@@ -1,0 +1,88 @@
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+  /* Puedes agregar estilos específicos para dispositivos móviles si es necesario */
+}
+
+/* Estilos para tablets */
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Puedes agregar estilos específicos para tablets si es necesario */
+}
+
+/* Estilos para escritorios */
+@media (min-width: 1025px) {
+  /* Puedes agregar estilos específicos para escritorios si es necesario */
+}
+
+body {
+  background: #bc4e9c;
+  background: -webkit-linear-gradient(
+      to right,
+      hsla(347, 92%, 72%, 0.671),
+      hsla(263, 47%, 43%, 0.89)
+    ),
+    url(../img/fondo.jpg);
+  background: linear-gradient(
+      to right,
+      hsla(347, 92%, 72%, 0.671),
+      hsla(263, 47%, 43%, 0.89)
+    ),
+    url(../img/fondo.jpg);
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+.containerMainLogin {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 70vh;
+  position: relative;
+}
+
+.containerRegistroLogin {
+  background-color: #ffffff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  border-radius: 5px;
+  text-align: center;
+  width: 300px;
+}
+
+.containerRegistroLogin label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.containerRegistroLogin .control {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.login-btn {
+  padding: 10px;
+  background-color: #333;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.login-btn:hover {
+  background-color: #555;
+}
+
+.is-invalid {
+  border: 1px solid #ff0000;
+}

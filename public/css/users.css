@@ -1,0 +1,58 @@
+/* Estilos generales para la sección de usuarios */
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+h2 {
+  font-size: 30px;
+  margin-bottom: 20px;
+}
+
+/* Estilos para el contenedor de usuarios */
+.users_container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Estilos para cada contenedor de usuario */
+.user_container {
+  margin: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-align: center;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.user_container img {
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+h3 {
+  font-size: 20px;
+  margin: 5px 0;
+}
+
+p {
+  margin: 5px 0;
+}
+
+/* Estilos para el botón de borrar */
+form button {
+  background-color: #dc3545;
+  color: #fff;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+form button:hover {
+  background-color: #c82333;
+}

@@ -1,0 +1,81 @@
+header .logo {
+  left: 0;
+}
+
+header section.banner {
+  background-size: cover;
+  text-align: center;
+  width: 100%;
+  margin: auto;
+}
+
+section.banner img {
+  width: 100%;
+  height: 30vh;
+}
+
+.message {
+  background-color: rgb(69, 18, 117);
+  color: blanchedalmond;
+  text-align: center;
+  height: 30px;
+  padding: 10px;
+}
+.message p {
+  margin: -5px;
+}
+
+/* CSS para los elementos del artículo */
+
+main.index {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: -250px; /* Ajusta el valor según sea necesario para lograr el superposicionamiento */
+  z-index: 3;
+}
+
+main.index .product {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: 10px;
+  width: 350px;
+  height: 450px;
+  border-radius: 1%;
+  
+
+  background-color: white;
+  box-shadow: 0 0 5px rgb(178, 185, 70);
+}
+main.index .titulo {
+
+  width: 100%;
+  height: 1%;
+  text-align: center;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
+
+main.index .product img {
+  height: 90%;
+  max-width: 95%;
+  margin: 5px;
+  border: solid rgb(8, 8, 8) 1px;
+}
+
+main.index .product h2 {
+  margin: 10px 0;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+  font-size: medium;
+}
+
+main.index .product .price {
+  font-weight: bold;
+  font-size: larger;
+}
+
+main.index .product:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 10px rgb(87, 86, 192);
+}
+

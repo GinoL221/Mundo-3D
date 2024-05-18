@@ -1,0 +1,70 @@
+<%- include('./partials/head') %>
+
+<link rel="stylesheet" href="/css/index.css" />
+<link rel="stylesheet" href="/css/carousel.css" />
+<title>Mundo 3D</title>
+</head>
+
+<body>
+  <div class="message">
+    <p>Si puedes pensarlo, puedes crearlo</p>
+  </div>
+
+  <%- include('./partials/header') %>
+
+  <section class="banner">
+    <img src="/img/699b24b0a24fe3586f3369783336ac56.jpg" alt="banner" />
+  </section>
+  <section class="carousel">
+    <div class="carousel-container">
+      <div class="carousel-slide">
+        <a href="/aboutUs">
+          <img src="/img/carousel/Capturaa.jpg" alt="Slide 1" class="carousel-img">
+        </a>
+      </div>
+      <div class="carousel-slide">
+        <a href="\products">
+          <img src="/img/carousel/Capturab.jpg" alt="Slide 2" class="carousel-img">
+        </a>
+
+      </div>
+      <div class="carousel-slide">
+        <a href="\new-product">
+          <img src="/img/carousel/Capturac.png" alt="Slide 3" class="carousel-img">
+
+        </a>
+
+      </div>
+    </div>
+    <button class="carousel-prev">&#10094;</button>
+    <button class="carousel-next">&#10095;</button>
+  </section>
+
+  <main class="index">
+    <h2 class="titulo">Nuestros Seleccionados</h2>
+    <article class="product">
+      <img src="/img/img14.jpg" alt="Producto 1" />
+    </article>
+    <article class="product">
+      <img src="/img/img2.jpg" alt="Producto 2" />
+    </article>
+    <article class="product">
+      <img src="/img/img3.jpg" alt="Producto 3" />
+    </article>
+    <article class="product">
+      <img src="/img/img5.jpg" alt="Producto 1" />
+    </article>
+    <article class="product">
+      <img src="/img/img9.jpg" alt="Producto 2" />
+    </article>
+    <article class="product">
+      <img src="/img/img4.jpg" alt="Producto 3" />
+    </article>
+  </main>
+
+  <%- include('./partials/footer') %>
+  <script src="/js/carousel.js"></script>
+
+</body>
+
+</html>

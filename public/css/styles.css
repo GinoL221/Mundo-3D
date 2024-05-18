@@ -1,0 +1,295 @@
+/* Estilos globales */
+* {
+  box-sizing: border-box;
+}
+
+/* Estilos del body */
+body {
+  background-color: #ebebeb;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Estilos del header */
+header {
+  width: 100%;
+  background-color: #333;
+  color: #fff;
+}
+
+header div.logo {
+  left: 0;
+  align-items: left;
+  flex-direction: column;
+  text-align: center;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  color: rgb(46, 72, 156);
+  padding-left: 30px;
+  padding-top: 30px;
+}
+
+header div.logo img {
+  max-width: 15%;
+}
+
+header div.buscador {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Estilo de la barra de navegacion */
+nav.barra-navegacion {
+  display: flex;
+  justify-content: space-between;
+  width: 90vw;
+  margin: auto;
+}
+
+nav.barra-navegacion ul {
+  display: flex;
+  list-style: none;
+}
+
+nav.barra-navegacion li {
+  display: inline;
+  margin-right: 20px;
+}
+
+nav.barra-navegacion a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.nav-item {
+  position: relative;
+}
+
+.perfil-dropdown {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: #333;
+  list-style: none;
+  padding: 10px;
+  display: none;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+.dropdown-menu a {
+  color: #fff;
+  text-decoration: none;
+  display: block;
+  padding: 5px 10px;
+}
+
+.perfil-dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+/* Agrega esta regla para ocultar el menú desplegable cuando no está en uso */
+.perfil-dropdown:not(:hover) .dropdown-menu {
+  display: none;
+}
+
+/* Estilos del contenido principal */
+main {
+  width: 100%;
+  margin: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+h2 {
+  display: flex;
+  justify-content: center;
+  font-size: 30px;
+  margin-bottom: 60px;
+}
+
+.containerParrafos {
+  display: flex;
+  justify-content: center;
+  font-size: 15px;
+  margin-bottom: 60px;
+}
+
+/* Estilos de los productos de muestra de la section */
+.containerSectionIndex {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.containerProducto {
+  margin: 10px 20px;
+  box-shadow: 0 4px 8px lightskyblue, 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  width: 250px;
+  background-color: rgb(160, 185, 185);
+  cursor: default;
+}
+
+.containerProductoImg img {
+  width: 100%;
+  height: auto;
+  cursor: pointer;
+  transition: 1s;
+}
+
+.containerCardFooter h3 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Estilos del pie de página */
+footer {
+  background-color: #fdfdfd;
+  color: #080707;
+}
+
+footer .containerFooter {
+  display: flex;
+  justify-content: center;
+  font-size: 16px;
+}
+
+footer .containerSections {
+  align-items: left;
+  justify-content: center;
+  display: block;
+}
+
+.containerSections h4 {
+  text-align: center;
+  color: rgb(46, 72, 156);
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.containerSections ul li::marker {
+  color: rgb(46, 72, 156);
+}
+
+.containerCopyRedes {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+footer .containerCopyright {
+  display: flex;
+  justify-content: flex-start;
+  font-size: 14px;
+}
+
+.containerCopyRedes p {
+  font-size: 14px;
+}
+
+footer .containerRedes {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Estilos para el contenedor --> por ahora no hay contenedor*/
+main .contenedor {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f0d3d3;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+  header {
+    width: 100%;
+    font-size: 18px;
+    padding: 10px;
+  }
+
+  header nav.barra-navegacion {
+    display: none;
+  }
+
+  main {
+    padding: 15px;
+  }
+
+  footer {
+    font-size: 10px;
+  }
+}
+
+/* Estilos para tablets */
+@media (min-width: 768px) {
+  header {
+    font-size: 24px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header div.logo {
+    display: flex;
+    justify-content: center;
+  }
+
+  header nav.barra-navegacion li {
+    margin: 0px 10px;
+  }
+
+  header nav.barra-navegacion a {
+    font-size: 20px;
+  }
+
+  main {
+    padding-left: 25px;
+    padding-right: 25px;
+  }
+
+  footer {
+    padding: 5px;
+  }
+
+  footer p {
+    margin: auto;
+    font-size: 10px;
+  }
+}
+
+/* Estilos para escritorios */
+@media (min-width: 1025px) {
+  /* Limito el tamaño de la barra de navegacion para pantallas grandes */
+  .barra-navegacion {
+    max-width: 1200px;
+    margin: auto;
+  }
+
+  main {
+    padding: 40px;
+    max-width: 1440px;
+  }
+
+  footer {
+    font-size: 16px;
+  }
+
+  footer .containerSections {
+    margin: 50px;
+  }
+}

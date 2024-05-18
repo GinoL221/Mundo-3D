@@ -1,0 +1,101 @@
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+    .containerNP {
+      margin-right: 0;
+      margin-left: 0;
+      padding: 15px; /* Aumenta el espaciado interno para dispositivos móviles */
+      max-width: 100%; /* Establece el ancho máximo al 100% para que se ajuste al ancho de la pantalla */
+      min-width: 50%;
+    }
+}
+
+/* Estilos para tablets */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .containerNP {
+      margin-right: 0;
+      margin-left: 0;
+      padding: 20px; /* Aumenta el espaciado interno para tablets */
+      max-width: 100%; /* Establece el ancho máximo al 100% para que se ajuste al ancho de la pantalla */
+      min-width: 50%;
+    }
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f2f2f2;
+    margin: 0;
+    padding: 0;
+    
+    background: #bc4e9c;
+    background: -webkit-linear-gradient(to right, hsla(347, 92%, 72%, 0.671), hsla(263, 47%, 43%, 0.89)), url(../img/img10.jpg);
+    background: linear-gradient(to right, hsla(347, 92%, 72%, 0.671), hsla(263, 47%, 43%, 0.89)), url(../img/img10.jpg);
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+main {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 100px;
+    /*align-items: center;/*/
+
+    height: 70vh;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+.containerNP {
+    border-radius: 4px;
+    background-color: aliceblue;
+    padding: 20px;
+    font-family: Arial, Helvetica, sans-serif;
+    margin-right: 50%;
+}
+
+.containerNP h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.containerNP div {
+    margin-bottom: 15px;
+}
+
+.containerNP label {
+    display: inline-block;
+    width: 120px;
+    text-align: left;
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.containerNP input[type="text"] {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ccc;
+    text-align: left;
+}
+
+.containerNP button {
+    display: inline-block;
+    margin-top: 15px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.containerNP button:hover {
+    background-color: #0056b3;
+}
+/* Aumenta la altura del campo de descripción */
+.containerNP input[name="description"] {
+    height: 90px; /* Puedes ajustar la altura según tus preferencias */
+    margin-bottom: 10px;
+    
+}

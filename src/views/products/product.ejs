@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html><head><%- include('../partials/head') %>
+  <link rel="stylesheet" href="/css/product.css" />
+  <title>New product</title>
+  </head>
+  
+  <body>
+    <%- include('../partials/header') %>
+    <main>
+      <div class="containerNP">
+        <h1>Editar producto</h1>
+        <form action="/product/<%= product._id%>/edit?_method=PUT" method="POST">
+          <div>
+            <label for="">Titulo: </label>
+            <input type="text" name="productName" id="" value="<%= product.productName %>">
+          </div>
+          <div>
+            <label for="">Precio: </label>
+            <input type="number" name="price" id="" value="<%= product.price %>">
+          </div>
+          <div>
+            <label for="">Descripcion: </label>
+            <input type="text" name="description" id="" value="<%= product.description %>">
+          </div>
+          <button type="submit">Confirmar</button>
+        </form>
+      </div>
+  
+    </main>
+    <%- include('../partials/footer') %>
+  </body>
+  
+  </html>

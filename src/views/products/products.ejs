@@ -1,0 +1,32 @@
+<%- include('../partials/head') %>
+<link rel="stylesheet" href="/css/products.css" />
+<title>Mundo 3D</title>
+</head>
+
+<body>
+  <%- include('../partials/header') %>
+
+  <main>
+    <h2><span>NUESTROS PRODUCTOS</span></h2>
+    <section class="contenido_produc">
+      <% for(let i = 0; i < allProducts.length; i++){ %>
+      <article class="contenido">
+        <a href="/product/<%= allProducts[i].IDProduct %>">
+          <div class="imagen">
+            <img src="/img/products/<%= allProducts[i].Image %>" alt="<%= allProducts[i].NameProduct %>">
+          </div>
+          <div class="pie_imagen">
+            <h3 class="info_produc"><%= allProducts[i].NameProduct %></h3>
+            <p class="price">$<%= allProducts[i].Price %></p>
+            <!-- <button>Añadir al carrito</button> -->
+          </div>
+        </a>
+      </article>
+      <% } %>
+    </section>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+
+</html>

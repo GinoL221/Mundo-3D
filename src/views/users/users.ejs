@@ -1,0 +1,33 @@
+<%- include('../partials/head') %>
+<link rel="stylesheet" href="/css/users.css">
+<title>Nuestros usuarios</title>
+</head>
+
+<body>
+  <%- include('../partials/header') %>
+
+  <main>
+    <h2>Todos los usuarios registrados</h2>
+    <section class="users_container">
+      <% for(let i = 0; i < allUsers.length; i++) { %>
+      <article class="user_container">
+        <% if (allUsers[i].Image && allUsers[i].Image.length) { %>
+        <img src="/img/users/<%= allUsers[i].Image %>" alt="image" width="300px" height="300px">
+        <% } else { %>
+        <img src="/img/users/usuarioSinImagen.jpg" alt="image" width="300px" height="300px">
+        <% } %>
+        <h3>Nombre: <%= allUsers[i].FirstName %></h3>
+        <h3>Apellido: <%= allUsers[i].LastName %></h3>
+        <p>Email: <%= allUsers[i].Email %></p>
+        <form action="/users/delete/<%= allUsers[i].IDUser %>?_method=DELETE" method="POST">
+          <button type="submit">Borrar</button>
+        </form>
+      </article>
+      <% } %>
+    </section>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+
+</html>

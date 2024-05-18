@@ -1,0 +1,27 @@
+<%- include('../partials/head') %>
+<title>Perfil de Usuario</title>
+</head>
+
+<body>
+  <%- include('../partials/header') %>
+
+  <main>
+    <h2>Perfil de Usuario</h2>
+    <section class="users_container">
+      <article class="user_container">
+        <% if (user.Image && user.Image.length) { %>
+          <img src="/img/users/<%= user.Image %>" alt="image" width="300px" height="300px">
+        <% } else { %>
+          <img src="/img/users/usuarioSinImagen.jpg" alt="image" width="300px" height="300px">
+        <% } %>
+        <h3>Nombre: <%= user.FirstName %></h3>
+        <h3>Apellido: <%= user.LastName %></h3>
+        <p>Email: <%= user.Email %></p>
+      </article>
+    </section>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+
+</html>

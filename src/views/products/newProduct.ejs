@@ -1,0 +1,80 @@
+<%- include('../partials/head') %>
+
+<link rel="stylesheet" href="/css/newProduct.css" />
+<title>New product</title>
+</head>
+
+<body>
+  <%- include('../partials/header') %>
+  <main>
+    <div class="containerNP">
+      <h1>Crear nuevo producto</h1>
+      <form action="/products" method="POST" enctype="multipart/form-data">
+
+        <label for="productName">Nombre:</label>
+        <input type="text" id="productName" name="productName" class="control <%= locals.errors && errors.productName ? 'is-invalid' : '' %>" value="<%= locals.oldData ? oldData.productName : '' %>">
+        <% if(locals.errors && errors.productName) { %>
+        <div class="text-danger">
+          <%= errors.productName.msg  %>
+        </div>
+        <% } %>
+
+        <label for="category">Categoría:</label>
+        <select id="category" name="category" class="control <%= locals.errors && errors.IDCategory ? 'is-invalid' : '' %>">
+          <% for(let i = 0; i < categories.length; i++) { %>
+          <option value="<%= categories[i].IDCategory %>" <%= locals.oldData && locals.oldData.IDCategory == categories[i].IDCategory ? 'selected' : '' %>><%= categories[i].NameCategory %></option>
+          <% } %>
+
+        </select>
+        <% if(locals.errors && errors.IDCategory) { %>
+        <div class="text-danger">
+          <%= errors.IDCategory.msg  %>
+        </div>
+        <% } %>
+
+        <label for="franchise">Franquicia:</label>
+        <select id="franchise" name="franchise" class="control <%= locals.errors && errors.IDFranchise ? 'is-invalid' : '' %>">
+          <% for(let i = 0; i < franchises.length; i++) { %>
+          <option value="<%= franchises[i].IDFranchise %>" <%= locals.oldData && locals.oldData.IDFranchise == franchises[i].IDFranchise ? 'selected' : '' %>><%= franchises[i].NameFranchise %></option>
+          <% } %>
+        </select>
+        <% if(locals.errors && errors.IDFranchise) { %>
+        <div class="text-danger">
+          <%= errors.IDFranchise.msg  %>
+        </div>
+        <% } %>
+
+        <label for="price">Precio: </label>
+        <input type="number" id="price" name="price" class="control <%= locals.errors && errors.price ? 'is-invalid' : '' %>" value="<%= locals.oldData ? oldData.price : '' %>">
+        <% if(locals.errors && errors.price) { %>
+        <div class="text-danger">
+          <%= errors.price.msg  %>
+        </div>
+        <% } %>
+
+        <label for="description">Descripción: </label>
+        <textarea type="text" id="description" name="description" class="control <%= locals.errors && errors.description ? 'is-invalid' : '' %>" value="<%= locals.oldData ? oldData.description : '' %>"></textarea>
+        <% if(locals.errors && errors.description) { %>
+        <div class="text-danger">
+          <%= errors.description.msg  %>
+        </div>
+        <% } %>
+
+        <label for="image">Imagen del producto: </label>
+        <input type="file" id="image" name="image">
+        <% if(locals.errors && errors.image) { %>
+        <div class="text-danger">
+          <%= errors.image.msg  %>
+        </div>
+        <% } %>
+
+        <button type="reset">Borrar</button>
+        <button type="submit">Crear</button>
+      </form>
+    </div>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+
+</html>

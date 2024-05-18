@@ -1,0 +1,2 @@
+###
+GET http://localhost:3031/api/products HTTP/1.1

@@ -1,0 +1,32 @@
+body.profile-body {
+  font-family: "Arial", sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+}
+
+main.profile-main {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+  color: #333;
+  width: 100%;
+  font-size: 40px;
+}
+
+img.profile-image {
+  max-width: 70%;
+  height: auto;
+  border-radius: 50%;
+  margin-top: 10px;
+}
+
+p.profile-email {
+  color: #666;
+  font-size: 25px;
+}

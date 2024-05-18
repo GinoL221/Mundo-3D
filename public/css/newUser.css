@@ -1,0 +1,58 @@
+main {
+    text-align: center;
+    padding: 20px;
+    border-radius: 10px;
+  }
+
+  body{
+    background: #bc4e9c;
+    background: -webkit-linear-gradient(to right, hsla(347, 92%, 72%, 0.671), hsla(263, 47%, 43%, 0.89)), url(../img/fondo.jpg);
+    background: linear-gradient(to right, hsla(347, 92%, 72%, 0.671), hsla(263, 47%, 43%, 0.89)), url(../img/fondo.jpg);
+    background-size: cover;
+    background-attachment: fixed;
+  }
+
+  h1 {
+    font-size: 24px;
+    margin-bottom: 30px;
+    border-radius: 15px;
+    padding: 5px;
+    background-color: #007bffd8;
+  }
+  
+  .containerNewUser {
+    background-color: #ffffff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+    width: 400px;
+  }
+
+  div {
+    margin-bottom: 15px;
+  }
+  
+  label {
+    display: block;
+    font-weight: bold;
+  }
+  
+  #firstName, #lastName, #email, #password, #imagenDePerfil, #confirmPassword{
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+  }
+  
+  /* Estilos para los botones */
+  #crear, #borrar{
+    padding: 10px 20px;
+    background-color: #007bffd8;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 10px;
+  }

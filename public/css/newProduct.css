@@ -1,0 +1,96 @@
+/* Estilos adicionales para dispositivos móviles */
+@media (max-width: 768px) {
+  .containerNP {
+    padding: 15px;
+    max-width: 100%;
+    min-width: 50%;
+  }
+}
+
+/* Estilos adicionales para tablets */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .containerNP {
+    padding: 20px;
+    max-width: 100%;
+    min-width: 50%;
+  }
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f2f2f2;
+  margin: 0;
+  padding: 0;
+
+  background: #bc4e9c;
+  background: -webkit-linear-gradient(
+      to right,
+      hsla(347, 92%, 72%, 0.671),
+      hsla(263, 47%, 43%, 0.89)
+    ),
+    url(../img/img10.jpg);
+  background: linear-gradient(
+      to right,
+      hsla(347, 92%, 72%, 0.671),
+      hsla(263, 47%, 43%, 0.89)
+    ),
+    url(../img/img10.jpg);
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+.containerNP {
+  border-radius: 8px;
+  background-color: #ffffff;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  font-family: Arial, Helvetica, sans-serif;
+  margin: auto;
+  text-align: center;
+}
+
+.containerNP h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.containerNP label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.containerNP select,
+.containerNP input,
+.containerNP textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.containerNP button {
+  background-color: #000;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 3px;
+  margin-bottom: 5px;
+}
+
+.containerNP button:hover {
+  background-color: #333;
+}

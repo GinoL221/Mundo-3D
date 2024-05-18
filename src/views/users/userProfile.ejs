@@ -1,0 +1,19 @@
+<%- include('../partials/head') %>
+<title>Tu perfil</title>
+<link rel="stylesheet" href="/css/profile.css">
+</head>
+
+<body class="profile-body">
+
+  <%- include('../partials/header') %>
+
+  <main class="profile-main">
+    <h2>Hola <%= user.FirstName %> </h2>
+    <img src="/img/users/<%= user.Image %>" alt="" class="profile-image">
+    <p class="profile-email">Email: <strong><%= user.Email %></strong></p>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+
+</html>

@@ -1,0 +1,118 @@
+*{
+    box-sizing: border-box; 
+}
+
+.containerTitle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin-top: 50px;
+}
+.containerMainProductDetail{
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    height: 100%;
+}
+.containerCardProducto img{
+    display: flex;
+    flex-wrap: wrap;
+    height: 50%;
+    width: 100%;
+    border-radius: 20px;
+    margin: 5px;
+}
+
+.containerCardProducto{
+    display: block;
+    width: 100%;
+    height: auto;
+}
+.containerSectionDetalle {
+    width: 100%;
+    height: auto;
+    display: block;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: white;
+    padding: 25px;
+    margin: 5px;
+    border-radius: 20px;
+    flex-wrap: wrap;
+}
+.containerSectionDetalle button{
+    display: block;
+    flex-wrap: wrap;
+    width: 100%;
+    padding: 10px;
+    height: auto;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-radius: 20px;
+    margin: 5px;
+    margin-top: 25px;
+    background-color: #ebebeb;
+    cursor: pointer;
+}
+.containerSectionDetalle a{
+    text-decoration: none;
+    text-decoration-line: none
+}
+
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+    .containerSectionDetalle{
+        font-size: 24px;
+        padding: 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+}
+
+/* Estilos para tablets */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .containerCardProducto{
+        display: flex;
+    }
+    .containerMainProductDetail img{
+        width: 100%;
+        height: auto;
+    }
+    .containerCardProducto{
+        display: flex;
+        flex-wrap: wrap;
+    }
+}
+
+/* Estilos para escritorios */
+@media (min-width: 1025px) {
+    .containerCardProducto{
+        display: flex;
+    }
+    .containerMainProductDetail img{
+        width: 100%;
+        height: auto;
+    }
+    .containerSectionDetalle{
+        align-items: center;
+        justify-content: center;
+        padding-top: 50px;
+    }
+    .containerSectionDetalle h3{
+        padding-bottom: 100px;
+    }
+    .containerSectionDetalle p{
+        padding-bottom: 150px;
+        font-size: 24px;
+    }
+    .containerSectionDetalle button{
+        width: 100%;
+        height: auto;  
+        margin-top: 50px;
+    }
+}

@@ -1,0 +1,81 @@
+/* Agrega estilos personalizados en tu archivo productMenu.css */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f2f2f2;
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+  }
+  .titulo{
+    width: 100%;
+    height: 10px;
+    font-family: 5px 'Times New Roman', Times, serif;
+    text-align:right;
+}
+/* Agrega estilos personalizados en tu archivo productMenu.css */
+
+*.products_container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+  }
+  
+  .product_container {
+    width: 90%; /* Cambiado de 300px a 90% del ancho */
+    max-width: 300px; /* Agregado un ancho máximo para evitar que sea demasiado grande en pantallas grandes */
+    height: 70vh; /* Cambiado de 100% a 70% del alto de la ventana */
+    margin: 10px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box; /* Se asegura de que el padding no afecte el ancho y alto total */
+  }
+  
+  
+
+  
+  
+  .product_container:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .product_container img {
+    width: 100%;
+    height: 50%; /* Ajusta la altura de la imagen según tus necesidades */
+    object-fit: cover;
+    margin-bottom: 10px;
+  }
+  
+  .product_container h3 {
+    font-size: 1.2em;
+    margin-bottom: 5px;
+    overflow: hidden; /* Evita que las letras se salgan del article */
+    white-space: nowrap; /* Evita el salto de línea si el texto es demasiado largo */
+    text-overflow: ellipsis; /* Agrega puntos suspensivos (...) si el texto es demasiado largo */
+  }
+  
+  .product_container p {
+    margin-bottom: 10px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  
+  .product_container form {
+    margin-top: 10px;
+  }
+  
+  .product_container button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  
+  h2 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  

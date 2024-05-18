@@ -1,0 +1,107 @@
+/* Estilos body */
+body {
+  font-family: Arial, sans-serif;
+}
+
+/* Estilos del contenido principal */
+main {
+  width: auto;
+  margin: auto;
+}
+
+main h2 {
+  text-align: center;
+  font-size: 30px;
+  margin-bottom: 60px;
+  width: 100%;
+}
+
+/* Estilos para el contenedor --> por ahora no hay contenedor*/
+main .contenedor {
+  max-width: 1000px;
+  margin: auto;
+  padding: 60px 0;
+  overflow: hidden;
+  background-color: #f0d3d3;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* SECCION PRODUCTOS*/
+
+.contenido_produc {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+article.contenido {
+  margin: 10px 20px;
+  box-shadow: 0 4px 8px lightskyblue, 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  width: 250px;
+  background-color: rgb(160, 185, 185);
+  cursor: default; /* Deshabilita el cursor de enlace */
+}
+
+article.contenido a {
+  text-decoration: none; /* Elimina la decoración de hipervínculo */
+  color: inherit; /* Hereda el color del texto del elemento padre (puedes ajustar esto según sea necesario) */
+}
+
+article.contenido img {
+  width: 100%;
+  height: auto;
+  cursor: pointer;
+  transition: 1s;
+}
+
+article.contenido:hover {
+  border: 1px solid lightblue;
+}
+
+.info_produc {
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+}
+
+.pie_imagen {
+  text-align: center;
+  padding: 10px;
+}
+
+.price {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.pie_imagen button {
+  border: none;
+  background: none;
+  background-color: black;
+  color: #fff;
+  padding: 5px 55px;
+  cursor: pointer;
+}
+
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+  main {
+    padding: 10px;
+  }
+}
+
+/* Estilos para tablets */
+@media (min-width: 768px) {
+  main {
+    padding: 15px;
+  }
+}
+
+/* Estilos para escritorios */
+@media (min-width: 1025px) {
+  main {
+    padding: 40px;
+  }
+}
