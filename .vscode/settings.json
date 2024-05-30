@@ -1,0 +1,24 @@
+{
+  "eslint.enable": true,
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/*/**": true,
+    "**/.vscode/*/**": true,
+    "**/.yarn/*/**": true
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/*.pyc": true,
+    "**/__pycache__": true
+  },
+  "files.caseSensitive": true,
+  "files.defaultLanguage": "javascript",
+  "files.associations": {
+    "*.extension": "javascript"
+  }
+}
