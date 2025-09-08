@@ -1,4 +1,4 @@
-const { ShoppingCart, Product, User } = require("../../database/models");
+const { ShoppingCart, Product, User } = require("../../database/models/db");
 const path = require("path");
 
 const calcularTotal = (userShoppingCart) => {

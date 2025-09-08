@@ -1,5 +1,5 @@
 const path = require("path");
-const { Category, Franchise } = require("../../database/models");
+const { Category, Franchise } = require("../../database/models/db");
 
 const formNewProduct = async (req, res) => {
   const categories = await Category.findAll();

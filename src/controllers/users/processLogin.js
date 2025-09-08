@@ -1,7 +1,7 @@
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const { validationResult } = require("express-validator");
-const { User } = require("../../database/models");
+const { User } = require("../../database/models/db");
 
 const processLogin = async (req, res) => {
   try {
@@ -12,7 +12,7 @@ const processLogin = async (req, res) => {
 
       // Buscar el usuario por su email en la base de datos
       const userToLogin = await User.findOne({
-        where: { email },
+        where: { Email: email },
         attributes: [
           "IDUser",
           "FirstName",

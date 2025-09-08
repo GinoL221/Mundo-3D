@@ -1,7 +1,7 @@
 const path = require("path");
 const bcryptjs = require("bcryptjs");
 const { validationResult } = require("express-validator");
-const { User } = require("../../database/models");
+const { User } = require("../../database/models/db");
 
 const postNewUser = async (req, res) => {
   try {

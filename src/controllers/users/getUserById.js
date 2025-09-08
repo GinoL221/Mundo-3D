@@ -1,4 +1,4 @@
-const { User } = require("../../database/models"); // Asegúrate de importar el modelo User desde el archivo correcto
+const { User } = require("../../database/models/db"); // Asegúrate de importar el modelo User desde el archivo correcto
 const path = require("path");
 
 const getUserById = async (req, res) => {

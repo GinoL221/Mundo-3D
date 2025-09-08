@@ -2,7 +2,9 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const { Op } = require("sequelize");
-const { sequelize, Category, Product } = require("../database/models");
+const { initializeModels } = require("../database/models");
+const db = initializeModels();
+const { sequelize, Category, Product } = db;
 const { body } = require("express-validator");
 const {
   isUser,
@@ -130,7 +132,9 @@ router.get("/api/products", async (req, res) => {
 
     // Mapear productos para incluir solo la información necesaria de Category
     const mappedProducts = products.map((product) => {
-      const categoryName = product.Category ? product.Category.NameCategory : "Sin categoría";
+      const categoryName = product.Category
+        ? product.Category.NameCategory
+        : "Sin categoría";
 
       const categoryInfo = product.Category
         ? {
@@ -195,7 +199,7 @@ router.get("/api/products/latest", async (req, res) => {
         model: Category,
         as: "Category",
       },
-      order: [['IDProduct', 'DESC']], // Ordena por IDProduct de forma descendente para obtener el último
+      order: [["IDProduct", "DESC"]], // Ordena por IDProduct de forma descendente para obtener el último
     });
 
     if (!latestProduct) {
@@ -209,7 +213,9 @@ router.get("/api/products/latest", async (req, res) => {
       Price: latestProduct.Price,
       DescriptionProduct: latestProduct.DescriptionProduct,
       Image: latestProduct.Image,
-      Category: latestProduct.Category ? latestProduct.Category.NameCategory : "Sin categoría",
+      Category: latestProduct.Category
+        ? latestProduct.Category.NameCategory
+        : "Sin categoría",
     };
 
     res.json(mappedLatestProduct);
@@ -218,6 +224,5 @@ router.get("/api/products/latest", async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor" });
   }
 });
-
 
 module.exports = router;

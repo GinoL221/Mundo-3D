@@ -85,7 +85,9 @@ const {
   userProfile,
   logout,
 } = require("../controllers/users");
-const { User } = require("../database/models");
+const { initializeModels } = require("../database/models");
+const db = initializeModels();
+const { User } = db;
 
 //Ruta para ver todos los usuarios
 router.get("/users", isUser, getAllUsers);

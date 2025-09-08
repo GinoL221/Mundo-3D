@@ -1,0 +1,10 @@
+[
+  {
+    "NameProduct": "Mario",
+    "Price": "1500",
+    "DescriptionProduct": "Personaje de videojuego",
+    "Image": "Mario.jpg",
+    "IDCategory": 1,
+    "IDFranchise": 4
+  }
+]

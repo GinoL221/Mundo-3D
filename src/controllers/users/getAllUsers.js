@@ -1,6 +1,6 @@
 const path = require("path");
 
-const { User } = require("../../database/models");
+const { User } = require("../../database/models/db");
 
 const getAllUsers = async (req, res) => {
   try {

@@ -1,4 +1,6 @@
-const { User } = require("../database/models");
+const { initializeModels } = require("../database/models");
+const db = initializeModels();
+const { User } = db;
 const path = require("path");
 
 const isUser = (req, res, next) => {
