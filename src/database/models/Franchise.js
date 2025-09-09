@@ -13,6 +13,7 @@ module.exports = (sequelize) => {
       NameFranchise: {
         type: DataTypes.STRING(255),
         allowNull: false,
+          unique: true,
       },
     },
     {
@@ -21,13 +22,12 @@ module.exports = (sequelize) => {
     }
   );
 
-  Franchise.sync({ force: false })
-    .then(() => {
-      console.log("Tabla de Franquicias sincronizada correctamente.");
-    })
-    .catch((error) => {
-      console.error("Error al sincronizar la tabla de Franquicias:", error);
-    });
+    Franchise.associate = function (models) {
+      Franchise.hasMany(models.Product, {
+        as: "products",
+        foreignKey: "IDFranchise",
+      });
+    };
 
   return Franchise;
 };

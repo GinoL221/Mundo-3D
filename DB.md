@@ -1,6 +1,6 @@
 -- Crear la base de datos
-CREATE DATABASE IF NOT EXISTS ecommerce_dbtest;
-USE ecommerce_dbtest;
+CREATE DATABASE IF NOT EXISTS mundo3d_db;
+USE mundo3d_db;
 
 -- Tabla de Categorías con restricción de clave única en NameCategory
 CREATE TABLE IF NOT EXISTS Category (
