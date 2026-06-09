@@ -38,27 +38,27 @@ Chain strategy: stacked-to-main
 
 ## Phase 2: Visual Identity (Header/Footer/Error Pages)
 
-- [ ] 2.1 Rewrite `src/views/partials/header.ejs` — pixel art nav with Press Start 2P logo, VT323 nav links
-- [ ] 2.2 Add pixel art cart icon from `/images/icons/cart.png` in header
-- [ ] 2.3 Implement cart counter badge: show distinct product count from session, hide when empty (no "0")
-- [ ] 2.4 Add styled search bar (visually complete, non-functional — aria-label for accessibility)
-- [ ] 2.5 Modify `src/views/partials/footer.ejs` — PICO-8 colors, VT323 font, pixel art social icons
-- [ ] 2.6 Modify `src/views/403Forbidden.ejs` — Press Start 2P heading, VT323 body, PICO-8 styling
-- [ ] 2.7 Modify `src/views/404NotFound.ejs` — PICO-8 styling consistency with design system
-- [ ] 2.8 Test: Load all pages (index, products, login, register, cart, 403, 404) — verify single styles.css
+- [x] 2.1 Rewrite `src/views/partials/header.ejs` — pixel art nav with Press Start 2P logo, VT323 nav links
+- [x] 2.2 Add pixel art cart icon from `/images/icons/cart.png` in header
+- [x] 2.3 Implement cart counter badge: show distinct product count from session, hide when empty (no "0")
+- [x] 2.4 Add styled search bar (visually complete, non-functional — aria-label for accessibility)
+- [x] 2.5 Modify `src/views/partials/footer.ejs` — PICO-8 colors, VT323 font, pixel art social icons
+- [x] 2.6 Modify `src/views/403Forbidden.ejs` — Press Start 2P heading, VT323 body, PICO-8 styling
+- [x] 2.7 Modify `src/views/404NotFound.ejs` — PICO-8 styling consistency with design system
+- [x] 2.8 Test: Load all pages (index, products, login, register, cart, 403, 404) — verify single styles.css
 
 ## Phase 3: Dynamic Homepage + Carousel
 
-- [ ] 3.1 Add `index(req, res)` method to `src/controllers/mainController.js` — call `ProductService.findAll()`
-- [ ] 3.2 Modify `src/routes/mainRoutes.js` — import mainController, use `mainController.index` for GET `/`
-- [ ] 3.3 Rewrite `src/views/index.ejs` — dynamic product grid from `products` local variable
-- [ ] 3.4 Add product cards: name, price (Press Start 2P), category illustration (`/images/illustrations/{category}.png`)
-- [ ] 3.5 Add product card links to detail page (`/products/{IDProduct}`)
-- [ ] 3.6 Implement empty state: 3D printer pixel art illustration + "Próximamente" text (when products array empty)
-- [ ] 3.7 Rewrite `public/js/carousel.js` — autoplay (4000ms interval), infinite loop, pause-on-hover
-- [ ] 3.8 Configure carousel with 3 slides linked to `/products`, `/aboutUs`, `/new-product`
-- [ ] 3.9 Add carousel navigation: prev/next arrows, slide indicators
-- [ ] 3.10 Test: With products — verify cards render; without products — verify "Próximamente" empty state
+- [x] 3.1 Add `index(req, res)` method to `src/controllers/mainController.js` — call `ProductService.findAll()`
+- [x] 3.2 Modify `src/routes/mainRoutes.js` — import mainController, use `mainController.index` for GET `/`
+- [x] 3.3 Rewrite `src/views/index.ejs` — dynamic product grid from `products` local variable
+- [x] 3.4 Add product cards: name, price (Press Start 2P), category illustration (`/images/illustrations/{category}.png`)
+- [x] 3.5 Add product card links to detail page (`/products/{IDProduct}`)
+- [x] 3.6 Implement empty state: 3D printer pixel art illustration + "Próximamente" text (when products array empty)
+- [x] 3.7 Rewrite `public/js/carousel.js` — autoplay (4000ms interval), infinite loop, pause-on-hover
+- [x] 3.8 Configure carousel with 3 slides linked to `/products`, `/aboutUs`, `/new-product`
+- [x] 3.9 Add carousel navigation: prev/next arrows, slide indicators
+- [x] 3.10 Test: With products — verify cards render; without products — verify "Próximamente" empty state
 
 ## Phase 4: Assets + Verification
 
