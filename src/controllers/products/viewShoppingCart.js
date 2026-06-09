@@ -1,5 +1,5 @@
-const { ShoppingCart, Product, User } = require("../../database/models/db");
-const path = require("path");
+const { ShoppingCart, Product, User } = require('../../database/models/db');
+const path = require('path');
 
 const calcularTotal = (userShoppingCart) => {
   let total = 0;
@@ -14,17 +14,17 @@ const viewShoppingCart = (req, res) => {
 
   ShoppingCart.findAll({
     where: { IDUser: userId },
-    include: [{ model: Product, as: "product" }],
+    include: [{ model: Product, as: 'product' }],
   })
     .then((userShoppingCart) => {
-      console.log("Carrito de compras:", userShoppingCart);
+      console.log('Carrito de compras:', userShoppingCart);
 
-      const ruta = path.join(__dirname, "../../views/products/productCart.ejs");
+      const ruta = path.join(__dirname, '../../views/products/productCart.ejs');
       res.render(ruta, { userShoppingCart, calcularTotal });
     })
     .catch((error) => {
-      console.error("Error al obtener el carrito de compras", error);
-      res.status(500).send("Error interno del servidor");
+      console.error('Error al obtener el carrito de compras', error);
+      res.status(500).send('Error interno del servidor');
     });
 };
 

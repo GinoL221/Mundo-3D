@@ -1,23 +1,19 @@
-const { Product } = require("../../database/models/db");
+const { ProductService } = require('../../services');
 
 const deleteProduct = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // Buscar el producto en la base de datos
-    const product = await Product.findByPk(id);
+    const deleted = await ProductService.remove(id);
 
-    if (!product) {
-      return res.status(404).send("Producto no encontrado");
+    if (!deleted) {
+      return res.status(404).send('Producto no encontrado');
     }
 
-    // Eliminar el producto
-    await product.destroy();
-
-    res.redirect("/products");
+    res.redirect('/products');
   } catch (error) {
-    console.error("Error al eliminar el producto:", error);
-    res.status(500).send("Error interno del servidor");
+    console.error('Error al eliminar el producto:', error);
+    res.status(500).send('Error interno del servidor');
   }
 };
 
