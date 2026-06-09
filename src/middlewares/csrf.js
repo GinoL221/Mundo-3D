@@ -46,7 +46,7 @@ function csrfProtection(req, res, next) {
   const sessionToken = req.session && req.session.csrfToken;
 
   if (!submittedToken || !sessionToken) {
-    return res.status(403).render(require('path').join(__dirname, '../views/404NotFound.ejs'), {
+    return res.status(403).render(require('path').join(__dirname, '../views/403Forbidden.ejs'), {
       message: 'Token CSRF inválido. Vuelve atrás e intenta de nuevo.',
     });
   }
@@ -59,13 +59,13 @@ function csrfProtection(req, res, next) {
     );
 
     if (!isValid) {
-      return res.status(403).render(require('path').join(__dirname, '../views/404NotFound.ejs'), {
+      return res.status(403).render(require('path').join(__dirname, '../views/403Forbidden.ejs'), {
         message: 'Token CSRF inválido. Vuelve atrás e intenta de nuevo.',
       });
     }
   } catch (err) {
     // Tokens with different lengths will throw — treat as invalid
-    return res.status(403).render(require('path').join(__dirname, '../views/404NotFound.ejs'), {
+    return res.status(403).render(require('path').join(__dirname, '../views/403Forbidden.ejs'), {
       message: 'Token CSRF inválido. Vuelve atrás e intenta de nuevo.',
     });
   }
