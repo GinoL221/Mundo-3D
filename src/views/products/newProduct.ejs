@@ -10,6 +10,7 @@
     <div class="containerNP">
       <h1>Crear nuevo producto</h1>
       <form action="/products" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
 
         <label for="productName">Nombre:</label>
         <input type="text" id="productName" name="productName" class="control <%= locals.errors && errors.productName ? 'is-invalid' : '' %>" value="<%= locals.oldData ? oldData.productName : '' %>">

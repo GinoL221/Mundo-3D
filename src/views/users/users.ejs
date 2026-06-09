@@ -20,6 +20,7 @@
         <h3>Apellido: <%= allUsers[i].LastName %></h3>
         <p>Email: <%= allUsers[i].Email %></p>
         <form action="/users/delete/<%= allUsers[i].IDUser %>?_method=DELETE" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
           <button type="submit">Borrar</button>
         </form>
       </article>

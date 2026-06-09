@@ -1,51 +1,6 @@
-const { initializeModels } = require("../database/models");
-const db = initializeModels();
-const { User } = db;
-const path = require("path");
-
-const isUser = (req, res, next) => {
-  res.locals.isLogged ? next() : res.redirect("/login");
-};
-
-const guestMiddleware = (req, res, next) => {
-  if (req.session.userLogged) {
-    return res.redirect("/profile");
-  }
-  next();
-};
-
-const authMiddleware = (req, res, next) => {
-  if (!req.session.userLogged) {
-    return res.redirect("/login");
-  }
-  next();
-};
-
-const userLoggedMiddleware = async (req, res, next) => {
-  res.locals.isLogged = false;
-
-  try {
-    if (req.cookies) {
-      const emailInCookie = req.cookies.userEmail;
-      const userFromCookie = await User.findOne({
-        where: { email: emailInCookie },
-      });
-
-      if (userFromCookie) {
-        res.locals.userLogged = userFromCookie;
-      }
-    }
-  } catch (error) {
-    console.error("Error al buscar usuario en la base de datos:", error);
-  }
-
-  if (req.session.userLogged) {
-    res.locals.isLogged = true;
-    res.locals.userLogged = req.session.userLogged;
-  }
-
-  next();
-};
+// Re-export from split files for backward compatibility
+const { isUser, guestMiddleware, authMiddleware } = require('./auth');
+const userLoggedMiddleware = require('./userLogged');
 
 module.exports = {
   isUser,

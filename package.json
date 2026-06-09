@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "lint": "eslint src/",
+    "format": "prettier --write \"src/**/*.js\""
   },
   "repository": {
     "type": "git",
@@ -26,16 +28,23 @@
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
+    "express-rate-limit": "8.5.2",
     "express-session": "^1.18.0",
     "express-validator": "^7.0.1",
+    "helmet": "8.2.0",
     "method-override": "^3.0.0",
     "morgan": "^1.10.0",
     "multer": "^2.0.2",
     "mysql2": "^3.9.7",
     "sequelize": "^6.37.3",
-    "uuid": "^9.0.1"
+    "uuid": "^11.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "@eslint/js": "10.0.1",
+    "eslint": "10.4.1",
+    "globals": "17.6.0",
+    "jest": "30.4.2",
+    "nodemon": "^3.1.0",
+    "prettier": "3.8.3"
   }
 }
