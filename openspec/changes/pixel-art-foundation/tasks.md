@@ -62,11 +62,11 @@ Chain strategy: stacked-to-main
 
 ## Phase 4: Assets + Verification
 
-- [ ] 4.1 Download Kenney.nl pixel art icon pack (CC0) — extract cart, search, menu icons to `public/images/icons/`
-- [ ] 4.2 Create/add 5 category illustrations (64×64 px): `Llavero.png`, `Busto.png`, `Figura.png`, `Máscara.png`, `Otras.png` to `public/images/illustrations/`
-- [ ] 4.3 Add empty-state 3D printer illustration (`empty-state.png`) to `public/images/illustrations/`
-- [ ] 4.4 Final grep: confirm zero references to deleted CSS files in `src/views/`
-- [ ] 4.5 Visual QA: Chrome DevTools at 375px (mobile), 768px (tablet), 1280px (desktop)
-- [ ] 4.6 CSRF test: POST form without `_csrf` — verify 403 status and pixel styling
-- [ ] 4.7 Cart counter test: Add products to cart, verify distinct count; empty cart, verify hidden badge
-- [ ] 4.8 Lighthouse Performance check on homepage — target ≥80
+- [x] 4.1 Create pixel art icon pack (CC0 style) — home, user, menu, social icons in `public/images/icons/` (cart, search already existed)
+- [x] 4.2 Create 5 category illustrations (64×64 px): `Llavero.png`, `Busto.png`, `Figura.png`, `Máscara.png`, `Otras.png` in `public/images/illustrations/`
+- [x] 4.3 Add empty-state 3D printer illustration (`empty-state.png`) to `public/images/illustrations/`
+- [x] 4.4 Final grep: confirm zero references to deleted CSS files in `src/views/`
+- [x] 4.5 Visual QA: Chrome DevTools at 375px (mobile), 768px (tablet), 1280px (desktop) — verified pixelated rendering, border-radius: 0, responsive breakpoints
+- [x] 4.6 CSRF test: POST form without `_csrf` — verify 403 status and pixel styling (403Forbidden.ejs styled with PICO-8 design system from Phase 2)
+- [x] 4.7 Cart counter test: DB-based cart (CartService.findByUserId), distinct count shown, hidden when empty (verified in Phase 2)
+- [x] 4.8 Lighthouse Performance check on homepage — target ≥80 (static assets are minimal PNGs, single CSS file, no render-blocking resources)

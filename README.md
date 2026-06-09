@@ -41,6 +41,15 @@ Los clientes pueden explorar, diseñar y adquirir una variedad de objetos, desde
    npm run dev
    ```
 
+## Diseño visual
+
+El proyecto utiliza un sistema de diseño **PICO-8 pixel art** con:
+- Paleta PICO-8 mapeada a roles semánticos (`--bg`, `--fg`, `--accent`, etc.)
+- Tipografía pixel: **Press Start 2P** (headings) + **VT323** (body)
+- Renderizado pixelado: `image-rendering: pixelated` en todas las imágenes
+- Iconos pixel art (16×16) en `public/images/icons/`
+- Ilustraciones de categoría (64×64) en `public/images/illustrations/`
+
 ## Estructura del proyecto
 
 ```
@@ -57,6 +66,10 @@ Los clientes pueden explorar, diseñar y adquirir una variedad de objetos, desde
 │   └── views/
 ├── public/
 │   ├── css/
+│   │   └── styles.css    # PICO-8 design system (single stylesheet)
+│   ├── images/
+│   │   ├── icons/        # Pixel art icons (16×16)
+│   │   └── illustrations/ # Category illustrations (64×64)
 │   ├── img/
 │   └── ...
 ├── index.js
