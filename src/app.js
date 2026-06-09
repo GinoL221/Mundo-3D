@@ -18,6 +18,7 @@ const cookies = require('cookie-parser');
 const server = express();
 
 const userLoggedMiddleware = require('./middlewares/userLogged');
+const cartCountMiddleware = require('./middlewares/cartCount');
 const errorHandler = require('./middlewares/errorHandler.js');
 const { csrfProtection } = require('./middlewares/csrf.js');
 
@@ -36,6 +37,7 @@ server.use(
 );
 
 server.use(userLoggedMiddleware);
+server.use(cartCountMiddleware);
 
 server.use(cookies());
 server.use(morgan('dev'));

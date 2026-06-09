@@ -125,7 +125,82 @@ header {
   width: 100%;
   background-color: var(--surface);
   color: var(--fg);
-  padding: var(--space-md) 0;
+  padding: var(--space-sm) 0;
+}
+
+.header-inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Site logo */
+.site-logo {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: var(--pico-yellow);
+  text-align: center;
+  padding: var(--space-xs) 0;
+  letter-spacing: 2px;
+}
+
+.site-logo:hover {
+  color: var(--pico-white);
+}
+
+/* Search bar (visual only) */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.search-bar input {
+  font-family: var(--font-body);
+  font-size: 16px;
+  padding: var(--space-xs) var(--space-sm);
+  background-color: var(--pico-black);
+  color: var(--fg);
+  border: 2px solid var(--pico-muted);
+  flex: 1;
+}
+
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.search-bar button {
+  font-family: var(--font-body);
+  font-size: 16px;
+  padding: var(--space-xs) var(--space-sm);
+  background-color: var(--accent);
+  color: var(--pico-white);
+  border: 2px solid var(--accent);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.search-bar button:hover {
+  background-color: var(--pico-black);
+  border-color: var(--accent);
+}
+
+/* Header layout: logo row + nav row */
+@media (min-width: 640px) {
+  .header-inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .search-bar {
+    margin: 0;
+  }
 }
 
 header .logo {
@@ -214,6 +289,17 @@ nav.barra-navegacion a:hover {
   display: block;
 }
 
+/* Cart link with icon + badge */
+.cart-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.cart-link img {
+  image-rendering: pixelated;
+}
+
 /* Cart counter badge */
 .cart-badge {
   display: inline-flex;
@@ -229,35 +315,11 @@ nav.barra-navegacion a:hover {
   margin-left: var(--space-xs);
 }
 
-/* Search bar (visual only) */
-.search-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-.search-bar input {
+/* User greeting in header */
+.user-greeting {
   font-family: var(--font-body);
   font-size: 16px;
-  padding: var(--space-xs) var(--space-sm);
-  background-color: var(--pico-black);
   color: var(--fg);
-  border: 2px solid var(--pico-muted);
-}
-
-.search-bar input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
-.search-bar button {
-  font-family: var(--font-body);
-  font-size: 16px;
-  padding: var(--space-xs) var(--space-sm);
-  background-color: var(--accent);
-  color: var(--pico-white);
-  border: none;
-  cursor: pointer;
 }
 
 /* ── 5.2 Banner / Carousel ─────────────────────────────────── */
