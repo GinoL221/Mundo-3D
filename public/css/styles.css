@@ -336,6 +336,41 @@ section.banner img {
   object-fit: cover;
 }
 
+/* Homepage carousel (standalone, not inside header) */
+#homepage-carousel {
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+  margin: 0 auto;
+  position: relative;
+  border: 4px solid var(--surface);
+}
+
+#homepage-carousel .carousel-slide a {
+  display: block;
+  position: relative;
+}
+
+.carousel-caption {
+  position: absolute;
+  bottom: var(--space-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-heading);
+  font-size: 12px;
+  color: var(--pico-white);
+  background-color: var(--pico-black);
+  padding: var(--space-xs) var(--space-md);
+  border: 2px solid var(--accent);
+  white-space: nowrap;
+  z-index: 5;
+}
+
+.carousel-caption:hover {
+  background-color: var(--accent);
+  color: var(--pico-white);
+}
+
 .carousel {
   width: 100%;
   max-height: 80vh;
@@ -409,6 +444,52 @@ section.banner img {
 }
 
 /* ── 5.3 Product Cards ─────────────────────────────────────── */
+
+/* Homepage product grid */
+.index .titulo {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+  color: var(--pico-yellow);
+}
+
+.product-category-img {
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+  margin: var(--space-md) auto;
+  display: block;
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  text-align: center;
+  padding: var(--space-2xl) var(--space-md);
+}
+
+.empty-state-img {
+  width: 128px;
+  height: 128px;
+  image-rendering: pixelated;
+  margin-bottom: var(--space-lg);
+}
+
+.empty-state h2 {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  color: var(--pico-yellow);
+  margin-bottom: var(--space-sm);
+}
+
+.empty-state p {
+  font-family: var(--font-body);
+  font-size: 20px;
+  color: var(--fg);
+}
 .containerSectionIndex,
 .contenido_produc,
 .products_container {

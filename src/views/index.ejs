@@ -4,60 +4,62 @@
 </head>
 
 <body>
-  <div class="message">
-    <p>Si puedes pensarlo, puedes crearlo</p>
-  </div>
-
   <%- include('./partials/header') %>
 
-  <section class="banner">
-    <img src="/img/699b24b0a24fe3586f3369783336ac56.jpg" alt="banner" />
-  </section>
-  <section class="carousel">
+  <section class="carousel" id="homepage-carousel">
     <div class="carousel-container">
       <div class="carousel-slide">
+        <a href="/products">
+          <img src="/img/carousel/Capturaa.jpg" alt="Explorá la colección" class="carousel-img">
+          <div class="carousel-caption">Explorá la colección</div>
+        </a>
+      </div>
+      <div class="carousel-slide">
+        <a href="/products?category=Llavero">
+          <img src="/img/carousel/Capturab.jpg" alt="Nuevos llaveros" class="carousel-img">
+          <div class="carousel-caption">Nuevos llaveros</div>
+        </a>
+      </div>
+      <div class="carousel-slide">
         <a href="/aboutUs">
-          <img src="/img/carousel/Capturaa.jpg" alt="Slide 1" class="carousel-img">
+          <img src="/img/carousel/Capturac.png" alt="Conocé Mundo 3D" class="carousel-img">
+          <div class="carousel-caption">Conocé Mundo 3D</div>
         </a>
-      </div>
-      <div class="carousel-slide">
-        <a href="\products">
-          <img src="/img/carousel/Capturab.jpg" alt="Slide 2" class="carousel-img">
-        </a>
-
-      </div>
-      <div class="carousel-slide">
-        <a href="\new-product">
-          <img src="/img/carousel/Capturac.png" alt="Slide 3" class="carousel-img">
-
-        </a>
-
       </div>
     </div>
-    <button class="carousel-prev">&#10094;</button>
-    <button class="carousel-next">&#10095;</button>
+    <button class="carousel-prev" aria-label="Slide anterior">&#10094;</button>
+    <button class="carousel-next" aria-label="Slide siguiente">&#10095;</button>
+    <div class="carousel-indicators">
+      <button class="indicator active" data-slide="0" aria-label="Ir al slide 1"></button>
+      <button class="indicator" data-slide="1" aria-label="Ir al slide 2"></button>
+      <button class="indicator" data-slide="2" aria-label="Ir al slide 3"></button>
+    </div>
   </section>
 
   <main class="index">
-    <h2 class="titulo">Nuestros Seleccionados</h2>
-    <article class="product">
-      <img src="/img/img14.jpg" alt="Producto 1" />
-    </article>
-    <article class="product">
-      <img src="/img/img2.jpg" alt="Producto 2" />
-    </article>
-    <article class="product">
-      <img src="/img/img3.jpg" alt="Producto 3" />
-    </article>
-    <article class="product">
-      <img src="/img/img5.jpg" alt="Producto 1" />
-    </article>
-    <article class="product">
-      <img src="/img/img9.jpg" alt="Producto 2" />
-    </article>
-    <article class="product">
-      <img src="/img/img4.jpg" alt="Producto 3" />
-    </article>
+    <% if (products && products.length > 0) { %>
+      <h2 class="titulo">Nuestros Seleccionados</h2>
+      <div class="products_container">
+        <% products.forEach(function(product) { %>
+          <article class="product_container">
+            <a href="/products/<%= product.IDProduct %>">
+              <% var catName = product.Category && product.Category.NameCategory ? product.Category.NameCategory : 'Otras'; %>
+              <img src="/images/illustrations/<%= catName %>.png" alt="<%= catName %>" class="product-category-img">
+              <div class="info_produc">
+                <h3><%= product.NameProduct %></h3>
+                <p class="price">$<%= product.Price %></p>
+              </div>
+            </a>
+          </article>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="empty-state">
+        <img src="/images/illustrations/empty-state.png" alt="Próximamente" class="empty-state-img">
+        <h2>Próximamente</h2>
+        <p>Estamos preparando productos increíbles para vos.</p>
+      </div>
+    <% } %>
   </main>
 
   <%- include('./partials/footer') %>
