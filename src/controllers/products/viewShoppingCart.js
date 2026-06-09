@@ -1,4 +1,5 @@
-const { ShoppingCart, Product, User } = require('../../database/models/db');
+const { CartService } = require('../../services');
+const { User } = require('../../database/models/db');
 const path = require('path');
 
 const calcularTotal = (userShoppingCart) => {
@@ -12,10 +13,7 @@ const calcularTotal = (userShoppingCart) => {
 const viewShoppingCart = (req, res) => {
   const userId = req.session.userLogged.IDUser;
 
-  ShoppingCart.findAll({
-    where: { IDUser: userId },
-    include: [{ model: Product, as: 'product' }],
-  })
+  CartService.findByUserId(userId)
     .then((userShoppingCart) => {
       console.log('Carrito de compras:', userShoppingCart);
 

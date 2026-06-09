@@ -1,14 +1,13 @@
 const { validationResult } = require('express-validator');
-const { ProductService } = require('../../services');
-const { Category, Franchise } = require('../../database/models/db');
+const { ProductService, CategoryService, FranchiseService } = require('../../services');
 const path = require('path');
 
 const postNewProduct = async (req, res) => {
   const errors = validationResult(req);
 
   try {
-    const categories = await Category.findAll();
-    const franchises = await Franchise.findAll();
+    const categories = await CategoryService.findAll();
+    const franchises = await FranchiseService.findAll();
 
     if (errors.isEmpty()) {
       const { productName, price, description, category, franchise } = req.body;
