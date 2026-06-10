@@ -1,0 +1,26 @@
+/* ============================================================
+   profile.css — Profile Component (BEM)
+   Extracted from styles.css lines 994-1012
+   ============================================================ */
+
+/* ── Profile Block ─────────────────────────────────────────── */
+.profile {
+  max-width: 800px;
+  margin: var(--space-lg) auto;
+  padding: var(--space-lg);
+  background-color: var(--surface);
+  border: 2px solid var(--pico-muted);
+}
+
+/* ── Profile Image ─────────────────────────────────────────── */
+.profile__image {
+  max-width: 70%;
+  height: auto;
+  border: 2px solid var(--pico-muted);
+}
+
+/* ── Profile Email ─────────────────────────────────────────── */
+.profile__email {
+  color: var(--fg);
+  font-size: 20px;
+}

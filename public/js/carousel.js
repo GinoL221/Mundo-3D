@@ -2,11 +2,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const carousel = document.getElementById("homepage-carousel");
   if (!carousel) return;
 
-  const container = carousel.querySelector(".carousel-container");
-  const slides = carousel.querySelectorAll(".carousel-slide");
-  const prevBtn = carousel.querySelector(".carousel-prev");
-  const nextBtn = carousel.querySelector(".carousel-next");
-  const indicators = carousel.querySelectorAll(".carousel-indicators .indicator");
+  const container = carousel.querySelector(".carousel__container");
+  const slides = carousel.querySelectorAll(".carousel__slide");
+  const prevBtn = carousel.querySelector(".carousel__prev");
+  const nextBtn = carousel.querySelector(".carousel__next");
+  const indicators = carousel.querySelectorAll(".carousel__indicators .carousel__indicator");
 
   const totalSlides = slides.length;
   if (totalSlides === 0) return;

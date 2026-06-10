@@ -5,7 +5,7 @@ function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', 'dark');
   }
 
-  const toggleBtnText = document.querySelector('.theme-toggle-btn .theme-toggle-text');
+  const toggleBtnText = document.querySelector('.theme-toggle-btn__text');
   if (toggleBtnText) {
     toggleBtnText.textContent = theme === 'light' ? 'MODE: LIGHT' : 'MODE: DARK';
   }

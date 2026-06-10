@@ -25,7 +25,7 @@ describe('Theme Toggle Functionality', () => {
     global.document = {
       documentElement: mockHtml,
       querySelector(selector) {
-        if (selector === '.theme-toggle-btn .theme-toggle-text') {
+        if (selector === '.theme-toggle-btn__text') {
           return mockButtonText;
         }
         return null;
@@ -90,7 +90,7 @@ describe('Theme Toggle Functionality', () => {
         return null;
       },
       querySelector(selector) {
-        if (selector === '.theme-toggle-btn .theme-toggle-text') {
+        if (selector === '.theme-toggle-btn__text') {
           return mockButtonText;
         }
         return null;

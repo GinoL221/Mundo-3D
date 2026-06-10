@@ -6,56 +6,56 @@
 <body>
   <%- include('../partials/header') %>
   <main>
-    <div class="containerNP">
+    <div class="form-card--wide">
       <h1>Crear nuevo producto</h1>
       <form action="/products" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
 
         <label for="productName">Nombre:</label>
-        <input type="text" id="productName" name="productName" class="control <%= locals.errors && errors.productName ? 'is-invalid' : '' %>" value="<%= locals.oldData ? oldData.productName : '' %>">
+        <input type="text" id="productName" name="productName" class="form-card__input <%= locals.errors && errors.productName ? 'form-card__input--invalid' : '' %>" value="<%= locals.oldData ? oldData.productName : '' %>">
         <% if(locals.errors && errors.productName) { %>
-        <div class="text-danger">
+        <div class="form-card__error">
           <%= errors.productName.msg  %>
         </div>
         <% } %>
 
         <label for="category">Categoría:</label>
-        <select id="category" name="category" class="control <%= locals.errors && errors.IDCategory ? 'is-invalid' : '' %>">
+        <select id="category" name="category" class="form-card__input <%= locals.errors && errors.IDCategory ? 'form-card__input--invalid' : '' %>">
           <% for(let i = 0; i < categories.length; i++) { %>
           <option value="<%= categories[i].IDCategory %>" <%= locals.oldData && locals.oldData.IDCategory == categories[i].IDCategory ? 'selected' : '' %>><%= categories[i].NameCategory %></option>
           <% } %>
 
         </select>
         <% if(locals.errors && errors.IDCategory) { %>
-        <div class="text-danger">
+        <div class="form-card__error">
           <%= errors.IDCategory.msg  %>
         </div>
         <% } %>
 
         <label for="franchise">Franquicia:</label>
-        <select id="franchise" name="franchise" class="control <%= locals.errors && errors.IDFranchise ? 'is-invalid' : '' %>">
+        <select id="franchise" name="franchise" class="form-card__input <%= locals.errors && errors.IDFranchise ? 'form-card__input--invalid' : '' %>">
           <% for(let i = 0; i < franchises.length; i++) { %>
           <option value="<%= franchises[i].IDFranchise %>" <%= locals.oldData && locals.oldData.IDFranchise == franchises[i].IDFranchise ? 'selected' : '' %>><%= franchises[i].NameFranchise %></option>
           <% } %>
         </select>
         <% if(locals.errors && errors.IDFranchise) { %>
-        <div class="text-danger">
+        <div class="form-card__error">
           <%= errors.IDFranchise.msg  %>
         </div>
         <% } %>
 
         <label for="price">Precio: </label>
-        <input type="number" id="price" name="price" class="control <%= locals.errors && errors.price ? 'is-invalid' : '' %>" value="<%= locals.oldData ? oldData.price : '' %>">
+        <input type="number" id="price" name="price" class="form-card__input <%= locals.errors && errors.price ? 'form-card__input--invalid' : '' %>" value="<%= locals.oldData ? oldData.price : '' %>">
         <% if(locals.errors && errors.price) { %>
-        <div class="text-danger">
+        <div class="form-card__error">
           <%= errors.price.msg  %>
         </div>
         <% } %>
 
         <label for="description">Descripción: </label>
-        <textarea type="text" id="description" name="description" class="control <%= locals.errors && errors.description ? 'is-invalid' : '' %>" value="<%= locals.oldData ? oldData.description : '' %>"></textarea>
+        <textarea type="text" id="description" name="description" class="form-card__input <%= locals.errors && errors.description ? 'form-card__input--invalid' : '' %>" value="<%= locals.oldData ? oldData.description : '' %>"></textarea>
         <% if(locals.errors && errors.description) { %>
-        <div class="text-danger">
+        <div class="form-card__error">
           <%= errors.description.msg  %>
         </div>
         <% } %>
@@ -63,13 +63,13 @@
         <label for="image">Imagen del producto: </label>
         <input type="file" id="image" name="image">
         <% if(locals.errors && errors.image) { %>
-        <div class="text-danger">
+        <div class="form-card__error">
           <%= errors.image.msg  %>
         </div>
         <% } %>
 
-        <button type="reset">Borrar</button>
-        <button type="submit">Crear</button>
+        <button type="reset" class="form-card__btn">Borrar</button>
+        <button type="submit" class="form-card__btn">Crear</button>
       </form>
     </div>
   </main>

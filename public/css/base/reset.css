@@ -1,0 +1,18 @@
+/* ============================================================
+   base/reset.css — Box-Sizing + Pixelated Images
+   ============================================================ */
+
+/* ── Global Reset ──────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  border-radius: 0;
+}
+
+/* ── Pixel Art Image Rendering ─────────────────────────────── */
+img {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}

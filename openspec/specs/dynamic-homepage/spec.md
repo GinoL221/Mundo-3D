@@ -8,7 +8,9 @@ Replaces the hardcoded index page with a dynamic one powered by ProductService, 
 
 ### Requirement: Dynamic Product Listing on Homepage
 
-`index.ejs` MUST fetch products via `ProductService.findAll()` (or `findLatest()`) and render product cards with name, price, category illustration, and link to detail.
+`index.ejs` MUST fetch products via `ProductService.findAll()` (or `findLatest()`) and render product cards with name, price, category illustration, and link to detail. All product grid elements MUST use the canonical BEM class `.product-grid` for the grid container and `.product-card` for individual cards.
+
+(Previously: Referenced legacy mixed class names in EJS markup.)
 
 #### Scenario: Products displayed when available
 
@@ -16,6 +18,7 @@ Replaces the hardcoded index page with a dynamic one powered by ProductService, 
 - WHEN a user visits `/` (index route)
 - THEN the page MUST render a product card for each product with its name, price, and category illustration
 - AND each card MUST link to the product detail page
+- AND the grid container MUST use `.product-grid` class
 
 #### Scenario: Products not found shows empty state
 
@@ -76,13 +79,15 @@ The header cart counter MUST show the distinct product count and hide when the c
 
 ### Requirement: Responsive Layout
 
-All pages MUST be responsive across three breakpoints: Mobile (<640px), Tablet (640–1024px), Desktop (>1024px), with a container max-width of 1200px.
+All pages MUST be responsive across three breakpoints: Mobile (<640px), Tablet (640–1024px), Desktop (>1024px), with a container max-width of 1440px. Breakpoint media queries MUST use `min-width` (mobile-first) and reference `--bp-mobile` (640px) and `--bp-tablet` (1024px) custom properties for widths only.
+
+(Previously: Referenced `--breakpoint-*` tokens and inconsistent max-width values.)
 
 #### Scenario: Desktop layout
 
 - GIVEN a viewport wider than 1024px
 - WHEN any page renders
-- THEN the main content container MUST have `max-width: 1200px` and `margin: 0 auto`
+- THEN the main content container MUST have `max-width: 1440px` and `margin: 0 auto`
 - AND product grids MUST display in multi-column layout
 
 #### Scenario: Mobile layout

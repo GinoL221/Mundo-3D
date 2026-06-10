@@ -32,12 +32,13 @@ The CSRF middleware SHALL render a 403 Forbidden response when CSRF token valida
 - THEN the response SHALL have status 403
 - AND the middleware MUST catch the exception and render the 403 error page
 
-#### Scenario: 403 page uses consolidated stylesheet
+#### Scenario: 403 page uses multi-file CSS loading
 
-- GIVEN the CSS consolidation is complete
+- GIVEN the CSS migration is complete
 - WHEN the 403 error page renders
-- THEN it MUST reference `styles.css` only
-- AND MUST NOT reference any deleted per-page CSS file
+- THEN it MUST load CSS via multiple `<link>` tags in `head.ejs` (normalize, tokens, base, components)
+- AND MUST NOT reference `styles.css`
+- AND the error page content MUST use the `.error-page` BEM class
 
 #### Scenario: Controller error on CSRF-validated POST route reaches global handler
 
@@ -48,7 +49,9 @@ The CSRF middleware SHALL render a 403 Forbidden response when CSRF token valida
 
 ### Requirement: 403 Error View Template
 
-The system MUST provide a `403Forbidden.ejs` view at `src/views/403Forbidden.ejs` that renders a Forbidden error page using the PICO-8 design system, Press Start 2P headings, and VT323 body text.
+The system MUST provide a `403Forbidden.ejs` view at `src/views/403Forbidden.ejs` that renders a Forbidden error page using the PICO-8 design system, Press Start 2P headings, and VT323 body text. Error page styling MUST come from `components/error-pages.css`.
+
+(Previously: Referenced `styles.css` for error page styling.)
 
 #### Scenario: 403 view renders with error message
 

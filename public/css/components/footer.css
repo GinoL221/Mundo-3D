@@ -1,0 +1,97 @@
+/* ============================================================
+   components/footer.css — Footer Sections, Copyright, Social Links
+   ============================================================ */
+
+/* ── Footer Block ──────────────────────────────────────────── */
+.footer {
+  background-color: var(--surface);
+  color: var(--fg);
+  padding: var(--space-lg) 0;
+  margin-top: auto;
+}
+
+.footer__inner {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-xl);
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
+
+.footer__section {
+  text-align: center;
+}
+
+.footer__section h4 {
+  text-align: center;
+  color: var(--fg);
+  margin-top: 0;
+  margin-bottom: var(--space-md);
+  font-family: var(--font-heading);
+  font-size: 14px;
+}
+
+.footer__section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer__section ul li {
+  margin-bottom: var(--space-xs);
+}
+
+.footer__section ul li::marker {
+  color: var(--accent);
+}
+
+.footer__section ul li a {
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 18px;
+}
+
+.footer__section ul li a:hover {
+  color: var(--pico-yellow);
+}
+
+.footer__bottom {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  max-width: 1440px;
+  margin: var(--space-lg) auto 0;
+  padding: 0 var(--space-md);
+}
+
+.footer__copyright {
+  display: flex;
+  justify-content: flex-start;
+  font-size: 16px;
+  color: var(--pico-muted);
+}
+
+.footer__social {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-md);
+}
+
+.footer__social a {
+  color: var(--fg);
+  font-size: 18px;
+}
+
+.footer__social a:hover {
+  color: var(--pico-yellow);
+}
+
+/* ── Responsive: Desktop (>= 1024px) ───────────────────────── */
+@media (min-width: 1024px) {
+  .footer__section {
+    margin: 0 var(--space-xl);
+  }
+}

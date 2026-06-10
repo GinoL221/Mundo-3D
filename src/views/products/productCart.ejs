@@ -1,42 +1,48 @@
 <%- include('../partials/head') %>
-<title>Carrito de compras</title>
-</head>
+  <title>Carrito de compras</title>
+  </head>
 
-<body>
-  <%- include('../partials/header') %>
-  <script src="/js/productCart.js"></script>
+  <body>
+    <%- include('../partials/header') %>
+      <script src="/js/productCart.js"></script>
 
-  <main class="carrito">
-    <h2>PRODUCTOS EN SU CARRITO</h2>
-    <div class="contenedor-carrito">
-      <section class="tarjetas-de-productos">
-        <% userShoppingCart.forEach(cartItem => { %>
-        <article class="producto">
-          <h4 class="nombre"><%= cartItem.product.NameProduct %></h4>
-          <div class="tarjeta">
-            <img src="/img/products/<%= cartItem.product.Image %>" alt="" class="imagen-producto" />
-            <p class="precio">$ <%= cartItem.UnitPrice %></p>
-            <p class="cantidad">+ <%= cartItem.Quantity %> -</p>
-            <p class="subtotal">$ <%= cartItem.UnitPrice * cartItem.Quantity %></p>
-          </div>
-        </article>
-        <% }) %>
-      </section>
-      <section class="total">
-        <div class="tarjeta">
-          <h4>Resumen de su compra</h4>
-          <p class="cantProductos">Cantidad de productos: <%= userShoppingCart.length %></p>
-          <!-- Logica de calculo de en -->
-          <p class="envio">Envio: $ 000</p>
-          <h4>Total del carrito : $ <%= total %></h4>
+      <main class="cart">
+        <h2>PRODUCTOS EN SU CARRITO</h2>
+        <div class="cart__container">
+          <section class="cart__items">
+            <% userShoppingCart.forEach(cartItem=> { %>
+              <article class="cart__item">
+                <h4 class="cart__item-name">
+                  <%= cartItem.product.NameProduct %>
+                </h4>
+                <div class="cart__item-details">
+                  <img src="/img/products/<%= cartItem.product.Image %>" alt="" class="cart__item-image" />
+                  <p class="cart__item-price">$ <%= cartItem.UnitPrice %>
+                  </p>
+                  <p class="cart__item-qty">+ <%= cartItem.Quantity %> -</p>
+                  <p class="cart__item-subtotal">$ <%= cartItem.UnitPrice * cartItem.Quantity %>
+                  </p>
+                </div>
+              </article>
+              <% }) %>
+          </section>
+          <section class="cart__summary">
+            <div class="cart__item-details">
+              <h4>Resumen de su compra</h4>
+              <p class="cart__summary-count">Cantidad de productos: <%= userShoppingCart.length %>
+              </p>
+              <!-- Logica de calculo de en -->
+              <p class="cart__summary-shipping">Envio: $ 000</p>
+              <h4>Total del carrito : $ <%= total %>
+              </h4>
+            </div>
+            <button class="cart__btn-continue" type="submit">Seguir comprando</button>
+            <button class="cart__btn-checkout" type="submit">Finalizar compra</button>
+          </section>
         </div>
-        <button class="seguir" type="submit">Seguir comprando</button>
-        <button class="finalizar" type="submit">Finalizar compra</button>
-      </section>
-    </div>
-  </main>
+      </main>
 
-  <%- include('../partials/footer') %>
-</body>
+      <%- include('../partials/footer') %>
+  </body>
 
-</html>
+  </html>

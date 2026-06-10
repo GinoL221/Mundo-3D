@@ -8,20 +8,21 @@ Establishes the PICO-8 pixel art design system as the single visual foundation f
 
 ### Requirement: PICO-8 Design System Custom Properties
 
-The system MUST define CSS custom properties for the PICO-8 palette mapped to semantic roles (`--bg`, `--fg`, `--accent`, `--danger`, `--warning`, `--surface`), typography scales, spacing units, and responsive breakpoints in a single `styles.css` file. The system MUST support a light theme override where custom properties map to a light palette: `#f5f0e8` (`--bg`), `#1a2a4a` (`--fg`), `#8b7355` (`--accent`), and `#ffffff` (`--surface`). The default theme SHALL be dark.
-(Previously: Defined static CSS custom properties for semantic color roles on root.)
+The system MUST define CSS custom properties for the PICO-8 palette mapped to semantic roles (`--bg`, `--fg`, `--accent`, `--danger`, `--warning`, `--surface`), typography scales, spacing units, and responsive breakpoints across modular token files (`tokens/colors.css`, `tokens/typography.css`, `tokens/spacing.css`) loaded via ordered `<link>` tags in `head.ejs`. Breakpoint tokens MUST use the `--bp-*` naming scheme exclusively (`--bp-mobile`, `--bp-tablet`, `--bp-desktop`); the `--breakpoint-*` aliases MUST NOT exist. The system MUST support a light theme override where custom properties map to a light palette: `#f5f0e8` (`--bg`), `#1a2a4a` (`--fg`), `#8b7355` (`--accent`), and `#ffffff` (`--surface`). The default theme SHALL be dark.
+(Previously: Defined all custom properties in a single `styles.css` with duplicate `--breakpoint-*` aliases.)
 
 #### Scenario: Design properties available on root
 
-- GIVEN any page loads `styles.css`
+- GIVEN any page loads the token CSS files
 - WHEN the browser computes styles for the `<html>` element with default/dark theme
 - THEN `--bg`, `--fg`, `--accent`, `--danger`, `--warning`, and `--surface` MUST each resolve to a PICO-8 hex color
 - AND `--font-heading` MUST resolve to `'Press Start 2P'` and `--font-body` to `'VT323'`
 
 #### Scenario: Breakpoint custom properties defined
 
-- GIVEN the design system custom properties are loaded
-- THEN `--breakpoint-mobile`, `--breakpoint-tablet`, and `--breakpoint-desktop` MUST resolve to `640px`, `1024px`, and a value ≥1024px respectively
+- GIVEN the design system token files are loaded
+- THEN `--bp-mobile` MUST resolve to `640px` and `--bp-tablet` MUST resolve to `1024px`
+- AND `--breakpoint-mobile`, `--breakpoint-tablet`, and `--breakpoint-desktop` MUST NOT be defined
 
 #### Scenario: Light theme active
 
@@ -32,22 +33,24 @@ The system MUST define CSS custom properties for the PICO-8 palette mapped to se
 - AND `--accent` MUST resolve to `#8b7355`
 - AND `--surface` MUST resolve to `#ffffff`
 
-### Requirement: CSS Consolidation into Single Stylesheet
+### Requirement: Multi-File CSS Loading via Ordered Link Tags
 
-The system MUST consolidate all ~16 CSS files into ONE `public/css/styles.css` organized by layer (custom properties → reset → typography → layout → components → utilities) and remove all old CSS files.
+The system MUST load CSS through ordered `<link>` tags in `head.ejs`: normalize, token files (colors, typography, spacing), base files (reset, layout), component files, in that order. The single `styles.css` stylesheet MUST NOT be referenced. Each CSS file MUST exist at its declared path.
 
-#### Scenario: All pages reference single stylesheet
+(Previously: Consolidated into one `styles.css` file; this is a new requirement replacing single-stylesheet mandate.)
+
+#### Scenario: All pages load CSS via multiple link tags
 
 - GIVEN any EJS template in `src/views/`
 - WHEN the template renders its `<head>` section
-- THEN it MUST reference exactly `styles.css` and MUST NOT reference any deleted CSS file
+- THEN it MUST load CSS via multiple `<link>` tags in the documented order
+- AND MUST NOT reference `styles.css`
 
-#### Scenario: Old CSS files removed
+#### Scenario: Theme tokens override correctly across files
 
-- GIVEN the consolidation is complete
-- WHEN listing files in `public/css/`
-- THEN only `styles.css` (and `normalize.css` if retained) MUST exist
-- AND all page-specific files (index.css, login.css, users.css, etc.) MUST NOT exist
+- GIVEN the token files are loaded in order
+- WHEN `[data-theme="light"]` selectors apply
+- THEN component files MUST correctly inherit the light theme custom properties from `colors.css`
 
 ### Requirement: Pixel Art Global Rendering Rules
 

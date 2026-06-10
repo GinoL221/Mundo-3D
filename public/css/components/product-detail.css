@@ -1,0 +1,66 @@
+/* ============================================================
+   product-detail.css — Product detail page layout
+   Unifies: .containerTitle, .containerMainProductDetail,
+            .containerCardProducto, .containerSectionDetalle
+   ============================================================ */
+
+/* ── Product Detail Title ─────────────────────────────────── */
+
+.product-detail__title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-top: var(--space-xl);
+}
+
+/* ── Product Detail Main Layout ───────────────────────────── */
+
+.product-detail__main {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: var(--space-md);
+}
+
+/* ── Product Detail Image ─────────────────────────────────── */
+
+.product-detail__image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 2px solid var(--pico-muted);
+}
+
+/* ── Product Detail Info Section ──────────────────────────── */
+
+.product-detail__info {
+  width: 100%;
+  background-color: var(--surface);
+  padding: var(--space-lg);
+  border: 2px solid var(--pico-muted);
+  text-align: center;
+}
+
+.product-detail__action {
+  font-family: var(--font-body);
+  font-size: 16px;
+  display: block;
+  width: 100%;
+  padding: var(--space-sm);
+  margin-top: var(--space-md);
+  background-color: var(--pico-black);
+  color: var(--fg);
+  border: 2px solid var(--pico-muted);
+  cursor: pointer;
+}
+
+.product-detail__action:hover {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+.product-detail__info a {
+  text-decoration: none;
+  color: var(--accent);
+}

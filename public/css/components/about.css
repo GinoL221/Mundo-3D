@@ -1,0 +1,13 @@
+/* ============================================================
+   about.css — About Page Component (BEM)
+   Extracted from styles.css lines 1198-1204
+   ============================================================ */
+
+/* ── About Content ─────────────────────────────────────────── */
+.about-content {
+  max-width: 800px;
+  padding: var(--space-lg);
+  background-color: var(--surface);
+  border: 2px solid var(--pico-muted);
+  text-align: center;
+}

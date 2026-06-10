@@ -1,0 +1,32 @@
+/* ============================================================
+   product-grid.css — Product listing grid layout
+   Unifies: .containerSectionIndex, .contenido_produc, .products_container
+   ============================================================ */
+
+/* ── Product Grid Block ────────────────────────────────────── */
+
+.product-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-lg);
+  padding: var(--space-md) 0;
+}
+
+/* ── Responsive: Tablet (640px – 1023px) ──────────────────── */
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .product-card {
+    width: calc(50% - var(--space-lg));
+    min-width: 250px;
+  }
+}
+
+/* ── Responsive: Desktop (>= 1024px) ──────────────────────── */
+
+@media (min-width: 1024px) {
+  .product-card {
+    width: calc(25% - var(--space-lg));
+    min-width: 220px;
+  }
+}
