@@ -1,6 +1,6 @@
 const { ProductService } = require('../../services');
 
-const deleteProduct = async (req, res) => {
+const deleteProduct = async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -13,7 +13,7 @@ const deleteProduct = async (req, res) => {
     res.redirect('/products');
   } catch (error) {
     console.error('Error al eliminar el producto:', error);
-    res.status(500).send('Error interno del servidor');
+    next(error);
   }
 };
 

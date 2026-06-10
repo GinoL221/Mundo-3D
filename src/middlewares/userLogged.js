@@ -1,6 +1,4 @@
-const { initializeModels } = require('../database/models');
-const db = initializeModels();
-const { User } = db;
+const { UserService } = require('../services');
 
 const userLoggedMiddleware = async (req, res, next) => {
   res.locals.isLogged = false;
@@ -8,13 +6,12 @@ const userLoggedMiddleware = async (req, res, next) => {
   try {
     if (req.cookies) {
       const emailInCookie = req.cookies.userEmail;
-      const userFromCookie = await User.findOne({
-        where: { Email: emailInCookie },
-        attributes: { exclude: ['PasswordUser'] },
-      });
+      if (emailInCookie) {
+        const userFromCookie = await UserService.findByEmail(emailInCookie);
 
-      if (userFromCookie) {
-        res.locals.userLogged = userFromCookie;
+        if (userFromCookie) {
+          res.locals.userLogged = userFromCookie;
+        }
       }
     }
   } catch (error) {

@@ -1,7 +1,7 @@
 const path = require('path');
 const { UserService } = require('../../services');
 
-const getAllUsers = async (req, res) => {
+const getAllUsers = async (req, res, next) => {
   try {
     const allUsers = await UserService.findAll();
 
@@ -10,7 +10,7 @@ const getAllUsers = async (req, res) => {
     res.render(ruta, { allUsers });
   } catch (error) {
     console.error('Error al obtener usuarios:', error);
-    res.status(500).send('Error interno del servidor');
+    next(error);
   }
 };
 

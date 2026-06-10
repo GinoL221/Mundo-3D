@@ -17,12 +17,37 @@ const cookies = require('cookie-parser');
 
 const server = express();
 
+// Configure views directory so res.render() can use view names instead of full paths
+server.set('views', path.join(__dirname, 'views'));
+
 const userLoggedMiddleware = require('./middlewares/userLogged');
 const cartCountMiddleware = require('./middlewares/cartCount');
 const errorHandler = require('./middlewares/errorHandler.js');
 const { csrfProtection } = require('./middlewares/csrf.js');
 
-//configuración de session
+// 1. Security headers (first)
+server.use(helmet());
+
+// 2. CORS headers
+server.use(cors());
+
+// 3. Static files
+server.use(express.static(path.join(__dirname, '../public')));
+
+// 4. Request logging
+server.use(morgan('dev'));
+
+// 5. Body parsing
+server.use(express.urlencoded({ extended: false }));
+server.use(express.json());
+
+// 6. Method override
+server.use(methodOverride('_method'));
+
+// 7. Cookie parsing (MUST be before session and auth)
+server.use(cookies());
+
+// 8. Session management
 server.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -36,28 +61,14 @@ server.use(
   }),
 );
 
+// 9. Auth middleware (reads req.cookies.userEmail)
 server.use(userLoggedMiddleware);
 server.use(cartCountMiddleware);
 
-server.use(cookies());
-server.use(morgan('dev'));
+// 10. View engine
 server.set('view engine', 'ejs');
 
-//manejar data desde un formulario HTML
-server.use(express.urlencoded({ extended: false }));
-server.use(express.json());
-
-//Reconoce put o delete
-server.use(methodOverride('_method'));
-
-server.use(express.static(path.join(__dirname, '../public')));
-
-server.use(cors());
-
-// Security headers
-server.use(helmet());
-
-// CSRF protection (must be after session + cookie-parser + body parser)
+// 11. CSRF protection (must be after session + cookie-parser + body parser)
 server.use(csrfProtection);
 
 // API routes (mounted at /api)
@@ -69,8 +80,7 @@ server.use(productsRoutes);
 
 //Ruta 404
 server.use((req, res, next) => {
-  const ruta = path.join(__dirname, './views/404NotFound.ejs');
-  res.status(404).render(ruta, { message: 'Dirección no encontrada' });
+  res.status(404).render('404NotFound', { message: 'Dirección no encontrada' });
 });
 
 // Global error handler (must be last)

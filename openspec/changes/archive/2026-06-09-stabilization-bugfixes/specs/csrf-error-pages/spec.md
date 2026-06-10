@@ -1,14 +1,12 @@
-# CSRF Error Pages
+# Delta for CSRF Error Pages
 
-## Purpose
-
-The CSRF error pages capability defines the rendering behavior when CSRF token validation fails on a POST request, and the dedicated Forbidden error view that all error pages share. The view must conform to the PICO-8 pixel art design system.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: CSRF 403 Error Rendering
 
 The CSRF middleware SHALL render a 403 Forbidden response when CSRF token validation fails. Controller errors on POST routes (not CSRF failures) MUST propagate through `next(err)` to the global error handler, not via inline `res.status(500)` responses.
+
+(Previously: Only specified the CSRF middleware renders a 403. Did not address controller error propagation for POST routes that passed CSRF validation.)
 
 #### Scenario: Missing CSRF token renders 403 page
 
@@ -45,16 +43,3 @@ The CSRF middleware SHALL render a 403 Forbidden response when CSRF token valida
 - WHEN the target controller's catch block receives an unhandled error
 - THEN the controller SHALL call `next(err)` (not `res.status(500).send(...)`)
 - AND the global error handler SHALL produce a consistent 500 error response
-
-### Requirement: 403 Error View Template
-
-The system MUST provide a `403Forbidden.ejs` view at `src/views/403Forbidden.ejs` that renders a Forbidden error page using the PICO-8 design system, Press Start 2P headings, and VT323 body text.
-
-#### Scenario: 403 view renders with error message
-
-- GIVEN the `403Forbidden.ejs` template exists
-- WHEN the CSRF middleware renders this view with a `message` variable
-- THEN the rendered HTML SHALL display the message content
-- AND the page title or heading MUST indicate "Forbidden" or "403"
-- AND the heading MUST use Press Start 2P font (`--font-heading`)
-- AND the body text MUST use VT323 font (`--font-body`)

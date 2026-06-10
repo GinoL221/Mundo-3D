@@ -1,7 +1,7 @@
 const path = require('path');
 const { UserService } = require('../../services');
 
-const deleteUser = async (req, res) => {
+const deleteUser = async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -14,7 +14,7 @@ const deleteUser = async (req, res) => {
     res.redirect('/users');
   } catch (error) {
     console.error('Error al eliminar usuario:', error);
-    res.status(500).send(`Error: ${error.message}`);
+    next(error);
   }
 };
 

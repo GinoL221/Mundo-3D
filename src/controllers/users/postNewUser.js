@@ -2,7 +2,7 @@ const path = require('path');
 const { validationResult } = require('express-validator');
 const { UserService } = require('../../services');
 
-const postNewUser = async (req, res) => {
+const postNewUser = async (req, res, next) => {
   try {
     const errors = validationResult(req);
 
@@ -41,7 +41,7 @@ const postNewUser = async (req, res) => {
     res.redirect('/users');
   } catch (error) {
     console.error('Error en el controlador postNewUser:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    next(error);
   }
 };
 

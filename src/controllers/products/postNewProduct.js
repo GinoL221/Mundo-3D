@@ -1,8 +1,7 @@
 const { validationResult } = require('express-validator');
 const { ProductService, CategoryService, FranchiseService } = require('../../services');
-const path = require('path');
 
-const postNewProduct = async (req, res) => {
+const postNewProduct = async (req, res, next) => {
   const errors = validationResult(req);
 
   try {
@@ -17,10 +16,6 @@ const postNewProduct = async (req, res) => {
         return res.status(400).json({ error: 'Category y Franchise son obligatorios' });
       }
 
-      if (!req.file) {
-        throw new Error('Tienes que subir una imagen');
-      }
-
       const newProduct = await ProductService.create({
         IDCategory: parseInt(category),
         IDFranchise: parseInt(franchise),
@@ -32,8 +27,7 @@ const postNewProduct = async (req, res) => {
 
       res.redirect('/products');
     } else {
-      const ruta = path.join(__dirname, '../../views/products/newProduct.ejs');
-      res.render(ruta, {
+      res.render('products/newProduct', {
         categories,
         franchises,
         errors: errors.mapped(),
@@ -42,7 +36,7 @@ const postNewProduct = async (req, res) => {
     }
   } catch (error) {
     console.error('Error al manejar el formulario:', error);
-    res.status(500).send('Error interno del servidor');
+    next(error);
   }
 };
 

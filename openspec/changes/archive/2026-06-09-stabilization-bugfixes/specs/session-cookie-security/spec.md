@@ -1,49 +1,15 @@
-# Session Cookie Security
+# Delta for Session Cookie Security
 
-## Purpose
-
-Defines the security and ordering requirements for the session and cookie middleware in the Express app, including SameSite/secure flags, dead-import cleanup, and the ordering contract that makes the "remember me" cookie readable by the auth middleware.
-
-## Requirements
-
-### Requirement: SameSite Cookie Flag
-
-The session cookie configuration MUST include `sameSite: 'lax'` in the `cookie` options of `express-session` configuration.
-
-#### Scenario: Session cookie includes SameSite attribute
-
-- GIVEN the session middleware is configured in `app.js`
-- WHEN a session cookie is set in the response
-- THEN the `Set-Cookie` header MUST include `SameSite=Lax`
-
-#### Scenario: SameSite lax allows safe cross-origin navigation
-
-- GIVEN `sameSite` is set to `'lax'`
-- WHEN a user navigates to the site via a top-level GET request from another origin (e.g., following a link)
-- THEN the session cookie SHALL be sent with the request
-- AND the user SHALL remain logged in
-
-### Requirement: Conditional Secure Cookie Flag
-
-The session cookie configuration MUST include a `secure` flag that is `true` in production (`NODE_ENV=production`) and `false` in other environments.
-
-#### Scenario: Secure flag in production environment
-
-- GIVEN `NODE_ENV` is set to `'production'`
-- WHEN the session middleware initialization runs
-- THEN the session cookie `secure` option SHALL be `true`
-- AND browsers MUST only send the cookie over HTTPS
-
-#### Scenario: Secure flag in development environment
-
-- GIVEN `NODE_ENV` is not set or set to a value other than `'production'`
-- WHEN the session middleware initialization runs
-- THEN the session cookie `secure` option SHALL be `false`
-- AND the session cookie SHALL be sent over HTTP in local development
+## ADDED Requirements
 
 ### Requirement: Remember-Me Cookie Readability
 
 The `cookie-parser` middleware MUST execute before `userLoggedMiddleware` in the Express middleware stack so that `req.cookies.userEmail` is populated when the auth middleware inspects it for the "remember me" feature.
+
+- GIVEN `cookie-parser` is registered in `src/app.js`
+- WHEN the middleware stack processes an incoming request
+- THEN `cookie-parser` SHALL run before `userLoggedMiddleware`
+- AND `req.cookies.userEmail` SHALL be available to the auth middleware
 
 #### Scenario: Remember-me cookie is accessible to auth middleware
 
@@ -59,9 +25,13 @@ The `cookie-parser` middleware MUST execute before `userLoggedMiddleware` in the
 - THEN all existing session and auth behavior MUST remain unchanged
 - AND no middleware SHALL receive `undefined` for previously available cookie values
 
+## MODIFIED Requirements
+
 ### Requirement: Dead Code Removal from Route Imports
 
 The system MUST remove unused route imports: `authMiddleware` from `src/routes/userRoutes.js` and `src/routes/productsRoutes.js`, `guestMiddleware` from `src/routes/productsRoutes.js`, and the unused `User` model import from `src/controllers/users/viewShoppingCart.js`. A debug `console.log` statement at `viewShoppingCart.js:18` MUST also be removed.
+
+(Previously: Only covered removing unused `authMiddleware` imports from two route files.)
 
 #### Scenario: userRoutes no longer imports authMiddleware
 

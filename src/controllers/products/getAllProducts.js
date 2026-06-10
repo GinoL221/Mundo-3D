@@ -1,7 +1,7 @@
 const { ProductService } = require('../../services');
 const path = require('path');
 
-const getAllProducts = async (req, res) => {
+const getAllProducts = async (req, res, next) => {
   try {
     const allProducts = await ProductService.findAll();
 
@@ -10,7 +10,7 @@ const getAllProducts = async (req, res) => {
     res.render(ruta, { allProducts });
   } catch (error) {
     console.error('Error al obtener todos los productos:', error);
-    res.status(500).send('Error interno del servidor');
+    next(error);
   }
 };
 

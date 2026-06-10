@@ -1,7 +1,7 @@
 const { ProductService } = require('../../services');
 const path = require('path');
 
-const getProductById = async (req, res) => {
+const getProductById = async (req, res, next) => {
   try {
     const productId = req.params.id;
     const product = await ProductService.findById(productId);
@@ -16,7 +16,7 @@ const getProductById = async (req, res) => {
     res.render(ruta, { product });
   } catch (error) {
     console.error('Error al obtener detalles del producto:', error);
-    res.status(500).send('Error interno del servidor');
+    next(error);
   }
 };
 

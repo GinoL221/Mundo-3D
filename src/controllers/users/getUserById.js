@@ -1,7 +1,7 @@
 const { UserService } = require('../../services');
 const path = require('path');
 
-const getUserById = async (req, res) => {
+const getUserById = async (req, res, next) => {
   const ruta = path.join(__dirname, '../../views/users/user.ejs');
   const { id } = req.params;
 
@@ -17,7 +17,7 @@ const getUserById = async (req, res) => {
     res.render(ruta, { user });
   } catch (error) {
     console.error('Error al obtener usuario por ID:', error);
-    res.status(500).send('Error interno del servidor');
+    next(error);
   }
 };
 

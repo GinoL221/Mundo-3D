@@ -14,7 +14,7 @@
         <article class="producto">
           <h4 class="nombre"><%= cartItem.product.NameProduct %></h4>
           <div class="tarjeta">
-            <img src="/img/<%= cartItem.product.Image %>" alt="" class="imagen-producto" />
+            <img src="/img/products/<%= cartItem.product.Image %>" alt="" class="imagen-producto" />
             <p class="precio">$ <%= cartItem.UnitPrice %></p>
             <p class="cantidad">+ <%= cartItem.Quantity %> -</p>
             <p class="subtotal">$ <%= cartItem.UnitPrice * cartItem.Quantity %></p>
@@ -28,7 +28,7 @@
           <p class="cantProductos">Cantidad de productos: <%= userShoppingCart.length %></p>
           <!-- Logica de calculo de en -->
           <p class="envio">Envio: $ 000</p>
-          <h4>Total del carrito : $ <%= calcularTotal(userShoppingCart) %></h4>
+          <h4>Total del carrito : $ <%= total %></h4>
         </div>
         <button class="seguir" type="submit">Seguir comprando</button>
         <button class="finalizar" type="submit">Finalizar compra</button>

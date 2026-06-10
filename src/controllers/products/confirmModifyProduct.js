@@ -1,7 +1,7 @@
 const { ProductService } = require('../../services');
 const path = require('path');
 
-const confirmModifyProduct = async (req, res) => {
+const confirmModifyProduct = async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -19,7 +19,7 @@ const confirmModifyProduct = async (req, res) => {
     res.redirect('/products');
   } catch (error) {
     console.error('Error al modificar el producto:', error);
-    res.status(500).send('Error interno del servidor');
+    next(error);
   }
 };
 

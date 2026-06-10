@@ -1,9 +1,7 @@
-const path = require('path');
-const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 const { UserService } = require('../../services');
 
-const processLogin = async (req, res) => {
+const processLogin = async (req, res, next) => {
   try {
     const errors = validationResult(req);
 
@@ -15,7 +13,7 @@ const processLogin = async (req, res) => {
       });
 
       if (userToLogin) {
-        if (bcrypt.compareSync(password, userToLogin.PasswordUser)) {
+        if (UserService.verifyPassword(password, userToLogin.PasswordUser)) {
           const userWithoutPassword = {
             IDUser: userToLogin.IDUser,
             FirstName: userToLogin.FirstName,
@@ -32,7 +30,7 @@ const processLogin = async (req, res) => {
 
           return res.redirect('profile');
         } else {
-          return res.render(path.join(__dirname, '../../views/users/login.ejs'), {
+          return res.render('users/login', {
             errors: {
               email: {
                 msg: 'El email o la contraseña no coinciden',
@@ -45,7 +43,7 @@ const processLogin = async (req, res) => {
           });
         }
       } else {
-        return res.render(path.join(__dirname, '../../views/users/login.ejs'), {
+        return res.render('users/login', {
           errors: {
             email: {
               msg: 'El email o la contraseña no coinciden',
@@ -58,14 +56,14 @@ const processLogin = async (req, res) => {
         });
       }
     } else {
-      return res.render(path.join(__dirname, '../../views/users/login.ejs'), {
+      return res.render('users/login', {
         errors: errors.mapped(),
         oldData: req.body.email,
       });
     }
   } catch (error) {
     console.error('Error al procesar el login:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    next(error);
   }
 };
 

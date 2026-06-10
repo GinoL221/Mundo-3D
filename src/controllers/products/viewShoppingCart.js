@@ -1,28 +1,18 @@
 const { CartService } = require('../../services');
-const { User } = require('../../database/models/db');
-const path = require('path');
 
-const calcularTotal = (userShoppingCart) => {
-  let total = 0;
-  userShoppingCart.forEach((cartItem) => {
-    total += cartItem.product.Price * cartItem.Quantity;
-  });
-  return total;
-};
-
-const viewShoppingCart = (req, res) => {
+const viewShoppingCart = (req, res, next) => {
   const userId = req.session.userLogged.IDUser;
 
   CartService.findByUserId(userId)
     .then((userShoppingCart) => {
-      console.log('Carrito de compras:', userShoppingCart);
-
-      const ruta = path.join(__dirname, '../../views/products/productCart.ejs');
-      res.render(ruta, { userShoppingCart, calcularTotal });
+      res.render('products/productCart', {
+        userShoppingCart,
+        total: CartService.computeTotal(userShoppingCart),
+      });
     })
     .catch((error) => {
       console.error('Error al obtener el carrito de compras', error);
-      res.status(500).send('Error interno del servidor');
+      next(error);
     });
 };
 
