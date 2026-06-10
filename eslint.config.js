@@ -17,4 +17,14 @@ module.exports = [
       "no-console": "warn",
     },
   },
+  {
+    files: ["public/js/**/*.js"],
+    languageOptions: {
+      ecmaVersion: 2021,
+      sourceType: "script",
+      globals: {
+        ...globals.browser,
+      },
+    },
+  },
 ];
