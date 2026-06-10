@@ -5,7 +5,7 @@
 
 /* ── Page Heading (homepage) ──────────────────────────────── */
 
-.index .page-heading {
+.page-heading {
   text-align: center;
   margin-bottom: var(--space-xl);
   color: var(--pico-yellow);
@@ -57,7 +57,7 @@
 
 .product-card {
   background-color: var(--surface);
-  border: 2px solid var(--pico-muted);
+  border: 2px solid var(--border);
   width: 250px;
   cursor: default;
   display: flex;

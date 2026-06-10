@@ -17,18 +17,22 @@
   --pico-sky:          #29adff;
 
   /* ── Semantic Mappings ─────────────────────────────────── */
-  --bg:       var(--pico-black);
-  --fg:       var(--pico-light);
-  --accent:   var(--pico-dark-green);
-  --danger:   var(--pico-red);
-  --warning:  var(--pico-orange);
-  --surface:  var(--pico-dark-blue);
+  --bg:        #0d1117;
+  --fg:        var(--pico-light);
+  --accent:    var(--pico-dark-green);
+  --danger:    var(--pico-red);
+  --warning:   var(--pico-orange);
+  --surface:   var(--pico-dark-blue);
+  --border:    #2c3e6a;
+  --input-bg:  var(--pico-black);
 }
 
 /* ── Light Theme Overrides ─────────────────────────────────── */
 [data-theme="light"] {
-  --bg:       #f5f0e8;
-  --fg:       #1a2a4a;
-  --accent:   #8b7355;
-  --surface:  #ffffff;
+  --bg:        #f5f0e8;
+  --fg:        #1a2a4a;
+  --accent:    #8b7355;
+  --surface:   #ffffff;
+  --border:    #b0a895;
+  --input-bg:  var(--pico-black);
 }

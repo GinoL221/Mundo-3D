@@ -14,14 +14,13 @@
 
 /* ── Form Card ─────────────────────────────────────────────── */
 .form-card,
-.container,
 .form-card--medium,
 .form-card--wide {
   background-color: var(--surface);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   padding: var(--space-lg);
   text-align: center;
-  border: 2px solid var(--pico-muted);
+  border: 2px solid var(--border);
 }
 
 .form-card {
@@ -60,8 +59,8 @@
   width: 100%;
   padding: var(--space-sm);
   margin-bottom: var(--space-md);
-  border: 2px solid var(--pico-muted);
-  background-color: var(--pico-black);
+  border: 2px solid var(--border);
+  background-color: var(--input-bg);
   color: var(--fg);
   font-family: var(--font-body);
   font-size: 16px;
@@ -82,9 +81,9 @@
   font-family: var(--font-body);
   font-size: 16px;
   padding: var(--space-sm) var(--space-md);
-  background-color: var(--pico-black);
+  background-color: var(--input-bg);
   color: var(--fg);
-  border: 2px solid var(--pico-muted);
+  border: 2px solid var(--border);
   cursor: pointer;
   margin-right: var(--space-sm);
 }
@@ -130,8 +129,8 @@
 .form-card__form input {
   padding: var(--space-sm);
   margin-bottom: var(--space-sm);
-  border: 2px solid var(--pico-muted);
-  background-color: var(--pico-black);
+  border: 2px solid var(--border);
+  background-color: var(--input-bg);
   color: var(--fg);
   font-family: var(--font-body);
   font-size: 16px;
@@ -156,8 +155,7 @@ form {
 /* ── Mobile (< 640px) ──────────────────────────────────────── */
 @media (max-width: 639px) {
   .form-card--medium,
-  .form-card--wide,
-  .containerNewUser {
+  .form-card--wide {
     width: 100%;
     max-width: 100%;
   }

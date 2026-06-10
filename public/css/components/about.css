@@ -1,13 +1,50 @@
 /* ============================================================
    about.css — About Page Component (BEM)
-   Extracted from styles.css lines 1198-1204
    ============================================================ */
 
 /* ── About Content ─────────────────────────────────────────── */
 .about-content {
   max-width: 800px;
-  padding: var(--space-lg);
+  width: 100%;
+  padding: var(--space-2xl) var(--space-lg);
   background-color: var(--surface);
-  border: 2px solid var(--pico-muted);
+  border: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.about-content h1 {
+  font-family: var(--font-heading);
+  font-size: var(--text-h2);
+  color: var(--pico-yellow);
   text-align: center;
+}
+
+.about-content h2 {
+  font-family: var(--font-heading);
+  font-size: var(--text-h3);
+  color: var(--pico-yellow);
+  margin-bottom: var(--space-sm);
+}
+
+.about-content p {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--line-height-base);
+  color: var(--fg);
+  margin-bottom: var(--space-sm);
+}
+
+/* ── Section separator ─────────────────────────────────────── */
+.about-content section + section {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-lg);
+}
+
+/* ── Mobile ────────────────────────────────────────────────── */
+@media (max-width: 639px) {
+  .about-content {
+    padding: var(--space-lg) var(--space-md);
+  }
 }

@@ -51,7 +51,7 @@
   padding: var(--space-xs) var(--space-sm);
   background-color: var(--pico-black);
   color: var(--fg);
-  border: 2px solid var(--pico-muted);
+  border: 2px solid var(--border);
   flex: 1;
 }
 
