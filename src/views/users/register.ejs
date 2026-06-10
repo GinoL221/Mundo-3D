@@ -6,7 +6,7 @@
   <%- include('../partials/header') %>
 
   <main class="main-register">
-    <div class="container">
+    <div class="containerRegistroLogin">
       <form action="/users" method="POST" enctype="multipart/form-data" class="register">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
         <h2>Registro</h2>

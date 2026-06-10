@@ -9,6 +9,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const indicators = carousel.querySelectorAll(".carousel-indicators .indicator");
 
   const totalSlides = slides.length;
+  if (totalSlides === 0) return;
+
   let currentIndex = 0;
   let autoplayTimer = null;
   const INTERVAL = 4000;
@@ -25,7 +27,11 @@ document.addEventListener("DOMContentLoaded", function () {
     container.style.transform = "translateX(" + (-currentIndex * 100) + "%)";
 
     indicators.forEach(function (ind, i) {
-      ind.classList.toggle("active", i === currentIndex);
+      if (i === currentIndex) {
+        ind.classList.add("active");
+      } else {
+        ind.classList.remove("active");
+      }
     });
   }
 
@@ -43,18 +49,20 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Navigation buttons
-  prevBtn.addEventListener("click", function () {
-    goToSlide(currentIndex - 1);
-    startAutoplay();
-  });
+  if (prevBtn) {
+    prevBtn.addEventListener("click", function () {
+      goToSlide(currentIndex - 1);
+      startAutoplay();
+    });
+  }
 
-  nextBtn.addEventListener("click", function () {
-    goToSlide(currentIndex + 1);
-    startAutoplay();
-  });
+  if (nextBtn) {
+    nextBtn.addEventListener("click", function () {
+      goToSlide(currentIndex + 1);
+      startAutoplay();
+    });
+  }
 
-  // Indicators
   indicators.forEach(function (indicator) {
     indicator.addEventListener("click", function () {
       goToSlide(parseInt(this.dataset.slide, 10));
@@ -62,11 +70,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // Pause on hover
   carousel.addEventListener("mouseenter", stopAutoplay);
   carousel.addEventListener("mouseleave", startAutoplay);
 
-  // Initialize
   goToSlide(0);
   startAutoplay();
 });
