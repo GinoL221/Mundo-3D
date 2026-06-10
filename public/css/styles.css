@@ -34,6 +34,9 @@
   /* Breakpoints */
   --bp-mobile:  640px;
   --bp-tablet:  1024px;
+  --breakpoint-mobile:  640px;
+  --breakpoint-tablet:  1024px;
+  --breakpoint-desktop: 1024px;
 
   /* Spacing (8px grid) */
   --space-xs:  4px;
@@ -42,6 +45,13 @@
   --space-lg:  24px;
   --space-xl:  32px;
   --space-2xl: 48px;
+}
+
+[data-theme="light"] {
+  --bg:       #f5f0e8;
+  --fg:       #1a2a4a;
+  --accent:   #8b7355;
+  --surface:  #ffffff;
 }
 
 /* ── 2. Reset ──────────────────────────────────────────────── */
@@ -106,7 +116,7 @@ a:focus {
 
 /* ── 4. Layout ─────────────────────────────────────────────── */
 .container {
-  max-width: 1200px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 0 var(--space-md);
   width: 100%;
@@ -217,7 +227,6 @@ nav.barra-navegacion {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
   margin: 0 auto;
   padding: 0 var(--space-md);
   flex-wrap: wrap;
@@ -441,6 +450,162 @@ section.banner img {
 
 .carousel-indicators button.active {
   background-color: var(--accent);
+}
+
+/* ── Theme Toggle Button Styling ──────────────────────────────── */
+.theme-toggle-btn {
+  background-color: var(--surface);
+  color: var(--fg);
+  border: 2px solid var(--fg);
+  padding: var(--space-xs) var(--space-sm);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle-btn:hover {
+  background-color: var(--accent);
+  color: var(--pico-white);
+}
+
+.theme-toggle-btn .theme-toggle-icon {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .theme-toggle-btn .theme-toggle-text {
+    display: none;
+  }
+  .theme-toggle-btn .theme-toggle-icon {
+    display: inline;
+    font-size: 18px;
+  }
+}
+
+/* ── Compact Retro LCD Carousel Styling ───────────────────────── */
+.carousel.lcd-panel {
+  height: 150px;
+  max-height: 150px;
+  background-color: #0f2010; /* default dark mode LCD background */
+  border: 6px double var(--accent);
+  color: #39ff14; /* glowing green */
+  font-family: var(--font-heading);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="light"] .carousel.lcd-panel {
+  background-color: #cbd5c5; /* passive slate background */
+  color: #1b301c; /* passive dark slate text */
+  border-color: var(--accent);
+}
+
+.carousel.lcd-panel .carousel-container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  transition: transform 0.5s ease-in-out;
+}
+
+.carousel.lcd-panel .carousel-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.carousel.lcd-panel .carousel-slide a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.carousel.lcd-panel .lcd-text {
+  font-size: 16px;
+  line-height: 1.4;
+  text-transform: uppercase;
+  padding: 0 var(--space-xl);
+}
+
+/* Glow animation */
+@keyframes lcd-glow {
+  0%, 100% {
+    text-shadow: 0 0 2px currentColor, 0 0 8px currentColor;
+  }
+  50% {
+    text-shadow: 0 0 4px currentColor, 0 0 12px currentColor, 0 0 16px currentColor;
+  }
+}
+
+.carousel.lcd-panel .glow {
+  animation: lcd-glow 2s infinite ease-in-out;
+}
+
+/* Scanline linear-gradients overlay */
+.carousel.lcd-panel::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background-size: 100% 4px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+[data-theme="light"] .carousel.lcd-panel::after {
+  background: linear-gradient(rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+  background-size: 100% 4px;
+}
+
+/* Custom navigation buttons for LCD panel */
+.carousel.lcd-panel .carousel-prev,
+.carousel.lcd-panel .carousel-next {
+  background-color: transparent;
+  color: currentColor;
+  border: 1px solid currentColor;
+  font-size: 18px;
+  padding: var(--space-xs);
+  z-index: 10;
+  font-family: var(--font-body);
+}
+
+.carousel.lcd-panel .carousel-prev:hover,
+.carousel.lcd-panel .carousel-next:hover {
+  background-color: currentColor;
+  color: #0f2010;
+}
+
+[data-theme="light"] .carousel.lcd-panel .carousel-prev:hover,
+[data-theme="light"] .carousel.lcd-panel .carousel-next:hover {
+  background-color: currentColor;
+  color: #cbd5c5;
+}
+
+/* Custom indicators for LCD panel */
+.carousel.lcd-panel .carousel-indicators {
+  bottom: var(--space-xs);
+}
+
+.carousel.lcd-panel .carousel-indicators button {
+  width: 8px;
+  height: 8px;
+  background-color: transparent;
+  border: 1px solid currentColor;
+}
+
+.carousel.lcd-panel .carousel-indicators button.active {
+  background-color: currentColor;
 }
 
 /* ── 5.3 Product Cards ─────────────────────────────────────── */
@@ -710,7 +875,6 @@ main.carrito section.total button:hover {
 }
 
 .containerRegistroLogin { width: 300px; }
-.container { width: 300px; }
 .containerNewUser { width: 400px; }
 .containerNP {
   max-width: 600px;
@@ -902,7 +1066,7 @@ footer .containerFooter {
   justify-content: center;
   flex-wrap: wrap;
   gap: var(--space-xl);
-  max-width: 1200px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 0 var(--space-md);
 }
@@ -949,7 +1113,7 @@ footer .containerSections {
   width: 100%;
   flex-wrap: wrap;
   justify-content: space-between;
-  max-width: 1200px;
+  max-width: 1440px;
   margin: var(--space-lg) auto 0;
   padding: 0 var(--space-md);
 }
@@ -1141,7 +1305,7 @@ footer .containerRedes a:hover {
 @media (min-width: 1024px) {
   main {
     padding: var(--space-xl) var(--space-md);
-    max-width: 1200px;
+    max-width: 1440px;
     margin: 0 auto;
   }
 
