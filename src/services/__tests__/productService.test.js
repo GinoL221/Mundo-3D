@@ -119,4 +119,172 @@ describe('ProductService', () => {
       expect(result).toBe(false);
     });
   });
+
+  describe('update', () => {
+    it('updates product fields and returns updated product', async () => {
+      const existingProduct = {
+        IDProduct: 1,
+        NameProduct: 'Old Name',
+        Price: 50,
+        DescriptionProduct: 'Old desc',
+        save: jest.fn().mockResolvedValue(undefined),
+      };
+      Product.findByPk.mockResolvedValue(existingProduct);
+
+      const result = await ProductService.update(1, {
+        NameProduct: 'New Name',
+        Price: 75,
+      });
+
+      expect(result).toEqual(existingProduct);
+      expect(existingProduct.NameProduct).toBe('New Name');
+      expect(existingProduct.Price).toBe(75);
+      expect(existingProduct.save).toHaveBeenCalled();
+    });
+
+    it('returns null when product not found', async () => {
+      Product.findByPk.mockResolvedValue(null);
+
+      const result = await ProductService.update(999, { NameProduct: 'Test' });
+
+      expect(result).toBeNull();
+      expect(Product.findByPk).toHaveBeenCalledWith(999);
+    });
+
+    it('preserves unchanged fields when partial update', async () => {
+      const existingProduct = {
+        IDProduct: 2,
+        NameProduct: 'Keep Name',
+        Price: 30,
+        DescriptionProduct: 'Keep desc',
+        save: jest.fn().mockResolvedValue(undefined),
+      };
+      Product.findByPk.mockResolvedValue(existingProduct);
+
+      const result = await ProductService.update(2, { Price: 45 });
+
+      expect(result).toBe(existingProduct);
+      expect(existingProduct.NameProduct).toBe('Keep Name');
+      expect(existingProduct.Price).toBe(45);
+      expect(existingProduct.DescriptionProduct).toBe('Keep desc');
+    });
+  });
+
+  describe('findLatest', () => {
+    it('returns the most recent product with category', async () => {
+      const latestProduct = {
+        IDProduct: 5,
+        NameProduct: 'Latest',
+        Category: { IDCategory: 1, NameCategory: 'Figures' },
+      };
+      Product.findOne.mockResolvedValue(latestProduct);
+
+      const result = await ProductService.findLatest();
+
+      expect(result).toEqual(latestProduct);
+      expect(Product.findOne).toHaveBeenCalledWith(
+        expect.objectContaining({
+          order: [['IDProduct', 'DESC']],
+          include: expect.arrayContaining([
+            expect.objectContaining({
+              model: expect.anything(),
+              as: 'Category',
+            }),
+          ]),
+        }),
+      );
+    });
+
+    it('returns null when no products exist', async () => {
+      Product.findOne.mockResolvedValue(null);
+
+      const result = await ProductService.findLatest();
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('transformWithCategoryCount', () => {
+    it('returns correct structure with empty array', () => {
+      const result = ProductService.transformWithCategoryCount([]);
+
+      expect(result).toEqual({
+        count: 0,
+        countByCategory: {},
+        products: [],
+      });
+    });
+
+    it('transforms products and counts by category', () => {
+      const products = [
+        {
+          IDProduct: 1,
+          NameProduct: 'Product A',
+          Price: 50,
+          DescriptionProduct: 'Desc A',
+          Image: 'a.jpg',
+          Category: { IDCategory: 1, IDType: 10, NameCategory: 'Figures' },
+        },
+        {
+          IDProduct: 2,
+          NameProduct: 'Product B',
+          Price: 30,
+          DescriptionProduct: 'Desc B',
+          Image: 'b.jpg',
+          Category: { IDCategory: 1, IDType: 10, NameCategory: 'Figures' },
+        },
+        {
+          IDProduct: 3,
+          NameProduct: 'Product C',
+          Price: 20,
+          DescriptionProduct: 'Desc C',
+          Image: 'c.jpg',
+          Category: { IDCategory: 2, IDType: 20, NameCategory: 'Decorations' },
+        },
+      ];
+
+      const result = ProductService.transformWithCategoryCount(products);
+
+      expect(result.count).toBe(3);
+      expect(result.countByCategory['Figures'].count).toBe(2);
+      expect(result.countByCategory['Figures'].category).toEqual({
+        IDCategory: 1,
+        IDType: 10,
+      });
+      expect(result.countByCategory['Decorations'].count).toBe(1);
+      expect(result.countByCategory['Decorations'].category).toEqual({
+        IDCategory: 2,
+        IDType: 20,
+      });
+      expect(result.products).toHaveLength(3);
+      expect(result.products[0]).toEqual({
+        IDProduct: 1,
+        NameProduct: 'Product A',
+        Price: 50,
+        DescriptionProduct: 'Desc A',
+        Image: 'a.jpg',
+        Category: 'Figures',
+      });
+    });
+
+    it('handles products without category', () => {
+      const products = [
+        {
+          IDProduct: 1,
+          NameProduct: 'No Cat Product',
+          Price: 15,
+          DescriptionProduct: 'No category',
+          Image: 'x.jpg',
+          Category: null,
+        },
+      ];
+
+      const result = ProductService.transformWithCategoryCount(products);
+
+      expect(result.count).toBe(1);
+      expect(result.countByCategory['Sin categoría'].count).toBe(1);
+      expect(result.countByCategory['Sin categoría'].category).toBeNull();
+      expect(result.products[0].Category).toBe('Sin categoría');
+    });
+  });
 });

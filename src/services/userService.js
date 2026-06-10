@@ -47,6 +47,10 @@ const UserService = {
     await user.destroy();
     return true;
   },
+
+  verifyPassword(plainPassword, hashedPassword) {
+    return bcryptjs.compareSync(plainPassword, hashedPassword);
+  },
 };
 
 module.exports = UserService;

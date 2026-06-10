@@ -65,6 +65,45 @@ const ProductService = {
       order: [['IDProduct', 'DESC']],
     });
   },
+
+  transformWithCategoryCount(products) {
+    const countByCategory = {};
+
+    const mappedProducts = products.map((product) => {
+      const categoryName = product.Category ? product.Category.NameCategory : 'Sin categoría';
+
+      const categoryInfo = product.Category
+        ? {
+            IDCategory: product.Category.IDCategory,
+            IDType: product.Category.IDType,
+          }
+        : null;
+
+      if (!countByCategory[categoryName]) {
+        countByCategory[categoryName] = {
+          count: 1,
+          category: categoryInfo,
+        };
+      } else {
+        countByCategory[categoryName].count++;
+      }
+
+      return {
+        IDProduct: product.IDProduct,
+        NameProduct: product.NameProduct,
+        Price: product.Price,
+        DescriptionProduct: product.DescriptionProduct,
+        Image: product.Image,
+        Category: categoryName,
+      };
+    });
+
+    return {
+      count: products.length,
+      countByCategory,
+      products: mappedProducts,
+    };
+  },
 };
 
 module.exports = ProductService;

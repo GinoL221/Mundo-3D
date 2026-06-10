@@ -13,9 +13,11 @@ jest.mock('../../database/models/db', () => ({
 // Mock bcryptjs
 jest.mock('bcryptjs', () => ({
   hashSync: jest.fn((password) => `hashed_${password}`),
+  compareSync: jest.fn((plain, hash) => plain === 'correct' && hash === 'hashed_correct'),
 }));
 
 const { User } = require('../../database/models/db');
+const bcryptjs = require('bcryptjs');
 
 describe('UserService', () => {
   beforeEach(() => {
@@ -138,6 +140,26 @@ describe('UserService', () => {
       const result = await UserService.remove(999);
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe('verifyPassword', () => {
+    it('returns true when password matches hash', () => {
+      bcryptjs.compareSync.mockReturnValue(true);
+
+      const result = UserService.verifyPassword('correct', 'hashed_correct');
+
+      expect(result).toBe(true);
+      expect(bcryptjs.compareSync).toHaveBeenCalledWith('correct', 'hashed_correct');
+    });
+
+    it('returns false when password does not match hash', () => {
+      bcryptjs.compareSync.mockReturnValue(false);
+
+      const result = UserService.verifyPassword('wrong', 'hashed_correct');
+
+      expect(result).toBe(false);
+      expect(bcryptjs.compareSync).toHaveBeenCalledWith('wrong', 'hashed_correct');
     });
   });
 });

@@ -67,4 +67,40 @@ describe('CartService', () => {
       expect(result).toHaveLength(0);
     });
   });
+
+  describe('computeTotal', () => {
+    it('returns 0 for empty cart', () => {
+      const result = CartService.computeTotal([]);
+
+      expect(result).toBe(0);
+    });
+
+    it('returns correct total for single item', () => {
+      const items = [{ product: { Price: 50 }, Quantity: 2 }];
+
+      const result = CartService.computeTotal(items);
+
+      expect(result).toBe(100);
+    });
+
+    it('returns correct total for multiple items', () => {
+      const items = [
+        { product: { Price: 50 }, Quantity: 2 },
+        { product: { Price: 30 }, Quantity: 1 },
+        { product: { Price: 20 }, Quantity: 3 },
+      ];
+
+      const result = CartService.computeTotal(items);
+
+      expect(result).toBe(190); // 100 + 30 + 60
+    });
+
+    it('handles items with Price at root level (fallback)', () => {
+      const items = [{ Price: 40, Quantity: 3 }];
+
+      const result = CartService.computeTotal(items);
+
+      expect(result).toBe(120);
+    });
+  });
 });

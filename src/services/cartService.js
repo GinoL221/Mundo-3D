@@ -11,6 +11,13 @@ const CartService = {
   async findAll() {
     return ShoppingCart.findAll();
   },
+
+  computeTotal(cartItems) {
+    return cartItems.reduce(
+      (sum, item) => sum + (item.product?.Price || item.Price || 0) * (item.Quantity || 0),
+      0,
+    );
+  },
 };
 
 module.exports = CartService;
