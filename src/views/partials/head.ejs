@@ -2,9 +2,34 @@
 <html lang="es">
 
 <head>
+  <script>
+    (function() {
+      var t = localStorage.getItem('theme');
+      if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="/css/normalize.css" />
-  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/tokens/colors.css" />
+  <link rel="stylesheet" href="/css/tokens/typography.css" />
+  <link rel="stylesheet" href="/css/tokens/spacing.css" />
+  <link rel="stylesheet" href="/css/base/reset.css" />
+  <link rel="stylesheet" href="/css/base/layout.css" />
+  <link rel="stylesheet" href="/css/base/utilities.css" />
+  <link rel="stylesheet" href="/css/components/navbar.css" />
+  <link rel="stylesheet" href="/css/components/carousel.css" />
+  <link rel="stylesheet" href="/css/components/footer.css" />
+  <link rel="stylesheet" href="/css/components/product-grid.css" />
+  <link rel="stylesheet" href="/css/components/product-card.css" />
+  <link rel="stylesheet" href="/css/components/product-detail.css" />
+  <link rel="stylesheet" href="/css/components/cart.css" />
+  <link rel="stylesheet" href="/css/components/forms.css" />
+  <link rel="stylesheet" href="/css/components/profile.css" />
+  <link rel="stylesheet" href="/css/components/users-list.css" />
+  <link rel="stylesheet" href="/css/components/alerts.css" />
+  <link rel="stylesheet" href="/css/components/error-pages.css" />
+  <link rel="stylesheet" href="/css/components/about.css" />
   <link rel="shortcut icon" href="/img/m3d.png" type="image/x-icon" />
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <script src="/js/theme.js" defer></script>

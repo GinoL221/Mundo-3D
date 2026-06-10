@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
+const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
   const Franchise = sequelize.define(
-    "Franchise",
+    'Franchise',
     {
       IDFranchise: {
         type: DataTypes.INTEGER,
@@ -13,21 +13,14 @@ module.exports = (sequelize) => {
       NameFranchise: {
         type: DataTypes.STRING(255),
         allowNull: false,
-          unique: true,
+        unique: true,
       },
     },
     {
-      tableName: "Franchise",
+      tableName: 'Franchise',
       timestamps: false,
-    }
+    },
   );
-
-    Franchise.associate = function (models) {
-      Franchise.hasMany(models.Product, {
-        as: "products",
-        foreignKey: "IDFranchise",
-      });
-    };
 
   return Franchise;
 };

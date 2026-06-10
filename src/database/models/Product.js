@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
+const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
   const Product = sequelize.define(
-    "Product",
+    'Product',
     {
       IDProduct: {
         type: DataTypes.INTEGER,
@@ -33,27 +33,11 @@ module.exports = (sequelize) => {
       },
     },
     {
-      tableName: "Product",
+      tableName: 'Product',
       timestamps: false,
-      indexes: [{ unique: false, fields: ["IDCategory"] }],
-    }
+      indexes: [{ unique: false, fields: ['IDCategory'] }],
+    },
   );
-
-  Product.associate = function (models) {
-    Product.belongsTo(models.Category, {
-      as: "Category",
-      foreignKey: "IDCategory",
-    });
-
-    Product.belongsTo(models.Franchise, {
-      as: "Franchise",
-      foreignKey: "IDFranchise",
-    });
-  };
-
-  Product.findById = async function (productId) {
-    return await Product.findByPk(productId);
-  };
 
   return Product;
 };

@@ -1,0 +1,18 @@
+/* ============================================================
+   tokens/spacing.css — 8px Grid + Breakpoints
+   ============================================================ */
+
+:root {
+  /* ── Spacing Scale (8px grid) ──────────────────────────── */
+  --space-xs:   4px;
+  --space-sm:   8px;
+  --space-md:   16px;
+  --space-lg:   24px;
+  --space-xl:   32px;
+  --space-2xl:  48px;
+
+  /* ── Breakpoints ───────────────────────────────────────── */
+  --bp-mobile:  640px;
+  --bp-tablet:  1024px;
+  --bp-desktop: 1024px;
+}

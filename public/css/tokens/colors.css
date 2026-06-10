@@ -1,0 +1,34 @@
+/* ============================================================
+   tokens/colors.css — PICO-8 Palette + Semantic Aliases
+   ============================================================ */
+
+/* ── PICO-8 Palette ────────────────────────────────────────── */
+:root {
+  --pico-black:        #000000;
+  --pico-dark-blue:    #1d2b53;
+  --pico-purple:       #7e2553;
+  --pico-dark-green:   #008351;
+  --pico-red:          #ff004d;
+  --pico-yellow:       #ffec27;
+  --pico-orange:       #ffa300;
+  --pico-white:        #ffffff;
+  --pico-light:        #c2c3c7;
+  --pico-muted:        #5f574f;
+  --pico-sky:          #29adff;
+
+  /* ── Semantic Mappings ─────────────────────────────────── */
+  --bg:       var(--pico-black);
+  --fg:       var(--pico-light);
+  --accent:   var(--pico-dark-green);
+  --danger:   var(--pico-red);
+  --warning:  var(--pico-orange);
+  --surface:  var(--pico-dark-blue);
+}
+
+/* ── Light Theme Overrides ─────────────────────────────────── */
+[data-theme="light"] {
+  --bg:       #f5f0e8;
+  --fg:       #1a2a4a;
+  --accent:   #8b7355;
+  --surface:  #ffffff;
+}

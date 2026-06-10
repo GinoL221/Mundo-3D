@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
+const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
   const ShoppingCart = sequelize.define(
-    "ShoppingCart",
+    'ShoppingCart',
     {
       IDCart: {
         type: DataTypes.INTEGER,
@@ -31,20 +31,10 @@ module.exports = (sequelize) => {
       },
     },
     {
-      tableName: "ShoppingCart",
+      tableName: 'ShoppingCart',
       timestamps: false,
-    }
+    },
   );
-
-  ShoppingCart.belongsTo(sequelize.models.User, {
-    foreignKey: "IDUser",
-    as: "user",
-  });
-
-  ShoppingCart.belongsTo(sequelize.models.Product, {
-    foreignKey: "IDProduct",
-    as: "product",
-  });
 
   return ShoppingCart;
 };

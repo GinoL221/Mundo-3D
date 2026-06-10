@@ -1,5 +1,13 @@
-const server = require("./src/app");
 require("dotenv").config();
+
+const server = require("./src/app");
+
+// Validate required environment variables
+if (!process.env.SESSION_SECRET) {
+  console.error("FATAL: SESSION_SECRET environment variable is required. Set it in .env file.");
+  process.exit(1);
+}
+
 const {
   ensureDatabaseExists,
 } = require("./src/database/config/ensureDatabase");

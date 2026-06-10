@@ -1,10 +1,10 @@
-const mysql = require("mysql2/promise");
-const config = require("./config");
+const mysql = require('mysql2/promise');
+const config = require('./config');
 
 /**
  * Crea la base de datos si no existe antes de inicializar Sequelize
  */
-async function ensureDatabaseExists(env = "development") {
+async function ensureDatabaseExists(env = 'development') {
   const dbConfig = config[env];
   const dbName = dbConfig.database;
   const dbUser = dbConfig.username;

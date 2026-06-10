@@ -1,38 +1,62 @@
-<header>
-  <div class="logo">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  </div>
-  <div class="buscador">
-    <input type="text" placeholder="Buscar productos..." />
-    <button type="submit">Buscar</button>
-  </div>
+<header class="navbar">
+  <div class="container">
+    <div class="navbar__inner">
+      <!-- Logo -->
+      <a href="/" class="navbar__logo">
+        MUNDO 3D
+      </a>
 
-  <nav class="barra-navegacion">
-    <ul class="barra-izquierda">
-      <li><a href="/">Inicio</a></li>
-      <li><a href="/products">Productos</a></li>
-      <% if (locals.isLogged) { %>
-      <li><a href="/new-product">Nuevo producto</a></li>
-      <% } %>
-    </ul>
+      <!-- Search bar (visual only, non-functional) -->
+      <div class="navbar__search">
+        <input type="text" placeholder="Buscar productos..." aria-label="Buscar productos" class="navbar__search-input" />
+        <button type="button" aria-label="Buscar" class="navbar__search-btn">
+          <img src="/images/icons/search.png" alt="" width="16" height="16" />
+        </button>
+      </div>
 
-    <ul class="barra-derecha">
-      <% if (locals.isLogged) { %>
-      <li class="nav-item">
-        <div class="perfil-dropdown">
-          <img src="/img/users/<%= locals.userLogged.Image %>" width="40" style="border-radius: 50%;">
-          <a class=""> Hola <%= locals.userLogged.FirstName %> </a>
-          <ul class="dropdown-menu">
-            <li><a href="/profile">Mi perfil</a></li>
-            <li><a href="/logout">Cerrar sesión</a></li>
-          </ul>
-        </div>
-      </li>
-      <% } else { %>
-      <li><a href="/login">Iniciar sesión</a></li>
-      <li><a href="/register">Registrarse</a></li>
-      <% } %>
-      <li><a href="/productCart">Carrito</a></li>
-    </ul>
-  </nav>
+      <!-- Navigation -->
+      <nav class="navbar__list">
+        <ul class="navbar__list--left">
+          <li class="navbar__item"><a href="/" class="navbar__link">Inicio</a></li>
+          <li class="navbar__item"><a href="/products" class="navbar__link">Productos</a></li>
+          <% if (locals.isLogged) { %>
+          <li class="navbar__item"><a href="/new-product" class="navbar__link">Nuevo producto</a></li>
+          <% } %>
+        </ul>
+
+        <ul class="navbar__list--right">
+          <% if (locals.isLogged) { %>
+          <li class="nav-item">
+            <div class="nav-item__trigger">
+              <img src="/img/users/<%= locals.userLogged.Image %>" width="32" height="32" alt="Avatar">
+              <span class="navbar__greeting">Hola <%= locals.userLogged.FirstName %></span>
+              <ul class="nav-item__dropdown">
+                <li><a href="/profile">Mi perfil</a></li>
+                <li><a href="/logout">Cerrar sesi&oacute;n</a></li>
+              </ul>
+            </div>
+          </li>
+          <% } else { %>
+          <li class="navbar__item"><a href="/login" class="navbar__link">Iniciar sesi&oacute;n</a></li>
+          <li class="navbar__item"><a href="/register" class="navbar__link">Registrarse</a></li>
+          <% } %>
+          <li class="navbar__item">
+            <a href="/productCart" class="cart-link" aria-label="Carrito de compras">
+              <img src="/images/icons/cart.png" alt="" width="16" height="16" />
+              Carrito
+              <% if (locals.cartDistinctCount && locals.cartDistinctCount > 0) { %>
+              <span class="cart-link__badge"><%= locals.cartDistinctCount %></span>
+              <% } %>
+            </a>
+          </li>
+          <li class="navbar__item">
+            <button class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle Theme">
+              <span class="theme-toggle-btn__text">MODE: DARK</span>
+              <span class="theme-toggle-btn__icon">◐</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
 </header>

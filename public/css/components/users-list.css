@@ -1,0 +1,48 @@
+/* ============================================================
+   users-list.css — Users List Component (BEM)
+   Extracted from styles.css lines 1014-1054
+   ============================================================ */
+
+/* ── Users List Block ──────────────────────────────────────── */
+.users-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-lg);
+}
+
+/* ── User Card ─────────────────────────────────────────────── */
+.users-list__card {
+  margin: var(--space-md);
+  padding: var(--space-md);
+  border: 2px solid var(--pico-muted);
+  text-align: center;
+  background-color: var(--surface);
+}
+
+.users-list__card img {
+  border: 2px solid var(--pico-muted);
+  margin-bottom: var(--space-sm);
+}
+
+.users-list__card h3 {
+  font-family: var(--font-body);
+  font-size: 18px;
+  margin: var(--space-xs) 0;
+}
+
+/* ── Danger Button ─────────────────────────────────────────── */
+.users-list__btn--danger {
+  font-family: var(--font-body);
+  font-size: 16px;
+  background-color: var(--danger);
+  color: var(--pico-white);
+  padding: var(--space-sm) var(--space-md);
+  border: 2px solid var(--danger);
+  cursor: pointer;
+}
+
+.users-list__btn--danger:hover {
+  background-color: var(--pico-black);
+  border-color: var(--pico-muted);
+}

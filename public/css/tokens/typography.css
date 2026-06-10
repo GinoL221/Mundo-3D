@@ -1,0 +1,24 @@
+/* ============================================================
+   tokens/typography.css — Font Families + Heading/Body Scale
+   ============================================================ */
+
+:root {
+  /* ── Font Families ─────────────────────────────────────── */
+  --font-heading: 'Press Start 2P', monospace;
+  --font-body:    'VT323', monospace;
+
+  /* ── Heading Scale ─────────────────────────────────────── */
+  --text-h1:      18px;
+  --text-h2:      16px;
+  --text-h3:      14px;
+  --text-heading: 14px;
+
+  /* ── Body Scale ────────────────────────────────────────── */
+  --text-body:    18px;
+  --text-small:   16px;
+  --text-xs:      10px;
+
+  /* ── Line Height ───────────────────────────────────────── */
+  --line-height-base: 1.5;
+  --line-height-heading: 1.6;
+}

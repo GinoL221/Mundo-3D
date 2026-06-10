@@ -1,5 +1,4 @@
 <%- include('../partials/head') %>
-<link rel="stylesheet" href="/css/users.css">
 <title>Nuestros usuarios</title>
 </head>
 
@@ -8,9 +7,9 @@
 
   <main>
     <h2>Todos los usuarios registrados</h2>
-    <section class="users_container">
+    <section class="users-list">
       <% for(let i = 0; i < allUsers.length; i++) { %>
-      <article class="user_container">
+      <article class="users-list__card">
         <% if (allUsers[i].Image && allUsers[i].Image.length) { %>
         <img src="/img/users/<%= allUsers[i].Image %>" alt="image" width="300px" height="300px">
         <% } else { %>
@@ -20,7 +19,8 @@
         <h3>Apellido: <%= allUsers[i].LastName %></h3>
         <p>Email: <%= allUsers[i].Email %></p>
         <form action="/users/delete/<%= allUsers[i].IDUser %>?_method=DELETE" method="POST">
-          <button type="submit">Borrar</button>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+          <button type="submit" class="users-list__btn--danger">Borrar</button>
         </form>
       </article>
       <% } %>

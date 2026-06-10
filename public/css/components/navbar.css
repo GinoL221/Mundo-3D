@@ -1,0 +1,248 @@
+/* ============================================================
+   components/navbar.css — Header, Navigation, Search, Theme Toggle
+   ============================================================ */
+
+/* ── Navbar Block ──────────────────────────────────────────── */
+.navbar {
+  width: 100%;
+  background-color: var(--surface);
+  color: var(--fg);
+  padding: var(--space-sm) 0;
+}
+
+.navbar__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Site logo */
+.navbar__logo {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: var(--pico-yellow);
+  text-align: center;
+  padding: var(--space-xs) 0;
+  letter-spacing: 2px;
+}
+
+.navbar__logo:hover {
+  color: var(--pico-white);
+}
+
+/* Logo image variant */
+.navbar__logo img {
+  max-width: 120px;
+  height: auto;
+}
+
+/* Search bar */
+.navbar__search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.navbar__search-input {
+  font-family: var(--font-body);
+  font-size: 16px;
+  padding: var(--space-xs) var(--space-sm);
+  background-color: var(--pico-black);
+  color: var(--fg);
+  border: 2px solid var(--pico-muted);
+  flex: 1;
+}
+
+.navbar__search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.navbar__search-btn {
+  font-family: var(--font-body);
+  font-size: 16px;
+  padding: var(--space-xs) var(--space-sm);
+  background-color: var(--accent);
+  color: var(--pico-white);
+  border: 2px solid var(--accent);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.navbar__search-btn:hover {
+  background-color: var(--pico-black);
+  border-color: var(--accent);
+}
+
+/* Nav list (replaces nav.barra-navegacion) */
+.navbar__list {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+/* Nav list items (replaces nav.barra-navegacion ul) */
+.navbar__list--left,
+.navbar__list--right {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.navbar__item {
+  display: inline;
+}
+
+.navbar__link {
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 18px;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.navbar__link:hover {
+  color: var(--pico-yellow);
+}
+
+/* User greeting */
+.navbar__greeting {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--fg);
+}
+
+/* ── Dropdown (nav-item sub-component) ─────────────────────── */
+.nav-item {
+  position: relative;
+}
+
+.nav-item__trigger {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.nav-item__dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: var(--surface);
+  list-style: none;
+  padding: var(--space-sm);
+  display: none;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  min-width: 160px;
+}
+
+.nav-item__dropdown a {
+  color: var(--fg);
+  display: block;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.nav-item__dropdown a:hover {
+  background-color: var(--pico-dark-blue);
+  color: var(--pico-yellow);
+}
+
+.nav-item__trigger:hover .nav-item__dropdown,
+.nav-item__trigger:focus-within .nav-item__dropdown {
+  display: block;
+}
+
+/* ── Cart Link (standalone BEM block) ──────────────────────── */
+.cart-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.cart-link img {
+  image-rendering: pixelated;
+}
+
+.cart-link__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--danger);
+  color: var(--pico-white);
+  font-family: var(--font-heading);
+  font-size: 10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 var(--space-xs);
+  margin-left: var(--space-xs);
+}
+
+/* ── Theme Toggle Button (standalone BEM block) ────────────── */
+.theme-toggle-btn {
+  background-color: var(--surface);
+  color: var(--fg);
+  border: 2px solid var(--fg);
+  padding: var(--space-xs) var(--space-sm);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle-btn:hover {
+  background-color: var(--accent);
+  color: var(--pico-white);
+}
+
+.theme-toggle-btn__icon {
+  display: none;
+}
+
+/* ── Responsive: Tablet+ (>= 640px) ────────────────────────── */
+@media (min-width: 640px) {
+  .navbar__inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .navbar__search {
+    margin: 0;
+  }
+}
+
+/* ── Responsive: Mobile (< 640px) ──────────────────────────── */
+@media (max-width: 639px) {
+  .navbar__list {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navbar__list--left,
+  .navbar__list--right {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .theme-toggle-btn__text {
+    display: none;
+  }
+
+  .theme-toggle-btn__icon {
+    display: inline;
+    font-size: 18px;
+  }
+}

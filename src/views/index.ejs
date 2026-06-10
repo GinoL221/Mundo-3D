@@ -1,70 +1,72 @@
 <%- include('./partials/head') %>
 
-<link rel="stylesheet" href="/css/index.css" />
-<link rel="stylesheet" href="/css/carousel.css" />
-<title>Mundo 3D</title>
-</head>
+  <title>Mundo 3D</title>
+  </head>
 
-<body>
-  <div class="message">
-    <p>Si puedes pensarlo, puedes crearlo</p>
-  </div>
+  <body>
+    <%- include('./partials/header') %>
 
-  <%- include('./partials/header') %>
+      <section class="carousel carousel--lcd" id="homepage-carousel">
+        <div class="carousel__container">
+          <div class="carousel__slide">
+            <a href="/products">
+              <div class="carousel__text glow">Modelado y fabricación 3D</div>
+            </a>
+          </div>
+          <div class="carousel__slide">
+            <a href="/aboutUs">
+              <div class="carousel__text glow">Calidad premium garantizada</div>
+            </a>
+          </div>
+          <div class="carousel__slide">
+            <a href="#">
+              <div class="carousel__text glow">Pedí tu cotización</div>
+            </a>
+          </div>
+        </div>
+        <button class="carousel__prev" aria-label="Slide anterior">&#10094;</button>
+        <button class="carousel__next" aria-label="Slide siguiente">&#10095;</button>
+        <div class="carousel__indicators">
+          <button class="carousel__indicator active" data-slide="0" aria-label="Ir al slide 1"></button>
+          <button class="carousel__indicator" data-slide="1" aria-label="Ir al slide 2"></button>
+          <button class="carousel__indicator" data-slide="2" aria-label="Ir al slide 3"></button>
+        </div>
+      </section>
 
-  <section class="banner">
-    <img src="/img/699b24b0a24fe3586f3369783336ac56.jpg" alt="banner" />
-  </section>
-  <section class="carousel">
-    <div class="carousel-container">
-      <div class="carousel-slide">
-        <a href="/aboutUs">
-          <img src="/img/carousel/Capturaa.jpg" alt="Slide 1" class="carousel-img">
-        </a>
-      </div>
-      <div class="carousel-slide">
-        <a href="\products">
-          <img src="/img/carousel/Capturab.jpg" alt="Slide 2" class="carousel-img">
-        </a>
+      <main class="index">
+        <% if (products && products.length> 0) { %>
+          <h2 class="page-heading">Nuestros Seleccionados</h2>
+          <div class="product-grid">
+            <% products.forEach(function(product) { %>
+              <article class="product-card">
+                <a href="/products/<%= product.IDProduct %>">
+                  <% var catName=product.Category && product.Category.NameCategory ? product.Category.NameCategory
+                    : 'Otras' ; %>
+                    <img src="/images/illustrations/<%= catName %>.png" alt="<%= catName %>"
+                      class="product-card__category-img">
+                    <div class="product-card__body">
+                      <h3>
+                        <%= product.NameProduct %>
+                      </h3>
+                      <p class="product-card__price">$<%= product.Price %>
+                      </p>
+                    </div>
+                </a>
+              </article>
+              <% }); %>
+          </div>
+          <% } else { %>
+            <div class="empty-state">
+              <img src="/images/illustrations/empty-state.png" alt="Próximamente" class="empty-state-img">
+              <h2>Próximamente</h2>
+              <p>Estamos preparando productos increíbles para vos.</p>
+            </div>
+            <% } %>
+      </main>
 
-      </div>
-      <div class="carousel-slide">
-        <a href="\new-product">
-          <img src="/img/carousel/Capturac.png" alt="Slide 3" class="carousel-img">
+      <%- include('./partials/footer') %>
+        <script src="/js/carousel.js"></script>
 
-        </a>
+  </body>
 
-      </div>
-    </div>
-    <button class="carousel-prev">&#10094;</button>
-    <button class="carousel-next">&#10095;</button>
-  </section>
-
-  <main class="index">
-    <h2 class="titulo">Nuestros Seleccionados</h2>
-    <article class="product">
-      <img src="/img/img14.jpg" alt="Producto 1" />
-    </article>
-    <article class="product">
-      <img src="/img/img2.jpg" alt="Producto 2" />
-    </article>
-    <article class="product">
-      <img src="/img/img3.jpg" alt="Producto 3" />
-    </article>
-    <article class="product">
-      <img src="/img/img5.jpg" alt="Producto 1" />
-    </article>
-    <article class="product">
-      <img src="/img/img9.jpg" alt="Producto 2" />
-    </article>
-    <article class="product">
-      <img src="/img/img4.jpg" alt="Producto 3" />
-    </article>
-  </main>
-
-  <%- include('./partials/footer') %>
-  <script src="/js/carousel.js"></script>
-
-</body>
-
-</html>
+  </html>

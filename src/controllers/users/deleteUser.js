@@ -1,24 +1,20 @@
-// controllers/deleteUser.js
-const path = require("path");
+const path = require('path');
+const { UserService } = require('../../services');
 
-const { User } = require("../../database/models/db"); // Asegúrate de importar el modelo User adecuadamente
-
-const deleteUser = async (req, res) => {
+const deleteUser = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const user = await User.findByPk(id);
+    const deleted = await UserService.remove(id);
 
-    if (!user) {
-      return res.status(404).send("Usuario no encontrado");
+    if (!deleted) {
+      return res.status(404).send('Usuario no encontrado');
     }
 
-    await user.destroy();
-
-    res.redirect("/users");
+    res.redirect('/users');
   } catch (error) {
-    console.error("Error al eliminar usuario:", error);
-    res.status(500).send(`Error: ${error.message}`);
+    console.error('Error al eliminar usuario:', error);
+    next(error);
   }
 };
 

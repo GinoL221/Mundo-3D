@@ -1,29 +1,33 @@
 <%- include('../partials/head') %>
 
-<link rel="stylesheet" href="/css/productDetail.css" />
-<title>Detalles del Producto</title>
-</head>
+  <title>Detalles del Producto</title>
+  </head>
 
-<body>
+  <body>
 
-  <%- include('../partials/header') %>
+    <%- include('../partials/header') %>
 
-  <h2 class="containerTitle">Detalles del Producto</h2>
+      <h2 class="product-detail__title">Detalles del Producto</h2>
 
-  <main class="containerMainProductDetail">
-    <div class="containerCardProducto">
-      <img src="/img/products/<%= product.Image %>" alt="<%= product.NameProduct %>">
-      <section class="containerSectionDetalle">
-        <h3><%= product.NameProduct %></h3>
-        <p>Precio: $<%= product.Price %></p>
-        <p><%= product.DescriptionProduct %></p>
-        <a href="/productCart"><button>COMPRAR</button></a>
-        <a href="/productCart"><button>AGREGAR AL CARRITO</button></a>
-      </section>
-    </div>
-  </main>
+      <main class="product-detail__main">
+        <div class="product-detail__card">
+          <img src="/img/products/<%= product.Image %>" alt="<%= product.NameProduct %>" class="product-detail__image">
+          <section class="product-detail__info">
+            <h3>
+              <%= product.NameProduct %>
+            </h3>
+            <p>Precio: $<%= product.Price %>
+            </p>
+            <p>
+              <%= product.DescriptionProduct %>
+            </p>
+            <a href="/productCart"><button class="product-detail__action">COMPRAR</button></a>
+            <a href="/productCart"><button class="product-detail__action">AGREGAR AL CARRITO</button></a>
+          </section>
+        </div>
+      </main>
 
-  <%- include('../partials/footer') %>
-</body>
+      <%- include('../partials/footer') %>
+  </body>
 
-</html>
+  </html>
