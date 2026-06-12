@@ -49,8 +49,8 @@
   font-family: var(--font-body);
   font-size: 16px;
   padding: var(--space-xs) var(--space-sm);
-  background-color: var(--pico-black);
-  color: var(--fg);
+  background-color: var(--input-bg);
+  color: var(--input-fg);
   border: 2px solid var(--border);
   flex: 1;
 }
@@ -73,7 +73,7 @@
 }
 
 .navbar__search-btn:hover {
-  background-color: var(--pico-black);
+  background-color: var(--input-bg);
   border-color: var(--accent);
 }
 

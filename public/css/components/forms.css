@@ -61,7 +61,7 @@
   margin-bottom: var(--space-md);
   border: 2px solid var(--border);
   background-color: var(--input-bg);
-  color: var(--fg);
+  color: var(--input-fg);
   font-family: var(--font-body);
   font-size: 16px;
 }
@@ -82,7 +82,7 @@
   font-size: 16px;
   padding: var(--space-sm) var(--space-md);
   background-color: var(--input-bg);
-  color: var(--fg);
+  color: var(--input-fg);
   border: 2px solid var(--border);
   cursor: pointer;
   margin-right: var(--space-sm);
@@ -131,7 +131,7 @@
   margin-bottom: var(--space-sm);
   border: 2px solid var(--border);
   background-color: var(--input-bg);
-  color: var(--fg);
+  color: var(--input-fg);
   font-family: var(--font-body);
   font-size: 16px;
 }

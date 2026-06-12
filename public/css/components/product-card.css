@@ -58,7 +58,6 @@
 .product-card {
   background-color: var(--surface);
   border: 2px solid var(--border);
-  width: 250px;
   cursor: default;
   display: flex;
   flex-direction: column;
@@ -102,9 +101,9 @@
 .product-card__action {
   font-family: var(--font-body);
   font-size: 16px;
-  border: 2px solid var(--pico-black);
-  background-color: var(--pico-black);
-  color: var(--fg);
+  border: 2px solid var(--border);
+  background-color: var(--input-bg);
+  color: var(--input-fg);
   padding: var(--space-xs) var(--space-md);
   cursor: pointer;
   width: 100%;
@@ -113,13 +112,5 @@
 .product-card__action:hover {
   background-color: var(--accent);
   border-color: var(--accent);
-}
-
-/* ── Responsive: Mobile (< 640px) ─────────────────────────── */
-
-@media (max-width: 639px) {
-  .product-card {
-    width: 100%;
-    max-width: 320px;
-  }
+  color: var(--pico-white);
 }

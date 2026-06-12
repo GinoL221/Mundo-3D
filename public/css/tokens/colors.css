@@ -25,6 +25,7 @@
   --surface:   var(--pico-dark-blue);
   --border:    #2c3e6a;
   --input-bg:  var(--pico-black);
+  --input-fg:  var(--pico-light);
 }
 
 /* ── Light Theme Overrides ─────────────────────────────────── */
@@ -34,5 +35,6 @@
   --accent:    #8b7355;
   --surface:   #ffffff;
   --border:    #b0a895;
-  --input-bg:  var(--pico-black);
+  --input-bg:  #f0ebe3;
+  --input-fg:  #1a2a4a;
 }

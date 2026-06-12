@@ -1,27 +1,6 @@
-# Cart and Forms Specification
+# Delta for Cart and Forms
 
-## Purpose
-
-BEM cart and form styles replacing Spanish selectors (`.contenedor-carrito`, `.tarjeta-de-productos`, `.containerRegistroLogin`, etc.).
-
-## Requirements
-
-### Requirement: Cart Block
-
-The `.cart` block MUST style the cart page. Elements: `.cart__container` (replaces `.contenedor-carrito`), `.cart__items` (replaces `.tarjeta-de-productos`), `.cart__item` (replaces `article.producto`), `.cart__item-image` (replaces `.imagen-producto`), `.cart__item-details` (replaces `.tarjeta`), `.cart__summary` (replaces `section.total`), `.cart__btn-continue` (replaces `.seguir`), `.cart__btn-checkout` (replaces `.finalizar`).
-
-#### Scenario: Desktop cart layout
-
-- GIVEN a viewport ≥1024px
-- WHEN the cart page renders
-- THEN `.cart__container` MUST flex with `--space-lg` gap
-- AND `.cart__items` takes 55% width, `.cart__summary` takes 40% width with no top border
-
-#### Scenario: Mobile cart layout
-
-- GIVEN a viewport <640px
-- WHEN the cart page renders
-- THEN `.cart__item` MUST flex-direction column and `.cart__item-image` MUST be full width
+## MODIFIED Requirements
 
 ### Requirement: Form Block
 

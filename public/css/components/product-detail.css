@@ -49,18 +49,35 @@
   width: 100%;
   padding: var(--space-sm);
   margin-top: var(--space-md);
-  background-color: var(--pico-black);
-  color: var(--fg);
-  border: 2px solid var(--pico-muted);
+  background-color: var(--input-bg);
+  color: var(--input-fg);
+  border: 2px solid var(--border);
   cursor: pointer;
 }
 
 .product-detail__action:hover {
   background-color: var(--accent);
   border-color: var(--accent);
+  color: var(--pico-white);
 }
 
 .product-detail__info a {
   text-decoration: none;
   color: var(--accent);
+}
+
+/* ── Product Detail Card (2-column at ≥640px) ─────────────── */
+
+.product-detail__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+@media (min-width: 640px) {
+  .product-detail__card {
+    flex-direction: row;
+  }
+  .product-detail__image { flex: 1; }
+  .product-detail__info  { flex: 1; }
 }

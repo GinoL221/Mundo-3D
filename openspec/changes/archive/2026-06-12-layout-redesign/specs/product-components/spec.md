@@ -1,10 +1,6 @@
-# Product Components Specification
+# Delta for Product Components
 
-## Purpose
-
-BEM product card and product grid styles replacing `.contenido_produc`, `.containerProducto`, `.products_container`, and product detail classes.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Product Grid Block
 
@@ -32,22 +28,6 @@ The `.product-grid` block MUST use `display: grid` with `grid-template-columns: 
 - WHEN searching `product-grid.css` for `calc(` or `width:` on `.product-card`
 - THEN zero matches MUST be found for calc-based widths or hardcoded card widths
 
-### Requirement: Product Card Block
-
-The `.product-card` block MUST style each product card with `--surface` background, `2px solid --pico-muted` border, flex-direction column, and hover state changing border to `--accent`. Elements: `.product-card__image` replaces `.containerProductoImg img`, `.product-card__body` replaces `.containerCardFooter`/`.info_produc`, `.product-card__title` for product name, `.product-card__price` for pricing, `.product-card__action` for add-to-cart button.
-
-#### Scenario: Card hover interaction
-
-- GIVEN a `.product-card` element
-- WHEN the user hovers over it
-- THEN the border-color MUST change to `--accent`
-
-#### Scenario: Card add-to-cart button
-
-- GIVEN a `.product-card__action` button
-- WHEN rendered
-- THEN it MUST use `--font-body` at 16px, `--pico-black` background, full width, and hover state changing background to `--accent`
-
 ### Requirement: Product Detail Styles
 
 Product detail page MUST use `.product-detail` block with `.product-detail__title`, `.product-detail__main`, `.product-detail__image`, and `.product-detail__info`. The `.product-detail__card` wrapper MUST use `display: flex` with `gap` at viewport ≥640px to create a 2-column layout (image + info side-by-side). Below 640px the layout MUST stack vertically.
@@ -66,13 +46,3 @@ Product detail page MUST use `.product-detail` block with `.product-detail__titl
 - GIVEN a viewport <640px
 - WHEN a product detail page renders
 - THEN `.product-detail__card` MUST stack vertically (image above info)
-
-### Requirement: Empty State Block
-
-The `.empty-state` block MUST display a centered fallback with 3D printer illustration, `--pico-yellow` heading in `--font-heading`, and `--font-body` message text when no products exist.
-
-#### Scenario: Empty state renders
-
-- GIVEN zero products are available
-- WHEN the homepage renders
-- THEN `.empty-state` MUST center content vertically with min-height 50vh
