@@ -54,7 +54,7 @@
 }
 
 .footer__section ul li a:hover {
-  color: var(--pico-yellow);
+  color: var(--accent);
 }
 
 .footer__bottom {
@@ -86,7 +86,7 @@
 }
 
 .footer__social a:hover {
-  color: var(--pico-yellow);
+  color: var(--accent);
 }
 
 /* ── Responsive: Desktop (>= 1024px) ───────────────────────── */

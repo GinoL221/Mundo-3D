@@ -3,10 +3,7 @@ const path = require('path');
 
 describe('Cart Image Path', () => {
   test('productCart.ejs should use /img/products/ path prefix for product images', () => {
-    const filePath = path.join(
-      __dirname,
-      '../views/products/productCart.ejs'
-    );
+    const filePath = path.join(__dirname, '../views/products/productCart.ejs');
     const content = fs.readFileSync(filePath, 'utf-8');
 
     // The img src should contain /img/products/

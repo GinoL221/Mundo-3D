@@ -24,10 +24,10 @@ describe('Middleware Order', () => {
         .map((layer) => layer.handle.name);
 
       const cookieParserIndex = middlewareNames.findIndex(
-        (name) => name === 'cookieParser' || name === 'cookieparser'
+        (name) => name === 'cookieParser' || name === 'cookieparser',
       );
       const userLoggedIndex = middlewareNames.findIndex(
-        (name) => name === 'userLoggedMiddleware' || name.includes('userLogged')
+        (name) => name === 'userLoggedMiddleware' || name.includes('userLogged'),
       );
 
       // Both must be found and cookie-parser must come BEFORE userLoggedMiddleware
@@ -42,11 +42,9 @@ describe('Middleware Order', () => {
         .filter((layer) => layer.handle && layer.handle.name)
         .map((layer) => layer.handle.name);
 
-      const helmetIndex = middlewareNames.findIndex(
-        (name) => name === 'helmetMiddleware'
-      );
+      const helmetIndex = middlewareNames.findIndex((name) => name === 'helmetMiddleware');
       const corsIndex = middlewareNames.findIndex(
-        (name) => name === 'corsMiddleware' || name === 'cors'
+        (name) => name === 'corsMiddleware' || name === 'cors',
       );
 
       expect(helmetIndex).toBeGreaterThanOrEqual(0);

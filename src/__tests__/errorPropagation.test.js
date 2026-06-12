@@ -70,7 +70,9 @@ describe('Error Propagation', () => {
     });
 
     test('should call next(error) and NOT leak error.message to client', async () => {
-      jest.spyOn(UserService, 'remove').mockRejectedValue(new Error('SENSITIVE_INTERNAL_ERROR_12345'));
+      jest
+        .spyOn(UserService, 'remove')
+        .mockRejectedValue(new Error('SENSITIVE_INTERNAL_ERROR_12345'));
 
       const deleteUser = require('../controllers/users/deleteUser');
 

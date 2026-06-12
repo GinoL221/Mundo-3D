@@ -1,54 +1,31 @@
-# Cart and Forms Specification
+# Cart and Forms Delta Spec
 
 ## Purpose
+Fix button widths and alignment in forms.
 
-BEM cart and form styles replacing Spanish selectors (`.contenedor-carrito`, `.tarjeta-de-productos`, `.containerRegistroLogin`, etc.).
-
-## Requirements
-
-### Requirement: Cart Block
-
-The `.cart` block MUST style the cart page. Elements: `.cart__container` (replaces `.contenedor-carrito`), `.cart__items` (replaces `.tarjeta-de-productos`), `.cart__item` (replaces `article.producto`), `.cart__item-image` (replaces `.imagen-producto`), `.cart__item-details` (replaces `.tarjeta`), `.cart__summary` (replaces `section.total`), `.cart__btn-continue` (replaces `.seguir`), `.cart__btn-checkout` (replaces `.finalizar`).
-
-#### Scenario: Desktop cart layout
-
-- GIVEN a viewport ≥1024px
-- WHEN the cart page renders
-- THEN `.cart__container` MUST flex with `--space-lg` gap
-- AND `.cart__items` takes 55% width, `.cart__summary` takes 40% width with no top border
-
-#### Scenario: Mobile cart layout
-
-- GIVEN a viewport <640px
-- WHEN the cart page renders
-- THEN `.cart__item` MUST flex-direction column and `.cart__item-image` MUST be full width
+## MODIFIED Requirements
 
 ### Requirement: Form Block
-
 The `.form-card` block MUST style login, register, new user, and product form containers with `--surface` background and centered text. All `.form-card__input` and `.form-card__btn` elements MUST use `var(--input-fg)` for text. Buttons MUST span 100% of the inputs' width (either as a single 100% width button or flexed equally inside a 100% width container), with no offset margins.
 
 (Previously: form buttons had right margin and no specified width, making them narrower than inputs.)
 
 #### Scenario: Login form renders
-
 - GIVEN the login page loads
 - WHEN `.form-card--login` renders
 - THEN it MUST be 300px wide with centered text and `--surface` background
 
 #### Scenario: Form input styling
-
 - GIVEN any form inside `.form-card`
 - WHEN `.form-card__input` renders
 - THEN it MUST have `var(--input-bg)` background, `2px solid --pico-muted` border, and `var(--input-fg)` text color
 
 #### Scenario: Form button styling
-
 - GIVEN any `.form-card__btn` in a single-button form
 - WHEN rendered
 - THEN it MUST have 100% width and no right margin
 
 #### Scenario: Register form uses medium variant with actions container
-
 - GIVEN the register page loads
 - WHEN the form container renders
 - THEN it MUST use `.form-card--medium` (400px width)

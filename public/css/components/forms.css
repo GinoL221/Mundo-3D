@@ -85,7 +85,7 @@
   color: var(--input-fg);
   border: 2px solid var(--border);
   cursor: pointer;
-  margin-right: var(--space-sm);
+  width: 100%;
 }
 
 .form-card__btn:hover,
@@ -93,6 +93,20 @@
 .form-card--wide button:hover {
   background-color: var(--accent);
   border-color: var(--accent);
+}
+
+.form-card__actions {
+  display: flex;
+  gap: var(--space-sm);
+  width: 100%;
+  margin-top: var(--space-md);
+}
+
+.form-card__actions .form-card__btn,
+.form-card__actions button {
+  flex: 1;
+  width: auto;
+  margin-right: 0;
 }
 
 /* ── Checkbox ──────────────────────────────────────────────── */

@@ -49,7 +49,7 @@ a {
 
 a:hover,
 a:focus {
-  color: var(--pico-yellow);
+  color: var(--accent);
 }
 
 /* ── Container ─────────────────────────────────────────────── */

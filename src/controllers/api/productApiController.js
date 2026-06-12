@@ -4,8 +4,11 @@ const productApiController = {
   async index(req, res, next) {
     try {
       const products = await ProductService.findAll();
-      const { count, countByCategory, products: mappedProducts } =
-        ProductService.transformWithCategoryCount(products);
+      const {
+        count,
+        countByCategory,
+        products: mappedProducts,
+      } = ProductService.transformWithCategoryCount(products);
       res.json({ count, countByCategory, products: mappedProducts });
     } catch (error) {
       next(error);

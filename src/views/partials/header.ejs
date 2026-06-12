@@ -17,7 +17,6 @@
       <!-- Navigation -->
       <nav class="navbar__list">
         <ul class="navbar__list--left">
-          <li class="navbar__item"><a href="/" class="navbar__link">Inicio</a></li>
           <li class="navbar__item"><a href="/products" class="navbar__link">Productos</a></li>
           <% if (locals.isLogged) { %>
           <li class="navbar__item"><a href="/new-product" class="navbar__link">Nuevo producto</a></li>
@@ -51,7 +50,6 @@
           </li>
           <li class="navbar__item">
             <button class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle Theme">
-              <span class="theme-toggle-btn__text">MODE: DARK</span>
               <span class="theme-toggle-btn__icon">◐</span>
             </button>
           </li>

@@ -6,7 +6,7 @@
 /* ── Alert Block ───────────────────────────────────────────── */
 .alert {
   background-color: var(--pico-purple);
-  color: var(--pico-yellow);
+  color: var(--pico-white);
   text-align: center;
   padding: var(--space-sm) var(--space-md);
   margin: 0;

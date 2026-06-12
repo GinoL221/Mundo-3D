@@ -23,7 +23,7 @@
 .feature-strip__title {
   font-family: var(--font-heading);
   font-size: 16px;
-  color: var(--pico-yellow);
+  color: var(--title-highlight);
   margin-bottom: var(--space-xs);
 }
 

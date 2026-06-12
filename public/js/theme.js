@@ -5,9 +5,9 @@ function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', 'dark');
   }
 
-  const toggleBtnText = document.querySelector('.theme-toggle-btn__text');
-  if (toggleBtnText) {
-    toggleBtnText.textContent = theme === 'light' ? 'MODE: LIGHT' : 'MODE: DARK';
+  const toggleBtnIcon = document.querySelector('.theme-toggle-btn__icon');
+  if (toggleBtnIcon) {
+    toggleBtnIcon.textContent = theme === 'light' ? '☀️' : '🌙';
   }
 }
 

@@ -88,9 +88,9 @@
 .carousel--lcd {
   height: 150px;
   max-height: 150px;
-  background-color: #0f2010; /* default dark mode LCD background */
-  border: 6px double var(--accent);
-  color: #39ff14; /* glowing green */
+  background-color: var(--lcd-bg);
+  border: 6px double var(--lcd-fg);
+  color: var(--lcd-fg);
   font-family: var(--font-heading);
   position: relative;
   overflow: hidden;
@@ -172,8 +172,8 @@
 
 .carousel--lcd .carousel__prev:hover,
 .carousel--lcd .carousel__next:hover {
-  background-color: currentColor;
-  color: #0f2010;
+  background-color: var(--lcd-fg);
+  color: var(--lcd-bg);
 }
 
 

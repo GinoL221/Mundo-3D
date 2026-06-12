@@ -17,24 +17,33 @@
   --pico-sky:          #29adff;
 
   /* ── Semantic Mappings ─────────────────────────────────── */
-  --bg:        #0d1117;
-  --fg:        var(--pico-light);
-  --accent:    var(--pico-dark-green);
-  --danger:    var(--pico-red);
+  --bg:        #000000;
+  --fg:        #ffffff;
+  --accent:    #ed407f;
+  --danger:    #8a0032;
   --warning:   var(--pico-orange);
-  --surface:   var(--pico-dark-blue);
-  --border:    #2c3e6a;
-  --input-bg:  var(--pico-black);
-  --input-fg:  var(--pico-light);
+  --surface:   #121214;
+  --border:    #2b2c2f;
+  --input-bg:  #18191b;
+  --input-fg:  #ffffff;
+
+  --title-highlight:   #ed407f;
+  --lcd-bg:            #121214;
+  --lcd-fg:            #ed407f;
 }
 
 /* ── Light Theme Overrides ─────────────────────────────────── */
 [data-theme="light"] {
-  --bg:        #f5f0e8;
-  --fg:        #1a2a4a;
-  --accent:    #8b7355;
+  --bg:        #c2c3c7;
+  --fg:        #000000;
+  --accent:    #bf1251;
+  --danger:    #8a0032;
   --surface:   #ffffff;
-  --border:    #b0a895;
-  --input-bg:  #f0ebe3;
-  --input-fg:  #1a2a4a;
+  --border:    #a0a1a5;
+  --input-bg:  #ffffff;
+  --input-fg:  #000000;
+
+  --title-highlight:   #bf1251;
+  --lcd-bg:            #ffffff;
+  --lcd-fg:            #bf1251;
 }

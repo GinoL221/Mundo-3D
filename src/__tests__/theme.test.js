@@ -15,21 +15,21 @@ describe('Theme Toggle Functionality', () => {
       },
       removeAttribute(name) {
         delete this.attributes[name];
-      }
+      },
     };
 
     mockButtonText = {
-      textContent: ''
+      textContent: '',
     };
 
     global.document = {
       documentElement: mockHtml,
       querySelector(selector) {
-        if (selector === '.theme-toggle-btn__text') {
+        if (selector === '.theme-toggle-btn__icon') {
           return mockButtonText;
         }
         return null;
-      }
+      },
     };
 
     const store = {};
@@ -42,7 +42,7 @@ describe('Theme Toggle Functionality', () => {
       },
       clear() {
         for (let k in store) delete store[k];
-      }
+      },
     };
   });
 
@@ -51,30 +51,30 @@ describe('Theme Toggle Functionality', () => {
     delete global.localStorage;
   });
 
-  test('should apply light theme correctly to documentElement and update button text', () => {
+  test('should apply light theme correctly to documentElement and update button icon', () => {
     applyTheme('light');
     expect(mockHtml.getAttribute('data-theme')).toBe('light');
-    expect(mockButtonText.textContent).toBe('MODE: LIGHT');
+    expect(mockButtonText.textContent).toBe('☀️');
   });
 
-  test('should apply dark theme correctly to documentElement and update button text', () => {
+  test('should apply dark theme correctly to documentElement and update button icon', () => {
     applyTheme('dark');
     expect(mockHtml.getAttribute('data-theme')).toBe('dark');
-    expect(mockButtonText.textContent).toBe('MODE: DARK');
+    expect(mockButtonText.textContent).toBe('🌙');
   });
 
   test('should bind click listener on DOMContentLoaded and toggle theme when clicked', () => {
     jest.resetModules();
-    
+
     let clickCallback;
     const mockButton = {
       addEventListener(event, callback) {
         if (event === 'click') {
           clickCallback = callback;
         }
-      }
+      },
     };
-    
+
     let domContentLoadedCallback;
     global.document = {
       documentElement: mockHtml,
@@ -90,28 +90,28 @@ describe('Theme Toggle Functionality', () => {
         return null;
       },
       querySelector(selector) {
-        if (selector === '.theme-toggle-btn__text') {
+        if (selector === '.theme-toggle-btn__icon') {
           return mockButtonText;
         }
         return null;
-      }
+      },
     };
-    
+
     // Requiring registers the listener
     require('../../public/js/theme');
-    
+
     // Simulate DOMContentLoaded
     expect(domContentLoadedCallback).toBeDefined();
     domContentLoadedCallback();
-    
+
     // Verify click event bound
     expect(clickCallback).toBeDefined();
-    
+
     // Verify clicking toggles theme light <-> dark
     clickCallback();
     expect(mockHtml.getAttribute('data-theme')).toBe('light');
     expect(localStorage.getItem('theme')).toBe('light');
-    
+
     clickCallback();
     expect(mockHtml.getAttribute('data-theme')).toBe('dark');
     expect(localStorage.getItem('theme')).toBe('dark');

@@ -8,24 +8,22 @@ Token-driven CSS architecture replacing the monolithic `styles.css` with modular
 
 ### Requirement: Design Token Files
 
-The system MUST provide three token files under `public/css/tokens/`: `colors.css` (PICO-8 palette + semantic custom properties including `[data-theme="light"]` overrides AND the `--input-fg` token with light-mode override for `--input-bg`), `typography.css` (font scale: `--font-heading` Press Start 2P, `--font-body` VT323, heading sizes), and `spacing.css` (8px grid: `--space-xs` through `--space-2xl`). Token files MUST be loaded before base and component files in `head.ejs`.
+The system MUST provide token files under `public/css/tokens/`: `colors.css` (including `--input-fg`, `--title-highlight`, `--lcd-bg`, and `--lcd-fg`), `typography.css`, and `spacing.css`.
 
-(Previously: colors.css listed semantic custom properties without `--input-fg` or light-mode `--input-bg` override.)
+(Previously: colors.css listed custom properties without `--title-highlight`, `--lcd-bg`, and `--lcd-fg`.)
 
 #### Scenario: Tokens cascade correctly
 
-- GIVEN `head.ejs` renders its `<link>` tags in order
-- WHEN the browser processes the CSS cascade
-- THEN `tokens/colors.css` MUST be linked before `base/reset.css`
-- AND all semantic custom properties (`--bg`, `--fg`, `--accent`, `--danger`, `--warning`, `--surface`, `--input-fg`) MUST resolve to PICO-8 hex values in dark mode
+- GIVEN `head.ejs` loads token files
+- WHEN processing CSS cascade
+- THEN `--title-highlight`, `--lcd-bg`, and `--lcd-fg` MUST resolve to dark-mode defaults
 
-#### Scenario: Light theme tokens override correctly
+#### Scenario: Light theme overrides
 
 - GIVEN `data-theme="light"` is set on `<html>`
-- WHEN `[data-theme="light"]` selectors in `colors.css` are evaluated
-- THEN `--bg` MUST resolve to `#f5f0e8`, `--fg` to `#1a2a4a`, `--accent` to `#8b7355`, `--surface` to `#ffffff`
-- AND `--input-bg` MUST resolve to a non-black value
-- AND `--input-fg` MUST resolve to a dark color legible on the light-mode `--input-bg`
+- WHEN colors.css is evaluated
+- THEN `--title-highlight` MUST resolve to `#1a2a4a`
+- AND `--lcd-bg` and `--lcd-fg` MUST resolve to classic Game Boy colors (#8bac0f and #0f380f)
 
 ### Requirement: Breakpoint Token Consolidation
 
@@ -132,3 +130,21 @@ The system MUST define a `--input-fg` custom property in `colors.css` for both d
 - WHEN `[data-theme="light"]` selectors in `colors.css` are evaluated
 - THEN `--input-bg` MUST resolve to a non-black background color
 - AND `--input-fg` MUST resolve to a dark color legible on that background
+
+### Requirement: Header Grid and Theme Toggle
+
+The header navbar MUST use a CSS Grid layout on viewports ≥640px to center the search bar. The theme toggle MUST NOT display text labels and MUST display only the theme icon.
+
+#### Scenario: Header grid on desktop
+
+- GIVEN a viewport ≥640px
+- WHEN the header renders
+- THEN `.navbar__inner` MUST display as grid centering the search bar
+- AND logo MUST align left, menu right
+
+#### Scenario: Theme toggle icon-only
+
+- GIVEN the header renders
+- WHEN inspecting the theme toggle button
+- THEN it MUST NOT contain a text element
+- AND the icon container MUST display the current theme icon
