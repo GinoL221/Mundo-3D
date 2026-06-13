@@ -33,13 +33,31 @@ Controllers and routes MUST NOT import `bcryptjs` directly. All password verific
 - THEN it SHALL call `UserService.verifyPassword(password, user.PasswordUser)`
 - AND it MUST NOT import `bcryptjs` or call `bcrypt.compareSync`
 
+### Requirement: Unified Login Error Rendering
+
+`processLogin.js` MUST simplify and unify credentials validation error rendering, returning a generic credential error to prevent user existence leakage.
+
+#### Scenario: Credential verification failure renders generic error
+
+- GIVEN a login attempt with invalid email or incorrect password
+- WHEN credential check fails
+- THEN the system SHALL render `users/login` with a single unified error
+- AND it MUST NOT leak whether the email exists in the database
+
+#### Scenario: Input validation failure renders field errors
+
+- GIVEN input fields fail basic validation checks (e.g., empty fields)
+- WHEN validation check runs
+- THEN the system SHALL render `users/login` with field-specific errors and `oldData`
+
 ### Requirement: Render Without path.join
 
-`processLogin.js` MUST use `res.render('users/login')` instead of `res.render(path.join(__dirname, '../../views/users/login.ejs'))`.
+All view rendering MUST use relative view paths instead of absolute paths or `path.join(__dirname, ...)`. Specifically, `processLogin.js` MUST use `res.render('users/login')` and `getAllProducts.js` MUST use `res.render('products/products')`.
 
-#### Scenario: Login error renders with view name
+#### Scenario: View rendering uses relative paths
 
-- GIVEN a login attempt fails validation or credentials
-- WHEN `processLogin` renders the login page
-- THEN it SHALL call `res.render('users/login', { errors, oldData })`
-- AND it MUST NOT use `path.join(__dirname, ...)` for the view path
+- GIVEN a request that triggers `processLogin` or `getAllProducts`
+- WHEN rendering is initiated
+- THEN it SHALL render using `'users/login'` or `'products/products'`
+- AND it MUST NOT use absolute paths or `path.join`
+

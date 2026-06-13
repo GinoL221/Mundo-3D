@@ -1,5 +1,6 @@
 const bcryptjs = require('bcryptjs');
-const { User } = require('../database/models/db');
+const { User, RememberToken } = require('../database/models/db');
+const crypto = require('crypto');
 
 const UserService = {
   async findAll() {
@@ -50,6 +51,42 @@ const UserService = {
 
   verifyPassword(plainPassword, hashedPassword) {
     return bcryptjs.compareSync(plainPassword, hashedPassword);
+  },
+
+  async createRememberToken(userId, plainToken, durationSeconds) {
+    const hashedToken = crypto.createHash('sha256').update(plainToken).digest('hex');
+    const expiresAt = new Date(Date.now() + durationSeconds * 1000);
+
+    return RememberToken.create({
+      IDUser: userId,
+      TokenHash: hashedToken,
+      ExpiresAt: expiresAt,
+    });
+  },
+
+  async verifyRememberToken(plainToken) {
+    const hashedToken = crypto.createHash('sha256').update(plainToken).digest('hex');
+    const tokenRecord = await RememberToken.findOne({
+      where: { TokenHash: hashedToken },
+    });
+
+    if (!tokenRecord) {
+      return null;
+    }
+
+    if (new Date() > new Date(tokenRecord.ExpiresAt)) {
+      await tokenRecord.destroy();
+      return null;
+    }
+
+    return this.findById(tokenRecord.IDUser);
+  },
+
+  async deleteRememberToken(plainToken) {
+    const hashedToken = crypto.createHash('sha256').update(plainToken).digest('hex');
+    return RememberToken.destroy({
+      where: { TokenHash: hashedToken },
+    });
   },
 };
 

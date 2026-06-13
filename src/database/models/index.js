@@ -15,15 +15,19 @@ function initializeModels() {
   const ShoppingCartModel = require('./ShoppingCart')(sequelize, Sequelize.DataTypes);
   const CategoryModel = require('./Category')(sequelize, Sequelize.DataTypes);
   const FranchiseModel = require('./Franchise')(sequelize, Sequelize.DataTypes);
+  const RememberTokenModel = require('./RememberToken')(sequelize, Sequelize.DataTypes);
 
   db['User'] = UserModel;
   db['Product'] = ProductModel;
   db['ShoppingCart'] = ShoppingCartModel;
   db['Category'] = CategoryModel;
   db['Franchise'] = FranchiseModel;
+  db['RememberToken'] = RememberTokenModel;
 
   UserModel.hasMany(ShoppingCartModel, { foreignKey: 'IDUser' });
   ShoppingCartModel.belongsTo(UserModel, { foreignKey: 'IDUser' });
+  UserModel.hasMany(RememberTokenModel, { foreignKey: 'IDUser' });
+  RememberTokenModel.belongsTo(UserModel, { foreignKey: 'IDUser' });
   ProductModel.hasMany(ShoppingCartModel, {
     foreignKey: 'IDProduct',
     as: 'ShoppingCarts',

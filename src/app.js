@@ -1,3 +1,12 @@
+if (process.env.NODE_ENV !== 'test') {
+  if (!process.env.SESSION_SECRET) {
+    throw new Error('SESSION_SECRET is required but not set in environment.');
+  }
+  if (!process.env.COOKIE_SECRET) {
+    throw new Error('COOKIE_SECRET is required but not set in environment.');
+  }
+}
+
 const express = require('express');
 const morgan = require('morgan');
 const methodOverride = require('method-override');
@@ -45,12 +54,12 @@ server.use(express.json());
 server.use(methodOverride('_method'));
 
 // 7. Cookie parsing (MUST be before session and auth)
-server.use(cookies());
+server.use(cookies(process.env.COOKIE_SECRET || 'test_cookie_secret'));
 
 // 8. Session management
 server.use(
   session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || 'test_session_secret',
     resave: false,
     saveUninitialized: false,
     cookie: {
