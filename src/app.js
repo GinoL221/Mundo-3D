@@ -38,7 +38,18 @@ const { csrfProtection } = require('./middlewares/csrf.js');
 server.use(helmet());
 
 // 2. CORS headers
-server.use(cors());
+server.use(
+  cors({
+    origin: (origin, callback) => {
+      const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
+      if (!origin || origin === allowedOrigin) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
+  }),
+);
 
 // 3. Static files
 server.use(express.static(path.join(__dirname, '../public')));

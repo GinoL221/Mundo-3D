@@ -168,6 +168,57 @@ describe('ProductService', () => {
       expect(existingProduct.Price).toBe(45);
       expect(existingProduct.DescriptionProduct).toBe('Keep desc');
     });
+
+    it('updates optional fields Image, IDCategory, IDFranchise and returns updated product', async () => {
+      const existingProduct = {
+        IDProduct: 1,
+        NameProduct: 'Old Name',
+        Price: 50,
+        DescriptionProduct: 'Old desc',
+        Image: 'old.jpg',
+        IDCategory: 2,
+        IDFranchise: 3,
+        save: jest.fn().mockResolvedValue(undefined),
+      };
+      Product.findByPk.mockResolvedValue(existingProduct);
+
+      const result = await ProductService.update(1, {
+        Image: 'new.jpg',
+        IDCategory: 4,
+        IDFranchise: 5,
+      });
+
+      expect(result).toEqual(existingProduct);
+      expect(existingProduct.Image).toBe('new.jpg');
+      expect(existingProduct.IDCategory).toBe(4);
+      expect(existingProduct.IDFranchise).toBe(5);
+      expect(existingProduct.save).toHaveBeenCalled();
+    });
+
+    it('preserves optional fields Image, IDCategory, IDFranchise when not provided in data', async () => {
+      const existingProduct = {
+        IDProduct: 1,
+        NameProduct: 'Old Name',
+        Price: 50,
+        DescriptionProduct: 'Old desc',
+        Image: 'old.jpg',
+        IDCategory: 2,
+        IDFranchise: 3,
+        save: jest.fn().mockResolvedValue(undefined),
+      };
+      Product.findByPk.mockResolvedValue(existingProduct);
+
+      const result = await ProductService.update(1, {
+        NameProduct: 'New Name',
+      });
+
+      expect(result).toEqual(existingProduct);
+      expect(existingProduct.NameProduct).toBe('New Name');
+      expect(existingProduct.Image).toBe('old.jpg');
+      expect(existingProduct.IDCategory).toBe(2);
+      expect(existingProduct.IDFranchise).toBe(3);
+      expect(existingProduct.save).toHaveBeenCalled();
+    });
   });
 
   describe('findLatest', () => {

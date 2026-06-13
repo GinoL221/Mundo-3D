@@ -40,6 +40,9 @@ const ProductService = {
     product.NameProduct = data.NameProduct ?? product.NameProduct;
     product.Price = data.Price ?? product.Price;
     product.DescriptionProduct = data.DescriptionProduct ?? product.DescriptionProduct;
+    product.Image = data.Image ?? product.Image;
+    product.IDCategory = data.IDCategory ?? product.IDCategory;
+    product.IDFranchise = data.IDFranchise ?? product.IDFranchise;
 
     await product.save();
     return product;
