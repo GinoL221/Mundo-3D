@@ -11,18 +11,19 @@
 
       <main class="product-detail__main">
         <div class="product-detail__card">
+          <a href="/products" class="product-detail__back-link">← Volver a productos</a>
           <img src="/img/products/<%= product.Image %>" alt="<%= product.NameProduct %>" class="product-detail__image">
           <section class="product-detail__info">
             <h3>
               <%= product.NameProduct %>
             </h3>
-            <p>Precio: $<%= product.Price %>
+            <p class="price price--lg">Precio: $<%= product.Price %>
             </p>
             <p>
               <%= product.DescriptionProduct %>
             </p>
-            <a href="/productCart"><button class="product-detail__action">COMPRAR</button></a>
-            <a href="/productCart"><button class="product-detail__action">AGREGAR AL CARRITO</button></a>
+            <a href="/productCart?action=buy" class="product-detail__action">COMPRAR</a>
+            <a href="/productCart?action=add" class="product-detail__action product-detail__action--secondary">AGREGAR AL CARRITO</a>
           </section>
         </div>
       </main>
