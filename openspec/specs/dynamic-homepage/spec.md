@@ -8,17 +8,16 @@ Replaces the hardcoded index page with a dynamic one powered by ProductService, 
 
 ### Requirement: Dynamic Product Listing on Homepage
 
-`index.ejs` MUST fetch products via `ProductService.findAll()` (or `findLatest()`) and render product cards with name, price, category illustration, and link to detail. All product grid elements MUST use the canonical BEM class `.product-grid` for the grid container and `.product-card` for individual cards.
+`index.ejs` MUST fetch products via `ProductService.findAll()` (or `findLatest()`) and render product cards with name, price, category illustration, and link to detail. The detail link path MUST be `/product/:id` (where `:id` is the product ID). All product grid elements MUST use the canonical BEM class `.product-grid` for the grid container and `.product-card` for individual cards.
 
-(Previously: Referenced legacy mixed class names in EJS markup.)
+(Previously: The detail link path incorrectly linked to `/products/:id`.)
 
 #### Scenario: Products displayed when available
 
 - GIVEN the database contains one or more active products
 - WHEN a user visits `/` (index route)
 - THEN the page MUST render a product card for each product with its name, price, and category illustration
-- AND each card MUST link to the product detail page
-- AND the grid container MUST use `.product-grid` class
+- AND each card MUST link to `/product/:id` where `:id` is the product ID
 
 #### Scenario: Products not found shows empty state
 
