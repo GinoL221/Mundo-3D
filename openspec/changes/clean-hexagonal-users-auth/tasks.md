@@ -15,10 +15,10 @@
 ---
 
 ## Phase 1: Domain & Ports (PR 1)
-- [ ] Define exceptions `UserAlreadyExistsException.ts` and `InvalidCredentialsException.ts` in `src/domain/`.
-- [ ] Create domain entities `User.ts` and `RememberToken.ts` under `src/domain/entities/`.
-- [ ] Define interfaces `IUserRepository.ts` and `IRememberTokenRepository.ts` under `src/domain/ports/`.
-- [ ] Define interfaces `IPasswordHasher.ts` and `ITokenHasher.ts` under `src/domain/ports/`.
+- [x] Define exceptions `UserAlreadyExistsException.ts` and `InvalidCredentialsException.ts` in `src/domain/`.
+- [x] Create domain entities `User.ts` and `RememberToken.ts` under `src/domain/entities/`.
+- [x] Define interfaces `IUserRepository.ts` and `IRememberTokenRepository.ts` under `src/domain/ports/`.
+- [x] Define interfaces `IPasswordHasher.ts` and `ITokenHasher.ts` under `src/domain/ports/`.
 
 ## Phase 2: DTOs & Application Setup (PR 2)
 - [ ] Create `UserDTO.ts` and `RememberTokenDTO.ts` in `src/application/dtos/` preserving legacy PascalCase properties.
