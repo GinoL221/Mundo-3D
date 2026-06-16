@@ -131,3 +131,14 @@ dist
 
 # Local AI runtime state
 .atl/
+
+# Test results
+test-results.json
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor configuration
+.vscode/
+.idea/
