@@ -34,10 +34,10 @@
 - [x] **Task 3.5**: Write unit tests for domain entities and use cases using mocked repositories in `src/application/__tests__/`.
 
 ## Phase 4: Infrastructure Layer & Integration Tests
-- [ ] **Task 4.1**: Implement database repository adapters in `src/infrastructure/repositories/` using Sequelize models (mapping to domain entities).
-- [ ] **Task 4.2**: Write integration tests for Sequelize repository adapters using SQLite in-memory DB or mocked Sequelize models in `src/infrastructure/repositories/__tests__/`.
-- [ ] **Task 4.3**: Implement `ProductController` in `src/infrastructure/controllers/ProductController.ts` with syntactic validations.
-- [ ] **Task 4.4**: Integrate Express routes inside `src/infrastructure/routes/productRoutes.ts` with dependency injection.
+- [x] **Task 4.1**: Implement database repository adapters in `src/infrastructure/repositories/` using Sequelize models (mapping to domain entities).
+- [x] **Task 4.2**: Write integration tests for Sequelize repository adapters using SQLite in-memory DB or mocked Sequelize models in `src/infrastructure/repositories/__tests__/`.
+- [x] **Task 4.3**: Implement `ProductController` in `src/infrastructure/controllers/ProductController.ts` with syntactic validations.
+- [x] **Task 4.4**: Integrate Express routes inside `src/infrastructure/routes/productRoutes.ts` with dependency injection.
 
 ## Phase 5: Verification & Cleanup
 - [ ] **Task 5.1**: Run full test suite with coverage checks (coverage threshold >= 80%).
