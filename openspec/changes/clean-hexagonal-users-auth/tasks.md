@@ -21,13 +21,13 @@
 - [x] Define interfaces `IPasswordHasher.ts` and `ITokenHasher.ts` under `src/domain/ports/`.
 
 ## Phase 2: DTOs & Application Setup (PR 2)
-- [ ] Create `UserDTO.ts` and `RememberTokenDTO.ts` in `src/application/dtos/` preserving legacy PascalCase properties.
+- [x] Create `UserDTO.ts` and `RememberTokenDTO.ts` in `src/application/dtos/` preserving legacy PascalCase properties.
 
 ## Phase 3: Application Use Cases & Unit Tests (PR 2)
-- [ ] Implement `RegisterUserUseCase.ts` and unit tests in `src/application/__tests__/RegisterUserUseCase.test.ts`.
-- [ ] Implement `AuthenticateUserUseCase.ts` and unit tests in `src/application/__tests__/AuthenticateUserUseCase.test.ts`.
-- [ ] Implement `CreateRememberTokenUseCase.ts`, `VerifyRememberTokenUseCase.ts`, `DeleteRememberTokenUseCase.ts`.
-- [ ] Implement unit tests for all remember token use cases in `src/application/__tests__/RememberTokenUseCases.test.ts`.
+- [x] Implement `RegisterUserUseCase.ts` and unit tests in `src/application/__tests__/RegisterUserUseCase.test.ts`.
+- [x] Implement `AuthenticateUserUseCase.ts` and unit tests in `src/application/__tests__/AuthenticateUserUseCase.test.ts`.
+- [x] Implement `CreateRememberTokenUseCase.ts`, `VerifyRememberTokenUseCase.ts`, `DeleteRememberTokenUseCase.ts`.
+- [x] Implement unit tests for all remember token use cases in `src/application/__tests__/RememberTokenUseCases.test.ts`.
 
 ## Phase 4: Infrastructure Adapters & Tests (PR 3 & PR 4)
 - [ ] Implement `BcryptPasswordHasher.ts` and `Sha256TokenHasher.ts` in `src/infrastructure/security/`.

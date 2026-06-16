@@ -1,0 +1,171 @@
+import { CreateRememberTokenUseCase } from '../use-cases/CreateRememberTokenUseCase';
+import { VerifyRememberTokenUseCase } from '../use-cases/VerifyRememberTokenUseCase';
+import { DeleteRememberTokenUseCase } from '../use-cases/DeleteRememberTokenUseCase';
+import { IRememberTokenRepository } from '../../domain/ports/IRememberTokenRepository';
+import { IUserRepository } from '../../domain/ports/IUserRepository';
+import { ITokenHasher } from '../../domain/ports/ITokenHasher';
+import { RememberToken } from '../../domain/entities/RememberToken';
+import { User } from '../../domain/entities/User';
+
+describe('RememberToken Use Cases', () => {
+  let mockRememberTokenRepo: jest.Mocked<IRememberTokenRepository>;
+  let mockUserRepo: jest.Mocked<IUserRepository>;
+  let mockTokenHasher: jest.Mocked<ITokenHasher>;
+
+  beforeEach(() => {
+    mockRememberTokenRepo = {
+      create: jest.fn(),
+      findByHash: jest.fn(),
+      deleteByHash: jest.fn(),
+    } as unknown as jest.Mocked<IRememberTokenRepository>;
+
+    mockUserRepo = {
+      findById: jest.fn(),
+      findByEmail: jest.fn(),
+      create: jest.fn(),
+    } as unknown as jest.Mocked<IUserRepository>;
+
+    mockTokenHasher = {
+      hash: jest.fn(),
+    } as unknown as jest.Mocked<ITokenHasher>;
+  });
+
+  describe('CreateRememberTokenUseCase', () => {
+    it('should create a remember token and return the DTO', async () => {
+      const useCase = new CreateRememberTokenUseCase(mockRememberTokenRepo, mockTokenHasher);
+
+      mockTokenHasher.hash.mockReturnValue('hashedPlainToken123');
+
+      const expectedDate = new Date();
+      const mockCreated = new RememberToken(
+        99,
+        'hashedPlainToken123',
+        10,
+        expectedDate,
+        expectedDate
+      );
+
+      mockRememberTokenRepo.create.mockResolvedValue(mockCreated);
+
+      const result = await useCase.execute({
+        IDUser: 10,
+        PlainToken: 'myPlainToken',
+        DurationSeconds: 3600,
+      });
+
+      expect(result).toEqual({
+        IDRememberToken: 99,
+        TokenHash: 'hashedPlainToken123',
+        IDUser: 10,
+        ExpiryDate: expectedDate,
+        CreatedAt: expectedDate,
+      });
+
+      expect(mockTokenHasher.hash).toHaveBeenCalledWith('myPlainToken');
+      expect(mockRememberTokenRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          TokenHash: 'hashedPlainToken123',
+          IDUser: 10,
+          ExpiryDate: expect.any(Date),
+        })
+      );
+    });
+  });
+
+  describe('VerifyRememberTokenUseCase', () => {
+    let useCase: VerifyRememberTokenUseCase;
+
+    beforeEach(() => {
+      useCase = new VerifyRememberTokenUseCase(
+        mockRememberTokenRepo,
+        mockUserRepo,
+        mockTokenHasher
+      );
+    });
+
+    it('should return null if remember token is not found in database', async () => {
+      mockTokenHasher.hash.mockReturnValue('hashedPlainToken');
+      mockRememberTokenRepo.findByHash.mockResolvedValue(null);
+
+      const result = await useCase.execute('myPlainToken');
+
+      expect(result).toBeNull();
+      expect(mockTokenHasher.hash).toHaveBeenCalledWith('myPlainToken');
+      expect(mockRememberTokenRepo.findByHash).toHaveBeenCalledWith('hashedPlainToken');
+      expect(mockUserRepo.findById).not.toHaveBeenCalled();
+    });
+
+    it('should delete token and return null if token is expired', async () => {
+      mockTokenHasher.hash.mockReturnValue('hashedPlainToken');
+      
+      const expiredDate = new Date(Date.now() - 10000); // 10s in the past
+      const expiredToken = new RememberToken(1, 'hashedPlainToken', 5, expiredDate);
+      
+      mockRememberTokenRepo.findByHash.mockResolvedValue(expiredToken);
+      mockRememberTokenRepo.deleteByHash.mockResolvedValue(true);
+
+      const result = await useCase.execute('myPlainToken');
+
+      expect(result).toBeNull();
+      expect(mockRememberTokenRepo.deleteByHash).toHaveBeenCalledWith('hashedPlainToken');
+      expect(mockUserRepo.findById).not.toHaveBeenCalled();
+    });
+
+    it('should return user DTO if token is valid and user exists', async () => {
+      mockTokenHasher.hash.mockReturnValue('hashedPlainToken');
+      
+      const futureDate = new Date(Date.now() + 10000); // 10s in the future
+      const validToken = new RememberToken(1, 'hashedPlainToken', 5, futureDate);
+      
+      const user = new User(5, 'Alice', 'Smith', 'alice@example.com', 'hashedPass', 'alice.png', 2, 'VIP');
+
+      mockRememberTokenRepo.findByHash.mockResolvedValue(validToken);
+      mockUserRepo.findById.mockResolvedValue(user);
+
+      const result = await useCase.execute('myPlainToken');
+
+      expect(result).toEqual({
+        IDUser: 5,
+        FirstName: 'Alice',
+        LastName: 'Smith',
+        Email: 'alice@example.com',
+        Image: 'alice.png',
+        IDRole: 2,
+        Category: 'VIP',
+      });
+
+      expect(mockUserRepo.findById).toHaveBeenCalledWith(5);
+      expect(mockRememberTokenRepo.deleteByHash).not.toHaveBeenCalled();
+    });
+
+    it('should return null if user is not found in database', async () => {
+      mockTokenHasher.hash.mockReturnValue('hashedPlainToken');
+      
+      const futureDate = new Date(Date.now() + 10000);
+      const validToken = new RememberToken(1, 'hashedPlainToken', 5, futureDate);
+
+      mockRememberTokenRepo.findByHash.mockResolvedValue(validToken);
+      mockUserRepo.findById.mockResolvedValue(null);
+
+      const result = await useCase.execute('myPlainToken');
+
+      expect(result).toBeNull();
+      expect(mockUserRepo.findById).toHaveBeenCalledWith(5);
+    });
+  });
+
+  describe('DeleteRememberTokenUseCase', () => {
+    it('should hash token and call repo deletion', async () => {
+      const useCase = new DeleteRememberTokenUseCase(mockRememberTokenRepo, mockTokenHasher);
+
+      mockTokenHasher.hash.mockReturnValue('hashedTokenToDelete');
+      mockRememberTokenRepo.deleteByHash.mockResolvedValue(true);
+
+      const result = await useCase.execute('plainTokenToDelete');
+
+      expect(result).toBe(true);
+      expect(mockTokenHasher.hash).toHaveBeenCalledWith('plainTokenToDelete');
+      expect(mockRememberTokenRepo.deleteByHash).toHaveBeenCalledWith('hashedTokenToDelete');
+    });
+  });
+});
