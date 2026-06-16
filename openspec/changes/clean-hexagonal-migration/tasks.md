@@ -26,18 +26,19 @@
 - [x] **Task 2.3**: Implement `Product` domain entity in `src/domain/entities/Product.ts` with association mappings.
 - [x] **Task 2.4**: Define repository ports: `IProductRepository.ts`, `ICategoryRepository.ts`, `IFranchiseRepository.ts` in `src/domain/ports/`.
 
-## Phase 3: Application Layer
+## Phase 3: Application Layer & Unit Tests
 - [ ] **Task 3.1**: Define data transfer objects (`ProductDTO.ts`, `CategoryDTO.ts`) in `src/application/dtos/`.
 - [ ] **Task 3.2**: Implement `ListProducts` use case mapping domain entities to DTOs and calculating category counters.
 - [ ] **Task 3.3**: Implement `GetProductById` use case returning product details DTO or throwing exception if not found.
 - [ ] **Task 3.4**: Implement use cases for product creation, modification, and deletion.
+- [ ] **Task 3.5**: Write unit tests for domain entities and use cases using mocked repositories in `src/application/__tests__/`.
 
-## Phase 4: Infrastructure Layer
+## Phase 4: Infrastructure Layer & Integration Tests
 - [ ] **Task 4.1**: Implement database repository adapters in `src/infrastructure/repositories/` using Sequelize models (mapping to domain entities).
-- [ ] **Task 4.2**: Implement `ProductController` in `src/infrastructure/controllers/ProductController.ts` with syntactic validations.
-- [ ] **Task 4.3**: Integrate Express routes inside `src/infrastructure/routes/productRoutes.ts` with dependency injection.
+- [ ] **Task 4.2**: Write integration tests for Sequelize repository adapters using SQLite in-memory DB or mocked Sequelize models in `src/infrastructure/repositories/__tests__/`.
+- [ ] **Task 4.3**: Implement `ProductController` in `src/infrastructure/controllers/ProductController.ts` with syntactic validations.
+- [ ] **Task 4.4**: Integrate Express routes inside `src/infrastructure/routes/productRoutes.ts` with dependency injection.
 
-## Phase 5: Testing & Verification
-- [ ] **Task 5.1**: Write unit tests for domain entities and use cases using mocked repositories.
-- [ ] **Task 5.2**: Write integration tests for Sequelize repository adapters using SQLite in-memory DB.
-- [ ] **Task 5.3**: Run full test suite with coverage checks (coverage threshold >= 80%).
+## Phase 5: Verification & Cleanup
+- [ ] **Task 5.1**: Run full test suite with coverage checks (coverage threshold >= 80%).
+- [ ] **Task 5.2**: Update docs/comments and clean up any unused legacy files in the Product domain.
