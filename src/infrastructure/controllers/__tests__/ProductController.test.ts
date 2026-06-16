@@ -1,6 +1,11 @@
 import { ProductController } from '../ProductController';
 import { Request, Response } from 'express';
 import path from 'path';
+import { validationResult } from 'express-validator';
+
+jest.mock('express-validator', () => ({
+  validationResult: jest.fn(),
+}));
 
 describe('ProductController', () => {
   let controller: ProductController;
@@ -12,7 +17,7 @@ describe('ProductController', () => {
   let mockCategoryRepo: any;
   let mockFranchiseRepo: any;
 
-  let req: Partial<Request>;
+  let req: Partial<Request> & { file?: { filename: string } };
   let res: Partial<Response>;
   let next: jest.Mock;
 
@@ -104,7 +109,7 @@ describe('ProductController', () => {
 
       expect(mockGetProductByIdUseCase.execute).toHaveBeenCalledWith(1);
       expect(res.render).toHaveBeenCalledWith(
-        path.join(__dirname, '../../views/products/productDetail.ejs'),
+        path.join(__dirname, '../../../views/products/productDetail.ejs'),
         { product: mockProduct }
       );
     });
@@ -116,7 +121,7 @@ describe('ProductController', () => {
       await controller.getProductById(req as Request, res as Response, next);
 
       expect(res.render).toHaveBeenCalledWith(
-        path.join(__dirname, '../../views/404NotFound.ejs'),
+        path.join(__dirname, '../../../views/404NotFound.ejs'),
         { message: 'Product not found' }
       );
     });
@@ -132,7 +137,7 @@ describe('ProductController', () => {
       await controller.formNewProduct(req as Request, res as Response, next);
 
       expect(res.render).toHaveBeenCalledWith(
-        path.join(__dirname, '../../views/products/newProduct.ejs'),
+        path.join(__dirname, '../../../views/products/newProduct.ejs'),
         { categories: mockCategories, franchises: mockFranchises }
       );
     });
@@ -141,10 +146,9 @@ describe('ProductController', () => {
   describe('postNewProduct', () => {
     it('should redirect to /products on successful creation', async () => {
       // Mock validationResult to be empty
-      const expressValidator = require('express-validator');
-      jest.spyOn(expressValidator, 'validationResult').mockReturnValue({
+      (validationResult as unknown as jest.Mock).mockReturnValue({
         isEmpty: () => true,
-      } as any);
+      });
 
       req.body = {
         productName: 'New Product',
@@ -153,11 +157,11 @@ describe('ProductController', () => {
         category: '1',
         franchise: '2',
       };
-      req.file = { filename: 'new_image.jpg' } as any;
+      req.file = { filename: 'new_image.jpg' };
 
       mockCreateProductUseCase.execute.mockResolvedValue({});
 
-      await controller.postNewProduct(req as Request, res as Response, next);
+      await controller.postNewProduct(req as Request & { file?: { filename: string } }, res as Response, next);
 
       expect(mockCreateProductUseCase.execute).toHaveBeenCalledWith({
         NameProduct: 'New Product',
@@ -199,7 +203,7 @@ describe('ProductController', () => {
       await controller.confirmModifyProduct(req as Request, res as Response, next);
 
       expect(res.render).toHaveBeenCalledWith(
-        path.join(__dirname, '../../views/404NotFound.ejs'),
+        path.join(__dirname, '../../../views/404NotFound.ejs'),
         { message: 'Product not found' }
       );
     });

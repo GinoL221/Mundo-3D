@@ -32,7 +32,7 @@ export class ProductController {
 
   getProductById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id as string);
       const product = await this.getProductByIdUseCase.execute(id);
       res.render(path.join(__dirname, '../../views/products/productDetail.ejs'), { product });
     } catch (error: any) {
@@ -57,7 +57,7 @@ export class ProductController {
     }
   };
 
-  postNewProduct = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  postNewProduct = async (req: Request & { file?: { filename: string } }, res: Response, next: NextFunction): Promise<void> => {
     const errors = validationResult(req);
     try {
       const categories = await this.categoryRepo.findAll();
@@ -98,7 +98,7 @@ export class ProductController {
 
   confirmModifyProduct = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id as string);
       const updated = await this.updateProductUseCase.execute(id, {
         NameProduct: req.body.productName,
         Price: req.body.price ? parseFloat(req.body.price) : undefined,
@@ -118,7 +118,7 @@ export class ProductController {
 
   deleteProduct = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id as string);
       const deleted = await this.deleteProductUseCase.execute(id);
 
       if (!deleted) {
