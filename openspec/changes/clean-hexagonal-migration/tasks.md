@@ -21,10 +21,10 @@
 - [x] **Task 1.3**: Configure `jest.config.js` to support `ts-jest` for executing `.ts` files under `src/`.
 
 ## Phase 2: Domain Layer
-- [ ] **Task 2.1**: Implement `Category` domain entity in `src/domain/entities/Category.ts`.
-- [ ] **Task 2.2**: Implement `Franchise` domain entity in `src/domain/entities/Franchise.ts`.
-- [ ] **Task 2.3**: Implement `Product` domain entity in `src/domain/entities/Product.ts` with association mappings.
-- [ ] **Task 2.4**: Define repository ports: `IProductRepository.ts`, `ICategoryRepository.ts`, `IFranchiseRepository.ts` in `src/domain/ports/`.
+- [x] **Task 2.1**: Implement `Category` domain entity in `src/domain/entities/Category.ts`.
+- [x] **Task 2.2**: Implement `Franchise` domain entity in `src/domain/entities/Franchise.ts`.
+- [x] **Task 2.3**: Implement `Product` domain entity in `src/domain/entities/Product.ts` with association mappings.
+- [x] **Task 2.4**: Define repository ports: `IProductRepository.ts`, `ICategoryRepository.ts`, `IFranchiseRepository.ts` in `src/domain/ports/`.
 
 ## Phase 3: Application Layer
 - [ ] **Task 3.1**: Define data transfer objects (`ProductDTO.ts`, `CategoryDTO.ts`) in `src/application/dtos/`.
