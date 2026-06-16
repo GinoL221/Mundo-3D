@@ -1,3 +1,6 @@
+/**
+ * @deprecated Replaced by ProductController.postNewProduct in src/infrastructure/controllers/ProductController.ts
+ */
 const { validationResult } = require('express-validator');
 const { ProductService, CategoryService, FranchiseService } = require('../../services');
 

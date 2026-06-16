@@ -6,7 +6,7 @@ import createUpload from '../../middlewares/upload';
 // @ts-ignore
 import { validationsForm } from '../../middlewares/validators/productValidators';
 // @ts-ignore
-import { viewShoppingCart } from '../../controllers/products';
+import viewShoppingCart from '../../controllers/products/viewShoppingCart';
 
 import { SequelizeProductRepository } from '../repositories/SequelizeProductRepository';
 import { SequelizeCategoryRepository } from '../repositories/SequelizeCategoryRepository';

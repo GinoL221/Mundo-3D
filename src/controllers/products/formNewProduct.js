@@ -1,3 +1,6 @@
+/**
+ * @deprecated Replaced by ProductController.formNewProduct in src/infrastructure/controllers/ProductController.ts
+ */
 const path = require('path');
 const { CategoryService, FranchiseService } = require('../../services');
 

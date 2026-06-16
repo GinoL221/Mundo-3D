@@ -1,3 +1,7 @@
+/**
+ * @deprecated Replaced by ProductController.getAllProducts in src/infrastructure/controllers/ProductController.ts
+ * Kept for legacy tests compatibility.
+ */
 const { ProductService } = require('../../services');
 
 const getAllProducts = async (req, res, next) => {

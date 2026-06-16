@@ -40,5 +40,5 @@
 - [x] **Task 4.4**: Integrate Express routes inside `src/infrastructure/routes/productRoutes.ts` with dependency injection.
 
 ## Phase 5: Verification & Cleanup
-- [ ] **Task 5.1**: Run full test suite with coverage checks (coverage threshold >= 80%).
-- [ ] **Task 5.2**: Update docs/comments and clean up any unused legacy files in the Product domain.
+- [x] **Task 5.1**: Run full test suite with coverage checks (coverage threshold >= 80%).
+- [x] **Task 5.2**: Update docs/comments and clean up any unused legacy files in the Product domain.

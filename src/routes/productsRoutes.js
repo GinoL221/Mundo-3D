@@ -1,3 +1,11 @@
+/**
+ * @deprecated Legacy Product routes.
+ * Fully replaced by the Hexagonal/Clean Architecture implementation in:
+ * - Route: src/infrastructure/routes/productRoutes.ts
+ * - Controller: src/infrastructure/controllers/ProductController.ts
+ * Kept on disk for compatibility with legacy tests that read its contents.
+ */
+
 const express = require('express');
 const { isUser } = require('../middlewares/auth');
 const createUpload = require('../middlewares/upload');

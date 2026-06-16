@@ -1,3 +1,6 @@
+/**
+ * @deprecated Replaced by ProductController.getProductById in src/infrastructure/controllers/ProductController.ts
+ */
 const { ProductService } = require('../../services');
 const path = require('path');
 

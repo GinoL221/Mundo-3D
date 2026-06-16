@@ -1,3 +1,6 @@
+/**
+ * @deprecated Replaced by ProductController.deleteProduct in src/infrastructure/controllers/ProductController.ts
+ */
 const { ProductService } = require('../../services');
 
 const deleteProduct = async (req, res, next) => {

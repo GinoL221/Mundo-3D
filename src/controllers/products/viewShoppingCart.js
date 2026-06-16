@@ -1,3 +1,7 @@
+/**
+ * Kept for compatibility. This controller handles the shopping cart view,
+ * which remains legacy while the Product domain has been migrated to Hexagonal Architecture.
+ */
 const { CartService } = require('../../services');
 
 const viewShoppingCart = (req, res, next) => {
