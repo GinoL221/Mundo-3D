@@ -89,12 +89,6 @@
   color: var(--fg);
 }
 
-.product-card__price {
-  font-family: var(--font-heading);
-  font-size: 14px;
-  color: var(--accent);
-  margin: var(--space-xs) 0;
-}
 
 /* ── Card Action Button ───────────────────────────────────── */
 
