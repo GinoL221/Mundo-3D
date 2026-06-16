@@ -1,7 +1,11 @@
 module.exports = {
   testEnvironment: "node",
-  testMatch: ["**/src/**/*.test.js"],
-  collectCoverageFrom: ["src/services/**/*.js"],
+  testMatch: ["**/src/**/*.test.js", "**/src/**/*.test.ts"],
+  transform: {
+    "^.+\\.jsx?$": "babel-jest",
+    "^.+\\.tsx?$": "ts-jest",
+  },
+  collectCoverageFrom: ["src/services/**/*.js", "src/**/*.ts"],
   coverageDirectory: "coverage",
   coverageThreshold: {
     global: {

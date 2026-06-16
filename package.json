@@ -41,11 +41,18 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@types/express": "5.0.6",
+    "@types/jest": "30.0.0",
+    "@types/node": "25.9.2",
+    "@types/sequelize": "4.28.20",
     "eslint": "10.4.1",
     "globals": "17.6.0",
     "jest": "30.4.2",
     "nodemon": "^3.1.0",
     "prettier": "3.8.3",
-    "supertest": "7.2.2"
+    "supertest": "7.2.2",
+    "ts-jest": "29.4.11",
+    "ts-node": "10.9.2",
+    "typescript": "6.0.3"
   }
 }
