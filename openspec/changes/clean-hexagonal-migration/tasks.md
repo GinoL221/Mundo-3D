@@ -27,11 +27,11 @@
 - [x] **Task 2.4**: Define repository ports: `IProductRepository.ts`, `ICategoryRepository.ts`, `IFranchiseRepository.ts` in `src/domain/ports/`.
 
 ## Phase 3: Application Layer & Unit Tests
-- [ ] **Task 3.1**: Define data transfer objects (`ProductDTO.ts`, `CategoryDTO.ts`) in `src/application/dtos/`.
-- [ ] **Task 3.2**: Implement `ListProducts` use case mapping domain entities to DTOs and calculating category counters.
-- [ ] **Task 3.3**: Implement `GetProductById` use case returning product details DTO or throwing exception if not found.
-- [ ] **Task 3.4**: Implement use cases for product creation, modification, and deletion.
-- [ ] **Task 3.5**: Write unit tests for domain entities and use cases using mocked repositories in `src/application/__tests__/`.
+- [x] **Task 3.1**: Define data transfer objects (`ProductDTO.ts`, `CategoryDTO.ts`) in `src/application/dtos/`.
+- [x] **Task 3.2**: Implement `ListProducts` use case mapping domain entities to DTOs and calculating category counters.
+- [x] **Task 3.3**: Implement `GetProductById` use case returning product details DTO or throwing exception if not found.
+- [x] **Task 3.4**: Implement use cases for product creation, modification, and deletion.
+- [x] **Task 3.5**: Write unit tests for domain entities and use cases using mocked repositories in `src/application/__tests__/`.
 
 ## Phase 4: Infrastructure Layer & Integration Tests
 - [ ] **Task 4.1**: Implement database repository adapters in `src/infrastructure/repositories/` using Sequelize models (mapping to domain entities).
