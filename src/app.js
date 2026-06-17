@@ -19,11 +19,12 @@ const cors = require('cors');
 const path = require('path');
 
 const mainRoutes = require('./routes/mainRoutes.js');
-const userRoutes = require('./routes/userRoutes.js');
 
 // Register ts-node dynamically to require TypeScript modules in JavaScript
 require('ts-node/register');
 const productsRoutes = require('./infrastructure/routes/productRoutes').default;
+const userRoutes = require('./infrastructure/routes/userRoutes').default;
+
 
 const apiRouter = require('./routes/api');
 const cookies = require('cookie-parser');

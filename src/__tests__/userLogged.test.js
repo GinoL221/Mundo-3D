@@ -1,4 +1,16 @@
-const userLoggedMiddleware = require('../middlewares/userLogged');
+jest.mock('../application/use-cases/VerifyRememberTokenUseCase', () => {
+  return {
+    VerifyRememberTokenUseCase: jest.fn().mockImplementation(() => {
+      return {
+        execute: jest.fn((plainToken) => {
+          const { UserService } = require('../services');
+          return UserService.verifyRememberToken(plainToken);
+        }),
+      };
+    }),
+  };
+});
+
 const { UserService } = require('../services');
 
 // Mock UserService
@@ -8,6 +20,9 @@ jest.mock('../services', () => ({
     verifyRememberToken: jest.fn(),
   },
 }));
+
+const userLoggedMiddleware = require('../middlewares/userLogged');
+
 
 describe('userLoggedMiddleware', () => {
   let req, res, next;

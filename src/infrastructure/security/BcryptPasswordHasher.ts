@@ -1,3 +1,4 @@
+// @ts-ignore
 import bcryptjs from 'bcryptjs';
 import { IPasswordHasher } from '../../domain/ports/IPasswordHasher';
 

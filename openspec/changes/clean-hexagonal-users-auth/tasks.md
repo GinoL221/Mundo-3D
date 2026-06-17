@@ -35,11 +35,12 @@
 - [x] Implement repository `SequelizeUserRepository.ts` in `src/infrastructure/repositories/`.
 - [x] Implement repository `SequelizeRememberTokenRepository.ts` in `src/infrastructure/repositories/`.
 - [x] Write integration tests using SQLite in-memory for both repositories in `src/infrastructure/repositories/__tests__/`.
-- [ ] Migrate `processLogin.js` to `processLogin.ts` under `src/controllers/users/`, injecting dependencies.
-- [ ] Migrate `postNewUser.js` to `postNewUser.ts` and `logout.js` to `logout.ts` under `src/controllers/users/`.
-- [ ] Migrate middleware `userLogged.js` to `userLogged.ts` under `src/middlewares/`.
-- [ ] Integrate updated controllers and middleware into `src/routes/userRoutes.js` (or convert to `.ts`).
-- [ ] Write E2E integration tests for Express routes and session/cookie flows in `src/infrastructure/controllers/__tests__/UserAuth.test.ts`.
+- [x] Migrate `processLogin.js` to `processLogin.ts` under `src/controllers/users/`, injecting dependencies.
+- [x] Migrate `postNewUser.js` to `postNewUser.ts` and `logout.js` to `logout.ts` under `src/controllers/users/`.
+- [x] Migrate middleware `userLogged.js` to `userLogged.ts` under `src/middlewares/`.
+- [x] Integrate updated controllers and middleware into `src/routes/userRoutes.js` (or convert to `.ts`).
+- [x] Write E2E integration tests for Express routes and session/cookie flows in `src/infrastructure/controllers/__tests__/UserAuth.test.ts`.
+
 
 ## Phase 5: Verification & Clean-up (PR 4)
 - [ ] Run test suite (`npm test`) and resolve linting errors.

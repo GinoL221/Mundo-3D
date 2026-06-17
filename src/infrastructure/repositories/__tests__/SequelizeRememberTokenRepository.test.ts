@@ -32,10 +32,10 @@ describe('SequelizeRememberTokenRepository Integration Tests', () => {
   beforeEach(async () => {
     repository = new SequelizeRememberTokenRepository();
     if (isSqliteAvailable && sequelize && sqliteRememberTokenModel) {
-      db.RememberToken = sqliteRememberTokenModel;
+      (db as any).RememberToken = sqliteRememberTokenModel;
       await sequelize.sync({ force: true });
     } else {
-      db.RememberToken = {
+      (db as any).RememberToken = {
         create: jest.fn(),
         findOne: jest.fn(),
         destroy: jest.fn(),
@@ -44,7 +44,7 @@ describe('SequelizeRememberTokenRepository Integration Tests', () => {
   });
 
   afterAll(() => {
-    db.RememberToken = originalRememberToken;
+    (db as any).RememberToken = originalRememberToken;
   });
 
   describe('create', () => {

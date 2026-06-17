@@ -1,6 +1,41 @@
-const processLogin = require('../controllers/users/processLogin');
+jest.mock('../application/use-cases/AuthenticateUserUseCase', () => {
+  return {
+    AuthenticateUserUseCase: jest.fn().mockImplementation(() => {
+      return {
+        execute: async (input) => {
+          const { UserService } = require('../services');
+          const user = await UserService.findByEmail(input.Email, { includePassword: true });
+          if (!user || !UserService.verifyPassword(input.Password || input.PasswordUser, user.PasswordUser)) {
+            const { InvalidCredentialsException } = require('../domain/exceptions/InvalidCredentialsException');
+            throw new InvalidCredentialsException('El email o la contraseña no coinciden');
+          }
+          return {
+            IDUser: user.IDUser,
+            FirstName: user.FirstName,
+            LastName: user.LastName,
+            Email: user.Email,
+            Image: user.Image,
+          };
+        },
+      };
+    }),
+  };
+});
+
+jest.mock('../application/use-cases/CreateRememberTokenUseCase', () => {
+  return {
+    CreateRememberTokenUseCase: jest.fn().mockImplementation(() => {
+      return {
+        execute: async (input) => {
+          const { UserService } = require('../services');
+          return UserService.createRememberToken(input.IDUser, input.PlainToken, input.DurationSeconds);
+        },
+      };
+    }),
+  };
+});
+
 const { UserService } = require('../services');
-const { validationResult } = require('express-validator');
 
 jest.mock('../services', () => ({
   UserService: {
@@ -13,6 +48,10 @@ jest.mock('../services', () => ({
 jest.mock('express-validator', () => ({
   validationResult: jest.fn(),
 }));
+
+const processLogin = require('../controllers/users/processLogin');
+const { validationResult } = require('express-validator');
+
 
 describe('processLogin controller', () => {
   let req, res, next;

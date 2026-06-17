@@ -24,10 +24,10 @@ describe('SequelizeUserRepository Integration Tests', () => {
   beforeEach(async () => {
     repository = new SequelizeUserRepository();
     if (isSqliteAvailable && sequelize && sqliteUserModel) {
-      db.User = sqliteUserModel;
+      (db as any).User = sqliteUserModel;
       await sequelize.sync({ force: true });
     } else {
-      db.User = {
+      (db as any).User = {
         findByPk: jest.fn(),
         findOne: jest.fn(),
         create: jest.fn(),
@@ -36,7 +36,7 @@ describe('SequelizeUserRepository Integration Tests', () => {
   });
 
   afterAll(() => {
-    db.User = originalUser;
+    (db as any).User = originalUser;
   });
 
   describe('create', () => {

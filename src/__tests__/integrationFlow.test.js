@@ -1,7 +1,69 @@
+jest.mock('../application/use-cases/AuthenticateUserUseCase', () => {
+  return {
+    AuthenticateUserUseCase: jest.fn().mockImplementation(() => {
+      return {
+        execute: async (input) => {
+          const { UserService } = require('../services');
+          const user = await UserService.findByEmail(input.Email, { includePassword: true });
+          if (!user || !UserService.verifyPassword(input.Password || input.PasswordUser, user.PasswordUser)) {
+            const { InvalidCredentialsException } = require('../domain/exceptions/InvalidCredentialsException');
+            throw new InvalidCredentialsException('El email o la contraseña no coinciden');
+          }
+          return {
+            IDUser: user.IDUser,
+            FirstName: user.FirstName,
+            LastName: user.LastName,
+            Email: user.Email,
+            Image: user.Image,
+          };
+        },
+      };
+    }),
+  };
+});
+
+jest.mock('../application/use-cases/CreateRememberTokenUseCase', () => {
+  return {
+    CreateRememberTokenUseCase: jest.fn().mockImplementation(() => {
+      return {
+        execute: async (input) => {
+          const { UserService } = require('../services');
+          return UserService.createRememberToken(input.IDUser, input.PlainToken, input.DurationSeconds);
+        },
+      };
+    }),
+  };
+});
+
+jest.mock('../application/use-cases/VerifyRememberTokenUseCase', () => {
+  return {
+    VerifyRememberTokenUseCase: jest.fn().mockImplementation(() => {
+      return {
+        execute: async (plainToken) => {
+          const { UserService } = require('../services');
+          return UserService.verifyRememberToken(plainToken);
+        },
+      };
+    }),
+  };
+});
+
+jest.mock('../application/use-cases/DeleteRememberTokenUseCase', () => {
+  return {
+    DeleteRememberTokenUseCase: jest.fn().mockImplementation(() => {
+      return {
+        execute: async (plainToken) => {
+          const { UserService } = require('../services');
+          return UserService.deleteRememberToken(plainToken);
+        },
+      };
+    }),
+  };
+});
+
 const processLogin = require('../controllers/users/processLogin');
 const userLoggedMiddleware = require('../middlewares/userLogged');
 const logout = require('../controllers/users/logout');
-const { UserService } = require('../services');
 const { validationResult } = require('express-validator');
 
 // Mock UserService
