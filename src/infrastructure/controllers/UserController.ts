@@ -95,7 +95,7 @@ export class UserController {
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        res.render(path.join(__dirname, '../../views/users/register.ejs'), {
+        res.render('users/register', {
           errors: errors.mapped(),
           oldData: req.body,
         });
@@ -119,7 +119,7 @@ export class UserController {
         });
       } catch (error) {
         if (error instanceof UserAlreadyExistsException) {
-          res.render(path.join(__dirname, '../../views/users/register.ejs'), {
+          res.render('users/register', {
             errors: {
               email: { msg: error.message },
             },

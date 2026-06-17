@@ -43,5 +43,5 @@
 
 
 ## Phase 5: Verification & Clean-up (PR 4)
-- [ ] Run test suite (`npm test`) and resolve linting errors.
-- [ ] Verify rollback capability by preserving `src/services/userService.js` intact.
+- [x] Run test suite (`npm test`) and resolve linting errors.
+- [x] Verify rollback capability by preserving `src/services/userService.js` intact.
