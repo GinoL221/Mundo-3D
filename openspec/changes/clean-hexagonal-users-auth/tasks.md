@@ -30,11 +30,11 @@
 - [x] Implement unit tests for all remember token use cases in `src/application/__tests__/RememberTokenUseCases.test.ts`.
 
 ## Phase 4: Infrastructure Adapters & Tests (PR 3 & PR 4)
-- [ ] Implement `BcryptPasswordHasher.ts` and `Sha256TokenHasher.ts` in `src/infrastructure/security/`.
-- [ ] Write integration tests for security adapters in `src/infrastructure/security/__tests__/SecurityAdapters.test.ts`.
-- [ ] Implement repository `SequelizeUserRepository.ts` in `src/infrastructure/repositories/`.
-- [ ] Implement repository `SequelizeRememberTokenRepository.ts` in `src/infrastructure/repositories/`.
-- [ ] Write integration tests using SQLite in-memory for both repositories in `src/infrastructure/repositories/__tests__/`.
+- [x] Implement `BcryptPasswordHasher.ts` and `Sha256TokenHasher.ts` in `src/infrastructure/security/`.
+- [x] Write integration tests for security adapters in `src/infrastructure/security/__tests__/SecurityAdapters.test.ts`.
+- [x] Implement repository `SequelizeUserRepository.ts` in `src/infrastructure/repositories/`.
+- [x] Implement repository `SequelizeRememberTokenRepository.ts` in `src/infrastructure/repositories/`.
+- [x] Write integration tests using SQLite in-memory for both repositories in `src/infrastructure/repositories/__tests__/`.
 - [ ] Migrate `processLogin.js` to `processLogin.ts` under `src/controllers/users/`, injecting dependencies.
 - [ ] Migrate `postNewUser.js` to `postNewUser.ts` and `logout.js` to `logout.ts` under `src/controllers/users/`.
 - [ ] Migrate middleware `userLogged.js` to `userLogged.ts` under `src/middlewares/`.

@@ -20,6 +20,22 @@ export interface FranchiseAttributes {
   NameFranchise: string;
 }
 
+export interface UserAttributes {
+  IDUser: number;
+  FirstName: string;
+  LastName: string;
+  Email: string;
+  Image: string | null;
+  PasswordUser: string;
+}
+
+export interface RememberTokenAttributes {
+  id: number;
+  IDUser: number;
+  TokenHash: string;
+  ExpiresAt: Date;
+}
+
 export interface ProductInstance extends Model<ProductAttributes, Partial<ProductAttributes>>, ProductAttributes {
   Category?: CategoryInstance;
   Franchise?: FranchiseInstance;
@@ -29,7 +45,17 @@ export interface CategoryInstance extends Model<CategoryAttributes, Partial<Cate
 
 export interface FranchiseInstance extends Model<FranchiseAttributes, Partial<FranchiseAttributes>>, FranchiseAttributes {}
 
+export interface UserInstance extends Model<UserAttributes, Partial<UserAttributes>>, UserAttributes {
+  RememberTokens?: RememberTokenInstance[];
+}
+
+export interface RememberTokenInstance extends Model<RememberTokenAttributes, Partial<RememberTokenAttributes>>, RememberTokenAttributes {
+  User?: UserInstance;
+}
+
 export const Product: ModelCtor<ProductInstance>;
 export const Category: ModelCtor<CategoryInstance>;
 export const Franchise: ModelCtor<FranchiseInstance>;
+export const User: ModelCtor<UserInstance>;
+export const RememberToken: ModelCtor<RememberTokenInstance>;
 export const sequelize: Sequelize;
