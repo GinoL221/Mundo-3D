@@ -1,63 +1,45 @@
-# User Auth Specification
+# User & Auth Domain Hexagonal Architecture Specification
 
-## Purpose
+This specification defines the architectural rules and non-functional requirements for migrating the User and Authentication domain slice to Hexagonal Architecture.
 
-Defines the credential verification capability owned by `UserService`, ensuring no controller or route directly calls `bcrypt`.
+## 1. Structural Layering Rules
 
-## Requirements
+- **Domain Layer (`src/domain`)**: MUST define pure business entities (`User`, `RememberToken`), repository ports (`IUserRepository`, `IRememberTokenRepository`), security ports (`IPasswordHasher`, `ITokenHasher`), and custom exceptions (e.g. `InvalidCredentialsException`, `UserAlreadyExistsException`). It MUST NOT import from the application or infrastructure layers, nor depend on Sequelize, Bcrypt, or Express.
+- **Application Layer (`src/application`)**: MUST encapsulate use cases (Register, Authenticate, Create/Verify/Delete Remember Token). They MUST depend solely on Domain ports. They MUST throw custom domain exceptions on validation/business failure and return plain DTO objects (`UserDTO`, `RememberTokenDTO`) preserving PascalCase attributes (`IDUser`, `FirstName`, `LastName`, `Email`, `Image`).
+- **Infrastructure Layer (`src/infrastructure`)**:
+  - **Database Adapters**: MUST implement domain repositories via Sequelize, mapping database records to Domain Entities.
+  - **Security Adapters**: MUST implement hashing ports using BcryptJS and SHA-256.
+  - **Controllers/Middlewares**: MUST handle HTTP mapping. They MUST instantiate adapters, inject them into Use Cases, and handle domain exceptions to return appropriate HTTP responses or render relative views.
 
-### Requirement: Password Verification
+## 2. BDD Scenarios
 
-`UserService` MUST expose `verifyPassword(plainPassword, hashedPassword)` returning a boolean. The method SHALL delegate to `bcryptjs.compareSync` internally.
+### Scenario 1: Domain Layer Dependency Isolation
+Given a module being written in the domain layer (`src/domain`)
+When importing dependencies
+Then the import paths MUST NOT point to the application (`src/application`) or infrastructure (`src/infrastructure`) layers
+And the code MUST NOT import external frameworks or library adapters such as Sequelize, Express, or BcryptJS
 
-#### Scenario: Correct password returns true
+### Scenario 2: Use Case Execution and Return Types
+Given an application Use Case in `src/application/use-cases`
+When the Use Case successfully completes its execution
+Then it MUST return a plain JavaScript/TypeScript DTO object containing PascalCase properties
+And it MUST NOT return Sequelize model instances or any active database transaction/connection references
 
-- GIVEN a user with hashed password stored in DB
-- WHEN `UserService.verifyPassword('secret123', hash)` is called where 'secret123' matches the hash
-- THEN the method SHALL return `true`
+### Scenario 3: Business Error Propagation
+Given an application Use Case running a business action
+When a business rule is violated (e.g., duplicate email during registration or invalid credentials during login)
+Then the Use Case MUST throw a custom Domain Exception
+And it MUST NOT throw generic database, network, or framework errors
 
-#### Scenario: Incorrect password returns false
+### Scenario 4: Controller Dependency Injection and View Handling
+Given an Express Controller handling user registration or login
+When an HTTP request is received
+Then the controller MUST validate syntactic inputs
+And it MUST call the appropriate Use Case by injecting the correct infrastructure adapters (Sequelize repositories, Bcrypt/SHA-256 security services)
+And it MUST catch Domain Exceptions to render views using relative path syntax (e.g., `res.render('users/login')` or `res.render('users/register')`) without using `path.join` or absolute paths
 
-- GIVEN a user with hashed password stored in DB
-- WHEN `UserService.verifyPassword('wrongpass', hash)` is called
-- THEN the method SHALL return `false`
-
-### Requirement: No Direct bcrypt in Controllers
-
-Controllers and routes MUST NOT import `bcryptjs` directly. All password verification MUST go through `UserService.verifyPassword`.
-
-#### Scenario: processLogin uses UserService instead of bcrypt
-
-- GIVEN `processLogin.js` needs to verify a login password
-- WHEN the controller verifies the password
-- THEN it SHALL call `UserService.verifyPassword(password, user.PasswordUser)`
-- AND it MUST NOT import `bcryptjs` or call `bcrypt.compareSync`
-
-### Requirement: Unified Login Error Rendering
-
-`processLogin.js` MUST simplify and unify credentials validation error rendering, returning a generic credential error to prevent user existence leakage.
-
-#### Scenario: Credential verification failure renders generic error
-
-- GIVEN a login attempt with invalid email or incorrect password
-- WHEN credential check fails
-- THEN the system SHALL render `users/login` with a single unified error
-- AND it MUST NOT leak whether the email exists in the database
-
-#### Scenario: Input validation failure renders field errors
-
-- GIVEN input fields fail basic validation checks (e.g., empty fields)
-- WHEN validation check runs
-- THEN the system SHALL render `users/login` with field-specific errors and `oldData`
-
-### Requirement: Render Without path.join
-
-All view rendering MUST use relative view paths instead of absolute paths or `path.join(__dirname, ...)`. Specifically, `processLogin.js` MUST use `res.render('users/login')` and `getAllProducts.js` MUST use `res.render('products/products')`.
-
-#### Scenario: View rendering uses relative paths
-
-- GIVEN a request that triggers `processLogin` or `getAllProducts`
-- WHEN rendering is initiated
-- THEN it SHALL render using `'users/login'` or `'products/products'`
-- AND it MUST NOT use absolute paths or `path.join`
-
+### Scenario 5: Infrastructure Adapter Verification
+Given a repository adapter in the infrastructure layer (`src/infrastructure/repositories`)
+When executing database operations via Sequelize
+Then it MUST translate query results into pure Domain Entities or return null/boolean as defined by the domain port
+And it MUST NOT expose Sequelize-specific classes or methods to the application layer
