@@ -1,4 +1,5 @@
 import { CartValidationException } from '../exceptions/CartValidationException';
+import { Product } from './Product';
 
 export enum CartStatus {
   ACTIVE = 'ACTIVE',
@@ -13,7 +14,8 @@ export class ShoppingCart {
     public readonly idProduct: number,
     public readonly quantity: number,
     public readonly unitPrice: number,
-    public readonly status: CartStatus
+    public readonly status: CartStatus,
+    public readonly product?: Product
   ) {
     if (!Number.isInteger(quantity)) {
       throw new CartValidationException('Quantity must be an integer');

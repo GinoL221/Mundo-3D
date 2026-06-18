@@ -38,6 +38,15 @@ export interface RememberTokenAttributes {
   ExpiresAt: Date;
 }
 
+export interface ShoppingCartAttributes {
+  IDCart: number;
+  IDUser: number;
+  IDProduct: number;
+  Quantity: number;
+  UnitPrice: number;
+  CartStatus: string;
+}
+
 export interface ProductInstance extends Model<ProductAttributes, Partial<ProductAttributes>>, ProductAttributes {
   Category?: CategoryInstance;
   Franchise?: FranchiseInstance;
@@ -55,9 +64,15 @@ export interface RememberTokenInstance extends Model<RememberTokenAttributes, Pa
   User?: UserInstance;
 }
 
+export interface ShoppingCartInstance extends Model<ShoppingCartAttributes, Partial<ShoppingCartAttributes>>, ShoppingCartAttributes {
+  product?: ProductInstance;
+  User?: UserInstance;
+}
+
 export const Product: ModelCtor<ProductInstance>;
 export const Category: ModelCtor<CategoryInstance>;
 export const Franchise: ModelCtor<FranchiseInstance>;
 export const User: ModelCtor<UserInstance>;
 export const RememberToken: ModelCtor<RememberTokenInstance>;
+export const ShoppingCart: ModelCtor<ShoppingCartInstance>;
 export const sequelize: Sequelize;

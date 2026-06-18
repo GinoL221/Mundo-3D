@@ -30,14 +30,14 @@ Chain strategy: stacked-to-main
 - [x] 1.1 Create `src/domain/exceptions/CartValidationException.ts` extending `Error`.
 - [x] 1.2 Create `src/domain/entities/ShoppingCart.ts` with `CartStatus` enum, quantity limits validation, and `hasPriceDrift` method.
 - [x] 1.3 Create `src/domain/ports/IShoppingCartRepository.ts` interface with `findByUserId` and `getDistinctCount` methods.
-- [ ] 1.4 Declare TS declarations for `ShoppingCart` in `src/database/models/db.d.ts`.
-- [ ] 1.5 Implement `src/infrastructure/repositories/SequelizeShoppingCartRepository.ts` query interface.
+- [x] 1.4 Declare TS declarations for `ShoppingCart` in `src/database/models/db.d.ts`.
+- [x] 1.5 Implement `src/infrastructure/repositories/SequelizeShoppingCartRepository.ts` query interface.
 
 ## Phase 2: Core Implementation
 
-- [ ] 2.1 Create `src/application/dtos/ShoppingCartDTO.ts` with `ShoppingCartDTO` and `GetCartResult` interfaces, mapping entities to PascalCase.
-- [ ] 2.2 Create `src/application/use-cases/GetCartByUserIdUseCase.ts` computing total and detecting price drift.
-- [ ] 2.3 Create `src/application/use-cases/GetCartDistinctCountUseCase.ts` returning distinct count.
+- [x] 2.1 Create `src/application/dtos/ShoppingCartDTO.ts` with `ShoppingCartDTO` and `GetCartResult` interfaces, mapping entities to PascalCase.
+- [x] 2.2 Create `src/application/use-cases/GetCartByUserIdUseCase.ts` computing total and detecting price drift.
+- [x] 2.3 Create `src/application/use-cases/GetCartDistinctCountUseCase.ts` returning distinct count.
 - [ ] 2.4 Create `src/infrastructure/controllers/CartController.ts` rendering `products/productCart` relative views.
 - [ ] 2.5 Create `src/infrastructure/routes/cartRoutes.ts` with DI and router paths.
 - [ ] 2.6 Create `src/infrastructure/middlewares/cartCount.ts` setting `res.locals.cartDistinctCount`.
@@ -51,7 +51,7 @@ Chain strategy: stacked-to-main
 ## Phase 4: Testing / Verification
 
 - [x] 4.1 Unit test `ShoppingCart.ts` for limits (qty > 10 throws) and `hasPriceDrift`.
-- [ ] 4.2 Unit test `GetCartByUserIdUseCase.ts` (price drift logic and total sum) and `GetCartDistinctCountUseCase.ts`.
+- [x] 4.2 Unit test `GetCartByUserIdUseCase.ts` and `GetCartDistinctCountUseCase.ts`.
 - [ ] 4.3 Integration test `CartController.ts` checking rendered EJS parameters.
 - [ ] 4.4 Test `cartCount.ts` middleware setting local variable.
 - [ ] 4.5 End-to-end route tests for `/productCart` checking authentication logic.
