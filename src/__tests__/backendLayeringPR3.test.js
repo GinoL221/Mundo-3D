@@ -85,10 +85,18 @@ describe('API Route Delegation', () => {
 });
 
 describe('Main Controller Barrel', () => {
-  test('controllers/main/index.js should export home and aboutUs', () => {
-    const { home, aboutUs } = require('../../src/controllers/main');
-    expect(typeof home).toBe('function');
-    expect(typeof aboutUs).toBe('function');
+  test('controllers/main barrel should no longer exist', () => {
+    const dirPath = path.join(__dirname, '../../src/controllers/main');
+    expect(fs.existsSync(dirPath)).toBe(false);
+  });
+
+  test('StaticPagesController should expose home and aboutUs as functions', () => {
+    const {
+      StaticPagesController,
+    } = require('../../src/infrastructure/controllers/StaticPagesController');
+    const controller = new StaticPagesController({ execute: jest.fn() });
+    expect(typeof controller.home).toBe('function');
+    expect(typeof controller.aboutUs).toBe('function');
   });
 
   test('old mainController.js should be deleted', () => {
@@ -130,21 +138,37 @@ describe('Route File Cleanup', () => {
 });
 
 describe('Controller Path.join Cleanup', () => {
-  test('mainRoutes.js should not use path.join for renders', () => {
+  test('mainRoutes.js should no longer exist', () => {
     const filePath = path.join(__dirname, '../../src/routes/mainRoutes.js');
-    const content = fs.readFileSync(filePath, 'utf-8');
-    expect(content).not.toMatch(/path\.join.*views/);
+    expect(fs.existsSync(filePath)).toBe(false);
   });
 
-  test('home.js should use view names not path.join', () => {
-    const filePath = path.join(__dirname, '../../src/controllers/main/home.js');
+  test('staticPagesRoutes.ts should exist and export a default router', () => {
+    const filePath = path.join(
+      __dirname,
+      '../../src/infrastructure/routes/staticPagesRoutes.ts',
+    );
+    expect(fs.existsSync(filePath)).toBe(true);
     const content = fs.readFileSync(filePath, 'utf-8');
-    expect(content).not.toMatch(/path\.join/);
+    expect(content).toMatch(/export default/);
+  });
+
+  test('StaticPagesController.ts home should use ListProductsUseCase, not productService, and render index', () => {
+    const filePath = path.join(
+      __dirname,
+      '../../src/infrastructure/controllers/StaticPagesController.ts',
+    );
+    const content = fs.readFileSync(filePath, 'utf-8');
     expect(content).toMatch(/res\.render\('index'/);
+    expect(content).toMatch(/ListProductsUseCase/);
+    expect(content).not.toMatch(/productService/i);
   });
 
-  test('aboutUs.js should use view names not path.join', () => {
-    const filePath = path.join(__dirname, '../../src/controllers/main/aboutUs.js');
+  test('StaticPagesController.ts aboutUs should use view names not path.join', () => {
+    const filePath = path.join(
+      __dirname,
+      '../../src/infrastructure/controllers/StaticPagesController.ts',
+    );
     const content = fs.readFileSync(filePath, 'utf-8');
     expect(content).not.toMatch(/path\.join/);
     expect(content).toMatch(/res\.render\('aboutUs'/);

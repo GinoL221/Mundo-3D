@@ -49,17 +49,21 @@ Chain strategy: stacked-to-main
 
 ## Phase 3: Test Retargeting and Legacy Removal (PR 3)
 
-- [ ] 3.1 In `src/__tests__/backendLayeringPR3.test.js`, replace the `Main Controller Barrel` block (current L88-92): drop `require('../../src/controllers/main')` barrel-import assertion; assert `fs.existsSync(path.join(__dirname, '../../src/controllers/main'))` is `false` and that `StaticPagesController` (imported from `src/infrastructure/controllers/StaticPagesController`) exposes `home` and `aboutUs` as functions on its prototype/instance. Keep the unrelated `old mainController.js should be deleted` test (L94-97) as-is.
-- [ ] 3.2 In the same file, replace the `mainRoutes.js should not use path.join for renders` test (current L133-137): assert `fs.existsSync(path.join(__dirname, '../../src/routes/mainRoutes.js'))` is `false`, and add a positive check that `src/infrastructure/routes/staticPagesRoutes.ts` exists and its content matches `/export default/`.
-- [ ] 3.3 In the same file, replace the `home.js should use view names not path.join` test (current L139-144): retarget `filePath` to `src/infrastructure/controllers/StaticPagesController.ts`; assert content matches `/res\.render\('index'/` and `/ListProductsUseCase/`, and assert it does NOT match `/productService/i`.
-- [ ] 3.4 In the same file, replace the `aboutUs.js should use view names not path.join` test (current L146-151): retarget `filePath` to `src/infrastructure/controllers/StaticPagesController.ts`; assert content matches `/res\.render\('aboutUs'/`.
-- [ ] 3.5 Delete `src/controllers/main/home.js`, `aboutUs.js`, `terms.js`, `privacy.js`, `faq.js`, `stepByStep.js`, `help.js`, and the barrel `src/controllers/main/index.js`.
-- [ ] 3.6 Delete `src/routes/mainRoutes.js`.
-- [ ] 3.7 Run the full test suite (`backendLayeringPR3.test.js`, `footerPages.test.js`, `StaticPagesController.test.ts`, and the rest) and confirm 100% green — this is the parity proof gate, since the new fs-existence assertions in 3.1/3.2 only pass once legacy files are gone (matches design §8 guidance to combine retarget+delete in one commit boundary).
-- [ ] 3.8 Confirm `src/services/productService.js`, `src/controllers/products/getAllProducts.js`, `src/routes/productsRoutes.js` still exist on disk, unchanged (final out-of-scope boundary check).
-- [ ] 3.9 Commit: `refactor(static-pages): retarget structural tests and remove legacy main controllers` (PR 3, base `main`).
+- [x] 3.1 In `src/__tests__/backendLayeringPR3.test.js`, replace the `Main Controller Barrel` block (current L88-92): drop `require('../../src/controllers/main')` barrel-import assertion; assert `fs.existsSync(path.join(__dirname, '../../src/controllers/main'))` is `false` and that `StaticPagesController` (imported from `src/infrastructure/controllers/StaticPagesController`) exposes `home` and `aboutUs` as functions on its prototype/instance. Keep the unrelated `old mainController.js should be deleted` test (L94-97) as-is.
+- [x] 3.2 In the same file, replace the `mainRoutes.js should not use path.join for renders` test (current L133-137): assert `fs.existsSync(path.join(__dirname, '../../src/routes/mainRoutes.js'))` is `false`, and add a positive check that `src/infrastructure/routes/staticPagesRoutes.ts` exists and its content matches `/export default/`.
+- [x] 3.3 In the same file, replace the `home.js should use view names not path.join` test (current L139-144): retarget `filePath` to `src/infrastructure/controllers/StaticPagesController.ts`; assert content matches `/res\.render\('index'/` and `/ListProductsUseCase/`, and assert it does NOT match `/productService/i`.
+- [x] 3.4 In the same file, replace the `aboutUs.js should use view names not path.join` test (current L146-151): retarget `filePath` to `src/infrastructure/controllers/StaticPagesController.ts`; assert content matches `/res\.render\('aboutUs'/`.
+- [x] 3.5 Delete `src/controllers/main/home.js`, `aboutUs.js`, `terms.js`, `privacy.js`, `faq.js`, `stepByStep.js`, `help.js`, and the barrel `src/controllers/main/index.js`.
+- [x] 3.6 Delete `src/routes/mainRoutes.js`.
+- [x] 3.7 Run the full test suite (`backendLayeringPR3.test.js`, `footerPages.test.js`, `StaticPagesController.test.ts`, and the rest) and confirm 100% green — this is the parity proof gate, since the new fs-existence assertions in 3.1/3.2 only pass once legacy files are gone (matches design §8 guidance to combine retarget+delete in one commit boundary).
+- [x] 3.8 Confirm `src/services/productService.js`, `src/controllers/products/getAllProducts.js`, `src/routes/productsRoutes.js` still exist on disk, unchanged (final out-of-scope boundary check).
+- [x] 3.9 Commit: `refactor(static-pages): retarget structural tests and remove legacy main controllers` (PR 3, base `main`).
+
+**PR 3 status: COMPLETE.** `backendLayeringPR3.test.js` retargeted in place: barrel block now asserts `src/controllers/main` is absent and `StaticPagesController` exposes `home`/`aboutUs` as functions; mainRoutes block now asserts `mainRoutes.js` absence plus `staticPagesRoutes.ts` existence/`export default`; home/aboutUs regex blocks retarget to `StaticPagesController.ts` content. RED confirmed first (2 failing fs-existence assertions while legacy files were still present), then `src/controllers/main/*` (7 files + barrel) and `src/routes/mainRoutes.js` deleted, then GREEN confirmed (23/23 in that file). Full suite: 44/44 suites green, 253 passed + 1 skipped (254 total). Out-of-scope files (`productService.js`, `getAllProducts.js`, `productsRoutes.js`) confirmed present/unchanged.
 
 ## Phase 4: Final Verification
 
-- [ ] 4.1 Confirm `src/views/index.ejs` has zero diff (untouched) across all 3 PRs — design Decision 2 boundary.
-- [ ] 4.2 Run full suite once more post-merge-simulation (all 3 PRs applied in order) to confirm no regression in unrelated suites (user/auth/products).
+- [x] 4.1 Confirm `src/views/index.ejs` has zero diff (untouched) across all 3 PRs — design Decision 2 boundary.
+- [x] 4.2 Run full suite once more post-merge-simulation (all 3 PRs applied in order) to confirm no regression in unrelated suites (user/auth/products).
+
+**Phase 4 status: COMPLETE.** `git diff 9d7f394~1..HEAD -- src/views/index.ejs` returns empty — zero diff confirmed across the entire 3-PR change. Full suite re-run after Phase 3 commit: 44/44 suites green, 253 passed + 1 skipped, including `userAuth`/`adminGuard`/products suites — no regressions. **The entire `static-pages-ts-migration` change is now IMPLEMENTATION-COMPLETE — ready for `sdd-verify`.**
