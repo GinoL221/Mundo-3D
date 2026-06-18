@@ -29,6 +29,16 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      IDRole: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 2,
+      },
+      Category: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: 'User',
+      },
     },
     {
       tableName: 'User',

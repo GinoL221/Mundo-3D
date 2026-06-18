@@ -27,6 +27,8 @@ export interface UserAttributes {
   Email: string;
   Image: string | null;
   PasswordUser: string;
+  IDRole?: number;
+  Category?: string;
 }
 
 export interface RememberTokenAttributes {

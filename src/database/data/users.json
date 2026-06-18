@@ -4,6 +4,17 @@
     "LastName": "Lencina",
     "Email": "gino@email.com",
     "Image": "usuarioSinImagen.jpg",
-    "PasswordUser": "123456"
+    "PasswordUser": "123456",
+    "IDRole": 2,
+    "Category": "User"
+  },
+  {
+    "FirstName": "Admin",
+    "LastName": "User",
+    "Email": "admin@email.com",
+    "Image": "usuarioSinImagen.jpg",
+    "PasswordUser": "admin123",
+    "IDRole": 1,
+    "Category": "Admin"
   }
 ]
