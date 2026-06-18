@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
-import path from 'path';
 import crypto from 'crypto';
 import { AuthenticateUserUseCase } from '../../application/use-cases/AuthenticateUserUseCase';
 import { RegisterUserUseCase } from '../../application/use-cases/RegisterUserUseCase';
@@ -61,6 +60,8 @@ export class UserController {
         LastName: userDto.LastName,
         Email: userDto.Email,
         Image: userDto.Image,
+        IDRole: userDto.IDRole,
+        Category: userDto.Category,
       };
 
       (req as any).session.userLogged = userWithoutPassword;

@@ -122,6 +122,8 @@ describe('User Authentication Integration / E2E Tests', () => {
         LastName: 'Doe',
         Email: 'john@example.com',
         Image: 'john.png',
+        IDRole: 2,
+        Category: 'User',
       });
 
       const loginRes = await request(app)

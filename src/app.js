@@ -5,6 +5,9 @@ if (process.env.NODE_ENV !== 'test') {
   if (!process.env.COOKIE_SECRET) {
     throw new Error('COOKIE_SECRET is required but not set in environment.');
   }
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET is required but not set in environment.');
+  }
 }
 
 const express = require('express');
