@@ -21,10 +21,9 @@ const cors = require('cors');
 // Agregar cors al middleware
 const path = require('path');
 
-const mainRoutes = require('./routes/mainRoutes.js');
-
 // Register ts-node dynamically to require TypeScript modules in JavaScript
 require('ts-node/register');
+const staticPagesRoutes = require('./infrastructure/routes/staticPagesRoutes').default;
 const productsRoutes = require('./infrastructure/routes/productRoutes').default;
 const userRoutes = require('./infrastructure/routes/userRoutes').default;
 
@@ -102,7 +101,7 @@ server.use(csrfProtection);
 // API routes (mounted at /api)
 server.use('/api', apiRouter);
 
-server.use(mainRoutes);
+server.use(staticPagesRoutes);
 server.use(userRoutes);
 server.use(productsRoutes);
 
