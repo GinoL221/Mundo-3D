@@ -45,8 +45,8 @@ Chain strategy: stacked-to-main
 ## Phase 3: Integration / Wiring
 
 - [x] 3.1 Mount `cartRoutes` router and import/register `cartCount` in `src/app.js`.
-- [ ] 3.2 Remove legacy `/productCart` route from `src/infrastructure/routes/productRoutes.ts`.
-- [ ] 3.3 Modify `src/__tests__/errorPropagation.test.js` to spy on use cases or controller instead of `CartService.findByUserId`.
+- [x] 3.2 Remove legacy `/productCart` route from `src/infrastructure/routes/productRoutes.ts`.
+- [x] 3.3 Modify `src/__tests__/errorPropagation.test.js` to spy on use cases or controller instead of `CartService.findByUserId`.
 
 ## Phase 4: Testing / Verification
 
@@ -58,6 +58,6 @@ Chain strategy: stacked-to-main
 
 ## Phase 5: Cleanup
 
-- [ ] 5.1 Delete legacy `src/services/cartService.js` and `src/services/__tests__/cartService.test.js`.
-- [ ] 5.2 Remove legacy controller `src/controllers/products/viewShoppingCart.js` and middleware `src/middlewares/cartCount.js`.
-- [ ] 5.3 Remove references from exports in `src/services/index.js` and `src/controllers/products/index.js`.
+- [x] 5.1 Delete legacy `src/services/cartService.js` and `src/services/__tests__/cartService.test.js`.
+- [x] 5.2 Remove legacy controller `src/controllers/products/viewShoppingCart.js` and middleware `src/middlewares/cartCount.js`.
+- [x] 5.3 Remove references from exports in `src/services/index.js` and `src/controllers/products/index.js`.

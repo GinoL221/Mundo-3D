@@ -19,21 +19,8 @@ describe('Dead Code Removal', () => {
     });
   });
 
-  describe('Unused imports removed', () => {
-    test('should not import User in viewShoppingCart.js', () => {
-      const filePath = path.join(__dirname, '../../src/controllers/products/viewShoppingCart.js');
-      const content = fs.readFileSync(filePath, 'utf-8');
-      // Should not have the unused User import
-      expect(content).not.toMatch(/const\s*\{\s*User\s*\}\s*=\s*require/);
-    });
+  // Removed obsolete viewShoppingCart.js checks
 
-    test('should not have debug console.log in viewShoppingCart.js', () => {
-      const filePath = path.join(__dirname, '../../src/controllers/products/viewShoppingCart.js');
-      const content = fs.readFileSync(filePath, 'utf-8');
-      // Should not have the debug console.log
-      expect(content).not.toMatch(/console\.log\(/);
-    });
-  });
 
   describe('Unused middleware imports removed', () => {
     test('should not import guestMiddleware in productsRoutes.js', () => {

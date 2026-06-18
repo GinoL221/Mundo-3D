@@ -1,15 +1,18 @@
-const { CartService, ProductService, UserService } = require('../services');
+const { ProductService, UserService } = require('../services');
 
 describe('Error Propagation', () => {
-  describe('viewShoppingCart error propagation', () => {
+  describe('viewCart error propagation', () => {
     afterEach(() => {
       jest.restoreAllMocks();
     });
 
-    test('should call next(error) when CartService rejects', async () => {
-      jest.spyOn(CartService, 'findByUserId').mockRejectedValue(new Error('DB connection failed'));
+    test('should call next(error) when GetCartByUserIdUseCase rejects', async () => {
+      const { CartController } = require('../infrastructure/controllers/CartController');
 
-      const viewShoppingCart = require('../controllers/products/viewShoppingCart');
+      const mockGetCartByUserIdUseCase = {
+        execute: jest.fn().mockRejectedValue(new Error('DB connection failed'))
+      };
+      const controller = new CartController(mockGetCartByUserIdUseCase);
 
       const mockReq = { session: { userLogged: { IDUser: 1 } } };
       const mockRes = {
@@ -20,10 +23,7 @@ describe('Error Propagation', () => {
       const mockNext = jest.fn();
 
       // Call the controller
-      viewShoppingCart(mockReq, mockRes, mockNext);
-
-      // Wait for the promise chain to resolve
-      await new Promise((resolve) => setImmediate(resolve));
+      await controller.viewCart(mockReq, mockRes, mockNext);
 
       // Should call next(error), NOT res.status(500).send()
       expect(mockNext).toHaveBeenCalledWith(expect.any(Error));

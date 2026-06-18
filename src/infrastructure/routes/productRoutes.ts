@@ -5,8 +5,6 @@ import { isUser, adminGuard } from '../../middlewares/auth';
 import createUpload from '../../middlewares/upload';
 // @ts-ignore
 import { validationsForm } from '../../middlewares/validators/productValidators';
-// @ts-ignore
-import viewShoppingCart from '../../controllers/products/viewShoppingCart';
 
 import { SequelizeProductRepository } from '../repositories/SequelizeProductRepository';
 import { SequelizeCategoryRepository } from '../repositories/SequelizeCategoryRepository';
@@ -45,8 +43,6 @@ const controller = new ProductController(
 
 const uploadImgProduct = createUpload('products');
 
-// Shopping cart route (kept for compatibility, calling legacy controller)
-router.get('/productCart', isUser, viewShoppingCart);
 
 // View all products and details
 router.get('/products', controller.getAllProducts);
