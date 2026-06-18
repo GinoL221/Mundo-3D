@@ -11,8 +11,6 @@ export interface RegisterUserInput {
   Password?: string;
   PasswordUser?: string;
   Image: string | null;
-  IDRole?: number | null;
-  Category?: string | null;
 }
 
 export class RegisterUserUseCase {
@@ -34,6 +32,8 @@ export class RegisterUserUseCase {
 
     const hashedPassword = await this.passwordHasher.hash(plainPassword);
 
+    // Public self-registration must never trust caller-supplied role data.
+    // Always force the standard user role, regardless of what the input contains.
     const userEntity = new User(
       0, // IDUser is ignored/overwritten by the repository upon creation
       input.FirstName,
@@ -41,8 +41,8 @@ export class RegisterUserUseCase {
       input.Email,
       hashedPassword,
       input.Image,
-      input.IDRole,
-      input.Category
+      2,
+      'User'
     );
 
     const createdUser = await this.userRepo.create(userEntity);

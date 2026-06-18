@@ -24,15 +24,13 @@ describe('RegisterUserUseCase', () => {
     useCase = new RegisterUserUseCase(mockUserRepo, mockPasswordHasher);
   });
 
-  it('should successfully register a user when email is not taken', async () => {
+  it('should successfully register a user when email is not taken, defaulting to the standard role', async () => {
     const input: RegisterUserInput = {
       FirstName: 'John',
       LastName: 'Doe',
       Email: 'john.doe@example.com',
       Password: 'plainPassword123',
       Image: 'avatar.jpg',
-      IDRole: 2,
-      Category: 'Standard',
     };
 
     const expectedHashedPassword = 'hashedPassword123';
@@ -43,8 +41,8 @@ describe('RegisterUserUseCase', () => {
       input.Email,
       expectedHashedPassword,
       input.Image,
-      input.IDRole,
-      input.Category
+      2,
+      'User'
     );
 
     mockUserRepo.findByEmail.mockResolvedValue(null);
@@ -60,7 +58,7 @@ describe('RegisterUserUseCase', () => {
       Email: 'john.doe@example.com',
       Image: 'avatar.jpg',
       IDRole: 2,
-      Category: 'Standard',
+      Category: 'User',
     });
 
     expect(mockUserRepo.findByEmail).toHaveBeenCalledWith('john.doe@example.com');
@@ -73,7 +71,47 @@ describe('RegisterUserUseCase', () => {
         Password: expectedHashedPassword,
         Image: 'avatar.jpg',
         IDRole: 2,
-        Category: 'Standard',
+        Category: 'User',
+      })
+    );
+  });
+
+  it('should ignore an attacker-supplied administrative role and force the default standard role', async () => {
+    const input = {
+      FirstName: 'Evil',
+      LastName: 'Hacker',
+      Email: 'evil.hacker@example.com',
+      Password: 'plainPassword123',
+      Image: 'avatar.jpg',
+      IDRole: 1,
+      Category: 'Admin',
+    } as RegisterUserInput;
+
+    const expectedHashedPassword = 'hashedPassword123';
+    const createdUser = new User(
+      99,
+      input.FirstName,
+      input.LastName,
+      input.Email,
+      expectedHashedPassword,
+      input.Image,
+      2,
+      'User'
+    );
+
+    mockUserRepo.findByEmail.mockResolvedValue(null);
+    mockPasswordHasher.hash.mockResolvedValue(expectedHashedPassword);
+    mockUserRepo.create.mockResolvedValue(createdUser);
+
+    const result = await useCase.execute(input);
+
+    expect(result.IDRole).toBe(2);
+    expect(result.Category).toBe('User');
+
+    expect(mockUserRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        IDRole: 2,
+        Category: 'User',
       })
     );
   });

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 // @ts-ignore
-import { isUser, guestMiddleware } from '../../middlewares/auth';
+import { isUser, guestMiddleware, adminGuard } from '../../middlewares/auth';
 // @ts-ignore
 import loginLimiter from '../../middlewares/loginLimiter';
 // @ts-ignore
@@ -59,7 +59,7 @@ router.get('/register', guestMiddleware, formNewUser);
 router.get('/login', guestMiddleware, loginUsers);
 router.get('/profile/', isUser, userProfile);
 router.get('/user/:id', isUser, getUserById);
-router.delete('/users/delete/:id', isUser, deleteUser);
+router.delete('/users/delete/:id', adminGuard, deleteUser);
 
 // Migrated routes using UserController
 router.post('/users', uploadImgUser.single('image'), validationsUsers, userController.postNewUser);

@@ -18,7 +18,7 @@
       <nav class="navbar__list">
         <ul class="navbar__list--left">
           <li class="navbar__item"><a href="/products" class="navbar__link">Productos</a></li>
-          <% if (locals.isLogged) { %>
+          <% if (locals.isLogged && locals.userLogged && locals.userLogged.IDRole === 1) { %>
           <li class="navbar__item"><a href="/new-product" class="navbar__link">Nuevo producto</a></li>
           <% } %>
         </ul>

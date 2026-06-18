@@ -1,6 +1,6 @@
 import { Router } from 'express';
 // @ts-ignore
-import { isUser } from '../../middlewares/auth';
+import { isUser, adminGuard } from '../../middlewares/auth';
 // @ts-ignore
 import createUpload from '../../middlewares/upload';
 // @ts-ignore
@@ -52,14 +52,14 @@ router.get('/productCart', isUser, viewShoppingCart);
 router.get('/products', controller.getAllProducts);
 router.get('/product/:id', controller.getProductById);
 
-// Create product routes
-router.get('/new-product', isUser, controller.formNewProduct);
-router.post('/products', isUser, uploadImgProduct.single('image'), validationsForm, controller.postNewProduct);
+// Create product routes (admin-only)
+router.get('/new-product', adminGuard, controller.formNewProduct);
+router.post('/products', adminGuard, uploadImgProduct.single('image'), validationsForm, controller.postNewProduct);
 
-// Edit product route
-router.put('/product/:id/edit', isUser, controller.confirmModifyProduct);
+// Edit product route (admin-only)
+router.put('/product/:id/edit', adminGuard, controller.confirmModifyProduct);
 
-// Delete product route
-router.delete('/product/delete/:id', isUser, controller.deleteProduct);
+// Delete product route (admin-only)
+router.delete('/product/delete/:id', adminGuard, controller.deleteProduct);
 
 export default router;
