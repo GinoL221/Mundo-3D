@@ -38,13 +38,13 @@ Chain strategy: stacked-to-main
 - [x] 2.1 Create `src/application/dtos/ShoppingCartDTO.ts` with `ShoppingCartDTO` and `GetCartResult` interfaces, mapping entities to PascalCase.
 - [x] 2.2 Create `src/application/use-cases/GetCartByUserIdUseCase.ts` computing total and detecting price drift.
 - [x] 2.3 Create `src/application/use-cases/GetCartDistinctCountUseCase.ts` returning distinct count.
-- [ ] 2.4 Create `src/infrastructure/controllers/CartController.ts` rendering `products/productCart` relative views.
-- [ ] 2.5 Create `src/infrastructure/routes/cartRoutes.ts` with DI and router paths.
-- [ ] 2.6 Create `src/infrastructure/middlewares/cartCount.ts` setting `res.locals.cartDistinctCount`.
+- [x] 2.4 Create `src/infrastructure/controllers/CartController.ts` rendering `products/productCart` relative views.
+- [x] 2.5 Create `src/infrastructure/routes/cartRoutes.ts` with DI and router paths.
+- [x] 2.6 Create `src/infrastructure/middlewares/cartCount.ts` setting `res.locals.cartDistinctCount`.
 
 ## Phase 3: Integration / Wiring
 
-- [ ] 3.1 Mount `cartRoutes` router and import/register `cartCount` in `src/app.js`.
+- [x] 3.1 Mount `cartRoutes` router and import/register `cartCount` in `src/app.js`.
 - [ ] 3.2 Remove legacy `/productCart` route from `src/infrastructure/routes/productRoutes.ts`.
 - [ ] 3.3 Modify `src/__tests__/errorPropagation.test.js` to spy on use cases or controller instead of `CartService.findByUserId`.
 
@@ -52,9 +52,9 @@ Chain strategy: stacked-to-main
 
 - [x] 4.1 Unit test `ShoppingCart.ts` for limits (qty > 10 throws) and `hasPriceDrift`.
 - [x] 4.2 Unit test `GetCartByUserIdUseCase.ts` and `GetCartDistinctCountUseCase.ts`.
-- [ ] 4.3 Integration test `CartController.ts` checking rendered EJS parameters.
-- [ ] 4.4 Test `cartCount.ts` middleware setting local variable.
-- [ ] 4.5 End-to-end route tests for `/productCart` checking authentication logic.
+- [x] 4.3 Integration test `CartController.ts` checking rendered EJS parameters.
+- [x] 4.4 Test `cartCount.ts` middleware setting local variable.
+- [x] 4.5 End-to-end route tests for `/productCart` checking authentication logic.
 
 ## Phase 5: Cleanup
 

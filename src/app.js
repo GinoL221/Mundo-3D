@@ -26,6 +26,7 @@ require('ts-node/register');
 const staticPagesRoutes = require('./infrastructure/routes/staticPagesRoutes').default;
 const productsRoutes = require('./infrastructure/routes/productRoutes').default;
 const userRoutes = require('./infrastructure/routes/userRoutes').default;
+const cartRoutes = require('./infrastructure/routes/cartRoutes').default;
 
 
 const apiRouter = require('./routes/api');
@@ -37,7 +38,7 @@ const server = express();
 server.set('views', path.join(__dirname, 'views'));
 
 const userLoggedMiddleware = require('./middlewares/userLogged');
-const cartCountMiddleware = require('./middlewares/cartCount');
+const cartCountMiddleware = require('./infrastructure/middlewares/cartCount').default;
 const errorHandler = require('./middlewares/errorHandler.js');
 const { csrfProtection } = require('./middlewares/csrf.js');
 
@@ -101,6 +102,7 @@ server.use(csrfProtection);
 // API routes (mounted at /api)
 server.use('/api', apiRouter);
 
+server.use(cartRoutes);
 server.use(staticPagesRoutes);
 server.use(userRoutes);
 server.use(productsRoutes);
