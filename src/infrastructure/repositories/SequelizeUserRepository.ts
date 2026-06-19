@@ -5,14 +5,14 @@ import db, { UserInstance } from '../../database/models/db';
 export class SequelizeUserRepository implements IUserRepository {
   private toEntity(instance: UserInstance): User {
     return new User(
-      instance.IDUser,
-      instance.FirstName,
-      instance.LastName,
-      instance.Email,
-      instance.PasswordUser,
-      instance.Image || null,
-      (instance as any).IDRole || null,
-      (instance as any).Category || null
+      instance.idUser,
+      instance.firstName,
+      instance.lastName,
+      instance.email,
+      instance.passwordUser,
+      instance.image || null,
+      instance.idRole || null,
+      instance.category || null
     );
   }
 
@@ -24,19 +24,19 @@ export class SequelizeUserRepository implements IUserRepository {
 
   async findByEmail(email: string): Promise<User | null> {
     const instance = await db.User.findOne({
-      where: { Email: email },
+      where: { email: email },
     });
     if (!instance) return null;
     return this.toEntity(instance);
   }
 
-  async create(user: Omit<User, 'IDUser'>): Promise<User> {
+  async create(user: Omit<User, 'idUser'>): Promise<User> {
     const instance = await db.User.create({
-      FirstName: user.FirstName,
-      LastName: user.LastName,
-      Email: user.Email,
-      PasswordUser: user.Password,
-      Image: user.Image,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      passwordUser: user.password,
+      image: user.image,
     } as any);
     return this.toEntity(instance);
   }

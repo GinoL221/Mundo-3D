@@ -4,17 +4,17 @@ jest.mock('../application/use-cases/AuthenticateUserUseCase', () => {
       return {
         execute: async (input) => {
           const { UserService } = require('../services');
-          const user = await UserService.findByEmail(input.Email, { includePassword: true });
-          if (!user || !UserService.verifyPassword(input.Password || input.PasswordUser, user.PasswordUser)) {
+          const user = await UserService.findByEmail(input.email, { includePassword: true });
+          if (!user || !UserService.verifyPassword(input.password || input.passwordUser, user.PasswordUser)) {
             const { InvalidCredentialsException } = require('../domain/exceptions/InvalidCredentialsException');
             throw new InvalidCredentialsException('El email o la contraseña no coinciden');
           }
           return {
-            IDUser: user.IDUser,
-            FirstName: user.FirstName,
-            LastName: user.LastName,
-            Email: user.Email,
-            Image: user.Image,
+            idUser: user.idUser || user.IDUser,
+            firstName: user.firstName || user.FirstName,
+            lastName: user.lastName || user.LastName,
+            email: user.email || user.Email,
+            image: user.image || user.Image,
           };
         },
       };
@@ -28,7 +28,7 @@ jest.mock('../application/use-cases/CreateRememberTokenUseCase', () => {
       return {
         execute: async (input) => {
           const { UserService } = require('../services');
-          return UserService.createRememberToken(input.IDUser, input.PlainToken, input.DurationSeconds);
+          return UserService.createRememberToken(input.idUser, input.plainToken, input.durationSeconds);
         },
       };
     }),
@@ -51,7 +51,6 @@ jest.mock('express-validator', () => ({
 
 const processLogin = require('../controllers/users/processLogin');
 const { validationResult } = require('express-validator');
-
 
 describe('processLogin controller', () => {
   let req, res, next;
@@ -101,12 +100,12 @@ describe('processLogin controller', () => {
   describe('Credential Validation', () => {
     it('redirects to profile and does NOT set remember cookie when login succeeds without remember checked', async () => {
       const mockUser = {
-        IDUser: 42,
-        FirstName: 'John',
-        LastName: 'Doe',
-        Email: 'test@example.com',
+        idUser: 42,
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'test@example.com',
         PasswordUser: 'hashedPassword',
-        Image: 'john.png',
+        image: 'john.png',
       };
       UserService.findByEmail.mockResolvedValue(mockUser);
       UserService.verifyPassword.mockReturnValue(true);
@@ -116,11 +115,11 @@ describe('processLogin controller', () => {
       await processLogin(req, res, next);
 
       expect(req.session.userLogged).toEqual({
-        IDUser: 42,
-        FirstName: 'John',
-        LastName: 'Doe',
-        Email: 'test@example.com',
-        Image: 'john.png',
+        idUser: 42,
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'test@example.com',
+        image: 'john.png',
       });
       expect(res.redirect).toHaveBeenCalledWith('profile');
       expect(res.cookie).not.toHaveBeenCalled();
@@ -129,12 +128,12 @@ describe('processLogin controller', () => {
 
     it('creates remember token, sets signed cookie, and redirects when login succeeds with remember checked', async () => {
       const mockUser = {
-        IDUser: 42,
-        FirstName: 'John',
-        LastName: 'Doe',
-        Email: 'test@example.com',
+        idUser: 42,
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'test@example.com',
         PasswordUser: 'hashedPassword',
-        Image: 'john.png',
+        image: 'john.png',
       };
       UserService.findByEmail.mockResolvedValue(mockUser);
       UserService.verifyPassword.mockReturnValue(true);
@@ -145,11 +144,11 @@ describe('processLogin controller', () => {
       await processLogin(req, res, next);
 
       expect(req.session.userLogged).toEqual({
-        IDUser: 42,
-        FirstName: 'John',
-        LastName: 'Doe',
-        Email: 'test@example.com',
-        Image: 'john.png',
+        idUser: 42,
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'test@example.com',
+        image: 'john.png',
       });
       expect(res.redirect).toHaveBeenCalledWith('profile');
       expect(UserService.createRememberToken).toHaveBeenCalledWith(
@@ -172,10 +171,10 @@ describe('processLogin controller', () => {
 
     it('renders invalid credentials error helper when password does not match', async () => {
       const mockUser = {
-        IDUser: 42,
-        FirstName: 'John',
-        LastName: 'Doe',
-        Email: 'test@example.com',
+        idUser: 42,
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'test@example.com',
         PasswordUser: 'hashedPassword',
       };
       UserService.findByEmail.mockResolvedValue(mockUser);

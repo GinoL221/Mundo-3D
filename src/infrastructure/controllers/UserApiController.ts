@@ -18,15 +18,15 @@ export class UserApiController {
       const password = req.body.Password || req.body.password;
 
       const userDto = await this.authenticateUserUseCase.execute({
-        Email: email,
-        Password: password,
+        email: email,
+        password: password,
       });
 
       const payload = {
-        userID: userDto.IDUser,
-        Email: userDto.Email,
-        Category: userDto.Category,
-        IDRole: userDto.IDRole,
+        userId: userDto.idUser,
+        email: userDto.email,
+        category: userDto.category,
+        idRole: userDto.idRole,
       };
 
       const secret = process.env.JWT_SECRET || 'test_jwt_secret';

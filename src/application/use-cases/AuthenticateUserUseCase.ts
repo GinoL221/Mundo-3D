@@ -4,9 +4,9 @@ import { InvalidCredentialsException } from '../../domain/exceptions/InvalidCred
 import { UserDTO } from '../dtos/UserDTO';
 
 export interface AuthenticateUserInput {
-  Email: string;
-  Password?: string;
-  PasswordUser?: string;
+  email: string;
+  password?: string;
+  passwordUser?: string;
 }
 
 export class AuthenticateUserUseCase {
@@ -16,29 +16,29 @@ export class AuthenticateUserUseCase {
   ) {}
 
   async execute(input: AuthenticateUserInput): Promise<UserDTO> {
-    const user = await this.userRepo.findByEmail(input.Email);
+    const user = await this.userRepo.findByEmail(input.email);
     if (!user) {
       throw new InvalidCredentialsException('El email o la contraseña no coinciden');
     }
 
-    const plainPassword = input.Password || input.PasswordUser;
+    const plainPassword = input.password || input.passwordUser;
     if (!plainPassword) {
       throw new InvalidCredentialsException('El email o la contraseña no coinciden');
     }
 
-    const isMatch = await this.passwordHasher.compare(plainPassword, user.Password);
+    const isMatch = await this.passwordHasher.compare(plainPassword, user.password);
     if (!isMatch) {
       throw new InvalidCredentialsException('El email o la contraseña no coinciden');
     }
 
     return {
-      IDUser: user.IDUser,
-      FirstName: user.FirstName,
-      LastName: user.LastName,
-      Email: user.Email,
-      Image: user.Image,
-      IDRole: user.IDRole,
-      Category: user.Category,
+      idUser: user.idUser,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      image: user.image,
+      idRole: user.idRole,
+      category: user.category,
     };
   }
 }

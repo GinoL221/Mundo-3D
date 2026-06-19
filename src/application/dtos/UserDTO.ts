@@ -1,9 +1,9 @@
 export interface UserDTO {
-  IDUser: number;
-  FirstName: string;
-  LastName: string;
-  Email: string;
-  Image: string | null;
-  IDRole?: number | null;
-  Category?: string | null;
+  idUser: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  image: string | null;
+  idRole?: number | null;
+  category?: string | null;
 }

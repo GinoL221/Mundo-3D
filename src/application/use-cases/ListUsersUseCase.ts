@@ -7,13 +7,13 @@ export class ListUsersUseCase {
   async execute(): Promise<UserDTO[]> {
     const users = await this.userRepository.findAll();
     return users.map(user => ({
-      IDUser: user.IDUser,
-      FirstName: user.FirstName,
-      LastName: user.LastName,
-      Email: user.Email,
-      Image: user.Image,
-      IDRole: user.IDRole ?? null,
-      Category: user.Category ?? null,
+      idUser: user.idUser,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      image: user.image,
+      idRole: user.idRole ?? null,
+      category: user.category ?? null,
     }));
   }
 }

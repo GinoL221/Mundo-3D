@@ -15,23 +15,32 @@ describe('RememberToken Model Definition', () => {
     expect(defineMock).toHaveBeenCalledWith(
       'RememberToken',
       expect.objectContaining({
-        id: expect.objectContaining({
+        idRememberToken: expect.objectContaining({
           type: DataTypes.INTEGER,
           primaryKey: true,
           autoIncrement: true,
+          field: 'id_remember_token',
         }),
-        IDUser: expect.objectContaining({
+        idUser: expect.objectContaining({
           type: DataTypes.INTEGER,
           allowNull: false,
+          field: 'id_user',
         }),
-        TokenHash: expect.objectContaining({
+        tokenHash: expect.objectContaining({
           type: DataTypes.STRING(64),
           allowNull: false,
           unique: true,
+          field: 'token_hash',
         }),
-        ExpiresAt: expect.objectContaining({
+        expiryDate: expect.objectContaining({
           type: DataTypes.DATE,
           allowNull: false,
+          field: 'expiry_date',
+        }),
+        createdAt: expect.objectContaining({
+          type: DataTypes.DATE,
+          allowNull: false,
+          field: 'created_at',
         }),
       }),
       expect.objectContaining({

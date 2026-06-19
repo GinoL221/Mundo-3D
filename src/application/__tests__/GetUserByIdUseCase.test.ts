@@ -31,13 +31,13 @@ describe('GetUserByIdUseCase', () => {
     const result = await useCase.execute(42);
 
     expect(result).toEqual({
-      IDUser: 42,
-      FirstName: 'John',
-      LastName: 'Doe',
-      Email: 'john@example.com',
-      Image: 'john.jpg',
-      IDRole: 1,
-      Category: 'Admin',
+      idUser: 42,
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@example.com',
+      image: 'john.jpg',
+      idRole: 1,
+      category: 'Admin',
     });
     expect(mockUserRepo.findById).toHaveBeenCalledWith(42);
   });

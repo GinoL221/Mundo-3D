@@ -117,13 +117,13 @@ describe('User Authentication Integration / E2E Tests', () => {
       const initialCookies = getCookieString(getRes);
 
       mockAuthenticateUserExecute.mockResolvedValue({
-        IDUser: 1,
-        FirstName: 'John',
-        LastName: 'Doe',
-        Email: 'john@example.com',
-        Image: 'john.png',
-        IDRole: 2,
-        Category: 'User',
+        idUser: 1,
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john@example.com',
+        image: 'john.png',
+        idRole: 2,
+        category: 'User',
       });
 
       const loginRes = await request(app)
@@ -138,8 +138,8 @@ describe('User Authentication Integration / E2E Tests', () => {
       expect(loginRes.status).toBe(302);
       expect(loginRes.headers.location).toBe('profile');
       expect(mockAuthenticateUserExecute).toHaveBeenCalledWith({
-        Email: 'john@example.com',
-        Password: 'password123',
+        email: 'john@example.com',
+        password: 'password123',
       });
       expect(mockCreateRememberTokenExecute).not.toHaveBeenCalled();
 
@@ -154,17 +154,17 @@ describe('User Authentication Integration / E2E Tests', () => {
       const initialCookies = getCookieString(getRes);
 
       mockAuthenticateUserExecute.mockResolvedValue({
-        IDUser: 1,
-        FirstName: 'John',
-        LastName: 'Doe',
-        Email: 'john@example.com',
-        Image: 'john.png',
+        idUser: 1,
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john@example.com',
+        image: 'john.png',
       });
       mockCreateRememberTokenExecute.mockResolvedValue({
-        IDRememberToken: 1,
-        TokenHash: 'some_hash',
-        IDUser: 1,
-        ExpiryDate: new Date(),
+        idRememberToken: 1,
+        tokenHash: 'some_hash',
+        idUser: 1,
+        expiryDate: new Date(),
       });
 
       const loginRes = await request(app)
@@ -207,17 +207,13 @@ describe('User Authentication Integration / E2E Tests', () => {
       expect(res.headers.location).toBe('/login');
     });
 
-    // NOTE: This test is skipped because the legacy JS→TS bridge (userLogged.js → ts-node/register
-    // → userLogged.ts) bypasses Jest's module mock system for the VerifyRememberTokenUseCase.
-    // The mock never reaches the middleware when loaded through this path.
-    // TODO: Remove .skip once the full TS migration eliminates the ts-node bridge layer.
     it.skip('should auto-login via remember_token signed cookie', async () => {
       const mockUser = {
-        IDUser: 1,
-        FirstName: 'John',
-        LastName: 'Doe',
-        Email: 'john@example.com',
-        Image: 'john.png',
+        idUser: 1,
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john@example.com',
+        image: 'john.png',
       };
       
       mockVerifyRememberTokenExecute.mockResolvedValue(mockUser);

@@ -8,6 +8,29 @@ import { DeleteRememberTokenUseCase } from '../../application/use-cases/DeleteRe
 import { InvalidCredentialsException } from '../../domain/exceptions/InvalidCredentialsException';
 import { UserAlreadyExistsException } from '../../domain/exceptions/UserAlreadyExistsException';
 
+function addLegacyGetters(obj: any): any {
+  if (!obj) return obj;
+  const mappings: Record<string, string> = {
+    IDUser: 'idUser',
+    IDRole: 'idRole',
+    FirstName: 'firstName',
+    LastName: 'lastName',
+    Email: 'email',
+    Image: 'image',
+    Category: 'category'
+  };
+  for (const [legacyKey, newKey] of Object.entries(mappings)) {
+    if (newKey in obj && !(legacyKey in obj)) {
+      Object.defineProperty(obj, legacyKey, {
+        get() { return this[newKey]; },
+        configurable: true,
+        enumerable: false
+      });
+    }
+  }
+  return obj;
+}
+
 export class UserController {
   constructor(
     private readonly authenticateUserUseCase: AuthenticateUserUseCase,
@@ -33,8 +56,8 @@ export class UserController {
       let userDto;
       try {
         userDto = await this.authenticateUserUseCase.execute({
-          Email: email,
-          Password: password,
+          email: email,
+          password: password,
         });
       } catch (error) {
         if (error instanceof InvalidCredentialsException) {
@@ -54,15 +77,15 @@ export class UserController {
         throw error;
       }
 
-      const userWithoutPassword = {
-        IDUser: userDto.IDUser,
-        FirstName: userDto.FirstName,
-        LastName: userDto.LastName,
-        Email: userDto.Email,
-        Image: userDto.Image,
-        IDRole: userDto.IDRole,
-        Category: userDto.Category,
-      };
+      const userWithoutPassword = addLegacyGetters({
+        idUser: userDto.idUser ?? (userDto as any).IDUser,
+        firstName: userDto.firstName ?? (userDto as any).FirstName,
+        lastName: userDto.lastName ?? (userDto as any).LastName,
+        email: userDto.email ?? (userDto as any).Email,
+        image: userDto.image ?? (userDto as any).Image,
+        idRole: userDto.idRole ?? (userDto as any).IDRole,
+        category: userDto.category ?? (userDto as any).Category,
+      });
 
       (req as any).session.userLogged = userWithoutPassword;
 
@@ -70,12 +93,12 @@ export class UserController {
         const plainToken = crypto.randomBytes(32).toString('hex');
         const durationSeconds = 30 * 24 * 60 * 60; // 30 days
         await this.createRememberTokenUseCase.execute({
-          IDUser: userDto.IDUser,
-          PlainToken: plainToken,
-          DurationSeconds: durationSeconds,
+          idUser: userDto.idUser,
+          plainToken: plainToken,
+          durationSeconds: durationSeconds,
         });
 
-        res.cookie('remember_token', `${userDto.IDUser}:${plainToken}`, {
+        res.cookie('remember_token', `${userDto.idUser}:${plainToken}`, {
           maxAge: durationSeconds * 1000,
           signed: true,
           httpOnly: true,
@@ -112,11 +135,11 @@ export class UserController {
 
       try {
         await this.registerUserUseCase.execute({
-          FirstName: firstName,
-          LastName: lastName,
-          Email: email,
-          Password: password,
-          Image: image,
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          password: password,
+          image: image,
         });
       } catch (error) {
         if (error instanceof UserAlreadyExistsException) {

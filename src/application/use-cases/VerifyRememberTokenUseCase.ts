@@ -18,24 +18,24 @@ export class VerifyRememberTokenUseCase {
       return null;
     }
 
-    if (new Date() > tokenRecord.ExpiryDate) {
+    if (new Date() > tokenRecord.expiryDate) {
       await this.rememberTokenRepo.deleteByHash(hashedToken);
       return null;
     }
 
-    const user = await this.userRepo.findById(tokenRecord.IDUser);
+    const user = await this.userRepo.findById(tokenRecord.idUser);
     if (!user) {
       return null;
     }
 
     return {
-      IDUser: user.IDUser,
-      FirstName: user.FirstName,
-      LastName: user.LastName,
-      Email: user.Email,
-      Image: user.Image,
-      IDRole: user.IDRole,
-      Category: user.Category,
+      idUser: user.idUser,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      image: user.image,
+      idRole: user.idRole,
+      category: user.category,
     };
   }
 }

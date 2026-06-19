@@ -14,7 +14,7 @@ describe('Error Propagation', () => {
       };
       const controller = new CartController(mockGetCartByUserIdUseCase);
 
-      const mockReq = { session: { userLogged: { IDUser: 1 } } };
+      const mockReq = { session: { userLogged: { idUser: 1 } } };
       const mockRes = {
         status: jest.fn().mockReturnThis(),
         send: jest.fn(),

@@ -26,21 +26,21 @@ describe('RegisterUserUseCase', () => {
 
   it('should successfully register a user when email is not taken, defaulting to the standard role', async () => {
     const input: RegisterUserInput = {
-      FirstName: 'John',
-      LastName: 'Doe',
-      Email: 'john.doe@example.com',
-      Password: 'plainPassword123',
-      Image: 'avatar.jpg',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+      password: 'plainPassword123',
+      image: 'avatar.jpg',
     };
 
     const expectedHashedPassword = 'hashedPassword123';
     const createdUser = new User(
       42,
-      input.FirstName,
-      input.LastName,
-      input.Email,
+      input.firstName,
+      input.lastName,
+      input.email,
       expectedHashedPassword,
-      input.Image,
+      input.image,
       2,
       'User'
     );
@@ -52,49 +52,49 @@ describe('RegisterUserUseCase', () => {
     const result = await useCase.execute(input);
 
     expect(result).toEqual({
-      IDUser: 42,
-      FirstName: 'John',
-      LastName: 'Doe',
-      Email: 'john.doe@example.com',
-      Image: 'avatar.jpg',
-      IDRole: 2,
-      Category: 'User',
+      idUser: 42,
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+      image: 'avatar.jpg',
+      idRole: 2,
+      category: 'User',
     });
 
     expect(mockUserRepo.findByEmail).toHaveBeenCalledWith('john.doe@example.com');
     expect(mockPasswordHasher.hash).toHaveBeenCalledWith('plainPassword123');
     expect(mockUserRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        FirstName: 'John',
-        LastName: 'Doe',
-        Email: 'john.doe@example.com',
-        Password: expectedHashedPassword,
-        Image: 'avatar.jpg',
-        IDRole: 2,
-        Category: 'User',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john.doe@example.com',
+        password: expectedHashedPassword,
+        image: 'avatar.jpg',
+        idRole: 2,
+        category: 'User',
       })
     );
   });
 
   it('should ignore an attacker-supplied administrative role and force the default standard role', async () => {
     const input = {
-      FirstName: 'Evil',
-      LastName: 'Hacker',
-      Email: 'evil.hacker@example.com',
-      Password: 'plainPassword123',
-      Image: 'avatar.jpg',
-      IDRole: 1,
-      Category: 'Admin',
+      firstName: 'Evil',
+      lastName: 'Hacker',
+      email: 'evil.hacker@example.com',
+      password: 'plainPassword123',
+      image: 'avatar.jpg',
+      idRole: 1,
+      category: 'Admin',
     } as RegisterUserInput;
 
     const expectedHashedPassword = 'hashedPassword123';
     const createdUser = new User(
       99,
-      input.FirstName,
-      input.LastName,
-      input.Email,
+      input.firstName,
+      input.lastName,
+      input.email,
       expectedHashedPassword,
-      input.Image,
+      input.image,
       2,
       'User'
     );
@@ -105,34 +105,34 @@ describe('RegisterUserUseCase', () => {
 
     const result = await useCase.execute(input);
 
-    expect(result.IDRole).toBe(2);
-    expect(result.Category).toBe('User');
+    expect(result.idRole).toBe(2);
+    expect(result.category).toBe('User');
 
     expect(mockUserRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        IDRole: 2,
-        Category: 'User',
+        idRole: 2,
+        category: 'User',
       })
     );
   });
 
-  it('should successfully register a user when input uses PasswordUser', async () => {
+  it('should successfully register a user when input uses passwordUser', async () => {
     const input: RegisterUserInput = {
-      FirstName: 'John',
-      LastName: 'Doe',
-      Email: 'john.doe@example.com',
-      PasswordUser: 'plainPassword123',
-      Image: 'avatar.jpg',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+      passwordUser: 'plainPassword123',
+      image: 'avatar.jpg',
     };
 
     const expectedHashedPassword = 'hashedPassword123';
     const createdUser = new User(
       42,
-      input.FirstName,
-      input.LastName,
-      input.Email,
+      input.firstName,
+      input.lastName,
+      input.email,
       expectedHashedPassword,
-      input.Image,
+      input.image,
       null,
       null
     );
@@ -143,17 +143,17 @@ describe('RegisterUserUseCase', () => {
 
     const result = await useCase.execute(input);
 
-    expect(result.IDUser).toBe(42);
+    expect(result.idUser).toBe(42);
     expect(mockPasswordHasher.hash).toHaveBeenCalledWith('plainPassword123');
   });
 
   it('should throw UserAlreadyExistsException if email is already taken', async () => {
     const input: RegisterUserInput = {
-      FirstName: 'Jane',
-      LastName: 'Doe',
-      Email: 'jane.doe@example.com',
-      Password: 'password123',
-      Image: null,
+      firstName: 'Jane',
+      lastName: 'Doe',
+      email: 'jane.doe@example.com',
+      password: 'password123',
+      image: null,
     };
 
     const existingUser = new User(
@@ -179,10 +179,10 @@ describe('RegisterUserUseCase', () => {
 
   it('should throw an error if no password is provided', async () => {
     const input: RegisterUserInput = {
-      FirstName: 'Jane',
-      LastName: 'Doe',
-      Email: 'jane.doe@example.com',
-      Image: null,
+      firstName: 'Jane',
+      lastName: 'Doe',
+      email: 'jane.doe@example.com',
+      image: null,
     };
 
     mockUserRepo.findByEmail.mockResolvedValue(null);

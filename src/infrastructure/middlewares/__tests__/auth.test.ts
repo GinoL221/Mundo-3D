@@ -56,7 +56,7 @@ describe('guestMiddleware', () => {
   });
 
   it('redirects to /profile if userLogged is in session', () => {
-    req.session!.userLogged = { IDUser: 1, Email: 'user@test.com', FirstName: 'John', LastName: 'Doe', Image: null, IDRole: 2, Category: 'User' };
+    req.session!.userLogged = { idUser: 1, email: 'user@test.com', firstName: 'John', lastName: 'Doe', image: null, idRole: 2, category: 'User' };
     guestMiddleware(req as Request, res as Response, next);
     expect(res.redirect).toHaveBeenCalledWith('/profile');
     expect(next).not.toHaveBeenCalled();
@@ -91,7 +91,7 @@ describe('authMiddleware', () => {
   });
 
   it('calls next() if userLogged is in session', () => {
-    req.session!.userLogged = { IDUser: 1, Email: 'user@test.com', FirstName: 'John', LastName: 'Doe', Image: null, IDRole: 2, Category: 'User' };
+    req.session!.userLogged = { idUser: 1, email: 'user@test.com', firstName: 'John', lastName: 'Doe', image: null, idRole: 2, category: 'User' };
     authMiddleware(req as Request, res as Response, next);
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.redirect).not.toHaveBeenCalled();
@@ -134,7 +134,7 @@ describe('apiAuthMiddleware', () => {
   });
 
   it('attaches payload to req.user and calls next() on valid token', () => {
-    const payload = { userID: 1, Email: 'user@test.com', Category: 'User', IDRole: 2 };
+    const payload = { userId: 1, email: 'user@test.com', category: 'User', idRole: 2 };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '2h' });
     req.headers!.authorization = `Bearer ${token}`;
 
@@ -175,21 +175,21 @@ describe('adminGuard', () => {
 
   it('returns 403 JSON error for authenticated API requests if role is not admin', () => {
     (req as any).path = '/api/users';
-    req.user = { userID: 2, Email: 'user@test.com', Category: 'User', IDRole: 2 };
+    req.user = { userId: 2, email: 'user@test.com', category: 'User', idRole: 2 };
     adminGuard(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith({ error: 'Acceso restringido a administradores' });
   });
 
   it('renders 403Forbidden page for authenticated web requests if role is not admin', () => {
-    req.session!.userLogged = { IDUser: 2, FirstName: 'John', LastName: 'Doe', Email: 'user@test.com', Image: null, IDRole: 2, Category: 'User' };
+    req.session!.userLogged = { idUser: 2, firstName: 'John', lastName: 'Doe', email: 'user@test.com', image: null, idRole: 2, category: 'User' };
     adminGuard(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.render).toHaveBeenCalledWith(expect.stringContaining('403Forbidden.ejs'), expect.any(Object));
   });
 
   it('calls next() for admin web sessions (role 1)', () => {
-    req.session!.userLogged = { IDUser: 1, FirstName: 'Admin', LastName: 'User', Email: 'admin@test.com', Image: null, IDRole: 1, Category: 'Admin' };
+    req.session!.userLogged = { idUser: 1, firstName: 'Admin', lastName: 'User', email: 'admin@test.com', image: null, idRole: 1, category: 'Admin' };
     adminGuard(req as Request, res as Response, next);
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.redirect).not.toHaveBeenCalled();
@@ -197,7 +197,7 @@ describe('adminGuard', () => {
 
   it('calls next() for admin API requests (role 1)', () => {
     (req as any).path = '/api/users';
-    req.user = { userID: 1, Email: 'admin@test.com', Category: 'Admin', IDRole: 1 };
+    req.user = { userId: 1, email: 'admin@test.com', category: 'Admin', idRole: 1 };
     adminGuard(req as Request, res as Response, next);
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();

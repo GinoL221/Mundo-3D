@@ -38,22 +38,22 @@ describe('ListUsersUseCase', () => {
 
     expect(result).toHaveLength(2);
     expect(result[0]).toEqual({
-      IDUser: 1,
-      FirstName: 'Alice',
-      LastName: 'Smith',
-      Email: 'alice@example.com',
-      Image: 'alice.jpg',
-      IDRole: 2,
-      Category: 'Admin',
+      idUser: 1,
+      firstName: 'Alice',
+      lastName: 'Smith',
+      email: 'alice@example.com',
+      image: 'alice.jpg',
+      idRole: 2,
+      category: 'Admin',
     });
     expect(result[1]).toEqual({
-      IDUser: 2,
-      FirstName: 'Bob',
-      LastName: 'Jones',
-      Email: 'bob@example.com',
-      Image: null,
-      IDRole: 3,
-      Category: 'User',
+      idUser: 2,
+      firstName: 'Bob',
+      lastName: 'Jones',
+      email: 'bob@example.com',
+      image: null,
+      idRole: 3,
+      category: 'User',
     });
     expect(mockUserRepo.findAll).toHaveBeenCalledTimes(1);
   });

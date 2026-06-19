@@ -51,10 +51,10 @@ describe('POST /api/users/login', () => {
 
   it('returns 200 with a signed JWT token on successful login', async () => {
     mockAuthenticateUserExecute.mockResolvedValue({
-      IDUser: 1,
-      Email: 'user@test.com',
-      Category: 'User',
-      IDRole: 2,
+      idUser: 1,
+      email: 'user@test.com',
+      category: 'User',
+      idRole: 2,
     });
 
     const res = await request(app)
@@ -66,15 +66,15 @@ describe('POST /api/users/login', () => {
 
     const decoded = jwt.verify(res.body.token, JWT_SECRET);
     expect(decoded).toMatchObject({
-      userID: 1,
-      Email: 'user@test.com',
-      Category: 'User',
-      IDRole: 2,
+      userId: 1,
+      email: 'user@test.com',
+      category: 'User',
+      idRole: 2,
     });
 
     expect(mockAuthenticateUserExecute).toHaveBeenCalledWith({
-      Email: 'user@test.com',
-      Password: 'password123',
+      email: 'user@test.com',
+      password: 'password123',
     });
   });
 
@@ -130,7 +130,7 @@ describe('apiAuthMiddleware mounted on /api/users routes', () => {
   it('allows GET /api/users with a valid Bearer token', async () => {
     mockListUsersExecute.mockResolvedValue([]);
     const token = jwt.sign(
-      { userID: 1, Email: 'admin@test.com', Category: 'Admin', IDRole: 1 },
+      { userId: 1, email: 'admin@test.com', category: 'Admin', idRole: 1 },
       JWT_SECRET,
       { expiresIn: '1h' },
     );

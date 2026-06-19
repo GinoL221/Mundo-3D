@@ -17,8 +17,8 @@ try {
   sqliteUserModel = UserDefine(sequelize);
   sqliteRememberTokenModel = RememberTokenDefine(sequelize);
 
-  sqliteUserModel.hasMany(sqliteRememberTokenModel, { foreignKey: 'IDUser' });
-  sqliteRememberTokenModel.belongsTo(sqliteUserModel, { foreignKey: 'IDUser' });
+  sqliteUserModel.hasMany(sqliteRememberTokenModel, { foreignKey: 'idUser' });
+  sqliteRememberTokenModel.belongsTo(sqliteUserModel, { foreignKey: 'idUser' });
 
   isSqliteAvailable = true;
 } catch (e) {
@@ -51,26 +51,27 @@ describe('SequelizeRememberTokenRepository Integration Tests', () => {
     it('should create and store remember token', async () => {
       if (isSqliteAvailable && sqliteUserModel) {
         const user = await sqliteUserModel.create({
-          FirstName: 'Test',
-          LastName: 'User',
-          Email: 'test@example.com',
-          PasswordUser: 'hash',
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@example.com',
+          passwordUser: 'hash',
         });
 
         const expiry = new Date(Date.now() + 3600 * 1000);
-        const token = new RememberToken(0, 'hashed_token_string', user.IDUser, expiry);
+        const token = new RememberToken(0, 'hashed_token_string', user.idUser, expiry);
 
         const created = await repository.create(token);
-        expect(created.IDRememberToken).toBeGreaterThan(0);
-        expect(created.TokenHash).toBe('hashed_token_string');
-        expect(created.IDUser).toBe(user.IDUser);
-        expect(created.ExpiryDate.getTime()).toBeCloseTo(expiry.getTime(), -2);
+        expect(created.idRememberToken).toBeGreaterThan(0);
+        expect(created.tokenHash).toBe('hashed_token_string');
+        expect(created.idUser).toBe(user.idUser);
+        expect(created.expiryDate.getTime()).toBeCloseTo(expiry.getTime(), -2);
       } else {
         const mockInstance = {
-          id: 10,
-          TokenHash: 'hashed_token_string',
-          IDUser: 5,
-          ExpiresAt: new Date(),
+          idRememberToken: 10,
+          tokenHash: 'hashed_token_string',
+          idUser: 5,
+          expiryDate: new Date(),
+          createdAt: new Date(),
         };
         jest.mocked(db.RememberToken.create).mockResolvedValue(mockInstance as any);
 
@@ -78,8 +79,8 @@ describe('SequelizeRememberTokenRepository Integration Tests', () => {
         const token = new RememberToken(0, 'hashed_token_string', 5, expiry);
 
         const created = await repository.create(token);
-        expect(created.IDRememberToken).toBe(10);
-        expect(created.TokenHash).toBe('hashed_token_string');
+        expect(created.idRememberToken).toBe(10);
+        expect(created.tokenHash).toBe('hashed_token_string');
         expect(db.RememberToken.create).toHaveBeenCalled();
       }
     });
@@ -89,36 +90,38 @@ describe('SequelizeRememberTokenRepository Integration Tests', () => {
     it('should retrieve a token by hash if it exists', async () => {
       if (isSqliteAvailable && sqliteUserModel) {
         const user = await sqliteUserModel.create({
-          FirstName: 'Test',
-          LastName: 'User',
-          Email: 'test@example.com',
-          PasswordUser: 'hash',
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@example.com',
+          passwordUser: 'hash',
         });
 
         const expiry = new Date(Date.now() + 3600 * 1000);
         await sqliteRememberTokenModel.create({
-          IDUser: user.IDUser,
-          TokenHash: 'my_unique_hash',
-          ExpiresAt: expiry,
+          idUser: user.idUser,
+          tokenHash: 'my_unique_hash',
+          expiryDate: expiry,
+          createdAt: new Date(),
         });
 
         const found = await repository.findByHash('my_unique_hash');
         expect(found).not.toBeNull();
-        expect(found?.TokenHash).toBe('my_unique_hash');
-        expect(found?.IDUser).toBe(user.IDUser);
+        expect(found?.tokenHash).toBe('my_unique_hash');
+        expect(found?.idUser).toBe(user.idUser);
       } else {
         const mockInstance = {
-          id: 11,
-          TokenHash: 'my_unique_hash',
-          IDUser: 6,
-          ExpiresAt: new Date(),
+          idRememberToken: 11,
+          tokenHash: 'my_unique_hash',
+          idUser: 6,
+          expiryDate: new Date(),
+          createdAt: new Date(),
         };
         jest.mocked(db.RememberToken.findOne).mockResolvedValue(mockInstance as any);
 
         const found = await repository.findByHash('my_unique_hash');
         expect(found).not.toBeNull();
-        expect(found?.TokenHash).toBe('my_unique_hash');
-        expect(db.RememberToken.findOne).toHaveBeenCalledWith({ where: { TokenHash: 'my_unique_hash' } });
+        expect(found?.tokenHash).toBe('my_unique_hash');
+        expect(db.RememberToken.findOne).toHaveBeenCalledWith({ where: { tokenHash: 'my_unique_hash' } });
       }
     });
 
@@ -138,17 +141,18 @@ describe('SequelizeRememberTokenRepository Integration Tests', () => {
     it('should delete token and return true if deletion occurred', async () => {
       if (isSqliteAvailable && sqliteUserModel) {
         const user = await sqliteUserModel.create({
-          FirstName: 'Test',
-          LastName: 'User',
-          Email: 'test@example.com',
-          PasswordUser: 'hash',
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@example.com',
+          passwordUser: 'hash',
         });
 
         const expiry = new Date(Date.now() + 3600 * 1000);
         await sqliteRememberTokenModel.create({
-          IDUser: user.IDUser,
-          TokenHash: 'to_delete',
-          ExpiresAt: expiry,
+          idUser: user.idUser,
+          tokenHash: 'to_delete',
+          expiryDate: expiry,
+          createdAt: new Date(),
         });
 
         const deleted = await repository.deleteByHash('to_delete');
@@ -161,7 +165,7 @@ describe('SequelizeRememberTokenRepository Integration Tests', () => {
 
         const deleted = await repository.deleteByHash('to_delete');
         expect(deleted).toBe(true);
-        expect(db.RememberToken.destroy).toHaveBeenCalledWith({ where: { TokenHash: 'to_delete' } });
+        expect(db.RememberToken.destroy).toHaveBeenCalledWith({ where: { tokenHash: 'to_delete' } });
       }
     });
 

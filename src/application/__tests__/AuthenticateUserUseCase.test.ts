@@ -24,10 +24,10 @@ describe('AuthenticateUserUseCase', () => {
     useCase = new AuthenticateUserUseCase(mockUserRepo, mockPasswordHasher);
   });
 
-  it('should authenticate successfully with correct credentials (using Password)', async () => {
+  it('should authenticate successfully with correct credentials (using password)', async () => {
     const input: AuthenticateUserInput = {
-      Email: 'test@example.com',
-      Password: 'correctPassword',
+      email: 'test@example.com',
+      password: 'correctPassword',
     };
 
     const existingUser = new User(
@@ -47,23 +47,23 @@ describe('AuthenticateUserUseCase', () => {
     const result = await useCase.execute(input);
 
     expect(result).toEqual({
-      IDUser: 7,
-      FirstName: 'Bob',
-      LastName: 'Builder',
-      Email: 'test@example.com',
-      Image: 'bob.jpg',
-      IDRole: 1,
-      Category: 'Admin',
+      idUser: 7,
+      firstName: 'Bob',
+      lastName: 'Builder',
+      email: 'test@example.com',
+      image: 'bob.jpg',
+      idRole: 1,
+      category: 'Admin',
     });
 
     expect(mockUserRepo.findByEmail).toHaveBeenCalledWith('test@example.com');
     expect(mockPasswordHasher.compare).toHaveBeenCalledWith('correctPassword', 'hashedPassword');
   });
 
-  it('should authenticate successfully with correct credentials (using PasswordUser)', async () => {
+  it('should authenticate successfully with correct credentials (using passwordUser)', async () => {
     const input: AuthenticateUserInput = {
-      Email: 'test@example.com',
-      PasswordUser: 'correctPassword',
+      email: 'test@example.com',
+      passwordUser: 'correctPassword',
     };
 
     const existingUser = new User(
@@ -82,14 +82,14 @@ describe('AuthenticateUserUseCase', () => {
 
     const result = await useCase.execute(input);
 
-    expect(result.IDUser).toBe(7);
+    expect(result.idUser).toBe(7);
     expect(mockPasswordHasher.compare).toHaveBeenCalledWith('correctPassword', 'hashedPassword');
   });
 
   it('should throw InvalidCredentialsException when email is not found', async () => {
     const input: AuthenticateUserInput = {
-      Email: 'notfound@example.com',
-      Password: 'password',
+      email: 'notfound@example.com',
+      password: 'password',
     };
 
     mockUserRepo.findByEmail.mockResolvedValue(null);
@@ -103,8 +103,8 @@ describe('AuthenticateUserUseCase', () => {
 
   it('should throw InvalidCredentialsException when password does not match', async () => {
     const input: AuthenticateUserInput = {
-      Email: 'test@example.com',
-      Password: 'wrongPassword',
+      email: 'test@example.com',
+      password: 'wrongPassword',
     };
 
     const existingUser = new User(
@@ -130,7 +130,7 @@ describe('AuthenticateUserUseCase', () => {
 
   it('should throw InvalidCredentialsException when no password is provided', async () => {
     const input: AuthenticateUserInput = {
-      Email: 'test@example.com',
+      email: 'test@example.com',
     };
 
     const existingUser = new User(

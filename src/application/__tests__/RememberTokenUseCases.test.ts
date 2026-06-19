@@ -48,25 +48,25 @@ describe('RememberToken Use Cases', () => {
       mockRememberTokenRepo.create.mockResolvedValue(mockCreated);
 
       const result = await useCase.execute({
-        IDUser: 10,
-        PlainToken: 'myPlainToken',
-        DurationSeconds: 3600,
+        idUser: 10,
+        plainToken: 'myPlainToken',
+        durationSeconds: 3600,
       });
 
       expect(result).toEqual({
-        IDRememberToken: 99,
-        TokenHash: 'hashedPlainToken123',
-        IDUser: 10,
-        ExpiryDate: expectedDate,
-        CreatedAt: expectedDate,
+        idRememberToken: 99,
+        tokenHash: 'hashedPlainToken123',
+        idUser: 10,
+        expiryDate: expectedDate,
+        createdAt: expectedDate,
       });
 
       expect(mockTokenHasher.hash).toHaveBeenCalledWith('myPlainToken');
       expect(mockRememberTokenRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          TokenHash: 'hashedPlainToken123',
-          IDUser: 10,
-          ExpiryDate: expect.any(Date),
+          tokenHash: 'hashedPlainToken123',
+          idUser: 10,
+          expiryDate: expect.any(Date),
         })
       );
     });
@@ -125,13 +125,13 @@ describe('RememberToken Use Cases', () => {
       const result = await useCase.execute('myPlainToken');
 
       expect(result).toEqual({
-        IDUser: 5,
-        FirstName: 'Alice',
-        LastName: 'Smith',
-        Email: 'alice@example.com',
-        Image: 'alice.png',
-        IDRole: 2,
-        Category: 'VIP',
+        idUser: 5,
+        firstName: 'Alice',
+        lastName: 'Smith',
+        email: 'alice@example.com',
+        image: 'alice.png',
+        idRole: 2,
+        category: 'VIP',
       });
 
       expect(mockUserRepo.findById).toHaveBeenCalledWith(5);

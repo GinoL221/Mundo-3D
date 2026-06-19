@@ -14,7 +14,7 @@ describe('CartController', () => {
 
     req = {
       session: {
-        userLogged: { IDUser: 42 }
+        userLogged: { idUser: 42 }
       }
     };
     res = {

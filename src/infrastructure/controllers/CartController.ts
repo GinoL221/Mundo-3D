@@ -6,7 +6,7 @@ export class CartController {
 
   async viewCart(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userId = (req as any).session?.userLogged?.IDUser;
+      const userId = (req as any).session?.userLogged?.idUser;
       if (!userId) {
         throw new Error('User is not logged in');
       }

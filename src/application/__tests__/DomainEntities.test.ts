@@ -1,6 +1,8 @@
 import { Product } from '../../domain/entities/Product';
 import { Category } from '../../domain/entities/Category';
 import { Franchise } from '../../domain/entities/Franchise';
+import { User } from '../../domain/entities/User';
+import { RememberToken } from '../../domain/entities/RememberToken';
 
 describe('Domain Entities', () => {
   it('should create a Category entity correctly', () => {
@@ -39,5 +41,28 @@ describe('Domain Entities', () => {
     expect(product.IDFranchise).toBe(2);
     expect(product.Category).toBe(category);
     expect(product.Franchise).toBe(franchise);
+  });
+
+  it('should create a User entity correctly with camelCase properties', () => {
+    const user = new User(1, 'John', 'Doe', 'john@example.com', 'hashedpassword', 'john.jpg', 2, 'Admin');
+    expect(user.idUser).toBe(1);
+    expect(user.firstName).toBe('John');
+    expect(user.lastName).toBe('Doe');
+    expect(user.email).toBe('john@example.com');
+    expect(user.password).toBe('hashedpassword');
+    expect(user.image).toBe('john.jpg');
+    expect(user.idRole).toBe(2);
+    expect(user.category).toBe('Admin');
+  });
+
+  it('should create a RememberToken entity correctly with camelCase properties', () => {
+    const date = new Date();
+    const createdDate = new Date();
+    const token = new RememberToken(101, 'hash123', 1, date, createdDate);
+    expect(token.idRememberToken).toBe(101);
+    expect(token.tokenHash).toBe('hash123');
+    expect(token.idUser).toBe(1);
+    expect(token.expiryDate).toBe(date);
+    expect(token.createdAt).toBe(createdDate);
   });
 });

@@ -1,7 +1,7 @@
 export interface RememberTokenDTO {
-  IDRememberToken: number;
-  TokenHash: string;
-  IDUser: number;
-  ExpiryDate: Date;
-  CreatedAt?: Date | null;
+  idRememberToken: number;
+  tokenHash: string;
+  idUser: number;
+  expiryDate: Date;
+  createdAt?: Date | null;
 }

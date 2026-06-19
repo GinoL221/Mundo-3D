@@ -38,13 +38,20 @@ async function seedInitialData(db) {
       const usersPath = path.join(__dirname, 'data/users.json');
       if (fs.existsSync(usersPath)) {
         const usersData = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
-        const usersHashed = usersData.map((u) => ({
-          ...u,
-          PasswordUser:
-            u.PasswordUser && u.PasswordUser.startsWith('$2a$')
-              ? u.PasswordUser
-              : bcrypt.hashSync(u.PasswordUser || u.Password || u.password, 10),
-        }));
+        const usersHashed = usersData.map((u) => {
+          const rawPassword = u.PasswordUser || u.Password || u.password || '';
+          return {
+            firstName: u.FirstName || u.firstName,
+            lastName: u.LastName || u.lastName,
+            email: u.Email || u.email,
+            image: u.Image || u.image,
+            passwordUser: rawPassword.startsWith('$2a$')
+              ? rawPassword
+              : bcrypt.hashSync(rawPassword, 10),
+            idRole: u.IDRole || u.idRole,
+            category: u.Category || u.category,
+          };
+        });
         await db.User.bulkCreate(usersHashed);
         console.log('✔ Usuarios insertados desde JSON (con contraseña hasheada)');
       }

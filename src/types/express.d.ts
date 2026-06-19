@@ -4,10 +4,10 @@ declare global {
   namespace Express {
     interface Request {
       user?: {
-        userID: number;
-        Email: string;
-        Category: string | null;
-        IDRole: number;
+        userId: number;
+        email: string;
+        category: string | null;
+        idRole: number;
       };
       session?: {
         userLogged?: Partial<UserDTO>;

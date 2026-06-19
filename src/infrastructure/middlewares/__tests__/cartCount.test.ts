@@ -39,7 +39,7 @@ describe('cartCountMiddleware', () => {
   it('should retrieve distinct count and set cartDistinctCount when user is logged in', async () => {
     res.locals = {
       isLogged: true,
-      userLogged: { IDUser: 42 },
+      userLogged: { idUser: 42 },
     };
 
     await cartCountMiddleware(req as Request, res as Response, next);
@@ -51,7 +51,7 @@ describe('cartCountMiddleware', () => {
   it('should set distinct count correctly for another user (Triangulation)', async () => {
     res.locals = {
       isLogged: true,
-      userLogged: { IDUser: 99 },
+      userLogged: { idUser: 99 },
     };
 
     await cartCountMiddleware(req as Request, res as Response, next);
@@ -63,7 +63,7 @@ describe('cartCountMiddleware', () => {
   it('should silently default to 0 and call next when the use case throws an error', async () => {
     res.locals = {
       isLogged: true,
-      userLogged: { IDUser: 666 }, // triggers the mocked error
+      userLogged: { idUser: 666 }, // triggers the mocked error
     };
 
     await cartCountMiddleware(req as Request, res as Response, next);

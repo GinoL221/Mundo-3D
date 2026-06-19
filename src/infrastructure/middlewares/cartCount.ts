@@ -10,7 +10,7 @@ export const cartCountMiddleware = async (req: Request, res: Response, next: Nex
 
   if (res.locals.isLogged && res.locals.userLogged) {
     try {
-      const userId = res.locals.userLogged.IDUser;
+      const userId = res.locals.userLogged.idUser;
       const count = await getCartDistinctCountUseCase.execute(userId);
       res.locals.cartDistinctCount = count;
     } catch (error: any) {

@@ -45,7 +45,7 @@ describe('apiAuthMiddleware', () => {
 
   it('returns 401 when the token is expired', () => {
     const expiredToken = jwt.sign(
-      { userID: 1, Email: 'user@test.com', Category: 'User', IDRole: 2 },
+      { userId: 1, email: 'user@test.com', category: 'User', idRole: 2 },
       JWT_SECRET,
       { expiresIn: -10 },
     );
@@ -58,7 +58,7 @@ describe('apiAuthMiddleware', () => {
   });
 
   it('attaches decoded payload to req.user and calls next() when the token is valid', () => {
-    const payload = { userID: 1, Email: 'user@test.com', Category: 'User', IDRole: 2 };
+    const payload = { userId: 1, email: 'user@test.com', category: 'User', idRole: 2 };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
     req.headers.authorization = `Bearer ${token}`;
 
@@ -103,8 +103,8 @@ describe('adminGuard', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('returns 403 for an authenticated non-admin web session (IDRole !== 1)', () => {
-    req.session.userLogged = { IDUser: 2, IDRole: 2, Category: 'User' };
+  it('returns 403 for an authenticated non-admin web session (idRole !== 1)', () => {
+    req.session.userLogged = { idUser: 2, idRole: 2, category: 'User' };
 
     adminGuard(req, res, next);
 
@@ -112,9 +112,9 @@ describe('adminGuard', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('returns 403 JSON for an authenticated non-admin API request (req.user.IDRole !== 1)', () => {
+  it('returns 403 JSON for an authenticated non-admin API request (req.user.idRole !== 1)', () => {
     req.path = '/api/users';
-    req.user = { userID: 2, IDRole: 2, Category: 'User' };
+    req.user = { userId: 2, idRole: 2, category: 'User' };
 
     adminGuard(req, res, next);
 
@@ -125,8 +125,8 @@ describe('adminGuard', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('calls next() for an authenticated admin web session (IDRole === 1)', () => {
-    req.session.userLogged = { IDUser: 1, IDRole: 1, Category: 'Admin' };
+  it('calls next() for an authenticated admin web session (idRole === 1)', () => {
+    req.session.userLogged = { idUser: 1, idRole: 1, category: 'Admin' };
 
     adminGuard(req, res, next);
 
@@ -135,9 +135,9 @@ describe('adminGuard', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
-  it('calls next() for an authenticated admin API request (req.user.IDRole === 1)', () => {
+  it('calls next() for an authenticated admin API request (req.user.idRole === 1)', () => {
     req.path = '/api/users';
-    req.user = { userID: 1, IDRole: 1, Category: 'Admin' };
+    req.user = { userId: 1, idRole: 1, category: 'Admin' };
 
     adminGuard(req, res, next);
 

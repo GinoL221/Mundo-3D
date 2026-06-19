@@ -45,28 +45,28 @@ describe('SequelizeUserRepository Integration Tests', () => {
         const userData = new User(0, 'John', 'Doe', 'john.doe@example.com', 'hashedpassword', 'image.png');
         const created = await repository.create(userData);
 
-        expect(created.IDUser).toBeGreaterThan(0);
-        expect(created.FirstName).toBe('John');
-        expect(created.LastName).toBe('Doe');
-        expect(created.Email).toBe('john.doe@example.com');
-        expect(created.Password).toBe('hashedpassword');
-        expect(created.Image).toBe('image.png');
+        expect(created.idUser).toBeGreaterThan(0);
+        expect(created.firstName).toBe('John');
+        expect(created.lastName).toBe('Doe');
+        expect(created.email).toBe('john.doe@example.com');
+        expect(created.password).toBe('hashedpassword');
+        expect(created.image).toBe('image.png');
       } else {
         const mockInstance = {
-          IDUser: 1,
-          FirstName: 'John',
-          LastName: 'Doe',
-          Email: 'john.doe@example.com',
-          PasswordUser: 'hashedpassword',
-          Image: 'image.png',
+          idUser: 1,
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'john.doe@example.com',
+          passwordUser: 'hashedpassword',
+          image: 'image.png',
         };
         jest.mocked(db.User.create).mockResolvedValue(mockInstance as any);
 
         const userData = new User(0, 'John', 'Doe', 'john.doe@example.com', 'hashedpassword', 'image.png');
         const created = await repository.create(userData);
 
-        expect(created.IDUser).toBe(1);
-        expect(created.FirstName).toBe('John');
+        expect(created.idUser).toBe(1);
+        expect(created.firstName).toBe('John');
         expect(db.User.create).toHaveBeenCalled();
       }
     });
@@ -76,35 +76,35 @@ describe('SequelizeUserRepository Integration Tests', () => {
     it('should find user by primary key', async () => {
       if (isSqliteAvailable) {
         const createdModel = await sqliteUserModel.create({
-          FirstName: 'Alice',
-          LastName: 'Smith',
-          Email: 'alice@example.com',
-          PasswordUser: 'password123',
-          Image: 'alice.png',
+          firstName: 'Alice',
+          lastName: 'Smith',
+          email: 'alice@example.com',
+          passwordUser: 'password123',
+          image: 'alice.png',
         });
 
-        const found = await repository.findById(createdModel.IDUser);
+        const found = await repository.findById(createdModel.idUser);
         expect(found).not.toBeNull();
-        expect(found?.FirstName).toBe('Alice');
-        expect(found?.LastName).toBe('Smith');
-        expect(found?.Email).toBe('alice@example.com');
-        expect(found?.Password).toBe('password123');
-        expect(found?.Image).toBe('alice.png');
+        expect(found?.firstName).toBe('Alice');
+        expect(found?.lastName).toBe('Smith');
+        expect(found?.email).toBe('alice@example.com');
+        expect(found?.password).toBe('password123');
+        expect(found?.image).toBe('alice.png');
       } else {
         const mockInstance = {
-          IDUser: 2,
-          FirstName: 'Alice',
-          LastName: 'Smith',
-          Email: 'alice@example.com',
-          PasswordUser: 'password123',
-          Image: 'alice.png',
+          idUser: 2,
+          firstName: 'Alice',
+          lastName: 'Smith',
+          email: 'alice@example.com',
+          passwordUser: 'password123',
+          image: 'alice.png',
         };
         jest.mocked(db.User.findByPk).mockResolvedValue(mockInstance as any);
 
         const found = await repository.findById(2);
         expect(found).not.toBeNull();
-        expect(found?.IDUser).toBe(2);
-        expect(found?.FirstName).toBe('Alice');
+        expect(found?.idUser).toBe(2);
+        expect(found?.firstName).toBe('Alice');
         expect(db.User.findByPk).toHaveBeenCalledWith(2);
       }
     });
@@ -125,32 +125,32 @@ describe('SequelizeUserRepository Integration Tests', () => {
     it('should find user by email', async () => {
       if (isSqliteAvailable) {
         await sqliteUserModel.create({
-          FirstName: 'Bob',
-          LastName: 'Jones',
-          Email: 'bob@example.com',
-          PasswordUser: 'securepwd',
-          Image: null,
+          firstName: 'Bob',
+          lastName: 'Jones',
+          email: 'bob@example.com',
+          passwordUser: 'securepwd',
+          image: null,
         });
 
         const found = await repository.findByEmail('bob@example.com');
         expect(found).not.toBeNull();
-        expect(found?.FirstName).toBe('Bob');
-        expect(found?.Email).toBe('bob@example.com');
+        expect(found?.firstName).toBe('Bob');
+        expect(found?.email).toBe('bob@example.com');
       } else {
         const mockInstance = {
-          IDUser: 3,
-          FirstName: 'Bob',
-          LastName: 'Jones',
-          Email: 'bob@example.com',
-          PasswordUser: 'securepwd',
-          Image: null,
+          idUser: 3,
+          firstName: 'Bob',
+          lastName: 'Jones',
+          email: 'bob@example.com',
+          passwordUser: 'securepwd',
+          image: null,
         };
         jest.mocked(db.User.findOne).mockResolvedValue(mockInstance as any);
 
         const found = await repository.findByEmail('bob@example.com');
         expect(found).not.toBeNull();
-        expect(found?.Email).toBe('bob@example.com');
-        expect(db.User.findOne).toHaveBeenCalledWith({ where: { Email: 'bob@example.com' } });
+        expect(found?.email).toBe('bob@example.com');
+        expect(db.User.findOne).toHaveBeenCalledWith({ where: { email: 'bob@example.com' } });
       }
     });
 
@@ -171,51 +171,51 @@ describe('SequelizeUserRepository Integration Tests', () => {
       if (isSqliteAvailable) {
         await sqliteUserModel.destroy({ where: {} });
         await sqliteUserModel.create({
-          FirstName: 'Alice',
-          LastName: 'Smith',
-          Email: 'alice@example.com',
-          PasswordUser: 'password123',
-          Image: 'alice.png',
+          firstName: 'Alice',
+          lastName: 'Smith',
+          email: 'alice@example.com',
+          passwordUser: 'password123',
+          image: 'alice.png',
         });
         await sqliteUserModel.create({
-          FirstName: 'Bob',
-          LastName: 'Jones',
-          Email: 'bob@example.com',
-          PasswordUser: 'securepwd',
-          Image: null,
+          firstName: 'Bob',
+          lastName: 'Jones',
+          email: 'bob@example.com',
+          passwordUser: 'securepwd',
+          image: null,
         });
 
         const users = await repository.findAll();
         expect(users).toHaveLength(2);
-        expect(users[0].FirstName).toBe('Alice');
-        expect(users[1].FirstName).toBe('Bob');
+        expect(users[0].firstName).toBe('Alice');
+        expect(users[1].firstName).toBe('Bob');
       } else {
         const mockInstances = [
           {
-            IDUser: 1,
-            FirstName: 'Alice',
-            LastName: 'Smith',
-            Email: 'alice@example.com',
-            PasswordUser: 'password123',
-            Image: 'alice.png',
+            idUser: 1,
+            firstName: 'Alice',
+            lastName: 'Smith',
+            email: 'alice@example.com',
+            passwordUser: 'password123',
+            image: 'alice.png',
           },
           {
-            IDUser: 2,
-            FirstName: 'Bob',
-            LastName: 'Jones',
-            Email: 'bob@example.com',
-            PasswordUser: 'securepwd',
-            Image: null,
+            idUser: 2,
+            firstName: 'Bob',
+            lastName: 'Jones',
+            email: 'bob@example.com',
+            passwordUser: 'securepwd',
+            image: null,
           }
         ];
         (db.User as any).findAll = jest.fn().mockResolvedValue(mockInstances);
 
         const users = await repository.findAll();
         expect(users).toHaveLength(2);
-        expect(users[0].IDUser).toBe(1);
-        expect(users[0].FirstName).toBe('Alice');
-        expect(users[1].IDUser).toBe(2);
-        expect(users[1].FirstName).toBe('Bob');
+        expect(users[0].idUser).toBe(1);
+        expect(users[0].firstName).toBe('Alice');
+        expect(users[1].idUser).toBe(2);
+        expect(users[1].firstName).toBe('Bob');
         expect(db.User.findAll).toHaveBeenCalled();
       }
     });

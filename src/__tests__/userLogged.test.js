@@ -23,7 +23,6 @@ jest.mock('../services', () => ({
 
 const userLoggedMiddleware = require('../middlewares/userLogged');
 
-
 describe('userLoggedMiddleware', () => {
   let req, res, next;
 
@@ -43,7 +42,7 @@ describe('userLoggedMiddleware', () => {
 
   describe('session-based user lookup', () => {
     it('sets isLogged true and attaches user when session has userLogged', async () => {
-      req.session.userLogged = { IDUser: 2, FirstName: 'SessionUser' };
+      req.session.userLogged = { idUser: 2, firstName: 'SessionUser' };
 
       await userLoggedMiddleware(req, res, next);
 
@@ -56,7 +55,7 @@ describe('userLoggedMiddleware', () => {
   describe('signed cookie remember-me authentication', () => {
     it('authenticates user and sets session when remember_token is valid and matching', async () => {
       req.signedCookies.remember_token = '42:plain_token_abc';
-      const mockUser = { IDUser: 42, FirstName: 'John', Email: 'john@test.com' };
+      const mockUser = { idUser: 42, firstName: 'John', email: 'john@test.com' };
       UserService.verifyRememberToken.mockResolvedValue(mockUser);
 
       await userLoggedMiddleware(req, res, next);
@@ -68,9 +67,9 @@ describe('userLoggedMiddleware', () => {
       expect(res.clearCookie).not.toHaveBeenCalled();
     });
 
-    it('clears cookie and does not log in user when IDUser does not match cookie', async () => {
+    it('clears cookie and does not log in user when idUser does not match cookie', async () => {
       req.signedCookies.remember_token = '99:plain_token_abc';
-      const mockUser = { IDUser: 42, FirstName: 'John', Email: 'john@test.com' };
+      const mockUser = { idUser: 42, firstName: 'John', email: 'john@test.com' };
       UserService.verifyRememberToken.mockResolvedValue(mockUser);
 
       await userLoggedMiddleware(req, res, next);

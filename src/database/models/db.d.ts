@@ -21,21 +21,22 @@ export interface FranchiseAttributes {
 }
 
 export interface UserAttributes {
-  IDUser: number;
-  FirstName: string;
-  LastName: string;
-  Email: string;
-  Image: string | null;
-  PasswordUser: string;
-  IDRole?: number;
-  Category?: string;
+  idUser: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  image: string | null;
+  passwordUser: string;
+  idRole?: number;
+  category?: string;
 }
 
 export interface RememberTokenAttributes {
-  id: number;
-  IDUser: number;
-  TokenHash: string;
-  ExpiresAt: Date;
+  idRememberToken: number;
+  idUser: number;
+  tokenHash: string;
+  expiryDate: Date;
+  createdAt: Date;
 }
 
 export interface ShoppingCartAttributes {

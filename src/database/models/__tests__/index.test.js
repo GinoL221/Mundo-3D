@@ -29,13 +29,13 @@ describe('Database Model Initialization & Association', () => {
     expect(db.User.hasMany).toHaveBeenCalledWith(
       db.RememberToken,
       expect.objectContaining({
-        foreignKey: 'IDUser',
+        foreignKey: 'idUser',
       })
     );
     expect(db.RememberToken.belongsTo).toHaveBeenCalledWith(
       db.User,
       expect.objectContaining({
-        foreignKey: 'IDUser',
+        foreignKey: 'idUser',
       })
     );
   });

@@ -26,8 +26,8 @@ function initializeModels() {
 
   UserModel.hasMany(ShoppingCartModel, { foreignKey: 'IDUser' });
   ShoppingCartModel.belongsTo(UserModel, { foreignKey: 'IDUser' });
-  UserModel.hasMany(RememberTokenModel, { foreignKey: 'IDUser' });
-  RememberTokenModel.belongsTo(UserModel, { foreignKey: 'IDUser' });
+  UserModel.hasMany(RememberTokenModel, { foreignKey: 'idUser' });
+  RememberTokenModel.belongsTo(UserModel, { foreignKey: 'idUser' });
   ProductModel.hasMany(ShoppingCartModel, {
     foreignKey: 'IDProduct',
     as: 'ShoppingCarts',

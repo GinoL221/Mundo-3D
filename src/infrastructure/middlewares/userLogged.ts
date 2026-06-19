@@ -9,6 +9,29 @@ const userRepo = new SequelizeUserRepository();
 const tokenHasher = new Sha256TokenHasher();
 const verifyRememberTokenUseCase = new VerifyRememberTokenUseCase(rememberTokenRepo, userRepo, tokenHasher);
 
+function addLegacyGetters(obj: any): any {
+  if (!obj) return obj;
+  const mappings: Record<string, string> = {
+    IDUser: 'idUser',
+    IDRole: 'idRole',
+    FirstName: 'firstName',
+    LastName: 'lastName',
+    Email: 'email',
+    Image: 'image',
+    Category: 'category'
+  };
+  for (const [legacyKey, newKey] of Object.entries(mappings)) {
+    if (newKey in obj && !(legacyKey in obj)) {
+      Object.defineProperty(obj, legacyKey, {
+        get() { return this[newKey]; },
+        configurable: true,
+        enumerable: false
+      });
+    }
+  }
+  return obj;
+}
+
 const userLoggedMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   res.locals.isLogged = false;
 
@@ -23,7 +46,7 @@ const userLoggedMiddleware = async (req: Request, res: Response, next: NextFunct
           const userId = parseInt(userIdStr, 10);
 
           const user = await verifyRememberTokenUseCase.execute(plainToken);
-          if (user && user.IDUser === userId) {
+          if (user && user.idUser === userId) {
             session.userLogged = user;
           } else {
             res.clearCookie('remember_token');
@@ -42,6 +65,17 @@ const userLoggedMiddleware = async (req: Request, res: Response, next: NextFunct
   const session = (req as any).session;
 
   if (session && session.userLogged) {
+    const logged = session.userLogged;
+    const baseObj = {
+      idUser: logged.idUser ?? logged.IDUser,
+      firstName: logged.firstName ?? logged.FirstName,
+      lastName: logged.lastName ?? logged.LastName,
+      email: logged.email ?? logged.Email,
+      image: logged.image ?? logged.Image,
+      idRole: logged.idRole ?? logged.IDRole,
+      category: logged.category ?? logged.Category,
+    };
+    session.userLogged = addLegacyGetters(baseObj);
     res.locals.isLogged = true;
     res.locals.userLogged = session.userLogged;
   }

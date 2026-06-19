@@ -30,15 +30,15 @@ describe('UserController.processLogin — session role data', () => {
     return { req, res, next };
   };
 
-  it('includes IDRole and Category in req.session.userLogged on successful login', async () => {
+  it('includes idUser and category in req.session.userLogged on successful login', async () => {
     const mockExecute = jest.fn().mockResolvedValue({
-      IDUser: 1,
-      FirstName: 'Admin',
-      LastName: 'User',
-      Email: 'admin@test.com',
-      Image: 'admin.png',
-      IDRole: 1,
-      Category: 'Admin',
+      idUser: 1,
+      firstName: 'Admin',
+      lastName: 'User',
+      email: 'admin@test.com',
+      image: 'admin.png',
+      idRole: 1,
+      category: 'Admin',
     });
 
     const controller = buildController(mockExecute);
@@ -49,23 +49,23 @@ describe('UserController.processLogin — session role data', () => {
     await controller.processLogin(req as any, res, next);
 
     expect((req as any).session.userLogged).toMatchObject({
-      IDUser: 1,
-      Email: 'admin@test.com',
-      IDRole: 1,
-      Category: 'Admin',
+      idUser: 1,
+      email: 'admin@test.com',
+      idRole: 1,
+      category: 'Admin',
     });
     expect(res.redirect).toHaveBeenCalledWith('profile');
   });
 
-  it('includes IDRole and Category for a standard user as well', async () => {
+  it('includes idRole and category for a standard user as well', async () => {
     const mockExecute = jest.fn().mockResolvedValue({
-      IDUser: 2,
-      FirstName: 'John',
-      LastName: 'Doe',
-      Email: 'john@test.com',
-      Image: 'john.png',
-      IDRole: 2,
-      Category: 'User',
+      idUser: 2,
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@test.com',
+      image: 'john.png',
+      idRole: 2,
+      category: 'User',
     });
 
     const controller = buildController(mockExecute);
@@ -74,10 +74,10 @@ describe('UserController.processLogin — session role data', () => {
     await controller.processLogin(req as any, res, next);
 
     expect((req as any).session.userLogged).toMatchObject({
-      IDUser: 2,
-      Email: 'john@test.com',
-      IDRole: 2,
-      Category: 'User',
+      idUser: 2,
+      email: 'john@test.com',
+      idRole: 2,
+      category: 'User',
     });
   });
 });

@@ -51,7 +51,7 @@ export const adminGuard = (req: Request, res: Response, next: NextFunction): any
     return res.redirect('/login');
   }
 
-  if (principal.IDRole !== 1) {
+  if (principal.idRole !== 1) {
     if (isApiRequest) {
       return res.status(403).json({ error: 'Acceso restringido a administradores' });
     }

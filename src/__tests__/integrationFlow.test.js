@@ -4,17 +4,17 @@ jest.mock('../application/use-cases/AuthenticateUserUseCase', () => {
       return {
         execute: async (input) => {
           const { UserService } = require('../services');
-          const user = await UserService.findByEmail(input.Email, { includePassword: true });
-          if (!user || !UserService.verifyPassword(input.Password || input.PasswordUser, user.PasswordUser)) {
+          const user = await UserService.findByEmail(input.email, { includePassword: true });
+          if (!user || !UserService.verifyPassword(input.password || input.passwordUser, user.PasswordUser)) {
             const { InvalidCredentialsException } = require('../domain/exceptions/InvalidCredentialsException');
             throw new InvalidCredentialsException('El email o la contraseña no coinciden');
           }
           return {
-            IDUser: user.IDUser,
-            FirstName: user.FirstName,
-            LastName: user.LastName,
-            Email: user.Email,
-            Image: user.Image,
+            idUser: user.idUser || user.IDUser,
+            firstName: user.firstName || user.FirstName,
+            lastName: user.lastName || user.LastName,
+            email: user.email || user.Email,
+            image: user.image || user.Image,
           };
         },
       };
@@ -28,7 +28,7 @@ jest.mock('../application/use-cases/CreateRememberTokenUseCase', () => {
       return {
         execute: async (input) => {
           const { UserService } = require('../services');
-          return UserService.createRememberToken(input.IDUser, input.PlainToken, input.DurationSeconds);
+          return UserService.createRememberToken(input.idUser, input.plainToken, input.durationSeconds);
         },
       };
     }),
@@ -70,21 +70,21 @@ const { validationResult } = require('express-validator');
 jest.mock('../services', () => {
   const mockTokens = {};
   const mockUsers = {
-    42: { IDUser: 42, FirstName: 'John', LastName: 'Doe', Email: 'john@test.com', PasswordUser: 'hashed_password' },
+    42: { idUser: 42, firstName: 'John', lastName: 'Doe', email: 'john@test.com', PasswordUser: 'hashed_password' },
   };
 
   return {
     UserService: {
       findByEmail: jest.fn(async (email) => {
-        return Object.values(mockUsers).find(u => u.Email === email) || null;
+        return Object.values(mockUsers).find(u => u.email === email) || null;
       }),
       verifyPassword: jest.fn((plain, hash) => plain === 'password123'),
       findById: jest.fn(async (id) => mockUsers[id] || null),
       createRememberToken: jest.fn(async (userId, plainToken, duration) => {
         const crypto = require('crypto');
         const hash = crypto.createHash('sha256').update(plainToken).digest('hex');
-        mockTokens[hash] = { IDUser: userId, ExpiresAt: new Date(Date.now() + duration * 1000) };
-        return { id: 123, IDUser: userId, TokenHash: hash };
+        mockTokens[hash] = { idUser: userId, ExpiresAt: new Date(Date.now() + duration * 1000) };
+        return { id: 123, idUser: userId, tokenHash: hash };
       }),
       verifyRememberToken: jest.fn(async (plainToken) => {
         const crypto = require('crypto');
@@ -95,7 +95,7 @@ jest.mock('../services', () => {
           delete mockTokens[hash];
           return null;
         }
-        return mockUsers[record.IDUser] || null;
+        return mockUsers[record.idUser] || null;
       }),
       deleteRememberToken: jest.fn(async (plainToken) => {
         const crypto = require('crypto');
@@ -155,7 +155,7 @@ describe('Remember-Me Authentication Flow Integration', () => {
 
     // Expect session to be set and signed cookie to be created
     expect(session.userLogged).toBeDefined();
-    expect(session.userLogged.IDUser).toBe(42);
+    expect(session.userLogged.idUser).toBe(42);
     expect(signedCookies.remember_token).toBeDefined();
     expect(signedCookies.remember_token).toContain('42:');
 
@@ -180,9 +180,9 @@ describe('Remember-Me Authentication Flow Integration', () => {
 
     // Expect middleware to automatically log in the user and populate session and locals
     expect(subsequentSession.userLogged).toBeDefined();
-    expect(subsequentSession.userLogged.IDUser).toBe(42);
+    expect(subsequentSession.userLogged.idUser).toBe(42);
     expect(middlewareRes.locals.isLogged).toBe(true);
-    expect(middlewareRes.locals.userLogged.IDUser).toBe(42);
+    expect(middlewareRes.locals.userLogged.idUser).toBe(42);
     expect(nextMock).toHaveBeenCalled();
 
     // 3. LOGOUT (clears cookie & deletes token from DB)
