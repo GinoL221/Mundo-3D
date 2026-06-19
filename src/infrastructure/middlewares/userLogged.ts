@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { VerifyRememberTokenUseCase } from '../application/use-cases/VerifyRememberTokenUseCase';
-import { SequelizeRememberTokenRepository } from '../infrastructure/repositories/SequelizeRememberTokenRepository';
-import { SequelizeUserRepository } from '../infrastructure/repositories/SequelizeUserRepository';
-import { Sha256TokenHasher } from '../infrastructure/security/Sha256TokenHasher';
+import { VerifyRememberTokenUseCase } from '../../application/use-cases/VerifyRememberTokenUseCase';
+import { SequelizeRememberTokenRepository } from '../repositories/SequelizeRememberTokenRepository';
+import { SequelizeUserRepository } from '../repositories/SequelizeUserRepository';
+import { Sha256TokenHasher } from '../security/Sha256TokenHasher';
 
 const rememberTokenRepo = new SequelizeRememberTokenRepository();
 const userRepo = new SequelizeUserRepository();

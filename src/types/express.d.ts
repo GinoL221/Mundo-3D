@@ -13,6 +13,11 @@ declare global {
         userLogged?: Partial<UserDTO>;
         [key: string]: any;
       };
+      file?: any;
+      files?: any;
     }
   }
 }
+
+
+

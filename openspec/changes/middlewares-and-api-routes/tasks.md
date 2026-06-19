@@ -36,12 +36,14 @@ Chain strategy: stacked-to-main
 
 ## Phase 2: Core Implementation
 
-- [ ] 2.1 Create `src/infrastructure/middlewares/auth.ts` containing TS auth, guest, apiAuth, and adminGuard.
-- [ ] 2.2 Create `src/infrastructure/middlewares/csrf.ts` with TS session-based CSRF protection.
-- [ ] 2.3 Create `src/infrastructure/middlewares/errorHandler.ts` with global TS error handling logic.
-- [ ] 2.4 Create `src/infrastructure/middlewares/loginLimiter.ts` using dynamic `LOGIN_LIMIT_MAX` & `LOGIN_LIMIT_WINDOW` env vars.
-- [ ] 2.5 Create `src/infrastructure/middlewares/upload.ts` for file uploading using multer.
-- [ ] 2.6 Create `src/infrastructure/middlewares/validators/productValidators.ts` & `userValidators.ts` using express-validator.
+- [x] 2.1 Create `src/infrastructure/middlewares/auth.ts` containing TS auth, guest, apiAuth, and adminGuard.
+- [x] 2.2 Create `src/infrastructure/middlewares/csrf.ts` with TS session-based CSRF protection.
+- [x] 2.3 Create `src/infrastructure/middlewares/errorHandler.ts` with global TS error handling logic.
+- [x] 2.4 Create `src/infrastructure/middlewares/loginLimiter.ts` using dynamic `LOGIN_LIMIT_MAX` & `LOGIN_LIMIT_WINDOW` env vars.
+  - [x] Quality adjustment: Mock `express-rate-limit` to check configuration options and verify middleware behavior.
+- [x] 2.5 Create `src/infrastructure/middlewares/upload.ts` for file uploading using multer.
+- [x] 2.6 Create `src/infrastructure/middlewares/validators/productValidators.ts` & `userValidators.ts` using express-validator.
+  - [x] Quality adjustment: Add `validationsUsers` tests for missing image and disallowed file extensions.
 - [ ] 2.7 Create `src/infrastructure/controllers/ProductApiController.ts` implementing product routes endpoints using use-cases.
 - [ ] 2.8 Create `src/infrastructure/controllers/UserApiController.ts` implementing user routes endpoints using use-cases.
 
