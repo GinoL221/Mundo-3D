@@ -50,6 +50,15 @@
         </div>
         <% } %>
 
+        <ul id="password-checks" class="pw-checks" style="display: none; list-style: none; padding: 0; margin: 8px 0; font-size: 0.9rem;">
+          <li id="check-length" style="color: #ea4335; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+            <span class="icon" style="font-weight: bold;">✘</span> Entre 6 y 16 caracteres
+          </li>
+          <li id="check-match" style="color: #ea4335; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+            <span class="icon" style="font-weight: bold;">✘</span> Las contraseñas coinciden
+          </li>
+        </ul>
+
         <label for="image">Imagen de perfil:</label>
         <input type="file" id="image" name="image">
         <% if(locals.errors && errors.image){ %>
@@ -67,6 +76,51 @@
   </main>
 
   <%- include('../partials/footer') %>
+
+  <script>
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const checksContainer = document.getElementById('password-checks');
+
+    const lengthCheck = document.getElementById('check-length');
+    const lengthIcon = lengthCheck.querySelector('.icon');
+
+    const matchCheck = document.getElementById('check-match');
+    const matchIcon = matchCheck.querySelector('.icon');
+
+    function updateChecks() {
+      const password = passwordInput.value;
+      const confirmPassword = confirmPasswordInput.value;
+
+      if (password.length > 0 || confirmPassword.length > 0) {
+        checksContainer.style.display = 'block';
+      } else {
+        checksContainer.style.display = 'none';
+        return;
+      }
+
+      const isLengthValid = password.length >= 6 && password.length <= 16;
+      if (isLengthValid) {
+        lengthCheck.style.color = '#34a853';
+        lengthIcon.textContent = '✔';
+      } else {
+        lengthCheck.style.color = '#ea4335';
+        lengthIcon.textContent = '✘';
+      }
+
+      const isMatchValid = password.length > 0 && password === confirmPassword;
+      if (isMatchValid) {
+        matchCheck.style.color = '#34a853';
+        matchIcon.textContent = '✔';
+      } else {
+        matchCheck.style.color = '#ea4335';
+        matchIcon.textContent = '✘';
+      }
+    }
+
+    passwordInput.addEventListener('input', updateChecks);
+    confirmPasswordInput.addEventListener('input', updateChecks);
+  </script>
 </body>
 
 </html>
