@@ -119,7 +119,16 @@
     }
 
     passwordInput.addEventListener('input', updateChecks);
+    passwordInput.addEventListener('change', updateChecks);
     confirmPasswordInput.addEventListener('input', updateChecks);
+    confirmPasswordInput.addEventListener('change', updateChecks);
+
+    // Initial check on load (for values that might be present immediately)
+    updateChecks();
+
+    // Fallback checks to catch browser autofill which can occur slightly after load
+    setTimeout(updateChecks, 100);
+    setTimeout(updateChecks, 500);
   </script>
 </body>
 
