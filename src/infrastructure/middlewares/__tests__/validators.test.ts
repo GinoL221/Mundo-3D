@@ -125,8 +125,8 @@ describe('userValidators - validationsUsers', () => {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@doe.com',
-      password: 'password123',
-      confirmPassword: 'password123'
+      password: 'Password123!',
+      confirmPassword: 'Password123!'
     };
     req.file = { originalname: 'photo.png' } as any;
 
@@ -139,8 +139,8 @@ describe('userValidators - validationsUsers', () => {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@doe.com',
-      password: 'password123',
-      confirmPassword: 'password123'
+      password: 'Password123!',
+      confirmPassword: 'Password123!'
     };
     req.file = undefined;
 
@@ -154,8 +154,8 @@ describe('userValidators - validationsUsers', () => {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@doe.com',
-      password: 'password123',
-      confirmPassword: 'password123'
+      password: 'Password123!',
+      confirmPassword: 'Password123!'
     };
     req.file = { originalname: 'photo.gif' } as any;
 
@@ -169,7 +169,7 @@ describe('userValidators - validationsUsers', () => {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@doe.com',
-      password: 'password123',
+      password: 'Password123!',
       confirmPassword: ''
     };
     req.file = { originalname: 'photo.png' } as any;
@@ -184,8 +184,8 @@ describe('userValidators - validationsUsers', () => {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@doe.com',
-      password: 'password123',
-      confirmPassword: 'differentPassword123'
+      password: 'Password123!',
+      confirmPassword: 'DifferentPassword123!'
     };
     req.file = { originalname: 'photo.png' } as any;
 

@@ -1,5 +1,15 @@
 const request = require('supertest');
 
+jest.mock('../application/use-cases/ListProductsUseCase', () => {
+  return {
+    ListProductsUseCase: jest.fn().mockImplementation(() => {
+      return {
+        execute: jest.fn().mockResolvedValue({ products: [] }),
+      };
+    }),
+  };
+});
+
 describe('CORS Integration Tests', () => {
   jest.setTimeout(20000);
 
