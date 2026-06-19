@@ -21,7 +21,7 @@ const { seedInitialData } = require("./src/database/seed");
 const db = require("./src/database/models/db");
 
 ensureDatabaseExists("development")
-  .then(() => db.sequelize.sync())
+  .then(() => db.sequelize.sync({ alter: true }))
   .then(() => seedInitialData(db))
   .then(() => {
     server.listen(PORT, () => {
