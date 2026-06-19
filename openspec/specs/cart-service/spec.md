@@ -1,34 +1,32 @@
-# Delta for CartService
+# Cart Service Specification
 
-## ADDED Requirements
+## Purpose
+
+Defines the application use cases and repository ports for retrieving and managing shopping carts, replacing legacy JavaScript service modules.
+
+## Requirements
 
 ### Requirement: ShoppingCart CRUD Operations
 
-The system SHALL provide a `CartService` module that encapsulates all Sequelize operations on the `ShoppingCart` model, following the established service pattern (object literal, async methods, `module.exports`).
-
-CartService MUST expose:
-- `findByUserId(userId)` — returns all cart items for a user with included `Product` association
-- `findAll()` — returns all cart items
+The system SHALL define a repository port `IShoppingCartRepository` and implement a `SequelizeShoppingCartRepository` adapter to interact with the database. The system MUST expose use cases `GetCartByUserIdUseCase` and `GetCartDistinctCountUseCase` to encapsulate cart queries instead of a legacy JavaScript service.
+(Previously: The system SHALL provide a JS CartService module encapsulating Sequelize operations on the ShoppingCart model.)
 
 #### Scenario: Find cart items by user ID with product details
 
 - GIVEN a user with ID 5 has 3 items in their shopping cart
-- WHEN `CartService.findByUserId(5)` is called
-- THEN the service SHALL return an array of 3 cart items, each including the associated `Product` data
-- AND the Sequelize query MUST use `include: [{ model: Product, as: 'product' }]`
+- WHEN `GetCartByUserIdUseCase.execute(5)` is executed
+- THEN the use case SHALL return an array of 3 cart items, each mapped to the DTO contract
+- AND each item MUST include its associated product details
 
 #### Scenario: Find cart for non-existent user
 
 - GIVEN no shopping cart entries exist for user ID 9999
-- WHEN `CartService.findByUserId(9999)` is called
-- THEN the service SHALL return an empty array
+- WHEN `GetCartByUserIdUseCase.execute(9999)` is executed
+- THEN the use case SHALL return an empty array
+
+## Removed Requirements
 
 ### Requirement: Service Registration in Index
 
-The system MUST register `CartService` in `src/services/index.js` alongside existing `ProductService` and `UserService`.
-
-#### Scenario: CartService is importable from services index
-
-- GIVEN the service layer index file at `src/services/index.js`
-- WHEN a controller imports `{ CartService }` from the services barrel export
-- THEN `CartService` MUST be a valid object with the `findByUserId` and `findAll` methods
+(Reason: The legacy JavaScript `CartService` is removed and replaced by Hexagonal use cases, so it is no longer exported from `src/services/index.js`.)
+(Migration: Replace imports of `CartService` with instances of `GetCartByUserIdUseCase` or `GetCartDistinctCountUseCase`.)
