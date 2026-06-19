@@ -108,7 +108,8 @@ describe('userValidators - validationsUsers', () => {
       firstName: 'A', // too short (less than 2)
       lastName: 'AVeryLongLastNameThatExceedsLimit', // too long (more than 10)
       email: 'not-an-email',
-      password: '123' // too short
+      password: '123', // too short
+      confirmPassword: '123'
     };
     req.file = { originalname: 'user.jpg' } as any;
 
@@ -124,7 +125,8 @@ describe('userValidators - validationsUsers', () => {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@doe.com',
-      password: 'password123'
+      password: 'password123',
+      confirmPassword: 'password123'
     };
     req.file = { originalname: 'photo.png' } as any;
 
@@ -137,7 +139,8 @@ describe('userValidators - validationsUsers', () => {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@doe.com',
-      password: 'password123'
+      password: 'password123',
+      confirmPassword: 'password123'
     };
     req.file = undefined;
 
@@ -151,13 +154,44 @@ describe('userValidators - validationsUsers', () => {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@doe.com',
-      password: 'password123'
+      password: 'password123',
+      confirmPassword: 'password123'
     };
     req.file = { originalname: 'photo.gif' } as any;
 
     const errors = await runValidation(req as Request, validationsUsers);
     expect(errors.mapped().image).toBeDefined();
     expect(errors.mapped().image.msg).toBe('Las extensiones de archivos permitidas son .jpg, .png');
+  });
+
+  it('fails if confirmPassword is missing or empty', async () => {
+    req.body = {
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@doe.com',
+      password: 'password123',
+      confirmPassword: ''
+    };
+    req.file = { originalname: 'photo.png' } as any;
+
+    const errors = await runValidation(req as Request, validationsUsers);
+    expect(errors.mapped().confirmPassword).toBeDefined();
+    expect(errors.mapped().confirmPassword.msg).toBe('Tienes que confirmar la contraseña');
+  });
+
+  it('fails if confirmPassword does not match password', async () => {
+    req.body = {
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@doe.com',
+      password: 'password123',
+      confirmPassword: 'differentPassword123'
+    };
+    req.file = { originalname: 'photo.png' } as any;
+
+    const errors = await runValidation(req as Request, validationsUsers);
+    expect(errors.mapped().confirmPassword).toBeDefined();
+    expect(errors.mapped().confirmPassword.msg).toBe('Las contraseñas no coinciden');
   });
 });
 

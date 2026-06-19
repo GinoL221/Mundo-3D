@@ -7,7 +7,7 @@
 
   <main class="form-layout">
     <div class="form-card--medium">
-      <form action="/users" method="POST" enctype="multipart/form-data" class="form-card__form">
+      <form action="/users?_csrf=<%= csrfToken %>" method="POST" enctype="multipart/form-data" class="form-card__form">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
         <h2>Registro</h2>
 
@@ -39,6 +39,14 @@
         <% if(locals.errors && errors.password){ %>
         <div class=" form-card__error">
           <%= errors.password.msg %>
+        </div>
+        <% } %>
+
+        <label for="confirmPassword">Confirmar contraseña:</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" class="form-card__input <%= locals.errors && errors.confirmPassword? 'form-card__input--invalid' : null %>">
+        <% if(locals.errors && errors.confirmPassword){ %>
+        <div class="form-card__error">
+          <%= errors.confirmPassword.msg %>
         </div>
         <% } %>
 

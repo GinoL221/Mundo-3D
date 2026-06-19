@@ -30,6 +30,17 @@ export const validationsUsers = [
     .bail()
     .isLength({ min: 6, max: 16 })
     .withMessage('Tiene que tener entre 6 y 16 caracteres'),
+  body('confirmPassword')
+    .trim()
+    .notEmpty()
+    .withMessage('Tienes que confirmar la contraseña')
+    .bail()
+    .custom((value, { req }) => {
+      if (value !== req.body.password) {
+        throw new Error('Las contraseñas no coinciden');
+      }
+      return true;
+    }),
   body('image').custom((value, { req }) => {
     const file = req.file;
     const acceptedExtensions = ['.jpg', '.png'];
