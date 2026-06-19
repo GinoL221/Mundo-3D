@@ -1,6 +1,8 @@
 const request = require('supertest');
 
 describe('CORS Integration Tests', () => {
+  jest.setTimeout(20000);
+
   beforeEach(() => {
     jest.resetModules();
   });

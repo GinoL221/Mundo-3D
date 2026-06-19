@@ -165,4 +165,72 @@ describe('SequelizeUserRepository Integration Tests', () => {
       }
     });
   });
+
+  describe('findAll', () => {
+    it('should return all users mapped to domain entities', async () => {
+      if (isSqliteAvailable) {
+        await sqliteUserModel.destroy({ where: {} });
+        await sqliteUserModel.create({
+          FirstName: 'Alice',
+          LastName: 'Smith',
+          Email: 'alice@example.com',
+          PasswordUser: 'password123',
+          Image: 'alice.png',
+        });
+        await sqliteUserModel.create({
+          FirstName: 'Bob',
+          LastName: 'Jones',
+          Email: 'bob@example.com',
+          PasswordUser: 'securepwd',
+          Image: null,
+        });
+
+        const users = await repository.findAll();
+        expect(users).toHaveLength(2);
+        expect(users[0].FirstName).toBe('Alice');
+        expect(users[1].FirstName).toBe('Bob');
+      } else {
+        const mockInstances = [
+          {
+            IDUser: 1,
+            FirstName: 'Alice',
+            LastName: 'Smith',
+            Email: 'alice@example.com',
+            PasswordUser: 'password123',
+            Image: 'alice.png',
+          },
+          {
+            IDUser: 2,
+            FirstName: 'Bob',
+            LastName: 'Jones',
+            Email: 'bob@example.com',
+            PasswordUser: 'securepwd',
+            Image: null,
+          }
+        ];
+        (db.User as any).findAll = jest.fn().mockResolvedValue(mockInstances);
+
+        const users = await repository.findAll();
+        expect(users).toHaveLength(2);
+        expect(users[0].IDUser).toBe(1);
+        expect(users[0].FirstName).toBe('Alice');
+        expect(users[1].IDUser).toBe(2);
+        expect(users[1].FirstName).toBe('Bob');
+        expect(db.User.findAll).toHaveBeenCalled();
+      }
+    });
+
+    it('should return empty list when no users exist', async () => {
+      if (isSqliteAvailable) {
+        await sqliteUserModel.destroy({ where: {} });
+        const users = await repository.findAll();
+        expect(users).toEqual([]);
+      } else {
+        (db.User as any).findAll = jest.fn().mockResolvedValue([]);
+        const users = await repository.findAll();
+        expect(users).toEqual([]);
+        expect(db.User.findAll).toHaveBeenCalled();
+      }
+    });
+  });
 });

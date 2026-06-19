@@ -40,4 +40,9 @@ export class SequelizeUserRepository implements IUserRepository {
     } as any);
     return this.toEntity(instance);
   }
+
+  async findAll(): Promise<User[]> {
+    const instances = await db.User.findAll();
+    return instances.map(instance => this.toEntity(instance));
+  }
 }
