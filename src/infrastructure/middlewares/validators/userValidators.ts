@@ -28,8 +28,17 @@ export const validationsUsers = [
     .notEmpty()
     .withMessage('Tienes que ingresar una contraseña')
     .bail()
-    .isLength({ min: 6, max: 16 })
-    .withMessage('Tiene que tener entre 6 y 16 caracteres'),
+    .isLength({ min: 8, max: 32 })
+    .withMessage('Tiene que tener entre 8 y 32 caracteres')
+    .bail()
+    .matches(/[A-Z]/)
+    .withMessage('Tiene que contener al menos una mayúscula')
+    .bail()
+    .matches(/[0-9]/)
+    .withMessage('Tiene que contener al menos un número')
+    .bail()
+    .matches(/[^A-Za-z0-9]/)
+    .withMessage('Tiene que contener al menos un carácter especial'),
   body('confirmPassword')
     .trim()
     .notEmpty()
@@ -64,6 +73,6 @@ export const loginValidation = [
     .notEmpty()
     .withMessage('Tienes que ingresar una contraseña')
     .bail()
-    .isLength({ min: 6 })
-    .withMessage('Tiene que tener al menos 6 caracteres'),
+    .isLength({ min: 8 })
+    .withMessage('Tiene que tener al menos 8 caracteres'),
 ];
