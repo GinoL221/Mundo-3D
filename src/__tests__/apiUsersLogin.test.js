@@ -2,17 +2,35 @@ const request = require('supertest');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 
-jest.mock('../services', () => ({
-  UserService: {
-    findByEmail: jest.fn(),
-    verifyPassword: jest.fn(),
-    findAll: jest.fn(),
-    findById: jest.fn(),
-  },
-}));
+const mockAuthenticateUserExecute = jest.fn();
+const mockListUsersExecute = jest.fn();
+const mockGetUserByIdExecute = jest.fn();
 
-const { UserService } = require('../services');
-const apiUsersRouter = require('../routes/api/users');
+jest.mock('../application/use-cases/AuthenticateUserUseCase', () => {
+  return {
+    AuthenticateUserUseCase: jest.fn().mockImplementation(() => ({
+      execute: mockAuthenticateUserExecute,
+    })),
+  };
+});
+
+jest.mock('../application/use-cases/ListUsersUseCase', () => {
+  return {
+    ListUsersUseCase: jest.fn().mockImplementation(() => ({
+      execute: mockListUsersExecute,
+    })),
+  };
+});
+
+jest.mock('../application/use-cases/GetUserByIdUseCase', () => {
+  return {
+    GetUserByIdUseCase: jest.fn().mockImplementation(() => ({
+      execute: mockGetUserByIdExecute,
+    })),
+  };
+});
+
+const apiUsersRouter = require('../infrastructure/routes/api/users').default;
 
 const JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret';
 
@@ -32,14 +50,12 @@ describe('POST /api/users/login', () => {
   });
 
   it('returns 200 with a signed JWT token on successful login', async () => {
-    UserService.findByEmail.mockResolvedValue({
+    mockAuthenticateUserExecute.mockResolvedValue({
       IDUser: 1,
       Email: 'user@test.com',
-      PasswordUser: 'hashedPassword',
       Category: 'User',
       IDRole: 2,
     });
-    UserService.verifyPassword.mockReturnValue(true);
 
     const res = await request(app)
       .post('/api/users/login')
@@ -56,13 +72,15 @@ describe('POST /api/users/login', () => {
       IDRole: 2,
     });
 
-    expect(UserService.findByEmail).toHaveBeenCalledWith('user@test.com', {
-      includePassword: true,
+    expect(mockAuthenticateUserExecute).toHaveBeenCalledWith({
+      Email: 'user@test.com',
+      Password: 'password123',
     });
   });
 
   it('returns 401 with an error message when the user does not exist', async () => {
-    UserService.findByEmail.mockResolvedValue(null);
+    const { InvalidCredentialsException } = require('../domain/exceptions/InvalidCredentialsException');
+    mockAuthenticateUserExecute.mockRejectedValue(new InvalidCredentialsException('El email o la contraseña no coinciden'));
 
     const res = await request(app)
       .post('/api/users/login')
@@ -73,14 +91,8 @@ describe('POST /api/users/login', () => {
   });
 
   it('returns 401 with an error message when the password does not match', async () => {
-    UserService.findByEmail.mockResolvedValue({
-      IDUser: 1,
-      Email: 'user@test.com',
-      PasswordUser: 'hashedPassword',
-      Category: 'User',
-      IDRole: 2,
-    });
-    UserService.verifyPassword.mockReturnValue(false);
+    const { InvalidCredentialsException } = require('../domain/exceptions/InvalidCredentialsException');
+    mockAuthenticateUserExecute.mockRejectedValue(new InvalidCredentialsException('El email o la contraseña no coinciden'));
 
     const res = await request(app)
       .post('/api/users/login')
@@ -104,7 +116,7 @@ describe('apiAuthMiddleware mounted on /api/users routes', () => {
 
     expect(res.status).toBe(401);
     expect(res.body.error).toBeDefined();
-    expect(UserService.findAll).not.toHaveBeenCalled();
+    expect(mockListUsersExecute).not.toHaveBeenCalled();
   });
 
   it('returns 401 on GET /api/users/:id without an Authorization header', async () => {
@@ -112,11 +124,11 @@ describe('apiAuthMiddleware mounted on /api/users routes', () => {
 
     expect(res.status).toBe(401);
     expect(res.body.error).toBeDefined();
-    expect(UserService.findById).not.toHaveBeenCalled();
+    expect(mockGetUserByIdExecute).not.toHaveBeenCalled();
   });
 
   it('allows GET /api/users with a valid Bearer token', async () => {
-    UserService.findAll.mockResolvedValue([]);
+    mockListUsersExecute.mockResolvedValue([]);
     const token = jwt.sign(
       { userID: 1, Email: 'admin@test.com', Category: 'Admin', IDRole: 1 },
       JWT_SECRET,
@@ -128,6 +140,6 @@ describe('apiAuthMiddleware mounted on /api/users routes', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(UserService.findAll).toHaveBeenCalledTimes(1);
+    expect(mockListUsersExecute).toHaveBeenCalledTimes(1);
   });
 });

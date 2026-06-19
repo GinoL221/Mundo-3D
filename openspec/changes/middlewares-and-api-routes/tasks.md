@@ -44,25 +44,25 @@ Chain strategy: stacked-to-main
 - [x] 2.5 Create `src/infrastructure/middlewares/upload.ts` for file uploading using multer.
 - [x] 2.6 Create `src/infrastructure/middlewares/validators/productValidators.ts` & `userValidators.ts` using express-validator.
   - [x] Quality adjustment: Add `validationsUsers` tests for missing image and disallowed file extensions.
-- [ ] 2.7 Create `src/infrastructure/controllers/ProductApiController.ts` implementing product routes endpoints using use-cases.
-- [ ] 2.8 Create `src/infrastructure/controllers/UserApiController.ts` implementing user routes endpoints using use-cases.
+- [x] 2.7 Create `src/infrastructure/controllers/ProductApiController.ts` implementing product routes endpoints using use-cases.
+- [x] 2.8 Create `src/infrastructure/controllers/UserApiController.ts` implementing user routes endpoints using use-cases.
 
 ## Phase 3: Integration / Wiring
 
-- [ ] 3.1 Create `src/infrastructure/routes/api/products.ts` linking endpoints to `ProductApiController`.
-- [ ] 3.2 Create `src/infrastructure/routes/api/users.ts` linking endpoints to `UserApiController` with `adminGuard` where needed.
-- [ ] 3.3 Create `src/infrastructure/routes/api/index.ts` to aggregate API routes into a single router.
-- [ ] 3.4 Modify `src/app.js` to import/wire new TS middlewares and routes in the specified top-to-bottom registration order.
+- [x] 3.1 Create `src/infrastructure/routes/api/products.ts` linking endpoints to `ProductApiController`.
+- [x] 3.2 Create `src/infrastructure/routes/api/users.ts` linking endpoints to `UserApiController` with `adminGuard` where needed.
+- [x] 3.3 Create `src/infrastructure/routes/api/index.ts` to aggregate API routes into a single router.
+- [x] 3.4 Modify `src/app.js` to import/wire new TS middlewares and routes in the specified top-to-bottom registration order.
 
 ## Phase 4: Testing / Verification
 
-- [ ] 4.1 Write integration tests in `__tests__/apiSecurity.test.js` verifying `adminGuard` protects user endpoints.
-- [ ] 4.2 Write integration tests in `__tests__/apiUsersLogin.test.js` verifying rate limiting and 2h JWT expiration.
-- [ ] 4.3 Write unit tests for new middlewares in `src/infrastructure/middlewares/__tests__/` verifying correct redirects and error handling.
-- [ ] 4.4 Run all integration and unit tests (`npm test`) ensuring all pass.
+- [x] 4.1 Write integration tests in `__tests__/apiSecurity.test.js` verifying `adminGuard` protects user endpoints.
+- [x] 4.2 Write integration tests in `__tests__/apiUsersLogin.test.js` verifying rate limiting and 2h JWT expiration.
+- [x] 4.3 Write unit tests for new middlewares in `src/infrastructure/middlewares/__tests__/` verifying correct redirects and error handling.
+- [x] 4.4 Run all integration and unit tests (`npm test`) ensuring all pass.
 
 ## Phase 5: Cleanup
 
-- [ ] 5.1 Delete legacy JS middlewares from `src/middlewares/` (excluding `cartCount.ts` and others already in infrastructure).
-- [ ] 5.2 Delete legacy JS routes from `src/routes/api/`.
-- [ ] 5.3 Run git status and verify clean tree before final PR slice reviews.
+- [x] 5.1 Delete legacy JS middlewares from `src/middlewares/` (excluding `userLogged.js` bridge wrapper which is kept for compatibility).
+- [x] 5.2 Delete legacy JS routes from `src/routes/api/`.
+- [x] 5.3 Run git status and verify clean tree before final PR slice reviews.

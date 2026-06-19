@@ -29,7 +29,7 @@ const userRoutes = require('./infrastructure/routes/userRoutes').default;
 const cartRoutes = require('./infrastructure/routes/cartRoutes').default;
 
 
-const apiRouter = require('./routes/api');
+const apiRouter = require('./infrastructure/routes/api/index').default;
 const cookies = require('cookie-parser');
 
 const server = express();
@@ -37,10 +37,10 @@ const server = express();
 // Configure views directory so res.render() can use view names instead of full paths
 server.set('views', path.join(__dirname, 'views'));
 
-const userLoggedMiddleware = require('./middlewares/userLogged');
+const userLoggedMiddleware = require('./infrastructure/middlewares/userLogged');
 const cartCountMiddleware = require('./infrastructure/middlewares/cartCount').default;
-const errorHandler = require('./middlewares/errorHandler.js');
-const { csrfProtection } = require('./middlewares/csrf.js');
+const errorHandler = require('./infrastructure/middlewares/errorHandler').default;
+const { csrfProtection } = require('./infrastructure/middlewares/csrf');
 
 // 1. Security headers (first)
 server.use(helmet());

@@ -1,10 +1,7 @@
 import { Router } from 'express';
-// @ts-ignore
-import { isUser, adminGuard } from '../../middlewares/auth';
-// @ts-ignore
-import createUpload from '../../middlewares/upload';
-// @ts-ignore
-import { validationsForm } from '../../middlewares/validators/productValidators';
+import { isUser, adminGuard } from '../middlewares/auth';
+import createUpload from '../middlewares/upload';
+import { validationsForm } from '../middlewares/validators/productValidators';
 
 import { SequelizeProductRepository } from '../repositories/SequelizeProductRepository';
 import { SequelizeCategoryRepository } from '../repositories/SequelizeCategoryRepository';

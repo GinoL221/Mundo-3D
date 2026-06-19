@@ -1,6 +1,5 @@
 import { Router } from 'express';
-// @ts-ignore
-import { isUser } from '../../middlewares/auth';
+import { isUser } from '../middlewares/auth';
 import { SequelizeShoppingCartRepository } from '../repositories/SequelizeShoppingCartRepository';
 import { GetCartByUserIdUseCase } from '../../application/use-cases/GetCartByUserIdUseCase';
 import { CartController } from '../controllers/CartController';

@@ -1,12 +1,8 @@
 import { Router } from 'express';
-// @ts-ignore
-import { isUser, guestMiddleware, adminGuard } from '../../middlewares/auth';
-// @ts-ignore
-import loginLimiter from '../../middlewares/loginLimiter';
-// @ts-ignore
-import createUpload from '../../middlewares/upload';
-// @ts-ignore
-import { validationsUsers, loginValidation } from '../../middlewares/validators/userValidators';
+import { isUser, guestMiddleware, adminGuard } from '../middlewares/auth';
+import loginLimiter from '../middlewares/loginLimiter';
+import createUpload from '../middlewares/upload';
+import { validationsUsers, loginValidation } from '../middlewares/validators/userValidators';
 
 // Legacy controllers for fallback routes
 // @ts-ignore

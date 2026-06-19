@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { apiAuthMiddleware, adminGuard } = require('../middlewares/auth');
+const { apiAuthMiddleware, adminGuard } = require('../infrastructure/middlewares/auth');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret';
 

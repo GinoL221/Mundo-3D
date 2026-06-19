@@ -5,7 +5,7 @@ describe('Upload Factory', () => {
   let createUpload;
 
   beforeAll(() => {
-    createUpload = require('../../src/middlewares/upload');
+    createUpload = require('../../src/infrastructure/middlewares/upload').default;
   });
 
   test('should be a function', () => {
@@ -30,57 +30,60 @@ describe('Upload Factory', () => {
 
 describe('Validator Modules', () => {
   test('productValidators should export validationsForm array', () => {
-    const { validationsForm } = require('../../src/middlewares/validators/productValidators');
+    const { validationsForm } = require('../../src/infrastructure/middlewares/validators/productValidators');
     expect(Array.isArray(validationsForm)).toBe(true);
     expect(validationsForm.length).toBeGreaterThan(0);
   });
 
   test('userValidators should export validationsUsers array', () => {
-    const { validationsUsers } = require('../../src/middlewares/validators/userValidators');
+    const { validationsUsers } = require('../../src/infrastructure/middlewares/validators/userValidators');
     expect(Array.isArray(validationsUsers)).toBe(true);
     expect(validationsUsers.length).toBeGreaterThan(0);
   });
 
   test('userValidators should export loginValidation array', () => {
-    const { loginValidation } = require('../../src/middlewares/validators/userValidators');
+    const { loginValidation } = require('../../src/infrastructure/middlewares/validators/userValidators');
     expect(Array.isArray(loginValidation)).toBe(true);
     expect(loginValidation.length).toBeGreaterThan(0);
   });
 });
 
 describe('API Controller Structure', () => {
-  let productApiController;
+  let ProductApiController;
+  let UserApiController;
 
   beforeAll(() => {
-    productApiController = require('../../src/controllers/api/productApiController');
+    ProductApiController = require('../../src/infrastructure/controllers/ProductApiController').ProductApiController;
+    UserApiController = require('../../src/infrastructure/controllers/UserApiController').UserApiController;
   });
 
-  test('should export index method', () => {
-    expect(typeof productApiController.index).toBe('function');
+  test('ProductApiController should be a class with index, show, latest methods', () => {
+    const controller = new ProductApiController(jest.fn(), jest.fn(), jest.fn());
+    expect(typeof controller.index).toBe('function');
+    expect(typeof controller.show).toBe('function');
+    expect(typeof controller.latest).toBe('function');
   });
 
-  test('should export show method', () => {
-    expect(typeof productApiController.show).toBe('function');
-  });
-
-  test('should export latest method', () => {
-    expect(typeof productApiController.latest).toBe('function');
+  test('UserApiController should be a class with login, index, show methods', () => {
+    const controller = new UserApiController(jest.fn(), jest.fn(), jest.fn());
+    expect(typeof controller.login).toBe('function');
+    expect(typeof controller.index).toBe('function');
+    expect(typeof controller.show).toBe('function');
   });
 });
 
 describe('API Route Delegation', () => {
-  test('api/products.js should import productApiController', () => {
-    const filePath = path.join(__dirname, '../../src/routes/api/products.js');
+  test('api/products.ts should import ProductApiController', () => {
+    const filePath = path.join(__dirname, '../../src/infrastructure/routes/api/products.ts');
     const content = fs.readFileSync(filePath, 'utf-8');
-    expect(content).toMatch(/productApiController/);
+    expect(content).toMatch(/ProductApiController/);
   });
 
-  test('api/products.js should not have inline handler logic', () => {
-    const filePath = path.join(__dirname, '../../src/routes/api/products.js');
+  test('api/products.ts should not have inline handler logic', () => {
+    const filePath = path.join(__dirname, '../../src/infrastructure/routes/api/products.ts');
     const content = fs.readFileSync(filePath, 'utf-8');
-    // Should delegate to controller, not have inline try/catch with ProductService
-    expect(content).not.toMatch(/ProductService\.findAll/);
-    expect(content).not.toMatch(/transformWithCategoryCount/);
+    expect(content).not.toMatch(/ProductService\.findAll/i);
+    expect(content).not.toMatch(/transformWithCategoryCount/i);
   });
 });
 
