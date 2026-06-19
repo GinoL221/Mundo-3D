@@ -10,91 +10,96 @@ Los clientes pueden explorar, diseñar y adquirir una variedad de objetos, desde
 
 ## Tecnologías utilizadas
 
-- Node.js
-- Express.js
-- Sequelize (ORM)
-- MySQL
+- Node.js / Express.js 4.x
+- TypeScript (transpilado en dev con ts-node)
+- Sequelize 6.x (ORM, mapeo camelCase → snake_case via `field`)
+- MySQL (mysql2)
 - EJS (vistas)
-- HTML, CSS, JavaScript (frontend)
-- bcryptjs (hash de contraseñas)
+- HTML, CSS modular (design system PICO-8), JavaScript (frontend)
+- bcryptjs + JWT (autenticación)
+- express-validator (validaciones)
+- multer + uuid (upload de imágenes)
+- Jest (testing, 326 tests passing)
 
 ## Instalación y uso
 
 1. Clona el repositorio:
    ```bash
-   git clone <url-del-repo>
+   git clone https://github.com/GinoL221/Mundo-3D.git
    ```
 2. Instala las dependencias:
    ```bash
    npm install
    ```
-3. Configura el archivo `.env` con tus variables de entorno (puerto, credenciales de base de datos, etc):
+3. Configura el archivo `.env` con tus variables de entorno:
    ```env
    PORT=3031
    DB_USER=root
    DB_PASS=tu_password
-   DB_NAME=ecommerce_dbtest
+   DB_NAME=mundo_3d_db
    DB_HOST=localhost
+   SESSION_SECRET=tu_secreto
    ```
-4. Inicia el servidor:
+4. Inicia el servidor en modo desarrollo:
    ```bash
    npm run dev
    ```
+5. Ejecuta los tests:
+   ```bash
+   npm test
+   ```
+
+## Arquitectura
+
+El proyecto sigue **Clean Architecture / Hexagonal**:
+
+```
+src/
+├── domain/             # Entidades, puertos, excepciones
+├── application/        # Casos de uso (RegisterUser, AuthenticateUser, VerifyRememberToken…)
+├── infrastructure/     # Controladores, repositorios Sequelize, middlewares y rutas (TypeScript)
+│   ├── controllers/
+│   ├── repositories/
+│   ├── middlewares/    # auth, csrf, errorHandler, loginLimiter, upload, validators
+│   └── routes/         # api/, userRoutes, productRoutes, cartRoutes, staticPagesRoutes
+├── database/
+│   ├── models/         # Sequelize models con mapeo camelCase → snake_case
+│   └── config/
+└── views/              # Templates EJS
+public/
+├── css/                # Design system modular (tokens + base + 12 componentes BEM)
+└── js/                 # carousel.js, theme.js, register.js (validación reactiva)
+```
 
 ## Diseño visual
 
 El proyecto utiliza un sistema de diseño **PICO-8 pixel art** con:
-- Paleta PICO-8 mapeada a roles semánticos (`--bg`, `--fg`, `--accent`, etc.)
+- Paleta PICO-8 mapeada a roles semánticos (`--color-primary`, `--color-bg`, `--color-text`, etc.)
 - Tipografía pixel: **Press Start 2P** (headings) + **VT323** (body)
 - Renderizado pixelado: `image-rendering: pixelated` en todas las imágenes
 - Iconos pixel art (16×16) en `public/images/icons/`
 - Ilustraciones de categoría (64×64) en `public/images/illustrations/`
-
-## Estructura del proyecto
-
-```
-├── src/
-│   ├── app.js
-│   ├── controllers/
-│   ├── database/
-│   │   ├── config/
-│   │   ├── data/
-│   │   ├── models/
-│   │   └── seed.js
-│   ├── middlewares/
-│   ├── routes/
-│   └── views/
-├── public/
-│   ├── css/
-│   │   └── styles.css    # PICO-8 design system (single stylesheet)
-│   ├── images/
-│   │   ├── icons/        # Pixel art icons (16×16)
-│   │   └── illustrations/ # Category illustrations (64×64)
-│   ├── img/
-│   └── ...
-├── index.js
-├── package.json
-└── README.md
-```
+- Tema dark/light con CSS custom properties y anti-flash script
 
 ## Funcionalidades principales
 
-- Registro e inicio de sesión de usuarios (con hash de contraseña)
+- Registro e inicio de sesión de usuarios
+  - Contraseña fuerte: mín 8 / máx 32 chars, al menos 1 mayúscula, 1 número y 1 carácter especial
+  - Feedback visual en tiempo real en el formulario de registro
+  - Remember-me con token persistido en base de datos
 - ABM de productos (crear, ver, modificar, eliminar)
 - Carrito de compras
-- Panel de administración (pendiente de completar)
+- API REST securizada con JWT (`/api/products`, `/api/users`)
+- Panel de administración (en desarrollo)
 - Seed automático de datos iniciales (categorías, franquicias, usuarios, productos)
 
-## Checklist para completar
+## Testing
 
-- [ ] Mejorar validaciones de formularios
-- [ ] Agregar tests automáticos
-- [ ] Documentar endpoints de la API
-- [ ] Mejorar la UI/UX del frontend
-- [ ] Implementar panel de administración completo
-- [ ] Agregar soporte para imágenes de productos subidas por el usuario
-- [ ] Internacionalización (i18n)
-- [ ] Despliegue en producción
+```bash
+npm test
+```
+
+326 tests passing · 63 suites · strict TDD
 
 ## Referencias
 
