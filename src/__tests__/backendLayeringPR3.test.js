@@ -87,19 +87,14 @@ describe('API Route Delegation', () => {
   });
 });
 
-describe('Main Controller Barrel', () => {
+describe.skip('Retired - Main Controller Barrel (EJS MVC removed in PR3)', () => {
   test('controllers/main barrel should no longer exist', () => {
     const dirPath = path.join(__dirname, '../../src/controllers/main');
     expect(fs.existsSync(dirPath)).toBe(false);
   });
 
   test('StaticPagesController should expose home and aboutUs as functions', () => {
-    const {
-      StaticPagesController,
-    } = require('../../src/infrastructure/controllers/StaticPagesController');
-    const controller = new StaticPagesController({ execute: jest.fn() });
-    expect(typeof controller.home).toBe('function');
-    expect(typeof controller.aboutUs).toBe('function');
+    // Retired: StaticPagesController deleted in PR3 (replaced by Astro SSG pages)
   });
 
   test('old mainController.js should be deleted', () => {
@@ -108,81 +103,17 @@ describe('Main Controller Barrel', () => {
   });
 });
 
-describe('Route File Cleanup', () => {
-  test('productsRoutes.js should not have inline multer config', () => {
-    const filePath = path.join(__dirname, '../../src/routes/productsRoutes.js');
-    const content = fs.readFileSync(filePath, 'utf-8');
-    expect(content).not.toMatch(/multer\.diskStorage/);
-    expect(content).toMatch(/require\('\.\.\/middlewares\/upload'\)/);
-  });
-
-  test('userRoutes.js should not have inline multer config', () => {
-    const filePath = path.join(__dirname, '../../src/routes/userRoutes.js');
-    const content = fs.readFileSync(filePath, 'utf-8');
-    expect(content).not.toMatch(/multer\.diskStorage/);
-    expect(content).toMatch(/require\('\.\.\/middlewares\/upload'\)/);
-  });
-
-  test('productsRoutes.js should not have inline validationsForm', () => {
-    const filePath = path.join(__dirname, '../../src/routes/productsRoutes.js');
-    const content = fs.readFileSync(filePath, 'utf-8');
-    // Should import validators, not define inline
-    expect(content).toMatch(/require\('\.\.\/middlewares\/validators\/productValidators'\)/);
-    // Should not have inline body() definitions
-    expect(content).not.toMatch(/body\('productName'\)/);
-  });
-
-  test('userRoutes.js should not have inline validators', () => {
-    const filePath = path.join(__dirname, '../../src/routes/userRoutes.js');
-    const content = fs.readFileSync(filePath, 'utf-8');
-    expect(content).toMatch(/require\('\.\.\/middlewares\/validators\/userValidators'\)/);
-    expect(content).not.toMatch(/body\('firstName'\)/);
-  });
+describe.skip('Retired - Route File Cleanup (legacy JS routes superseded by API routes in PR1)', () => {
+  // These tests verified old src/routes/*.js files.
+  // In PR1 all routing was migrated to src/infrastructure/routes/api/.
+  // The legacy src/routes/ files are retained as-is but no longer mounted in app.js.
 });
 
-describe('Controller Path.join Cleanup', () => {
-  test('mainRoutes.js should no longer exist', () => {
-    const filePath = path.join(__dirname, '../../src/routes/mainRoutes.js');
-    expect(fs.existsSync(filePath)).toBe(false);
-  });
-
-  test('staticPagesRoutes.ts should exist and export a default router', () => {
-    const filePath = path.join(
-      __dirname,
-      '../../src/infrastructure/routes/staticPagesRoutes.ts',
-    );
-    expect(fs.existsSync(filePath)).toBe(true);
-    const content = fs.readFileSync(filePath, 'utf-8');
-    expect(content).toMatch(/export default/);
-  });
-
-  test('StaticPagesController.ts home should use ListProductsUseCase, not productService, and render index', () => {
-    const filePath = path.join(
-      __dirname,
-      '../../src/infrastructure/controllers/StaticPagesController.ts',
-    );
-    const content = fs.readFileSync(filePath, 'utf-8');
-    expect(content).toMatch(/res\.render\('index'/);
-    expect(content).toMatch(/ListProductsUseCase/);
-    expect(content).not.toMatch(/productService/i);
-  });
-
-  test('StaticPagesController.ts aboutUs should use view names not path.join', () => {
-    const filePath = path.join(
-      __dirname,
-      '../../src/infrastructure/controllers/StaticPagesController.ts',
-    );
-    const content = fs.readFileSync(filePath, 'utf-8');
-    expect(content).not.toMatch(/path\.join/);
-    expect(content).toMatch(/res\.render\('aboutUs'/);
-  });
+describe.skip('Retired - Controller Path.join Cleanup (EJS MVC removed in PR3)', () => {
+  // staticPagesRoutes.ts and StaticPagesController.ts deleted in PR3.
+  // Static pages (aboutUs, faq, etc.) now pre-rendered by Astro SSG.
 });
 
-describe('No bcrypt in Controllers', () => {
-  test('processLogin.js should not import bcrypt', () => {
-    const filePath = path.join(__dirname, '../../src/controllers/users/processLogin.js');
-    const content = fs.readFileSync(filePath, 'utf-8');
-    expect(content).not.toMatch(/require\(['"]bcrypt/);
-    expect(content).not.toMatch(/bcrypt\.compareSync/);
-  });
+describe.skip('Retired - No bcrypt in Controllers (legacy MVC controllers removed in PR3)', () => {
+  // processLogin.js was part of legacy MVC; replaced by UserApiController with BcryptPasswordHasher.
 });

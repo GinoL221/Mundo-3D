@@ -1,0 +1,118 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Detalle del Producto - Mundo 3D">
+  <h2 class="product-detail__title" id="product-title">Cargando...</h2>
+  <main class="product-detail__main">
+    <div class="product-detail__card">
+      <a href="/products" class="product-detail__back-link">← Volver a productos</a>
+      <div id="product-content" style="display:none;">
+        <img id="product-img" src="" alt="" class="product-detail__image" />
+        <section class="product-detail__info">
+          <h3 id="product-name"></h3>
+          <p class="price price--lg" id="product-price"></p>
+          <p id="product-description"></p>
+          <button id="add-to-cart-btn" class="product-detail__action product-detail__action--secondary">
+            AGREGAR AL CARRITO
+          </button>
+          <a href="/cart" class="product-detail__action">IR AL CARRITO</a>
+        </section>
+      </div>
+      <div id="product-error" style="display:none;">
+        <p>No se pudo cargar el producto. <a href="/products">Volver al catálogo</a></p>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  /**
+   * Reads the product id from the URL.
+   * Supports both:
+   *  - /product?id=123  (query param strategy, used by Astro SSG)
+   *  - /product/123     (path segment, handled by dev server rewrite if configured)
+   */
+  function getProductId(): string | null {
+    const searchParams = new URLSearchParams(window.location.search);
+    const fromQuery = searchParams.get('id');
+    if (fromQuery) return fromQuery;
+
+    // Fallback: try to extract from path segments
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    if (parts.length >= 2 && parts[0] === 'product') {
+      return parts[1];
+    }
+    return null;
+  }
+
+  async function loadProduct(): Promise<void> {
+    const productId = getProductId();
+    if (!productId) {
+      showError();
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/product/${productId}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const product = await res.json();
+
+      const titleEl = document.getElementById('product-title');
+      const imgEl = document.getElementById('product-img') as HTMLImageElement | null;
+      const nameEl = document.getElementById('product-name');
+      const priceEl = document.getElementById('product-price');
+      const descEl = document.getElementById('product-description');
+      const contentEl = document.getElementById('product-content');
+      const addBtn = document.getElementById('add-to-cart-btn');
+
+      if (titleEl) titleEl.textContent = product.NameProduct;
+      if (imgEl) {
+        imgEl.src = `/img/products/${product.Image}`;
+        imgEl.alt = product.NameProduct;
+      }
+      if (nameEl) nameEl.textContent = product.NameProduct;
+      if (priceEl) priceEl.textContent = `Precio: $${product.Price}`;
+      if (descEl) descEl.textContent = product.DescriptionProduct || '';
+      if (contentEl) contentEl.style.display = 'block';
+      document.title = `${product.NameProduct} - Mundo 3D`;
+
+      addBtn?.addEventListener('click', () => {
+        const rawCart = localStorage.getItem('cart');
+        let cart: any[] = rawCart ? JSON.parse(rawCart) : [];
+        const existing = cart.find((i: any) => i.productId === product.IDProduct);
+        if (existing) {
+          existing.quantity += 1;
+        } else {
+          cart.push({
+            productId: product.IDProduct,
+            name: product.NameProduct,
+            image: product.Image,
+            unitPrice: product.Price,
+            quantity: 1,
+          });
+        }
+        localStorage.setItem('cart', JSON.stringify(cart));
+        window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count: cart.length } }));
+        const btn = addBtn as HTMLButtonElement;
+        const original = btn.textContent;
+        btn.textContent = '✔ AGREGADO';
+        btn.disabled = true;
+        setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2000);
+      });
+    } catch (err) {
+      console.error('Error loading product:', err);
+      showError();
+    }
+  }
+
+  function showError(): void {
+    const errorEl = document.getElementById('product-error');
+    const titleEl = document.getElementById('product-title');
+    if (errorEl) errorEl.style.display = 'block';
+    if (titleEl) titleEl.textContent = 'Producto no encontrado';
+  }
+
+  loadProduct();
+</script>

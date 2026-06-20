@@ -18,13 +18,9 @@ const apiRouter = require('./infrastructure/routes/api/index').default;
 
 const server = express();
 
-// Configure views directory so res.render() can use view names instead of full paths
-server.set('views', path.join(__dirname, 'views'));
 
-const userLoggedMiddleware = require('./infrastructure/middlewares/userLogged');
-const cartCountMiddleware = require('./infrastructure/middlewares/cartCount').default;
+
 const errorHandler = require('./infrastructure/middlewares/errorHandler').default;
-const { csrfProtection } = require('./infrastructure/middlewares/csrf');
 
 // 1. Security headers (first)
 server.use(helmet());
