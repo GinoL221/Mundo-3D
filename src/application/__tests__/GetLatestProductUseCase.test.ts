@@ -40,8 +40,8 @@ describe('GetLatestProductUseCase', () => {
       Price: 120,
       DescriptionProduct: 'Awesome figures',
       Image: 'fig.jpg',
-      IDCategory: 2,
-      IDFranchise: 5,
+      idCategory: 2,
+      idFranchise: 5,
       Category: 'Figures',
     });
     expect(mockProductRepo.findLatest).toHaveBeenCalledTimes(1);

@@ -9,13 +9,15 @@ module.exports = (sequelize) => {
         primaryKey: true,
         autoIncrement: true,
       },
-      IDCategory: {
+      idCategory: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        field: 'id_category',
       },
-      IDFranchise: {
+      idFranchise: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        field: 'id_franchise',
       },
       NameProduct: {
         type: DataTypes.STRING,
@@ -35,7 +37,15 @@ module.exports = (sequelize) => {
     {
       tableName: 'Product',
       timestamps: false,
-      indexes: [{ unique: false, fields: ['IDCategory'] }],
+      indexes: [{ unique: false, fields: ['id_category'] }],
+      getterMethods: {
+        IDCategory() {
+          return this.idCategory;
+        },
+        IDFranchise() {
+          return this.idFranchise;
+        },
+      },
     },
   );
 

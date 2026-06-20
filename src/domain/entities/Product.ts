@@ -8,8 +8,8 @@ export class Product {
     public readonly Price: number,
     public readonly DescriptionProduct: string | null,
     public readonly Image: string | null,
-    public readonly IDCategory: number,
-    public readonly IDFranchise: number,
+    public readonly idCategory: number,
+    public readonly idFranchise: number,
     public readonly Category?: Category,
     public readonly Franchise?: Franchise
   ) {}

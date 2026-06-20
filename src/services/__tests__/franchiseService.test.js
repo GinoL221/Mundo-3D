@@ -18,8 +18,8 @@ describe('FranchiseService', () => {
   describe('findAll', () => {
     it('returns all franchises', async () => {
       const mockFranchises = [
-        { IDFranchise: 1, NameFranchise: 'Franchise A' },
-        { IDFranchise: 2, NameFranchise: 'Franchise B' },
+        { idFranchise: 1, nameFranchise: 'Franchise A', IDFranchise: 1, NameFranchise: 'Franchise A' },
+        { idFranchise: 2, nameFranchise: 'Franchise B', IDFranchise: 2, NameFranchise: 'Franchise B' },
       ];
       Franchise.findAll.mockResolvedValue(mockFranchises);
 
@@ -42,7 +42,7 @@ describe('FranchiseService', () => {
 
   describe('findById', () => {
     it('returns franchise when valid id is provided', async () => {
-      const mockFranchise = { IDFranchise: 1, NameFranchise: 'Franchise A' };
+      const mockFranchise = { idFranchise: 1, nameFranchise: 'Franchise A', IDFranchise: 1, NameFranchise: 'Franchise A' };
       Franchise.findByPk.mockResolvedValue(mockFranchise);
 
       const result = await FranchiseService.findById(1);

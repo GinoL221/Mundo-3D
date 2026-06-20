@@ -7,14 +7,14 @@ import { RememberToken } from '../../domain/entities/RememberToken';
 describe('Domain Entities', () => {
   it('should create a Category entity correctly', () => {
     const category = new Category(1, 'Figures');
-    expect(category.IDCategory).toBe(1);
-    expect(category.NameCategory).toBe('Figures');
+    expect(category.idCategory).toBe(1);
+    expect(category.nameCategory).toBe('Figures');
   });
 
   it('should create a Franchise entity correctly', () => {
     const franchise = new Franchise(2, 'Star Wars');
-    expect(franchise.IDFranchise).toBe(2);
-    expect(franchise.NameFranchise).toBe('Star Wars');
+    expect(franchise.idFranchise).toBe(2);
+    expect(franchise.nameFranchise).toBe('Star Wars');
   });
 
   it('should create a Product entity correctly', () => {
@@ -37,8 +37,8 @@ describe('Domain Entities', () => {
     expect(product.Price).toBe(29.99);
     expect(product.DescriptionProduct).toBe('Detailed figure');
     expect(product.Image).toBe('figure.jpg');
-    expect(product.IDCategory).toBe(1);
-    expect(product.IDFranchise).toBe(2);
+    expect(product.idCategory).toBe(1);
+    expect(product.idFranchise).toBe(2);
     expect(product.Category).toBe(category);
     expect(product.Franchise).toBe(franchise);
   });

@@ -7,8 +7,8 @@ export interface UpdateProductInput {
   Price?: number;
   DescriptionProduct?: string | null;
   Image?: string | null;
-  IDCategory?: number;
-  IDFranchise?: number;
+  idCategory?: number;
+  idFranchise?: number;
 }
 
 export class UpdateProductUseCase {
@@ -25,11 +25,11 @@ export class UpdateProductUseCase {
 
     let categoryName = 'Sin categoría';
     if (updated.Category) {
-      categoryName = updated.Category.NameCategory;
-    } else if (this.categoryRepo && updated.IDCategory) {
-      const category = await this.categoryRepo.findById(updated.IDCategory);
+      categoryName = updated.Category.nameCategory;
+    } else if (this.categoryRepo && updated.idCategory) {
+      const category = await this.categoryRepo.findById(updated.idCategory);
       if (category) {
-        categoryName = category.NameCategory;
+        categoryName = category.nameCategory;
       }
     }
 
@@ -39,8 +39,8 @@ export class UpdateProductUseCase {
       Price: Number(updated.Price),
       DescriptionProduct: updated.DescriptionProduct,
       Image: updated.Image,
-      IDCategory: updated.IDCategory,
-      IDFranchise: updated.IDFranchise,
+      idCategory: updated.idCategory,
+      idFranchise: updated.idFranchise,
       Category: categoryName,
     };
   }

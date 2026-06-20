@@ -1,6 +1,6 @@
 export class Category {
   constructor(
-    public readonly IDCategory: number,
-    public readonly NameCategory: string
+    public readonly idCategory: number,
+    public readonly nameCategory: string
   ) {}
 }

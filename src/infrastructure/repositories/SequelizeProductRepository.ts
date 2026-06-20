@@ -7,11 +7,11 @@ import db, { ProductInstance } from '../../database/models/db';
 export class SequelizeProductRepository implements IProductRepository {
   private toEntity(instance: ProductInstance): Product {
     const category = instance.Category
-      ? new Category(instance.Category.IDCategory, instance.Category.NameCategory)
+      ? new Category(instance.Category.idCategory, instance.Category.nameCategory)
       : undefined;
 
     const franchise = instance.Franchise
-      ? new Franchise(instance.Franchise.IDFranchise, instance.Franchise.NameFranchise)
+      ? new Franchise(instance.Franchise.idFranchise, instance.Franchise.nameFranchise)
       : undefined;
 
     return new Product(
@@ -20,8 +20,8 @@ export class SequelizeProductRepository implements IProductRepository {
       Number(instance.Price),
       instance.DescriptionProduct,
       instance.Image,
-      instance.IDCategory,
-      instance.IDFranchise,
+      instance.idCategory,
+      instance.idFranchise,
       category,
       franchise
     );
@@ -33,12 +33,12 @@ export class SequelizeProductRepository implements IProductRepository {
         {
           model: db.Category,
           as: 'Category',
-          attributes: ['IDCategory', 'NameCategory'],
+          attributes: ['idCategory', 'nameCategory'],
         },
         {
           model: db.Franchise,
           as: 'Franchise',
-          attributes: ['IDFranchise', 'NameFranchise'],
+          attributes: ['idFranchise', 'nameFranchise'],
         },
       ],
     });
@@ -51,12 +51,12 @@ export class SequelizeProductRepository implements IProductRepository {
         {
           model: db.Category,
           as: 'Category',
-          attributes: ['IDCategory', 'NameCategory'],
+          attributes: ['idCategory', 'nameCategory'],
         },
         {
           model: db.Franchise,
           as: 'Franchise',
-          attributes: ['IDFranchise', 'NameFranchise'],
+          attributes: ['idFranchise', 'nameFranchise'],
         },
       ],
     });
@@ -70,12 +70,12 @@ export class SequelizeProductRepository implements IProductRepository {
         {
           model: db.Category,
           as: 'Category',
-          attributes: ['IDCategory', 'NameCategory'],
+          attributes: ['idCategory', 'nameCategory'],
         },
         {
           model: db.Franchise,
           as: 'Franchise',
-          attributes: ['IDFranchise', 'NameFranchise'],
+          attributes: ['idFranchise', 'nameFranchise'],
         },
       ],
       order: [['IDProduct', 'DESC']],
@@ -90,8 +90,8 @@ export class SequelizeProductRepository implements IProductRepository {
       Price: product.Price,
       DescriptionProduct: product.DescriptionProduct,
       Image: product.Image,
-      IDCategory: product.IDCategory,
-      IDFranchise: product.IDFranchise,
+      idCategory: product.idCategory,
+      idFranchise: product.idFranchise,
     } as any);
 
     const created = await this.findById(instance.IDProduct);
@@ -102,8 +102,8 @@ export class SequelizeProductRepository implements IProductRepository {
         Number(instance.Price),
         instance.DescriptionProduct,
         instance.Image,
-        instance.IDCategory,
-        instance.IDFranchise
+        instance.idCategory,
+        instance.idFranchise
       );
     }
     return created;
@@ -118,8 +118,8 @@ export class SequelizeProductRepository implements IProductRepository {
     if (product.Price !== undefined) updatedData.Price = product.Price;
     if (product.DescriptionProduct !== undefined) updatedData.DescriptionProduct = product.DescriptionProduct;
     if (product.Image !== undefined) updatedData.Image = product.Image;
-    if (product.IDCategory !== undefined) updatedData.IDCategory = product.IDCategory;
-    if (product.IDFranchise !== undefined) updatedData.IDFranchise = product.IDFranchise;
+    if (product.idCategory !== undefined) updatedData.idCategory = product.idCategory;
+    if (product.idFranchise !== undefined) updatedData.idFranchise = product.idFranchise;
 
     await instance.update(updatedData);
 

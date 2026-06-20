@@ -34,8 +34,8 @@ describe('GetProductByIdUseCase', () => {
       Price: 50,
       DescriptionProduct: 'Desc A',
       Image: 'a.jpg',
-      IDCategory: 1,
-      IDFranchise: 10,
+      idCategory: 1,
+      idFranchise: 10,
       Category: 'Figures',
     });
     expect(mockProductRepo.findById).toHaveBeenCalledWith(1);

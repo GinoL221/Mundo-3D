@@ -21,32 +21,32 @@ describe('SequelizeFranchiseRepository', () => {
   describe('findAll', () => {
     it('should return all franchises mapped to domain entities', async () => {
       const mockInstances = [
-        { IDFranchise: 1, NameFranchise: 'Franchise A' },
-        { IDFranchise: 2, NameFranchise: 'Franchise B' },
+        { idFranchise: 1, nameFranchise: 'Franchise A' },
+        { idFranchise: 2, nameFranchise: 'Franchise B' },
       ];
       jest.mocked(db.Franchise.findAll).mockResolvedValue(mockInstances as unknown as FranchiseInstance[]);
 
       const result = await repository.findAll();
 
       expect(result).toHaveLength(2);
-      expect(result[0].IDFranchise).toBe(1);
-      expect(result[0].NameFranchise).toBe('Franchise A');
-      expect(result[1].IDFranchise).toBe(2);
-      expect(result[1].NameFranchise).toBe('Franchise B');
+      expect(result[0].idFranchise).toBe(1);
+      expect(result[0].nameFranchise).toBe('Franchise A');
+      expect(result[1].idFranchise).toBe(2);
+      expect(result[1].nameFranchise).toBe('Franchise B');
       expect(db.Franchise.findAll).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('findById', () => {
     it('should return mapped franchise if found', async () => {
-      const mockInstance = { IDFranchise: 1, NameFranchise: 'Franchise A' };
+      const mockInstance = { idFranchise: 1, nameFranchise: 'Franchise A' };
       jest.mocked(db.Franchise.findByPk).mockResolvedValue(mockInstance as unknown as FranchiseInstance);
 
       const result = await repository.findById(1);
 
       expect(result).not.toBeNull();
-      expect(result?.IDFranchise).toBe(1);
-      expect(result?.NameFranchise).toBe('Franchise A');
+      expect(result?.idFranchise).toBe(1);
+      expect(result?.nameFranchise).toBe('Franchise A');
       expect(db.Franchise.findByPk).toHaveBeenCalledWith(1);
     });
 
@@ -62,14 +62,14 @@ describe('SequelizeFranchiseRepository', () => {
 
   describe('create', () => {
     it('should create and return the franchise', async () => {
-      const mockInstance = { IDFranchise: 1, NameFranchise: 'New Franchise' };
+      const mockInstance = { idFranchise: 1, nameFranchise: 'New Franchise' };
       jest.mocked(db.Franchise.create).mockResolvedValue(mockInstance as unknown as FranchiseInstance);
 
-      const result = await repository.create({ NameFranchise: 'New Franchise' });
+      const result = await repository.create({ nameFranchise: 'New Franchise' });
 
-      expect(result.IDFranchise).toBe(1);
-      expect(result.NameFranchise).toBe('New Franchise');
-      expect(db.Franchise.create).toHaveBeenCalledWith({ NameFranchise: 'New Franchise' });
+      expect(result.idFranchise).toBe(1);
+      expect(result.nameFranchise).toBe('New Franchise');
+      expect(db.Franchise.create).toHaveBeenCalledWith({ nameFranchise: 'New Franchise' });
     });
   });
 
@@ -77,22 +77,22 @@ describe('SequelizeFranchiseRepository', () => {
     it('should update the franchise and return updated entity', async () => {
       const mockUpdate = jest.fn();
       const mockInstance = {
-        IDFranchise: 1,
-        NameFranchise: 'Old Franchise',
+        idFranchise: 1,
+        nameFranchise: 'Old Franchise',
         update: mockUpdate,
       };
       jest.mocked(db.Franchise.findByPk).mockResolvedValue(mockInstance as unknown as FranchiseInstance);
 
-      const result = await repository.update(1, { NameFranchise: 'Updated Franchise' });
+      const result = await repository.update(1, { nameFranchise: 'Updated Franchise' });
 
-      expect(mockUpdate).toHaveBeenCalledWith({ NameFranchise: 'Updated Franchise' });
-      expect(result?.NameFranchise).toBe('Old Franchise');
+      expect(mockUpdate).toHaveBeenCalledWith({ nameFranchise: 'Updated Franchise' });
+      expect(result?.nameFranchise).toBe('Old Franchise');
     });
 
     it('should return null if franchise to update is not found', async () => {
       jest.mocked(db.Franchise.findByPk).mockResolvedValue(null);
 
-      const result = await repository.update(999, { NameFranchise: 'Non-existent' });
+      const result = await repository.update(999, { nameFranchise: 'Non-existent' });
 
       expect(result).toBeNull();
     });
@@ -105,7 +105,7 @@ describe('SequelizeFranchiseRepository', () => {
       const result = await repository.delete(1);
 
       expect(result).toBe(true);
-      expect(db.Franchise.destroy).toHaveBeenCalledWith({ where: { IDFranchise: 1 } });
+      expect(db.Franchise.destroy).toHaveBeenCalledWith({ where: { idFranchise: 1 } });
     });
 
     it('should return false if not deleted', async () => {

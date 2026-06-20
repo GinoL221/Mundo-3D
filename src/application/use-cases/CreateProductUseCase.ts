@@ -7,8 +7,8 @@ export interface CreateProductInput {
   Price: number;
   DescriptionProduct: string | null;
   Image: string | null;
-  IDCategory: number;
-  IDFranchise: number;
+  idCategory: number;
+  idFranchise: number;
 }
 
 export class CreateProductUseCase {
@@ -23,17 +23,17 @@ export class CreateProductUseCase {
       Price: input.Price,
       DescriptionProduct: input.DescriptionProduct,
       Image: input.Image,
-      IDCategory: input.IDCategory,
-      IDFranchise: input.IDFranchise,
+      idCategory: input.idCategory,
+      idFranchise: input.idFranchise,
     });
 
     let categoryName = 'Sin categoría';
     if (created.Category) {
-      categoryName = created.Category.NameCategory;
+      categoryName = created.Category.nameCategory;
     } else if (this.categoryRepo) {
-      const category = await this.categoryRepo.findById(input.IDCategory);
+      const category = await this.categoryRepo.findById(input.idCategory);
       if (category) {
-        categoryName = category.NameCategory;
+        categoryName = category.nameCategory;
       }
     }
 
@@ -43,8 +43,8 @@ export class CreateProductUseCase {
       Price: Number(created.Price),
       DescriptionProduct: created.DescriptionProduct,
       Image: created.Image,
-      IDCategory: created.IDCategory,
-      IDFranchise: created.IDFranchise,
+      idCategory: created.idCategory,
+      idFranchise: created.idFranchise,
       Category: categoryName,
     };
   }

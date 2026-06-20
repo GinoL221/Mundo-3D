@@ -2,22 +2,28 @@ import { Model, ModelCtor, Sequelize } from 'sequelize';
 
 export interface ProductAttributes {
   IDProduct: number;
-  IDCategory: number;
-  IDFranchise: number;
+  idCategory: number;
+  idFranchise: number;
   NameProduct: string;
   Price: number;
   DescriptionProduct: string | null;
   Image: string | null;
+  IDCategory?: number;
+  IDFranchise?: number;
 }
 
 export interface CategoryAttributes {
-  IDCategory: number;
-  NameCategory: string;
+  idCategory: number;
+  nameCategory: string;
+  IDCategory?: number;
+  NameCategory?: string;
 }
 
 export interface FranchiseAttributes {
-  IDFranchise: number;
-  NameFranchise: string;
+  idFranchise: number;
+  nameFranchise: string;
+  IDFranchise?: number;
+  NameFranchise?: string;
 }
 
 export interface UserAttributes {

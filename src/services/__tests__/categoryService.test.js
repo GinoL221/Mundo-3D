@@ -18,8 +18,8 @@ describe('CategoryService', () => {
   describe('findAll', () => {
     it('returns all categories', async () => {
       const mockCategories = [
-        { IDCategory: 1, NameCategory: 'Electronics' },
-        { IDCategory: 2, NameCategory: 'Clothing' },
+        { idCategory: 1, nameCategory: 'Electronics', IDCategory: 1, NameCategory: 'Electronics' },
+        { idCategory: 2, nameCategory: 'Clothing', IDCategory: 2, NameCategory: 'Clothing' },
       ];
       Category.findAll.mockResolvedValue(mockCategories);
 
@@ -42,7 +42,7 @@ describe('CategoryService', () => {
 
   describe('findById', () => {
     it('returns category when valid id is provided', async () => {
-      const mockCategory = { IDCategory: 1, NameCategory: 'Electronics' };
+      const mockCategory = { idCategory: 1, nameCategory: 'Electronics', IDCategory: 1, NameCategory: 'Electronics' };
       Category.findByPk.mockResolvedValue(mockCategory);
 
       const result = await CategoryService.findById(1);

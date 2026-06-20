@@ -4,7 +4,7 @@ export interface ProductDTO {
   Price: number;
   DescriptionProduct: string | null;
   Image: string | null;
-  IDCategory: number;
-  IDFranchise: number;
+  idCategory: number;
+  idFranchise: number;
   Category: string;
 }

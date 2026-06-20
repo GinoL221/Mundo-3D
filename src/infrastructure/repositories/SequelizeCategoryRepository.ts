@@ -4,7 +4,7 @@ import db, { CategoryInstance } from '../../database/models/db';
 
 export class SequelizeCategoryRepository implements ICategoryRepository {
   private toEntity(instance: CategoryInstance): Category {
-    return new Category(instance.IDCategory, instance.NameCategory);
+    return new Category(instance.idCategory, instance.nameCategory);
   }
 
   async findAll(): Promise<Category[]> {
@@ -18,10 +18,10 @@ export class SequelizeCategoryRepository implements ICategoryRepository {
     return this.toEntity(instance);
   }
 
-  async create(category: Omit<Category, 'IDCategory'>): Promise<Category> {
+  async create(category: Omit<Category, 'idCategory'>): Promise<Category> {
     const instance = await db.Category.create({
-      NameCategory: category.NameCategory,
-    } as any); // Casting attributes to bypass strict types in create if needed, but since it matches CategoryAttributes it's fine
+      nameCategory: category.nameCategory,
+    } as any);
     return this.toEntity(instance);
   }
 
@@ -30,8 +30,8 @@ export class SequelizeCategoryRepository implements ICategoryRepository {
     if (!instance) return null;
 
     const updatedData: Partial<CategoryInstance> = {};
-    if (category.NameCategory !== undefined) {
-      updatedData.NameCategory = category.NameCategory;
+    if (category.nameCategory !== undefined) {
+      updatedData.nameCategory = category.nameCategory;
     }
 
     await instance.update(updatedData);
@@ -40,7 +40,7 @@ export class SequelizeCategoryRepository implements ICategoryRepository {
 
   async delete(id: number): Promise<boolean> {
     const deletedCount = await db.Category.destroy({
-      where: { IDCategory: id },
+      where: { idCategory: id },
     });
     return deletedCount > 0;
   }

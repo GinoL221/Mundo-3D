@@ -4,7 +4,7 @@ import { ProductDTO } from '../dtos/ProductDTO';
 export interface CategoryCountInfo {
   count: number;
   category: {
-    IDCategory: number;
+    idCategory: number;
   } | null;
 }
 
@@ -22,11 +22,11 @@ export class ListProductsUseCase {
     const countByCategory: Record<string, CategoryCountInfo> = {};
 
     const mapped = products.map((p) => {
-      const categoryName = p.Category ? p.Category.NameCategory : 'Sin categoría';
+      const categoryName = p.Category ? p.Category.nameCategory : 'Sin categoría';
 
       const categoryInfo = p.Category
         ? {
-            IDCategory: p.Category.IDCategory,
+            idCategory: p.Category.idCategory,
           }
         : null;
 
@@ -45,8 +45,8 @@ export class ListProductsUseCase {
         Price: Number(p.Price),
         DescriptionProduct: p.DescriptionProduct,
         Image: p.Image,
-        IDCategory: p.IDCategory,
-        IDFranchise: p.IDFranchise,
+        idCategory: p.idCategory,
+        idFranchise: p.idFranchise,
         Category: categoryName,
       };
     });
