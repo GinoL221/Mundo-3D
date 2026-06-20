@@ -41,7 +41,7 @@ export const apiAuthMiddleware = (req: Request, res: Response, next: NextFunctio
 };
 
 export const adminGuard = (req: Request, res: Response, next: NextFunction): any => {
-  const isApiRequest = req.path.startsWith('/api');
+  const isApiRequest = req.path.startsWith('/api') || req.originalUrl?.startsWith('/api');
   const principal = req.session?.userLogged || req.user;
 
   if (!principal) {

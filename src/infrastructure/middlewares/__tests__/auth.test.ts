@@ -173,6 +173,14 @@ describe('adminGuard', () => {
     expect(res.json).toHaveBeenCalledWith({ error: 'Autenticación requerida' });
   });
 
+  it('returns 401 JSON error for non-authenticated API requests where path does not start with /api but originalUrl does', () => {
+    (req as any).path = '/users';
+    (req as any).originalUrl = '/api/users';
+    adminGuard(req as Request, res as Response, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Autenticación requerida' });
+  });
+
   it('returns 403 JSON error for authenticated API requests if role is not admin', () => {
     (req as any).path = '/api/users';
     req.user = { userId: 2, email: 'user@test.com', category: 'User', idRole: 2 };

@@ -60,4 +60,29 @@ describe('errorHandler middleware', () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
   });
+
+  it('returns 400 for multer errors with clear error payload', () => {
+    process.env.NODE_ENV = 'production';
+    const err = new Error('File too large');
+    err.name = 'MulterError';
+
+    errorHandler(err, req as Request, res as Response, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Invalid file format or size limit exceeded'
+    });
+  });
+
+  it('returns 400 for custom file filter errors', () => {
+    process.env.NODE_ENV = 'production';
+    const err = new Error('Invalid file format or size limit exceeded');
+
+    errorHandler(err, req as Request, res as Response, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Invalid file format or size limit exceeded'
+    });
+  });
 });

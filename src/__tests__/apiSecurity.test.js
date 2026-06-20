@@ -1,320 +1,168 @@
 const request = require('supertest');
+const express = require('express');
+const jwt = require('jsonwebtoken');
 
-jest.mock('../services', () => ({
-  UserService: {
-    findByEmail: jest.fn(),
-    verifyPassword: jest.fn(),
-    findAll: jest.fn(),
-    findById: jest.fn(),
-    remove: jest.fn(),
-  },
+const mockListUsersExecute = jest.fn();
+const mockGetUserByIdExecute = jest.fn();
+const mockGetCartByUserIdExecute = jest.fn();
+const mockSyncCartExecute = jest.fn();
+
+jest.mock('../application/use-cases/ListUsersUseCase', () => ({
+  ListUsersUseCase: jest.fn().mockImplementation(() => ({
+    execute: mockListUsersExecute,
+  })),
 }));
 
-const mockAuthenticateUserExecute = jest.fn();
+jest.mock('../application/use-cases/GetUserByIdUseCase', () => ({
+  GetUserByIdUseCase: jest.fn().mockImplementation(() => ({
+    execute: mockGetUserByIdExecute,
+  })),
+}));
 
-jest.mock('../application/use-cases/AuthenticateUserUseCase', () => {
-  return {
-    AuthenticateUserUseCase: jest.fn().mockImplementation(() => {
-      return {
-        execute: (input) => {
-          const fn = global.mockAuthenticateUserExecute || (global.mockAuthenticateUserExecute = jest.fn());
-          return fn(input);
-        },
-      };
-    }),
-  };
-});
+jest.mock('../application/use-cases/GetCartByUserIdUseCase', () => ({
+  GetCartByUserIdUseCase: jest.fn().mockImplementation(() => ({
+    execute: mockGetCartByUserIdExecute,
+  })),
+}));
 
-const { UserService } = require('../services');
-const app = require('../app');
+jest.mock('../application/use-cases/SyncCartUseCase', () => ({
+  SyncCartUseCase: jest.fn().mockImplementation(() => ({
+    execute: mockSyncCartExecute,
+  })),
+}));
 
-const getCookieString = (res) => {
-  const cookies = res.headers['set-cookie'];
-  if (!cookies) return '';
-  return cookies.map((c) => c.split(';')[0]).join('; ');
+const apiRouter = require('../infrastructure/routes/api/index').default;
+const errorHandler = require('../infrastructure/middlewares/errorHandler').default;
+
+const JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret';
+
+const buildApp = () => {
+  const app = express();
+  app.use(express.json());
+  app.use('/api', apiRouter);
+  app.use(errorHandler);
+  return app;
 };
 
-const getCsrfToken = (html) => {
-  const match = html.match(/name="_csrf" value="([a-f0-9]+)"/);
-  return match ? match[1] : '';
-};
+describe('REST API Security & Role Gating', () => {
+  let app;
+  let adminToken;
+  let userToken;
+  let invalidToken;
 
-const loginAs = async (userDto) => {
-  const getRes = await request(app).get('/login');
-  const csrfToken = getCsrfToken(getRes.text);
-  const initialCookies = getCookieString(getRes);
-
-  global.mockAuthenticateUserExecute.mockResolvedValueOnce(userDto);
-
-  const loginRes = await request(app)
-    .post('/login')
-    .set('Cookie', initialCookies)
-    .send({
-      email: userDto.email,
-      password: 'password123',
-      _csrf: csrfToken,
-    });
-
-  const cookies = getCookieString(loginRes) || initialCookies;
-  return { cookies };
-};
-
-const refreshCsrf = async (cookies, path = '/users') => {
-  const res = await request(app).get(path).set('Cookie', cookies);
-  return getCsrfToken(res.text) || '';
-};
-
-const adminUser = {
-  idUser: 1,
-  firstName: 'Admin',
-  lastName: 'User',
-  email: 'admin@test.com',
-  image: 'admin.png',
-  idRole: 1,
-  category: 'Admin',
-};
-
-const standardUser = {
-  idUser: 2,
-  firstName: 'Standard',
-  lastName: 'User',
-  email: 'user@test.com',
-  image: 'user.png',
-  idRole: 2,
-  category: 'User',
-};
-
-let adminCookies;
-let standardCookies;
-
-beforeAll(async () => {
-  global.mockAuthenticateUserExecute = mockAuthenticateUserExecute;
-  ({ cookies: adminCookies } = await loginAs(adminUser));
-  ({ cookies: standardCookies } = await loginAs(standardUser));
-});
-
-beforeEach(() => {
-  jest.clearAllMocks();
-  global.mockAuthenticateUserExecute = mockAuthenticateUserExecute;
-  UserService.findAll.mockResolvedValue([
-    {
-      idUser: 2,
-      IDUser: 2,
-      firstName: 'Standard',
-      FirstName: 'Standard',
-      lastName: 'User',
-      LastName: 'User',
-      email: 'user@test.com',
-      Email: 'user@test.com',
-      image: '',
-      Image: '',
-    },
-  ]);
-});
-
-describe('Admin-only product routes (web adminGuard integration)', () => {
-  describe('GET /new-product', () => {
-    it('redirects an unauthenticated (guest) request to /login', async () => {
-      const res = await request(app).get('/new-product');
-
-      expect(res.status).toBe(302);
-      expect(res.headers.location).toBe('/login');
-    });
-
-    it('returns 403 for an authenticated non-admin user', async () => {
-      const res = await request(app).get('/new-product').set('Cookie', standardCookies);
-
-      expect(res.status).toBe(403);
-      expect(res.text).toContain('Acceso denegado');
-    });
-
-    it('allows an authenticated admin user past the guard (reaches the controller)', async () => {
-      const res = await request(app).get('/new-product').set('Cookie', adminCookies);
-
-      expect(res.status).not.toBe(401);
-      expect(res.status).not.toBe(403);
-      expect(res.headers.location).not.toBe('/login');
-    });
+  beforeAll(() => {
+    adminToken = jwt.sign(
+      { userId: 1, email: 'admin@test.com', category: 'Admin', idRole: 1 },
+      JWT_SECRET
+    );
+    userToken = jwt.sign(
+      { userId: 2, email: 'user@test.com', category: 'User', idRole: 2 },
+      JWT_SECRET
+    );
+    invalidToken = 'invalid-token-signature-value';
   });
 
-  describe('POST /products (create)', () => {
-    it('rejects an unauthenticated (guest) request before it reaches adminGuard', async () => {
-      const res = await request(app).post('/products').send({});
+  beforeEach(() => {
+    jest.clearAllMocks();
+    app = buildApp();
+  });
 
-      expect(res.status).toBe(403);
-      expect(res.text).toContain('Acceso denegado');
+  describe('GET /api/users (Admin restriction)', () => {
+    it('returns 401 when Authorization header is missing', async () => {
+      const res = await request(app).get('/api/users');
+      expect(res.status).toBe(401);
+      expect(res.body.error).toBe('Token de autenticación no proporcionado');
+      expect(mockListUsersExecute).not.toHaveBeenCalled();
     });
 
-    it('returns 403 for an authenticated non-admin user', async () => {
-      const csrfToken = await refreshCsrf(standardCookies);
-
+    it('returns 401 when Authorization token is invalid', async () => {
       const res = await request(app)
-        .post('/products')
-        .set('Cookie', standardCookies)
-        .send({ _csrf: csrfToken, productName: 'Toy' });
-
-      expect(res.status).toBe(403);
-      expect(res.text).toContain('Acceso denegado');
+        .get('/api/users')
+        .set('Authorization', `Bearer ${invalidToken}`);
+      expect(res.status).toBe(401);
+      expect(res.body.error).toBe('Token de autenticación inválido o expirado');
+      expect(mockListUsersExecute).not.toHaveBeenCalled();
     });
 
-    it('allows an authenticated admin user past the guard (reaches the controller)', async () => {
-      const csrfToken = await refreshCsrf(adminCookies);
-
+    it('returns 403 when authenticated user is not an admin (idRole !== 1)', async () => {
       const res = await request(app)
-        .post('/products')
-        .set('Cookie', adminCookies)
-        .send({ _csrf: csrfToken, productName: 'Toy', price: '10', category: '1', franchise: '1' });
-
-      expect(res.status).not.toBe(401);
-      expect(res.status).not.toBe(403);
-      expect(res.headers.location).not.toBe('/login');
-    });
-  });
-
-  describe('PUT /product/:id/edit', () => {
-    it('rejects an unauthenticated (guest) request before it reaches adminGuard', async () => {
-      const res = await request(app).put('/product/1/edit').send({});
-
+        .get('/api/users')
+        .set('Authorization', `Bearer ${userToken}`);
       expect(res.status).toBe(403);
-      expect(res.text).toContain('Acceso denegado');
+      expect(res.body.error).toBe('Acceso restringido a administradores');
+      expect(mockListUsersExecute).not.toHaveBeenCalled();
     });
 
-    it('returns 403 for an authenticated non-admin user', async () => {
-      const csrfToken = await refreshCsrf(standardCookies);
-
+    it('allows access and returns 200 when authenticated user is admin (idRole === 1)', async () => {
+      mockListUsersExecute.mockResolvedValue([]);
       const res = await request(app)
-        .put('/product/1/edit')
-        .set('Cookie', standardCookies)
-        .send({ _csrf: csrfToken, productName: 'Toy edited' });
+        .get('/api/users')
+        .set('Authorization', `Bearer ${adminToken}`);
+      expect(res.status).toBe(200);
+      expect(mockListUsersExecute).toHaveBeenCalledTimes(1);
+    });
+  });
 
+  describe('GET /api/users/:id (Admin restriction)', () => {
+    it('returns 401 when Authorization header is missing', async () => {
+      const res = await request(app).get('/api/users/2');
+      expect(res.status).toBe(401);
+      expect(mockGetUserByIdExecute).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 when authenticated user is not an admin', async () => {
+      const res = await request(app)
+        .get('/api/users/2')
+        .set('Authorization', `Bearer ${userToken}`);
       expect(res.status).toBe(403);
-      expect(res.text).toContain('Acceso denegado');
+      expect(mockGetUserByIdExecute).not.toHaveBeenCalled();
     });
 
-    it('allows an authenticated admin user past the guard (reaches the controller)', async () => {
-      const csrfToken = await refreshCsrf(adminCookies);
-
+    it('allows access and returns 200 when authenticated user is admin', async () => {
+      mockGetUserByIdExecute.mockResolvedValue({ idUser: 2, email: 'user@test.com' });
       const res = await request(app)
-        .put('/product/1/edit')
-        .set('Cookie', adminCookies)
-        .send({ _csrf: csrfToken, productName: 'Toy edited' });
-
-      expect(res.status).not.toBe(401);
-      expect(res.status).not.toBe(403);
-      expect(res.headers.location).not.toBe('/login');
+        .get('/api/users/2')
+        .set('Authorization', `Bearer ${adminToken}`);
+      expect(res.status).toBe(200);
+      expect(mockGetUserByIdExecute).toHaveBeenCalledWith(2);
     });
   });
 
-  describe('DELETE /product/delete/:id', () => {
-    it('rejects an unauthenticated (guest) request before it reaches adminGuard', async () => {
-      const res = await request(app).delete('/product/delete/1');
-
-      expect(res.status).toBe(403);
-      expect(res.text).toContain('Acceso denegado');
+  describe('GET /api/cart (User Authentication restriction)', () => {
+    it('returns 401 when Authorization header is missing', async () => {
+      const res = await request(app).get('/api/cart');
+      expect(res.status).toBe(401);
+      expect(mockGetCartByUserIdExecute).not.toHaveBeenCalled();
     });
 
-    it('returns 403 for an authenticated non-admin user', async () => {
-      const csrfToken = await refreshCsrf(standardCookies);
-
+    it('allows access and returns 200 for a standard authenticated user', async () => {
+      mockGetCartByUserIdExecute.mockResolvedValue({ items: [], total: 0 });
       const res = await request(app)
-        .delete('/product/delete/1')
-        .set('Cookie', standardCookies)
-        .send({ _csrf: csrfToken });
+        .get('/api/cart')
+        .set('Authorization', `Bearer ${userToken}`);
+      expect(res.status).toBe(200);
+      expect(mockGetCartByUserIdExecute).toHaveBeenCalledWith(2);
+    });
+  });
 
-      expect(res.status).toBe(403);
-      expect(res.text).toContain('Acceso denegado');
+  describe('PUT /api/cart (User Authentication restriction)', () => {
+    it('returns 401 when Authorization header is missing', async () => {
+      const res = await request(app).put('/api/cart').send({ items: [] });
+      expect(res.status).toBe(401);
+      expect(mockSyncCartExecute).not.toHaveBeenCalled();
     });
 
-    it('allows an authenticated admin user past the guard (reaches the controller)', async () => {
-      const csrfToken = await refreshCsrf(adminCookies);
-
+    it('allows access, syncs, and returns 200 for authenticated user', async () => {
+      mockSyncCartExecute.mockResolvedValue(undefined);
+      mockGetCartByUserIdExecute.mockResolvedValue({ items: [], total: 0 });
       const res = await request(app)
-        .delete('/product/delete/1')
-        .set('Cookie', adminCookies)
-        .send({ _csrf: csrfToken });
+        .put('/api/cart')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ items: [{ productId: 10, quantity: 2 }] });
 
-      expect(res.status).not.toBe(401);
-      expect(res.status).not.toBe(403);
-      expect(res.headers.location).not.toBe('/login');
+      expect(res.status).toBe(200);
+      expect(mockSyncCartExecute).toHaveBeenCalledWith(2, [{ productId: 10, quantity: 2 }]);
+      expect(mockGetCartByUserIdExecute).toHaveBeenCalledWith(2);
     });
-  });
-});
-
-describe('/productCart route still uses isUser (any logged-in user, not admin-only)', () => {
-  it('redirects an unauthenticated (guest) request to /login', async () => {
-    const res = await request(app).get('/productCart');
-
-    expect(res.status).toBe(302);
-    expect(res.headers.location).toBe('/login');
-  });
-
-  it('allows an authenticated standard (non-admin) user past the guard', async () => {
-    const res = await request(app).get('/productCart').set('Cookie', standardCookies);
-
-    expect(res.status).not.toBe(403);
-    expect(res.headers.location).not.toBe('/login');
-  });
-
-  it('allows an authenticated admin user past the guard as well', async () => {
-    const res = await request(app).get('/productCart').set('Cookie', adminCookies);
-
-    expect(res.status).not.toBe(403);
-    expect(res.headers.location).not.toBe('/login');
-  });
-});
-
-describe('DELETE /users/delete/:id (web adminGuard integration)', () => {
-  it('rejects an unauthenticated (guest) request before it reaches adminGuard', async () => {
-    const res = await request(app).delete('/users/delete/2');
-
-    expect(res.status).toBe(403);
-    expect(res.text).toContain('Acceso denegado');
-  });
-
-  it('returns 403 for an authenticated non-admin user', async () => {
-    const csrfToken = await refreshCsrf(standardCookies, '/users');
-
-    const res = await request(app)
-      .delete('/users/delete/2')
-      .set('Cookie', standardCookies)
-      .send({ _csrf: csrfToken });
-
-    expect(res.status).toBe(403);
-    expect(res.text).toContain('Acceso denegado');
-    expect(UserService.remove).not.toHaveBeenCalled();
-  });
-
-  it('allows an authenticated admin user past the guard and completes the deletion', async () => {
-    const csrfToken = await refreshCsrf(adminCookies, '/users');
-    UserService.remove.mockResolvedValue(true);
-
-    const res = await request(app)
-      .delete('/users/delete/2')
-      .set('Cookie', adminCookies)
-      .send({ _csrf: csrfToken });
-
-    expect(res.status).toBe(302);
-    expect(res.headers.location).toBe('/users');
-    expect(UserService.remove).toHaveBeenCalledWith('2');
-  });
-});
-
-describe('GET /users (EJS view gating for the "Borrar" delete button and the "Nuevo producto" link)', () => {
-  it('does not render the delete form/button or the "Nuevo producto" link for a standard (non-admin) user', async () => {
-    const res = await request(app).get('/users').set('Cookie', standardCookies);
-
-    expect(res.status).toBe(200);
-    expect(res.text).not.toContain('Borrar');
-    expect(res.text).not.toContain('/users/delete/');
-    expect(res.text).not.toContain('Nuevo producto');
-  });
-
-  it('renders the delete form/button and the "Nuevo producto" link for an admin user', async () => {
-    const res = await request(app).get('/users').set('Cookie', adminCookies);
-
-    expect(res.status).toBe(200);
-    expect(res.text).toContain('Borrar');
-    expect(res.text).toContain('/users/delete/2');
-    expect(res.text).toContain('Nuevo producto');
   });
 });

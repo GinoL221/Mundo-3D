@@ -11,6 +11,7 @@ describe('GetCartByUserIdUseCase', () => {
     repositoryMock = {
       findByUserId: jest.fn(),
       getDistinctCount: jest.fn(),
+      syncCart: jest.fn(),
     };
     useCase = new GetCartByUserIdUseCase(repositoryMock);
   });

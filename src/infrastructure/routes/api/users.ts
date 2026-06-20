@@ -4,11 +4,13 @@ import { BcryptPasswordHasher } from '../../security/BcryptPasswordHasher';
 import { AuthenticateUserUseCase } from '../../../application/use-cases/AuthenticateUserUseCase';
 import { ListUsersUseCase } from '../../../application/use-cases/ListUsersUseCase';
 import { GetUserByIdUseCase } from '../../../application/use-cases/GetUserByIdUseCase';
+import { RegisterUserUseCase } from '../../../application/use-cases/RegisterUserUseCase';
 import { UserApiController } from '../../controllers/UserApiController';
 import loginLimiter from '../../middlewares/loginLimiter';
 import { apiAuthMiddleware, adminGuard } from '../../middlewares/auth';
-import { loginValidation } from '../../middlewares/validators/userValidators';
+import { loginValidation, validationsUsers } from '../../middlewares/validators/userValidators';
 import { validationResult } from 'express-validator';
+import createUpload from '../../middlewares/upload';
 
 const router = Router();
 
@@ -18,12 +20,16 @@ const passwordHasher = new BcryptPasswordHasher();
 const authenticateUserUseCase = new AuthenticateUserUseCase(userRepo, passwordHasher);
 const listUsersUseCase = new ListUsersUseCase(userRepo);
 const getUserByIdUseCase = new GetUserByIdUseCase(userRepo);
+const registerUserUseCase = new RegisterUserUseCase(userRepo, passwordHasher);
 
 const controller = new UserApiController(
   authenticateUserUseCase,
   listUsersUseCase,
-  getUserByIdUseCase
+  getUserByIdUseCase,
+  registerUserUseCase
 );
+
+const uploadImgUser = createUpload('users');
 
 const normalizeLoginBody = (req: Request, res: Response, next: NextFunction) => {
   if (req.body) {
@@ -52,6 +58,20 @@ router.post(
   loginValidation,
   handleValidationErrors,
   controller.login
+);
+
+router.post(
+  '/users/register',
+  uploadImgUser.single('image'),
+  validationsUsers,
+  controller.register
+);
+
+router.post(
+  '/users',
+  uploadImgUser.single('image'),
+  validationsUsers,
+  controller.register
 );
 
 router.get('/users', apiAuthMiddleware, adminGuard, controller.index);

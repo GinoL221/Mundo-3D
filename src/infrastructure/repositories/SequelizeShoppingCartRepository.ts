@@ -47,4 +47,35 @@ export class SequelizeShoppingCartRepository implements IShoppingCartRepository 
     });
     return count;
   }
+
+  async syncCart(userId: number, items: { productId: number; quantity: number; unitPrice: number }[]): Promise<void> {
+    const transaction = await db.sequelize.transaction();
+    try {
+      await db.ShoppingCart.destroy({
+        where: {
+          IDUser: userId,
+          CartStatus: 'ACTIVE',
+        },
+        transaction,
+      });
+
+      for (const item of items) {
+        await db.ShoppingCart.create(
+          {
+            IDUser: userId,
+            IDProduct: item.productId,
+            Quantity: item.quantity,
+            UnitPrice: item.unitPrice,
+            CartStatus: 'ACTIVE',
+          },
+          { transaction }
+        );
+      }
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
 }

@@ -51,4 +51,27 @@ describe('createUpload factory', () => {
 
     expect(callback).toHaveBeenCalledWith(null, expect.stringMatching(/^[0-9a-f-]{36}\.png$/));
   });
+
+  it('defines fileFilter to validate image formats and rejects invalid ones', () => {
+    createUpload('test-dest');
+    const multerOptions = (multer as unknown as jest.Mock).mock.calls[0][0];
+    expect(multerOptions.fileFilter).toBeDefined();
+
+    const callback = jest.fn();
+    const file = { originalname: 'test.txt', mimetype: 'text/plain' } as any;
+    multerOptions.fileFilter({} as any, file, callback);
+
+    expect(callback).toHaveBeenCalledWith(expect.any(Error), false);
+    expect(callback.mock.calls[0][0].message).toBe('Invalid file format or size limit exceeded');
+  });
+
+  it('allows valid image formats in fileFilter', () => {
+    createUpload('test-dest');
+    const multerOptions = (multer as unknown as jest.Mock).mock.calls[0][0];
+    const callback = jest.fn();
+    const file = { originalname: 'avatar.png', mimetype: 'image/png' } as any;
+    multerOptions.fileFilter({} as any, file, callback);
+
+    expect(callback).toHaveBeenCalledWith(null, true);
+  });
 });
