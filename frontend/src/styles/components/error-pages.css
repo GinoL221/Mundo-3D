@@ -1,0 +1,47 @@
+/* ============================================================
+   error-pages.css — Error Pages Component (BEM)
+   Extracted from styles.css lines 1158-1195
+   .error-page already uses valid BEM naming — kept as-is
+   ============================================================ */
+
+/* ── Error Page Block ──────────────────────────────────────── */
+.error-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  padding: var(--space-2xl) var(--space-md);
+}
+
+/* ── Error Code ────────────────────────────────────────────── */
+.error-page h1 {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  color: var(--danger);
+  margin-bottom: var(--space-lg);
+}
+
+/* ── Error Message ─────────────────────────────────────────── */
+.error-page p {
+  font-family: var(--font-body);
+  font-size: 20px;
+  color: var(--fg);
+  margin-bottom: var(--space-lg);
+}
+
+/* ── Error Action Link ─────────────────────────────────────── */
+.error-page a {
+  font-family: var(--font-body);
+  font-size: 18px;
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--accent);
+  color: var(--pico-white);
+  border: 2px solid var(--accent);
+}
+
+.error-page a:hover {
+  background-color: var(--pico-black);
+  color: var(--accent);
+}

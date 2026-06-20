@@ -1,0 +1,13 @@
+/* ============================================================
+   product-grid.css — Product listing grid layout
+   Unifies: .containerSectionIndex, .contenido_produc, .products_container
+   ============================================================ */
+
+/* ── Product Grid Block ────────────────────────────────────── */
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--space-lg);
+  padding: var(--space-md) 0;
+}

@@ -1,0 +1,62 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+// Global styling imports
+import '../styles/normalize.css';
+import '../styles/tokens/colors.css';
+import '../styles/tokens/typography.css';
+import '../styles/tokens/spacing.css';
+import '../styles/base/reset.css';
+import '../styles/base/layout.css';
+import '../styles/base/utilities.css';
+import '../styles/components/navbar.css';
+import '../styles/components/carousel.css';
+import '../styles/components/feature-strip.css';
+import '../styles/components/footer.css';
+import '../styles/components/product-grid.css';
+import '../styles/components/product-card.css';
+import '../styles/components/price.css';
+import '../styles/components/product-detail.css';
+import '../styles/components/cart.css';
+import '../styles/components/forms.css';
+import '../styles/components/profile.css';
+import '../styles/components/users-list.css';
+import '../styles/components/alerts.css';
+import '../styles/components/error-pages.css';
+import '../styles/components/about.css';
+
+interface Props {
+	title?: string;
+}
+
+const { title = "Mundo 3D" } = Astro.props;
+---
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+		
+		<!-- Google Fonts -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+		
+		<!-- Theme initialization script (runs immediately to prevent flash of wrong theme) -->
+		<script is:inline>
+			(function () {
+				const theme = localStorage.getItem('theme') || 'dark';
+				document.documentElement.setAttribute('data-theme', theme);
+			})();
+		</script>
+	</head>
+	<body>
+		<Header />
+		<slot />
+		<Footer />
+	</body>
+</html>

@@ -1,0 +1,171 @@
+---
+// Header component
+---
+<header class="navbar">
+  <div class="container">
+    <div class="navbar__inner">
+      <!-- Logo -->
+      <a href="/" class="navbar__logo">
+        MUNDO 3D
+      </a>
+
+      <!-- Search bar (visual only, non-functional) -->
+      <div class="navbar__search">
+        <input type="text" placeholder="Buscar productos..." aria-label="Buscar productos" class="navbar__search-input" />
+        <button type="button" aria-label="Buscar" class="navbar__search-btn">
+          <img src="/images/icons/search.png" alt="" width="16" height="16" />
+        </button>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="navbar__list">
+        <ul class="navbar__list--left">
+          <li class="navbar__item"><a href="/products" class="navbar__link">Productos</a></li>
+          <li class="navbar__item admin-only" style="display: none;"><a href="/new-product" class="navbar__link">Nuevo producto</a></li>
+        </ul>
+
+        <ul class="navbar__list--right">
+          <!-- Guest Navigation -->
+          <li class="navbar__item guest-only"><a href="/login" class="navbar__link">Iniciar sesión</a></li>
+          <li class="navbar__item guest-only"><a href="/register" class="navbar__link">Registrarse</a></li>
+
+          <!-- User Navigation (Authenticated) -->
+          <li class="nav-item user-only" style="display: none;">
+            <div class="nav-item__trigger">
+              <img id="navbar-avatar" src="/img/users/default-avatar.png" width="32" height="32" alt="Avatar" style="border-radius: 50%; object-fit: cover;" />
+              <span class="navbar__greeting" id="navbar-greeting">Hola</span>
+              <ul class="nav-item__dropdown">
+                <li><a href="/profile">Mi perfil</a></li>
+                <li><a href="#" id="navbar-logout">Cerrar sesión</a></li>
+              </ul>
+            </div>
+          </li>
+
+          <!-- Cart badge -->
+          <li class="navbar__item">
+            <a href="/productCart" class="cart-link" aria-label="Carrito de compras">
+              <img src="/images/icons/cart.png" alt="" width="16" height="16" />
+              Carrito
+              <span class="cart-link__badge" id="navbar-cart-badge" style="display: none;">0</span>
+            </a>
+          </li>
+
+          <!-- Theme toggle -->
+          <li class="navbar__item">
+            <button class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle Theme">
+              <span class="theme-toggle-btn__icon">◐</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Dynamic User Session and UI state hydration
+  function updateSessionUI() {
+    const token = localStorage.getItem('token');
+    const userJson = localStorage.getItem('user');
+    
+    const guestElements = document.querySelectorAll('.guest-only');
+    const userElements = document.querySelectorAll('.user-only');
+    const adminElements = document.querySelectorAll('.admin-only');
+    const greetingEl = document.getElementById('navbar-greeting');
+    const avatarEl = document.getElementById('navbar-avatar') as HTMLImageElement | null;
+
+    if (token && userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        
+        // Hide guest links
+        guestElements.forEach(el => (el as HTMLElement).style.display = 'none');
+        
+        // Show authenticated links
+        userElements.forEach(el => (el as HTMLElement).style.display = 'block');
+        
+        // Update greeting and avatar
+        if (greetingEl) {
+          greetingEl.textContent = `Hola ${user.firstName || user.FirstName || 'Usuario'}`;
+        }
+        if (avatarEl && user.image) {
+          avatarEl.src = `/img/users/${user.image}`;
+        } else if (avatarEl && user.Image) {
+          avatarEl.src = `/img/users/${user.Image}`;
+        }
+
+        // Show admin links if user is an admin (IDRole === 1 or category === 'Admin')
+        const isAdmin = user.IDRole === 1 || user.idRole === 1 || user.category === 'Admin';
+        adminElements.forEach(el => {
+          (el as HTMLElement).style.display = isAdmin ? 'block' : 'none';
+        });
+      } catch (e) {
+        console.error('Error parsing user storage:', e);
+        // Clear corrupt storage
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        resetToGuestUI();
+      }
+    } else {
+      resetToGuestUI();
+    }
+  }
+
+  function resetToGuestUI() {
+    const guestElements = document.querySelectorAll('.guest-only');
+    const userElements = document.querySelectorAll('.user-only');
+    const adminElements = document.querySelectorAll('.admin-only');
+    
+    guestElements.forEach(el => (el as HTMLElement).style.display = 'block');
+    userElements.forEach(el => (el as HTMLElement).style.display = 'none');
+    adminElements.forEach(el => (el as HTMLElement).style.display = 'none');
+  }
+
+  // Handle Logout
+  const logoutBtn = document.getElementById('navbar-logout');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('cart'); // Clear cart state as well
+      window.location.href = '/login';
+    });
+  }
+
+  // Theme Toggle Logic
+  function applyTheme(theme: string) {
+    if (theme === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+
+    const toggleBtnIcon = document.querySelector('.theme-toggle-btn__icon');
+    if (toggleBtnIcon) {
+      toggleBtnIcon.textContent = theme === 'light' ? '☀️' : '🌙';
+    }
+  }
+
+  const toggleBtn = document.getElementById('theme-toggle');
+  const currentTheme = localStorage.getItem('theme') || 'dark';
+  applyTheme(currentTheme);
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const activeTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+      const newTheme = activeTheme === 'light' ? 'dark' : 'light';
+      localStorage.setItem('theme', newTheme);
+      applyTheme(newTheme);
+    });
+  }
+
+  // Initial Run and Event Listeners
+  updateSessionUI();
+  
+  // Listen for storage updates (in case session changes in another tab)
+  window.addEventListener('storage', updateSessionUI);
+  
+  // Listen for custom login/logout/session events to update immediately
+  window.addEventListener('session-changed', updateSessionUI);
+</script>
