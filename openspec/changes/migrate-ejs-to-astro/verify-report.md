@@ -1,11 +1,11 @@
-# Verification Report: Migrate EJS to Astro (PR 2 - Astro Foundation & SSG)
+# Verification Report: Migrate EJS to Astro (PR 1 - Headless REST API)
 
 - **Change**: `migrate-ejs-to-astro`
-- **Work Unit / PR**: PR 2 (Astro Foundation & SSG)
+- **Work Unit / PR**: PR 1 (Headless REST API)
 - **Mode**: `hybrid` (openspec + engram)
 - **Status**: Successful
-- **Branch**: `change/migrate-ejs-to-astro-pr2`
-- **Timestamp**: 2026-06-20T01:56:00Z
+- **Branch**: `change/migrate-ejs-to-astro-pr1`
+- **Timestamp**: 2026-06-20T01:40:00Z
 
 ---
 
@@ -22,24 +22,17 @@
 | **2.1** Clean app.js from MVC engines and middlewares | ✅ Completed | Covered by `src/__tests__/appConfig.test.js` |
 | **2.2** Configure CORS for Astro origins | ✅ Completed | Covered by `src/__tests__/cors.test.js` |
 | **3.1** Refactor integration tests to JSON | ✅ Completed | Covered by `src/__tests__/apiSecurity.test.js` and `middlewareOrder.test.js` |
-| **4.1** Bootstrap Astro project under `frontend/` | ✅ Completed | Astro configuration (`astro.config.mjs`, `tsconfig.json`) and directory structure verified under `/frontend` |
-| **4.2** Import global Vanilla CSS styles | ✅ Completed | Placed under `frontend/src/styles/` and imported in `Layout.astro` |
-| **4.3** Create static pre-rendered pages | ✅ Completed | Created Astro pages: `aboutUs.astro`, `faq.astro`, `help.astro`, `privacy.astro`, `terms.astro`, and `step-by-step.astro` |
 
 ---
 
 ## 2. Build, Tests & Coverage Evidence
 
-- **TypeScript Compilation (Backend)**: `npx tsc --noEmit` exited with code `0` (Zero compilation errors).
-- **Backend Test execution command**: `npm test`
-- **Backend Test results**:
+- **TypeScript Compilation**: `npx tsc --noEmit` exited with code `0` (Zero compilation errors).
+- **Test execution command**: `npm test`
+- **Test results**:
   - Test Suites: 57 passed, 10 skipped, 67 total
   - Tests: 292 passed, 10 skipped, 302 total
-  - Time: 25.196 s
-- **Frontend Astro compilation command**: `npm run build` (executed inside `frontend/`)
-- **Frontend Astro compilation results**:
-  - Pages built: 7 static routes generated (`/`, `/aboutUs`, `/faq`, `/help`, `/privacy`, `/terms`, `/step-by-step`)
-  - Status: Exited with code `0` (Zero build compilation or routing errors)
+  - Time: ~73 seconds (under coverage run)
 - **Coverage Tool**: Jest
   - Average Statement Coverage on Changed Files: **95.46%**
 
@@ -59,9 +52,6 @@
 | **static-pages-controller** | View-related EJS tests are retired | `src/infrastructure/routes/__tests__/cartRoutes.e2e.test.ts` is skipped | ✅ PASS |
 | **upload-middleware** | Upload factory handles successful upload | `src/infrastructure/middlewares/__tests__/upload.test.ts` | ✅ PASS |
 | **upload-middleware** | Upload factory handles format/size errors returning JSON 400 | `src/infrastructure/middlewares/__tests__/errorHandler.test.ts` | ✅ PASS |
-| **astro-frontend** | Decoupled architecture under `frontend/` | Verified directory presence of `src/pages`, `src/components`, `src/layouts` | ✅ PASS |
-| **astro-frontend** | Layout imports Vanilla CSS & provides Header/Footer structure | Verified `Layout.astro` links local Vanilla CSS files and renders `<Header />` & `<Footer />` | ✅ PASS |
-| **astro-frontend** | Static pages pre-rendered via SSG at build time | Astro build generated static `.html` files for all 6 static pages | ✅ PASS |
 
 ---
 
@@ -73,8 +63,6 @@
 | **CORS Configuration** | `app.js` CORS setup uses `process.env.CORS_ORIGIN` or defaults | ✅ Coherent |
 | **Headless Backend** | `app.js` EJS template engine definitions removed, session/csrf/cookies detached | ✅ Coherent |
 | **Cart Synchronizer** | `SyncCartUseCase` and `CartApiController` use `req.user.userId` | ✅ Coherent |
-| **Astro Layout Structure** | `Layout.astro` holds Google Fonts links, `<Header />` and `<Footer />` components, and script to bootstrap theme without page flash | ✅ Coherent |
-| **Astro Page Routing** | Pre-rendered static pages use relative links matching EJS view routing structure | ✅ Coherent |
 
 ---
 
@@ -101,7 +89,7 @@
 |-------|-------|-------|-------|
 | Unit | 37 | 6 | Jest |
 | Integration | 17 | 4 | Jest / Supertest |
-| E2E | 0 | 0 | None (Out of scope for PR 1 and PR 2) |
+| E2E | 0 | 0 | None (Out of scope for PR 1) |
 | **Total** | **54** | **10** | |
 
 ---
@@ -136,7 +124,7 @@ No tautologies (`expect(true).toBe(true)`), empty collection queries without non
 
 ### Quality Metrics
 
-- **Linter**: ✅ No errors (25 warnings found globally in legacy controller/db files, 0 in new PR 1/2 API codebase files).
+- **Linter**: ✅ No errors (25 warnings found globally in legacy controller/db files, 0 in new PR 1 API codebase files).
 - **Type Checker**: ✅ No errors (tsc compiled successfully).
 
 ---
@@ -157,4 +145,4 @@ No tautologies (`expect(true).toBe(true)`), empty collection queries without non
 ## 7. Final Verdict
 
 ### **PASS**
-The cumulative work units (PR 1: Headless REST API and PR 2: Astro Foundation & SSG) have been successfully verified. All specs, design specifications, and tasks are fully implemented, validated by robust TDD test suites, compile/build successfully with zero errors, and are ready for integration.
+The first work unit (PR 1: Headless REST API) has been successfully verified. All specs, design specifications, and tasks are fully implemented, validated by robust TDD test suites, and clean of type/compiler issues. It is **ready-for-pr**.
