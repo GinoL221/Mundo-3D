@@ -1,11 +1,148 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="Mundo 3D - Inicio">
+  <!-- Carousel -->
+  <section class="carousel carousel--lcd" id="homepage-carousel">
+    <div class="carousel__container">
+      <div class="carousel__slide">
+        <a href="/products">
+          <div class="carousel__text glow">Modelado y fabricación 3D</div>
+        </a>
+      </div>
+      <div class="carousel__slide">
+        <a href="/aboutUs">
+          <div class="carousel__text glow">Calidad premium garantizada</div>
+        </a>
+      </div>
+      <div class="carousel__slide">
+        <a href="/help">
+          <div class="carousel__text glow">Pedí tu cotización</div>
+        </a>
+      </div>
+    </div>
+    <button class="carousel__prev" aria-label="Slide anterior">&#10094;</button>
+    <button class="carousel__next" aria-label="Slide siguiente">&#10095;</button>
+    <div class="carousel__indicators">
+      <button class="carousel__indicator active" data-slide="0" aria-label="Ir al slide 1"></button>
+      <button class="carousel__indicator" data-slide="1" aria-label="Ir al slide 2"></button>
+      <button class="carousel__indicator" data-slide="2" aria-label="Ir al slide 3"></button>
+    </div>
+  </section>
+
+  <!-- Feature Strip -->
+  <section class="feature-strip">
+    <div class="feature-strip__tile">
+      <h3 class="feature-strip__title">Calidad Premium</h3>
+      <p class="feature-strip__description">Materiales de alta resistencia para cada proyecto.</p>
+    </div>
+    <div class="feature-strip__tile">
+      <h3 class="feature-strip__title">Envío Rápido</h3>
+      <p class="feature-strip__description">Recibí tu pedido en tiempo récord, preparado con cuidado.</p>
+    </div>
+    <div class="feature-strip__tile">
+      <h3 class="feature-strip__title">Soporte 24/7</h3>
+      <p class="feature-strip__description">Estamos para vos en cada paso del proceso.</p>
+    </div>
+  </section>
+
+  <!-- Dynamic product section -->
+  <main class="index">
+    <div id="products-container">
+      <p style="text-align:center; padding:2rem;">Cargando productos...</p>
+    </div>
+  </main>
 </Layout>
+
+<script>
+  // Carousel logic
+  (function initCarousel() {
+    const container = document.querySelector('.carousel__container') as HTMLElement | null;
+    const slides = document.querySelectorAll('.carousel__slide');
+    const indicators = document.querySelectorAll('.carousel__indicator');
+    let current = 0;
+    let interval: ReturnType<typeof setInterval>;
+
+    function goTo(idx: number): void {
+      current = (idx + slides.length) % slides.length;
+      if (container) container.style.transform = `translateX(-${current * 100}%)`;
+      indicators.forEach((ind, i) => {
+        ind.classList.toggle('active', i === current);
+      });
+    }
+
+    document.querySelector('.carousel__prev')?.addEventListener('click', () => {
+      goTo(current - 1);
+      resetInterval();
+    });
+    document.querySelector('.carousel__next')?.addEventListener('click', () => {
+      goTo(current + 1);
+      resetInterval();
+    });
+    indicators.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const slide = Number((btn as HTMLElement).dataset.slide);
+        goTo(slide);
+        resetInterval();
+      });
+    });
+
+    function resetInterval(): void {
+      clearInterval(interval);
+      interval = setInterval(() => goTo(current + 1), 5000);
+    }
+
+    resetInterval();
+  })();
+
+  // Dynamic product grid
+  async function loadProducts(): Promise<void> {
+    const container = document.getElementById('products-container');
+    if (!container) return;
+
+    try {
+      const res = await fetch('http://localhost:3000/api/products');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const products = await res.json();
+
+      if (!Array.isArray(products) || products.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <img src="/images/illustrations/empty-state.png" alt="Próximamente" class="empty-state-img" />
+            <h2>Próximamente</h2>
+            <p>Estamos preparando productos increíbles para vos.</p>
+          </div>`;
+        return;
+      }
+
+      const cards = products.map((product: any) => {
+        const catName = product.Category?.NameCategory || 'Otras';
+        return `
+          <article class="product-card">
+            <a href="/product?id=${product.IDProduct}">
+              <img src="/images/illustrations/${catName}.png" alt="${catName}" class="product-card__category-img"
+                onerror="this.src='/images/illustrations/Otras.png'" />
+              <div class="product-card__body">
+                <h3>${product.NameProduct}</h3>
+                <p class="price">$${product.Price}</p>
+              </div>
+            </a>
+          </article>`;
+      }).join('');
+
+      container.innerHTML = `
+        <h2 class="page-heading">Nuestros Seleccionados</h2>
+        <div class="product-grid">${cards}</div>`;
+    } catch {
+      container.innerHTML = `
+        <div class="empty-state">
+          <img src="/images/illustrations/empty-state.png" alt="Error" class="empty-state-img" />
+          <h2>Próximamente</h2>
+          <p>Estamos preparando productos increíbles para vos.</p>
+        </div>`;
+    }
+  }
+
+  loadProducts();
+</script>

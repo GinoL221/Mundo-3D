@@ -35,9 +35,9 @@ Chain strategy: feature-branch-chain
 - [x] Refactor integration tests in `src/__tests__/` to assert against API JSON responses instead of HTML view output.
 
 ## Phase 4: Astro Frontend Foundation
-- [ ] Bootstrap Astro project under `frontend/` directory with layout structure.
-- [ ] Import global Vanilla CSS styles inside `frontend/src/layouts/Layout.astro`.
-- [ ] Create static pre-rendered pages in `frontend/src/pages/`: `aboutUs.astro`, `faq.astro`, `help.astro`, `privacy.astro`, `terms.astro`.
+- [x] Bootstrap Astro project under `frontend/` directory with layout structure.
+- [x] Import global Vanilla CSS styles inside `frontend/src/layouts/Layout.astro`.
+- [x] Create static pre-rendered pages in `frontend/src/pages/`: `aboutUs.astro`, `faq.astro`, `help.astro`, `privacy.astro`, `terms.astro`.
 
 ## Phase 5: Astro Frontend Dynamic Logic
 - [ ] Implement login page `login.astro` and register page `register.astro` with JWT storing in `localStorage`.

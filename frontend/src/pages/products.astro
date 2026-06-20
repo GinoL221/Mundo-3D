@@ -1,0 +1,79 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Productos - Mundo 3D">
+  <main class="products">
+    <h2 class="page-heading">NUESTROS PRODUCTOS</h2>
+    <section class="product-grid" id="product-grid-container">
+      <!-- Products rendered by client-side script -->
+      <p id="loading-msg" style="text-align:center; padding: 2rem;">Cargando productos...</p>
+    </section>
+  </main>
+</Layout>
+
+<script>
+  const CATEGORY_IMAGES: Record<string, string> = {
+    Figura: 'Figura',
+    Busto: 'Busto',
+    Llavero: 'Llavero',
+    Máscara: 'Máscara',
+    Otras: 'Otras',
+  };
+
+  function getCategoryImg(categoryName: string): string {
+    return CATEGORY_IMAGES[categoryName] || 'Otras';
+  }
+
+  async function loadProducts(): Promise<void> {
+    const container = document.getElementById('product-grid-container');
+    const loadingMsg = document.getElementById('loading-msg');
+
+    try {
+      const res = await fetch('http://localhost:3000/api/products');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const products = await res.json();
+
+      if (loadingMsg) loadingMsg.remove();
+
+      if (!Array.isArray(products) || products.length === 0) {
+        container!.innerHTML = `
+          <div class="empty-state">
+            <img src="/images/illustrations/empty-state.png" alt="Próximamente" class="empty-state-img" />
+            <h2>Próximamente</h2>
+            <p>Estamos preparando productos increíbles para vos.</p>
+          </div>`;
+        return;
+      }
+
+      const cards = products.map((product: any) => {
+        const catName = product.Category?.NameCategory || 'Otras';
+        const catImg = getCategoryImg(catName);
+        return `
+          <article class="product-card">
+            <a href="/product?id=${product.IDProduct}">
+              <img src="/images/illustrations/${catImg}.png" alt="${catName}" class="product-card__category-img" />
+              <div class="product-card__body">
+                <h3>${product.NameProduct}</h3>
+                <p class="price">$${product.Price}</p>
+              </div>
+            </a>
+          </article>`;
+      }).join('');
+
+      container!.innerHTML = cards;
+    } catch (err) {
+      if (loadingMsg) loadingMsg.remove();
+      container!.innerHTML = `
+        <div class="empty-state">
+          <img src="/images/illustrations/empty-state.png" alt="Error" class="empty-state-img" />
+          <h2>No se pudo cargar</h2>
+          <p>Verificá tu conexión e intentá de nuevo.</p>
+        </div>`;
+      console.error('Error loading products:', err);
+    }
+  }
+
+  loadProducts();
+</script>

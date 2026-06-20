@@ -1,0 +1,88 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Carrito de Compras - Mundo 3D">
+  <main class="cart">
+    <h2>PRODUCTOS EN SU CARRITO</h2>
+    <div class="cart__container">
+      <section class="cart__items" id="cart-items-container">
+        <p id="cart-loading" style="text-align:center; padding:2rem;">Cargando carrito...</p>
+      </section>
+      <section class="cart__summary" id="cart-summary" style="display:none;">
+        <div class="cart__item-details">
+          <h4>Resumen de su compra</h4>
+          <p class="cart__summary-count" id="cart-count">Cantidad de productos: 0</p>
+          <p class="cart__summary-shipping">Envio: $ 000</p>
+          <h4>Total del carrito: $<span id="cart-total">0</span></h4>
+        </div>
+        <a href="/products" class="cart__btn-continue" style="display:inline-block; text-align:center;">Seguir comprando</a>
+        <button class="cart__btn-checkout" type="button">Finalizar compra</button>
+      </section>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  function renderCart(): void {
+    const container = document.getElementById('cart-items-container');
+    const summaryEl = document.getElementById('cart-summary');
+    const loadingEl = document.getElementById('cart-loading');
+    const countEl = document.getElementById('cart-count');
+    const totalEl = document.getElementById('cart-total');
+
+    const rawCart = localStorage.getItem('cart');
+    let cart: any[] = [];
+    try {
+      cart = rawCart ? JSON.parse(rawCart) : [];
+    } catch {
+      cart = [];
+    }
+
+    if (loadingEl) loadingEl.remove();
+
+    if (!Array.isArray(cart) || cart.length === 0) {
+      if (container) {
+        container.innerHTML = `
+          <div class="empty-state" style="text-align:center; padding:2rem;">
+            <img src="/images/illustrations/empty-state.png" alt="Carrito vacío" class="empty-state-img" style="max-width:200px;" />
+            <h2>Tu carrito está vacío</h2>
+            <p><a href="/products">Ver productos</a></p>
+          </div>`;
+      }
+      return;
+    }
+
+    const total = cart.reduce((sum: number, i: any) => sum + i.unitPrice * i.quantity, 0);
+
+    if (container) {
+      container.innerHTML = cart.map((item: any) => `
+        <article class="cart__item">
+          <h4 class="cart__item-name">${item.name}</h4>
+          <div class="cart__item-details">
+            <img src="/img/products/${item.image}" alt="${item.name}" class="cart__item-image" />
+            <p class="cart__item-price">$ ${item.unitPrice}</p>
+            <p class="cart__item-qty">Cantidad: ${item.quantity}</p>
+            <p class="cart__item-subtotal">$ ${(item.unitPrice * item.quantity).toFixed(2)}</p>
+            <button class="form-card__btn" onclick="removeItem(${item.productId})" style="font-size:0.75rem;">Eliminar</button>
+          </div>
+        </article>`).join('');
+    }
+
+    if (summaryEl) summaryEl.style.display = 'block';
+    if (countEl) countEl.textContent = `Cantidad de productos: ${cart.length}`;
+    if (totalEl) totalEl.textContent = total.toFixed(2);
+  }
+
+  (window as any).removeItem = function (productId: number): void {
+    const rawCart = localStorage.getItem('cart');
+    let cart: any[] = rawCart ? JSON.parse(rawCart) : [];
+    cart = cart.filter((i: any) => i.productId !== productId);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count: cart.length } }));
+    renderCart();
+  };
+
+  renderCart();
+  window.addEventListener('cart-updated', renderCart);
+</script>
