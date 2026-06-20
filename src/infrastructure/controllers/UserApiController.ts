@@ -3,13 +3,17 @@ import jwt from 'jsonwebtoken';
 import { AuthenticateUserUseCase } from '../../application/use-cases/AuthenticateUserUseCase';
 import { ListUsersUseCase } from '../../application/use-cases/ListUsersUseCase';
 import { GetUserByIdUseCase } from '../../application/use-cases/GetUserByIdUseCase';
+import { RegisterUserUseCase } from '../../application/use-cases/RegisterUserUseCase';
 import { InvalidCredentialsException } from '../../domain/exceptions/InvalidCredentialsException';
+import { UserAlreadyExistsException } from '../../domain/exceptions/UserAlreadyExistsException';
+import { validationResult } from 'express-validator';
 
 export class UserApiController {
   constructor(
     private readonly authenticateUserUseCase: AuthenticateUserUseCase,
     private readonly listUsersUseCase: ListUsersUseCase,
-    private readonly getUserByIdUseCase: GetUserByIdUseCase
+    private readonly getUserByIdUseCase: GetUserByIdUseCase,
+    private readonly registerUserUseCase?: RegisterUserUseCase
   ) {}
 
   login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -36,6 +40,54 @@ export class UserApiController {
     } catch (error: any) {
       if (error instanceof InvalidCredentialsException) {
         res.status(401).json({ error: 'El email o la contraseña no coinciden' });
+        return;
+      }
+      next(error);
+    }
+  };
+
+  register = async (req: Request & { file?: { filename: string } }, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!this.registerUserUseCase) {
+        throw new Error('RegisterUserUseCase not injected');
+      }
+
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        res.status(400).json({ errors: errors.mapped() });
+        return;
+      }
+
+      if (!req.file) {
+        res.status(400).json({ error: 'Tienes que subir una imagen' });
+        return;
+      }
+
+      const { firstName, lastName, email, password } = req.body;
+      const image = req.file.filename;
+
+      const userDto = await this.registerUserUseCase.execute({
+        firstName,
+        lastName,
+        email,
+        password,
+        image,
+      });
+
+      const payload = {
+        userId: userDto.idUser,
+        email: userDto.email,
+        category: userDto.category,
+        idRole: userDto.idRole,
+      };
+
+      const secret = process.env.JWT_SECRET || 'test_jwt_secret';
+      const token = jwt.sign(payload, secret, { expiresIn: '2h' });
+
+      res.status(201).json({ token });
+    } catch (error) {
+      if (error instanceof UserAlreadyExistsException) {
+        res.status(400).json({ error: error.message });
         return;
       }
       next(error);

@@ -17,8 +17,20 @@ export default function createUpload(dest: string): any {
     },
   });
 
+  const fileFilter = (req: any, file: any, callback: any) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+
+    if (extname && mimetype) {
+      return callback(null, true);
+    }
+    callback(new Error('Invalid file format or size limit exceeded'), false);
+  };
+
   return multer({
     storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter,
   });
 }
