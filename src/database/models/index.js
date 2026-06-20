@@ -39,21 +39,21 @@ function initializeModels() {
 
   // Asociación Product -> Category
   ProductModel.belongsTo(CategoryModel, {
-    foreignKey: 'IDCategory',
+    foreignKey: 'idCategory',
     as: 'Category',
   });
   CategoryModel.hasMany(ProductModel, {
-    foreignKey: 'IDCategory',
+    foreignKey: 'idCategory',
     as: 'Products',
   });
 
   // Asociación Product -> Franchise
   ProductModel.belongsTo(FranchiseModel, {
-    foreignKey: 'IDFranchise',
+    foreignKey: 'idFranchise',
     as: 'Franchise',
   });
   FranchiseModel.hasMany(ProductModel, {
-    foreignKey: 'IDFranchise',
+    foreignKey: 'idFranchise',
     as: 'Products',
   });
 

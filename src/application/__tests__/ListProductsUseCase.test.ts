@@ -55,19 +55,19 @@ describe('ListProductsUseCase', () => {
       Price: 50,
       DescriptionProduct: 'Desc A',
       Image: 'a.jpg',
-      IDCategory: 1,
-      IDFranchise: 10,
+      idCategory: 1,
+      idFranchise: 10,
       Category: 'Figures',
     });
 
     expect(result.countByCategory['Figures'].count).toBe(2);
     expect(result.countByCategory['Figures'].category).toEqual({
-      IDCategory: 1,
+      idCategory: 1,
     });
 
     expect(result.countByCategory['Decorations'].count).toBe(1);
     expect(result.countByCategory['Decorations'].category).toEqual({
-      IDCategory: 2,
+      idCategory: 2,
     });
   });
 

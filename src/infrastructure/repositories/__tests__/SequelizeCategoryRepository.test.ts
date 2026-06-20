@@ -21,32 +21,32 @@ describe('SequelizeCategoryRepository', () => {
   describe('findAll', () => {
     it('should return all categories mapped to domain entities', async () => {
       const mockInstances = [
-        { IDCategory: 1, NameCategory: 'Category A' },
-        { IDCategory: 2, NameCategory: 'Category B' },
+        { idCategory: 1, nameCategory: 'Category A' },
+        { idCategory: 2, nameCategory: 'Category B' },
       ];
       jest.mocked(db.Category.findAll).mockResolvedValue(mockInstances as unknown as CategoryInstance[]);
 
       const result = await repository.findAll();
 
       expect(result).toHaveLength(2);
-      expect(result[0].IDCategory).toBe(1);
-      expect(result[0].NameCategory).toBe('Category A');
-      expect(result[1].IDCategory).toBe(2);
-      expect(result[1].NameCategory).toBe('Category B');
+      expect(result[0].idCategory).toBe(1);
+      expect(result[0].nameCategory).toBe('Category A');
+      expect(result[1].idCategory).toBe(2);
+      expect(result[1].nameCategory).toBe('Category B');
       expect(db.Category.findAll).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('findById', () => {
     it('should return mapped category if found', async () => {
-      const mockInstance = { IDCategory: 1, NameCategory: 'Category A' };
+      const mockInstance = { idCategory: 1, nameCategory: 'Category A' };
       jest.mocked(db.Category.findByPk).mockResolvedValue(mockInstance as unknown as CategoryInstance);
 
       const result = await repository.findById(1);
 
       expect(result).not.toBeNull();
-      expect(result?.IDCategory).toBe(1);
-      expect(result?.NameCategory).toBe('Category A');
+      expect(result?.idCategory).toBe(1);
+      expect(result?.nameCategory).toBe('Category A');
       expect(db.Category.findByPk).toHaveBeenCalledWith(1);
     });
 
@@ -62,14 +62,14 @@ describe('SequelizeCategoryRepository', () => {
 
   describe('create', () => {
     it('should create and return the category', async () => {
-      const mockInstance = { IDCategory: 1, NameCategory: 'New Category' };
+      const mockInstance = { idCategory: 1, nameCategory: 'New Category' };
       jest.mocked(db.Category.create).mockResolvedValue(mockInstance as unknown as CategoryInstance);
 
-      const result = await repository.create({ NameCategory: 'New Category' });
+      const result = await repository.create({ nameCategory: 'New Category' });
 
-      expect(result.IDCategory).toBe(1);
-      expect(result.NameCategory).toBe('New Category');
-      expect(db.Category.create).toHaveBeenCalledWith({ NameCategory: 'New Category' });
+      expect(result.idCategory).toBe(1);
+      expect(result.nameCategory).toBe('New Category');
+      expect(db.Category.create).toHaveBeenCalledWith({ nameCategory: 'New Category' });
     });
   });
 
@@ -77,22 +77,22 @@ describe('SequelizeCategoryRepository', () => {
     it('should update the category and return updated entity', async () => {
       const mockUpdate = jest.fn();
       const mockInstance = {
-        IDCategory: 1,
-        NameCategory: 'Old Category',
+        idCategory: 1,
+        nameCategory: 'Old Category',
         update: mockUpdate,
       };
       jest.mocked(db.Category.findByPk).mockResolvedValue(mockInstance as unknown as CategoryInstance);
 
-      const result = await repository.update(1, { NameCategory: 'Updated Category' });
+      const result = await repository.update(1, { nameCategory: 'Updated Category' });
 
-      expect(mockUpdate).toHaveBeenCalledWith({ NameCategory: 'Updated Category' });
-      expect(result?.NameCategory).toBe('Old Category');
+      expect(mockUpdate).toHaveBeenCalledWith({ nameCategory: 'Updated Category' });
+      expect(result?.nameCategory).toBe('Old Category');
     });
 
     it('should return null if category to update is not found', async () => {
       jest.mocked(db.Category.findByPk).mockResolvedValue(null);
 
-      const result = await repository.update(999, { NameCategory: 'Non-existent' });
+      const result = await repository.update(999, { nameCategory: 'Non-existent' });
 
       expect(result).toBeNull();
     });
@@ -105,7 +105,7 @@ describe('SequelizeCategoryRepository', () => {
       const result = await repository.delete(1);
 
       expect(result).toBe(true);
-      expect(db.Category.destroy).toHaveBeenCalledWith({ where: { IDCategory: 1 } });
+      expect(db.Category.destroy).toHaveBeenCalledWith({ where: { idCategory: 1 } });
     });
 
     it('should return false if not deleted', async () => {

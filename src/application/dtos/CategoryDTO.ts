@@ -1,4 +1,4 @@
 export interface CategoryDTO {
-  IDCategory: number;
-  NameCategory: string;
+  idCategory: number;
+  nameCategory: string;
 }

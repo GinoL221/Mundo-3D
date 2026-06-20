@@ -6,47 +6,24 @@ Define the HTTP-level contract for the static/main routes (`/`, `/aboutUs`, `/te
 
 ## Requirements
 
-### Requirement: Pure-Render Static Page Parity
+### Requirement: Pure-Render Static Page Retirement from Express
 
-The system MUST serve `/aboutUs`, `/terms`, `/privacy`, `/faq`, `/step-by-step`, and `/help` via `StaticPagesController` (TypeScript), each rendering the same view it rendered before migration, with identical HTTP status and no behavioral change.
+The Express backend MUST NOT serve or render HTML views for `/aboutUs`, `/terms`, `/privacy`, `/faq`, `/step-by-step`, and `/help`. These routes are retired from Express and will be pre-rendered using SSG on the Astro frontend.
 
-#### Scenario: Static page renders unchanged
+#### Scenario: Express backend returns 404 for retired static routes
+- GIVEN a request to `/aboutUs`, `/terms`, `/privacy`, `/faq`, `/step-by-step`, or `/help` on the Express port
+- WHEN the request is received by the Express application
+- THEN the Express application MUST NOT route it to a view engine and MUST return a 404 Not Found
 
-- GIVEN a client requests one of `/aboutUs`, `/terms`, `/privacy`, `/faq`, `/step-by-step`, `/help`
-- WHEN the request is handled by `StaticPagesController`
-- THEN the response MUST be HTTP 200
-- AND the response MUST render the same view name that the legacy `main/*.js` controller rendered for that path
+### Requirement: Home Route SSR Retirement from Express
 
-#### Scenario: No domain or application layer for pure-render pages
+The Express backend MUST NOT render the `index` view or serve the `/` homepage route. The homepage route is retired from Express SSR and transitioned to Astro. The Express backend will only serve products as JSON via `/api/products`.
 
-- GIVEN any of the five pure-render pages (`aboutUs`, `faq`, `help`, `privacy`, `stepByStep`, `terms`)
-- WHEN its controller method executes
-- THEN it MUST perform only a view render (no use-case invocation, no domain entity, no repository call)
-
-### Requirement: Home Route Product Listing
-
-The system MUST serve `/` by rendering the `index` view with products obtained from `ListProductsUseCase`, replacing the legacy direct call to `productService.js`.
-
-#### Scenario: Home renders products on success
-
-- GIVEN `ListProductsUseCase.execute()` resolves with a list of products
-- WHEN a client requests `/`
-- THEN the response MUST be HTTP 200
-- AND the response MUST render the `index` view with the resolved products
-
-### Requirement: Home Degrade-to-Empty Resilience
-
-The home route MUST degrade gracefully on `ListProductsUseCase` failure: it MUST catch the error, MUST NOT propagate it via `next(error)`, and MUST still render `index` with an empty products array.
-
-(This is a closed decision, not a TBD: home intentionally diverges from `ProductController.getAllProducts`'s fail-fast `next(error)` pattern because the homepage has a broad purpose beyond the product listing.)
-
-#### Scenario: Home degrades to empty list on use-case failure
-
-- GIVEN `ListProductsUseCase.execute()` rejects with an error
-- WHEN a client requests `/`
-- THEN the response MUST still be HTTP 200
-- AND the response MUST render the `index` view with `products: []`
-- AND the error MUST NOT be passed to `next(error)`
+#### Scenario: Express backend does not render EJS for home route
+- GIVEN a request to `/` on the Express application port
+- WHEN the request is received by the Express application
+- THEN it MUST NOT call `ListProductsUseCase` to render an HTML page
+- AND it MUST NOT use the EJS view engine
 
 ### Requirement: Out-of-Scope Boundaries
 
@@ -64,22 +41,14 @@ The migration MUST NOT modify `src/services/productService.js`, `src/controllers
 - WHEN inspecting the repository
 - THEN `src/controllers/products/getAllProducts.js` and `src/routes/productsRoutes.js` MUST still exist on disk, unchanged
 
-### Requirement: Test Suite Parity and Retargeting
+### Requirement: Test Suite Retargeting
 
-The migration MUST keep `footerPages.test.js` passing without modification, and MUST update (not delete) the brittle path/content assertions in `backendLayeringPR3.test.js` so they reference the new TypeScript structure instead of the removed legacy files.
+The Express test suite (`footerPages.test.js`, `backendLayeringPR3.test.js`) MUST be retired or adapted to test the REST API endpoints and behavior rather than HTML page rendering.
 
-#### Scenario: footerPages.test.js passes unchanged
-
-- GIVEN the migration is complete
-- WHEN `footerPages.test.js` runs
-- THEN all its assertions MUST pass without any modification to that test file
-
-#### Scenario: backendLayeringPR3.test.js assertions retarget to TS paths
-
-- GIVEN the migration removes `src/controllers/main/*.js`, the barrel `index.js`, and `src/routes/mainRoutes.js`
-- WHEN `backendLayeringPR3.test.js` runs
-- THEN its assertions MUST reference `src/infrastructure/controllers/StaticPagesController.ts` and `src/infrastructure/routes/staticPagesRoutes.ts` in place of the removed legacy paths
-- AND the test MUST pass without relying on compatibility shims
+#### Scenario: Retired Express view tests are removed or adapted
+- GIVEN view-related test suites on the Express backend
+- WHEN the EJS engine and views are retired
+- THEN all tests verifying EJS rendering MUST be deleted or migrated to verify JSON outputs on `/api` endpoints
 
 ### Requirement: Legacy Removal After Parity Verification
 

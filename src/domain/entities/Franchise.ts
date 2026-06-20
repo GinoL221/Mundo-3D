@@ -1,6 +1,6 @@
 export class Franchise {
   constructor(
-    public readonly IDFranchise: number,
-    public readonly NameFranchise: string
+    public readonly idFranchise: number,
+    public readonly nameFranchise: string
   ) {}
 }

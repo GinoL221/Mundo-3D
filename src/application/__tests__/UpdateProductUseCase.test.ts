@@ -49,8 +49,8 @@ describe('UpdateProductUseCase', () => {
       Price: 150,
       DescriptionProduct: 'Desc',
       Image: 'img.jpg',
-      IDCategory: 1,
-      IDFranchise: 2,
+      idCategory: 1,
+      idFranchise: 2,
       Category: 'Figures',
     });
 

@@ -36,8 +36,8 @@ describe('CreateProductUseCase', () => {
       Price: 100,
       DescriptionProduct: 'Brand new',
       Image: 'new.jpg',
-      IDCategory: 1,
-      IDFranchise: 2,
+      idCategory: 1,
+      idFranchise: 2,
     };
 
     const createdProduct = new Product(10, 'New Product', 100, 'Brand new', 'new.jpg', 1, 2);
@@ -54,8 +54,8 @@ describe('CreateProductUseCase', () => {
       Price: 100,
       DescriptionProduct: 'Brand new',
       Image: 'new.jpg',
-      IDCategory: 1,
-      IDFranchise: 2,
+      idCategory: 1,
+      idFranchise: 2,
       Category: 'Figures',
     });
 
@@ -64,8 +64,8 @@ describe('CreateProductUseCase', () => {
       Price: input.Price,
       DescriptionProduct: input.DescriptionProduct,
       Image: input.Image,
-      IDCategory: input.IDCategory,
-      IDFranchise: input.IDFranchise,
+      idCategory: input.idCategory,
+      idFranchise: input.idFranchise,
     });
     expect(mockCategoryRepo.findById).toHaveBeenCalledWith(1);
   });
@@ -76,8 +76,8 @@ describe('CreateProductUseCase', () => {
       Price: 100,
       DescriptionProduct: 'Brand new',
       Image: 'new.jpg',
-      IDCategory: 1,
-      IDFranchise: 2,
+      idCategory: 1,
+      idFranchise: 2,
     };
 
     const mockCategory = new Category(1, 'Figures');
@@ -97,8 +97,8 @@ describe('CreateProductUseCase', () => {
       Price: 100,
       DescriptionProduct: 'Brand new',
       Image: 'new.jpg',
-      IDCategory: 999,
-      IDFranchise: 2,
+      idCategory: 999,
+      idFranchise: 2,
     };
 
     const createdProduct = new Product(10, 'New Product', 100, 'Brand new', 'new.jpg', 999, 2);

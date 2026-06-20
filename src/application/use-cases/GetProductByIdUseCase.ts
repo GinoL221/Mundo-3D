@@ -10,7 +10,7 @@ export class GetProductByIdUseCase {
       throw new Error('Product not found');
     }
 
-    const categoryName = product.Category ? product.Category.NameCategory : 'Sin categoría';
+    const categoryName = product.Category ? product.Category.nameCategory : 'Sin categoría';
 
     return {
       IDProduct: product.IDProduct,
@@ -18,8 +18,8 @@ export class GetProductByIdUseCase {
       Price: Number(product.Price),
       DescriptionProduct: product.DescriptionProduct,
       Image: product.Image,
-      IDCategory: product.IDCategory,
-      IDFranchise: product.IDFranchise,
+      idCategory: product.idCategory,
+      idFranchise: product.idFranchise,
       Category: categoryName,
     };
   }

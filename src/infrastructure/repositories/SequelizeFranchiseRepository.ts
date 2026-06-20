@@ -4,7 +4,7 @@ import db, { FranchiseInstance } from '../../database/models/db';
 
 export class SequelizeFranchiseRepository implements IFranchiseRepository {
   private toEntity(instance: FranchiseInstance): Franchise {
-    return new Franchise(instance.IDFranchise, instance.NameFranchise);
+    return new Franchise(instance.idFranchise, instance.nameFranchise);
   }
 
   async findAll(): Promise<Franchise[]> {
@@ -18,9 +18,9 @@ export class SequelizeFranchiseRepository implements IFranchiseRepository {
     return this.toEntity(instance);
   }
 
-  async create(franchise: Omit<Franchise, 'IDFranchise'>): Promise<Franchise> {
+  async create(franchise: Omit<Franchise, 'idFranchise'>): Promise<Franchise> {
     const instance = await db.Franchise.create({
-      NameFranchise: franchise.NameFranchise,
+      nameFranchise: franchise.nameFranchise,
     } as any);
     return this.toEntity(instance);
   }
@@ -30,8 +30,8 @@ export class SequelizeFranchiseRepository implements IFranchiseRepository {
     if (!instance) return null;
 
     const updatedData: Partial<FranchiseInstance> = {};
-    if (franchise.NameFranchise !== undefined) {
-      updatedData.NameFranchise = franchise.NameFranchise;
+    if (franchise.nameFranchise !== undefined) {
+      updatedData.nameFranchise = franchise.nameFranchise;
     }
 
     await instance.update(updatedData);
@@ -40,7 +40,7 @@ export class SequelizeFranchiseRepository implements IFranchiseRepository {
 
   async delete(id: number): Promise<boolean> {
     const deletedCount = await db.Franchise.destroy({
-      where: { IDFranchise: id },
+      where: { idFranchise: id },
     });
     return deletedCount > 0;
   }

@@ -12,8 +12,8 @@ export class SequelizeShoppingCartRepository implements IShoppingCartRepository 
           Number(instance.product.Price),
           instance.product.DescriptionProduct,
           instance.product.Image,
-          instance.product.IDCategory,
-          instance.product.IDFranchise
+          instance.product.idCategory,
+          instance.product.idFranchise
         )
       : undefined;
 

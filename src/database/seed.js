@@ -6,18 +6,18 @@ const bcrypt = require('bcryptjs');
 async function seedInitialData(db) {
   // Categorías
   const categories = [
-    { NameCategory: 'Llavero' },
-    { NameCategory: 'Busto' },
-    { NameCategory: 'Figura' },
-    { NameCategory: 'Mascara' },
-    { NameCategory: 'Otras' },
+    { nameCategory: 'Llavero' },
+    { nameCategory: 'Busto' },
+    { nameCategory: 'Figura' },
+    { nameCategory: 'Mascara' },
+    { nameCategory: 'Otras' },
   ];
   // Franquicias
   const franchises = [
-    { NameFranchise: 'Marvel' },
-    { NameFranchise: 'DC' },
-    { NameFranchise: 'Disney' },
-    { NameFranchise: 'Otra' },
+    { nameFranchise: 'Marvel' },
+    { nameFranchise: 'DC' },
+    { nameFranchise: 'Disney' },
+    { nameFranchise: 'Otra' },
   ];
   try {
     // Categorías
@@ -62,7 +62,15 @@ async function seedInitialData(db) {
       const productsPath = path.join(__dirname, 'data/products.json');
       if (fs.existsSync(productsPath)) {
         const productsData = JSON.parse(fs.readFileSync(productsPath, 'utf8'));
-        await db.Product.bulkCreate(productsData);
+        const productsMapped = productsData.map((p) => ({
+          NameProduct: p.NameProduct,
+          Price: p.Price,
+          DescriptionProduct: p.DescriptionProduct,
+          Image: p.Image,
+          idCategory: p.IDCategory || p.idCategory,
+          idFranchise: p.IDFranchise || p.idFranchise,
+        }));
+        await db.Product.bulkCreate(productsMapped);
         console.log('✔ Productos insertados desde JSON');
       }
     }

@@ -30,10 +30,10 @@ describe('SequelizeProductRepository', () => {
           Price: '100.50',
           DescriptionProduct: 'Desc A',
           Image: 'imageA.jpg',
-          IDCategory: 10,
-          IDFranchise: 20,
-          Category: { IDCategory: 10, NameCategory: 'Category A' },
-          Franchise: { IDFranchise: 20, NameFranchise: 'Franchise A' },
+          idCategory: 10,
+          idFranchise: 20,
+          Category: { idCategory: 10, nameCategory: 'Category A' },
+          Franchise: { idFranchise: 20, nameFranchise: 'Franchise A' },
         },
       ];
       jest.mocked(db.Product.findAll).mockResolvedValue(mockInstances as unknown as ProductInstance[]);
@@ -44,8 +44,8 @@ describe('SequelizeProductRepository', () => {
       expect(result[0].IDProduct).toBe(1);
       expect(result[0].NameProduct).toBe('Product A');
       expect(result[0].Price).toBe(100.5);
-      expect(result[0].Category?.NameCategory).toBe('Category A');
-      expect(result[0].Franchise?.NameFranchise).toBe('Franchise A');
+      expect(result[0].Category?.nameCategory).toBe('Category A');
+      expect(result[0].Franchise?.nameFranchise).toBe('Franchise A');
     });
   });
 
@@ -57,10 +57,10 @@ describe('SequelizeProductRepository', () => {
         Price: '100.50',
         DescriptionProduct: 'Desc A',
         Image: 'imageA.jpg',
-        IDCategory: 10,
-        IDFranchise: 20,
-        Category: { IDCategory: 10, NameCategory: 'Category A' },
-        Franchise: { IDFranchise: 20, NameFranchise: 'Franchise A' },
+        idCategory: 10,
+        idFranchise: 20,
+        Category: { idCategory: 10, nameCategory: 'Category A' },
+        Franchise: { idFranchise: 20, nameFranchise: 'Franchise A' },
       };
       jest.mocked(db.Product.findByPk).mockResolvedValue(mockInstance as unknown as ProductInstance);
 
@@ -69,7 +69,7 @@ describe('SequelizeProductRepository', () => {
       expect(result).not.toBeNull();
       expect(result?.IDProduct).toBe(1);
       expect(result?.Price).toBe(100.5);
-      expect(result?.Category?.NameCategory).toBe('Category A');
+      expect(result?.Category?.nameCategory).toBe('Category A');
     });
   });
 
@@ -81,10 +81,10 @@ describe('SequelizeProductRepository', () => {
         Price: '200.00',
         DescriptionProduct: 'Desc B',
         Image: 'imageB.jpg',
-        IDCategory: 10,
-        IDFranchise: 20,
-        Category: { IDCategory: 10, NameCategory: 'Category A' },
-        Franchise: { IDFranchise: 20, NameFranchise: 'Franchise A' },
+        idCategory: 10,
+        idFranchise: 20,
+        Category: { idCategory: 10, nameCategory: 'Category A' },
+        Franchise: { idFranchise: 20, nameFranchise: 'Franchise A' },
       };
       jest.mocked(db.Product.findOne).mockResolvedValue(mockInstance as unknown as ProductInstance);
 
@@ -104,14 +104,14 @@ describe('SequelizeProductRepository', () => {
         Price: '300.00',
         DescriptionProduct: 'Desc C',
         Image: 'imageC.jpg',
-        IDCategory: 10,
-        IDFranchise: 20,
+        idCategory: 10,
+        idFranchise: 20,
       };
 
       const mockFetchedInstance = {
         ...mockCreatedInstance,
-        Category: { IDCategory: 10, NameCategory: 'Category A' },
-        Franchise: { IDFranchise: 20, NameFranchise: 'Franchise A' },
+        Category: { idCategory: 10, nameCategory: 'Category A' },
+        Franchise: { idFranchise: 20, nameFranchise: 'Franchise A' },
       };
 
       jest.mocked(db.Product.create).mockResolvedValue(mockCreatedInstance as unknown as ProductInstance);
@@ -122,13 +122,13 @@ describe('SequelizeProductRepository', () => {
         Price: 300.0,
         DescriptionProduct: 'Desc C',
         Image: 'imageC.jpg',
-        IDCategory: 10,
-        IDFranchise: 20,
+        idCategory: 10,
+        idFranchise: 20,
       });
 
       expect(result.IDProduct).toBe(3);
       expect(result.Price).toBe(300.0);
-      expect(result.Category?.NameCategory).toBe('Category A');
+      expect(result.Category?.nameCategory).toBe('Category A');
     });
   });
 
@@ -148,10 +148,10 @@ describe('SequelizeProductRepository', () => {
         Price: '120.00',
         DescriptionProduct: 'Desc A',
         Image: 'imageA.jpg',
-        IDCategory: 10,
-        IDFranchise: 20,
-        Category: { IDCategory: 10, NameCategory: 'Category A' },
-        Franchise: { IDFranchise: 20, NameFranchise: 'Franchise A' },
+        idCategory: 10,
+        idFranchise: 20,
+        Category: { idCategory: 10, nameCategory: 'Category A' },
+        Franchise: { idFranchise: 20, nameFranchise: 'Franchise A' },
       };
 
       jest.mocked(db.Product.findByPk)
