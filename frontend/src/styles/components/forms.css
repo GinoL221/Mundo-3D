@@ -1,0 +1,176 @@
+/* ============================================================
+   forms.css — Forms Component (BEM)
+   Extracted from styles.css lines 857-992 + responsive
+   ============================================================ */
+
+/* ── Form Layout ───────────────────────────────────────────── */
+.form-layout {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  position: relative;
+}
+
+/* ── Form Card ─────────────────────────────────────────────── */
+.form-card,
+.form-card--medium,
+.form-card--wide {
+  background-color: var(--surface);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  padding: var(--space-lg);
+  text-align: center;
+  border: 2px solid var(--border);
+}
+
+.form-card {
+  width: 300px;
+}
+
+.form-card--medium {
+  width: 400px;
+}
+
+.form-card--wide {
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── Form Labels ───────────────────────────────────────────── */
+.form-card label,
+.form-card--medium label,
+.form-card--wide label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: var(--space-xs);
+  color: var(--fg);
+}
+
+/* ── Form Inputs ───────────────────────────────────────────── */
+.form-card__input,
+.form-card--medium input,
+.form-card--medium select,
+.form-card--wide input,
+.form-card--wide select,
+.form-card--wide textarea {
+  width: 100%;
+  padding: var(--space-sm);
+  margin-bottom: var(--space-md);
+  border: 2px solid var(--border);
+  background-color: var(--input-bg);
+  color: var(--input-fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+}
+
+.form-card__input:focus,
+.form-card--medium input:focus,
+.form-card--wide input:focus,
+.form-card--wide textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ── Form Buttons ──────────────────────────────────────────── */
+.form-card__btn,
+.form-card__form button,
+.form-card--wide button {
+  font-family: var(--font-body);
+  font-size: 16px;
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--input-bg);
+  color: var(--input-fg);
+  border: 2px solid var(--border);
+  cursor: pointer;
+  width: 100%;
+}
+
+.form-card__btn:hover,
+.form-card__form button:hover,
+.form-card--wide button:hover {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+.form-card__actions {
+  display: flex;
+  gap: var(--space-sm);
+  width: 100%;
+  margin-top: var(--space-md);
+}
+
+.form-card__actions .form-card__btn,
+.form-card__actions button {
+  flex: 1;
+  width: auto;
+  margin-right: 0;
+}
+
+/* ── Checkbox ──────────────────────────────────────────────── */
+.form-card__checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: var(--space-md);
+  font-size: 16px;
+  color: var(--fg);
+}
+
+/* ── Invalid Input ─────────────────────────────────────────── */
+.form-card__input--invalid {
+  border-color: var(--danger) !important;
+}
+
+/* ── Register Form ─────────────────────────────────────────── */
+.form-card__form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-card__form h2 {
+  text-align: center;
+  margin-bottom: var(--space-md);
+}
+
+.form-card__form label {
+  font-weight: bold;
+  margin-bottom: var(--space-xs);
+}
+
+.form-card__form input {
+  padding: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  border: 2px solid var(--border);
+  background-color: var(--input-bg);
+  color: var(--input-fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+}
+
+.form-card__form button {
+  padding: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+/* ── Generic Form ──────────────────────────────────────────── */
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Form Error ────────────────────────────────────────────── */
+.form-card__error {
+  color: var(--danger);
+}
+
+/* ── Mobile (< 640px) ──────────────────────────────────────── */
+@media (max-width: 639px) {
+  .form-card--medium,
+  .form-card--wide {
+    width: 100%;
+    max-width: 100%;
+  }
+}

@@ -1,0 +1,40 @@
+/* ============================================================
+   feature-strip.css — Feature strip component
+   ============================================================ */
+
+.feature-strip {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-md);
+  background-color: var(--surface);
+  border-top: 2px solid var(--pico-muted);
+  border-bottom: 2px solid var(--pico-muted);
+}
+
+.feature-strip__tile {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-md);
+  border: 2px solid var(--pico-muted);
+  background-color: var(--bg);
+}
+
+.feature-strip__title {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  color: var(--title-highlight);
+  margin-bottom: var(--space-xs);
+}
+
+.feature-strip__description {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--fg);
+}
+
+@media (min-width: 640px) {
+  .feature-strip {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

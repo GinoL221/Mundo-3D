@@ -1,0 +1,11 @@
+/* public/css/components/price.css */
+.price {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: var(--accent);
+  margin: var(--space-xs) 0;
+}
+.price--lg {
+  font-size: 18px;
+  margin: var(--space-md) 0;
+}

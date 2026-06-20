@@ -1,0 +1,83 @@
+/* ============================================================
+   base/layout.css — Container, Main, Body, Typography Defaults
+   ============================================================ */
+
+/* ── Root ──────────────────────────────────────────────────── */
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+/* ── Body ──────────────────────────────────────────────────── */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--line-height-base);
+  color: var(--fg);
+  background-color: var(--bg);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── Headings ──────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-size: var(--text-heading);
+  line-height: var(--line-height-heading);
+  margin: 0 0 var(--space-md) 0;
+  color: var(--fg);
+}
+
+h1 { font-size: var(--text-h1); }
+h2 { font-size: var(--text-h2); }
+h3 { font-size: var(--text-h3); }
+
+/* ── Paragraphs ────────────────────────────────────────────── */
+p {
+  margin: 0 0 var(--space-md) 0;
+}
+
+/* ── Links ─────────────────────────────────────────────────── */
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+a:hover,
+a:focus {
+  color: var(--accent);
+}
+
+/* ── Container ─────────────────────────────────────────────── */
+.container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+  width: 100%;
+}
+
+/* ── Main ──────────────────────────────────────────────────── */
+main {
+  flex: 1;
+  width: 100%;
+  padding: var(--space-lg) var(--space-md);
+}
+
+/* ── Responsive Main Padding ───────────────────────────────── */
+@media (min-width: 640px) and (max-width: 1023px) {
+  main {
+    padding: var(--space-lg) var(--space-lg);
+  }
+}
+
+@media (min-width: 1024px) {
+  main {
+    padding: var(--space-xl) var(--space-md);
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+}
