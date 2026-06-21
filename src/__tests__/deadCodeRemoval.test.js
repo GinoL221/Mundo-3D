@@ -22,11 +22,15 @@ describe('Dead Code Removal', () => {
   // Removed obsolete viewShoppingCart.js checks
 
 
-  describe('Unused middleware imports removed', () => {
-    test('should not import guestMiddleware in productsRoutes.js', () => {
+  describe('Deleted legacy routes', () => {
+    test('should not have src/routes/productsRoutes.js', () => {
       const filePath = path.join(__dirname, '../../src/routes/productsRoutes.js');
-      const content = fs.readFileSync(filePath, 'utf-8');
-      expect(content).not.toMatch(/guestMiddleware/);
+      expect(fs.existsSync(filePath)).toBe(false);
+    });
+
+    test('should not have src/routes/userRoutes.js', () => {
+      const filePath = path.join(__dirname, '../../src/routes/userRoutes.js');
+      expect(fs.existsSync(filePath)).toBe(false);
     });
   });
 });
