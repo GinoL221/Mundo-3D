@@ -1,110 +1,116 @@
 # Mundo3D
 
-Mundo3D es un ecommerce especializado en productos personalizados y únicos mediante impresión 3D.
-Los clientes pueden explorar, diseñar y adquirir una variedad de objetos, desde elementos decorativos hasta prototipos funcionales, con opciones para elegir diseños, colores y materiales.
+Mundo3D es un e-commerce moderno y desacoplado, especializado en la venta de productos personalizados mediante impresión 3D. El proyecto cuenta con un frontend estático e interactivo en Astro y una API REST headless en Express/TypeScript estructurada bajo los principios de Arquitectura Limpia/Hexagonal.
 
-## Público objetivo
+---
 
-- Personas interesadas en la innovación y la impresión 3D, que buscan productos únicos y personalizados.
-- Clientes que disfrutan creando proyectos y prototipos, y que buscan una manera accesible de materializar sus ideas.
+## Inicio Rápido (Quick Start)
 
-## Tecnologías utilizadas
-
-- Node.js / Express.js 4.x
-- TypeScript (transpilado en dev con ts-node)
-- Sequelize 6.x (ORM, mapeo camelCase → snake_case via `field`)
-- MySQL (mysql2)
-- EJS (vistas)
-- HTML, CSS modular (design system PICO-8), JavaScript (frontend)
-- bcryptjs + JWT (autenticación)
-- express-validator (validaciones)
-- multer + uuid (upload de imágenes)
-- Jest (testing, 326 tests passing)
-
-## Instalación y uso
-
-1. Clona el repositorio:
-   ```bash
-   git clone https://github.com/GinoL221/Mundo-3D.git
-   ```
-2. Instala las dependencias:
-   ```bash
-   npm install
-   ```
-3. Configura el archivo `.env` con tus variables de entorno:
-   ```env
-   PORT=3031
-   DB_USER=root
-   DB_PASS=tu_password
-   DB_NAME=mundo_3d_db
-   DB_HOST=localhost
-   SESSION_SECRET=tu_secreto
-   ```
-4. Inicia el servidor en modo desarrollo:
-   ```bash
-   npm run dev
-   ```
-5. Ejecuta los tests:
-   ```bash
-   npm test
-   ```
-
-## Arquitectura
-
-El proyecto sigue **Clean Architecture / Hexagonal**:
-
-```
-src/
-├── domain/             # Entidades, puertos, excepciones
-├── application/        # Casos de uso (RegisterUser, AuthenticateUser, VerifyRememberToken…)
-├── infrastructure/     # Controladores, repositorios Sequelize, middlewares y rutas (TypeScript)
-│   ├── controllers/
-│   ├── repositories/
-│   ├── middlewares/    # auth, csrf, errorHandler, loginLimiter, upload, validators
-│   └── routes/         # api/, userRoutes, productRoutes, cartRoutes, staticPagesRoutes
-├── database/
-│   ├── models/         # Sequelize models con mapeo camelCase → snake_case
-│   └── config/
-└── views/              # Templates EJS
-public/
-├── css/                # Design system modular (tokens + base + 12 componentes BEM)
-└── js/                 # carousel.js, theme.js, register.js (validación reactiva)
-```
-
-## Diseño visual
-
-El proyecto utiliza un sistema de diseño **PICO-8 pixel art** con:
-- Paleta PICO-8 mapeada a roles semánticos (`--color-primary`, `--color-bg`, `--color-text`, etc.)
-- Tipografía pixel: **Press Start 2P** (headings) + **VT323** (body)
-- Renderizado pixelado: `image-rendering: pixelated` en todas las imágenes
-- Iconos pixel art (16×16) en `public/images/icons/`
-- Ilustraciones de categoría (64×64) en `public/images/illustrations/`
-- Tema dark/light con CSS custom properties y anti-flash script
-
-## Funcionalidades principales
-
-- Registro e inicio de sesión de usuarios
-  - Contraseña fuerte: mín 8 / máx 32 chars, al menos 1 mayúscula, 1 número y 1 carácter especial
-  - Feedback visual en tiempo real en el formulario de registro
-  - Remember-me con token persistido en base de datos
-- ABM de productos (crear, ver, modificar, eliminar)
-- Carrito de compras
-- API REST securizada con JWT (`/api/products`, `/api/users`)
-- Panel de administración (en desarrollo)
-- Seed automático de datos iniciales (categorías, franquicias, usuarios, productos)
-
-## Testing
-
+### 1. Clonar e Instalar
+Cloná el repositorio e instalá las dependencias de la API REST (root) y del frontend (carpeta `frontend`):
 ```bash
+git clone https://github.com/GinoL221/Mundo-3D.git
+cd Mundo-3D
+npm install
+cd frontend && npm install
+cd ..
+```
+
+### 2. Configurar Entorno
+Creá un archivo `.env` en la raíz del proyecto basándote en `.env.example`:
+```env
+PORT=3000
+JWT_SECRET=tu_secreto_super_seguro
+CORS_ORIGIN=http://localhost:4321
+DB_USER=root
+DB_PASS=tu_password
+DB_NAME=mundo_3d_db
+DB_HOST=localhost
+```
+
+### 3. Levantar los Servidores
+Necesitás correr ambos servidores en paralelo en terminales distintas:
+```bash
+# Terminal 1: Iniciar API REST Express (Puerto 3000)
+npm run dev
+
+# Terminal 2: Iniciar Frontend Astro (Puerto 4321)
+cd frontend
+npm run dev
+```
+
+---
+
+## Arquitectura del Proyecto
+
+El proyecto está estructurado como un **Monorepo Desacoplado**:
+
+```
+Mundo-3D/
+├── frontend/             # Aplicación Frontend (Astro 6.x)
+│   ├── src/
+│   │   ├── components/   # Componentes reactivos (Header, Footer)
+│   │   ├── layouts/      # Layout base con theme-inject
+│   │   ├── pages/        # Páginas estáticas (SSG) e interactivas (Login, Register, Cart)
+│   │   ├── store/        # Nano Stores para sincronización asíncrona de Carrito
+│   │   └── styles/       # Sistema de diseño modular en Vanilla CSS
+│   └── public/           # Assets públicos pixel art localizados
+├── src/                  # API REST Headless (Express.js + TypeScript)
+│   ├── domain/           # Entidades puras y puertos (TypeScript)
+│   ├── application/      # Casos de uso de negocio (Auth, Cart, Products)
+│   ├── infrastructure/   # Controladores API, repositorios Sequelize y middlewares
+│   └── database/
+│       ├── models/       # Modelos Sequelize mapeados (camelCase ↔ snake_case)
+│       └── seed.js       # Script de seeding automático en base de datos
+└── openspec/             # Especificaciones de diseño bajo metodología SDD
+```
+
+---
+
+## Tecnologías Utilizadas
+
+| Capa | Tecnologías | Propósito |
+|---|---|---|
+| **Frontend** | Astro 6.x, Vanilla CSS, HTML5, Nano Stores | Generación de páginas SSG y manejo reactivo del carrito de compras. |
+| **Backend** | Node.js, Express.js, TypeScript | API REST Headless, JWT, CORS. |
+| **Persistencia** | MySQL, Sequelize 6.x (ORM) | Modelos relacionales con mapeo camelCase en código y snake_case en DB. |
+| **Pruebas** | Jest, Supertest | Testing unitario e integración con TDD estricto. |
+
+---
+
+## Funcionalidades Clave
+
+- **Autenticación:** JWT con Bearer Token y almacenamiento local en `localStorage` (sin sesiones en cookies del servidor).
+- **Carrito de Compras Asíncrono:** Carrito reactivo del lado del cliente hidratado por Nano Stores con sincronización en tiempo real mediante `/api/cart`.
+- **Pre-rendering SSG:** Páginas estáticas informativas (Sobre Nosotros, FAQ, Ayuda, etc.) pre-renderizadas en build-time con Astro para velocidad de carga máxima.
+- **Validación Robusta (TDD):** Validación de formularios en frontend y backend (fuerza de contraseña en tiempo real, validación multipart en subida de imágenes de productos y perfiles).
+
+---
+
+## Sistema de Diseño (Visual System)
+
+El proyecto utiliza un sistema de diseño estético **PICO-8 pixel art**:
+- **Tipografías:** **Press Start 2P** para títulos y **VT323** para textos de lectura.
+- **Paleta de Colores:** Colores semánticos definidos mediante CSS custom properties mapeados de la paleta oficial de PICO-8.
+- **Ajuste Pixelado:** Renderizado óptimo en imágenes usando `image-rendering: pixelated`.
+- **Tema:** Soporte de Tema Dark/Light nativo con script anti-flash para evitar parpadeos en carga.
+
+---
+
+## Pruebas (Testing)
+
+El backend cuenta con una suite completa de pruebas unitarias e integración en Jest bajo la metodología **Strict TDD**:
+```bash
+# Correr todas las pruebas unitarias e integración
 npm test
 ```
+* **Estado:** 48 suites de pruebas ejecutadas de forma limpia (207 tests pasando), 0 fallados, 0 omitidos.
 
-326 tests passing · 63 suites · strict TDD
+---
 
-## Referencias
+## Colaboradores y Referencias
 
 - [Tiendamia](https://tiendamia.com/ar/)
-- [Eldon](https://www.eldon.com.ar/)
 - [Mercadolibre](https://www.mercadolibre.com.ar/)
 - [Doctor Ink](https://www.doctorink.com.ar/)
-- [Enanddes](https://enanddes.es/quienes-somos/)
+- [Eldon](https://www.eldon.com.ar/)
