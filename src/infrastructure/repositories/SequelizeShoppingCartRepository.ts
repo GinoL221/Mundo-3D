@@ -7,11 +7,11 @@ export class SequelizeShoppingCartRepository implements IShoppingCartRepository 
   private toEntity(instance: ShoppingCartInstance): ShoppingCart {
     const product = instance.product
       ? new Product(
-          instance.product.IDProduct,
-          instance.product.NameProduct,
-          Number(instance.product.Price),
-          instance.product.DescriptionProduct,
-          instance.product.Image,
+          instance.product.idProduct,
+          instance.product.nameProduct,
+          Number(instance.product.price),
+          instance.product.descriptionProduct,
+          instance.product.image,
           instance.product.idCategory,
           instance.product.idFranchise
         )

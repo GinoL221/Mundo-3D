@@ -17,16 +17,34 @@ Defines the controller+service layering for API product endpoints, removing inli
 - THEN it SHALL call `productApiController.index(req, res, next)`
 - AND the controller SHALL call `ProductService.findAll()` for data
 
+#### Scenario: List products endpoint response structure
+- GIVEN a GET request to `/api/products`
+- WHEN the route handler delegates to `productApiController.index`
+- THEN the controller SHALL return a JSON object envelope containing `{ count, countByCategory, products }`
+- AND the `products` array elements SHALL have properties: `{ idProduct, nameProduct, price, descriptionProduct, image, Category }`
+
+### Requirement: Product DTO Casing
+The API endpoint payloads and `ProductDTO` interface MUST use camelCase property names.
+
 ### Requirement: Category Count Transformation in Service
 
-`ProductService` MUST expose `transformWithCategoryCount(products)` that performs the `countByCategory` accumulation and product mapping currently inline in the route. The method SHALL return `{ count, countByCategory, products: mappedProducts }`.
+`ProductService` (or its application layer equivalents) MUST expose `transformWithCategoryCount(products)` that performs the `countByCategory` accumulation and product mapping. The method SHALL return `{ count, countByCategory, products: mappedProducts }` using camelCase property names when mapping output list elements.
 
 #### Scenario: Service produces countByCategory from raw products
-
 - GIVEN an array of products with Category associations
 - WHEN `ProductService.transformWithCategoryCount(products)` is called
 - THEN the result SHALL contain `countByCategory` with category name keys and count/category info values
-- AND `products` SHALL be mapped to `{ IDProduct, NameProduct, Price, DescriptionProduct, Image, Category }`
+- AND `products` returned in the result envelope SHALL be mapped to:
+  ```json
+  {
+    "idProduct": 1,
+    "nameProduct": "Product Name",
+    "price": 100,
+    "descriptionProduct": "Description",
+    "image": "image.png",
+    "Category": "Category Name"
+  }
+  ```
 
 #### Scenario: Product without category mapped as "Sin categoria"
 

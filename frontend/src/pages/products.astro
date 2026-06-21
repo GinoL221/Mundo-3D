@@ -33,7 +33,8 @@ import Layout from '../layouts/Layout.astro';
       const res = await fetch('http://localhost:3000/api/products');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const products = await res.json();
+      const resData = await res.json();
+      const products = resData?.products;
 
       if (loadingMsg) loadingMsg.remove();
 
@@ -48,15 +49,15 @@ import Layout from '../layouts/Layout.astro';
       }
 
       const cards = products.map((product: any) => {
-        const catName = product.Category?.NameCategory || 'Otras';
+        const catName = product.Category || 'Otras';
         const catImg = getCategoryImg(catName);
         return `
           <article class="product-card">
-            <a href="/product?id=${product.IDProduct}">
+            <a href="/product?id=${product.idProduct}">
               <img src="/images/illustrations/${catImg}.png" alt="${catName}" class="product-card__category-img" />
               <div class="product-card__body">
-                <h3>${product.NameProduct}</h3>
-                <p class="price">$${product.Price}</p>
+                <h3>${product.nameProduct}</h3>
+                <p class="price">$${product.price}</p>
               </div>
             </a>
           </article>`;

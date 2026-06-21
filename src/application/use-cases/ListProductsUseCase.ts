@@ -40,11 +40,11 @@ export class ListProductsUseCase {
       }
 
       return {
-        IDProduct: p.IDProduct,
-        NameProduct: p.NameProduct,
-        Price: Number(p.Price),
-        DescriptionProduct: p.DescriptionProduct,
-        Image: p.Image,
+        idProduct: p.idProduct,
+        nameProduct: p.nameProduct,
+        price: Number(p.price),
+        descriptionProduct: p.descriptionProduct,
+        image: p.image,
         idCategory: p.idCategory,
         idFranchise: p.idFranchise,
         Category: categoryName,

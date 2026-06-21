@@ -29,13 +29,13 @@ describe('SequelizeShoppingCartRepository', () => {
           UnitPrice: '15.50',
           CartStatus: 'ACTIVE',
           product: {
-            IDProduct: 10,
-            NameProduct: 'Awesome 3D Print',
-            Price: '15.50',
-            DescriptionProduct: 'Cool print',
-            Image: 'image.jpg',
-            IDCategory: 1,
-            IDFranchise: 2,
+            idProduct: 10,
+            nameProduct: 'Awesome 3D Print',
+            price: '15.50',
+            descriptionProduct: 'Cool print',
+            image: 'image.jpg',
+            idCategory: 1,
+            idFranchise: 2,
           },
         },
       ];
@@ -56,6 +56,11 @@ describe('SequelizeShoppingCartRepository', () => {
       expect(result[0].unitPrice).toBe(15.50);
       expect(result[0].status).toBe(CartStatus.ACTIVE);
       expect(result[0].product).toBeDefined();
+      expect(result[0].product?.idProduct).toBe(10);
+      expect(result[0].product?.nameProduct).toBe('Awesome 3D Print');
+      expect(result[0].product?.price).toBe(15.50);
+
+      // Legacy compatibility assertions
       expect(result[0].product?.IDProduct).toBe(10);
       expect(result[0].product?.NameProduct).toBe('Awesome 3D Print');
       expect(result[0].product?.Price).toBe(15.50);

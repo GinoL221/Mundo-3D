@@ -3,7 +3,7 @@ import { Product } from '../../domain/entities/Product';
 import { mapToShoppingCartDTO } from '../dtos/ShoppingCartDTO';
 
 describe('mapToShoppingCartDTO', () => {
-  it('should correctly map a ShoppingCart entity and its Product to ShoppingCartDTO with PascalCase properties', () => {
+  it('should correctly map a ShoppingCart entity and its Product to ShoppingCartDTO with camelCase properties', () => {
     const product = new Product(10, 'Awesome Mug', 20.00, 'A nice mug', 'mug.png', 1, 2);
     const cartItem = new ShoppingCart(1, 5, 10, 2, 18.50, CartStatus.ACTIVE, product);
 
@@ -18,10 +18,10 @@ describe('mapToShoppingCartDTO', () => {
       CartStatus: 'ACTIVE',
       hasPriceDrift: true, // 18.50 !== 20.00
       product: {
-        IDProduct: 10,
-        NameProduct: 'Awesome Mug',
-        Price: 20.00,
-        Image: 'mug.png',
+        idProduct: 10,
+        nameProduct: 'Awesome Mug',
+        price: 20.00,
+        image: 'mug.png',
       },
     });
   });
@@ -41,10 +41,10 @@ describe('mapToShoppingCartDTO', () => {
     const dto = mapToShoppingCartDTO(cartItem);
 
     expect(dto.product).toEqual({
-      IDProduct: 10,
-      NameProduct: 'Unknown Product',
-      Price: 20.00,
-      Image: null,
+      idProduct: 10,
+      nameProduct: 'Unknown Product',
+      price: 20.00,
+      image: null,
     });
     expect(dto.hasPriceDrift).toBe(false);
   });

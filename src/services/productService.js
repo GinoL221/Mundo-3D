@@ -7,12 +7,12 @@ const ProductService = {
         {
           model: Category,
           as: 'Category',
-          attributes: ['IDCategory', 'NameCategory'],
+          attributes: ['idCategory', 'nameCategory'],
         },
         {
           model: Franchise,
           as: 'Franchise',
-          attributes: ['IDFranchise', 'NameFranchise'],
+          attributes: ['idFranchise', 'nameFranchise'],
         },
       ],
     });
@@ -24,12 +24,12 @@ const ProductService = {
 
   async create(data) {
     return Product.create({
-      NameProduct: data.NameProduct,
-      Price: data.Price,
-      DescriptionProduct: data.DescriptionProduct,
-      Image: data.Image,
-      IDCategory: data.IDCategory,
-      IDFranchise: data.IDFranchise,
+      nameProduct: data.nameProduct,
+      price: data.price,
+      descriptionProduct: data.descriptionProduct,
+      image: data.image,
+      idCategory: data.idCategory,
+      idFranchise: data.idFranchise,
     });
   },
 
@@ -37,12 +37,12 @@ const ProductService = {
     const product = await Product.findByPk(id);
     if (!product) return null;
 
-    product.NameProduct = data.NameProduct ?? product.NameProduct;
-    product.Price = data.Price ?? product.Price;
-    product.DescriptionProduct = data.DescriptionProduct ?? product.DescriptionProduct;
-    product.Image = data.Image ?? product.Image;
-    product.IDCategory = data.IDCategory ?? product.IDCategory;
-    product.IDFranchise = data.IDFranchise ?? product.IDFranchise;
+    product.nameProduct = data.nameProduct ?? product.nameProduct;
+    product.price = data.price ?? product.price;
+    product.descriptionProduct = data.descriptionProduct ?? product.descriptionProduct;
+    product.image = data.image ?? product.image;
+    product.idCategory = data.idCategory ?? product.idCategory;
+    product.idFranchise = data.idFranchise ?? product.idFranchise;
 
     await product.save();
     return product;
@@ -62,10 +62,10 @@ const ProductService = {
         {
           model: Category,
           as: 'Category',
-          attributes: ['IDCategory', 'NameCategory'],
+          attributes: ['idCategory', 'nameCategory'],
         },
       ],
-      order: [['IDProduct', 'DESC']],
+      order: [['idProduct', 'DESC']],
     });
   },
 
@@ -73,12 +73,11 @@ const ProductService = {
     const countByCategory = {};
 
     const mappedProducts = products.map((product) => {
-      const categoryName = product.Category ? product.Category.NameCategory : 'Sin categoría';
+      const categoryName = product.Category ? product.Category.nameCategory : 'Sin categoría';
 
       const categoryInfo = product.Category
         ? {
-            IDCategory: product.Category.IDCategory,
-            IDType: product.Category.IDType,
+            idCategory: product.Category.idCategory,
           }
         : null;
 
@@ -92,11 +91,11 @@ const ProductService = {
       }
 
       return {
-        IDProduct: product.IDProduct,
-        NameProduct: product.NameProduct,
-        Price: product.Price,
-        DescriptionProduct: product.DescriptionProduct,
-        Image: product.Image,
+        idProduct: product.idProduct,
+        nameProduct: product.nameProduct,
+        price: product.price,
+        descriptionProduct: product.descriptionProduct,
+        image: product.image,
         Category: categoryName,
       };
     });

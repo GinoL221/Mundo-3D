@@ -22,8 +22,8 @@ describe('ProductService', () => {
   describe('findAll', () => {
     it('returns an array of products', async () => {
       const mockProducts = [
-        { IDProduct: 1, NameProduct: 'Product A' },
-        { IDProduct: 2, NameProduct: 'Product B' },
+        { idProduct: 1, nameProduct: 'Product A' },
+        { idProduct: 2, nameProduct: 'Product B' },
       ];
       Product.findAll.mockResolvedValue(mockProducts);
 
@@ -46,7 +46,7 @@ describe('ProductService', () => {
 
   describe('findById', () => {
     it('returns product when valid id is provided', async () => {
-      const mockProduct = { IDProduct: 1, NameProduct: 'Product A' };
+      const mockProduct = { idProduct: 1, nameProduct: 'Product A' };
       Product.findByPk.mockResolvedValue(mockProduct);
 
       const result = await ProductService.findById(1);
@@ -75,14 +75,14 @@ describe('ProductService', () => {
   describe('create', () => {
     it('creates a new product', async () => {
       const inputData = {
-        NameProduct: 'New Product',
-        Price: 99.99,
-        DescriptionProduct: 'A test product',
-        Image: 'test.jpg',
-        IDCategory: 1,
-        IDFranchise: 1,
+        nameProduct: 'New Product',
+        price: 99.99,
+        descriptionProduct: 'A test product',
+        image: 'test.jpg',
+        idCategory: 1,
+        idFranchise: 1,
       };
-      const createdProduct = { IDProduct: 3, ...inputData };
+      const createdProduct = { idProduct: 3, ...inputData };
       Product.create.mockResolvedValue(createdProduct);
 
       const result = await ProductService.create(inputData);
@@ -90,8 +90,8 @@ describe('ProductService', () => {
       expect(result).toEqual(createdProduct);
       expect(Product.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          NameProduct: 'New Product',
-          Price: 99.99,
+          nameProduct: 'New Product',
+          price: 99.99,
         }),
       );
     });
@@ -100,7 +100,7 @@ describe('ProductService', () => {
   describe('remove', () => {
     it('returns true when product is deleted', async () => {
       const mockProduct = {
-        IDProduct: 1,
+        idProduct: 1,
         destroy: jest.fn().mockResolvedValue(true),
       };
       Product.findByPk.mockResolvedValue(mockProduct);
@@ -123,29 +123,29 @@ describe('ProductService', () => {
   describe('update', () => {
     it('updates product fields and returns updated product', async () => {
       const existingProduct = {
-        IDProduct: 1,
-        NameProduct: 'Old Name',
-        Price: 50,
-        DescriptionProduct: 'Old desc',
+        idProduct: 1,
+        nameProduct: 'Old Name',
+        price: 50,
+        descriptionProduct: 'Old desc',
         save: jest.fn().mockResolvedValue(undefined),
       };
       Product.findByPk.mockResolvedValue(existingProduct);
 
       const result = await ProductService.update(1, {
-        NameProduct: 'New Name',
-        Price: 75,
+        nameProduct: 'New Name',
+        price: 75,
       });
 
       expect(result).toEqual(existingProduct);
-      expect(existingProduct.NameProduct).toBe('New Name');
-      expect(existingProduct.Price).toBe(75);
+      expect(existingProduct.nameProduct).toBe('New Name');
+      expect(existingProduct.price).toBe(75);
       expect(existingProduct.save).toHaveBeenCalled();
     });
 
     it('returns null when product not found', async () => {
       Product.findByPk.mockResolvedValue(null);
 
-      const result = await ProductService.update(999, { NameProduct: 'Test' });
+      const result = await ProductService.update(999, { nameProduct: 'Test' });
 
       expect(result).toBeNull();
       expect(Product.findByPk).toHaveBeenCalledWith(999);
@@ -153,70 +153,70 @@ describe('ProductService', () => {
 
     it('preserves unchanged fields when partial update', async () => {
       const existingProduct = {
-        IDProduct: 2,
-        NameProduct: 'Keep Name',
-        Price: 30,
-        DescriptionProduct: 'Keep desc',
+        idProduct: 2,
+        nameProduct: 'Keep Name',
+        price: 30,
+        descriptionProduct: 'Keep desc',
         save: jest.fn().mockResolvedValue(undefined),
       };
       Product.findByPk.mockResolvedValue(existingProduct);
 
-      const result = await ProductService.update(2, { Price: 45 });
+      const result = await ProductService.update(2, { price: 45 });
 
       expect(result).toBe(existingProduct);
-      expect(existingProduct.NameProduct).toBe('Keep Name');
-      expect(existingProduct.Price).toBe(45);
-      expect(existingProduct.DescriptionProduct).toBe('Keep desc');
+      expect(existingProduct.nameProduct).toBe('Keep Name');
+      expect(existingProduct.price).toBe(45);
+      expect(existingProduct.descriptionProduct).toBe('Keep desc');
     });
 
     it('updates optional fields Image, IDCategory, IDFranchise and returns updated product', async () => {
       const existingProduct = {
-        IDProduct: 1,
-        NameProduct: 'Old Name',
-        Price: 50,
-        DescriptionProduct: 'Old desc',
-        Image: 'old.jpg',
-        IDCategory: 2,
-        IDFranchise: 3,
+        idProduct: 1,
+        nameProduct: 'Old Name',
+        price: 50,
+        descriptionProduct: 'Old desc',
+        image: 'old.jpg',
+        idCategory: 2,
+        idFranchise: 3,
         save: jest.fn().mockResolvedValue(undefined),
       };
       Product.findByPk.mockResolvedValue(existingProduct);
 
       const result = await ProductService.update(1, {
-        Image: 'new.jpg',
-        IDCategory: 4,
-        IDFranchise: 5,
+        image: 'new.jpg',
+        idCategory: 4,
+        idFranchise: 5,
       });
 
       expect(result).toEqual(existingProduct);
-      expect(existingProduct.Image).toBe('new.jpg');
-      expect(existingProduct.IDCategory).toBe(4);
-      expect(existingProduct.IDFranchise).toBe(5);
+      expect(existingProduct.image).toBe('new.jpg');
+      expect(existingProduct.idCategory).toBe(4);
+      expect(existingProduct.idFranchise).toBe(5);
       expect(existingProduct.save).toHaveBeenCalled();
     });
 
     it('preserves optional fields Image, IDCategory, IDFranchise when not provided in data', async () => {
       const existingProduct = {
-        IDProduct: 1,
-        NameProduct: 'Old Name',
-        Price: 50,
-        DescriptionProduct: 'Old desc',
-        Image: 'old.jpg',
-        IDCategory: 2,
-        IDFranchise: 3,
+        idProduct: 1,
+        nameProduct: 'Old Name',
+        price: 50,
+        descriptionProduct: 'Old desc',
+        image: 'old.jpg',
+        idCategory: 2,
+        idFranchise: 3,
         save: jest.fn().mockResolvedValue(undefined),
       };
       Product.findByPk.mockResolvedValue(existingProduct);
 
       const result = await ProductService.update(1, {
-        NameProduct: 'New Name',
+        nameProduct: 'New Name',
       });
 
       expect(result).toEqual(existingProduct);
-      expect(existingProduct.NameProduct).toBe('New Name');
-      expect(existingProduct.Image).toBe('old.jpg');
-      expect(existingProduct.IDCategory).toBe(2);
-      expect(existingProduct.IDFranchise).toBe(3);
+      expect(existingProduct.nameProduct).toBe('New Name');
+      expect(existingProduct.image).toBe('old.jpg');
+      expect(existingProduct.idCategory).toBe(2);
+      expect(existingProduct.idFranchise).toBe(3);
       expect(existingProduct.save).toHaveBeenCalled();
     });
   });
@@ -224,9 +224,9 @@ describe('ProductService', () => {
   describe('findLatest', () => {
     it('returns the most recent product with category', async () => {
       const latestProduct = {
-        IDProduct: 5,
-        NameProduct: 'Latest',
-        Category: { IDCategory: 1, NameCategory: 'Figures' },
+        idProduct: 5,
+        nameProduct: 'Latest',
+        Category: { idCategory: 1, nameCategory: 'Figures' },
       };
       Product.findOne.mockResolvedValue(latestProduct);
 
@@ -235,7 +235,7 @@ describe('ProductService', () => {
       expect(result).toEqual(latestProduct);
       expect(Product.findOne).toHaveBeenCalledWith(
         expect.objectContaining({
-          order: [['IDProduct', 'DESC']],
+          order: [['idProduct', 'DESC']],
           include: expect.arrayContaining([
             expect.objectContaining({
               model: expect.anything(),
@@ -269,28 +269,28 @@ describe('ProductService', () => {
     it('transforms products and counts by category', () => {
       const products = [
         {
-          IDProduct: 1,
-          NameProduct: 'Product A',
-          Price: 50,
-          DescriptionProduct: 'Desc A',
-          Image: 'a.jpg',
-          Category: { IDCategory: 1, IDType: 10, NameCategory: 'Figures' },
+          idProduct: 1,
+          nameProduct: 'Product A',
+          price: 50,
+          descriptionProduct: 'Desc A',
+          image: 'a.jpg',
+          Category: { idCategory: 1, nameCategory: 'Figures' },
         },
         {
-          IDProduct: 2,
-          NameProduct: 'Product B',
-          Price: 30,
-          DescriptionProduct: 'Desc B',
-          Image: 'b.jpg',
-          Category: { IDCategory: 1, IDType: 10, NameCategory: 'Figures' },
+          idProduct: 2,
+          nameProduct: 'Product B',
+          price: 30,
+          descriptionProduct: 'Desc B',
+          image: 'b.jpg',
+          Category: { idCategory: 1, nameCategory: 'Figures' },
         },
         {
-          IDProduct: 3,
-          NameProduct: 'Product C',
-          Price: 20,
-          DescriptionProduct: 'Desc C',
-          Image: 'c.jpg',
-          Category: { IDCategory: 2, IDType: 20, NameCategory: 'Decorations' },
+          idProduct: 3,
+          nameProduct: 'Product C',
+          price: 20,
+          descriptionProduct: 'Desc C',
+          image: 'c.jpg',
+          Category: { idCategory: 2, nameCategory: 'Decorations' },
         },
       ];
 
@@ -299,21 +299,19 @@ describe('ProductService', () => {
       expect(result.count).toBe(3);
       expect(result.countByCategory['Figures'].count).toBe(2);
       expect(result.countByCategory['Figures'].category).toEqual({
-        IDCategory: 1,
-        IDType: 10,
+        idCategory: 1,
       });
       expect(result.countByCategory['Decorations'].count).toBe(1);
       expect(result.countByCategory['Decorations'].category).toEqual({
-        IDCategory: 2,
-        IDType: 20,
+        idCategory: 2,
       });
       expect(result.products).toHaveLength(3);
       expect(result.products[0]).toEqual({
-        IDProduct: 1,
-        NameProduct: 'Product A',
-        Price: 50,
-        DescriptionProduct: 'Desc A',
-        Image: 'a.jpg',
+        idProduct: 1,
+        nameProduct: 'Product A',
+        price: 50,
+        descriptionProduct: 'Desc A',
+        image: 'a.jpg',
         Category: 'Figures',
       });
     });
@@ -321,11 +319,11 @@ describe('ProductService', () => {
     it('handles products without category', () => {
       const products = [
         {
-          IDProduct: 1,
-          NameProduct: 'No Cat Product',
-          Price: 15,
-          DescriptionProduct: 'No category',
-          Image: 'x.jpg',
+          idProduct: 1,
+          nameProduct: 'No Cat Product',
+          price: 15,
+          descriptionProduct: 'No category',
+          image: 'x.jpg',
           Category: null,
         },
       ];

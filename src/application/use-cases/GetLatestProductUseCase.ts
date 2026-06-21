@@ -13,11 +13,11 @@ export class GetLatestProductUseCase {
     const categoryName = product.Category ? product.Category.nameCategory : 'Sin categoría';
 
     return {
-      IDProduct: product.IDProduct,
-      NameProduct: product.NameProduct,
-      Price: Number(product.Price),
-      DescriptionProduct: product.DescriptionProduct,
-      Image: product.Image,
+      idProduct: product.idProduct,
+      nameProduct: product.nameProduct,
+      price: Number(product.price),
+      descriptionProduct: product.descriptionProduct,
+      image: product.image,
       idCategory: product.idCategory,
       idFranchise: product.idFranchise,
       Category: categoryName,

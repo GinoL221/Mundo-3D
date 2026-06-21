@@ -1,9 +1,9 @@
 export interface ProductDTO {
-  IDProduct: number;
-  NameProduct: string;
-  Price: number;
-  DescriptionProduct: string | null;
-  Image: string | null;
+  idProduct: number;
+  nameProduct: string;
+  price: number;
+  descriptionProduct: string | null;
+  image: string | null;
   idCategory: number;
   idFranchise: number;
   Category: string;

@@ -67,29 +67,29 @@ import Layout from '../layouts/Layout.astro';
       const contentEl = document.getElementById('product-content');
       const addBtn = document.getElementById('add-to-cart-btn');
 
-      if (titleEl) titleEl.textContent = product.NameProduct;
+      if (titleEl) titleEl.textContent = product.nameProduct;
       if (imgEl) {
-        imgEl.src = `/img/products/${product.Image}`;
-        imgEl.alt = product.NameProduct;
+        imgEl.src = `/img/products/${product.image}`;
+        imgEl.alt = product.nameProduct;
       }
-      if (nameEl) nameEl.textContent = product.NameProduct;
-      if (priceEl) priceEl.textContent = `Precio: $${product.Price}`;
-      if (descEl) descEl.textContent = product.DescriptionProduct || '';
+      if (nameEl) nameEl.textContent = product.nameProduct;
+      if (priceEl) priceEl.textContent = `Precio: $${product.price}`;
+      if (descEl) descEl.textContent = product.descriptionProduct || '';
       if (contentEl) contentEl.style.display = 'block';
-      document.title = `${product.NameProduct} - Mundo 3D`;
+      document.title = `${product.nameProduct} - Mundo 3D`;
 
       addBtn?.addEventListener('click', () => {
         const rawCart = localStorage.getItem('cart');
         let cart: any[] = rawCart ? JSON.parse(rawCart) : [];
-        const existing = cart.find((i: any) => i.productId === product.IDProduct);
+        const existing = cart.find((i: any) => i.productId === product.idProduct);
         if (existing) {
           existing.quantity += 1;
         } else {
           cart.push({
-            productId: product.IDProduct,
-            name: product.NameProduct,
-            image: product.Image,
-            unitPrice: product.Price,
+            productId: product.idProduct,
+            name: product.nameProduct,
+            image: product.image,
+            unitPrice: product.price,
             quantity: 1,
           });
         }

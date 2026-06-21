@@ -3,10 +3,10 @@ import { ICategoryRepository } from '../../domain/ports/ICategoryRepository';
 import { ProductDTO } from '../dtos/ProductDTO';
 
 export interface CreateProductInput {
-  NameProduct: string;
-  Price: number;
-  DescriptionProduct: string | null;
-  Image: string | null;
+  nameProduct: string;
+  price: number;
+  descriptionProduct: string | null;
+  image: string | null;
   idCategory: number;
   idFranchise: number;
 }
@@ -19,10 +19,10 @@ export class CreateProductUseCase {
 
   async execute(input: CreateProductInput): Promise<ProductDTO> {
     const created = await this.productRepo.create({
-      NameProduct: input.NameProduct,
-      Price: input.Price,
-      DescriptionProduct: input.DescriptionProduct,
-      Image: input.Image,
+      nameProduct: input.nameProduct,
+      price: input.price,
+      descriptionProduct: input.descriptionProduct,
+      image: input.image,
       idCategory: input.idCategory,
       idFranchise: input.idFranchise,
     });
@@ -38,11 +38,11 @@ export class CreateProductUseCase {
     }
 
     return {
-      IDProduct: created.IDProduct,
-      NameProduct: created.NameProduct,
-      Price: Number(created.Price),
-      DescriptionProduct: created.DescriptionProduct,
-      Image: created.Image,
+      idProduct: created.idProduct,
+      nameProduct: created.nameProduct,
+      price: Number(created.price),
+      descriptionProduct: created.descriptionProduct,
+      image: created.image,
       idCategory: created.idCategory,
       idFranchise: created.idFranchise,
       Category: categoryName,

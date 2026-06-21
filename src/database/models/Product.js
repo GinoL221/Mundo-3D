@@ -4,10 +4,11 @@ module.exports = (sequelize) => {
   const Product = sequelize.define(
     'Product',
     {
-      IDProduct: {
+      idProduct: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
+        field: 'id_product',
       },
       idCategory: {
         type: DataTypes.INTEGER,
@@ -19,19 +20,23 @@ module.exports = (sequelize) => {
         allowNull: false,
         field: 'id_franchise',
       },
-      NameProduct: {
+      nameProduct: {
         type: DataTypes.STRING,
         allowNull: false,
+        field: 'name_product',
       },
-      Price: {
+      price: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
+        field: 'price',
       },
-      DescriptionProduct: {
+      descriptionProduct: {
         type: DataTypes.TEXT,
+        field: 'description_product',
       },
-      Image: {
+      image: {
         type: DataTypes.STRING,
+        field: 'image',
       },
     },
     {
@@ -39,11 +44,26 @@ module.exports = (sequelize) => {
       timestamps: false,
       indexes: [{ unique: false, fields: ['id_category'] }],
       getterMethods: {
+        IDProduct() {
+          return this.idProduct;
+        },
         IDCategory() {
           return this.idCategory;
         },
         IDFranchise() {
           return this.idFranchise;
+        },
+        NameProduct() {
+          return this.nameProduct;
+        },
+        Price() {
+          return this.price;
+        },
+        DescriptionProduct() {
+          return this.descriptionProduct;
+        },
+        Image() {
+          return this.image;
         },
       },
     },

@@ -19,7 +19,7 @@ export class SyncCartUseCase {
         syncItems.push({
           productId: item.productId,
           quantity: item.quantity,
-          unitPrice: product.Price,
+          unitPrice: product.price,
         });
       }
     }
