@@ -13,9 +13,15 @@ The system MUST calculate the cart total in the use case or controller layer by 
 
 #### Scenario: Multiple items compute correct total
 
-- GIVEN cart items `[{UnitPrice: 10, Quantity: 2}, {UnitPrice: 5, Quantity: 3}]`
+- GIVEN cart items `[{unitPrice: 10, quantity: 2}, {unitPrice: 5, quantity: 3}]`
 - WHEN the cart total is calculated
 - THEN the result SHALL be `35`
+
+#### Scenario: Single item computation
+
+- GIVEN cart items `[{unitPrice: 15.50, quantity: 3}]`
+- WHEN the cart total is calculated
+- THEN the result SHALL be `46.50`
 
 #### Scenario: Empty cart returns zero
 
