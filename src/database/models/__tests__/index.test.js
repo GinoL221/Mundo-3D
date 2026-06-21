@@ -74,4 +74,35 @@ describe('Database Model Initialization & Association', () => {
       })
     );
   });
+
+  it('loads and associates ShoppingCart with User and Product', () => {
+    const db = initializeModels();
+    expect(db.ShoppingCart).toBeDefined();
+    expect(db.User.hasMany).toHaveBeenCalledWith(
+      db.ShoppingCart,
+      expect.objectContaining({
+        foreignKey: 'idUser',
+      })
+    );
+    expect(db.ShoppingCart.belongsTo).toHaveBeenCalledWith(
+      db.User,
+      expect.objectContaining({
+        foreignKey: 'idUser',
+      })
+    );
+    expect(db.Product.hasMany).toHaveBeenCalledWith(
+      db.ShoppingCart,
+      expect.objectContaining({
+        foreignKey: 'idProduct',
+        as: 'ShoppingCarts',
+      })
+    );
+    expect(db.ShoppingCart.belongsTo).toHaveBeenCalledWith(
+      db.Product,
+      expect.objectContaining({
+        foreignKey: 'idProduct',
+        as: 'product',
+      })
+    );
+  });
 });

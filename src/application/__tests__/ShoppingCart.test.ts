@@ -55,6 +55,16 @@ describe('ShoppingCart Entity', () => {
     const cart = new ShoppingCart(1, 10, 100, 2, 100.00, CartStatus.ACTIVE);
     expect(cart.hasPriceDrift(100.00)).toBe(false);
   });
+
+  it('should support legacy PascalCase getters', () => {
+    const cart = new ShoppingCart(1, 10, 100, 2, 150.00, CartStatus.ACTIVE);
+    expect(cart.IDCart).toBe(1);
+    expect(cart.IDUser).toBe(10);
+    expect(cart.IDProduct).toBe(100);
+    expect(cart.Quantity).toBe(2);
+    expect(cart.UnitPrice).toBe(150.00);
+    expect(cart.CartStatus).toBe('ACTIVE');
+  });
 });
 
 

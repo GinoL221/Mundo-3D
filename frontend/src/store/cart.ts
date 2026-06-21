@@ -49,7 +49,7 @@ async function syncToBackend(items: CartItem[]): Promise<void> {
   const previousItems = cartItems.get();
 
   try {
-    const payload = items.map((i) => ({ productId: i.productId, quantity: i.quantity }));
+    const payload = items.map((i) => ({ idProduct: i.productId, quantity: i.quantity }));
     const res = await fetch('http://localhost:3000/api/cart', {
       method: 'PUT',
       headers: {

@@ -22,12 +22,12 @@ describe('SequelizeShoppingCartRepository', () => {
     it('should retrieve cart items for userId and map them to ShoppingCart entities with product details', async () => {
       const mockInstances = [
         {
-          IDCart: 1,
-          IDUser: 5,
-          IDProduct: 10,
-          Quantity: 3,
-          UnitPrice: '15.50',
-          CartStatus: 'ACTIVE',
+          idCart: 1,
+          idUser: 5,
+          idProduct: 10,
+          quantity: 3,
+          unitPrice: '15.50',
+          cartStatus: 'ACTIVE',
           product: {
             idProduct: 10,
             nameProduct: 'Awesome 3D Print',
@@ -45,7 +45,7 @@ describe('SequelizeShoppingCartRepository', () => {
       const result = await repository.findByUserId(5);
 
       expect(db.ShoppingCart.findAll).toHaveBeenCalledWith({
-        where: { IDUser: 5 },
+        where: { idUser: 5 },
         include: [{ model: db.Product, as: 'product' }],
       });
       expect(result).toHaveLength(1);
@@ -83,11 +83,11 @@ describe('SequelizeShoppingCartRepository', () => {
 
       expect(db.ShoppingCart.count).toHaveBeenCalledWith({
         where: {
-          IDUser: 5,
-          CartStatus: 'ACTIVE',
+          idUser: 5,
+          cartStatus: 'ACTIVE',
         },
         distinct: true,
-        col: 'IDProduct',
+        col: 'idProduct',
       });
       expect(result).toBe(4);
     });

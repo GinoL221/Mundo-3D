@@ -53,12 +53,18 @@ export interface RememberTokenAttributes {
 }
 
 export interface ShoppingCartAttributes {
-  IDCart: number;
-  IDUser: number;
-  IDProduct: number;
-  Quantity: number;
-  UnitPrice: number;
-  CartStatus: string;
+  idCart: number;
+  idUser: number;
+  idProduct: number;
+  quantity: number;
+  unitPrice: number;
+  cartStatus: string;
+  IDCart?: number;
+  IDUser?: number;
+  IDProduct?: number;
+  Quantity?: number;
+  UnitPrice?: number;
+  CartStatus?: string;
 }
 
 export interface ProductInstance extends Model<ProductAttributes, Partial<ProductAttributes>>, ProductAttributes {

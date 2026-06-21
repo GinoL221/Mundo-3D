@@ -24,16 +24,16 @@ function initializeModels() {
   db['Franchise'] = FranchiseModel;
   db['RememberToken'] = RememberTokenModel;
 
-  UserModel.hasMany(ShoppingCartModel, { foreignKey: 'IDUser' });
-  ShoppingCartModel.belongsTo(UserModel, { foreignKey: 'IDUser' });
+  UserModel.hasMany(ShoppingCartModel, { foreignKey: 'idUser' });
+  ShoppingCartModel.belongsTo(UserModel, { foreignKey: 'idUser' });
   UserModel.hasMany(RememberTokenModel, { foreignKey: 'idUser' });
   RememberTokenModel.belongsTo(UserModel, { foreignKey: 'idUser' });
   ProductModel.hasMany(ShoppingCartModel, {
-    foreignKey: 'IDProduct',
+    foreignKey: 'idProduct',
     as: 'ShoppingCarts',
   });
   ShoppingCartModel.belongsTo(ProductModel, {
-    foreignKey: 'IDProduct',
+    foreignKey: 'idProduct',
     as: 'product',
   });
 
