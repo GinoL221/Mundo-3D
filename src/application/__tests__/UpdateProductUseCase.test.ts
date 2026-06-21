@@ -32,8 +32,8 @@ describe('UpdateProductUseCase', () => {
 
   it('should update the product and map it to a ProductDTO', async () => {
     const input: UpdateProductInput = {
-      NameProduct: 'Updated Product',
-      Price: 150,
+      nameProduct: 'Updated Product',
+      price: 150,
     };
 
     const mockCategory = new Category(1, 'Figures');
@@ -44,11 +44,11 @@ describe('UpdateProductUseCase', () => {
     const result = await useCase.execute(10, input);
 
     expect(result).toEqual({
-      IDProduct: 10,
-      NameProduct: 'Updated Product',
-      Price: 150,
-      DescriptionProduct: 'Desc',
-      Image: 'img.jpg',
+      idProduct: 10,
+      nameProduct: 'Updated Product',
+      price: 150,
+      descriptionProduct: 'Desc',
+      image: 'img.jpg',
       idCategory: 1,
       idFranchise: 2,
       Category: 'Figures',
@@ -60,9 +60,9 @@ describe('UpdateProductUseCase', () => {
   it('should return null if the product does not exist', async () => {
     mockProductRepo.update.mockResolvedValue(null);
 
-    const result = await useCase.execute(999, { NameProduct: 'Nonexistent' });
+    const result = await useCase.execute(999, { nameProduct: 'Nonexistent' });
 
     expect(result).toBeNull();
-    expect(mockProductRepo.update).toHaveBeenCalledWith(999, { NameProduct: 'Nonexistent' });
+    expect(mockProductRepo.update).toHaveBeenCalledWith(999, { nameProduct: 'Nonexistent' });
   });
 });

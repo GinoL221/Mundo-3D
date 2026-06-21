@@ -35,11 +35,11 @@ describe('GetLatestProductUseCase', () => {
     const result = await useCase.execute();
 
     expect(result).toEqual({
-      IDProduct: 10,
-      NameProduct: 'Latest Figures',
-      Price: 120,
-      DescriptionProduct: 'Awesome figures',
-      Image: 'fig.jpg',
+      idProduct: 10,
+      nameProduct: 'Latest Figures',
+      price: 120,
+      descriptionProduct: 'Awesome figures',
+      image: 'fig.jpg',
       idCategory: 2,
       idFranchise: 5,
       Category: 'Figures',

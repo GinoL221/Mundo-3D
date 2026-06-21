@@ -63,10 +63,10 @@ async function seedInitialData(db) {
       if (fs.existsSync(productsPath)) {
         const productsData = JSON.parse(fs.readFileSync(productsPath, 'utf8'));
         const productsMapped = productsData.map((p) => ({
-          NameProduct: p.NameProduct,
-          Price: p.Price,
-          DescriptionProduct: p.DescriptionProduct,
-          Image: p.Image,
+          nameProduct: p.NameProduct || p.nameProduct,
+          price: p.Price || p.price,
+          descriptionProduct: p.DescriptionProduct || p.descriptionProduct,
+          image: p.Image || p.image,
           idCategory: p.IDCategory || p.idCategory,
           idFranchise: p.IDFranchise || p.idFranchise,
         }));

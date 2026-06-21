@@ -15,11 +15,11 @@ export class SequelizeProductRepository implements IProductRepository {
       : undefined;
 
     return new Product(
-      instance.IDProduct,
-      instance.NameProduct,
-      Number(instance.Price),
-      instance.DescriptionProduct,
-      instance.Image,
+      instance.idProduct,
+      instance.nameProduct,
+      Number(instance.price),
+      instance.descriptionProduct,
+      instance.image,
       instance.idCategory,
       instance.idFranchise,
       category,
@@ -78,30 +78,30 @@ export class SequelizeProductRepository implements IProductRepository {
           attributes: ['idFranchise', 'nameFranchise'],
         },
       ],
-      order: [['IDProduct', 'DESC']],
+      order: [['idProduct', 'DESC']],
     });
     if (!instance) return null;
     return this.toEntity(instance);
   }
 
-  async create(product: Omit<Product, 'IDProduct' | 'Category' | 'Franchise'>): Promise<Product> {
+  async create(product: Omit<Product, 'idProduct' | 'IDProduct' | 'NameProduct' | 'Price' | 'DescriptionProduct' | 'Image' | 'IDCategory' | 'IDFranchise' | 'Category' | 'Franchise'>): Promise<Product> {
     const instance = await db.Product.create({
-      NameProduct: product.NameProduct,
-      Price: product.Price,
-      DescriptionProduct: product.DescriptionProduct,
-      Image: product.Image,
+      nameProduct: product.nameProduct,
+      price: product.price,
+      descriptionProduct: product.descriptionProduct,
+      image: product.image,
       idCategory: product.idCategory,
       idFranchise: product.idFranchise,
     } as any);
 
-    const created = await this.findById(instance.IDProduct);
+    const created = await this.findById(instance.idProduct);
     if (!created) {
       return new Product(
-        instance.IDProduct,
-        instance.NameProduct,
-        Number(instance.Price),
-        instance.DescriptionProduct,
-        instance.Image,
+        instance.idProduct,
+        instance.nameProduct,
+        Number(instance.price),
+        instance.descriptionProduct,
+        instance.image,
         instance.idCategory,
         instance.idFranchise
       );
@@ -114,10 +114,10 @@ export class SequelizeProductRepository implements IProductRepository {
     if (!instance) return null;
 
     const updatedData: Partial<ProductInstance> = {};
-    if (product.NameProduct !== undefined) updatedData.NameProduct = product.NameProduct;
-    if (product.Price !== undefined) updatedData.Price = product.Price;
-    if (product.DescriptionProduct !== undefined) updatedData.DescriptionProduct = product.DescriptionProduct;
-    if (product.Image !== undefined) updatedData.Image = product.Image;
+    if (product.nameProduct !== undefined) updatedData.nameProduct = product.nameProduct;
+    if (product.price !== undefined) updatedData.price = product.price;
+    if (product.descriptionProduct !== undefined) updatedData.descriptionProduct = product.descriptionProduct;
+    if (product.image !== undefined) updatedData.image = product.image;
     if (product.idCategory !== undefined) updatedData.idCategory = product.idCategory;
     if (product.idFranchise !== undefined) updatedData.idFranchise = product.idFranchise;
 
@@ -128,7 +128,7 @@ export class SequelizeProductRepository implements IProductRepository {
 
   async delete(id: number): Promise<boolean> {
     const deletedCount = await db.Product.destroy({
-      where: { IDProduct: id },
+      where: { idProduct: id },
     });
     return deletedCount > 0;
   }

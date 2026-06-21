@@ -41,9 +41,9 @@ describe('GetCartByUserIdUseCase', () => {
     expect(result.items).toHaveLength(2);
     expect(result.total).toBe(350.0);
     expect(result.items[0].IDCart).toBe(1);
-    expect(result.items[0].product.NameProduct).toBe('Product A');
+    expect(result.items[0].product.nameProduct).toBe('Product A');
     expect(result.items[1].IDCart).toBe(2);
-    expect(result.items[1].product.NameProduct).toBe('Product B');
+    expect(result.items[1].product.nameProduct).toBe('Product B');
   });
 
   it('should detect price drift in mapped items correctly', async () => {

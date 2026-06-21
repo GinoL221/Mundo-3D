@@ -32,10 +32,10 @@ describe('CreateProductUseCase', () => {
 
   it('should create a product and map it to a ProductDTO with fetched Category name', async () => {
     const input: CreateProductInput = {
-      NameProduct: 'New Product',
-      Price: 100,
-      DescriptionProduct: 'Brand new',
-      Image: 'new.jpg',
+      nameProduct: 'New Product',
+      price: 100,
+      descriptionProduct: 'Brand new',
+      image: 'new.jpg',
       idCategory: 1,
       idFranchise: 2,
     };
@@ -49,21 +49,21 @@ describe('CreateProductUseCase', () => {
     const result = await useCase.execute(input);
 
     expect(result).toEqual({
-      IDProduct: 10,
-      NameProduct: 'New Product',
-      Price: 100,
-      DescriptionProduct: 'Brand new',
-      Image: 'new.jpg',
+      idProduct: 10,
+      nameProduct: 'New Product',
+      price: 100,
+      descriptionProduct: 'Brand new',
+      image: 'new.jpg',
       idCategory: 1,
       idFranchise: 2,
       Category: 'Figures',
     });
 
     expect(mockProductRepo.create).toHaveBeenCalledWith({
-      NameProduct: input.NameProduct,
-      Price: input.Price,
-      DescriptionProduct: input.DescriptionProduct,
-      Image: input.Image,
+      nameProduct: input.nameProduct,
+      price: input.price,
+      descriptionProduct: input.descriptionProduct,
+      image: input.image,
       idCategory: input.idCategory,
       idFranchise: input.idFranchise,
     });
@@ -72,10 +72,10 @@ describe('CreateProductUseCase', () => {
 
   it('should use Category name from relation if already populated', async () => {
     const input: CreateProductInput = {
-      NameProduct: 'New Product',
-      Price: 100,
-      DescriptionProduct: 'Brand new',
-      Image: 'new.jpg',
+      nameProduct: 'New Product',
+      price: 100,
+      descriptionProduct: 'Brand new',
+      image: 'new.jpg',
       idCategory: 1,
       idFranchise: 2,
     };
@@ -93,10 +93,10 @@ describe('CreateProductUseCase', () => {
 
   it('should fallback to Sin categoría if Category is not found', async () => {
     const input: CreateProductInput = {
-      NameProduct: 'New Product',
-      Price: 100,
-      DescriptionProduct: 'Brand new',
-      Image: 'new.jpg',
+      nameProduct: 'New Product',
+      price: 100,
+      descriptionProduct: 'Brand new',
+      image: 'new.jpg',
       idCategory: 999,
       idFranchise: 2,
     };

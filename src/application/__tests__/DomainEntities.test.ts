@@ -32,15 +32,24 @@ describe('Domain Entities', () => {
       franchise
     );
 
+    expect(product.idProduct).toBe(10);
+    expect(product.nameProduct).toBe('Action Figure');
+    expect(product.price).toBe(29.99);
+    expect(product.descriptionProduct).toBe('Detailed figure');
+    expect(product.image).toBe('figure.jpg');
+    expect(product.idCategory).toBe(1);
+    expect(product.idFranchise).toBe(2);
+    expect(product.Category).toBe(category);
+    expect(product.Franchise).toBe(franchise);
+
+    // Legacy getters
     expect(product.IDProduct).toBe(10);
     expect(product.NameProduct).toBe('Action Figure');
     expect(product.Price).toBe(29.99);
     expect(product.DescriptionProduct).toBe('Detailed figure');
     expect(product.Image).toBe('figure.jpg');
-    expect(product.idCategory).toBe(1);
-    expect(product.idFranchise).toBe(2);
-    expect(product.Category).toBe(category);
-    expect(product.Franchise).toBe(franchise);
+    expect(product.IDCategory).toBe(1);
+    expect(product.IDFranchise).toBe(2);
   });
 
   it('should create a User entity correctly with camelCase properties', () => {

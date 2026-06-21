@@ -9,10 +9,10 @@ export interface ShoppingCartDTO {
   CartStatus: string;
   hasPriceDrift: boolean;
   product: {
-    IDProduct: number;
-    NameProduct: string;
-    Price: number;
-    Image: string | null;
+    idProduct: number;
+    nameProduct: string;
+    price: number;
+    image: string | null;
   };
 }
 
@@ -22,7 +22,7 @@ export interface GetCartResult {
 }
 
 export function mapToShoppingCartDTO(entity: ShoppingCart): ShoppingCartDTO {
-  const hasDrift = entity.product ? entity.hasPriceDrift(entity.product.Price) : false;
+  const hasDrift = entity.product ? entity.hasPriceDrift(entity.product.price) : false;
 
   return {
     IDCart: entity.idCart,
@@ -33,10 +33,10 @@ export function mapToShoppingCartDTO(entity: ShoppingCart): ShoppingCartDTO {
     CartStatus: entity.status,
     hasPriceDrift: hasDrift,
     product: {
-      IDProduct: entity.idProduct,
-      NameProduct: entity.product ? entity.product.NameProduct : 'Unknown Product',
-      Price: entity.product ? entity.product.Price : entity.unitPrice,
-      Image: entity.product ? entity.product.Image : null,
+      idProduct: entity.idProduct,
+      nameProduct: entity.product ? entity.product.nameProduct : 'Unknown Product',
+      price: entity.product ? entity.product.price : entity.unitPrice,
+      image: entity.product ? entity.product.image : null,
     },
   };
 }

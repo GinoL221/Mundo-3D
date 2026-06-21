@@ -3,10 +3,10 @@ import { ICategoryRepository } from '../../domain/ports/ICategoryRepository';
 import { ProductDTO } from '../dtos/ProductDTO';
 
 export interface UpdateProductInput {
-  NameProduct?: string;
-  Price?: number;
-  DescriptionProduct?: string | null;
-  Image?: string | null;
+  nameProduct?: string;
+  price?: number;
+  descriptionProduct?: string | null;
+  image?: string | null;
   idCategory?: number;
   idFranchise?: number;
 }
@@ -34,11 +34,11 @@ export class UpdateProductUseCase {
     }
 
     return {
-      IDProduct: updated.IDProduct,
-      NameProduct: updated.NameProduct,
-      Price: Number(updated.Price),
-      DescriptionProduct: updated.DescriptionProduct,
-      Image: updated.Image,
+      idProduct: updated.idProduct,
+      nameProduct: updated.nameProduct,
+      price: Number(updated.price),
+      descriptionProduct: updated.descriptionProduct,
+      image: updated.image,
       idCategory: updated.idCategory,
       idFranchise: updated.idFranchise,
       Category: categoryName,

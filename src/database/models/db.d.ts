@@ -1,15 +1,22 @@
 import { Model, ModelCtor, Sequelize } from 'sequelize';
 
 export interface ProductAttributes {
-  IDProduct: number;
+  idProduct: number;
   idCategory: number;
   idFranchise: number;
-  NameProduct: string;
-  Price: number;
-  DescriptionProduct: string | null;
-  Image: string | null;
+  nameProduct: string;
+  price: number;
+  descriptionProduct: string | null;
+  image: string | null;
+  IDProduct?: number;
+  idCategory_legacy?: number; // just in case
+  idFranchise_legacy?: number; // just in case
   IDCategory?: number;
   IDFranchise?: number;
+  NameProduct?: string;
+  Price?: number;
+  DescriptionProduct?: string | null;
+  Image?: string | null;
 }
 
 export interface CategoryAttributes {

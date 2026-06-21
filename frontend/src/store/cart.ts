@@ -74,23 +74,23 @@ async function syncToBackend(items: CartItem[]): Promise<void> {
   }
 }
 
-export function addToCart(product: { IDProduct: number; NameProduct: string; Image: string; Price: number }, qty = 1): void {
+export function addToCart(product: { idProduct: number; nameProduct: string; image: string; price: number }, qty = 1): void {
   const current = cartItems.get();
-  const existing = current.find((i) => i.productId === product.IDProduct);
+  const existing = current.find((i) => i.productId === product.idProduct);
 
   let updated: CartItem[];
   if (existing) {
     updated = current.map((i) =>
-      i.productId === product.IDProduct ? { ...i, quantity: i.quantity + qty } : i
+      i.productId === product.idProduct ? { ...i, quantity: i.quantity + qty } : i
     );
   } else {
     updated = [
       ...current,
       {
-        productId: product.IDProduct,
-        name: product.NameProduct,
-        image: product.Image,
-        unitPrice: product.Price,
+        productId: product.idProduct,
+        name: product.nameProduct,
+        image: product.image,
+        unitPrice: product.price,
         quantity: qty,
       },
     ];

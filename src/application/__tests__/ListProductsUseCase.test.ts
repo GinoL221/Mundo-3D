@@ -50,11 +50,11 @@ describe('ListProductsUseCase', () => {
     expect(result.count).toBe(3);
     expect(result.products).toHaveLength(3);
     expect(result.products[0]).toEqual({
-      IDProduct: 1,
-      NameProduct: 'Product A',
-      Price: 50,
-      DescriptionProduct: 'Desc A',
-      Image: 'a.jpg',
+      idProduct: 1,
+      nameProduct: 'Product A',
+      price: 50,
+      descriptionProduct: 'Desc A',
+      image: 'a.jpg',
       idCategory: 1,
       idFranchise: 10,
       Category: 'Figures',

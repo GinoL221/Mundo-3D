@@ -25,11 +25,11 @@ describe('SequelizeProductRepository', () => {
     it('should return all products mapped to domain entities', async () => {
       const mockInstances = [
         {
-          IDProduct: 1,
-          NameProduct: 'Product A',
-          Price: '100.50',
-          DescriptionProduct: 'Desc A',
-          Image: 'imageA.jpg',
+          idProduct: 1,
+          nameProduct: 'Product A',
+          price: '100.50',
+          descriptionProduct: 'Desc A',
+          image: 'imageA.jpg',
           idCategory: 10,
           idFranchise: 20,
           Category: { idCategory: 10, nameCategory: 'Category A' },
@@ -41,22 +41,29 @@ describe('SequelizeProductRepository', () => {
       const result = await repository.findAll();
 
       expect(result).toHaveLength(1);
+      expect(result[0].idProduct).toBe(1);
+      expect(result[0].nameProduct).toBe('Product A');
+      expect(result[0].price).toBe(100.5);
+      expect(result[0].Category?.nameCategory).toBe('Category A');
+      expect(result[0].Franchise?.nameFranchise).toBe('Franchise A');
+
+      // Legacy compatibility assertions
       expect(result[0].IDProduct).toBe(1);
       expect(result[0].NameProduct).toBe('Product A');
       expect(result[0].Price).toBe(100.5);
-      expect(result[0].Category?.nameCategory).toBe('Category A');
-      expect(result[0].Franchise?.nameFranchise).toBe('Franchise A');
+      expect(result[0].IDCategory).toBe(10);
+      expect(result[0].IDFranchise).toBe(20);
     });
   });
 
   describe('findById', () => {
     it('should return mapped product if found', async () => {
       const mockInstance = {
-        IDProduct: 1,
-        NameProduct: 'Product A',
-        Price: '100.50',
-        DescriptionProduct: 'Desc A',
-        Image: 'imageA.jpg',
+        idProduct: 1,
+        nameProduct: 'Product A',
+        price: '100.50',
+        descriptionProduct: 'Desc A',
+        image: 'imageA.jpg',
         idCategory: 10,
         idFranchise: 20,
         Category: { idCategory: 10, nameCategory: 'Category A' },
@@ -67,20 +74,24 @@ describe('SequelizeProductRepository', () => {
       const result = await repository.findById(1);
 
       expect(result).not.toBeNull();
+      expect(result?.idProduct).toBe(1);
+      expect(result?.price).toBe(100.5);
+      expect(result?.Category?.nameCategory).toBe('Category A');
+
+      // Legacy compatibility assertions
       expect(result?.IDProduct).toBe(1);
       expect(result?.Price).toBe(100.5);
-      expect(result?.Category?.nameCategory).toBe('Category A');
     });
   });
 
   describe('findLatest', () => {
     it('should return the latest product by ID', async () => {
       const mockInstance = {
-        IDProduct: 2,
-        NameProduct: 'Product B',
-        Price: '200.00',
-        DescriptionProduct: 'Desc B',
-        Image: 'imageB.jpg',
+        idProduct: 2,
+        nameProduct: 'Product B',
+        price: '200.00',
+        descriptionProduct: 'Desc B',
+        image: 'imageB.jpg',
         idCategory: 10,
         idFranchise: 20,
         Category: { idCategory: 10, nameCategory: 'Category A' },
@@ -91,6 +102,10 @@ describe('SequelizeProductRepository', () => {
       const result = await repository.findLatest();
 
       expect(result).not.toBeNull();
+      expect(result?.idProduct).toBe(2);
+      expect(result?.nameProduct).toBe('Product B');
+
+      // Legacy compatibility assertions
       expect(result?.IDProduct).toBe(2);
       expect(result?.NameProduct).toBe('Product B');
     });
@@ -99,11 +114,11 @@ describe('SequelizeProductRepository', () => {
   describe('create', () => {
     it('should create and return the product', async () => {
       const mockCreatedInstance = {
-        IDProduct: 3,
-        NameProduct: 'Product C',
-        Price: '300.00',
-        DescriptionProduct: 'Desc C',
-        Image: 'imageC.jpg',
+        idProduct: 3,
+        nameProduct: 'Product C',
+        price: '300.00',
+        descriptionProduct: 'Desc C',
+        image: 'imageC.jpg',
         idCategory: 10,
         idFranchise: 20,
       };
@@ -118,17 +133,21 @@ describe('SequelizeProductRepository', () => {
       jest.mocked(db.Product.findByPk).mockResolvedValue(mockFetchedInstance as unknown as ProductInstance);
 
       const result = await repository.create({
-        NameProduct: 'Product C',
-        Price: 300.0,
-        DescriptionProduct: 'Desc C',
-        Image: 'imageC.jpg',
+        nameProduct: 'Product C',
+        price: 300.0,
+        descriptionProduct: 'Desc C',
+        image: 'imageC.jpg',
         idCategory: 10,
         idFranchise: 20,
       });
 
+      expect(result.idProduct).toBe(3);
+      expect(result.price).toBe(300.0);
+      expect(result.Category?.nameCategory).toBe('Category A');
+
+      // Legacy compatibility assertions
       expect(result.IDProduct).toBe(3);
       expect(result.Price).toBe(300.0);
-      expect(result.Category?.nameCategory).toBe('Category A');
     });
   });
 
@@ -136,18 +155,18 @@ describe('SequelizeProductRepository', () => {
     it('should update the product and return updated entity', async () => {
       const mockUpdate = jest.fn();
       const mockInstance = {
-        IDProduct: 1,
-        NameProduct: 'Product A',
-        Price: '100.50',
+        idProduct: 1,
+        nameProduct: 'Product A',
+        price: '100.50',
         update: mockUpdate,
       };
 
       const mockFetchedInstance = {
-        IDProduct: 1,
-        NameProduct: 'Product A Updated',
-        Price: '120.00',
-        DescriptionProduct: 'Desc A',
-        Image: 'imageA.jpg',
+        idProduct: 1,
+        nameProduct: 'Product A Updated',
+        price: '120.00',
+        descriptionProduct: 'Desc A',
+        image: 'imageA.jpg',
         idCategory: 10,
         idFranchise: 20,
         Category: { idCategory: 10, nameCategory: 'Category A' },
@@ -158,9 +177,13 @@ describe('SequelizeProductRepository', () => {
         .mockResolvedValueOnce(mockInstance as unknown as ProductInstance)
         .mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
 
-      const result = await repository.update(1, { NameProduct: 'Product A Updated', Price: 120.0 });
+      const result = await repository.update(1, { nameProduct: 'Product A Updated', price: 120.0 });
 
-      expect(mockUpdate).toHaveBeenCalledWith({ NameProduct: 'Product A Updated', Price: 120.0 });
+      expect(mockUpdate).toHaveBeenCalledWith({ nameProduct: 'Product A Updated', price: 120.0 });
+      expect(result?.nameProduct).toBe('Product A Updated');
+      expect(result?.price).toBe(120.0);
+
+      // Legacy compatibility assertions
       expect(result?.NameProduct).toBe('Product A Updated');
       expect(result?.Price).toBe(120.0);
     });
@@ -173,7 +196,7 @@ describe('SequelizeProductRepository', () => {
       const result = await repository.delete(1);
 
       expect(result).toBe(true);
-      expect(db.Product.destroy).toHaveBeenCalledWith({ where: { IDProduct: 1 } });
+      expect(db.Product.destroy).toHaveBeenCalledWith({ where: { idProduct: 1 } });
     });
   });
 });
