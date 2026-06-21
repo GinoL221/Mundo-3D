@@ -40,9 +40,9 @@ describe('GetCartByUserIdUseCase', () => {
 
     expect(result.items).toHaveLength(2);
     expect(result.total).toBe(350.0);
-    expect(result.items[0].IDCart).toBe(1);
+    expect(result.items[0].idCart).toBe(1);
     expect(result.items[0].product.nameProduct).toBe('Product A');
-    expect(result.items[1].IDCart).toBe(2);
+    expect(result.items[1].idCart).toBe(2);
     expect(result.items[1].product.nameProduct).toBe('Product B');
   });
 

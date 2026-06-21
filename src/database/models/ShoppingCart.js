@@ -4,36 +4,61 @@ module.exports = (sequelize) => {
   const ShoppingCart = sequelize.define(
     'ShoppingCart',
     {
-      IDCart: {
+      idCart: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
+        field: 'id_cart',
       },
-      IDUser: {
+      idUser: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        field: 'id_user',
       },
-      IDProduct: {
+      idProduct: {
         type: DataTypes.INTEGER,
         allowNull: false,
         field: 'id_product',
       },
-      Quantity: {
+      quantity: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        field: 'quantity',
       },
-      UnitPrice: {
+      unitPrice: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
+        field: 'unit_price',
       },
-      CartStatus: {
+      cartStatus: {
         type: DataTypes.STRING(50),
         allowNull: false,
+        field: 'cart_status',
       },
     },
     {
       tableName: 'ShoppingCart',
       timestamps: false,
+      getterMethods: {
+        IDCart() {
+          return this.getDataValue('idCart');
+        },
+        IDUser() {
+          return this.getDataValue('idUser');
+        },
+        IDProduct() {
+          return this.getDataValue('idProduct');
+        },
+        Quantity() {
+          return this.getDataValue('quantity');
+        },
+        UnitPrice() {
+          return this.getDataValue('unitPrice');
+        },
+        CartStatus() {
+          return this.getDataValue('cartStatus');
+        },
+      },
     },
   );
 

@@ -31,5 +31,29 @@ export class ShoppingCart {
   hasPriceDrift(activeProductPrice: number): boolean {
     return this.unitPrice !== activeProductPrice;
   }
+
+  get IDCart(): number {
+    return this.idCart;
+  }
+
+  get IDUser(): number {
+    return this.idUser;
+  }
+
+  get IDProduct(): number {
+    return this.idProduct;
+  }
+
+  get Quantity(): number {
+    return this.quantity;
+  }
+
+  get UnitPrice(): number {
+    return this.unitPrice;
+  }
+
+  get CartStatus(): string {
+    return this.status;
+  }
 }
 

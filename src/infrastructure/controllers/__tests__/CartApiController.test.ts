@@ -41,12 +41,12 @@ describe('CartApiController', () => {
       const mockCartResult = {
         items: [
           {
-            IDCart: 1,
-            IDUser: 5,
-            IDProduct: 10,
-            Quantity: 2,
-            UnitPrice: 100.0,
-            CartStatus: 'ACTIVE',
+            idCart: 1,
+            idUser: 5,
+            idProduct: 10,
+            quantity: 2,
+            unitPrice: 100.0,
+            status: 'ACTIVE',
             product: {
               idProduct: 10,
               nameProduct: 'Product A',
@@ -80,7 +80,7 @@ describe('CartApiController', () => {
   });
 
   describe('syncCart', () => {
-    it('calls SyncCartUseCase, then returns updated cart DTO', async () => {
+    it('calls SyncCartUseCase, supporting productId, then returns updated cart DTO', async () => {
       req.body = {
         items: [{ productId: 10, quantity: 2 }],
       };
@@ -88,12 +88,52 @@ describe('CartApiController', () => {
       const mockCartResult = {
         items: [
           {
-            IDCart: 1,
-            IDUser: 5,
-            IDProduct: 10,
-            Quantity: 2,
-            UnitPrice: 100.0,
-            CartStatus: 'ACTIVE',
+            idCart: 1,
+            idUser: 5,
+            idProduct: 10,
+            quantity: 2,
+            unitPrice: 100.0,
+            status: 'ACTIVE',
+            product: {
+              idProduct: 10,
+              nameProduct: 'Product A',
+              price: 100.0,
+              image: 'imgA.png',
+            },
+            hasPriceDrift: false,
+          },
+        ],
+        total: 200.0,
+      };
+
+      mockSyncCartUseCase.execute.mockResolvedValue(undefined);
+      mockGetCartByUserIdUseCase.execute.mockResolvedValue(mockCartResult);
+
+      await controller.syncCart(req as Request, res as Response, next);
+
+      expect(mockSyncCartUseCase.execute).toHaveBeenCalledWith(5, [{ productId: 10, quantity: 2 }]);
+      expect(mockGetCartByUserIdUseCase.execute).toHaveBeenCalledWith(5);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        cart: mockCartResult,
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('calls SyncCartUseCase, mapping idProduct to productId', async () => {
+      req.body = {
+        items: [{ idProduct: 10, quantity: 2 }],
+      };
+
+      const mockCartResult = {
+        items: [
+          {
+            idCart: 1,
+            idUser: 5,
+            idProduct: 10,
+            quantity: 2,
+            unitPrice: 100.0,
+            status: 'ACTIVE',
             product: {
               idProduct: 10,
               nameProduct: 'Product A',

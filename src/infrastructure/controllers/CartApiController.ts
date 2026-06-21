@@ -31,7 +31,11 @@ export class CartApiController {
         return;
       }
 
-      const items = req.body.items || [];
+      const rawItems = req.body.items || [];
+      const items = rawItems.map((item: any) => ({
+        productId: typeof item.idProduct === 'number' ? item.idProduct : item.productId,
+        quantity: item.quantity,
+      }));
       await this.syncCartUseCase.execute(userId, items);
 
       const cartDto = await this.getCartByUserIdUseCase.execute(userId);

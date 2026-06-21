@@ -18,19 +18,19 @@ export class SequelizeShoppingCartRepository implements IShoppingCartRepository 
       : undefined;
 
     return new ShoppingCart(
-      instance.IDCart,
-      instance.IDUser,
-      instance.IDProduct,
-      instance.Quantity,
-      Number(instance.UnitPrice),
-      instance.CartStatus as CartStatus,
+      instance.idCart,
+      instance.idUser,
+      instance.idProduct,
+      instance.quantity,
+      Number(instance.unitPrice),
+      instance.cartStatus as CartStatus,
       product
     );
   }
 
   async findByUserId(userId: number): Promise<ShoppingCart[]> {
     const instances = await db.ShoppingCart.findAll({
-      where: { IDUser: userId },
+      where: { idUser: userId },
       include: [{ model: db.Product, as: 'product' }],
     });
     return instances.map((inst) => this.toEntity(inst));
@@ -39,11 +39,11 @@ export class SequelizeShoppingCartRepository implements IShoppingCartRepository 
   async getDistinctCount(userId: number): Promise<number> {
     const count = await db.ShoppingCart.count({
       where: {
-        IDUser: userId,
-        CartStatus: 'ACTIVE',
+        idUser: userId,
+        cartStatus: 'ACTIVE',
       },
       distinct: true,
-      col: 'IDProduct',
+      col: 'idProduct',
     });
     return count;
   }
@@ -53,8 +53,8 @@ export class SequelizeShoppingCartRepository implements IShoppingCartRepository 
     try {
       await db.ShoppingCart.destroy({
         where: {
-          IDUser: userId,
-          CartStatus: 'ACTIVE',
+          idUser: userId,
+          cartStatus: 'ACTIVE',
         },
         transaction,
       });
@@ -62,11 +62,11 @@ export class SequelizeShoppingCartRepository implements IShoppingCartRepository 
       for (const item of items) {
         await db.ShoppingCart.create(
           {
-            IDUser: userId,
-            IDProduct: item.productId,
-            Quantity: item.quantity,
-            UnitPrice: item.unitPrice,
-            CartStatus: 'ACTIVE',
+            idUser: userId,
+            idProduct: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            cartStatus: 'ACTIVE',
           },
           { transaction }
         );

@@ -10,12 +10,12 @@ describe('mapToShoppingCartDTO', () => {
     const dto = mapToShoppingCartDTO(cartItem);
 
     expect(dto).toEqual({
-      IDCart: 1,
-      IDUser: 5,
-      IDProduct: 10,
-      Quantity: 2,
-      UnitPrice: 18.50,
-      CartStatus: 'ACTIVE',
+      idCart: 1,
+      idUser: 5,
+      idProduct: 10,
+      quantity: 2,
+      unitPrice: 18.50,
+      status: 'ACTIVE',
       hasPriceDrift: true, // 18.50 !== 20.00
       product: {
         idProduct: 10,
