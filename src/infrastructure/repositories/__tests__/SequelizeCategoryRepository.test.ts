@@ -89,6 +89,21 @@ describe('SequelizeCategoryRepository', () => {
       expect(result?.nameCategory).toBe('Old Category');
     });
 
+    it('should update successfully without changing name if nameCategory is undefined', async () => {
+      const mockUpdate = jest.fn();
+      const mockInstance = {
+        idCategory: 1,
+        nameCategory: 'Old Category',
+        update: mockUpdate,
+      };
+      jest.mocked(db.Category.findByPk).mockResolvedValue(mockInstance as unknown as CategoryInstance);
+
+      const result = await repository.update(1, {});
+
+      expect(mockUpdate).toHaveBeenCalledWith({});
+      expect(result?.nameCategory).toBe('Old Category');
+    });
+
     it('should return null if category to update is not found', async () => {
       jest.mocked(db.Category.findByPk).mockResolvedValue(null);
 

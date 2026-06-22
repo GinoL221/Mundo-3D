@@ -6,8 +6,13 @@ jest.mock('../../../database/models/db', () => ({
   ShoppingCart: {
     findAll: jest.fn(),
     count: jest.fn(),
+    destroy: jest.fn(),
+    create: jest.fn(),
   },
   Product: {},
+  sequelize: {
+    transaction: jest.fn(),
+  },
 }));
 
 describe('SequelizeShoppingCartRepository', () => {
@@ -66,6 +71,27 @@ describe('SequelizeShoppingCartRepository', () => {
       expect(result[0].product?.Price).toBe(15.50);
     });
 
+    it('should map to ShoppingCart entity without product details if product is undefined/null', async () => {
+      const mockInstances = [
+        {
+          idCart: 2,
+          idUser: 5,
+          idProduct: 10,
+          quantity: 3,
+          unitPrice: '15.50',
+          cartStatus: 'ACTIVE',
+          product: null,
+        },
+      ];
+
+      jest.mocked(db.ShoppingCart.findAll).mockResolvedValue(mockInstances as unknown as ShoppingCartInstance[]);
+
+      const result = await repository.findByUserId(5);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].product).toBeUndefined();
+    });
+
     it('should return empty list when no cart items found', async () => {
       jest.mocked(db.ShoppingCart.findAll).mockResolvedValue([]);
 
@@ -90,6 +116,91 @@ describe('SequelizeShoppingCartRepository', () => {
         col: 'idProduct',
       });
       expect(result).toBe(4);
+    });
+  });
+
+  describe('syncCart', () => {
+    let mockTx: any;
+
+    beforeEach(() => {
+      mockTx = {
+        commit: jest.fn().mockResolvedValue(undefined),
+        rollback: jest.fn().mockResolvedValue(undefined),
+      };
+      (db.sequelize.transaction as jest.Mock).mockResolvedValue(mockTx);
+    });
+
+    it('should successfully sync cart items within a transaction', async () => {
+      const userId = 5;
+      const items = [
+        { productId: 10, quantity: 2, unitPrice: 15 },
+        { productId: 11, quantity: 1, unitPrice: 30 },
+      ];
+
+      (db.ShoppingCart.destroy as jest.Mock).mockResolvedValue(1);
+      (db.ShoppingCart.create as jest.Mock).mockResolvedValue({});
+
+      await repository.syncCart(userId, items);
+
+      expect(db.sequelize.transaction).toHaveBeenCalled();
+      expect(db.ShoppingCart.destroy).toHaveBeenCalledWith({
+        where: {
+          idUser: userId,
+          cartStatus: 'ACTIVE',
+        },
+        transaction: mockTx,
+      });
+      expect(db.ShoppingCart.create).toHaveBeenNthCalledWith(
+        1,
+        {
+          idUser: userId,
+          idProduct: 10,
+          quantity: 2,
+          unitPrice: 15,
+          cartStatus: 'ACTIVE',
+        },
+        { transaction: mockTx }
+      );
+      expect(db.ShoppingCart.create).toHaveBeenNthCalledWith(
+        2,
+        {
+          idUser: userId,
+          idProduct: 11,
+          quantity: 1,
+          unitPrice: 30,
+          cartStatus: 'ACTIVE',
+        },
+        { transaction: mockTx }
+      );
+      expect(mockTx.commit).toHaveBeenCalled();
+      expect(mockTx.rollback).not.toHaveBeenCalled();
+    });
+
+    it('should rollback transaction and throw error if destroy fails', async () => {
+      const userId = 5;
+      const items = [{ productId: 10, quantity: 2, unitPrice: 15 }];
+      const testError = new Error('Database delete error');
+
+      (db.ShoppingCart.destroy as jest.Mock).mockRejectedValue(testError);
+
+      await expect(repository.syncCart(userId, items)).rejects.toThrow(testError);
+
+      expect(mockTx.rollback).toHaveBeenCalled();
+      expect(mockTx.commit).not.toHaveBeenCalled();
+    });
+
+    it('should rollback transaction and throw error if create fails', async () => {
+      const userId = 5;
+      const items = [{ productId: 10, quantity: 2, unitPrice: 15 }];
+      const testError = new Error('Database insert error');
+
+      (db.ShoppingCart.destroy as jest.Mock).mockResolvedValue(1);
+      (db.ShoppingCart.create as jest.Mock).mockRejectedValue(testError);
+
+      await expect(repository.syncCart(userId, items)).rejects.toThrow(testError);
+
+      expect(mockTx.rollback).toHaveBeenCalled();
+      expect(mockTx.commit).not.toHaveBeenCalled();
     });
   });
 });

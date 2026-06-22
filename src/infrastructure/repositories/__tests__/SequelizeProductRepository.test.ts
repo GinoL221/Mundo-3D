@@ -82,6 +82,33 @@ describe('SequelizeProductRepository', () => {
       expect(result?.IDProduct).toBe(1);
       expect(result?.Price).toBe(100.5);
     });
+
+    it('should return null if product is not found', async () => {
+      jest.mocked(db.Product.findByPk).mockResolvedValue(null);
+      const result = await repository.findById(999);
+      expect(result).toBeNull();
+    });
+
+    it('should map correctly when Category and Franchise details are missing', async () => {
+      const mockInstance = {
+        idProduct: 1,
+        nameProduct: 'Product A',
+        price: '100.50',
+        descriptionProduct: 'Desc A',
+        image: 'imageA.jpg',
+        idCategory: 10,
+        idFranchise: 20,
+        Category: null,
+        Franchise: null,
+      };
+      jest.mocked(db.Product.findByPk).mockResolvedValue(mockInstance as unknown as ProductInstance);
+
+      const result = await repository.findById(1);
+
+      expect(result).not.toBeNull();
+      expect(result?.Category).toBeUndefined();
+      expect(result?.Franchise).toBeUndefined();
+    });
   });
 
   describe('findLatest', () => {
@@ -108,6 +135,12 @@ describe('SequelizeProductRepository', () => {
       // Legacy compatibility assertions
       expect(result?.IDProduct).toBe(2);
       expect(result?.NameProduct).toBe('Product B');
+    });
+
+    it('should return null if there are no products', async () => {
+      jest.mocked(db.Product.findOne).mockResolvedValue(null);
+      const result = await repository.findLatest();
+      expect(result).toBeNull();
     });
   });
 
@@ -149,6 +182,35 @@ describe('SequelizeProductRepository', () => {
       expect(result.IDProduct).toBe(3);
       expect(result.Price).toBe(300.0);
     });
+
+    it('should fallback to creation instance mapping if findById returns null in create', async () => {
+      const mockCreatedInstance = {
+        idProduct: 3,
+        nameProduct: 'Product C',
+        price: '300.00',
+        descriptionProduct: 'Desc C',
+        image: 'imageC.jpg',
+        idCategory: 10,
+        idFranchise: 20,
+      };
+
+      jest.mocked(db.Product.create).mockResolvedValue(mockCreatedInstance as unknown as ProductInstance);
+      jest.mocked(db.Product.findByPk).mockResolvedValue(null);
+
+      const result = await repository.create({
+        nameProduct: 'Product C',
+        price: 300.0,
+        descriptionProduct: 'Desc C',
+        image: 'imageC.jpg',
+        idCategory: 10,
+        idFranchise: 20,
+      });
+
+      expect(result.idProduct).toBe(3);
+      expect(result.price).toBe(300.0);
+      expect(result.Category).toBeUndefined();
+      expect(result.Franchise).toBeUndefined();
+    });
   });
 
   describe('update', () => {
@@ -187,6 +249,50 @@ describe('SequelizeProductRepository', () => {
       expect(result?.NameProduct).toBe('Product A Updated');
       expect(result?.Price).toBe(120.0);
     });
+
+    it('should update other fields like description, image, idCategory, idFranchise', async () => {
+      const mockUpdate = jest.fn();
+      const mockInstance = {
+        idProduct: 1,
+        update: mockUpdate,
+      };
+
+      const mockFetchedInstance = {
+        idProduct: 1,
+        nameProduct: 'Product A',
+        price: '100.50',
+        descriptionProduct: 'New Desc',
+        image: 'new.jpg',
+        idCategory: 11,
+        idFranchise: 21,
+      };
+
+      jest.mocked(db.Product.findByPk)
+        .mockResolvedValueOnce(mockInstance as unknown as ProductInstance)
+        .mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
+
+      const result = await repository.update(1, {
+        descriptionProduct: 'New Desc',
+        image: 'new.jpg',
+        idCategory: 11,
+        idFranchise: 21,
+      });
+
+      expect(mockUpdate).toHaveBeenCalledWith({
+        descriptionProduct: 'New Desc',
+        image: 'new.jpg',
+        idCategory: 11,
+        idFranchise: 21,
+      });
+      expect(result?.descriptionProduct).toBe('New Desc');
+      expect(result?.image).toBe('new.jpg');
+    });
+
+    it('should return null if product to update is not found', async () => {
+      jest.mocked(db.Product.findByPk).mockResolvedValue(null);
+      const result = await repository.update(999, { nameProduct: 'New Name' });
+      expect(result).toBeNull();
+    });
   });
 
   describe('delete', () => {
@@ -197,6 +303,11 @@ describe('SequelizeProductRepository', () => {
 
       expect(result).toBe(true);
       expect(db.Product.destroy).toHaveBeenCalledWith({ where: { idProduct: 1 } });
+    });
+    it('should return false if product is not found to delete', async () => {
+      jest.mocked(db.Product.destroy).mockResolvedValue(0);
+      const result = await repository.delete(999);
+      expect(result).toBe(false);
     });
   });
 });

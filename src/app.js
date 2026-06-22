@@ -12,7 +12,9 @@ const cors = require('cors');
 const path = require('path');
 
 // Register ts-node dynamically to require TypeScript modules in JavaScript
-require('ts-node/register');
+if (process.env.NODE_ENV !== 'test') {
+  require('ts-node/register');
+}
 
 const apiRouter = require('./infrastructure/routes/api/index').default;
 

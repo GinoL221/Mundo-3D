@@ -84,6 +84,39 @@ describe('SequelizeRememberTokenRepository Integration Tests', () => {
         expect(db.RememberToken.create).toHaveBeenCalled();
       }
     });
+
+    it('should create and store remember token with default createdAt if not specified', async () => {
+      if (isSqliteAvailable && sqliteUserModel) {
+        const user = await sqliteUserModel.create({
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@example.com',
+          passwordUser: 'hash',
+        });
+
+        const expiry = new Date(Date.now() + 3600 * 1000);
+        // Do not provide createdAt or set to null
+        const token = new RememberToken(0, 'hashed_token_string_no_created', user.idUser, expiry);
+
+        const created = await repository.create(token);
+        expect(created.createdAt).toBeInstanceOf(Date);
+      } else {
+        const mockInstance = {
+          idRememberToken: 12,
+          tokenHash: 'hashed_token_string_no_created',
+          idUser: 5,
+          expiryDate: new Date(),
+          createdAt: null,
+        };
+        jest.mocked(db.RememberToken.create).mockResolvedValue(mockInstance as any);
+
+        const expiry = new Date();
+        const token = new RememberToken(0, 'hashed_token_string_no_created', 5, expiry);
+
+        const created = await repository.create(token);
+        expect(created.createdAt).toBeNull();
+      }
+    });
   });
 
   describe('findByHash', () => {
@@ -133,6 +166,42 @@ describe('SequelizeRememberTokenRepository Integration Tests', () => {
         jest.mocked(db.RememberToken.findOne).mockResolvedValue(null);
         const found = await repository.findByHash('nonexistent');
         expect(found).toBeNull();
+      }
+    });
+
+    it('should retrieve a token and map null createdAt if it is null in the database', async () => {
+      if (isSqliteAvailable && sqliteUserModel) {
+        const user = await sqliteUserModel.create({
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@example.com',
+          passwordUser: 'hash',
+        });
+
+        const expiry = new Date(Date.now() + 3600 * 1000);
+        await sqliteRememberTokenModel.create({
+          idUser: user.idUser,
+          tokenHash: 'my_null_created_hash',
+          expiryDate: expiry,
+          createdAt: null,
+        });
+
+        const found = await repository.findByHash('my_null_created_hash');
+        expect(found).not.toBeNull();
+        expect(found?.createdAt).toBeNull();
+      } else {
+        const mockInstance = {
+          idRememberToken: 13,
+          tokenHash: 'my_null_created_hash',
+          idUser: 6,
+          expiryDate: new Date(),
+          createdAt: null,
+        };
+        jest.mocked(db.RememberToken.findOne).mockResolvedValue(mockInstance as any);
+
+        const found = await repository.findByHash('my_null_created_hash');
+        expect(found).not.toBeNull();
+        expect(found?.createdAt).toBeNull();
       }
     });
   });

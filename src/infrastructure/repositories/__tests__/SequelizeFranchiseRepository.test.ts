@@ -89,6 +89,21 @@ describe('SequelizeFranchiseRepository', () => {
       expect(result?.nameFranchise).toBe('Old Franchise');
     });
 
+    it('should update successfully without changing name if nameFranchise is undefined', async () => {
+      const mockUpdate = jest.fn();
+      const mockInstance = {
+        idFranchise: 1,
+        nameFranchise: 'Old Franchise',
+        update: mockUpdate,
+      };
+      jest.mocked(db.Franchise.findByPk).mockResolvedValue(mockInstance as unknown as FranchiseInstance);
+
+      const result = await repository.update(1, {});
+
+      expect(mockUpdate).toHaveBeenCalledWith({});
+      expect(result?.nameFranchise).toBe('Old Franchise');
+    });
+
     it('should return null if franchise to update is not found', async () => {
       jest.mocked(db.Franchise.findByPk).mockResolvedValue(null);
 

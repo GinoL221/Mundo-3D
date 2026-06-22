@@ -2,7 +2,6 @@ describe('app startup requirements', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
-    jest.resetModules();
     process.env = { ...originalEnv };
   });
 
@@ -15,7 +14,9 @@ describe('app startup requirements', () => {
     process.env.JWT_SECRET = 'some-jwt-secret';
     process.env.NODE_ENV = 'development';
     expect(() => {
-      require('../app');
+      jest.isolateModules(() => {
+        require('../app');
+      });
     }).not.toThrow();
   });
 
@@ -24,7 +25,9 @@ describe('app startup requirements', () => {
     process.env.JWT_SECRET = 'some-jwt-secret';
     process.env.NODE_ENV = 'development';
     expect(() => {
-      require('../app');
+      jest.isolateModules(() => {
+        require('../app');
+      });
     }).not.toThrow();
   });
 
@@ -32,7 +35,9 @@ describe('app startup requirements', () => {
     delete process.env.JWT_SECRET;
     process.env.NODE_ENV = 'development';
     expect(() => {
-      require('../app');
+      jest.isolateModules(() => {
+        require('../app');
+      });
     }).toThrow(/JWT_SECRET is required/);
   });
 });

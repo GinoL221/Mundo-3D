@@ -13,7 +13,6 @@ describe('loginLimiter middleware', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
-    jest.resetModules();
     jest.clearAllMocks();
     process.env = { ...originalEnv };
   });
@@ -27,8 +26,13 @@ describe('loginLimiter middleware', () => {
     delete process.env.LOGIN_LIMIT_WINDOW;
 
     // Load the module after modifying env vars
-    const loginLimiter = require('../loginLimiter').default;
-    const rateLimitMock = require('express-rate-limit');
+    let loginLimiter: any;
+    let rateLimitMock: any;
+    jest.isolateModules(() => {
+      loginLimiter = require('../loginLimiter').default;
+      rateLimitMock = require('express-rate-limit');
+    });
+
     expect(loginLimiter).toBeDefined();
     expect(typeof loginLimiter).toBe('function');
 
@@ -56,8 +60,13 @@ describe('loginLimiter middleware', () => {
     process.env.LOGIN_LIMIT_MAX = '10';
     process.env.LOGIN_LIMIT_WINDOW = '60000'; // 1 minute
 
-    const loginLimiter = require('../loginLimiter').default;
-    const rateLimitMock = require('express-rate-limit');
+    let loginLimiter: any;
+    let rateLimitMock: any;
+    jest.isolateModules(() => {
+      loginLimiter = require('../loginLimiter').default;
+      rateLimitMock = require('express-rate-limit');
+    });
+
     expect(loginLimiter).toBeDefined();
     expect(typeof loginLimiter).toBe('function');
 

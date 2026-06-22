@@ -3,7 +3,7 @@ module.exports = {
   testMatch: ["**/src/**/*.test.js", "**/src/**/*.test.ts"],
   transform: {
     "^.+\\.jsx?$": "babel-jest",
-    "^.+\\.tsx?$": "ts-jest",
+    "^.+\\.tsx?$": ["ts-jest", { isolatedModules: true }],
   },
   collectCoverageFrom: ["src/services/**/*.js", "src/**/*.ts"],
   coverageDirectory: "coverage",

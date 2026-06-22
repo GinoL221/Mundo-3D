@@ -4,9 +4,6 @@ const app = require('../app');
 describe('CORS Integration Tests', () => {
   jest.setTimeout(20000);
 
-  beforeEach(() => {
-    jest.resetModules();
-  });
 
   afterEach(() => {
     delete process.env.CORS_ORIGIN;

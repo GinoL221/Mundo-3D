@@ -64,8 +64,6 @@ describe('Theme Toggle Functionality', () => {
   });
 
   test('should bind click listener on DOMContentLoaded and toggle theme when clicked', () => {
-    jest.resetModules();
-
     let clickCallback;
     const mockButton = {
       addEventListener(event, callback) {
@@ -97,8 +95,10 @@ describe('Theme Toggle Functionality', () => {
       },
     };
 
-    // Requiring registers the listener
-    require('../../public/js/theme');
+    jest.isolateModules(() => {
+      // Requiring registers the listener
+      require('../../public/js/theme');
+    });
 
     // Simulate DOMContentLoaded
     expect(domContentLoadedCallback).toBeDefined();

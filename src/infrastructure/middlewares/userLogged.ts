@@ -3,6 +3,7 @@ import { VerifyRememberTokenUseCase } from '../../application/use-cases/VerifyRe
 import { SequelizeRememberTokenRepository } from '../repositories/SequelizeRememberTokenRepository';
 import { SequelizeUserRepository } from '../repositories/SequelizeUserRepository';
 import { Sha256TokenHasher } from '../security/Sha256TokenHasher';
+import { UserDTO } from '../../application/dtos/UserDTO';
 
 const rememberTokenRepo = new SequelizeRememberTokenRepository();
 const userRepo = new SequelizeUserRepository();
@@ -47,7 +48,7 @@ const userLoggedMiddleware = async (req: Request, res: Response, next: NextFunct
 
           const user = await verifyRememberTokenUseCase.execute(plainToken);
           if (user && user.idUser === userId) {
-            session.userLogged = user;
+            session.userLogged = user as Partial<UserDTO> & Record<string, unknown>;
           } else {
             res.clearCookie('remember_token');
           }
@@ -65,7 +66,7 @@ const userLoggedMiddleware = async (req: Request, res: Response, next: NextFunct
   const session = (req as any).session;
 
   if (session && session.userLogged) {
-    const logged = session.userLogged;
+    const logged = session.userLogged as Partial<UserDTO> & Record<string, unknown>;
     const baseObj = {
       idUser: logged.idUser ?? logged.IDUser,
       firstName: logged.firstName ?? logged.FirstName,
@@ -75,7 +76,7 @@ const userLoggedMiddleware = async (req: Request, res: Response, next: NextFunct
       idRole: logged.idRole ?? logged.IDRole,
       category: logged.category ?? logged.Category,
     };
-    session.userLogged = addLegacyGetters(baseObj);
+    session.userLogged = addLegacyGetters(baseObj) as Partial<UserDTO> & Record<string, unknown>;
     res.locals.isLogged = true;
     res.locals.userLogged = session.userLogged;
   }
