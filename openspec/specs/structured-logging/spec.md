@@ -39,26 +39,16 @@ The system MUST implement a type-safe logger utility in `src/infrastructure/logg
 ---
 
 ### Requirement: Middleware Logging Migration
-All raw `console.log` and `console.error` statements inside the application middleware files MUST be replaced by logger calls:
-- `src/infrastructure/middlewares/cartCount.ts`
-- `src/infrastructure/middlewares/errorHandler.ts`
-- `src/infrastructure/middlewares/userLogged.ts`
-No console output statements MUST remain in these modules.
 
-#### Scenario: Cart count middleware logs errors structured
-- GIVEN `cartCountMiddleware` fails during cart retrieval
-- WHEN an error is caught in the middleware block
-- THEN the error message MUST be logged via `logger.error` rather than `console.error`
+All raw `console.log` and `console.error` statements inside the application middleware files MUST be replaced by logger calls. After the orphaned middlewares (`cartCount.ts`, `userLogged.ts`) are removed, the remaining file requiring migration is `errorHandler.ts`. No console output statements MUST remain in active middleware modules.
 
-#### Scenario: User logged middleware logs session validation warnings structured
-- GIVEN `userLoggedMiddleware` fails during remember token verification
-- WHEN an error is caught in the token validation block
-- THEN the error details MUST be logged via `logger.error` rather than `console.error`
+(Previously: Listed `cartCount.ts`, `errorHandler.ts`, `userLogged.ts`; cartCount and userLogged are now removed as orphaned.)
 
 #### Scenario: Error handler middleware logs uncaught exceptions structured
 - GIVEN `errorHandler` processes an uncaught HTTP exception
 - WHEN the error stack and message are logged
 - THEN they MUST be logged via `logger.error` rather than `console.error`
+- AND the log entry MUST include the error message and stack trace
 
 ---
 

@@ -5,6 +5,7 @@ import { GetCartByUserIdUseCase } from '../../../application/use-cases/GetCartBy
 import { SyncCartUseCase } from '../../../application/use-cases/SyncCartUseCase';
 import { CartApiController } from '../../controllers/CartApiController';
 import { apiAuthMiddleware } from '../../middlewares/auth';
+import { cartSyncValidation } from '../../middlewares/validators/cartValidators';
 
 const router = Router();
 
@@ -20,6 +21,6 @@ const controller = new CartApiController(getCartByUserIdUseCase, syncCartUseCase
 router.get('/cart', apiAuthMiddleware, controller.getCart);
 
 // PUT /api/cart
-router.put('/cart', apiAuthMiddleware, controller.syncCart);
+router.put('/cart', apiAuthMiddleware, cartSyncValidation, controller.syncCart);
 
 export default router;

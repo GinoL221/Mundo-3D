@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken';
 import path from 'path';
 import { Request, Response, NextFunction } from 'express';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret';
+import { getJwtSecret } from '../security/JwtSecret';
+import { Role } from '../../domain/Role';
 
 export const isUser = (req: Request, res: Response, next: NextFunction): void => {
   res.locals.isLogged ? next() : res.redirect('/login');
@@ -22,7 +22,14 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction):
   next();
 };
 
-export const apiAuthMiddleware = (req: Request, res: Response, next: NextFunction): any => {
+interface DecodedToken {
+  userId: number;
+  email?: string;
+  category?: string;
+  idRole?: number;
+}
+
+export const apiAuthMiddleware = (req: Request, res: Response, next: NextFunction): void | Response => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -32,7 +39,7 @@ export const apiAuthMiddleware = (req: Request, res: Response, next: NextFunctio
   const token = authHeader.slice('Bearer '.length);
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const decoded = jwt.verify(token, getJwtSecret()) as DecodedToken;
     req.user = decoded;
     next();
   } catch {
@@ -40,7 +47,7 @@ export const apiAuthMiddleware = (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const adminGuard = (req: Request, res: Response, next: NextFunction): any => {
+export const adminGuard = (req: Request, res: Response, next: NextFunction): void | Response => {
   const isApiRequest = req.path.startsWith('/api') || req.originalUrl?.startsWith('/api');
   const principal = req.session?.userLogged || req.user;
 
@@ -51,7 +58,7 @@ export const adminGuard = (req: Request, res: Response, next: NextFunction): any
     return res.redirect('/login');
   }
 
-  if (principal.idRole !== 1) {
+  if (principal.idRole !== Role.ADMIN) {
     if (isApiRequest) {
       return res.status(403).json({ error: 'Acceso restringido a administradores' });
     }

@@ -7,6 +7,7 @@ import { RegisterUserUseCase } from '../../application/use-cases/RegisterUserUse
 import { InvalidCredentialsException } from '../../domain/exceptions/InvalidCredentialsException';
 import { UserAlreadyExistsException } from '../../domain/exceptions/UserAlreadyExistsException';
 import { validationResult } from 'express-validator';
+import { getJwtSecret } from '../security/JwtSecret';
 
 export class UserApiController {
   constructor(
@@ -33,11 +34,10 @@ export class UserApiController {
         idRole: userDto.idRole,
       };
 
-      const secret = process.env.JWT_SECRET || 'test_jwt_secret';
-      const token = jwt.sign(payload, secret, { expiresIn: '2h' });
+      const token = jwt.sign(payload, getJwtSecret(), { expiresIn: '2h' });
 
       res.json({ token });
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof InvalidCredentialsException) {
         res.status(401).json({ error: 'El email o la contraseña no coinciden' });
         return;
@@ -81,8 +81,7 @@ export class UserApiController {
         idRole: userDto.idRole,
       };
 
-      const secret = process.env.JWT_SECRET || 'test_jwt_secret';
-      const token = jwt.sign(payload, secret, { expiresIn: '2h' });
+      const token = jwt.sign(payload, getJwtSecret(), { expiresIn: '2h' });
 
       res.status(201).json({ token });
     } catch (error) {
@@ -108,8 +107,8 @@ export class UserApiController {
       const id = parseInt(req.params.id as string, 10);
       const user = await this.getUserByIdUseCase.execute(id);
       res.json(user);
-    } catch (error: any) {
-      if (error.message === 'User not found') {
+    } catch (error) {
+      if (error instanceof Error && error.message === 'User not found') {
         res.status(404).json({ error: 'Usuario no encontrado' });
         return;
       }

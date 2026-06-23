@@ -33,8 +33,9 @@ jest.mock('../application/use-cases/SyncCartUseCase', () => ({
 
 const apiRouter = require('../infrastructure/routes/api/index').default;
 const errorHandler = require('../infrastructure/middlewares/errorHandler').default;
+const { getJwtSecret } = require('../infrastructure/security/JwtSecret');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret';
+const JWT_SECRET = getJwtSecret();
 
 const buildApp = () => {
   const app = express();
@@ -84,7 +85,7 @@ describe('REST API Security & Role Gating', () => {
       expect(mockListUsersExecute).not.toHaveBeenCalled();
     });
 
-    it('returns 403 when authenticated user is not an admin (idRole !== 1)', async () => {
+    it('returns 403 when authenticated user is not an admin (idRole !== Role.ADMIN)', async () => {
       const res = await request(app)
         .get('/api/users')
         .set('Authorization', `Bearer ${userToken}`);
@@ -93,7 +94,7 @@ describe('REST API Security & Role Gating', () => {
       expect(mockListUsersExecute).not.toHaveBeenCalled();
     });
 
-    it('allows access and returns 200 when authenticated user is admin (idRole === 1)', async () => {
+    it('allows access and returns 200 when authenticated user is admin (idRole === Role.ADMIN)', async () => {
       mockListUsersExecute.mockResolvedValue([]);
       const res = await request(app)
         .get('/api/users')
@@ -163,6 +164,70 @@ describe('REST API Security & Role Gating', () => {
       expect(res.status).toBe(200);
       expect(mockSyncCartExecute).toHaveBeenCalledWith(2, [{ productId: 10, quantity: 2 }]);
       expect(mockGetCartByUserIdExecute).toHaveBeenCalledWith(2);
+    });
+
+    it('returns 400 when quantity is 0 (validation failure)', async () => {
+      const res = await request(app)
+        .put('/api/cart')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ items: [{ productId: 10, quantity: 0 }] });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBeDefined();
+      expect(mockSyncCartExecute).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('POST /api/users (Duplicate route removed)', () => {
+    it('returns 404 Not Found', async () => {
+      const res = await request(app)
+        .post('/api/users')
+        .send({ email: 'duplicate@test.com', password: 'password123' });
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('errorHandler Pino logging integration', () => {
+    it('routes uncaught exception through Pino logger.error', async () => {
+      const { logger } = require('../infrastructure/logging/logger');
+      const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+
+      mockListUsersExecute.mockRejectedValue(new Error('Test uncaught exception'));
+      const res = await request(app)
+        .get('/api/users')
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(res.status).toBe(500);
+      expect(loggerErrorSpy).toHaveBeenCalled();
+
+      loggerErrorSpy.mockRestore();
+    });
+  });
+
+  describe('POST /api/users/register rate limiting', () => {
+    let originalEnv;
+
+    beforeAll(() => {
+      originalEnv = process.env.NODE_ENV;
+    });
+
+    afterAll(() => {
+      process.env.NODE_ENV = originalEnv;
+    });
+
+    it('returns 429 when request limit is exceeded', async () => {
+      process.env.NODE_ENV = 'production';
+      const agent = request(app);
+
+      // Hits 1, 2, 3
+      await agent.post('/api/users/register').send({});
+      await agent.post('/api/users/register').send({});
+      await agent.post('/api/users/register').send({});
+
+      // Hit 4
+      const res4 = await agent.post('/api/users/register').send({});
+      expect(res4.status).toBe(429);
+      expect(res4.body.error).toBe('Demasiados intentos de registro. Intente nuevamente en 15 minutos.');
     });
   });
 });

@@ -31,8 +31,9 @@ jest.mock('../application/use-cases/GetUserByIdUseCase', () => {
 });
 
 const apiUsersRouter = require('../infrastructure/routes/api/users').default;
+const { getJwtSecret } = require('../infrastructure/security/JwtSecret');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret';
+const JWT_SECRET = getJwtSecret();
 
 const buildApp = () => {
   const app = express();

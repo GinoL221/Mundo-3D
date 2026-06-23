@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Defines the correct ordering and registration of Express middleware in the main application entry point (`src/app.ts`), the migration of custom middlewares to TypeScript, and the error propagation contract that all controllers MUST follow so that unhandled errors reach the global error handler.
+Defines the correct ordering and registration of Express middleware in the main application entry point (`src/app.js`), the migration of custom middlewares to TypeScript, and the error propagation contract that all controllers MUST follow so that unhandled errors reach the global error handler.
 
 ## Requirements
 
 ### Requirement: Middleware Registration Order
 
-The middleware in the main application entry point (e.g. `src/app.ts`) MUST be registered in the following top-to-bottom order:
+The middleware in the main application entry point (e.g. `src/app.js`) MUST be registered in the following top-to-bottom order:
 
 1. `helmet()` — security headers
 2. `cors()` — cross-origin headers
@@ -20,6 +20,8 @@ The middleware in the main application entry point (e.g. `src/app.ts`) MUST be r
 8. `userLoggedMiddleware` — auth check (reads `req.cookies`)
 
 All custom Express middlewares MUST reside in `src/infrastructure/middlewares/` and be migrated to TypeScript.
+
+(Previously: Listed `userLoggedMiddleware` in the pipeline; orphaned middlewares are now removed.)
 
 #### Scenario: Helmet headers appear before CORS headers
 
@@ -33,6 +35,24 @@ All custom Express middlewares MUST reside in `src/infrastructure/middlewares/` 
 - GIVEN `cookie-parser` is registered before `userLoggedMiddleware`
 - WHEN a request with a `userEmail` cookie arrives
 - THEN `req.cookies.userEmail` SHALL be available to `userLoggedMiddleware`
+
+### Requirement: Remove Orphaned Session Middlewares
+
+The system MUST remove middleware files that have no active callers: `csrf.ts`, `userLogged.ts`, and `cartCount.ts` from `src/infrastructure/middlewares/`. Before removal, a codebase grep MUST confirm no route, controller, or other middleware imports or references these files.
+
+#### Scenario: Orphaned middleware files are deleted
+
+- GIVEN `csrf.ts`, `userLogged.ts`, and `cartCount.ts` exist in `src/infrastructure/middlewares/`
+- AND a codebase-wide grep confirms no active imports or references
+- WHEN the hardening change is applied
+- THEN these files MUST be deleted from the codebase
+
+#### Scenario: Application starts without orphaned middlewares
+
+- GIVEN the orphaned middleware files have been removed
+- WHEN the application starts and the middleware pipeline initializes
+- THEN the application MUST start without errors
+- AND all remaining middleware MUST function correctly
 
 ### Requirement: Controller Error Propagation
 
@@ -52,31 +72,6 @@ All controller catch blocks MUST propagate errors to the global error handler vi
 - THEN `next(err)` SHALL be called instead
 - AND the client MUST NOT receive the raw `error.message` in the response body
 
-### Requirement: Auth Middleware Uses UserService
-
-The auth middleware (`src/infrastructure/middlewares/userLogged.ts`) MUST NOT call `User.findOne` directly or import database models directly. It SHALL use `UserService.findByEmail(email)` to look up users from the remember-me cookie. The middleware MUST be written in TypeScript.
-
-#### Scenario: userLogged finds user via UserService
-
-- GIVEN a request with `req.cookies.userEmail` set to a valid email
-- WHEN `userLoggedMiddleware` executes
-- THEN it SHALL call `UserService.findByEmail(emailInCookie)`
-- AND the result SHALL be assigned to `res.locals.userLogged`
-
-#### Scenario: userLogged does not import User model
-
-- GIVEN `userLogged.ts` after refactoring
-- WHEN the file is inspected
-- THEN it MUST NOT import database model classes directly
-- AND it MUST NOT call `User.findOne` directly
-
-#### Scenario: Cookie lookup failure does not block request
-
-- GIVEN `UserService.findByEmail` returns null (no user for cookie email)
-- WHEN `userLoggedMiddleware` executes
-- THEN `res.locals.userLogged` SHALL remain unset
-- AND `next()` SHALL be called without error
-
 ### Requirement: Global Error Handler Activation
 
 The `errorHandler` middleware (located at `src/infrastructure/middlewares/errorHandler.ts`) MUST be registered as the last middleware in the Express stack and MUST catch all unhandled errors propagated through `next(err)`. The middleware MUST be written in TypeScript.
@@ -93,3 +88,10 @@ The `errorHandler` middleware (located at `src/infrastructure/middlewares/errorH
 - GIVEN all controllers use `next(err)` instead of inline 500 responses
 - WHEN any controller throws an unhandled error
 - THEN the global error handler SHALL produce a consistent error response
+
+## Removed Requirements
+
+### Requirement: Auth Middleware Uses UserService
+
+(Reason: The legacy `userLogged.ts` middleware is removed as it was an orphaned session middleware with no active callers.)
+(Migration: Removed `userLoggedMiddleware` from the application entry point and pipeline.)

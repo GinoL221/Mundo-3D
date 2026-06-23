@@ -33,4 +33,31 @@ describe('Dead Code Removal', () => {
       expect(fs.existsSync(filePath)).toBe(false);
     });
   });
+
+  describe('Deleted orphaned middlewares', () => {
+    test('should not have src/infrastructure/middlewares/csrf.ts', () => {
+      const filePath = path.join(__dirname, '../infrastructure/middlewares/csrf.ts');
+      expect(fs.existsSync(filePath)).toBe(false);
+    });
+
+    test('should not have src/infrastructure/middlewares/__tests__/csrf.test.ts', () => {
+      const filePath = path.join(__dirname, '../infrastructure/middlewares/__tests__/csrf.test.ts');
+      expect(fs.existsSync(filePath)).toBe(false);
+    });
+
+    test('should not have src/infrastructure/middlewares/userLogged.ts', () => {
+      const filePath = path.join(__dirname, '../infrastructure/middlewares/userLogged.ts');
+      expect(fs.existsSync(filePath)).toBe(false);
+    });
+
+    test('should not have src/infrastructure/middlewares/cartCount.ts', () => {
+      const filePath = path.join(__dirname, '../infrastructure/middlewares/cartCount.ts');
+      expect(fs.existsSync(filePath)).toBe(false);
+    });
+
+    test('should not have src/infrastructure/middlewares/__tests__/cartCount.test.ts', () => {
+      const filePath = path.join(__dirname, '../infrastructure/middlewares/__tests__/cartCount.test.ts');
+      expect(fs.existsSync(filePath)).toBe(false);
+    });
+  });
 });

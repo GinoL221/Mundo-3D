@@ -8,8 +8,14 @@ import {
   apiAuthMiddleware,
   adminGuard
 } from '../auth';
+import { getJwtSecret } from '../../security/JwtSecret';
+import { Role } from '../../../domain/Role';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret';
+jest.mock('../../security/JwtSecret', () => ({
+  getJwtSecret: jest.fn(() => 'test-only-jwt-secret-not-for-production'),
+}));
+
+const JWT_SECRET = getJwtSecret();
 
 describe('isUser middleware', () => {
   let req: Partial<Request>;
@@ -183,29 +189,29 @@ describe('adminGuard', () => {
 
   it('returns 403 JSON error for authenticated API requests if role is not admin', () => {
     (req as any).path = '/api/users';
-    req.user = { userId: 2, email: 'user@test.com', category: 'User', idRole: 2 };
+    req.user = { userId: 2, email: 'user@test.com', category: 'User', idRole: Role.USER };
     adminGuard(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith({ error: 'Acceso restringido a administradores' });
   });
 
   it('renders 403Forbidden page for authenticated web requests if role is not admin', () => {
-    req.session!.userLogged = { idUser: 2, firstName: 'John', lastName: 'Doe', email: 'user@test.com', image: null, idRole: 2, category: 'User' };
+    req.session!.userLogged = { idUser: 2, firstName: 'John', lastName: 'Doe', email: 'user@test.com', image: null, idRole: Role.USER, category: 'User' };
     adminGuard(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.render).toHaveBeenCalledWith(expect.stringContaining('403Forbidden.ejs'), expect.any(Object));
   });
 
-  it('calls next() for admin web sessions (role 1)', () => {
-    req.session!.userLogged = { idUser: 1, firstName: 'Admin', lastName: 'User', email: 'admin@test.com', image: null, idRole: 1, category: 'Admin' };
+  it('calls next() for admin web sessions (Role.ADMIN)', () => {
+    req.session!.userLogged = { idUser: 1, firstName: 'Admin', lastName: 'User', email: 'admin@test.com', image: null, idRole: Role.ADMIN, category: 'Admin' };
     adminGuard(req as Request, res as Response, next);
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.redirect).not.toHaveBeenCalled();
   });
 
-  it('calls next() for admin API requests (role 1)', () => {
+  it('calls next() for admin API requests (Role.ADMIN)', () => {
     (req as any).path = '/api/users';
-    req.user = { userId: 1, email: 'admin@test.com', category: 'Admin', idRole: 1 };
+    req.user = { userId: 1, email: 'admin@test.com', category: 'Admin', idRole: Role.ADMIN };
     adminGuard(req as Request, res as Response, next);
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();

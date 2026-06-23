@@ -11,56 +11,97 @@ project:
   repository: https://github.com/Grupo-7-DH/Mundo-3D
 
 stack:
-  language: JavaScript (Node.js)
-  runtime: node
-  framework: Express.js 4.x
+  language: JavaScript + TypeScript (mixed, migrating to TS)
+  runtime: node (>=22.12.0)
+  backend_framework: Express.js 4.x
+  frontend_framework: Astro 6.x
   orm: Sequelize 6.x
   database: MySQL (mysql2 driver)
-  template_engine: EJS
+  auth: JWT (jsonwebtoken) + bcryptjs + express-session
+  logging: Pino (pino-pretty for dev)
+  security: Helmet, CORS, CSRF, express-rate-limit
+  file_upload: multer
+  validation: express-validator
+  state_management: Nanostores (frontend)
   package_manager: npm
+
+architecture:
+  style: Hexagonal / Clean Architecture
+  layers:
+    domain:
+      entities: src/domain/entities/        # Product, User, Category, Franchise, ShoppingCart, RememberToken
+      ports: src/domain/ports/              # IRepository interfaces, IPasswordHasher, ITokenHasher
+      exceptions: src/domain/exceptions/    # Domain-specific exceptions
+    application:
+      use_cases: src/application/use-cases/ # 16 use cases
+      dtos: src/application/dtos/           # DTOs per aggregate
+    infrastructure:
+      controllers: src/infrastructure/controllers/  # API controllers
+      repositories: src/infrastructure/repositories/ # Sequelize implementations
+      routes: src/infrastructure/routes/api/        # Express routers
+      middlewares: src/infrastructure/middlewares/  # auth, csrf, validators, etc.
+      security: src/infrastructure/security/        # Bcrypt, Sha256 adapters
+      logging: src/infrastructure/logging/          # Pino logger
+    database:
+      models: src/database/models/          # Sequelize model definitions
+      config: src/database/config/
+      seeds: src/database/seed.js
+    frontend:
+      framework: Astro 6.x
+      components: frontend/src/components/
+      pages: frontend/src/pages/
+      layouts: frontend/src/layouts/
+      store: frontend/src/store/
+      styles: frontend/src/styles/
 
 structure:
   entrypoint: index.js
   app: src/app.js
-  routes: src/routes/
-  controllers: src/controllers/
-  models: src/database/models/
-  views: src/views/
-  middleware: src/middlewares/
-  public: public/
-  seed: src/database/seed.js
-  config: src/database/config/
+  types: src/types/
 
 conventions:
-  module_system: CommonJS (require/module.exports)
-  model_pattern: Sequelize define function exported as factory (sequelize) => Model
-  routing: Express Router modules
-  views: EJS templates organized by domain (users/, products/, partials/)
-  css_framework: None detected (custom/inline)
-  auth: express-session + bcryptjs + cookie-parser
-  file_upload: multer
-  validation: express-validator
-  logging: morgan
+  module_system_backend: CommonJS (require/module.exports) with TS modules via ts-node
+  module_system_frontend: ESM (import/export)
+  entity_pattern: TypeScript classes in domain/entities
+  port_pattern: TypeScript interfaces in domain/ports (I-prefix)
+  repository_pattern: Sequelize implementations of port interfaces
+  use_case_pattern: One class per file, named *UseCase.ts
+  controller_pattern: One class per aggregate, named *ApiController.ts
+  routing: Express Router modules in infrastructure/routes/api/
+  auth: JWT-based API auth + session-based for legacy routes
+  css_framework: Custom CSS design system
 
 testing:
   strict_tdd: true
-  runner: Jest
-  coverage_tool: Jest
+  runner: Jest 30.x
+  coverage_tool: Jest built-in
   test_command: "npm test"
-  status: |
-    Jest is configured in package.json with scripts.test='jest'.
-    There are 5 test suites in the codebase.
-    Strict TDD is enabled.
+  test_layers:
+    - unit: domain entities, use cases, DTOs
+    - integration: repositories (Sequelize), controllers, middlewares
+    - e2e: API routes via supertest
+  test_count: 50 test files
+  coverage_threshold:
+    branches: 50
+    functions: 50
+    lines: 50
+    statements: 50
+  transform:
+    js: babel-jest
+    ts: ts-jest (isolatedModules)
+  test_match:
+    - "**/src/**/*.test.js"
+    - "**/src/**/*.test.ts"
+
+quality:
+  linter: ESLint 10.x (flat config)
+  formatter: "Prettier 3.x (singleQuote, trailingComma: all, printWidth: 100)"
+  type_checker: TypeScript 6.x (strict mode, target ES2022)
+  ci: GitHub Actions (lint + test on Node 22)
 
 persistence:
   mode: hybrid
   store: openspec/
-
-context: |
-  Tech stack: JavaScript/Express/Sequelize/EJS
-  Architecture: MVC (controllers, routes, views, database/models)
-  Testing: Jest (5 test suites)
-  Style: ESLint & Prettier
 
 rules:
   proposal:
@@ -75,12 +116,12 @@ rules:
     - Group by phase, use hierarchical numbering
     - Keep tasks completable in one session
   apply:
-    - Follow existing code patterns
-    tdd: true
-    test_command: "npm test"
+    - Follow hexagonal architecture layer boundaries
+    - Domain entities MUST NOT import from infrastructure
+    - Use cases depend on ports (interfaces), not concrete implementations
+    - TDD enabled, test_command = npm test
   verify:
-    test_command: "npm test"
-    build_command: ""
-    coverage_threshold: 0
+    - test_command = npm test
+    - coverage_threshold = 50
   archive:
     - Warn before merging destructive deltas

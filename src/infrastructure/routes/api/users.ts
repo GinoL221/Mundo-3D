@@ -7,6 +7,7 @@ import { GetUserByIdUseCase } from '../../../application/use-cases/GetUserByIdUs
 import { RegisterUserUseCase } from '../../../application/use-cases/RegisterUserUseCase';
 import { UserApiController } from '../../controllers/UserApiController';
 import loginLimiter from '../../middlewares/loginLimiter';
+import registerLimiter from '../../middlewares/registerLimiter';
 import { apiAuthMiddleware, adminGuard } from '../../middlewares/auth';
 import { loginValidation, validationsUsers } from '../../middlewares/validators/userValidators';
 import { validationResult } from 'express-validator';
@@ -62,13 +63,7 @@ router.post(
 
 router.post(
   '/users/register',
-  uploadImgUser.single('image'),
-  validationsUsers,
-  controller.register
-);
-
-router.post(
-  '/users',
+  registerLimiter,
   uploadImgUser.single('image'),
   validationsUsers,
   controller.register

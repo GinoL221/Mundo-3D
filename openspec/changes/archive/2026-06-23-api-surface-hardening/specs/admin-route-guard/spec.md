@@ -1,9 +1,6 @@
-# Admin Route Guard Specification
+# Delta for Admin Route Guard
 
-## Purpose
-Restricts access to administrative web routes (such as product creation, editing, deletion, and user deletion) and User API routes to users with administrator privileges (`Role.ADMIN`).
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Authentication and Role Verification
 
