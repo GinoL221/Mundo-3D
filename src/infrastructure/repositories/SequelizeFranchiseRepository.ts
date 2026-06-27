@@ -1,6 +1,6 @@
 import { Franchise } from '../../domain/entities/Franchise';
 import { IFranchiseRepository } from '../../domain/ports/IFranchiseRepository';
-import db, { FranchiseInstance } from '../../database/models/db';
+import db, { FranchiseInstance, FranchiseAttributes } from '../../database/models/db';
 
 export class SequelizeFranchiseRepository implements IFranchiseRepository {
   private toEntity(instance: FranchiseInstance): Franchise {
@@ -21,7 +21,7 @@ export class SequelizeFranchiseRepository implements IFranchiseRepository {
   async create(franchise: Omit<Franchise, 'idFranchise'>): Promise<Franchise> {
     const instance = await db.Franchise.create({
       nameFranchise: franchise.nameFranchise,
-    } as any);
+    } as Partial<FranchiseAttributes>);
     return this.toEntity(instance);
   }
 

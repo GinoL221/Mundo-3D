@@ -1,6 +1,6 @@
 import { User } from '../../domain/entities/User';
 import { IUserRepository } from '../../domain/ports/IUserRepository';
-import db, { UserInstance } from '../../database/models/db';
+import db, { UserInstance, UserAttributes } from '../../database/models/db';
 
 export class SequelizeUserRepository implements IUserRepository {
   private toEntity(instance: UserInstance): User {
@@ -37,7 +37,7 @@ export class SequelizeUserRepository implements IUserRepository {
       email: user.email,
       passwordUser: user.password,
       image: user.image,
-    } as any);
+    } as Partial<UserAttributes>);
     return this.toEntity(instance);
   }
 

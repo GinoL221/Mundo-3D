@@ -10,7 +10,7 @@ describe('RememberToken Model Definition', () => {
       define: defineMock,
     };
 
-    const RememberToken = RememberTokenDefine(mockSequelize);
+    RememberTokenDefine(mockSequelize);
 
     expect(defineMock).toHaveBeenCalledWith(
       'RememberToken',

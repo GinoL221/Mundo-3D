@@ -35,7 +35,6 @@
     "helmet": "8.2.0",
     "jsonwebtoken": "^9.0.2",
     "method-override": "^3.0.0",
-    "morgan": "^1.10.0",
     "multer": "^2.0.2",
     "mysql2": "^3.9.7",
     "pino": "10.3.1",
@@ -50,6 +49,7 @@
     "@types/node": "25.9.2",
     "@types/sequelize": "4.28.20",
     "eslint": "10.4.1",
+    "eslint-config-prettier": "^10.0.1",
     "globals": "17.6.0",
     "jest": "30.4.2",
     "nodemon": "^3.1.0",
@@ -58,6 +58,7 @@
     "supertest": "7.2.2",
     "ts-jest": "29.4.11",
     "ts-node": "10.9.2",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.24.0"
   }
 }

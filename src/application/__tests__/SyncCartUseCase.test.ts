@@ -13,7 +13,7 @@ describe('SyncCartUseCase', () => {
       findByUserId: jest.fn(),
       getDistinctCount: jest.fn(),
       syncCart: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<IShoppingCartRepository>;
 
     productRepoMock = {
       findAll: jest.fn(),

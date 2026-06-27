@@ -5,7 +5,6 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 const express = require('express');
-const morgan = require('morgan');
 const methodOverride = require('method-override');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -16,13 +15,16 @@ if (process.env.NODE_ENV !== 'test') {
   require('ts-node/register');
 }
 
+const requestIdMiddleware = require('./infrastructure/middlewares/requestId').default;
+const requestLoggerMiddleware = require('./infrastructure/middlewares/requestLogger').default;
 const apiRouter = require('./infrastructure/routes/api/index').default;
 
 const server = express();
 
-
-
 const errorHandler = require('./infrastructure/middlewares/errorHandler').default;
+
+// 0. Request correlation ID
+server.use(requestIdMiddleware);
 
 // 1. Security headers (first)
 server.use(helmet());
@@ -58,7 +60,7 @@ server.use(
 server.use(express.static(path.join(__dirname, '../public')));
 
 // 4. Request logging
-server.use(morgan('dev'));
+server.use(requestLoggerMiddleware);
 
 // 5. Body parsing
 server.use(express.urlencoded({ extended: false }));
@@ -71,7 +73,7 @@ server.use(methodOverride('_method'));
 server.use('/api', apiRouter);
 
 // Ruta 404
-server.use((req, res, next) => {
+server.use((req, res) => {
   res.status(404).json({ error: 'Not Found' });
 });
 

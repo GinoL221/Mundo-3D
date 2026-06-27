@@ -1,5 +1,4 @@
 const { initializeModels } = require('../index');
-const Sequelize = require('sequelize');
 
 jest.mock('sequelize', () => {
   const mSequelize = jest.fn(() => ({

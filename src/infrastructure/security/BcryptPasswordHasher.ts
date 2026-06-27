@@ -1,4 +1,4 @@
-// @ts-ignore
+// @ts-expect-error: bcryptjs does not provide native TypeScript types in all environments
 import bcryptjs from 'bcryptjs';
 import { IPasswordHasher } from '../../domain/ports/IPasswordHasher';
 

@@ -2,7 +2,7 @@ import { Product } from '../../domain/entities/Product';
 import { Category } from '../../domain/entities/Category';
 import { Franchise } from '../../domain/entities/Franchise';
 import { IProductRepository } from '../../domain/ports/IProductRepository';
-import db, { ProductInstance } from '../../database/models/db';
+import db, { ProductInstance, ProductAttributes } from '../../database/models/db';
 
 export class SequelizeProductRepository implements IProductRepository {
   private toEntity(instance: ProductInstance): Product {
@@ -92,7 +92,7 @@ export class SequelizeProductRepository implements IProductRepository {
       image: product.image,
       idCategory: product.idCategory,
       idFranchise: product.idFranchise,
-    } as any);
+    } as Partial<ProductAttributes>);
 
     const created = await this.findById(instance.idProduct);
     if (!created) {

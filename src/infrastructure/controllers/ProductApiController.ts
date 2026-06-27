@@ -24,8 +24,8 @@ export class ProductApiController {
       const id = parseInt(req.params.id as string, 10);
       const product = await this.getProductByIdUseCase.execute(id);
       res.json(product);
-    } catch (error: any) {
-      if (error.message === 'Product not found') {
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Product not found') {
         res.status(404).json({ error: 'Producto no encontrado' });
         return;
       }
@@ -37,8 +37,8 @@ export class ProductApiController {
     try {
       const product = await this.getLatestProductUseCase.execute();
       res.json(product);
-    } catch (error: any) {
-      if (error.message === 'Product not found') {
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Product not found') {
         res.status(404).json({ error: 'No hay productos disponibles.' });
         return;
       }

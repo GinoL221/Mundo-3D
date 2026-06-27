@@ -2,6 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import { GetCartByUserIdUseCase } from '../../application/use-cases/GetCartByUserIdUseCase';
 import { SyncCartUseCase } from '../../application/use-cases/SyncCartUseCase';
 
+interface RawCartItem {
+  idProduct?: number;
+  productId?: number;
+  quantity: number;
+}
+
 export class CartApiController {
   constructor(
     private readonly getCartByUserIdUseCase: GetCartByUserIdUseCase,
@@ -31,9 +37,9 @@ export class CartApiController {
         return;
       }
 
-      const rawItems = req.body.items || [];
-      const items = rawItems.map((item: any) => ({
-        productId: typeof item.idProduct === 'number' ? item.idProduct : item.productId,
+      const rawItems = (req.body.items || []) as RawCartItem[];
+      const items = rawItems.map((item: RawCartItem) => ({
+        productId: typeof item.idProduct === 'number' ? item.idProduct : (item.productId ?? 0),
         quantity: item.quantity,
       }));
       await this.syncCartUseCase.execute(userId, items);

@@ -1,6 +1,6 @@
 import { Category } from '../../domain/entities/Category';
 import { ICategoryRepository } from '../../domain/ports/ICategoryRepository';
-import db, { CategoryInstance } from '../../database/models/db';
+import db, { CategoryInstance, CategoryAttributes } from '../../database/models/db';
 
 export class SequelizeCategoryRepository implements ICategoryRepository {
   private toEntity(instance: CategoryInstance): Category {
@@ -21,7 +21,7 @@ export class SequelizeCategoryRepository implements ICategoryRepository {
   async create(category: Omit<Category, 'idCategory'>): Promise<Category> {
     const instance = await db.Category.create({
       nameCategory: category.nameCategory,
-    } as any);
+    } as Partial<CategoryAttributes>);
     return this.toEntity(instance);
   }
 

@@ -1,6 +1,6 @@
 import { RememberToken } from '../../domain/entities/RememberToken';
 import { IRememberTokenRepository } from '../../domain/ports/IRememberTokenRepository';
-import db, { RememberTokenInstance } from '../../database/models/db';
+import db, { RememberTokenInstance, RememberTokenAttributes } from '../../database/models/db';
 
 export class SequelizeRememberTokenRepository implements IRememberTokenRepository {
   private toEntity(instance: RememberTokenInstance): RememberToken {
@@ -19,7 +19,7 @@ export class SequelizeRememberTokenRepository implements IRememberTokenRepositor
       tokenHash: token.tokenHash,
       expiryDate: token.expiryDate,
       createdAt: token.createdAt || new Date(),
-    } as any);
+    } as Partial<RememberTokenAttributes>);
     return this.toEntity(instance);
   }
 
