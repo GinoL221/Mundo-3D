@@ -1,4 +1,5 @@
 import { atom, computed } from 'nanostores';
+import { API_URL } from '../config';
 
 export interface CartItem {
   productId: number;
@@ -50,7 +51,7 @@ async function syncToBackend(items: CartItem[]): Promise<void> {
 
   try {
     const payload = items.map((i) => ({ idProduct: i.productId, quantity: i.quantity }));
-    const res = await fetch('http://localhost:3000/api/cart', {
+    const res = await fetch(`${API_URL}/api/cart`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

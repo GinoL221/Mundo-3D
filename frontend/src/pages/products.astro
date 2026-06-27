@@ -13,6 +13,7 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <script>
+  import { API_URL } from '../config';
   const CATEGORY_IMAGES: Record<string, string> = {
     Figura: 'Figura',
     Busto: 'Busto',
@@ -30,7 +31,7 @@ import Layout from '../layouts/Layout.astro';
     const loadingMsg = document.getElementById('loading-msg');
 
     try {
-      const res = await fetch('http://localhost:3000/api/products');
+      const res = await fetch(`${API_URL}/api/products`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const resData = await res.json();

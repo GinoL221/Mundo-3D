@@ -27,6 +27,7 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <script>
+  import { API_URL } from '../config';
   /**
    * Reads the product id from the URL.
    * Supports both:
@@ -54,7 +55,7 @@ import Layout from '../layouts/Layout.astro';
     }
 
     try {
-      const res = await fetch(`http://localhost:3000/api/product/${productId}`);
+      const res = await fetch(`${API_URL}/api/product/${productId}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const product = await res.json();
