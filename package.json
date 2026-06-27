@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "frontend:dev": "pnpm --filter frontend dev",
+    "frontend:build": "pnpm --filter frontend build",
     "test": "jest",
     "lint": "eslint src/",
     "format": "prettier --write \"src/**/*.js\"",
@@ -18,6 +20,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "packageManager": "pnpm@11.0.9",
+  "engines": {
+    "node": ">=22"
+  },
   "bugs": {
     "url": "https://github.com/Grupo-7-DH/Mundo-3D/issues"
   },

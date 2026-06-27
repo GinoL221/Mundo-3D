@@ -1,0 +1,14 @@
+packages:
+  - '.'
+  - 'frontend'
+
+# Security Hardening (npm/pnpm Security Hardening — Protocolo 2026)
+minimumReleaseAge: 10080
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  - semver@6.3.1
+strictDepBuilds: true
+blockExoticSubdeps: true
+
+allowBuilds:
+  esbuild: true

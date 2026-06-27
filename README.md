@@ -7,13 +7,11 @@ Mundo3D es un e-commerce moderno y desacoplado, especializado en la venta de pro
 ## Inicio Rápido (Quick Start)
 
 ### 1. Clonar e Instalar
-Cloná el repositorio e instalá las dependencias de la API REST (root) y del frontend (carpeta `frontend`):
+Cloná el repositorio e instalá las dependencias utilizando pnpm workspaces:
 ```bash
 git clone https://github.com/GinoL221/Mundo-3D.git
 cd Mundo-3D
-npm install
-cd frontend && npm install
-cd ..
+pnpm install
 ```
 
 ### 2. Configurar Entorno
@@ -32,11 +30,10 @@ DB_HOST=localhost
 Necesitás correr ambos servidores en paralelo en terminales distintas:
 ```bash
 # Terminal 1: Iniciar API REST Express (Puerto 3000)
-npm run dev
+pnpm run dev
 
 # Terminal 2: Iniciar Frontend Astro (Puerto 4321)
-cd frontend
-npm run dev
+pnpm --filter frontend dev
 ```
 
 ---
@@ -102,7 +99,7 @@ El proyecto utiliza un sistema de diseño estético **PICO-8 pixel art**:
 El backend cuenta con una suite completa de pruebas unitarias e integración en Jest bajo la metodología **Strict TDD**:
 ```bash
 # Correr todas las pruebas unitarias e integración
-npm test
+pnpm test
 ```
 * **Estado:** 48 suites de pruebas ejecutadas de forma limpia (207 tests pasando), 0 fallados, 0 omitidos.
 
