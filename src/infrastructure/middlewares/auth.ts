@@ -5,7 +5,11 @@ import { getJwtSecret } from '../security/JwtSecret';
 import { Role } from '../../domain/Role';
 
 export const isUser = (req: Request, res: Response, next: NextFunction): void => {
-  res.locals.isLogged ? next() : res.redirect('/login');
+  if (res.locals.isLogged) {
+    next();
+  } else {
+    res.redirect('/login');
+  }
 };
 
 export const guestMiddleware = (req: Request, res: Response, next: NextFunction): void => {
