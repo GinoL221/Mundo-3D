@@ -58,3 +58,9 @@ The E2E testing suite MUST validate guest shopping cart interactions, header car
 - GIVEN a guest user has items in their cart and is on the cart page
 - WHEN they click the "Proceed to Checkout" button
 - THEN the system MUST redirect them to the login page to authenticate before completing checkout
+
+## Technical Notes & CI Infrastructure
+
+### CI Workflow Warnings (Infrastructure Debt)
+- **Deprecation Warning**: The GHA workflow displays a warning regarding Node.js 20 deprecation because actions (`actions/checkout@v4`, `actions/setup-node@v4`, `actions/cache@v4`, `pnpm/action-setup@v4`) target Node.js 20.
+- **Resolution Strategy**: Upgrading these actions to Node.js 24 compatible versions (e.g. `@v5` / `@v6`) is deferred. Specifically, `pnpm/action-setup@v6` has reported issues with monorepo root config parsing. It is advised to keep `@v4` for stability and perform upgrades once newer stable minor versions are released.
