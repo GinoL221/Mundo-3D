@@ -97,6 +97,18 @@ import Layout from '../layouts/Layout.astro';
     resetInterval();
   })();
 
+  const CATEGORY_IMAGES: Record<string, string> = {
+    Figura: 'Figura',
+    Busto: 'Busto',
+    Llavero: 'Llavero',
+    Máscara: 'Máscara',
+    Otras: 'Otras',
+  };
+
+  function getCategoryImg(categoryName: string): string {
+    return CATEGORY_IMAGES[categoryName] || 'Otras';
+  }
+
   // Dynamic product grid
   async function loadProducts(): Promise<void> {
     const container = document.getElementById('products-container');
@@ -119,12 +131,13 @@ import Layout from '../layouts/Layout.astro';
       }
 
       const cards = products.map((product: any) => {
-        const catName = product.Category || 'Otras';
+        const catName = product.category || 'Otras';
+        const catImg = getCategoryImg(catName);
         return `
           <article class="product-card">
             <a href="/product?id=${product.idProduct}">
-              <img src="/images/illustrations/${catName}.png" alt="${catName}" class="product-card__category-img"
-                onerror="this.src='/images/illustrations/Otras.png'" />
+              <img src="/images/illustrations/${catImg}.png" alt="${catName}" class="product-card__category-img"
+                onerror="this.onerror=null; this.src='/images/illustrations/Otras.png';" />
               <div class="product-card__body">
                 <h3>${product.nameProduct}</h3>
                 <p class="price">$${product.price}</p>

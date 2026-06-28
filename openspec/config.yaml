@@ -29,23 +29,23 @@ architecture:
   style: Hexagonal / Clean Architecture
   layers:
     domain:
-      entities: src/domain/entities/        # Product, User, Category, Franchise, ShoppingCart, RememberToken
-      ports: src/domain/ports/              # IRepository interfaces, IPasswordHasher, ITokenHasher
-      exceptions: src/domain/exceptions/    # Domain-specific exceptions
+      entities: backend/src/domain/entities/        # Product, User, Category, Franchise, ShoppingCart, RememberToken
+      ports: backend/src/domain/ports/              # IRepository interfaces, IPasswordHasher, ITokenHasher
+      exceptions: backend/src/domain/exceptions/    # Domain-specific exceptions
     application:
-      use_cases: src/application/use-cases/ # 16 use cases
-      dtos: src/application/dtos/           # DTOs per aggregate
+      use_cases: backend/src/application/use-cases/ # 16 use cases
+      dtos: backend/src/application/dtos/           # DTOs per aggregate
     infrastructure:
-      controllers: src/infrastructure/controllers/  # API controllers
-      repositories: src/infrastructure/repositories/ # Sequelize implementations
-      routes: src/infrastructure/routes/api/        # Express routers
-      middlewares: src/infrastructure/middlewares/  # auth, csrf, validators, etc.
-      security: src/infrastructure/security/        # Bcrypt, Sha256 adapters
-      logging: src/infrastructure/logging/          # Pino logger
+      controllers: backend/src/infrastructure/controllers/  # API controllers
+      repositories: backend/src/infrastructure/repositories/ # Sequelize implementations
+      routes: backend/src/infrastructure/routes/api/        # Express routers
+      middlewares: backend/src/infrastructure/middlewares/  # auth, csrf, validators, etc.
+      security: backend/src/infrastructure/security/        # Bcrypt, Sha256 adapters
+      logging: backend/src/infrastructure/logging/          # Pino logger
     database:
-      models: src/database/models/          # Sequelize model definitions
-      config: src/database/config/
-      seeds: src/database/seed.js
+      models: backend/src/database/models/          # Sequelize model definitions
+      config: backend/src/database/config/
+      seeds: backend/src/database/seed.js
     frontend:
       framework: Astro 6.x
       components: frontend/src/components/
@@ -55,9 +55,9 @@ architecture:
       styles: frontend/src/styles/
 
 structure:
-  entrypoint: index.js
-  app: src/app.js
-  types: src/types/
+  entrypoint: backend/index.js
+  app: backend/src/app.js
+  types: backend/src/types/
 
 conventions:
   module_system_backend: CommonJS (require/module.exports) with TS modules via ts-node

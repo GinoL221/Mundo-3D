@@ -4,19 +4,19 @@
 
 ### Requirement: Jest Coverage Collection Configuration
 
-The system SHALL configure Jest to collect coverage from all source files under `src/`, excluding `src/database/seed.js` and `src/app.js`.
+The system SHALL configure Jest to collect coverage from all source files under `backend/src/`, excluding `backend/src/database/seed.js` and `backend/src/app.js`.
 
-The `jest.config.js` MUST include:
-- `collectCoverageFrom`: array of glob patterns targeting `src/**/*.js` with negative patterns for `src/database/seed.js` and `src/app.js`
+The `backend/jest.config.js` MUST include:
+- `collectCoverageFrom`: array of glob patterns targeting `src/**/*.js` (relative to configuration root) with negative patterns for `src/database/seed.js` and `src/app.js`
 - `coverageDirectory`: set to `coverage`
 - `coverageThresholds`: global thresholds set to 50% for branches, functions, lines, and statements
 
 #### Scenario: Coverage is collected from source files only
 
 - GIVEN the Jest configuration is applied
-- WHEN `npm test -- --coverage` is run
-- THEN Jest SHALL collect coverage from files matching `src/**/*.js`
-- AND SHALL exclude `src/database/seed.js` and `src/app.js` from coverage collection
+- WHEN `pnpm --filter backend test` is run with coverage enabled
+- THEN Jest SHALL collect coverage from files matching `backend/src/**/*.js`
+- AND SHALL exclude `backend/src/database/seed.js` and `backend/src/app.js` from coverage collection
 
 #### Scenario: Build fails below 50% coverage
 
@@ -33,10 +33,10 @@ The `jest.config.js` MUST include:
 
 ### Requirement: Coverage Directory Output
 
-The system SHALL output coverage reports to a `coverage/` directory at the project root.
+The system SHALL output coverage reports to a `coverage/` directory at the backend package root (`backend/coverage/`).
 
 #### Scenario: Coverage directory is created on run
 
-- GIVEN Jest is configured with `coverageDirectory: 'coverage'`
-- WHEN `npm test -- --coverage` is run
-- THEN a `coverage/` directory SHALL be created in the project root containing the HTML and JSON coverage reports
+- GIVEN Jest is configured with `coverageDirectory: 'coverage'` inside `backend/jest.config.js`
+- WHEN `pnpm --filter backend test` is run with coverage enabled
+- THEN a `coverage/` directory SHALL be created in the `backend/` package root containing the HTML and JSON coverage reports

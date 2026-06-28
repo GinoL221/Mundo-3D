@@ -1,5 +1,5 @@
 packages:
-  - '.'
+  - 'backend'
   - 'frontend'
 
 # Security Hardening (npm/pnpm Security Hardening — Protocolo 2026)

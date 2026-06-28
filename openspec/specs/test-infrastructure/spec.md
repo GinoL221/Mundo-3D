@@ -10,7 +10,7 @@ Establish stable, fast, and type-safe test execution patterns for `Mundo-3D` and
 
 Jest test executions MUST compile modules quickly without triggering test runner timeouts.
 1. **Isolated Modules Compilation**: The `ts-jest` transformer in Jest MUST be configured with `isolatedModules: true` to bypass type-checking during test transpilations, relying on an independent type check step.
-2. **Conditional ts-node Registration**: Dynamic TS loading hooks (`ts-node/register`) in `src/app.js` MUST NOT register when the application runs in a test environment (`process.env.NODE_ENV === 'test'`), avoiding duplicate compilation hooks.
+2. **Conditional ts-node Registration**: Dynamic TS loading hooks (`ts-node/register`) in `backend/src/app.js` MUST NOT register when the application runs in a test environment (`process.env.NODE_ENV === 'test'`), avoiding duplicate compilation hooks.
 3. **No Redundant Module Resets**: Test files that do not dynamically re-evaluate modules MUST NOT call `jest.resetModules()`.
 
 #### Scenario: Compiling TS tests with Jest
@@ -21,7 +21,7 @@ Jest test executions MUST compile modules quickly without triggering test runner
 
 #### Scenario: Launching App in Test Environment
 - GIVEN the application is required in a test file (e.g., `supertest(app)`)
-- WHEN `src/app.js` is imported
+- WHEN `backend/src/app.js` is imported
 - THEN `ts-node/register` MUST NOT be registered.
 
 ---
@@ -29,7 +29,7 @@ Jest test executions MUST compile modules quickly without triggering test runner
 ### Requirement: Middleware Type Safety
 
 Middlewares written in TypeScript MUST compile successfully under strict compiler configuration without using the `any` type.
-Specifically, in `src/infrastructure/middlewares/userLogged.ts`, variables representing logged-in users assigned to `req.session.userLogged` MUST be explicitly typed or casted to their respective type contracts (`Partial<UserDTO> & Record<string, unknown>`) instead of using `any`.
+Specifically, in `backend/src/infrastructure/middlewares/userLogged.ts`, variables representing logged-in users assigned to `req.session.userLogged` MUST be explicitly typed or casted to their respective type contracts (`Partial<UserDTO> & Record<string, unknown>`) instead of using `any`.
 
 #### Scenario: Assigning logged user to session
 - GIVEN a verified `user` DTO object of type `UserDTO`
