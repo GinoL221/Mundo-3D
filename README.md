@@ -1,13 +1,13 @@
 # Mundo3D
 
-Mundo3D es un e-commerce moderno y desacoplado, especializado en la venta de productos personalizados mediante impresión 3D. El proyecto cuenta con un frontend estático e interactivo en Astro y una API REST headless en Express/TypeScript estructurada bajo los principios de Arquitectura Limpia/Hexagonal.
+Mundo3D es un e-commerce moderno y desacoplado, especializado en la venta de productos personalizados mediante impresión 3D. El proyecto está estructurado como un monorepo simétrico administrado con `pnpm`, compuesto por un frontend estático e interactivo en Astro y una API REST headless en Express/TypeScript bajo arquitectura limpia/hexagonal.
 
 ---
 
 ## Inicio Rápido (Quick Start)
 
 ### 1. Clonar e Instalar
-Cloná el repositorio e instalá las dependencias utilizando pnpm workspaces:
+Cloná el repositorio e instalá las dependencias desde la raíz del monorepo:
 ```bash
 git clone https://github.com/GinoL221/Mundo-3D.git
 cd Mundo-3D
@@ -15,7 +15,7 @@ pnpm install
 ```
 
 ### 2. Configurar Entorno
-Creá un archivo `.env` en la raíz del proyecto basándote en `.env.example`:
+Creá el archivo de configuración `.env` dentro de la carpeta `backend/` basándote en `backend/.env.example`:
 ```env
 PORT=3000
 JWT_SECRET=tu_secreto_super_seguro
@@ -27,39 +27,41 @@ DB_HOST=localhost
 ```
 
 ### 3. Levantar los Servidores
-Necesitás correr ambos servidores en paralelo en terminales distintas:
+Podés correr ambos entornos de desarrollo (backend y frontend) de la siguiente manera:
 ```bash
-# Terminal 1: Iniciar API REST Express (Puerto 3000)
-pnpm run dev
+# Iniciar la API REST Express (Servidor backend en el puerto 3000)
+pnpm dev
 
-# Terminal 2: Iniciar Frontend Astro (Puerto 4321)
-pnpm --filter frontend dev
+# Iniciar el Frontend Astro (Servidor de desarrollo en el puerto 4321)
+pnpm frontend:dev
 ```
 
 ---
 
-## Arquitectura del Proyecto
+## Estructura del Monorepo
 
-El proyecto está estructurado como un **Monorepo Desacoplado**:
+El proyecto implementa una estructura de **Monorepo Simétrico**:
 
 ```
 Mundo-3D/
+├── backend/              # API REST Headless (Express.js + TypeScript)
+│   ├── src/              # Código fuente de arquitectura limpia/hexagonal
+│   │   ├── domain/       # Entidades puras de dominio y puertos (TypeScript)
+│   │   ├── application/  # Casos de uso de negocio (Auth, Cart, Products)
+│   │   └── infrastructure/ # Controladores API, adaptadores Sequelize y middlewares
+│   ├── public/           # Archivos estáticos servidos por Express (pixel art localizados)
+│   ├── tsconfig.json     # Configuración de compilación de TypeScript
+│   └── package.json      # Dependencias del servidor backend
 ├── frontend/             # Aplicación Frontend (Astro 6.x)
 │   ├── src/
-│   │   ├── components/   # Componentes reactivos (Header, Footer)
-│   │   ├── layouts/      # Layout base con theme-inject
-│   │   ├── pages/        # Páginas estáticas (SSG) e interactivas (Login, Register, Cart)
+│   │   ├── components/   # Componentes interactivos y reutilizables
+│   │   ├── layouts/      # Estructura de layout base con theme-inject
+│   │   ├── pages/        # Rutas estáticas (SSG) y dinámicas (Login, Cart, etc.)
 │   │   ├── store/        # Nano Stores para sincronización asíncrona de Carrito
 │   │   └── styles/       # Sistema de diseño modular en Vanilla CSS
-│   └── public/           # Assets públicos pixel art localizados
-├── src/                  # API REST Headless (Express.js + TypeScript)
-│   ├── domain/           # Entidades puras y puertos (TypeScript)
-│   ├── application/      # Casos de uso de negocio (Auth, Cart, Products)
-│   ├── infrastructure/   # Controladores API, repositorios Sequelize y middlewares
-│   └── database/
-│       ├── models/       # Modelos Sequelize mapeados (camelCase ↔ snake_case)
-│       └── seed.js       # Script de seeding automático en base de datos
-└── openspec/             # Especificaciones de diseño bajo metodología SDD
+│   └── public/           # Assets estáticos y assets locales
+├── openspec/             # Especificaciones de diseño del sistema bajo metodología SDD
+└── package.json          # Orquestador del monorepo (scripts globales y Prettier)
 ```
 
 ---
@@ -68,6 +70,7 @@ Mundo-3D/
 
 | Capa | Tecnologías | Propósito |
 |---|---|---|
+| **Root (Monorepo)** | pnpm Workspaces, Prettier | Orquestación de dependencias y formato de código global. |
 | **Frontend** | Astro 6.x, Vanilla CSS, HTML5, Nano Stores | Generación de páginas SSG y manejo reactivo del carrito de compras. |
 | **Backend** | Node.js, Express.js, TypeScript | API REST Headless, JWT, CORS. |
 | **Persistencia** | MySQL, Sequelize 6.x (ORM) | Modelos relacionales con mapeo camelCase en código y snake_case en DB. |
@@ -79,7 +82,7 @@ Mundo-3D/
 
 - **Autenticación:** JWT con Bearer Token y almacenamiento local en `localStorage` (sin sesiones en cookies del servidor).
 - **Carrito de Compras Asíncrono:** Carrito reactivo del lado del cliente hidratado por Nano Stores con sincronización en tiempo real mediante `/api/cart`.
-- **Pre-rendering SSG:** Páginas estáticas informativas (Sobre Nosotros, FAQ, Ayuda, etc.) pre-renderizadas en build-time con Astro para velocidad de carga máxima.
+- **Pre-rendering SSG:** Páginas estáticas informativas pre-renderizadas en build-time con Astro para velocidad de carga máxima.
 - **Validación Robusta (TDD):** Validación de formularios en frontend y backend (fuerza de contraseña en tiempo real, validación multipart en subida de imágenes de productos y perfiles).
 
 ---
@@ -96,12 +99,12 @@ El proyecto utiliza un sistema de diseño estético **PICO-8 pixel art**:
 
 ## Pruebas (Testing)
 
-El backend cuenta con una suite completa de pruebas unitarias e integración en Jest bajo la metodología **Strict TDD**:
+El backend cuenta con una suite completa de pruebas unitarias e integración en Jest bajo la metodología **Strict TDD** ejecutadas recursivamente:
 ```bash
-# Correr todas las pruebas unitarias e integración
+# Correr todas las pruebas unitarias e integración de forma recursiva en el monorepo
 pnpm test
 ```
-* **Estado:** 48 suites de pruebas ejecutadas de forma limpia (207 tests pasando), 0 fallados, 0 omitidos.
+* **Estado:** 52 suites de pruebas ejecutadas de forma limpia (244 tests pasando), 0 fallados, 0 omitidos.
 
 ---
 
