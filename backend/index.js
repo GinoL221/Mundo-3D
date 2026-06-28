@@ -17,21 +17,27 @@ const PORT = process.env.PORT || 3031;
 
 const { seedInitialData } = require("./src/database/seed");
 
-// Crear la base de datos si no existe y luego iniciar el servidor
-const db = require("./src/database/models/db");
+const env = process.env.NODE_ENV || "development";
 
-ensureDatabaseExists("development")
-  .then(() => db.sequelize.sync({ alter: true }))
-  .then(() => seedInitialData(db))
-  .then(() => {
-    server.listen(PORT, () => {
-      console.log(`El servidor esta corriendo en http://localhost:${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error(
-      "Error al crear la base de datos, sincronizar modelos o insertar datos iniciales:",
-      err
-    );
-    process.exit(1);
+if (env === "test") {
+  server.listen(PORT, () => {
+    console.log(`El servidor de prueba esta corriendo en http://localhost:${PORT}`);
   });
+} else {
+  ensureDatabaseExists("development")
+    .then(() => db.sequelize.sync({ alter: true }))
+    .then(() => seedInitialData(db))
+    .then(() => {
+      server.listen(PORT, () => {
+        console.log(`El servidor esta corriendo en http://localhost:${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error(
+        "Error al crear la base de datos, sincronizar modelos o insertar datos iniciales:",
+        err
+      );
+      process.exit(1);
+    });
+}
+

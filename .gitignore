@@ -142,3 +142,7 @@ Thumbs.db
 # IDE / Editor configuration
 .vscode/
 .idea/
+
+# User uploaded images
+backend/public/img/users/*
+!backend/public/img/users/default-avatar.png

@@ -85,4 +85,20 @@ import Layout from '../layouts/Layout.astro';
 
   renderCart();
   window.addEventListener('cart-updated', renderCart);
+
+  // Checkout click handler
+  const checkoutBtn = document.querySelector('.cart__btn-checkout');
+  if (checkoutBtn) {
+    checkoutBtn.addEventListener('click', () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login';
+      } else {
+        alert('¡Compra finalizada con éxito!');
+        localStorage.removeItem('cart');
+        window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count: 0 } }));
+        window.location.href = '/';
+      }
+    });
+  }
 </script>

@@ -11,7 +11,7 @@ const cors = require('cors');
 const path = require('path');
 
 // Register ts-node dynamically to require TypeScript modules in JavaScript
-if (process.env.NODE_ENV !== 'test') {
+if (!process.env.JEST_WORKER_ID) {
   require('ts-node/register');
 }
 

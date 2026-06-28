@@ -10,6 +10,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
     strategy:
       matrix:
         node-version: [22]
@@ -34,5 +43,34 @@ jobs:
       - name: Run linter
         run: pnpm run lint
 
-      - name: Run tests
+      - name: Run unit/integration tests
         run: pnpm test
+
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "PLAYWRIGHT_VERSION=$(pnpm --filter e2e exec playwright --version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter e2e exec playwright install --with-deps
+
+      - name: Install Playwright System Dependencies (if cached)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter e2e exec playwright install-deps
+
+      - name: Run E2E tests
+        run: pnpm run test:e2e
+        env:
+          DB_HOST: 127.0.0.1
+          DB_USER: root
+          DB_PASS: ""
+

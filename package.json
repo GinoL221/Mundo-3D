@@ -12,7 +12,9 @@
     "format": "prettier --write \"backend/src/**/*.{js,ts}\" \"frontend/src/**/*.{js,ts,astro}\"",
     "type-check": "pnpm --filter backend type-check",
     "frontend:dev": "pnpm --filter frontend dev",
-    "frontend:build": "pnpm --filter frontend build"
+    "frontend:build": "pnpm --filter frontend build",
+    "test:e2e": "pnpm --filter e2e test --project=chromium",
+    "test:e2e:all": "pnpm --filter e2e test"
   },
   "devDependencies": {
     "prettier": "3.8.3"

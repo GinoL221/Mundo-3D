@@ -1,12 +1,15 @@
 packages:
   - 'backend'
   - 'frontend'
+  - 'e2e'
+
 
 # Security Hardening (npm/pnpm Security Hardening — Protocolo 2026)
 minimumReleaseAge: 10080
 trustPolicy: no-downgrade
 trustPolicyExclude:
   - semver@6.3.1
+  - undici-types@6.20.0
 strictDepBuilds: true
 blockExoticSubdeps: true
 

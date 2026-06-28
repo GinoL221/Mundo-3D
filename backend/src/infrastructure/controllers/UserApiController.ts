@@ -36,7 +36,18 @@ export class UserApiController {
 
       const token = jwt.sign(payload, getJwtSecret(), { expiresIn: '2h' });
 
-      res.json({ token });
+      res.json({
+        token,
+        user: {
+          idUser: userDto.idUser,
+          firstName: userDto.firstName,
+          lastName: userDto.lastName,
+          email: userDto.email,
+          image: userDto.image,
+          idRole: userDto.idRole,
+          category: userDto.category,
+        }
+      });
     } catch (error) {
       if (error instanceof InvalidCredentialsException) {
         res.status(401).json({ error: 'El email o la contraseña no coinciden' });
@@ -83,7 +94,18 @@ export class UserApiController {
 
       const token = jwt.sign(payload, getJwtSecret(), { expiresIn: '2h' });
 
-      res.status(201).json({ token });
+      res.status(201).json({
+        token,
+        user: {
+          idUser: userDto.idUser,
+          firstName: userDto.firstName,
+          lastName: userDto.lastName,
+          email: userDto.email,
+          image: userDto.image,
+          idRole: userDto.idRole,
+          category: userDto.category,
+        }
+      });
     } catch (error) {
       if (error instanceof UserAlreadyExistsException) {
         res.status(400).json({ error: error.message });
