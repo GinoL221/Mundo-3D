@@ -8,29 +8,16 @@ export interface ProductAttributes {
   price: number;
   descriptionProduct: string | null;
   image: string | null;
-  IDProduct?: number;
-  idCategory_legacy?: number; // just in case
-  idFranchise_legacy?: number; // just in case
-  IDCategory?: number;
-  IDFranchise?: number;
-  NameProduct?: string;
-  Price?: number;
-  DescriptionProduct?: string | null;
-  Image?: string | null;
 }
 
 export interface CategoryAttributes {
   idCategory: number;
   nameCategory: string;
-  IDCategory?: number;
-  NameCategory?: string;
 }
 
 export interface FranchiseAttributes {
   idFranchise: number;
   nameFranchise: string;
-  IDFranchise?: number;
-  NameFranchise?: string;
 }
 
 export interface UserAttributes {
@@ -59,12 +46,6 @@ export interface ShoppingCartAttributes {
   quantity: number;
   unitPrice: number;
   cartStatus: string;
-  IDCart?: number;
-  IDUser?: number;
-  IDProduct?: number;
-  Quantity?: number;
-  UnitPrice?: number;
-  CartStatus?: string;
 }
 
 export interface ProductInstance extends Model<ProductAttributes, Partial<ProductAttributes>>, ProductAttributes {

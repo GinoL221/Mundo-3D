@@ -32,34 +32,5 @@ export class ShoppingCart {
     return this.unitPrice !== activeProductPrice;
   }
 
-  /** @deprecated Use `idCart` instead. */
-  get IDCart(): number {
-    return this.idCart;
-  }
-
-  /** @deprecated Use `idUser` instead. */
-  get IDUser(): number {
-    return this.idUser;
-  }
-
-  /** @deprecated Use `idProduct` instead. */
-  get IDProduct(): number {
-    return this.idProduct;
-  }
-
-  /** @deprecated Use `quantity` instead. */
-  get Quantity(): number {
-    return this.quantity;
-  }
-
-  /** @deprecated Use `unitPrice` instead. */
-  get UnitPrice(): number {
-    return this.unitPrice;
-  }
-
-  /** @deprecated Use `status` instead. */
-  get CartStatus(): string {
-    return this.status;
-  }
 }
 

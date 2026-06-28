@@ -39,32 +39,6 @@ module.exports = (sequelize) => {
     {
       tableName: 'ShoppingCart',
       timestamps: false,
-      getterMethods: {
-        /** @deprecated Use camelCase attribute `idCart` instead. */
-        IDCart() {
-          return this.getDataValue('idCart');
-        },
-        /** @deprecated Use camelCase attribute `idUser` instead. */
-        IDUser() {
-          return this.getDataValue('idUser');
-        },
-        /** @deprecated Use camelCase attribute `idProduct` instead. */
-        IDProduct() {
-          return this.getDataValue('idProduct');
-        },
-        /** @deprecated Use camelCase attribute `quantity` instead. */
-        Quantity() {
-          return this.getDataValue('quantity');
-        },
-        /** @deprecated Use camelCase attribute `unitPrice` instead. */
-        UnitPrice() {
-          return this.getDataValue('unitPrice');
-        },
-        /** @deprecated Use camelCase attribute `cartStatus` instead. */
-        CartStatus() {
-          return this.getDataValue('cartStatus');
-        },
-      },
     },
   );
 

@@ -2,10 +2,8 @@ const ShoppingCartDefine = require('../ShoppingCart');
 const { DataTypes } = require('sequelize');
 
 describe('ShoppingCart Model Definition', () => {
-  it('defines the model with expected camelCase properties, snake_case fields and legacy getterMethods', () => {
-    let getterMethodsObj = {};
+  it('defines the model with expected camelCase properties and snake_case fields', () => {
     const defineMock = jest.fn((name, attributes, options) => {
-      getterMethodsObj = options.getterMethods || {};
       return { name, attributes, options };
     });
     const mockSequelize = {
@@ -54,25 +52,5 @@ describe('ShoppingCart Model Definition', () => {
         timestamps: false,
       })
     );
-
-    // Test legacy getters with a mock context object
-    const mockInstance = {
-      idCart: 1,
-      idUser: 10,
-      idProduct: 20,
-      quantity: 3,
-      unitPrice: 15.5,
-      cartStatus: 'active',
-      getDataValue(key) {
-        return this[key];
-      }
-    };
-
-    expect(getterMethodsObj.IDCart.call(mockInstance)).toBe(1);
-    expect(getterMethodsObj.IDUser.call(mockInstance)).toBe(10);
-    expect(getterMethodsObj.IDProduct.call(mockInstance)).toBe(20);
-    expect(getterMethodsObj.Quantity.call(mockInstance)).toBe(3);
-    expect(getterMethodsObj.UnitPrice.call(mockInstance)).toBe(15.5);
-    expect(getterMethodsObj.CartStatus.call(mockInstance)).toBe('active');
   });
 });
