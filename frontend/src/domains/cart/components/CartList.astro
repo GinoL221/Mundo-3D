@@ -1,0 +1,144 @@
+---
+// CartList Component
+---
+
+<div class="cart__container">
+  <section class="cart__items" id="cart-items-container">
+    <p id="cart-loading" style="text-align:center; padding:2rem;">Cargando carrito...</p>
+  </section>
+
+  <section class="cart__summary" id="cart-summary" style="display:none;">
+    <div class="cart__item-details">
+      <h4>Resumen de su compra</h4>
+      <p class="cart__summary-count" id="cart-count">Cantidad de productos: 0</p>
+      <p class="cart__summary-shipping">Envio: $ 000</p>
+      <h4>Total del carrito: $<span id="cart-total">0</span></h4>
+    </div>
+    <a href="/products" class="cart__btn-continue" style="display:inline-block; text-align:center;">Seguir comprando</a>
+    <button class="cart__btn-checkout" type="button">Finalizar compra</button>
+  </section>
+</div>
+
+<!-- Templates for dynamic rendering -->
+<template id="cart-item-template">
+  <article class="cart__item">
+    <h4 class="cart__item-name"></h4>
+    <div class="cart__item-details">
+      <img class="cart__item-image" src="" alt="" />
+      <p class="cart__item-price"></p>
+      <p class="cart__item-qty"></p>
+      <p class="cart__item-subtotal"></p>
+      <button class="form-card__btn cart__item-remove" style="font-size:0.75rem;" type="button">
+        Eliminar
+      </button>
+    </div>
+  </article>
+</template>
+
+<template id="cart-empty-template">
+  <div class="empty-state" style="text-align:center; padding:2rem;">
+    <img src="/images/illustrations/empty-state.png" alt="Carrito vacío" class="empty-state-img" style="max-width:200px;" />
+    <h2>Tu carrito está vacío</h2>
+    <p><a href="/products">Ver productos</a></p>
+  </div>
+</template>
+
+<script>
+  import { cartItems, cartTotal, CartService } from '../services/CartService';
+
+  function renderCart(): void {
+    const container = document.getElementById('cart-items-container');
+    const summaryEl = document.getElementById('cart-summary');
+    const loadingEl = document.getElementById('cart-loading');
+    const countEl = document.getElementById('cart-count');
+    const totalEl = document.getElementById('cart-total');
+
+    const items = cartItems.get();
+    const total = cartTotal.get();
+
+    if (loadingEl) {
+      loadingEl.remove();
+    }
+
+    if (!container) return;
+
+    // Clear container safely
+    container.innerHTML = '';
+
+    if (items.length === 0) {
+      if (summaryEl) summaryEl.style.display = 'none';
+      const emptyTemplate = document.getElementById('cart-empty-template') as HTMLTemplateElement | null;
+      if (emptyTemplate) {
+        const clone = emptyTemplate.content.cloneNode(true);
+        container.appendChild(clone);
+      }
+      return;
+    }
+
+    const itemTemplate = document.getElementById('cart-item-template') as HTMLTemplateElement | null;
+    if (!itemTemplate) return;
+
+    items.forEach((item) => {
+      const clone = itemTemplate.content.cloneNode(true) as DocumentFragment;
+
+      const nameEl = clone.querySelector('.cart__item-name');
+      const imgEl = clone.querySelector('.cart__item-image') as HTMLImageElement | null;
+      const priceEl = clone.querySelector('.cart__item-price');
+      const qtyEl = clone.querySelector('.cart__item-qty');
+      const subtotalEl = clone.querySelector('.cart__item-subtotal');
+      const removeBtn = clone.querySelector('.cart__item-remove') as HTMLButtonElement | null;
+
+      if (nameEl) nameEl.textContent = item.name;
+      if (imgEl) {
+        imgEl.src = `/img/products/${item.image}`;
+        imgEl.alt = item.name;
+      }
+      if (priceEl) priceEl.textContent = `$ ${item.unitPrice}`;
+      if (qtyEl) qtyEl.textContent = `Cantidad: ${item.quantity}`;
+      if (subtotalEl) {
+        subtotalEl.textContent = `$ ${(item.unitPrice * item.quantity).toFixed(2)}`;
+      }
+
+      if (removeBtn) {
+        removeBtn.addEventListener('click', () => {
+          CartService.removeFromCart(item.productId);
+        });
+      }
+
+      container.appendChild(clone);
+    });
+
+    if (summaryEl) summaryEl.style.display = 'block';
+    if (countEl) countEl.textContent = `Cantidad de productos: ${items.length}`;
+    if (totalEl) totalEl.textContent = total.toFixed(2);
+  }
+
+  // Load initial cart and listen for changes
+  CartService.loadCartFromStorage();
+
+  // Render on initial load
+  renderCart();
+
+  // Listen to store updates
+  cartItems.subscribe(() => {
+    renderCart();
+  });
+
+  // Checkout click handler
+  const checkoutBtn = document.querySelector('.cart__btn-checkout');
+  if (checkoutBtn) {
+    checkoutBtn.addEventListener('click', () => {
+      if (!CartService.hasToken()) {
+        window.location.href = '/login';
+      } else {
+        const success = CartService.checkout();
+        if (success) {
+          alert('¡Compra finalizada con éxito!');
+          window.location.href = '/';
+        } else {
+          alert('Hubo un problema al procesar su compra.');
+        }
+      }
+    });
+  }
+</script>

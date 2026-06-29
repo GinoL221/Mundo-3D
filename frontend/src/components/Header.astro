@@ -63,6 +63,8 @@
 </header>
 
 <script>
+  import { cartItems, CartService } from '../domains/cart';
+
   // Dynamic User Session and UI state hydration
   function updateSessionUI() {
     const token = localStorage.getItem('token');
@@ -128,7 +130,7 @@
       e.preventDefault();
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      localStorage.removeItem('cart'); // Clear cart state as well
+      CartService.clearCart(); // Clear cart state properly
       window.location.href = '/login';
     });
   }
@@ -173,23 +175,22 @@
   function updateCartBadge(): void {
     const badge = document.getElementById('navbar-cart-badge');
     if (!badge) return;
-    try {
-      const rawCart = localStorage.getItem('cart');
-      const cart: any[] = rawCart ? JSON.parse(rawCart) : [];
-      const count = Array.isArray(cart) ? cart.length : 0;
-      if (count > 0) {
-        badge.textContent = String(count);
-        badge.style.display = 'inline-block';
-      } else {
-        badge.style.display = 'none';
-      }
-    } catch {
+    const items = cartItems.get();
+    const count = items.length;
+    if (count > 0) {
+      badge.textContent = String(count);
+      badge.style.display = 'inline-block';
+    } else {
       badge.style.display = 'none';
     }
   }
 
+  // Load initial cart and listen to changes
+  CartService.loadCartFromStorage();
   updateCartBadge();
-  window.addEventListener('cart-updated', updateCartBadge);
-  window.addEventListener('storage', updateCartBadge);
+
+  cartItems.subscribe(() => {
+    updateCartBadge();
+  });
 </script>
 

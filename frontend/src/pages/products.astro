@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { ProductCard } from '../domains/products';
 ---
 
 <Layout title="Productos - Mundo 3D">
@@ -10,10 +11,31 @@ import Layout from '../layouts/Layout.astro';
       <p id="loading-msg" style="text-align:center; padding: 2rem;">Cargando productos...</p>
     </section>
   </main>
+
+  <ProductCard />
+
+  <template id="empty-state-template">
+    <div class="empty-state">
+      <img src="/images/illustrations/empty-state.png" alt="Próximamente" class="empty-state-img" />
+      <h2>Próximamente</h2>
+      <p>Estamos preparando productos increíbles para vos.</p>
+    </div>
+  </template>
+
+  <template id="error-state-template">
+    <div class="empty-state">
+      <img src="/images/illustrations/empty-state.png" alt="Error" class="empty-state-img" />
+      <h2>No se pudo cargar</h2>
+      <p>Verificá tu conexión e intentá de nuevo.</p>
+    </div>
+  </template>
 </Layout>
 
 <script>
   import { API_URL } from '../config';
+  import { adaptAPIProducts } from '../domains/products';
+  import type { APIProduct } from '../domains/products';
+
   const CATEGORY_IMAGES: Record<string, string> = {
     Figura: 'Figura',
     Busto: 'Busto',
@@ -29,54 +51,74 @@ import Layout from '../layouts/Layout.astro';
   async function loadProducts(): Promise<void> {
     const container = document.getElementById('product-grid-container');
     const loadingMsg = document.getElementById('loading-msg');
+    if (!container) return;
 
     try {
       const res = await fetch(`${API_URL}/api/products`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const resData = await res.json();
-      const products = resData?.products;
+      const resData = (await res.json()) as { products: APIProduct[] };
+      const rawProducts = resData?.products || [];
+      const products = adaptAPIProducts(rawProducts);
 
       if (loadingMsg) loadingMsg.remove();
 
-      if (!Array.isArray(products) || products.length === 0) {
-        container!.innerHTML = `
-          <div class="empty-state">
-            <img src="/images/illustrations/empty-state.png" alt="Próximamente" class="empty-state-img" />
-            <h2>Próximamente</h2>
-            <p>Estamos preparando productos increíbles para vos.</p>
-          </div>`;
+      if (products.length === 0) {
+        const emptyTemp = document.getElementById('empty-state-template') as HTMLTemplateElement | null;
+        if (emptyTemp) {
+          const clone = emptyTemp.content.cloneNode(true);
+          container.appendChild(clone);
+        }
         return;
       }
 
-      const cards = products.map((product: any) => {
-        const catName = product.category || 'Otras';
-        const catImg = getCategoryImg(catName);
-        return `
-          <article class="product-card">
-            <a href="/product?id=${product.idProduct}">
-              <img src="/images/illustrations/${catImg}.png" alt="${catName}" class="product-card__category-img"
-                onerror="this.onerror=null; this.src='/images/illustrations/Otras.png';" />
-              <div class="product-card__body">
-                <h3>${product.nameProduct}</h3>
-                <p class="price">$${product.price}</p>
-              </div>
-            </a>
-          </article>`;
-      }).join('');
+      const cardTemp = document.getElementById('product-card-template') as HTMLTemplateElement | null;
+      if (!cardTemp) return;
 
-      container!.innerHTML = cards;
+      const fragment = document.createDocumentFragment();
+      for (const product of products) {
+        const clone = cardTemp.content.cloneNode(true) as DocumentFragment;
+
+        const link = clone.querySelector('.product-card-link') as HTMLAnchorElement | null;
+        const img = clone.querySelector('.product-card__category-img') as HTMLImageElement | null;
+        const name = clone.querySelector('.product-card-name') as HTMLElement | null;
+        const price = clone.querySelector('.product-card-price') as HTMLElement | null;
+
+        if (link) {
+          link.href = `/product?id=${product.id}`;
+        }
+        if (img) {
+          const catName = product.category;
+          const catImg = getCategoryImg(catName);
+          img.src = `/images/illustrations/${catImg}.png`;
+          img.alt = catName;
+          img.addEventListener('error', () => {
+            img.src = '/images/illustrations/Otras.png';
+          });
+        }
+        if (name) {
+          name.textContent = product.name;
+        }
+        if (price) {
+          price.textContent = `$${product.price}`;
+        }
+
+        fragment.appendChild(clone);
+      }
+
+      container.appendChild(fragment);
     } catch (err) {
       if (loadingMsg) loadingMsg.remove();
-      container!.innerHTML = `
-        <div class="empty-state">
-          <img src="/images/illustrations/empty-state.png" alt="Error" class="empty-state-img" />
-          <h2>No se pudo cargar</h2>
-          <p>Verificá tu conexión e intentá de nuevo.</p>
-        </div>`;
+      const errorTemp = document.getElementById('error-state-template') as HTMLTemplateElement | null;
+      if (errorTemp) {
+        container.innerHTML = '';
+        const clone = errorTemp.content.cloneNode(true);
+        container.appendChild(clone);
+      }
       console.error('Error loading products:', err);
     }
   }
 
   loadProducts();
 </script>
+

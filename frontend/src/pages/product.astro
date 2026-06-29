@@ -28,6 +28,10 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
   import { API_URL } from '../config';
+  import { adaptAPIProduct } from '../domains/products';
+  import type { APIProduct } from '../domains/products';
+  import { CartService } from '../domains/cart';
+
   /**
    * Reads the product id from the URL.
    * Supports both:
@@ -58,7 +62,8 @@ import Layout from '../layouts/Layout.astro';
       const res = await fetch(`${API_URL}/api/product/${productId}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const product = await res.json();
+      const rawProduct = await res.json() as APIProduct;
+      const product = adaptAPIProduct(rawProduct);
 
       const titleEl = document.getElementById('product-title');
       const imgEl = document.getElementById('product-img') as HTMLImageElement | null;
@@ -68,34 +73,19 @@ import Layout from '../layouts/Layout.astro';
       const contentEl = document.getElementById('product-content');
       const addBtn = document.getElementById('add-to-cart-btn');
 
-      if (titleEl) titleEl.textContent = product.nameProduct;
+      if (titleEl) titleEl.textContent = product.name;
       if (imgEl) {
         imgEl.src = `/img/products/${product.image}`;
-        imgEl.alt = product.nameProduct;
+        imgEl.alt = product.name;
       }
-      if (nameEl) nameEl.textContent = product.nameProduct;
+      if (nameEl) nameEl.textContent = product.name;
       if (priceEl) priceEl.textContent = `Precio: $${product.price}`;
-      if (descEl) descEl.textContent = product.descriptionProduct || '';
+      if (descEl) descEl.textContent = product.description;
       if (contentEl) contentEl.style.display = 'block';
-      document.title = `${product.nameProduct} - Mundo 3D`;
+      document.title = `${product.name} - Mundo 3D`;
 
       addBtn?.addEventListener('click', () => {
-        const rawCart = localStorage.getItem('cart');
-        let cart: any[] = rawCart ? JSON.parse(rawCart) : [];
-        const existing = cart.find((i: any) => i.productId === product.idProduct);
-        if (existing) {
-          existing.quantity += 1;
-        } else {
-          cart.push({
-            productId: product.idProduct,
-            name: product.nameProduct,
-            image: product.image,
-            unitPrice: product.price,
-            quantity: 1,
-          });
-        }
-        localStorage.setItem('cart', JSON.stringify(cart));
-        window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count: cart.length } }));
+        CartService.addToCart(product);
         const btn = addBtn as HTMLButtonElement;
         const original = btn.textContent;
         btn.textContent = '✔ AGREGADO';
@@ -117,3 +107,4 @@ import Layout from '../layouts/Layout.astro';
 
   loadProduct();
 </script>
+
