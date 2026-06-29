@@ -78,15 +78,29 @@
   display: flex;
   justify-content: flex-end;
   gap: var(--space-md);
+  align-items: center;
 }
 
 .footer__social a {
   color: var(--fg);
   font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.15s;
 }
 
 .footer__social a:hover {
   color: var(--accent);
+}
+
+.footer__social-icon {
+  display: block;
+  filter: grayscale(1) brightness(1.2);
+  transition: filter 0.15s;
+}
+
+.footer__social a:hover .footer__social-icon {
+  filter: none;
 }
 
 /* ── Responsive: Desktop (>= 1024px) ───────────────────────── */

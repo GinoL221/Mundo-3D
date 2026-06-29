@@ -168,9 +168,17 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 18px;
+  padding: var(--space-xs) var(--space-sm);
 }
 
-.cart-link img {
+.cart-link:hover {
+  color: var(--accent);
+}
+
+.cart-link svg {
   image-rendering: pixelated;
 }
 
@@ -210,6 +218,63 @@
 .theme-toggle-btn__icon {
   display: inline-block;
   font-size: 18px;
+}
+
+/* ── CRT Toggle Button (standalone BEM block) ──────────────── */
+.crt-toggle-btn {
+  background-color: var(--surface);
+  color: var(--fg);
+  border: 2px solid var(--fg);
+  padding: var(--space-xs) var(--space-sm);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.crt-toggle-btn:hover {
+  background-color: var(--accent);
+  color: var(--pico-white);
+  border-color: var(--accent);
+}
+
+.crt-toggle-btn__icon {
+  display: inline-block;
+  font-size: 18px;
+}
+
+/* ── JRPG Hover Cursors on Navbar Links ────────────────────── */
+html.crt-theme-active .navbar__link {
+  position: relative;
+  transition: padding-left 0.2s ease-out;
+}
+
+html.crt-theme-active .navbar__link:hover {
+  padding-left: calc(var(--space-sm) + 14px); /* Shift right slightly to make space for arrow */
+}
+
+html.crt-theme-active .navbar__link::before {
+  content: "▶";
+  position: absolute;
+  left: var(--space-sm);
+  opacity: 0;
+  color: var(--accent);
+  transition: opacity 0.2s ease-out;
+  pointer-events: none;
+}
+
+html.crt-theme-active .navbar__link:hover::before {
+  opacity: 1;
+  animation: jrpg-blink 0.8s steps(2, start) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.crt-theme-active .navbar__link:hover::before {
+    animation: none;
+  }
 }
 
 /* ── Responsive: Tablet+ (>= 640px) ────────────────────────── */

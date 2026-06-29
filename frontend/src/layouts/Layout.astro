@@ -51,6 +51,13 @@ const { title = "Mundo 3D" } = Astro.props;
 			(function () {
 				const theme = localStorage.getItem('theme') || 'dark';
 				document.documentElement.setAttribute('data-theme', theme);
+
+				const crtPreference = localStorage.getItem('retro-theme-preference') || 'enabled';
+				if (crtPreference === 'enabled') {
+					document.documentElement.classList.add('crt-theme-active');
+				} else {
+					document.documentElement.classList.remove('crt-theme-active');
+				}
 			})();
 		</script>
 	</head>
@@ -58,5 +65,6 @@ const { title = "Mundo 3D" } = Astro.props;
 		<Header />
 		<slot />
 		<Footer />
+		<div class="crt-overlay"></div>
 	</body>
 </html>

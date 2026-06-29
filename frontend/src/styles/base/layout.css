@@ -2,6 +2,11 @@
    base/layout.css — Container, Main, Body, Typography Defaults
    ============================================================ */
 
+:root {
+  --scanline-opacity: 0.08;
+  --vignette-opacity: 0.15;
+}
+
 /* ── Root ──────────────────────────────────────────────────── */
 html {
   font-size: 16px;
@@ -79,5 +84,57 @@ main {
     padding: var(--space-xl) var(--space-md);
     max-width: 1440px;
     margin: 0 auto;
+  }
+}
+
+/* ── CRT Emulation & Retro Animations ──────────────────────── */
+@keyframes jrpg-blink {
+  0%, 49.9% {
+    opacity: 1;
+  }
+  50%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes crt-flicker {
+  0% {
+    opacity: 0.985;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.985;
+  }
+}
+
+.crt-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  background: 
+    radial-gradient(circle, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, var(--vignette-opacity)) 100%),
+    repeating-linear-gradient(
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, var(--scanline-opacity)) 2px,
+      rgba(0, 0, 0, var(--scanline-opacity)) 4px
+    );
+}
+
+html.crt-theme-active .crt-overlay {
+  display: block;
+  animation: crt-flicker 0.15s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.crt-theme-active .crt-overlay {
+    animation: none;
   }
 }

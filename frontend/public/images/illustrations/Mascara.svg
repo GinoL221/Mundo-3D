@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 32 32" fill="none" style="image-rendering:pixelated">
+  <!-- TOP CROWN ORNAMENT -->
+  <rect x="15" y="1" width="2" height="1" fill="#ffec27"/>
+  <rect x="13" y="2" width="6" height="2" fill="#ffec27"/>
+  <rect x="14" y="4" width="4" height="1" fill="#ffa300"/>
+
+  <!-- MASK MAIN BODY -->
+  <!-- Central column (narrow top/bottom) -->
+  <rect x="8" y="5" width="16" height="22" fill="#ff004d"/>
+  <!-- Wide middle section -->
+  <rect x="6" y="9" width="20" height="14" fill="#ff004d"/>
+
+  <!-- LEFT DEPTH SHADOW -->
+  <rect x="6" y="9" width="2" height="14" fill="#7e2553"/>
+
+  <!-- EYE ARCHES (gold, above each eye) -->
+  <rect x="8" y="10" width="6" height="1" fill="#ffec27"/>
+  <rect x="18" y="10" width="6" height="1" fill="#ffec27"/>
+
+  <!-- LEFT EYE HOLE -->
+  <rect x="8" y="11" width="6" height="5" fill="#000000"/>
+
+  <!-- RIGHT EYE HOLE -->
+  <rect x="18" y="11" width="6" height="5" fill="#000000"/>
+
+  <!-- NOSE BRIDGE -->
+  <rect x="14" y="16" width="4" height="4" fill="#7e2553"/>
+
+  <!-- MOUTH -->
+  <rect x="10" y="22" width="12" height="2" fill="#7e2553"/>
+  <rect x="11" y="22" width="10" height="1" fill="#ff004d"/>
+
+  <!-- CHIN TIES -->
+  <rect x="12" y="27" width="3" height="4" fill="#7e2553"/>
+  <rect x="17" y="27" width="3" height="4" fill="#7e2553"/>
+</svg>

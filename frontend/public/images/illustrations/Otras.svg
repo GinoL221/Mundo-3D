@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 32 32" fill="none" style="image-rendering:pixelated">
+  <!-- PRINTER FRAME -->
+  <rect x="3" y="2" width="2" height="27" fill="#1d2b53"/>
+  <rect x="27" y="2" width="2" height="27" fill="#1d2b53"/>
+  <rect x="3" y="2" width="26" height="2" fill="#1d2b53"/>
+  <rect x="3" y="29" width="26" height="2" fill="#1d2b53"/>
+  <!-- Base highlight -->
+  <rect x="4" y="29" width="24" height="1" fill="#29adff"/>
+  <!-- Frame corner accents -->
+  <rect x="4" y="3" width="1" height="1" fill="#29adff"/>
+  <rect x="27" y="3" width="1" height="1" fill="#29adff"/>
+
+  <!-- PRINT HEAD (sliding carriage on top bar) -->
+  <rect x="12" y="4" width="8" height="5" fill="#29adff"/>
+  <!-- Head detail -->
+  <rect x="13" y="5" width="6" height="1" fill="#c2c3c7"/>
+  <rect x="12" y="4" width="1" height="5" fill="#c2c3c7"/>
+  <!-- Nozzle -->
+  <rect x="15" y="9" width="2" height="4" fill="#5f574f"/>
+
+  <!-- BED SUPPORT POSTS -->
+  <rect x="7" y="14" width="2" height="8" fill="#5f574f"/>
+  <rect x="23" y="14" width="2" height="8" fill="#5f574f"/>
+
+  <!-- FILAMENT (from nozzle to object) -->
+  <rect x="15" y="13" width="2" height="4" fill="#ffa300"/>
+  <rect x="16" y="13" width="1" height="4" fill="#ffec27"/>
+
+  <!-- OBJECT BEING PRINTED -->
+  <rect x="14" y="17" width="4" height="1" fill="#ffec27"/>
+  <rect x="13" y="18" width="6" height="4" fill="#ffa300"/>
+  <rect x="14" y="19" width="4" height="1" fill="#ffec27"/>
+
+  <!-- PRINT BED -->
+  <rect x="5" y="22" width="22" height="2" fill="#c2c3c7"/>
+  <!-- Grid lines -->
+  <rect x="8" y="22" width="1" height="2" fill="#5f574f"/>
+  <rect x="12" y="22" width="1" height="2" fill="#5f574f"/>
+  <rect x="16" y="22" width="1" height="2" fill="#5f574f"/>
+  <rect x="20" y="22" width="1" height="2" fill="#5f574f"/>
+  <rect x="24" y="22" width="1" height="2" fill="#5f574f"/>
+  <!-- Bed shadow -->
+  <rect x="5" y="24" width="22" height="1" fill="#5f574f"/>
+</svg>

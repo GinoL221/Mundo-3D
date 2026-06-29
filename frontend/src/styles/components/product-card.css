@@ -11,13 +11,28 @@
   color: var(--title-highlight);
 }
 
+/* ── Category Image Panel (full-width header) ──────────────── */
+
+.product-card__image-panel {
+  width: 100%;
+  height: 160px;
+  background-color: var(--lcd-bg);
+  border-bottom: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-card:hover .product-card__image-panel {
+  border-bottom-color: var(--accent);
+}
+
 /* ── Category Icon ─────────────────────────────────────────── */
 
 .product-card__category-img {
-  width: 64px;
-  height: 64px;
+  width: 96px;
+  height: 96px;
   image-rendering: pixelated;
-  margin: var(--space-md) auto;
   display: block;
 }
 
@@ -107,4 +122,36 @@
   background-color: var(--accent);
   border-color: var(--accent);
   color: var(--pico-white);
+}
+
+/* ── JRPG Hover Cursors on Product Card Actions ────────────── */
+html.crt-theme-active .product-card__action {
+  position: relative;
+  transition: padding-left 0.2s ease-out, padding-right 0.2s ease-out;
+}
+
+html.crt-theme-active .product-card__action:hover {
+  padding-left: calc(var(--space-md) + 12px);
+  padding-right: calc(var(--space-md) - 12px);
+}
+
+html.crt-theme-active .product-card__action::before {
+  content: "▶";
+  position: absolute;
+  left: var(--space-md);
+  opacity: 0;
+  color: var(--accent);
+  transition: opacity 0.2s ease-out;
+  pointer-events: none;
+}
+
+html.crt-theme-active .product-card__action:hover::before {
+  opacity: 1;
+  animation: jrpg-blink 0.8s steps(2, start) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.crt-theme-active .product-card__action:hover::before {
+    animation: none;
+  }
 }

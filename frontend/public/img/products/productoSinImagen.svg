@@ -1,0 +1,13 @@
+<svg width="64" height="64" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="image-rendering: pixelated;">
+  <!-- Cara Superior del Cubo Isométrico (PICO-8 Naranja: #ffa300) -->
+  <polygon points="8,2 14,5 8,8 2,5" fill="#ffa300" />
+  
+  <!-- Cara Izquierda (PICO-8 Rojo: #ff004d) -->
+  <polygon points="2,5 8,8 8,14 2,11" fill="#ff004d" />
+  
+  <!-- Cara Derecha (PICO-8 Morado: #7e2553) -->
+  <polygon points="8,8 14,5 14,11 8,14" fill="#7e2553" />
+
+  <!-- Detalle del núcleo central o brillo (PICO-8 Amarillo: #ffec27) -->
+  <polygon points="8,5 11,6.5 8,8 5,6.5" fill="#ffec27" opacity="0.8" />
+</svg>

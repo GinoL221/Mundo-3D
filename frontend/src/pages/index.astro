@@ -63,7 +63,7 @@ import { ProductCard } from '../domains/products';
 
   <template id="empty-state-template">
     <div class="empty-state">
-      <img src="/images/illustrations/empty-state.png" alt="Próximamente" class="empty-state-img" />
+      <img src="/images/illustrations/empty-state.svg" alt="Próximamente" class="empty-state-img" style="image-rendering: pixelated;" />
       <h2>Próximamente</h2>
       <p>Estamos preparando productos increíbles para vos.</p>
     </div>
@@ -71,7 +71,7 @@ import { ProductCard } from '../domains/products';
 
   <template id="error-state-template">
     <div class="empty-state">
-      <img src="/images/illustrations/empty-state.png" alt="Error" class="empty-state-img" />
+      <img src="/images/illustrations/empty-state.svg" alt="Error" class="empty-state-img" style="image-rendering: pixelated;" />
       <h2>Próximamente</h2>
       <p>Estamos preparando productos increíbles para vos.</p>
     </div>
@@ -127,7 +127,7 @@ import { ProductCard } from '../domains/products';
     Figura: 'Figura',
     Busto: 'Busto',
     Llavero: 'Llavero',
-    Máscara: 'Máscara',
+    Máscara: 'Mascara',
     Otras: 'Otras',
   };
 
@@ -173,16 +173,20 @@ import { ProductCard } from '../domains/products';
         const name = clone.querySelector('.product-card-name') as HTMLElement | null;
         const price = clone.querySelector('.product-card-price') as HTMLElement | null;
 
+        const catImg = getCategoryImg(product.category);
+        const article = clone.querySelector('article') as HTMLElement | null;
+        if (article) article.dataset.category = catImg;
+
         if (link) {
           link.href = `/product?id=${product.id}`;
         }
         if (img) {
           const catName = product.category;
           const catImg = getCategoryImg(catName);
-          img.src = `/images/illustrations/${catImg}.png`;
+          img.src = `/images/illustrations/${catImg}.svg`;
           img.alt = catName;
           img.addEventListener('error', () => {
-            img.src = '/images/illustrations/Otras.png';
+            img.src = '/images/illustrations/Otras.svg';
           });
         }
         if (name) {

@@ -11,3 +11,7 @@
   gap: var(--space-lg);
   padding: var(--space-md) 0;
 }
+
+.product-grid .empty-state {
+  grid-column: 1 / -1;
+}

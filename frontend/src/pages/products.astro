@@ -16,7 +16,7 @@ import { ProductCard } from '../domains/products';
 
   <template id="empty-state-template">
     <div class="empty-state">
-      <img src="/images/illustrations/empty-state.png" alt="Próximamente" class="empty-state-img" />
+      <img src="/images/illustrations/empty-state.svg" alt="Próximamente" class="empty-state-img" style="image-rendering: pixelated;" />
       <h2>Próximamente</h2>
       <p>Estamos preparando productos increíbles para vos.</p>
     </div>
@@ -24,7 +24,7 @@ import { ProductCard } from '../domains/products';
 
   <template id="error-state-template">
     <div class="empty-state">
-      <img src="/images/illustrations/empty-state.png" alt="Error" class="empty-state-img" />
+      <img src="/images/illustrations/empty-state.svg" alt="Error" class="empty-state-img" style="image-rendering: pixelated;" />
       <h2>No se pudo cargar</h2>
       <p>Verificá tu conexión e intentá de nuevo.</p>
     </div>
@@ -40,7 +40,7 @@ import { ProductCard } from '../domains/products';
     Figura: 'Figura',
     Busto: 'Busto',
     Llavero: 'Llavero',
-    Máscara: 'Máscara',
+    Máscara: 'Mascara',
     Otras: 'Otras',
   };
 
@@ -79,6 +79,10 @@ import { ProductCard } from '../domains/products';
       for (const product of products) {
         const clone = cardTemp.content.cloneNode(true) as DocumentFragment;
 
+        const catImg = getCategoryImg(product.category);
+        const article = clone.querySelector('article') as HTMLElement | null;
+        if (article) article.dataset.category = catImg;
+
         const link = clone.querySelector('.product-card-link') as HTMLAnchorElement | null;
         const img = clone.querySelector('.product-card__category-img') as HTMLImageElement | null;
         const name = clone.querySelector('.product-card-name') as HTMLElement | null;
@@ -88,12 +92,10 @@ import { ProductCard } from '../domains/products';
           link.href = `/product?id=${product.id}`;
         }
         if (img) {
-          const catName = product.category;
-          const catImg = getCategoryImg(catName);
-          img.src = `/images/illustrations/${catImg}.png`;
-          img.alt = catName;
+          img.src = `/images/illustrations/${catImg}.svg`;
+          img.alt = product.category;
           img.addEventListener('error', () => {
-            img.src = '/images/illustrations/Otras.png';
+            img.src = '/images/illustrations/Otras.svg';
           });
         }
         if (name) {
