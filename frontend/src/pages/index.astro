@@ -183,10 +183,19 @@ import { ProductCard } from '../domains/products';
         if (img) {
           const catName = product.category;
           const catImg = getCategoryImg(catName);
-          img.src = `/images/illustrations/${catImg}.svg`;
-          img.alt = catName;
+          const isPlaceholder = !product.image || product.image === 'productoSinImagen.png' || product.image === 'productoSinImagen.svg';
+          if (isPlaceholder) {
+            img.src = `/images/illustrations/${catImg}.svg`;
+            img.alt = catName;
+            img.classList.add('product-card__category-img--pixelart');
+          } else {
+            img.src = `/img/products/${product.image}`;
+            img.alt = product.name;
+            img.classList.remove('product-card__category-img--pixelart');
+          }
           img.addEventListener('error', () => {
-            img.src = '/images/illustrations/Otras.svg';
+            img.src = `/images/illustrations/${catImg}.svg`;
+            img.classList.add('product-card__category-img--pixelart');
           });
         }
         if (name) {

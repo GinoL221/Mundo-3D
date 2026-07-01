@@ -57,6 +57,12 @@ describe('CreateProductUseCase', () => {
       idCategory: 1,
       idFranchise: 2,
       category: 'Figures',
+      material: null,
+      height: null,
+      width: null,
+      depth: null,
+      finish: null,
+      productionTime: null,
     });
 
     expect(mockProductRepo.create).toHaveBeenCalledWith({
@@ -66,6 +72,12 @@ describe('CreateProductUseCase', () => {
       image: input.image,
       idCategory: input.idCategory,
       idFranchise: input.idFranchise,
+      material: null,
+      height: null,
+      width: null,
+      depth: null,
+      finish: null,
+      productionTime: null,
     });
     expect(mockCategoryRepo.findById).toHaveBeenCalledWith(1);
   });

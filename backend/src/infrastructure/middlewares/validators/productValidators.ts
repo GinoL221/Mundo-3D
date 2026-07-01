@@ -50,4 +50,41 @@ export const validationsForm = [
     }
     return true;
   }),
+
+  body('material')
+    .optional({ values: 'falsy' })
+    .trim()
+    .custom((value) => {
+      const allowedMaterials = ['PLA', 'Resina', 'PETG', 'Flex'];
+      if (allowedMaterials.includes(value) || value.startsWith('Otros: ')) {
+        return true;
+      }
+      throw new Error('Material inválido');
+    }),
+
+  body('height')
+    .optional({ values: 'falsy' })
+    .isFloat({ min: 0 })
+    .withMessage('La altura debe ser un número mayor o igual a 0'),
+
+  body('width')
+    .optional({ values: 'falsy' })
+    .isFloat({ min: 0 })
+    .withMessage('El ancho debe ser un número mayor o igual a 0'),
+
+  body('depth')
+    .optional({ values: 'falsy' })
+    .isFloat({ min: 0 })
+    .withMessage('La profundidad debe ser un número mayor o igual a 0'),
+
+  body('finish')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .withMessage('El acabado debe ser un texto'),
+
+  body('productionTime')
+    .optional({ values: 'falsy' })
+    .isInt({ min: 1, max: 30 })
+    .withMessage('El tiempo de producción debe ser un entero entre 1 y 30 días'),
 ];

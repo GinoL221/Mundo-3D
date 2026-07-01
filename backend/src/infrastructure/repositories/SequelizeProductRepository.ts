@@ -23,7 +23,13 @@ export class SequelizeProductRepository implements IProductRepository {
       instance.idCategory,
       instance.idFranchise,
       category,
-      franchise
+      franchise,
+      instance.material,
+      instance.height !== null && instance.height !== undefined ? Number(instance.height) : null,
+      instance.width !== null && instance.width !== undefined ? Number(instance.width) : null,
+      instance.depth !== null && instance.depth !== undefined ? Number(instance.depth) : null,
+      instance.finish,
+      instance.productionTime !== null && instance.productionTime !== undefined ? Number(instance.productionTime) : null
     );
   }
 
@@ -84,7 +90,7 @@ export class SequelizeProductRepository implements IProductRepository {
     return this.toEntity(instance);
   }
 
-  async create(product: Omit<Product, 'idProduct' | 'IDProduct' | 'NameProduct' | 'Price' | 'DescriptionProduct' | 'Image' | 'IDCategory' | 'IDFranchise' | 'Category' | 'Franchise'>): Promise<Product> {
+  async create(product: Omit<Product, 'idProduct' | 'IDProduct' | 'NameProduct' | 'Price' | 'DescriptionProduct' | 'Image' | 'IDCategory' | 'IDFranchise' | 'Category' | 'Franchise' | 'Material' | 'Height' | 'Width' | 'Depth' | 'Finish' | 'ProductionTime'>): Promise<Product> {
     const instance = await db.Product.create({
       nameProduct: product.nameProduct,
       price: product.price,
@@ -92,6 +98,12 @@ export class SequelizeProductRepository implements IProductRepository {
       image: product.image,
       idCategory: product.idCategory,
       idFranchise: product.idFranchise,
+      material: product.material,
+      height: product.height,
+      width: product.width,
+      depth: product.depth,
+      finish: product.finish,
+      productionTime: product.productionTime,
     } as Partial<ProductAttributes>);
 
     const created = await this.findById(instance.idProduct);
@@ -103,7 +115,15 @@ export class SequelizeProductRepository implements IProductRepository {
         instance.descriptionProduct,
         instance.image,
         instance.idCategory,
-        instance.idFranchise
+        instance.idFranchise,
+        undefined,
+        undefined,
+        instance.material,
+        instance.height !== null && instance.height !== undefined ? Number(instance.height) : null,
+        instance.width !== null && instance.width !== undefined ? Number(instance.width) : null,
+        instance.depth !== null && instance.depth !== undefined ? Number(instance.depth) : null,
+        instance.finish,
+        instance.productionTime !== null && instance.productionTime !== undefined ? Number(instance.productionTime) : null
       );
     }
     return created;
@@ -120,6 +140,12 @@ export class SequelizeProductRepository implements IProductRepository {
     if (product.image !== undefined) updatedData.image = product.image;
     if (product.idCategory !== undefined) updatedData.idCategory = product.idCategory;
     if (product.idFranchise !== undefined) updatedData.idFranchise = product.idFranchise;
+    if (product.material !== undefined) updatedData.material = product.material;
+    if (product.height !== undefined) updatedData.height = product.height;
+    if (product.width !== undefined) updatedData.width = product.width;
+    if (product.depth !== undefined) updatedData.depth = product.depth;
+    if (product.finish !== undefined) updatedData.finish = product.finish;
+    if (product.productionTime !== undefined) updatedData.productionTime = product.productionTime;
 
     await instance.update(updatedData);
 

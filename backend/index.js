@@ -15,6 +15,7 @@ const {
 //variable de entorno
 const PORT = process.env.PORT || 3031;
 
+const db = require("./src/database/models/db");
 const { seedInitialData } = require("./src/database/seed");
 
 const env = process.env.NODE_ENV || "development";

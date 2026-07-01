@@ -37,6 +37,12 @@ describe('GetProductByIdUseCase', () => {
       idCategory: 1,
       idFranchise: 10,
       category: 'Figures',
+      material: null,
+      height: null,
+      width: null,
+      depth: null,
+      finish: null,
+      productionTime: null,
     });
     expect(mockProductRepo.findById).toHaveBeenCalledWith(1);
   });

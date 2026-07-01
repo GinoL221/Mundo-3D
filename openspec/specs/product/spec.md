@@ -118,10 +118,103 @@ And the instantiation MUST fail
 Given the Astro index page `frontend/src/pages/index.astro` is rendered
 When product information is fetched from `/api/products` and a product has a missing or null `category`
 Then the template SHALL render a fallback illustration of `'Otras'` using the path `/images/illustrations/Otras.png`
-And if a product has a custom illustration that fails to load, the image element `onerror` handler MUST set the source to `/images/illustrations/Otras.png`
+And if a product has a custom illustration that fails to load, the image element `onerror` handler MUST set the source to `/images/illustrations/Outras.png`
 
 ### Scenario 15: Rendering catalog on products page with category visual fallbacks
 Given the Astro products catalog page `frontend/src/pages/products.astro` is rendered
 When product information is fetched from `/api/products` and a product has a missing or null `category`
-Then the template SHALL resolve the category illustration using a local lookup map (defaulting to `'Otras'`)
-And render the image using `/images/illustrations/Otras.png`
+Then the template SHALL resolve the category illustration using a local lookup map (defaulting to `'Outras'`)
+And render the image using `/images/illustrations/Outras.png`
+
+---
+
+## 5. 3D Printing Properties and Specifications
+
+### Requirement: Product 3D printing properties in Domain Entity
+
+The `Product` domain entity constructor (`backend/src/domain/entities/Product.ts`) MUST support optional properties:
+- `material` (string | null)
+- `height` (number | null)
+- `width` (number | null)
+- `depth` (number | null)
+- `finish` (string | null)
+- `productionTime` (number | null)
+
+These properties MUST have matching PascalCase getters (`Material`, `Height`, `Width`, `Depth`, `Finish`, `ProductionTime`) returning their values (or `null` if undefined/null).
+
+The domain entity constructor MUST enforce the following constraints:
+- `height`, `width`, and `depth` MUST be greater than or equal to `0` if defined.
+- `productionTime` MUST be a positive integer and MUST NOT be greater than `30` (maximum 30 days) if defined.
+- `material` MUST be either `'PLA'`, `'Resina'`, `'PETG'`, `'Flex'`, or a string starting with the prefix `'Otros: '` if defined.
+
+#### Scenario: Product domain entity with valid 3D properties
+- GIVEN the `Product` domain entity constructor
+- WHEN a new instance is created with:
+  - `material`: "Otros: Madera"
+  - `height`: 10
+  - `width`: 15
+  - `depth`: 5
+  - `finish`: "Pintado a mano"
+  - `productionTime`: 20
+- THEN the domain entity MUST be created successfully
+
+#### Scenario: Product domain entity throws on invalid material
+- GIVEN the `Product` domain entity constructor
+- WHEN a new instance is created with `material` value of "Madera" (not in allowed list, lacking prefix)
+- THEN the constructor MUST throw an error
+
+#### Scenario: Product domain entity throws on production time exceeding 30 days
+- GIVEN the `Product` domain entity constructor
+- WHEN a new instance is created with `productionTime` of `31`
+- THEN the constructor MUST throw an error
+
+#### Scenario: Product domain entity throws on negative dimensions
+- GIVEN the `Product` domain entity constructor
+- WHEN a new instance is created with `height` of `-1`
+- THEN the constructor MUST throw an error
+
+---
+
+### Requirement: Database Attribute and Schema Mapping
+
+The Sequelize `Product` model (`backend/src/database/models/Product.js`) and database columns MUST map the new 3D attributes from camelCase to snake_case as follows:
+- `material` -> `material`
+- `height` -> `height`
+- `width` -> `width`
+- `depth` -> `depth`
+- `finish` -> `finish`
+- `productionTime` -> `production_time`
+
+Sequelize model getters in PascalCase (`Material`, `Height`, `Width`, `Depth`, `Finish`, `ProductionTime`) MUST be supported.
+
+---
+
+### Requirement: Frontend Adapter Dimensions Formatting and Fallbacks
+
+The frontend adapter function `adaptAPIProduct` (`frontend/src/domains/products/adapters/product.adapter.ts`) MUST map API response fields to display strings:
+- `material`: defaults to `"A consultar"` if null/undefined.
+- `finish`: defaults to `"A consultar"` if null/undefined.
+- `productionTime`: if defined, formats as `"${productionTime} días"`, else defaults to `"A consultar"`.
+- `height`, `width`, `depth`:
+  - If at least one of these is defined (not null, not undefined, and not 0):
+    - Any defined dimension MUST format as `"${val} cm"`.
+    - Any missing (null/undefined/0) dimension MUST format as `"no definida"`.
+  - If all of these are undefined or null or 0:
+    - All three MUST fallback to `"A consultar"`.
+
+#### Scenario: Frontend adapter handles partially defined dimensions
+- GIVEN a product DTO returned by the API with `height` of `12`, `width` of `null`, and `depth` of `null`
+- WHEN `adaptAPIProduct` is called on the DTO
+- THEN the adapted product `height` MUST be `"12 cm"`
+- AND the adapted product `width` MUST be `"no definida"`
+- AND the adapted product `depth` MUST be `"no definida"`
+
+#### Scenario: Frontend adapter handles fully undefined dimensions
+- GIVEN a product DTO returned by the API with all dimensions set to `null`
+- WHEN `adaptAPIProduct` is called on the DTO
+- THEN the adapted product `height`, `width`, and `depth` MUST all be `"A consultar"`
+
+#### Scenario: Frontend adapter displays custom material
+- GIVEN a product DTO with `material` set to `"Otros: ABS"`
+- WHEN `adaptAPIProduct` is called on the DTO
+- THEN the adapted product `material` MUST be `"Otros: ABS"`

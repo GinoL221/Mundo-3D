@@ -91,6 +91,85 @@ describe('productValidators - validationsForm', () => {
     const errors = await runValidation(req as Request, validationsForm);
     expect(errors.isEmpty()).toBe(true);
   });
+
+  describe('3D printing attributes', () => {
+    const baseValidBody = {
+      productName: 'Super Mario 3D',
+      price: '1250',
+      description: 'An awesome action figure',
+      category: '1',
+      franchise: '2'
+    };
+    const validFile = { originalname: 'mario.png' } as any;
+
+    it('passes when material is a valid allowed value', async () => {
+      req.body = { ...baseValidBody, material: 'PLA' };
+      req.file = validFile;
+
+      const errors = await runValidation(req as Request, validationsForm);
+      expect(errors.mapped().material).toBeUndefined();
+    });
+
+    it('passes when material uses the "Otros: " custom prefix', async () => {
+      req.body = { ...baseValidBody, material: 'Otros: Madera' };
+      req.file = validFile;
+
+      const errors = await runValidation(req as Request, validationsForm);
+      expect(errors.mapped().material).toBeUndefined();
+    });
+
+    it('fails when material is not an allowed value or custom prefix', async () => {
+      req.body = { ...baseValidBody, material: 'Madera' };
+      req.file = validFile;
+
+      const errors = await runValidation(req as Request, validationsForm);
+      expect(errors.mapped().material).toBeDefined();
+    });
+
+    it('passes when productionTime is within range (1-30)', async () => {
+      req.body = { ...baseValidBody, productionTime: '15' };
+      req.file = validFile;
+
+      const errors = await runValidation(req as Request, validationsForm);
+      expect(errors.mapped().productionTime).toBeUndefined();
+    });
+
+    it('fails when productionTime exceeds 30', async () => {
+      req.body = { ...baseValidBody, productionTime: '31' };
+      req.file = validFile;
+
+      const errors = await runValidation(req as Request, validationsForm);
+      expect(errors.mapped().productionTime).toBeDefined();
+    });
+
+    it('fails when height, width or depth are negative', async () => {
+      req.body = { ...baseValidBody, height: '-1', width: '-2', depth: '-3' };
+      req.file = validFile;
+
+      const errors = await runValidation(req as Request, validationsForm);
+      expect(errors.mapped().height).toBeDefined();
+      expect(errors.mapped().width).toBeDefined();
+      expect(errors.mapped().depth).toBeDefined();
+    });
+
+    it('passes when height, width and depth are non-negative numbers', async () => {
+      req.body = { ...baseValidBody, height: '10.5', width: '8', depth: '5.5' };
+      req.file = validFile;
+
+      const errors = await runValidation(req as Request, validationsForm);
+      expect(errors.mapped().height).toBeUndefined();
+      expect(errors.mapped().width).toBeUndefined();
+      expect(errors.mapped().depth).toBeUndefined();
+    });
+
+    it('passes when the 3D attributes are omitted entirely (all optional)', async () => {
+      req.body = { ...baseValidBody };
+      req.file = validFile;
+
+      const errors = await runValidation(req as Request, validationsForm);
+      expect(errors.isEmpty()).toBe(true);
+    });
+  });
 });
 
 describe('userValidators - validationsUsers', () => {

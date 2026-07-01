@@ -9,6 +9,12 @@ export interface CreateProductInput {
   image: string | null;
   idCategory: number;
   idFranchise: number;
+  material?: string | null;
+  height?: number | null;
+  width?: number | null;
+  depth?: number | null;
+  finish?: string | null;
+  productionTime?: number | null;
 }
 
 export class CreateProductUseCase {
@@ -25,6 +31,12 @@ export class CreateProductUseCase {
       image: input.image,
       idCategory: input.idCategory,
       idFranchise: input.idFranchise,
+      material: input.material ?? null,
+      height: input.height ?? null,
+      width: input.width ?? null,
+      depth: input.depth ?? null,
+      finish: input.finish ?? null,
+      productionTime: input.productionTime ?? null,
     });
 
     let categoryName = 'Sin categoría';
@@ -46,6 +58,12 @@ export class CreateProductUseCase {
       idCategory: created.idCategory,
       idFranchise: created.idFranchise,
       category: categoryName,
+      material: created.Material,
+      height: created.Height,
+      width: created.Width,
+      depth: created.Depth,
+      finish: created.Finish,
+      productionTime: created.ProductionTime,
     };
   }
 }

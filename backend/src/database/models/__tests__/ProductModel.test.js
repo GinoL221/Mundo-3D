@@ -49,6 +49,36 @@ describe('Product Model Definition', () => {
           type: DataTypes.STRING,
           field: 'image',
         }),
+        material: expect.objectContaining({
+          type: DataTypes.STRING,
+          allowNull: true,
+          field: 'material',
+        }),
+        height: expect.objectContaining({
+          type: DataTypes.DECIMAL(6, 2),
+          allowNull: true,
+          field: 'height',
+        }),
+        width: expect.objectContaining({
+          type: DataTypes.DECIMAL(6, 2),
+          allowNull: true,
+          field: 'width',
+        }),
+        depth: expect.objectContaining({
+          type: DataTypes.DECIMAL(6, 2),
+          allowNull: true,
+          field: 'depth',
+        }),
+        finish: expect.objectContaining({
+          type: DataTypes.STRING,
+          allowNull: true,
+          field: 'finish',
+        }),
+        productionTime: expect.objectContaining({
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          field: 'production_time',
+        }),
       }),
       expect.objectContaining({
         tableName: 'Product',
@@ -61,6 +91,12 @@ describe('Product Model Definition', () => {
           Image: expect.any(Function),
           IDCategory: expect.any(Function),
           IDFranchise: expect.any(Function),
+          Material: expect.any(Function),
+          Height: expect.any(Function),
+          Width: expect.any(Function),
+          Depth: expect.any(Function),
+          Finish: expect.any(Function),
+          ProductionTime: expect.any(Function),
         }),
       })
     );

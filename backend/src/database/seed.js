@@ -11,6 +11,11 @@ async function seedInitialData(db) {
     { nameCategory: 'Figura' },
     { nameCategory: 'Mascara' },
     { nameCategory: 'Otras' },
+    { nameCategory: 'Lámpara' },
+    { nameCategory: 'Accesorios' },
+    { nameCategory: 'Terror/Fantasía' },
+    { nameCategory: 'Utilitarios' },
+    { nameCategory: 'Juguetes' },
   ];
   // Franquicias
   const franchises = [
@@ -18,6 +23,12 @@ async function seedInitialData(db) {
     { nameFranchise: 'DC' },
     { nameFranchise: 'Disney' },
     { nameFranchise: 'Otra' },
+    { nameFranchise: 'Zelda' },
+    { nameFranchise: 'Star Wars' },
+    { nameFranchise: 'Portal' },
+    { nameFranchise: 'Pokemon' },
+    { nameFranchise: 'Nintendo' },
+    { nameFranchise: 'Terror/Fantasía' },
   ];
   try {
     // Categorías
@@ -69,6 +80,12 @@ async function seedInitialData(db) {
           image: p.Image || p.image,
           idCategory: p.IDCategory || p.idCategory,
           idFranchise: p.IDFranchise || p.idFranchise,
+          material: p.Material !== undefined ? p.Material : p.material,
+          height: p.Height !== undefined ? p.Height : p.height,
+          width: p.Width !== undefined ? p.Width : p.width,
+          depth: p.Depth !== undefined ? p.Depth : p.depth,
+          finish: p.Finish !== undefined ? p.Finish : p.finish,
+          productionTime: p.ProductionTime !== undefined ? p.ProductionTime : p.productionTime,
         }));
         await db.Product.bulkCreate(productsMapped);
         console.log('✔ Productos insertados desde JSON');

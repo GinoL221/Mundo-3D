@@ -9,6 +9,12 @@ export interface UpdateProductInput {
   image?: string | null;
   idCategory?: number;
   idFranchise?: number;
+  material?: string | null;
+  height?: number | null;
+  width?: number | null;
+  depth?: number | null;
+  finish?: string | null;
+  productionTime?: number | null;
 }
 
 export class UpdateProductUseCase {
@@ -42,6 +48,12 @@ export class UpdateProductUseCase {
       idCategory: updated.idCategory,
       idFranchise: updated.idFranchise,
       category: categoryName,
+      material: updated.Material,
+      height: updated.Height,
+      width: updated.Width,
+      depth: updated.Depth,
+      finish: updated.Finish,
+      productionTime: updated.ProductionTime,
     };
   }
 }

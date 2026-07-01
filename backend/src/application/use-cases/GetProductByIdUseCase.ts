@@ -21,6 +21,12 @@ export class GetProductByIdUseCase {
       idCategory: product.idCategory,
       idFranchise: product.idFranchise,
       category: categoryName,
+      material: product.Material,
+      height: product.Height,
+      width: product.Width,
+      depth: product.Depth,
+      finish: product.Finish,
+      productionTime: product.ProductionTime,
     };
   }
 }

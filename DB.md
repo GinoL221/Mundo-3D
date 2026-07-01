@@ -41,6 +41,9 @@ UNIQUE KEY uk_email (Email)
 );
 
 -- Tabla de Productos con índice en IDCategory y FranchiseID
+-- Las columnas de impresión 3D (material, height, width, depth, finish, production_time)
+-- son opcionales (NULL permitido) y se sincronizan automáticamente vía
+-- `db.sequelize.sync({ alter: true })` en backend/index.js — no requieren migración manual.
 CREATE TABLE IF NOT EXISTS Product (
 IDProduct INT PRIMARY KEY AUTO_INCREMENT,
 IDCategory INT NOT NULL,
@@ -49,6 +52,12 @@ NameProduct VARCHAR(255) NOT NULL,
 Price DECIMAL(10, 2) NOT NULL,
 DescriptionProduct TEXT,
 Image VARCHAR(255),
+Material VARCHAR(255) NULL,
+Height DECIMAL(6, 2) NULL,
+Width DECIMAL(6, 2) NULL,
+Depth DECIMAL(6, 2) NULL,
+Finish VARCHAR(255) NULL,
+ProductionTime INT NULL,
 INDEX idx_idcategory (IDCategory),
 INDEX idx_franchise_id (IDFranchise),
 CONSTRAINT fk_category
@@ -58,6 +67,17 @@ CONSTRAINT fk_franchise
 FOREIGN KEY (IDFranchise)
 REFERENCES Franchise(IDFranchise)
 );
+
+-- Columnas de impresión 3D en Product (mapeadas en backend/src/database/models/Product.js
+-- vía nombres de columna Sequelize en snake_case/lowercase):
+--   Material        -> material         VARCHAR, NULL. Debe ser 'PLA' | 'Resina' | 'PETG' | 'Flex'
+--                       o un valor personalizado con prefijo 'Otros: ' (ej. 'Otros: ABS').
+--                       Validado en Product.ts (dominio) y productValidators.ts (HTTP).
+--   Height          -> height           DECIMAL(6,2), NULL. Debe ser >= 0.
+--   Width           -> width            DECIMAL(6,2), NULL. Debe ser >= 0.
+--   Depth           -> depth            DECIMAL(6,2), NULL. Debe ser >= 0.
+--   Finish          -> finish           VARCHAR, NULL. Texto libre (ej. 'Pintado a mano').
+--   ProductionTime  -> production_time  INT, NULL. Entero positivo, máximo 30 (días).
 
 -- Tabla de Carrito de Compras con índice único en IDUser e IDProduct
 CREATE TABLE IF NOT EXISTS ShoppingCart (
