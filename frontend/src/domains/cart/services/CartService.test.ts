@@ -323,6 +323,94 @@ describe('CartService', () => {
         expect.objectContaining({ productId: 7 }),
       ]);
     });
+
+    // Regression test for a real concurrency bug: syncToBackend calls are
+    // fire-and-forget with no sequencing between them. If an OLDER call's
+    // PUT resolves LATE (after a NEWER call's PUT already resolved and
+    // succeeded), the older call's failure handler used to roll back to
+    // ITS OWN captured previousItems — stomping the newer, already-confirmed
+    // state with stale data. The sequence guard in syncToBackend must skip
+    // that stale rollback.
+    it('does not let a late-arriving failed sync roll back state that a newer sync already confirmed', async () => {
+      localStorageMock.getItem.mockImplementation((key: string) =>
+        key === 'token' ? 'abc123' : null
+      );
+
+      // First call (older): addToCart(id: 7). Its PUT will resolve LATE and
+      // fail. Second call (newer): removeFromCart(7). Its PUT resolves
+      // FIRST and succeeds, leaving the store at [] (correct, confirmed
+      // state).
+      let resolveFirstFetch: (value: { ok: boolean; status?: number }) => void;
+      const firstFetchPromise = new Promise<{ ok: boolean; status?: number }>((resolve) => {
+        resolveFirstFetch = resolve;
+      });
+
+      fetchMock.mockImplementationOnce(() => firstFetchPromise);
+      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true }));
+
+      // Older call starts: cart goes from [] -> [{productId: 7}], previousItems = [].
+      CartService.addToCart(buildProduct({ id: 7 }));
+      // Newer call starts before the older one resolves: cart goes from
+      // [{productId: 7}] -> [], previousItems = [{productId: 7}].
+      CartService.removeFromCart(7);
+
+      // Newer call's fetch resolves first and succeeds.
+      await flushPromises();
+      expect(cartItems.get()).toEqual([]);
+
+      // Older call's fetch now resolves LATE with a failure. Its captured
+      // previousItems happens to also be [], so the cartItems value alone
+      // wouldn't distinguish a fired-but-coincidentally-harmless rollback
+      // from a correctly-skipped one. The localStorage write is the
+      // distinguishing signal: without the sequence guard, the stale
+      // rollback still calls persistCart(previousItems), which re-invokes
+      // setItem even though the value happens to match.
+      localStorageMock.setItem.mockClear();
+      resolveFirstFetch!({ ok: false, status: 500 });
+      await flushPromises();
+
+      expect(cartItems.get()).toEqual([]);
+      // The stale rollback must not fire at all: no extra persist call from
+      // the older, now-superseded sync.
+      expect(localStorageMock.setItem).not.toHaveBeenCalled();
+    });
+
+    it('does not let a late-arriving failed sync roll back a DIFFERENT newer mutation', async () => {
+      localStorageMock.getItem.mockImplementation((key: string) =>
+        key === 'token' ? 'abc123' : null
+      );
+
+      let resolveFirstFetch: (value: { ok: boolean; status?: number }) => void;
+      const firstFetchPromise = new Promise<{ ok: boolean; status?: number }>((resolve) => {
+        resolveFirstFetch = resolve;
+      });
+
+      fetchMock.mockImplementationOnce(() => firstFetchPromise);
+      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true }));
+
+      // Older call: addToCart(id: 7). previousItems = [].
+      CartService.addToCart(buildProduct({ id: 7 }));
+      // Newer call: addToCart(id: 8). previousItems = [{productId: 7}].
+      // Its PUT resolves first and succeeds, confirming [7, 8].
+      CartService.addToCart(buildProduct({ id: 8 }));
+
+      await flushPromises();
+      expect(cartItems.get()).toEqual([
+        expect.objectContaining({ productId: 7 }),
+        expect.objectContaining({ productId: 8 }),
+      ]);
+
+      // Older call's fetch resolves LATE with a failure. If the stale
+      // rollback fired, it would reset state to [] (its own previousItems),
+      // discarding both confirmed items.
+      resolveFirstFetch!({ ok: false, status: 500 });
+      await flushPromises();
+
+      expect(cartItems.get()).toEqual([
+        expect.objectContaining({ productId: 7 }),
+        expect.objectContaining({ productId: 8 }),
+      ]);
+    });
   });
 
   describe('hasToken', () => {

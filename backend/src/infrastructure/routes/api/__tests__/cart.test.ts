@@ -125,18 +125,42 @@ describe('api/cart routes', () => {
     });
 
     it('removes an item: syncs a cart without a previously present product and returns the updated cart', async () => {
-      const mockCartAfterRemoval = { items: [], total: 0 };
+      // Represents the cart after removing product 10 from a previous state
+      // that had both product 10 and product 20 — the request body carries
+      // only the surviving product 20, distinguishing "remove" from "add"
+      // (which sends a superset, not a payload missing a previously present
+      // product).
+      const mockCartAfterRemoval = {
+        items: [
+          {
+            idCart: 2,
+            idUser: 5,
+            idProduct: 20,
+            quantity: 1,
+            unitPrice: 50,
+            status: 'ACTIVE',
+            product: { idProduct: 20, nameProduct: 'Product B', price: 50, image: 'b.png' },
+            hasPriceDrift: false,
+          },
+        ],
+        total: 50,
+      };
       mockSyncCartExecute.mockResolvedValue(undefined);
       mockGetCartByUserIdExecute.mockResolvedValue(mockCartAfterRemoval);
 
       const res = await request(app)
         .put('/api/cart')
         .set('Authorization', `Bearer ${authToken}`)
-        .send({ items: [{ productId: 10, quantity: 1 }] });
+        .send({ items: [{ productId: 20, quantity: 1 }] });
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ success: true, cart: mockCartAfterRemoval });
-      expect(mockSyncCartExecute).toHaveBeenCalledWith(5, [{ productId: 10, quantity: 1 }]);
+      expect(mockSyncCartExecute).toHaveBeenCalledWith(5, [{ productId: 20, quantity: 1 }]);
+      // The removed product must not be part of the synced payload.
+      expect(mockSyncCartExecute).not.toHaveBeenCalledWith(
+        5,
+        expect.arrayContaining([expect.objectContaining({ productId: 10 })])
+      );
     });
 
     it('updates quantity: syncs a cart with a changed quantity for an existing product', async () => {
