@@ -30,10 +30,10 @@ describe('cartValidators - cartSyncValidation', () => {
     expect(errors2.isEmpty()).toBe(false);
   });
 
-  it('fails if items is empty', async () => {
+  it('passes if items is empty (full-replace sync can clear the cart)', async () => {
     req.body = { items: [] };
     const errors = await runValidation(req as Request, validationsCart);
-    expect(errors.isEmpty()).toBe(false);
+    expect(errors.isEmpty()).toBe(true);
   });
 
   it('fails if productId is missing or not an integer', async () => {

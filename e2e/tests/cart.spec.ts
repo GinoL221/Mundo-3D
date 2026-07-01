@@ -62,6 +62,67 @@ test.describe('Cart E2E Tests - Guest Flow', () => {
     expect(parseFloat(totalText || '0')).toBeGreaterThan(0);
   });
 
+  test('Update Item Quantity in Cart', async ({ page }) => {
+    // Add product 1 twice from the product page (the UI has no dedicated
+    // quantity control — re-adding the same product is how quantity is
+    // increased, per CartService.addToCart's increment-on-existing logic)
+    await page.goto('/product?id=1');
+    await page.click('#add-to-cart-btn');
+    await page.click('#add-to-cart-btn');
+
+    const badge = page.locator('#navbar-cart-badge');
+    await expect(badge).toHaveText('1');
+
+    const cart = await page.evaluate(() => {
+      const raw = localStorage.getItem('cart');
+      return raw ? JSON.parse(raw) : [];
+    });
+    expect(cart).toHaveLength(1);
+    expect(cart[0].quantity).toBe(2);
+
+    // Go to cart page and verify the rendered quantity and subtotal
+    await page.goto('/cart');
+    const items = page.locator('.cart__item');
+    await expect(items).toHaveCount(1);
+
+    const qtyEl = items.first().locator('.cart__item-qty');
+    await expect(qtyEl).toHaveText('Cantidad: 2');
+
+    const priceText = await items.first().locator('.cart__item-price').textContent();
+    const unitPrice = parseFloat((priceText || '').replace(/[^0-9.]/g, ''));
+    const subtotalText = await items.first().locator('.cart__item-subtotal').textContent();
+    const subtotal = parseFloat((subtotalText || '').replace(/[^0-9.]/g, ''));
+    expect(subtotal).toBeCloseTo(unitPrice * 2, 2);
+  });
+
+  test('Remove Item from Cart', async ({ page }) => {
+    // Add product 1 and product 2
+    await page.goto('/product?id=1');
+    await page.click('#add-to-cart-btn');
+
+    await page.goto('/product?id=2');
+    await page.click('#add-to-cart-btn');
+
+    await page.goto('/cart');
+    await expect(page.locator('.cart__item')).toHaveCount(2);
+
+    // Remove the first rendered item
+    await page.locator('.cart__item').first().locator('.cart__item-remove').click();
+
+    // One item remains, both in the DOM and in localStorage
+    await expect(page.locator('.cart__item')).toHaveCount(1);
+
+    const cart = await page.evaluate(() => {
+      const raw = localStorage.getItem('cart');
+      return raw ? JSON.parse(raw) : [];
+    });
+    expect(cart).toHaveLength(1);
+    expect(cart[0].productId).toBe(2);
+
+    const badge = page.locator('#navbar-cart-badge');
+    await expect(badge).toHaveText('1');
+  });
+
   test('Checkout Navigation Guest Redirect', async ({ page }) => {
     // Add product 1
     await page.goto('/product?id=1');
@@ -87,12 +148,22 @@ test.describe('Cart E2E Tests - Authenticated Flow', () => {
   });
 
   test('Checkout Navigation Authenticated Success', async ({ page }) => {
-    // Add product 1
+    // Add product 1. Wait for the product fetch to resolve (which is what
+    // attaches the click listener to #add-to-cart-btn) before clicking —
+    // the button exists in the static markup immediately, but clicking it
+    // before hydration finishes is a no-op and silently leaves the cart
+    // empty, which was causing this test to flake.
     await page.goto('/product?id=1');
+    await expect(page.locator('#product-name')).not.toBeEmpty();
     await page.click('#add-to-cart-btn');
+    await expect(async () => {
+      const cart = await page.evaluate(() => localStorage.getItem('cart'));
+      expect(cart).toContain('"productId":1');
+    }).toPass();
 
     // Go to cart page and click checkout
     await page.goto('/cart');
+    await expect(page.locator('.cart__item')).toHaveCount(1);
 
     // Setup dialog handler for the checkout alert
     page.once('dialog', async dialog => {

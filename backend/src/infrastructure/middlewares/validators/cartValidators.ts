@@ -3,9 +3,13 @@ import { Request, Response, NextFunction } from 'express';
 import { CartValidationException } from '../../../domain/exceptions/CartValidationException';
 
 export const validationsCart = [
+  // `items` may be an empty array: PUT /api/cart performs a full-replace sync
+  // (see SyncCartUseCase / SequelizeShoppingCartRepository.syncCart), and an
+  // empty array is the valid way to represent an emptied cart (e.g. after
+  // checkout). Rejecting it here breaks that flow.
   body('items')
-    .isArray({ min: 1 })
-    .withMessage('Items must be a non-empty array'),
+    .isArray()
+    .withMessage('Items must be an array'),
   body('items.*.productId')
     .isInt({ min: 1 })
     .withMessage('productId must be an integer >= 1'),
