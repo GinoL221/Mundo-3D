@@ -18,6 +18,29 @@ import Layout from '../layouts/Layout.astro';
           </button>
           <a href="/cart" class="product-detail__action">IR AL CARRITO</a>
         </section>
+        <div class="product-specs">
+          <h4 class="product-specs__title">Especificaciones 3D</h4>
+          <table class="product-specs__table">
+            <tbody>
+              <tr>
+                <td class="product-specs__label">Material</td>
+                <td class="product-specs__value" id="product-material">-</td>
+              </tr>
+              <tr>
+                <td class="product-specs__label">Dimensiones</td>
+                <td class="product-specs__value" id="product-dimensions">-</td>
+              </tr>
+              <tr>
+                <td class="product-specs__label">Acabado</td>
+                <td class="product-specs__value" id="product-finish">-</td>
+              </tr>
+              <tr>
+                <td class="product-specs__label">Tiempo de Producción</td>
+                <td class="product-specs__value" id="product-production">-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
       <div id="product-error" style="display:none;">
         <p>No se pudo cargar el producto. <a href="/products">Volver al catálogo</a></p>
@@ -28,7 +51,7 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
   import { API_URL } from '../config';
-  import { adaptAPIProduct } from '../domains/products';
+  import { adaptAPIProduct, getCategoryImg, isPlaceholderImage } from '../domains/products';
   import type { APIProduct } from '../domains/products';
   import { CartService } from '../domains/cart';
 
@@ -73,15 +96,44 @@ import Layout from '../layouts/Layout.astro';
       const contentEl = document.getElementById('product-content');
       const addBtn = document.getElementById('add-to-cart-btn');
 
+      const materialEl = document.getElementById('product-material');
+      const dimensionsEl = document.getElementById('product-dimensions');
+      const finishEl = document.getElementById('product-finish');
+      const productionEl = document.getElementById('product-production');
+
       if (titleEl) titleEl.textContent = product.name;
+
       if (imgEl) {
-        imgEl.src = `/img/products/${product.image}`;
+        const isPlaceholder = isPlaceholderImage(product.image);
+        const catImg = getCategoryImg(product.category);
+        if (isPlaceholder) {
+          imgEl.src = `/images/illustrations/${catImg}.svg`;
+          imgEl.classList.add('product-detail__image--pixelart');
+        } else {
+          imgEl.src = `/img/products/${product.image}`;
+          imgEl.classList.remove('product-detail__image--pixelart');
+        }
         imgEl.alt = product.name;
+        imgEl.addEventListener('error', () => {
+          imgEl.src = '/images/illustrations/Otras.svg';
+          imgEl.classList.add('product-detail__image--pixelart');
+        });
       }
       if (nameEl) nameEl.textContent = product.name;
       if (priceEl) priceEl.textContent = `Precio: $${product.price}`;
       if (descEl) descEl.textContent = product.description;
-      if (contentEl) contentEl.style.display = 'block';
+
+      if (materialEl) materialEl.textContent = product.material;
+      if (finishEl) finishEl.textContent = product.finish;
+      if (productionEl) productionEl.textContent = product.productionTime;
+
+      if (dimensionsEl) {
+        dimensionsEl.textContent = product.hasDimensions
+          ? `H: ${product.height} | W: ${product.width} | D: ${product.depth}`
+          : 'A consultar';
+      }
+
+      if (contentEl) contentEl.style.display = '';
       document.title = `${product.name} - Mundo 3D`;
 
       addBtn?.addEventListener('click', () => {

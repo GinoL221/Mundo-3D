@@ -58,6 +58,12 @@ describe('ListProductsUseCase', () => {
       idCategory: 1,
       idFranchise: 10,
       category: 'Figures',
+      material: null,
+      height: null,
+      width: null,
+      depth: null,
+      finish: null,
+      productionTime: null,
     });
 
     expect(result.countByCategory['Figures'].count).toBe(2);

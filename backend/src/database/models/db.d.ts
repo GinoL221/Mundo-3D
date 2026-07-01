@@ -8,6 +8,12 @@ export interface ProductAttributes {
   price: number;
   descriptionProduct: string | null;
   image: string | null;
+  material?: string | null;
+  height?: number | null;
+  width?: number | null;
+  depth?: number | null;
+  finish?: string | null;
+  productionTime?: number | null;
 }
 
 export interface CategoryAttributes {

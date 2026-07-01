@@ -31,6 +31,9 @@
   height: auto;
   display: block;
   border: 2px solid var(--pico-muted);
+}
+
+.product-detail__image--pixelart {
   image-rendering: pixelated;
 }
 
@@ -102,11 +105,85 @@
   text-decoration: underline;
 }
 
-@media (min-width: 640px) {
-  .product-detail__card {
-    flex-direction: row;
-    align-items: center;
-  }
-  .product-detail__image { flex: 1; }
-  .product-detail__info  { flex: 1; }
+#product-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
 }
+
+@media (min-width: 640px) {
+  #product-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-lg);
+    align-items: start;
+  }
+}
+
+/* ── Product Specs Section ────────────────────────────────── */
+
+.product-specs {
+  background-color: var(--surface);
+  border: 2px solid var(--border);
+  padding: var(--space-md);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  position: relative;
+}
+
+/* Inner borders for retro/JRPG style panel */
+.product-specs::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  right: 3px;
+  bottom: 3px;
+  border: 1px solid var(--border);
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+.product-specs__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-h3);
+  color: var(--title-highlight);
+  margin-bottom: var(--space-md);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: var(--space-sm);
+  text-align: left;
+}
+
+.product-specs__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.product-specs__table tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.product-specs__table tr:last-child {
+  border-bottom: none;
+}
+
+.product-specs__label {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  color: var(--pico-light);
+  padding: var(--space-sm) 0;
+  text-align: left;
+  font-weight: bold;
+}
+
+.product-specs__value {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  color: var(--fg);
+  padding: var(--space-sm) 0;
+  text-align: right;
+}
+

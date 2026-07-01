@@ -52,6 +52,12 @@ describe('UpdateProductUseCase', () => {
       idCategory: 1,
       idFranchise: 2,
       category: 'Figures',
+      material: null,
+      height: null,
+      width: null,
+      depth: null,
+      finish: null,
+      productionTime: null,
     });
 
     expect(mockProductRepo.update).toHaveBeenCalledWith(10, input);

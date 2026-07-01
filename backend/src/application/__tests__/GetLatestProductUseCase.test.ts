@@ -43,6 +43,12 @@ describe('GetLatestProductUseCase', () => {
       idCategory: 2,
       idFranchise: 5,
       category: 'Figures',
+      material: null,
+      height: null,
+      width: null,
+      depth: null,
+      finish: null,
+      productionTime: null,
     });
     expect(mockProductRepo.findLatest).toHaveBeenCalledTimes(1);
   });

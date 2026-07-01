@@ -211,6 +211,65 @@ describe('SequelizeProductRepository', () => {
       expect(result.Category).toBeUndefined();
       expect(result.Franchise).toBeUndefined();
     });
+
+    it('should create and return the product with 3D printing attributes', async () => {
+      const mockCreatedInstance = {
+        idProduct: 4,
+        nameProduct: '3D Product',
+        price: '150.00',
+        descriptionProduct: '3D print',
+        image: '3d.jpg',
+        idCategory: 1,
+        idFranchise: 2,
+        material: 'PLA',
+        height: 10.5,
+        width: 8.0,
+        depth: 5.5,
+        finish: 'Pintado',
+        productionTime: 4,
+      };
+
+      const mockFetchedInstance = {
+        ...mockCreatedInstance,
+        Category: { idCategory: 1, nameCategory: 'Accesorios' },
+        Franchise: { idFranchise: 2, nameFranchise: 'Zelda' },
+      };
+
+      jest.mocked(db.Product.create).mockResolvedValue(mockCreatedInstance as unknown as ProductInstance);
+      jest.mocked(db.Product.findByPk).mockResolvedValue(mockFetchedInstance as unknown as ProductInstance);
+
+      const result = await repository.create({
+        nameProduct: '3D Product',
+        price: 150.0,
+        descriptionProduct: '3D print',
+        image: '3d.jpg',
+        idCategory: 1,
+        idFranchise: 2,
+        material: 'PLA',
+        height: 10.5,
+        width: 8.0,
+        depth: 5.5,
+        finish: 'Pintado',
+        productionTime: 4,
+      });
+
+      expect(result.idProduct).toBe(4);
+      expect(result.price).toBe(150.0);
+      expect(result.Material).toBe('PLA');
+      expect(result.Height).toBe(10.5);
+      expect(result.Width).toBe(8.0);
+      expect(result.Depth).toBe(5.5);
+      expect(result.Finish).toBe('Pintado');
+      expect(result.ProductionTime).toBe(4);
+      expect(jest.mocked(db.Product.create)).toHaveBeenCalledWith(expect.objectContaining({
+        material: 'PLA',
+        height: 10.5,
+        width: 8.0,
+        depth: 5.5,
+        finish: 'Pintado',
+        productionTime: 4,
+      }));
+    });
   });
 
   describe('update', () => {

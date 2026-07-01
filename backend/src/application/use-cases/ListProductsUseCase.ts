@@ -48,6 +48,12 @@ export class ListProductsUseCase {
         idCategory: p.idCategory,
         idFranchise: p.idFranchise,
         category: categoryName,
+        material: p.Material,
+        height: p.Height,
+        width: p.Width,
+        depth: p.Depth,
+        finish: p.Finish,
+        productionTime: p.ProductionTime,
       };
     });
 

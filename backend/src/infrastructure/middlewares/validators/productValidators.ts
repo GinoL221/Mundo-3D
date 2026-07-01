@@ -1,5 +1,6 @@
 import { body } from 'express-validator';
 import path from 'path';
+import { ALLOWED_MATERIALS, CUSTOM_MATERIAL_PREFIX, MAX_PRODUCTION_TIME_DAYS } from '../../../domain/entities/Product';
 
 export const validationsForm = [
   body('productName')
@@ -50,4 +51,40 @@ export const validationsForm = [
     }
     return true;
   }),
+
+  body('material')
+    .optional({ values: 'falsy' })
+    .trim()
+    .custom((value) => {
+      if (ALLOWED_MATERIALS.includes(value) || value.startsWith(CUSTOM_MATERIAL_PREFIX)) {
+        return true;
+      }
+      throw new Error('Material inválido');
+    }),
+
+  body('height')
+    .optional({ values: 'falsy' })
+    .isFloat({ min: 0 })
+    .withMessage('La altura debe ser un número mayor o igual a 0'),
+
+  body('width')
+    .optional({ values: 'falsy' })
+    .isFloat({ min: 0 })
+    .withMessage('El ancho debe ser un número mayor o igual a 0'),
+
+  body('depth')
+    .optional({ values: 'falsy' })
+    .isFloat({ min: 0 })
+    .withMessage('La profundidad debe ser un número mayor o igual a 0'),
+
+  body('finish')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .withMessage('El acabado debe ser un texto'),
+
+  body('productionTime')
+    .optional({ values: 'falsy' })
+    .isInt({ min: 1, max: MAX_PRODUCTION_TIME_DAYS })
+    .withMessage(`El tiempo de producción debe ser un entero entre 1 y ${MAX_PRODUCTION_TIME_DAYS} días`),
 ];

@@ -38,6 +38,36 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         field: 'image',
       },
+      material: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        field: 'material',
+      },
+      height: {
+        type: DataTypes.DECIMAL(6, 2),
+        allowNull: true,
+        field: 'height',
+      },
+      width: {
+        type: DataTypes.DECIMAL(6, 2),
+        allowNull: true,
+        field: 'width',
+      },
+      depth: {
+        type: DataTypes.DECIMAL(6, 2),
+        allowNull: true,
+        field: 'depth',
+      },
+      finish: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        field: 'finish',
+      },
+      productionTime: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: 'production_time',
+      },
     },
     {
       tableName: 'Product',
@@ -64,6 +94,24 @@ module.exports = (sequelize) => {
         },
         Image() {
           return this.image;
+        },
+        Material() {
+          return this.material;
+        },
+        Height() {
+          return this.height;
+        },
+        Width() {
+          return this.width;
+        },
+        Depth() {
+          return this.depth;
+        },
+        Finish() {
+          return this.finish;
+        },
+        ProductionTime() {
+          return this.productionTime;
         },
       },
     },

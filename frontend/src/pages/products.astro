@@ -33,20 +33,8 @@ import { ProductCard } from '../domains/products';
 
 <script>
   import { API_URL } from '../config';
-  import { adaptAPIProducts } from '../domains/products';
+  import { adaptAPIProducts, getCategoryImg, isPlaceholderImage } from '../domains/products';
   import type { APIProduct } from '../domains/products';
-
-  const CATEGORY_IMAGES: Record<string, string> = {
-    Figura: 'Figura',
-    Busto: 'Busto',
-    Llavero: 'Llavero',
-    Máscara: 'Mascara',
-    Otras: 'Otras',
-  };
-
-  function getCategoryImg(categoryName: string): string {
-    return CATEGORY_IMAGES[categoryName] || 'Otras';
-  }
 
   async function loadProducts(): Promise<void> {
     const container = document.getElementById('product-grid-container');
@@ -92,10 +80,19 @@ import { ProductCard } from '../domains/products';
           link.href = `/product?id=${product.id}`;
         }
         if (img) {
-          img.src = `/images/illustrations/${catImg}.svg`;
-          img.alt = product.category;
+          const isPlaceholder = isPlaceholderImage(product.image);
+          if (isPlaceholder) {
+            img.src = `/images/illustrations/${catImg}.svg`;
+            img.alt = product.category;
+            img.classList.add('product-card__category-img--pixelart');
+          } else {
+            img.src = `/img/products/${product.image}`;
+            img.alt = product.name;
+            img.classList.remove('product-card__category-img--pixelart');
+          }
           img.addEventListener('error', () => {
             img.src = '/images/illustrations/Otras.svg';
+            img.classList.add('product-card__category-img--pixelart');
           });
         }
         if (name) {
