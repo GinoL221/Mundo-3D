@@ -22,14 +22,26 @@ describe('adaptAPIProduct — dimension fallback logic', () => {
     expect(product.depth).toBe('A consultar');
   });
 
-  it('shows "A consultar" for all dimensions when all are null or 0', () => {
+  it('shows "A consultar" only when all dimensions are null or undefined', () => {
     const product = adaptAPIProduct(
-      buildAPIProduct({ height: null, width: 0, depth: undefined }),
+      buildAPIProduct({ height: null, width: null, depth: undefined }),
     );
 
     expect(product.height).toBe('A consultar');
     expect(product.width).toBe('A consultar');
     expect(product.depth).toBe('A consultar');
+    expect(product.hasDimensions).toBe(false);
+  });
+
+  it('treats a defined 0 among null/undefined siblings as present, not "A consultar"', () => {
+    const product = adaptAPIProduct(
+      buildAPIProduct({ height: null, width: 0, depth: undefined }),
+    );
+
+    expect(product.height).toBe('no definida');
+    expect(product.width).toBe('0 cm');
+    expect(product.depth).toBe('no definida');
+    expect(product.hasDimensions).toBe(true);
   });
 
   it('formats defined dimensions as "X cm" and undefined ones as "no definida" when at least one is defined', () => {
@@ -52,14 +64,25 @@ describe('adaptAPIProduct — dimension fallback logic', () => {
     expect(product.depth).toBe('5.5 cm');
   });
 
-  it('treats a 0 dimension as "no definida" when at least one other dimension is defined', () => {
+  it('treats a defined 0 dimension as a valid value, not "no definida"', () => {
     const product = adaptAPIProduct(
-      buildAPIProduct({ height: 12, width: 0, depth: 5 }),
+      buildAPIProduct({ height: 12, width: 8, depth: 0 }),
     );
 
     expect(product.height).toBe('12 cm');
-    expect(product.width).toBe('no definida');
-    expect(product.depth).toBe('5 cm');
+    expect(product.width).toBe('8 cm');
+    expect(product.depth).toBe('0 cm');
+  });
+
+  it('renders "0 cm" for all dimensions when all three are legitimately 0, not "A consultar"', () => {
+    const product = adaptAPIProduct(
+      buildAPIProduct({ height: 0, width: 0, depth: 0 }),
+    );
+
+    expect(product.height).toBe('0 cm');
+    expect(product.width).toBe('0 cm');
+    expect(product.depth).toBe('0 cm');
+    expect(product.hasDimensions).toBe(true);
   });
 });
 

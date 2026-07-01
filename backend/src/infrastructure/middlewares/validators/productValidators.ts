@@ -1,5 +1,6 @@
 import { body } from 'express-validator';
 import path from 'path';
+import { ALLOWED_MATERIALS, CUSTOM_MATERIAL_PREFIX, MAX_PRODUCTION_TIME_DAYS } from '../../../domain/entities/Product';
 
 export const validationsForm = [
   body('productName')
@@ -55,8 +56,7 @@ export const validationsForm = [
     .optional({ values: 'falsy' })
     .trim()
     .custom((value) => {
-      const allowedMaterials = ['PLA', 'Resina', 'PETG', 'Flex'];
-      if (allowedMaterials.includes(value) || value.startsWith('Otros: ')) {
+      if (ALLOWED_MATERIALS.includes(value) || value.startsWith(CUSTOM_MATERIAL_PREFIX)) {
         return true;
       }
       throw new Error('Material inválido');
@@ -85,6 +85,6 @@ export const validationsForm = [
 
   body('productionTime')
     .optional({ values: 'falsy' })
-    .isInt({ min: 1, max: 30 })
-    .withMessage('El tiempo de producción debe ser un entero entre 1 y 30 días'),
+    .isInt({ min: 1, max: MAX_PRODUCTION_TIME_DAYS })
+    .withMessage(`El tiempo de producción debe ser un entero entre 1 y ${MAX_PRODUCTION_TIME_DAYS} días`),
 ];

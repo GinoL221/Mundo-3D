@@ -51,7 +51,7 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
   import { API_URL } from '../config';
-  import { adaptAPIProduct } from '../domains/products';
+  import { adaptAPIProduct, getCategoryImg, isPlaceholderImage } from '../domains/products';
   import type { APIProduct } from '../domains/products';
   import { CartService } from '../domains/cart';
 
@@ -102,20 +102,9 @@ import Layout from '../layouts/Layout.astro';
       const productionEl = document.getElementById('product-production');
 
       if (titleEl) titleEl.textContent = product.name;
-      const CATEGORY_IMAGES: Record<string, string> = {
-        Figura: 'Figura',
-        Busto: 'Busto',
-        Llavero: 'Llavero',
-        Máscara: 'Mascara',
-        Otras: 'Otras',
-      };
-
-      function getCategoryImg(categoryName: string): string {
-        return CATEGORY_IMAGES[categoryName] || 'Otras';
-      }
 
       if (imgEl) {
-        const isPlaceholder = !product.image || product.image === 'productoSinImagen.png' || product.image === 'productoSinImagen.svg';
+        const isPlaceholder = isPlaceholderImage(product.image);
         const catImg = getCategoryImg(product.category);
         if (isPlaceholder) {
           imgEl.src = `/images/illustrations/${catImg}.svg`;
@@ -126,7 +115,7 @@ import Layout from '../layouts/Layout.astro';
         }
         imgEl.alt = product.name;
         imgEl.addEventListener('error', () => {
-          imgEl.src = `/images/illustrations/${catImg}.svg`;
+          imgEl.src = '/images/illustrations/Otras.svg';
           imgEl.classList.add('product-detail__image--pixelart');
         });
       }
@@ -139,15 +128,9 @@ import Layout from '../layouts/Layout.astro';
       if (productionEl) productionEl.textContent = product.productionTime;
 
       if (dimensionsEl) {
-        const hasHeight = product.height && product.height !== 'A consultar';
-        const hasWidth = product.width && product.width !== 'A consultar';
-        const hasDepth = product.depth && product.depth !== 'A consultar';
-
-        if (hasHeight || hasWidth || hasDepth) {
-          dimensionsEl.textContent = `H: ${product.height} | W: ${product.width} | D: ${product.depth}`;
-        } else {
-          dimensionsEl.textContent = 'A consultar';
-        }
+        dimensionsEl.textContent = product.hasDimensions
+          ? `H: ${product.height} | W: ${product.width} | D: ${product.depth}`
+          : 'A consultar';
       }
 
       if (contentEl) contentEl.style.display = '';

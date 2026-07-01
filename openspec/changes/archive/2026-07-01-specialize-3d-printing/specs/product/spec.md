@@ -117,14 +117,14 @@ And the instantiation MUST fail
 ### Scenario 14: Rendering catalog on index page with category visual fallbacks
 Given the Astro index page `frontend/src/pages/index.astro` is rendered
 When product information is fetched from `/api/products` and a product has a missing or null `category`
-Then the template SHALL render a fallback illustration of `'Outras'` using the path `/images/illustrations/Outras.png`
-And if a product has a custom illustration that fails to load, the image element `onerror` handler MUST set the source to `/images/illustrations/Outras.png`
+Then the template SHALL render a fallback illustration of `'Otras'` using the path `/images/illustrations/Otras.png`
+And if a product has a custom illustration that fails to load, the image element `onerror` handler MUST set the source to `/images/illustrations/Otras.png`
 
 ### Scenario 15: Rendering catalog on products page with category visual fallbacks
 Given the Astro products catalog page `frontend/src/pages/products.astro` is rendered
 When product information is fetched from `/api/products` and a product has a missing or null `category`
-Then the template SHALL resolve the category illustration using a local lookup map (defaulting to `'Outras'`)
-And render the image using `/images/illustrations/Outras.png`
+Then the template SHALL resolve the category illustration using a local lookup map (defaulting to `'Otras'`)
+And render the image using `/images/illustrations/Otras.png`
 
 ---
 

@@ -1,9 +1,9 @@
 import { Category } from './Category';
 import { Franchise } from './Franchise';
 
-const ALLOWED_MATERIALS = ['PLA', 'Resina', 'PETG', 'Flex'];
-const CUSTOM_MATERIAL_PREFIX = 'Otros: ';
-const MAX_PRODUCTION_TIME_DAYS = 30;
+export const ALLOWED_MATERIALS = ['PLA', 'Resina', 'PETG', 'Flex'];
+export const CUSTOM_MATERIAL_PREFIX = 'Otros: ';
+export const MAX_PRODUCTION_TIME_DAYS = 30;
 
 export class Product {
   constructor(
