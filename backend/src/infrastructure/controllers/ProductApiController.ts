@@ -22,10 +22,10 @@ export class ProductApiController {
     private readonly listProductsUseCase: ListProductsUseCase,
     private readonly getProductByIdUseCase: GetProductByIdUseCase,
     private readonly getLatestProductUseCase: GetLatestProductUseCase,
-    private readonly createProductUseCase?: CreateProductUseCase,
-    private readonly updateProductUseCase?: UpdateProductUseCase,
-    private readonly deleteProductUseCase?: DeleteProductUseCase,
-    private readonly adjustProductStockUseCase?: AdjustProductStockUseCase
+    private readonly createProductUseCase: CreateProductUseCase,
+    private readonly updateProductUseCase: UpdateProductUseCase,
+    private readonly deleteProductUseCase: DeleteProductUseCase,
+    private readonly adjustProductStockUseCase: AdjustProductStockUseCase
   ) {}
 
   index = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -70,10 +70,6 @@ export class ProductApiController {
 
   create = async (req: RequestWithFile, res: Response, next: NextFunction): Promise<void> => {
     try {
-      if (!this.createProductUseCase) {
-        throw new Error('CreateProductUseCase not injected');
-      }
-
       const {
         nameProduct,
         price,
@@ -113,10 +109,6 @@ export class ProductApiController {
 
   update = async (req: RequestWithFile, res: Response, next: NextFunction): Promise<void> => {
     try {
-      if (!this.updateProductUseCase) {
-        throw new Error('UpdateProductUseCase not injected');
-      }
-
       const id = parseInt(req.params.id as string, 10);
       if (Number.isNaN(id)) {
         res.status(400).json({ error: 'Id de producto inválido' });
@@ -174,10 +166,6 @@ export class ProductApiController {
 
   destroy = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      if (!this.deleteProductUseCase) {
-        throw new Error('DeleteProductUseCase not injected');
-      }
-
       const id = parseInt(req.params.id as string, 10);
       if (Number.isNaN(id)) {
         res.status(400).json({ error: 'Id de producto inválido' });
@@ -196,10 +184,6 @@ export class ProductApiController {
 
   adjustStock = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      if (!this.adjustProductStockUseCase) {
-        throw new Error('AdjustProductStockUseCase not injected');
-      }
-
       const id = parseInt(req.params.id as string, 10);
       if (Number.isNaN(id)) {
         res.status(400).json({ error: 'Id de producto inválido' });

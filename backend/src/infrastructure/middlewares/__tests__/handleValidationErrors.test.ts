@@ -12,7 +12,7 @@ jest.mock('../../utils/cleanupUploadedFile', () => ({
 }));
 
 describe('handleValidationErrors', () => {
-  let req: Partial<Request> & { file?: { path?: string } };
+  let req: Omit<Partial<Request>, 'file'> & { file?: { path?: string } };
   let res: Partial<Response>;
   let next: NextFunction;
 
