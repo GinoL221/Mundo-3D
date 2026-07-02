@@ -7,6 +7,11 @@ import { CreateProductUseCase } from '../../../application/use-cases/CreateProdu
 import { UpdateProductUseCase } from '../../../application/use-cases/UpdateProductUseCase';
 import { DeleteProductUseCase } from '../../../application/use-cases/DeleteProductUseCase';
 import { AdjustProductStockUseCase } from '../../../application/use-cases/AdjustProductStockUseCase';
+import { cleanupUploadedFile } from '../../utils/cleanupUploadedFile';
+
+jest.mock('../../utils/cleanupUploadedFile', () => ({
+  cleanupUploadedFile: jest.fn(),
+}));
 
 describe('ProductApiController', () => {
   let controller: ProductApiController;
@@ -23,6 +28,7 @@ describe('ProductApiController', () => {
   let next: NextFunction;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     mockListProductsUseCase = {
       execute: jest.fn(),
     } as any;
@@ -232,6 +238,29 @@ describe('ProductApiController', () => {
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({ error: 'Producto no encontrado' });
       expect(next).not.toHaveBeenCalled();
+    });
+
+    it('cleans up an already-uploaded replacement image when the product is not found (404)', async () => {
+      req.params = { id: '999' };
+      req.body = { nameProduct: 'Updated Name' };
+      req.file = { filename: 'new.png', path: '/tmp/uploads/new.png' } as any;
+      mockUpdateProductUseCase.execute.mockResolvedValue(null);
+
+      await controller.update(req as Request, res as Response, next);
+
+      expect(cleanupUploadedFile).toHaveBeenCalledWith('/tmp/uploads/new.png');
+    });
+
+    it('does not touch the filesystem (retains the uploaded image) when the update succeeds', async () => {
+      req.params = { id: '10' };
+      req.body = { nameProduct: 'Updated Name' };
+      req.file = { filename: 'new.png', path: '/tmp/uploads/new.png' } as any;
+      const mockProduct = { idProduct: 10, nameProduct: 'Updated Name', image: 'new.png', stock: 5 };
+      mockUpdateProductUseCase.execute.mockResolvedValue(mockProduct as any);
+
+      await controller.update(req as Request, res as Response, next);
+
+      expect(cleanupUploadedFile).not.toHaveBeenCalled();
     });
 
     it('forwards unexpected errors to next', async () => {

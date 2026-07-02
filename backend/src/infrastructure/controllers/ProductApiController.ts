@@ -6,8 +6,9 @@ import { CreateProductUseCase } from '../../application/use-cases/CreateProductU
 import { UpdateProductUseCase } from '../../application/use-cases/UpdateProductUseCase';
 import { DeleteProductUseCase } from '../../application/use-cases/DeleteProductUseCase';
 import { AdjustProductStockUseCase } from '../../application/use-cases/AdjustProductStockUseCase';
+import { cleanupUploadedFile } from '../utils/cleanupUploadedFile';
 
-type RequestWithFile = Request & { file?: { filename: string } };
+type RequestWithFile = Request & { file?: { filename: string; path?: string } };
 
 const toOptionalNumber = (value: unknown): number | null => {
   if (value === undefined || value === null || value === '') {
@@ -147,6 +148,12 @@ export class ProductApiController {
 
       const product = await this.updateProductUseCase.execute(id, input);
       if (!product) {
+        // A replacement image may have already been written to disk by
+        // multer before the use case discovered the product doesn't exist —
+        // don't leave it orphaned.
+        if (req.file?.path) {
+          cleanupUploadedFile(req.file.path);
+        }
         res.status(404).json({ error: 'Producto no encontrado' });
         return;
       }
