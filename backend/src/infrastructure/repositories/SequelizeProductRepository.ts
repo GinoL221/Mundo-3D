@@ -1,8 +1,15 @@
+import { QueryTypes } from 'sequelize';
 import { Product } from '../../domain/entities/Product';
 import { Category } from '../../domain/entities/Category';
 import { Franchise } from '../../domain/entities/Franchise';
 import { IProductRepository } from '../../domain/ports/IProductRepository';
 import db, { ProductInstance, ProductAttributes } from '../../database/models/db';
+
+// Raw column names as defined in `database/models/Product.js` (field mappings).
+// Kept in sync manually with that model definition — update both if either changes.
+const PRODUCT_TABLE = '`Product`';
+const PRODUCT_ID_COLUMN = '`id_product`';
+const PRODUCT_STOCK_COLUMN = '`stock`';
 
 export class SequelizeProductRepository implements IProductRepository {
   private toEntity(instance: ProductInstance): Product {
@@ -132,7 +139,11 @@ export class SequelizeProductRepository implements IProductRepository {
     return created;
   }
 
-  async update(id: number, product: Partial<Product>): Promise<Product | null> {
+  // NOTE: `stock` is intentionally NOT accepted here — see IProductRepository's
+  // `Omit<Partial<Product>, 'stock'>` signature. Per product-inventory spec
+  // ("Product Update"), PUT /api/products/:id MUST NOT modify stock; stock is
+  // exclusively mutated via `adjustStock` (PATCH .../stock).
+  async update(id: number, product: Omit<Partial<Product>, 'stock'>): Promise<Product | null> {
     const instance = await db.Product.findByPk(id);
     if (!instance) return null;
 
@@ -149,7 +160,6 @@ export class SequelizeProductRepository implements IProductRepository {
     if (product.depth !== undefined) updatedData.depth = product.depth;
     if (product.finish !== undefined) updatedData.finish = product.finish;
     if (product.productionTime !== undefined) updatedData.productionTime = product.productionTime;
-    if (product.stock !== undefined && product.stock !== null) updatedData.stock = product.stock;
 
     await instance.update(updatedData);
 
@@ -163,18 +173,33 @@ export class SequelizeProductRepository implements IProductRepository {
     return deletedCount > 0;
   }
 
+  // Atomic, race-safe stock adjustment. Implemented as a single conditional
+  // `UPDATE ... SET stock = stock + :delta WHERE id = :id AND stock + :delta >= 0`
+  // instead of a JS-level read-then-write, so two concurrent calls can never both
+  // pass a negative-stock check and then overwrite each other's write (TOCTOU/lost
+  // update). Sequelize's `sequelize.query(sql, { type: QueryTypes.UPDATE })` on the
+  // MySQL dialect used by this project resolves to `[undefined, affectedRowCount]`,
+  // giving us a reliable affected-row count to distinguish "not found" from
+  // "floor condition failed" without a second read-then-write race window.
   async adjustStock(id: number, delta: number): Promise<Product | null> {
-    const instance = await db.Product.findByPk(id);
-    if (!instance) return null;
-
-    const current = Number(instance.stock) || 0;
-    const next = current + delta;
-
-    if (next < 0) {
-      throw new Error('Insufficient stock');
+    if (!Number.isInteger(delta) || delta === 0) {
+      throw new Error('Delta must be a non-zero integer');
     }
 
-    await instance.update({ stock: next });
+    const [, affectedRows] = await db.sequelize.query(
+      `UPDATE ${PRODUCT_TABLE} SET ${PRODUCT_STOCK_COLUMN} = ${PRODUCT_STOCK_COLUMN} + :delta ` +
+        `WHERE ${PRODUCT_ID_COLUMN} = :id AND ${PRODUCT_STOCK_COLUMN} + :delta >= 0`,
+      {
+        replacements: { id, delta },
+        type: QueryTypes.UPDATE,
+      }
+    );
+
+    if (affectedRows === 0) {
+      const existing = await db.Product.findByPk(id);
+      if (!existing) return null;
+      throw new Error('Insufficient stock');
+    }
 
     return this.findById(id);
   }

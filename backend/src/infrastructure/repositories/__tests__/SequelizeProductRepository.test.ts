@@ -1,3 +1,4 @@
+import { QueryTypes } from 'sequelize';
 import { SequelizeProductRepository } from '../SequelizeProductRepository';
 import db, { ProductInstance } from '../../../database/models/db';
 
@@ -11,6 +12,9 @@ jest.mock('../../../database/models/db', () => ({
   },
   Category: {},
   Franchise: {},
+  sequelize: {
+    query: jest.fn(),
+  },
 }));
 
 describe('SequelizeProductRepository', () => {
@@ -406,31 +410,42 @@ describe('SequelizeProductRepository', () => {
       expect(jest.mocked(db.Product.create)).toHaveBeenCalledWith(expect.objectContaining({ stock: 12 }));
     });
 
-    it('should pass stock through on update', async () => {
+    it('should NOT accept stock through update — persisted stock must be unchanged (spec: Product Update)', async () => {
       const mockUpdate = jest.fn();
-      const mockInstance = { idProduct: 1, update: mockUpdate };
+      const mockInstance = { idProduct: 1, stock: 5, update: mockUpdate };
       const mockFetchedInstance = {
         idProduct: 1,
         nameProduct: 'Product A',
         price: '100.50',
-        stock: 9,
+        stock: 5,
       };
 
       jest.mocked(db.Product.findByPk)
         .mockResolvedValueOnce(mockInstance as unknown as ProductInstance)
         .mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
 
-      const result = await repository.update(1, { stock: 9 });
+      const result = await repository.update(1, {
+        nameProduct: 'Product A',
+        // @ts-expect-error stock is intentionally excluded from update()'s input type (CRITICAL 1 fix)
+        stock: 999,
+      });
 
-      expect(mockUpdate).toHaveBeenCalledWith({ stock: 9 });
-      expect(result?.stock).toBe(9);
+      expect(mockUpdate).toHaveBeenCalledWith({ nameProduct: 'Product A' });
+      expect(mockUpdate).not.toHaveBeenCalledWith(expect.objectContaining({ stock: expect.anything() }));
+      expect(result?.stock).toBe(5);
     });
   });
 
   describe('adjustStock', () => {
-    it('should increase stock by a positive delta and return the updated product', async () => {
-      const mockUpdate = jest.fn();
-      const mockInstance = { idProduct: 1, stock: 5, update: mockUpdate };
+    // CRITICAL 2 fix: adjustStock must be an atomic SQL UPDATE (SET stock = stock + delta
+    // WHERE id = :id AND stock + delta >= 0), never a JS-level read-then-write, so two
+    // concurrent calls cannot race past the "never negative" invariant (TOCTOU).
+    // `db.sequelize.query` is overloaded per QueryTypes in the real Sequelize typings,
+    // which is awkward for `jest.mocked` — cast to a plain jest.Mock for test wiring.
+    const mockSequelizeQuery = db.sequelize.query as unknown as jest.Mock;
+
+    it('should increase stock by a positive delta via an atomic floor-guarded UPDATE and return the updated product', async () => {
+      mockSequelizeQuery.mockResolvedValueOnce([undefined, 1]);
       const mockFetchedInstance = {
         idProduct: 1,
         nameProduct: 'Product A',
@@ -441,20 +456,22 @@ describe('SequelizeProductRepository', () => {
         idFranchise: 20,
         stock: 8,
       };
-
-      jest.mocked(db.Product.findByPk)
-        .mockResolvedValueOnce(mockInstance as unknown as ProductInstance)
-        .mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
+      jest.mocked(db.Product.findByPk).mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
 
       const result = await repository.adjustStock(1, 3);
 
-      expect(mockUpdate).toHaveBeenCalledWith({ stock: 8 });
+      expect(mockSequelizeQuery).toHaveBeenCalledWith(
+        expect.stringMatching(/UPDATE.*SET.*stock.*=.*stock.*\+.*:delta.*WHERE.*:id.*AND.*stock.*\+.*:delta.*>=\s*0/is),
+        expect.objectContaining({
+          replacements: { id: 1, delta: 3 },
+          type: QueryTypes.UPDATE,
+        })
+      );
       expect(result?.stock).toBe(8);
     });
 
-    it('should decrease stock by a negative delta and return the updated product', async () => {
-      const mockUpdate = jest.fn();
-      const mockInstance = { idProduct: 1, stock: 5, update: mockUpdate };
+    it('should decrease stock by a negative delta via the same atomic UPDATE and return the updated product', async () => {
+      mockSequelizeQuery.mockResolvedValueOnce([undefined, 1]);
       const mockFetchedInstance = {
         idProduct: 1,
         nameProduct: 'Product A',
@@ -465,33 +482,68 @@ describe('SequelizeProductRepository', () => {
         idFranchise: 20,
         stock: 3,
       };
-
-      jest.mocked(db.Product.findByPk)
-        .mockResolvedValueOnce(mockInstance as unknown as ProductInstance)
-        .mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
+      jest.mocked(db.Product.findByPk).mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
 
       const result = await repository.adjustStock(1, -2);
 
-      expect(mockUpdate).toHaveBeenCalledWith({ stock: 3 });
+      expect(mockSequelizeQuery).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          replacements: { id: 1, delta: -2 },
+          type: QueryTypes.UPDATE,
+        })
+      );
       expect(result?.stock).toBe(3);
     });
 
-    it('should reject a delta that would make stock negative without persisting', async () => {
-      const mockUpdate = jest.fn();
-      const mockInstance = { idProduct: 1, stock: 2, update: mockUpdate };
+    it('should allow the boundary case where the resulting stock lands exactly on 0', async () => {
+      mockSequelizeQuery.mockResolvedValueOnce([undefined, 1]);
+      const mockFetchedInstance = {
+        idProduct: 1,
+        nameProduct: 'Product A',
+        price: '100.50',
+        descriptionProduct: 'Desc A',
+        image: 'imageA.jpg',
+        idCategory: 10,
+        idFranchise: 20,
+        stock: 0,
+      };
+      jest.mocked(db.Product.findByPk).mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
 
-      jest.mocked(db.Product.findByPk).mockResolvedValueOnce(mockInstance as unknown as ProductInstance);
+      const result = await repository.adjustStock(1, -2);
 
-      await expect(repository.adjustStock(1, -5)).rejects.toThrow();
-      expect(mockUpdate).not.toHaveBeenCalled();
+      expect(result?.stock).toBe(0);
     });
 
-    it('should return null when the product does not exist', async () => {
+    it('should throw "Insufficient stock" and NOT persist when the atomic floor condition rejects the update on an existing product', async () => {
+      mockSequelizeQuery.mockResolvedValueOnce([undefined, 0]);
+      jest.mocked(db.Product.findByPk).mockResolvedValueOnce({ idProduct: 1, stock: 2 } as unknown as ProductInstance);
+
+      await expect(repository.adjustStock(1, -5)).rejects.toThrow('Insufficient stock');
+    });
+
+    it('should return null when the product does not exist (zero rows affected and no product found)', async () => {
+      mockSequelizeQuery.mockResolvedValueOnce([undefined, 0]);
       jest.mocked(db.Product.findByPk).mockResolvedValueOnce(null);
 
       const result = await repository.adjustStock(999, 1);
 
       expect(result).toBeNull();
+    });
+
+    it('should reject a non-integer delta before attempting the update', async () => {
+      await expect(repository.adjustStock(1, 2.5)).rejects.toThrow('Delta must be a non-zero integer');
+      expect(mockSequelizeQuery).not.toHaveBeenCalled();
+    });
+
+    it('should reject a non-finite (NaN) delta before attempting the update', async () => {
+      await expect(repository.adjustStock(1, NaN)).rejects.toThrow('Delta must be a non-zero integer');
+      expect(mockSequelizeQuery).not.toHaveBeenCalled();
+    });
+
+    it('should reject a delta of exactly 0 before attempting the update (spec: Zero or non-integer delta rejected)', async () => {
+      await expect(repository.adjustStock(1, 0)).rejects.toThrow('Delta must be a non-zero integer');
+      expect(mockSequelizeQuery).not.toHaveBeenCalled();
     });
   });
 
