@@ -91,6 +91,7 @@
 
 <script>
   import { cartItems, CartService } from '../domains/cart';
+  import { hasAdminAccess } from '../domains/auth';
 
   // Dynamic User Session and UI state hydration
   function updateSessionUI() {
@@ -123,13 +124,13 @@
           avatarEl.src = `/img/users/${user.Image}`;
         }
 
-        // Show the admin nav link only for ADMIN (1) or STAFF (3) — see
-        // Role in domains/auth/adapters/auth.adapter.ts. This is a
+        // Show the admin nav link only for ADMIN or STAFF — see Role in
+        // domains/auth/adapters/auth.adapter.ts. This is a
         // presentation-layer convenience only (visual-admin-hiding spec):
         // it MUST NOT be relied upon as the security boundary. The API's
         // requireRoles guard is authoritative for authorization regardless
         // of what this check renders.
-        const isAdminOrStaff = user.idRole === 1 || user.idRole === 3;
+        const isAdminOrStaff = hasAdminAccess(user);
         adminElements.forEach(el => {
           (el as HTMLElement).style.display = isAdminOrStaff ? 'block' : 'none';
         });
