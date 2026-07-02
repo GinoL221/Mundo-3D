@@ -147,5 +147,10 @@ Thumbs.db
 backend/public/img/users/*
 !backend/public/img/users/default-avatar.png
 
+# Product uploaded images (created by multer at runtime and by the
+# routes/api/__tests__/products.test.ts guard-matrix suite, which exercises
+# the real upload middleware with attached files)
+backend/public/img/products/*
+
 # Playwright auth state
 e2e/.auth/
