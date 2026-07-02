@@ -29,7 +29,8 @@ export class SequelizeProductRepository implements IProductRepository {
       instance.width !== null && instance.width !== undefined ? Number(instance.width) : null,
       instance.depth !== null && instance.depth !== undefined ? Number(instance.depth) : null,
       instance.finish,
-      instance.productionTime !== null && instance.productionTime !== undefined ? Number(instance.productionTime) : null
+      instance.productionTime !== null && instance.productionTime !== undefined ? Number(instance.productionTime) : null,
+      instance.stock !== null && instance.stock !== undefined ? Number(instance.stock) : null
     );
   }
 
@@ -90,7 +91,7 @@ export class SequelizeProductRepository implements IProductRepository {
     return this.toEntity(instance);
   }
 
-  async create(product: Omit<Product, 'idProduct' | 'IDProduct' | 'NameProduct' | 'Price' | 'DescriptionProduct' | 'Image' | 'IDCategory' | 'IDFranchise' | 'Category' | 'Franchise' | 'Material' | 'Height' | 'Width' | 'Depth' | 'Finish' | 'ProductionTime'>): Promise<Product> {
+  async create(product: Omit<Product, 'idProduct' | 'IDProduct' | 'NameProduct' | 'Price' | 'DescriptionProduct' | 'Image' | 'IDCategory' | 'IDFranchise' | 'Category' | 'Franchise' | 'Material' | 'Height' | 'Width' | 'Depth' | 'Finish' | 'ProductionTime' | 'Stock'>): Promise<Product> {
     const instance = await db.Product.create({
       nameProduct: product.nameProduct,
       price: product.price,
@@ -104,6 +105,7 @@ export class SequelizeProductRepository implements IProductRepository {
       depth: product.depth,
       finish: product.finish,
       productionTime: product.productionTime,
+      stock: product.stock,
     } as Partial<ProductAttributes>);
 
     const created = await this.findById(instance.idProduct);
@@ -123,7 +125,8 @@ export class SequelizeProductRepository implements IProductRepository {
         instance.width !== null && instance.width !== undefined ? Number(instance.width) : null,
         instance.depth !== null && instance.depth !== undefined ? Number(instance.depth) : null,
         instance.finish,
-        instance.productionTime !== null && instance.productionTime !== undefined ? Number(instance.productionTime) : null
+        instance.productionTime !== null && instance.productionTime !== undefined ? Number(instance.productionTime) : null,
+        instance.stock !== null && instance.stock !== undefined ? Number(instance.stock) : null
       );
     }
     return created;
@@ -146,6 +149,7 @@ export class SequelizeProductRepository implements IProductRepository {
     if (product.depth !== undefined) updatedData.depth = product.depth;
     if (product.finish !== undefined) updatedData.finish = product.finish;
     if (product.productionTime !== undefined) updatedData.productionTime = product.productionTime;
+    if (product.stock !== undefined && product.stock !== null) updatedData.stock = product.stock;
 
     await instance.update(updatedData);
 
@@ -157,5 +161,21 @@ export class SequelizeProductRepository implements IProductRepository {
       where: { idProduct: id },
     });
     return deletedCount > 0;
+  }
+
+  async adjustStock(id: number, delta: number): Promise<Product | null> {
+    const instance = await db.Product.findByPk(id);
+    if (!instance) return null;
+
+    const current = Number(instance.stock) || 0;
+    const next = current + delta;
+
+    if (next < 0) {
+      throw new Error('Insufficient stock');
+    }
+
+    await instance.update({ stock: next });
+
+    return this.findById(id);
   }
 }

@@ -354,6 +354,147 @@ describe('SequelizeProductRepository', () => {
     });
   });
 
+  describe('stock propagation', () => {
+    it('should propagate stock through findById', async () => {
+      const mockInstance = {
+        idProduct: 1,
+        nameProduct: 'Product A',
+        price: '100.50',
+        descriptionProduct: 'Desc A',
+        image: 'imageA.jpg',
+        idCategory: 10,
+        idFranchise: 20,
+        stock: 5,
+        Category: { idCategory: 10, nameCategory: 'Category A' },
+        Franchise: { idFranchise: 20, nameFranchise: 'Franchise A' },
+      };
+      jest.mocked(db.Product.findByPk).mockResolvedValue(mockInstance as unknown as ProductInstance);
+
+      const result = await repository.findById(1);
+
+      expect(result?.stock).toBe(5);
+      expect(result?.Stock).toBe(5);
+    });
+
+    it('should pass stock through on create', async () => {
+      const mockCreatedInstance = {
+        idProduct: 5,
+        nameProduct: 'Product E',
+        price: '50.00',
+        descriptionProduct: 'Desc E',
+        image: 'imageE.jpg',
+        idCategory: 10,
+        idFranchise: 20,
+        stock: 12,
+      };
+      const mockFetchedInstance = { ...mockCreatedInstance };
+
+      jest.mocked(db.Product.create).mockResolvedValue(mockCreatedInstance as unknown as ProductInstance);
+      jest.mocked(db.Product.findByPk).mockResolvedValue(mockFetchedInstance as unknown as ProductInstance);
+
+      const result = await repository.create({
+        nameProduct: 'Product E',
+        price: 50.0,
+        descriptionProduct: 'Desc E',
+        image: 'imageE.jpg',
+        idCategory: 10,
+        idFranchise: 20,
+        stock: 12,
+      });
+
+      expect(result.stock).toBe(12);
+      expect(jest.mocked(db.Product.create)).toHaveBeenCalledWith(expect.objectContaining({ stock: 12 }));
+    });
+
+    it('should pass stock through on update', async () => {
+      const mockUpdate = jest.fn();
+      const mockInstance = { idProduct: 1, update: mockUpdate };
+      const mockFetchedInstance = {
+        idProduct: 1,
+        nameProduct: 'Product A',
+        price: '100.50',
+        stock: 9,
+      };
+
+      jest.mocked(db.Product.findByPk)
+        .mockResolvedValueOnce(mockInstance as unknown as ProductInstance)
+        .mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
+
+      const result = await repository.update(1, { stock: 9 });
+
+      expect(mockUpdate).toHaveBeenCalledWith({ stock: 9 });
+      expect(result?.stock).toBe(9);
+    });
+  });
+
+  describe('adjustStock', () => {
+    it('should increase stock by a positive delta and return the updated product', async () => {
+      const mockUpdate = jest.fn();
+      const mockInstance = { idProduct: 1, stock: 5, update: mockUpdate };
+      const mockFetchedInstance = {
+        idProduct: 1,
+        nameProduct: 'Product A',
+        price: '100.50',
+        descriptionProduct: 'Desc A',
+        image: 'imageA.jpg',
+        idCategory: 10,
+        idFranchise: 20,
+        stock: 8,
+      };
+
+      jest.mocked(db.Product.findByPk)
+        .mockResolvedValueOnce(mockInstance as unknown as ProductInstance)
+        .mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
+
+      const result = await repository.adjustStock(1, 3);
+
+      expect(mockUpdate).toHaveBeenCalledWith({ stock: 8 });
+      expect(result?.stock).toBe(8);
+    });
+
+    it('should decrease stock by a negative delta and return the updated product', async () => {
+      const mockUpdate = jest.fn();
+      const mockInstance = { idProduct: 1, stock: 5, update: mockUpdate };
+      const mockFetchedInstance = {
+        idProduct: 1,
+        nameProduct: 'Product A',
+        price: '100.50',
+        descriptionProduct: 'Desc A',
+        image: 'imageA.jpg',
+        idCategory: 10,
+        idFranchise: 20,
+        stock: 3,
+      };
+
+      jest.mocked(db.Product.findByPk)
+        .mockResolvedValueOnce(mockInstance as unknown as ProductInstance)
+        .mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
+
+      const result = await repository.adjustStock(1, -2);
+
+      expect(mockUpdate).toHaveBeenCalledWith({ stock: 3 });
+      expect(result?.stock).toBe(3);
+    });
+
+    it('should reject a delta that would make stock negative without persisting', async () => {
+      const mockUpdate = jest.fn();
+      const mockInstance = { idProduct: 1, stock: 2, update: mockUpdate };
+
+      jest.mocked(db.Product.findByPk).mockResolvedValueOnce(mockInstance as unknown as ProductInstance);
+
+      await expect(repository.adjustStock(1, -5)).rejects.toThrow();
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should return null when the product does not exist', async () => {
+      jest.mocked(db.Product.findByPk).mockResolvedValueOnce(null);
+
+      const result = await repository.adjustStock(999, 1);
+
+      expect(result).toBeNull();
+    });
+  });
+
   describe('delete', () => {
     it('should return true if deleted successfully', async () => {
       jest.mocked(db.Product.destroy).mockResolvedValue(1);
