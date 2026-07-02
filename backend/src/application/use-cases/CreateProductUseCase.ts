@@ -15,6 +15,7 @@ export interface CreateProductInput {
   depth?: number | null;
   finish?: string | null;
   productionTime?: number | null;
+  stock?: number;
 }
 
 export class CreateProductUseCase {
@@ -37,6 +38,7 @@ export class CreateProductUseCase {
       depth: input.depth ?? null,
       finish: input.finish ?? null,
       productionTime: input.productionTime ?? null,
+      stock: input.stock ?? 0,
     });
 
     let categoryName = 'Sin categoría';
@@ -64,6 +66,7 @@ export class CreateProductUseCase {
       depth: created.Depth,
       finish: created.Finish,
       productionTime: created.ProductionTime,
+      stock: created.Stock ?? 0,
     };
   }
 }

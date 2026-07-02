@@ -13,4 +13,5 @@ export interface ProductDTO {
   depth: number | null;
   finish: string | null;
   productionTime: number | null;
+  stock: number;
 }

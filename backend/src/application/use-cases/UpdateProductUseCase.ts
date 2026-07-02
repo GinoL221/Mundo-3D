@@ -54,6 +54,7 @@ export class UpdateProductUseCase {
       depth: updated.Depth,
       finish: updated.Finish,
       productionTime: updated.ProductionTime,
+      stock: updated.Stock ?? 0,
     };
   }
 }

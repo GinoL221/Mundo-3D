@@ -49,6 +49,7 @@ describe('GetLatestProductUseCase', () => {
       depth: null,
       finish: null,
       productionTime: null,
+      stock: 0,
     });
     expect(mockProductRepo.findLatest).toHaveBeenCalledTimes(1);
   });

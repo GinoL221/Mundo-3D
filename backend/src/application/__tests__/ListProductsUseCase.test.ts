@@ -64,6 +64,7 @@ describe('ListProductsUseCase', () => {
       depth: null,
       finish: null,
       productionTime: null,
+      stock: 0,
     });
 
     expect(result.countByCategory['Figures'].count).toBe(2);

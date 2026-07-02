@@ -39,16 +39,29 @@ Chain strategy: pending
 
 ## Phase 3: Application Layer
 
-- [ ] 3.1 `backend/src/application/dtos/ProductDTO.ts`: add `stock: number`.
-- [ ] 3.2 `backend/src/application/use-cases/CreateProductUseCase.ts`: accept/default `stock` to `0`, map into DTO. Test-first: extend `application/__tests__/CreateProductUseCase.test.ts`. Satisfies: inventory spec — Product Create (stock defaults to 0). Depends: 3.1, 1.2.
-- [ ] 3.3 `backend/src/application/use-cases/UpdateProductUseCase.ts`: pass `stock` through to DTO read-only (no delta logic here). Test-first: extend `application/__tests__/UpdateProductUseCase.test.ts`. Satisfies: inventory spec — Product Update (stock unchanged by PUT). Depends: 3.1.
-- [ ] 3.4 Create `backend/src/application/use-cases/AdjustProductStockUseCase.ts`: `execute(id, delta)`, throws on negative result. Test-first: create `application/__tests__/AdjustProductStockUseCase.test.ts`. Satisfies: inventory spec — Stock Adjustment (all 4 scenarios). Depends: 2.1, 2.4.
+- [x] 3.1 `backend/src/application/dtos/ProductDTO.ts`: add `stock: number`.
+- [x] 3.2 `backend/src/application/use-cases/CreateProductUseCase.ts`: accept/default `stock` to `0`, map into DTO. Test-first: extend `application/__tests__/CreateProductUseCase.test.ts`. Satisfies: inventory spec — Product Create (stock defaults to 0). Depends: 3.1, 1.2.
+- [x] 3.3 `backend/src/application/use-cases/UpdateProductUseCase.ts`: pass `stock` through to DTO read-only (no delta logic here). Test-first: extend `application/__tests__/UpdateProductUseCase.test.ts`. Satisfies: inventory spec — Product Update (stock unchanged by PUT). Depends: 3.1.
+- [x] 3.4 Create `backend/src/application/use-cases/AdjustProductStockUseCase.ts`: `execute(id, delta)`, throws on negative result. Test-first: create `application/__tests__/AdjustProductStockUseCase.test.ts`. Satisfies: inventory spec — Stock Adjustment (all 4 scenarios). Depends: 2.1, 2.4.
 
 ## Phase 4: API Surface
 
-- [ ] 4.1 Rewrite `backend/src/infrastructure/middlewares/validators/productValidators.ts` in place: `productCreateValidators`/`productUpdateValidators` matching DTO field names (`nameProduct`, `price`, `descriptionProduct`, `idCategory`, `idFranchise`, optional `stock` int≥0); image required only on create. Test-first: extend `middlewares/__tests__/validators.test.ts`. Satisfies: inventory spec — Product Create/Update validation (400 on missing field).
-- [ ] 4.2 `backend/src/infrastructure/controllers/ProductApiController.ts`: add `create`/`update`/`destroy`/`adjustStock`, injecting use cases; 404 on "Product not found"; `adjustStock` maps use-case negative-throw to 409. Test-first: extend `controllers/__tests__/ProductApiController.test.ts`. Satisfies: inventory spec — Create 201/Update 200/Delete 204/404s/Stock 200/409. Depends: 3.2, 3.3, 3.4.
-- [ ] 4.3 `backend/src/infrastructure/routes/api/products.ts`: wire `POST/PUT/DELETE /api/products[/:id]` + `PATCH /api/products/:id/stock` with `apiAuthMiddleware` → `requireRoles(...)` (per Route Capability Matrix) → `createUpload('products')`/validators → controller. Test-first: create `routes/api/__tests__/products.test.ts` (supertest). Satisfies: guard spec — Route Capability Matrix (STAFF allowed create/update/stock, 403 on delete/users; missing token 401). Depends: 1.3, 4.1, 4.2.
+- [x] 4.1 Rewrite `backend/src/infrastructure/middlewares/validators/productValidators.ts` in place: `productCreateValidators`/`productUpdateValidators` matching DTO field names (`nameProduct`, `price`, `descriptionProduct`, `idCategory`, `idFranchise`, optional `stock` int≥0); image required only on create. Test-first: extend `middlewares/__tests__/validators.test.ts`. Satisfies: inventory spec — Product Create/Update validation (400 on missing field).
+- [x] 4.2 `backend/src/infrastructure/controllers/ProductApiController.ts`: add `create`/`update`/`destroy`/`adjustStock`, injecting use cases; 404 on "Product not found"; `adjustStock` maps use-case negative-throw to 409. Test-first: extend `controllers/__tests__/ProductApiController.test.ts`. Satisfies: inventory spec — Create 201/Update 200/Delete 204/404s/Stock 200/409. Depends: 3.2, 3.3, 3.4.
+- [x] 4.3 `backend/src/infrastructure/routes/api/products.ts`: wire `POST/PUT/DELETE /api/products[/:id]` + `PATCH /api/products/:id/stock` with `apiAuthMiddleware` → `requireRoles(...)` (per Route Capability Matrix) → `createUpload('products')`/validators → controller. Test-first: create `routes/api/__tests__/products.test.ts` (supertest). Satisfies: guard spec — Route Capability Matrix (STAFF allowed create/update/stock, 403 on delete/users; missing token 401). Depends: 1.3, 4.1, 4.2.
+
+### Phase 4 follow-up: review fix pass (PR2, post-tasks)
+
+Not new scoped tasks — a surgical fix pass closing WARNING-level findings from
+a 4-lens (risk/resilience/readability/reliability) review of PR2's diff, on
+the same branch/PR. Covers: audit logging on stock adjustments, `price`
+lower-bound validation, orphaned-upload cleanup on validation failure/404,
+`Number.isNaN(id)` guards on non-numeric `:id`, `handleValidationErrors`
+extraction, `adminGuard` reuse, and required (non-optional) use-case
+constructor params on `ProductApiController`. The 2 CRITICAL findings from
+the same review (stock-adjustment idempotency, upload disk-failure crash
+safety) were deliberately deferred — see engram
+`tech-debt/inventory-resilience-followups`.
 
 ## Phase 5: Frontend Auth Fix
 

@@ -1,6 +1,6 @@
 import { Request } from 'express';
 import { validationResult } from 'express-validator';
-import { validationsForm } from '../validators/productValidators';
+import { productCreateValidators, productUpdateValidators } from '../validators/productValidators';
 import { validationsUsers, loginValidation } from '../validators/userValidators';
 
 async function runValidation(req: Request, validations: any[]) {
@@ -12,7 +12,7 @@ async function runValidation(req: Request, validations: any[]) {
   return validationResult(req);
 }
 
-describe('productValidators - validationsForm', () => {
+describe('productValidators - productCreateValidators', () => {
   let req: any;
 
   beforeEach(() => {
@@ -22,83 +22,146 @@ describe('productValidators - validationsForm', () => {
     };
   });
 
-  it('fails if fields are missing or empty', async () => {
-    const errors = await runValidation(req as Request, validationsForm);
+  it('fails if required fields are missing or empty', async () => {
+    const errors = await runValidation(req as Request, productCreateValidators);
     expect(errors.isEmpty()).toBe(false);
-    expect(errors.mapped().productName).toBeDefined();
+    expect(errors.mapped().nameProduct).toBeDefined();
     expect(errors.mapped().price).toBeDefined();
-    expect(errors.mapped().description).toBeDefined();
-    expect(errors.mapped().category).toBeDefined();
-    expect(errors.mapped().franchise).toBeDefined();
+    expect(errors.mapped().descriptionProduct).toBeDefined();
+    expect(errors.mapped().idCategory).toBeDefined();
+    expect(errors.mapped().idFranchise).toBeDefined();
     expect(errors.mapped().image).toBeDefined();
   });
 
-  it('fails if productName is too short', async () => {
+  it('fails if nameProduct is too short', async () => {
     req.body = {
-      productName: 'abc', // less than 5
+      nameProduct: 'abc', // less than 5
       price: '100',
-      description: 'valid description here',
-      category: '1',
-      franchise: '2'
+      descriptionProduct: 'valid description here',
+      idCategory: '1',
+      idFranchise: '2'
     };
     req.file = { originalname: 'test.jpg' } as any;
 
-    const errors = await runValidation(req as Request, validationsForm);
-    expect(errors.mapped().productName).toBeDefined();
-    expect(errors.mapped().productName.msg).toBe('Tiene que tener entre 5 y 20 caracteres');
+    const errors = await runValidation(req as Request, productCreateValidators);
+    expect(errors.mapped().nameProduct).toBeDefined();
+    expect(errors.mapped().nameProduct.msg).toBe('Tiene que tener entre 5 y 20 caracteres');
   });
 
   it('fails if price is not numeric', async () => {
     req.body = {
-      productName: 'valid name',
+      nameProduct: 'valid name',
       price: 'not-a-number',
-      description: 'valid description here',
-      category: '1',
-      franchise: '2'
+      descriptionProduct: 'valid description here',
+      idCategory: '1',
+      idFranchise: '2'
     };
     req.file = { originalname: 'test.jpg' } as any;
 
-    const errors = await runValidation(req as Request, validationsForm);
+    const errors = await runValidation(req as Request, productCreateValidators);
     expect(errors.mapped().price).toBeDefined();
     expect(errors.mapped().price.msg).toBe('Debe ingresar un número');
   });
 
+  it('fails if image is missing (required on create)', async () => {
+    req.body = {
+      nameProduct: 'valid name',
+      price: '123.45',
+      descriptionProduct: 'valid description here',
+      idCategory: '1',
+      idFranchise: '2'
+    };
+    req.file = undefined;
+
+    const errors = await runValidation(req as Request, productCreateValidators);
+    expect(errors.mapped().image).toBeDefined();
+    expect(errors.mapped().image.msg).toBe('Tienes que subir una imagen');
+  });
+
   it('fails if image extension is not allowed', async () => {
     req.body = {
-      productName: 'valid name',
+      nameProduct: 'valid name',
       price: '123.45',
-      description: 'valid description here',
-      category: '1',
-      franchise: '2'
+      descriptionProduct: 'valid description here',
+      idCategory: '1',
+      idFranchise: '2'
     };
     req.file = { originalname: 'test.gif' } as any;
 
-    const errors = await runValidation(req as Request, validationsForm);
+    const errors = await runValidation(req as Request, productCreateValidators);
     expect(errors.mapped().image).toBeDefined();
     expect(errors.mapped().image.msg).toContain('Las extensiones de archivos permitidas son .jpg, .png');
   });
 
-  it('passes on valid product inputs', async () => {
+  it('fails when stock is negative', async () => {
     req.body = {
-      productName: 'Super Mario 3D',
+      nameProduct: 'Super Mario 3D',
       price: '1250',
-      description: 'An awesome action figure',
-      category: '1',
-      franchise: '2'
+      descriptionProduct: 'An awesome action figure',
+      idCategory: '1',
+      idFranchise: '2',
+      stock: '-1'
     };
     req.file = { originalname: 'mario.png' } as any;
 
-    const errors = await runValidation(req as Request, validationsForm);
+    const errors = await runValidation(req as Request, productCreateValidators);
+    expect(errors.mapped().stock).toBeDefined();
+  });
+
+  it('fails when price is zero or negative (mirrors the Product entity invariant)', async () => {
+    req.body = {
+      nameProduct: 'Super Mario 3D',
+      price: '0',
+      descriptionProduct: 'An awesome action figure',
+      idCategory: '1',
+      idFranchise: '2'
+    };
+    req.file = { originalname: 'mario.png' } as any;
+
+    const errors = await runValidation(req as Request, productCreateValidators);
+    expect(errors.mapped().price).toBeDefined();
+
+    req.body.price = '-5';
+    const negativeErrors = await runValidation(req as Request, productCreateValidators);
+    expect(negativeErrors.mapped().price).toBeDefined();
+  });
+
+  it('passes when stock is omitted (optional, defaults handled by the use case)', async () => {
+    req.body = {
+      nameProduct: 'Super Mario 3D',
+      price: '1250',
+      descriptionProduct: 'An awesome action figure',
+      idCategory: '1',
+      idFranchise: '2'
+    };
+    req.file = { originalname: 'mario.png' } as any;
+
+    const errors = await runValidation(req as Request, productCreateValidators);
+    expect(errors.mapped().stock).toBeUndefined();
+  });
+
+  it('passes on valid product inputs', async () => {
+    req.body = {
+      nameProduct: 'Super Mario 3D',
+      price: '1250',
+      descriptionProduct: 'An awesome action figure',
+      idCategory: '1',
+      idFranchise: '2',
+      stock: '5'
+    };
+    req.file = { originalname: 'mario.png' } as any;
+
+    const errors = await runValidation(req as Request, productCreateValidators);
     expect(errors.isEmpty()).toBe(true);
   });
 
   describe('3D printing attributes', () => {
     const baseValidBody = {
-      productName: 'Super Mario 3D',
+      nameProduct: 'Super Mario 3D',
       price: '1250',
-      description: 'An awesome action figure',
-      category: '1',
-      franchise: '2'
+      descriptionProduct: 'An awesome action figure',
+      idCategory: '1',
+      idFranchise: '2'
     };
     const validFile = { originalname: 'mario.png' } as any;
 
@@ -106,7 +169,7 @@ describe('productValidators - validationsForm', () => {
       req.body = { ...baseValidBody, material: 'PLA' };
       req.file = validFile;
 
-      const errors = await runValidation(req as Request, validationsForm);
+      const errors = await runValidation(req as Request, productCreateValidators);
       expect(errors.mapped().material).toBeUndefined();
     });
 
@@ -114,7 +177,7 @@ describe('productValidators - validationsForm', () => {
       req.body = { ...baseValidBody, material: 'Otros: Madera' };
       req.file = validFile;
 
-      const errors = await runValidation(req as Request, validationsForm);
+      const errors = await runValidation(req as Request, productCreateValidators);
       expect(errors.mapped().material).toBeUndefined();
     });
 
@@ -122,7 +185,7 @@ describe('productValidators - validationsForm', () => {
       req.body = { ...baseValidBody, material: 'Madera' };
       req.file = validFile;
 
-      const errors = await runValidation(req as Request, validationsForm);
+      const errors = await runValidation(req as Request, productCreateValidators);
       expect(errors.mapped().material).toBeDefined();
     });
 
@@ -130,7 +193,7 @@ describe('productValidators - validationsForm', () => {
       req.body = { ...baseValidBody, productionTime: '15' };
       req.file = validFile;
 
-      const errors = await runValidation(req as Request, validationsForm);
+      const errors = await runValidation(req as Request, productCreateValidators);
       expect(errors.mapped().productionTime).toBeUndefined();
     });
 
@@ -138,7 +201,7 @@ describe('productValidators - validationsForm', () => {
       req.body = { ...baseValidBody, productionTime: '31' };
       req.file = validFile;
 
-      const errors = await runValidation(req as Request, validationsForm);
+      const errors = await runValidation(req as Request, productCreateValidators);
       expect(errors.mapped().productionTime).toBeDefined();
     });
 
@@ -146,7 +209,7 @@ describe('productValidators - validationsForm', () => {
       req.body = { ...baseValidBody, height: '-1', width: '-2', depth: '-3' };
       req.file = validFile;
 
-      const errors = await runValidation(req as Request, validationsForm);
+      const errors = await runValidation(req as Request, productCreateValidators);
       expect(errors.mapped().height).toBeDefined();
       expect(errors.mapped().width).toBeDefined();
       expect(errors.mapped().depth).toBeDefined();
@@ -156,7 +219,7 @@ describe('productValidators - validationsForm', () => {
       req.body = { ...baseValidBody, height: '10.5', width: '8', depth: '5.5' };
       req.file = validFile;
 
-      const errors = await runValidation(req as Request, validationsForm);
+      const errors = await runValidation(req as Request, productCreateValidators);
       expect(errors.mapped().height).toBeUndefined();
       expect(errors.mapped().width).toBeUndefined();
       expect(errors.mapped().depth).toBeUndefined();
@@ -166,9 +229,72 @@ describe('productValidators - validationsForm', () => {
       req.body = { ...baseValidBody };
       req.file = validFile;
 
-      const errors = await runValidation(req as Request, validationsForm);
+      const errors = await runValidation(req as Request, productCreateValidators);
       expect(errors.isEmpty()).toBe(true);
     });
+  });
+});
+
+describe('productValidators - productUpdateValidators', () => {
+  let req: any;
+
+  beforeEach(() => {
+    req = {
+      body: {},
+      file: undefined
+    };
+  });
+
+  it('passes with an empty body and no image (all fields optional on update)', async () => {
+    const errors = await runValidation(req as Request, productUpdateValidators);
+    expect(errors.isEmpty()).toBe(true);
+  });
+
+  it('passes when only some fields are provided', async () => {
+    req.body = { nameProduct: 'Updated Name Here', price: '999' };
+
+    const errors = await runValidation(req as Request, productUpdateValidators);
+    expect(errors.isEmpty()).toBe(true);
+  });
+
+  it('fails if a provided field is invalid (nameProduct too short)', async () => {
+    req.body = { nameProduct: 'abc' };
+
+    const errors = await runValidation(req as Request, productUpdateValidators);
+    expect(errors.mapped().nameProduct).toBeDefined();
+  });
+
+  it('fails if image extension is not allowed when an image is provided', async () => {
+    req.file = { originalname: 'test.gif' } as any;
+
+    const errors = await runValidation(req as Request, productUpdateValidators);
+    expect(errors.mapped().image).toBeDefined();
+  });
+
+  it('passes when no image is provided (image optional on update)', async () => {
+    req.body = { nameProduct: 'Valid Name Here' };
+    req.file = undefined;
+
+    const errors = await runValidation(req as Request, productUpdateValidators);
+    expect(errors.mapped().image).toBeUndefined();
+  });
+
+  it('fails when stock is provided and negative', async () => {
+    req.body = { stock: '-3' };
+
+    const errors = await runValidation(req as Request, productUpdateValidators);
+    expect(errors.mapped().stock).toBeDefined();
+  });
+
+  it('fails when price is provided and zero or negative (mirrors the Product entity invariant)', async () => {
+    req.body = { price: '0' };
+
+    const errors = await runValidation(req as Request, productUpdateValidators);
+    expect(errors.mapped().price).toBeDefined();
+
+    req.body.price = '-10';
+    const negativeErrors = await runValidation(req as Request, productUpdateValidators);
+    expect(negativeErrors.mapped().price).toBeDefined();
   });
 });
 

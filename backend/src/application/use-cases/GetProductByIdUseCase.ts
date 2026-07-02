@@ -27,6 +27,7 @@ export class GetProductByIdUseCase {
       depth: product.Depth,
       finish: product.Finish,
       productionTime: product.ProductionTime,
+      stock: product.Stock ?? 0,
     };
   }
 }
