@@ -8,6 +8,7 @@ function buildAPIUser(overrides: Partial<APIUser> = {}): APIUser {
     lastName: 'Lovelace',
     email: 'ada@test.com',
     image: 'ada.jpg',
+    idRole: 2,
     ...overrides,
   };
 }
@@ -22,6 +23,7 @@ describe('createUserAdapter', () => {
       lastName: 'Lovelace',
       email: 'ada@test.com',
       image: 'ada.jpg',
+      idRole: 2,
     });
   });
 
@@ -29,6 +31,12 @@ describe('createUserAdapter', () => {
     const user = createUserAdapter(buildAPIUser({ image: null }));
 
     expect(user.image).toBe('');
+  });
+
+  it('carries idRole through unchanged (e.g. STAFF)', () => {
+    const user = createUserAdapter(buildAPIUser({ idRole: 3 }));
+
+    expect(user.idRole).toBe(3);
   });
 });
 
@@ -51,6 +59,7 @@ describe('createAuthAdapter', () => {
       lastName: 'Lovelace',
       email: 'ada@test.com',
       image: 'ada.jpg',
+      idRole: 2,
     });
   });
 
@@ -58,5 +67,11 @@ describe('createAuthAdapter', () => {
     const auth = createAuthAdapter(buildAPILoginResponse({ user: buildAPIUser({ image: null }) }));
 
     expect(auth.user.image).toBe('');
+  });
+
+  it('carries idRole through the full login round-trip (e.g. ADMIN)', () => {
+    const auth = createAuthAdapter(buildAPILoginResponse({ user: buildAPIUser({ idRole: 1 }) }));
+
+    expect(auth.user.idRole).toBe(1);
   });
 });

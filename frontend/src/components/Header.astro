@@ -29,7 +29,7 @@
       <nav class="navbar__list">
         <ul class="navbar__list--left">
           <li class="navbar__item"><a href="/products" class="navbar__link">Productos</a></li>
-          <li class="navbar__item admin-only" style="display: none;"><a href="/new-product" class="navbar__link">Nuevo producto</a></li>
+          <li class="navbar__item admin-only" style="display: none;"><a href="/admin/products" class="navbar__link">Administrar productos</a></li>
         </ul>
 
         <ul class="navbar__list--right">
@@ -91,6 +91,7 @@
 
 <script>
   import { cartItems, CartService } from '../domains/cart';
+  import { hasAdminAccess } from '../domains/auth';
 
   // Dynamic User Session and UI state hydration
   function updateSessionUI() {
@@ -123,10 +124,15 @@
           avatarEl.src = `/img/users/${user.Image}`;
         }
 
-        // Show admin links if user is an admin (IDRole === 1 or category === 'Admin')
-        const isAdmin = user.IDRole === 1 || user.idRole === 1 || user.category === 'Admin';
+        // Show the admin nav link only for ADMIN or STAFF — see Role in
+        // domains/auth/adapters/auth.adapter.ts. This is a
+        // presentation-layer convenience only (visual-admin-hiding spec):
+        // it MUST NOT be relied upon as the security boundary. The API's
+        // requireRoles guard is authoritative for authorization regardless
+        // of what this check renders.
+        const isAdminOrStaff = hasAdminAccess(user);
         adminElements.forEach(el => {
-          (el as HTMLElement).style.display = isAdmin ? 'block' : 'none';
+          (el as HTMLElement).style.display = isAdminOrStaff ? 'block' : 'none';
         });
       } catch (e) {
         console.error('Error parsing user storage:', e);

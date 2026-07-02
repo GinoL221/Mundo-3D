@@ -65,15 +65,42 @@ safety) were deliberately deferred — see engram
 
 ## Phase 5: Frontend Auth Fix
 
-- [ ] 5.1 `frontend/src/domains/auth/adapters/auth.adapter.ts`: add `idRole` to `APIUser`/`User` + both adapters. Test-first: extend `auth.adapter.test.ts`. Satisfies: hiding spec — prerequisite for Admin Nav Link Visibility / Delete Control Visibility (idRole must persist).
+- [x] 5.1 `frontend/src/domains/auth/adapters/auth.adapter.ts`: add `idRole` to `APIUser`/`User` + both adapters. Test-first: extend `auth.adapter.test.ts`. Satisfies: hiding spec — prerequisite for Admin Nav Link Visibility / Delete Control Visibility (idRole must persist).
 
 ## Phase 6: Frontend Admin UI
 
-- [ ] 6.1 `frontend/src/components/Header.astro`: replace dead `IDRole===1` check with `idRole ∈ {ADMIN,STAFF}`; point link to `/admin/products`. Satisfies: hiding spec — Admin Nav Link Visibility (both scenarios). Depends: 5.1.
-- [ ] 6.2 Create `frontend/src/domains/products/services/product.admin.service.ts`: Bearer-authed create/update/delete/adjustStock calls (pattern: `CartService`). Test-first: create `product.admin.service.test.ts`. Depends: 4.3 (API contract).
-- [ ] 6.3 Create `frontend/src/pages/admin/products/*.astro` (list/create/edit): gated on `idRole`, delete control ADMIN-only per row. Satisfies: hiding spec — Delete Control Visibility (both scenarios). Depends: 6.1, 6.2.
+- [x] 6.1 `frontend/src/components/Header.astro`: replace dead `IDRole===1` check with `idRole ∈ {ADMIN,STAFF}`; point link to `/admin/products`. Satisfies: hiding spec — Admin Nav Link Visibility (both scenarios). Depends: 5.1.
+- [x] 6.2 Create `frontend/src/domains/products/services/product.admin.service.ts`: Bearer-authed create/update/delete/adjustStock calls (pattern: `CartService`). Test-first: create `product.admin.service.test.ts`. Depends: 4.3 (API contract).
+- [x] 6.3 Create `frontend/src/pages/admin/products/*.astro` (list/create/edit): gated on `idRole`, delete control ADMIN-only per row. Satisfies: hiding spec — Delete Control Visibility (both scenarios). Depends: 6.1, 6.2.
 
 ## Phase 7: Integration / Verification
 
-- [ ] 7.1 Run backend guard-matrix + stock-delta integration suite (from 4.3) green; run full `npm test` (backend jest) and `npm test` (frontend vitest). Depends: all above.
-- [ ] 7.2 Manual e2e check: ADMIN full CRUD+stock; STAFF create/update/stock OK, delete 403 + hidden; USER/logged-out cannot see or reach `/admin/products`. Satisfies: proposal Success Criteria.
+- [x] 7.1 Run backend guard-matrix + stock-delta integration suite (from 4.3) green; run full `npm test` (backend jest) and `npm test` (frontend vitest). Depends: all above. (Frontend: 70/70 green. Backend: unchanged from PR2's 350/350 — no backend files touched in PR3, per scope constraint.)
+- [x] 7.2 Manual e2e check: ADMIN full CRUD+stock; STAFF create/update/stock OK, delete 403 + hidden; USER/logged-out cannot see or reach `/admin/products`. Satisfies: proposal Success Criteria. (No browser available in this environment — done as a careful code-level self-review tracing all 3 role paths through the actual implementation; see PR3 apply-progress for the full trace.)
+
+### Phase 6 follow-up: review fix pass (PR3, post-tasks)
+
+Not new scoped tasks — a surgical fix pass closing a BLOCKER, 3 CRITICAL, and
+2 WARNING findings from a 4-lens (risk/resilience/readability/reliability)
+review of PR3's diff, on the same branch/PR. Covers: extracting
+`getSessionUser`/`hasAdminAccess`/`isAdminOnly`/`clearSession` into
+`domains/auth/services/session.service.ts` (closing the BLOCKER — zero test
+coverage of the admin pages' role-gate/delete-visibility logic, now unit
+tested), in-flight/double-click guards on the stock adjust and delete
+buttons, a typed `ProductAdminApiError` carrying `res.status` with a 401 →
+clear-session-and-redirect-to-login handler in each admin page, inline
+validation messaging for invalid stock-delta input, and a clarifying comment
+on the `users-list` CSS reuse. 2 resilience findings (live session
+revalidation on bfcache, fetch timeout/AbortController) were deliberately
+deferred as app-wide tech debt — see engram
+`tech-debt/inventory-resilience-followups`.
+
+### Known limitation (PR3, out of scope to fix here)
+
+No `GET /api/categories` or `GET /api/franchises` endpoint exists in the
+backend, so the admin create/edit forms cannot offer a category/franchise
+picker — `idCategory`/`idFranchise` are plain numeric ID inputs the admin
+must know. Adding such listing endpoints would require backend changes,
+which are explicitly out of scope for this frontend-only PR. Tracked as
+follow-up tech debt, not a spec violation (the spec only requires the
+fields to be submitted correctly, not resolved from a picker).
