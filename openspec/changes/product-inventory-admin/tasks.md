@@ -50,6 +50,19 @@ Chain strategy: pending
 - [x] 4.2 `backend/src/infrastructure/controllers/ProductApiController.ts`: add `create`/`update`/`destroy`/`adjustStock`, injecting use cases; 404 on "Product not found"; `adjustStock` maps use-case negative-throw to 409. Test-first: extend `controllers/__tests__/ProductApiController.test.ts`. Satisfies: inventory spec — Create 201/Update 200/Delete 204/404s/Stock 200/409. Depends: 3.2, 3.3, 3.4.
 - [x] 4.3 `backend/src/infrastructure/routes/api/products.ts`: wire `POST/PUT/DELETE /api/products[/:id]` + `PATCH /api/products/:id/stock` with `apiAuthMiddleware` → `requireRoles(...)` (per Route Capability Matrix) → `createUpload('products')`/validators → controller. Test-first: create `routes/api/__tests__/products.test.ts` (supertest). Satisfies: guard spec — Route Capability Matrix (STAFF allowed create/update/stock, 403 on delete/users; missing token 401). Depends: 1.3, 4.1, 4.2.
 
+### Phase 4 follow-up: review fix pass (PR2, post-tasks)
+
+Not new scoped tasks — a surgical fix pass closing WARNING-level findings from
+a 4-lens (risk/resilience/readability/reliability) review of PR2's diff, on
+the same branch/PR. Covers: audit logging on stock adjustments, `price`
+lower-bound validation, orphaned-upload cleanup on validation failure/404,
+`Number.isNaN(id)` guards on non-numeric `:id`, `handleValidationErrors`
+extraction, `adminGuard` reuse, and required (non-optional) use-case
+constructor params on `ProductApiController`. The 2 CRITICAL findings from
+the same review (stock-adjustment idempotency, upload disk-failure crash
+safety) were deliberately deferred — see engram
+`tech-debt/inventory-resilience-followups`.
+
 ## Phase 5: Frontend Auth Fix
 
 - [ ] 5.1 `frontend/src/domains/auth/adapters/auth.adapter.ts`: add `idRole` to `APIUser`/`User` + both adapters. Test-first: extend `auth.adapter.test.ts`. Satisfies: hiding spec — prerequisite for Admin Nav Link Visibility / Delete Control Visibility (idRole must persist).
