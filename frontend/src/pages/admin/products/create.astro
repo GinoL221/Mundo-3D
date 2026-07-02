@@ -69,29 +69,14 @@ import Layout from '../../../layouts/Layout.astro';
 </Layout>
 
 <script>
-  import { Role } from '../../../domains/auth';
+  import { getSessionUser, hasAdminAccess } from '../../../domains/auth';
   import { ProductAdminService } from '../../../domains/products';
-
-  interface SessionUser {
-    idRole: number;
-  }
-
-  function getSessionUser(): SessionUser | null {
-    try {
-      const token = localStorage.getItem('token');
-      const userJson = localStorage.getItem('user');
-      if (!token || !userJson) return null;
-      return JSON.parse(userJson) as SessionUser;
-    } catch {
-      return null;
-    }
-  }
 
   const deniedEl = document.getElementById('admin-gate-denied');
   const contentEl = document.getElementById('admin-create-content');
 
   const sessionUser = getSessionUser();
-  const isAdminOrStaff = sessionUser?.idRole === Role.ADMIN || sessionUser?.idRole === Role.STAFF;
+  const isAdminOrStaff = hasAdminAccess(sessionUser);
 
   if (!isAdminOrStaff) {
     if (deniedEl) deniedEl.style.display = 'block';

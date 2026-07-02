@@ -79,24 +79,9 @@ import Layout from '../../../layouts/Layout.astro';
 
 <script>
   import { API_URL } from '../../../config';
-  import { Role } from '../../../domains/auth';
+  import { getSessionUser, hasAdminAccess } from '../../../domains/auth';
   import { ProductAdminService } from '../../../domains/products';
   import type { AdminProductDTO } from '../../../domains/products';
-
-  interface SessionUser {
-    idRole: number;
-  }
-
-  function getSessionUser(): SessionUser | null {
-    try {
-      const token = localStorage.getItem('token');
-      const userJson = localStorage.getItem('user');
-      if (!token || !userJson) return null;
-      return JSON.parse(userJson) as SessionUser;
-    } catch {
-      return null;
-    }
-  }
 
   function getProductId(): string | null {
     const searchParams = new URLSearchParams(window.location.search);
@@ -109,7 +94,7 @@ import Layout from '../../../layouts/Layout.astro';
   const contentEl = document.getElementById('admin-edit-content');
 
   const sessionUser = getSessionUser();
-  const isAdminOrStaff = sessionUser?.idRole === Role.ADMIN || sessionUser?.idRole === Role.STAFF;
+  const isAdminOrStaff = hasAdminAccess(sessionUser);
 
   const productId = getProductId();
 
