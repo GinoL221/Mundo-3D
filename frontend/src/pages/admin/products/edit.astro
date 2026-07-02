@@ -79,8 +79,8 @@ import Layout from '../../../layouts/Layout.astro';
 
 <script>
   import { API_URL } from '../../../config';
-  import { getSessionUser, hasAdminAccess } from '../../../domains/auth';
-  import { ProductAdminService } from '../../../domains/products';
+  import { clearSession, getSessionUser, hasAdminAccess } from '../../../domains/auth';
+  import { ProductAdminApiError, ProductAdminService } from '../../../domains/products';
   import type { AdminProductDTO } from '../../../domains/products';
 
   function getProductId(): string | null {
@@ -166,7 +166,10 @@ import Layout from '../../../layouts/Layout.astro';
       await ProductAdminService.update(Number(productId), formData);
       window.location.href = '/admin/products';
     } catch (err) {
-      if (err instanceof Error) {
+      if (err instanceof ProductAdminApiError && err.status === 401) {
+        clearSession();
+        window.location.href = '/login';
+      } else if (err instanceof Error) {
         showError(err.message);
       } else {
         showError('No se pudo conectar con el servidor. Intentá de nuevo.');

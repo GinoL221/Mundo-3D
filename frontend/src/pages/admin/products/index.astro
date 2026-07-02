@@ -31,6 +31,13 @@ import Layout from '../../../layouts/Layout.astro';
       <div id="admin-error" class="form-card__error" style="display:none; text-align:center;"></div>
       <p id="admin-loading-msg" style="text-align:center; padding: 2rem;">Cargando productos...</p>
 
+      <!--
+        Intentional cross-domain CSS reuse: `.users-list` / `.users-list__card` /
+        `.users-list__btn--danger` were originally styled for the users list,
+        but already have exactly the card + danger-button shape this admin
+        product list needs, so they're reused verbatim instead of duplicating
+        CSS. Not a copy-paste mistake.
+      -->
       <div class="users-list" id="admin-products-list"></div>
     </div>
   </main>
@@ -66,8 +73,8 @@ import Layout from '../../../layouts/Layout.astro';
 
 <script>
   import { API_URL } from '../../../config';
-  import { getSessionUser, hasAdminAccess, isAdminOnly } from '../../../domains/auth';
-  import { ProductAdminService } from '../../../domains/products';
+  import { clearSession, getSessionUser, hasAdminAccess, isAdminOnly } from '../../../domains/auth';
+  import { ProductAdminApiError, ProductAdminService } from '../../../domains/products';
   import type { AdminProductDTO } from '../../../domains/products';
 
   const deniedEl = document.getElementById('admin-gate-denied');
@@ -84,10 +91,30 @@ import Layout from '../../../layouts/Layout.astro';
     loadProducts();
   }
 
+  function showAdminError(msg: string): void {
+    const errorEl = document.getElementById('admin-error');
+    if (errorEl) {
+      errorEl.textContent = msg;
+      errorEl.style.display = 'block';
+    }
+  }
+
+  function hideAdminError(): void {
+    const errorEl = document.getElementById('admin-error');
+    if (errorEl) errorEl.style.display = 'none';
+  }
+
+  // Session expired/invalid mid-page (e.g. the stored token was revoked
+  // server-side): clear it and send the admin back to /login instead of
+  // showing a confusing generic error.
+  function handleUnauthorized(): void {
+    clearSession();
+    window.location.href = '/login';
+  }
+
   async function loadProducts(): Promise<void> {
     const listEl = document.getElementById('admin-products-list');
     const loadingMsg = document.getElementById('admin-loading-msg');
-    const errorEl = document.getElementById('admin-error');
     if (!listEl) return;
 
     try {
@@ -111,10 +138,7 @@ import Layout from '../../../layouts/Layout.astro';
       listEl.appendChild(fragment);
     } catch (err) {
       if (loadingMsg) loadingMsg.remove();
-      if (errorEl) {
-        errorEl.textContent = 'No se pudieron cargar los productos.';
-        errorEl.style.display = 'block';
-      }
+      showAdminError('No se pudieron cargar los productos.');
       console.error('Error loading admin products:', err);
     }
   }
@@ -138,12 +162,30 @@ import Layout from '../../../layouts/Layout.astro';
 
     async function applyDelta(sign: 1 | -1): Promise<void> {
       const magnitude = Number(deltaInput?.value);
-      if (!Number.isInteger(magnitude) || magnitude <= 0) return;
+      if (!Number.isInteger(magnitude) || magnitude <= 0) {
+        showAdminError('Ingresá una cantidad entera positiva para ajustar el stock.');
+        return;
+      }
+      hideAdminError();
+
+      // In-flight guard: the stock-adjust endpoint is not idempotent, so a
+      // rapid double-click must not fire two overlapping requests.
+      if (plusBtn) plusBtn.disabled = true;
+      if (minusBtn) minusBtn.disabled = true;
+      if (deltaInput) deltaInput.disabled = true;
       try {
         const updated = await ProductAdminService.adjustStock(product.idProduct, magnitude * sign);
         if (stockEl) stockEl.textContent = String(updated.stock);
       } catch (err) {
+        if (err instanceof ProductAdminApiError && err.status === 401) {
+          handleUnauthorized();
+          return;
+        }
         alert(err instanceof Error ? err.message : 'No se pudo ajustar el stock.');
+      } finally {
+        if (plusBtn) plusBtn.disabled = false;
+        if (minusBtn) minusBtn.disabled = false;
+        if (deltaInput) deltaInput.disabled = false;
       }
     }
 
@@ -157,12 +199,21 @@ import Layout from '../../../layouts/Layout.astro';
       if (isAdmin) {
         deleteBtn.addEventListener('click', () => {
           if (!confirm(`¿Eliminar "${product.nameProduct}"?`)) return;
+          // In-flight guard: a rapid double-click must not fire two DELETE
+          // requests (the second would otherwise surface a confusing 404
+          // right after a successful delete).
+          deleteBtn.disabled = true;
           ProductAdminService.remove(product.idProduct)
             .then(() => {
               deleteBtn.closest('article')?.remove();
             })
             .catch((err) => {
+              if (err instanceof ProductAdminApiError && err.status === 401) {
+                handleUnauthorized();
+                return;
+              }
               alert(err instanceof Error ? err.message : 'No se pudo eliminar el producto.');
+              deleteBtn.disabled = false;
             });
         });
       } else {

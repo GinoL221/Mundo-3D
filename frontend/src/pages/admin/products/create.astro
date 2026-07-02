@@ -69,8 +69,8 @@ import Layout from '../../../layouts/Layout.astro';
 </Layout>
 
 <script>
-  import { getSessionUser, hasAdminAccess } from '../../../domains/auth';
-  import { ProductAdminService } from '../../../domains/products';
+  import { clearSession, getSessionUser, hasAdminAccess } from '../../../domains/auth';
+  import { ProductAdminApiError, ProductAdminService } from '../../../domains/products';
 
   const deniedEl = document.getElementById('admin-gate-denied');
   const contentEl = document.getElementById('admin-create-content');
@@ -105,7 +105,10 @@ import Layout from '../../../layouts/Layout.astro';
       await ProductAdminService.create(formData);
       window.location.href = '/admin/products';
     } catch (err) {
-      if (err instanceof Error) {
+      if (err instanceof ProductAdminApiError && err.status === 401) {
+        clearSession();
+        window.location.href = '/login';
+      } else if (err instanceof Error) {
         showError(err.message);
       } else {
         showError('No se pudo conectar con el servidor. Intentá de nuevo.');
