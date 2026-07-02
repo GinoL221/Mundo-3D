@@ -1,5 +1,4 @@
 import jwt from 'jsonwebtoken';
-import path from 'path';
 import { Request, Response, NextFunction } from 'express';
 import { getJwtSecret } from '../security/JwtSecret';
 import { Role } from '../../domain/Role';
@@ -51,25 +50,22 @@ export const apiAuthMiddleware = (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const adminGuard = (req: Request, res: Response, next: NextFunction): void | Response => {
-  const isApiRequest = req.path.startsWith('/api') || req.originalUrl?.startsWith('/api');
+export const requireRoles = (...roles: Role[]) => (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void | Response => {
   const principal = req.session?.userLogged || req.user;
 
   if (!principal) {
-    if (isApiRequest) {
-      return res.status(401).json({ error: 'Autenticación requerida' });
-    }
-    return res.redirect('/login');
+    return res.status(401).json({ error: 'Autenticación requerida' });
   }
 
-  if (principal.idRole !== Role.ADMIN) {
-    if (isApiRequest) {
-      return res.status(403).json({ error: 'Acceso restringido a administradores' });
-    }
-    return res.status(403).render(path.join(__dirname, '../../views/403Forbidden.ejs'), {
-      message: 'No tienes permisos de administrador para acceder a esta página.',
-    });
+  if (!roles.includes(principal.idRole as Role)) {
+    return res.status(403).json({ error: 'Acceso restringido' });
   }
 
   next();
 };
+
+export const adminGuard = requireRoles(Role.ADMIN);
