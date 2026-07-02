@@ -96,7 +96,10 @@ export const productCreateValidators = [
     .withMessage('El precio no puede estar vacío')
     .bail()
     .isNumeric()
-    .withMessage('Debe ingresar un número'),
+    .withMessage('Debe ingresar un número')
+    .bail()
+    .custom((value) => Number(value) > 0)
+    .withMessage('El precio debe ser mayor a 0'),
 
   body('descriptionProduct')
     .trim()
@@ -132,7 +135,10 @@ export const productUpdateValidators = [
     .optional({ values: 'falsy' })
     .trim()
     .isNumeric()
-    .withMessage('Debe ingresar un número'),
+    .withMessage('Debe ingresar un número')
+    .bail()
+    .custom((value) => Number(value) > 0)
+    .withMessage('El precio debe ser mayor a 0'),
 
   body('descriptionProduct')
     .optional({ values: 'falsy' })

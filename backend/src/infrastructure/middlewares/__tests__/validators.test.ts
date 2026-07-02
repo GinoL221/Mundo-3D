@@ -108,6 +108,24 @@ describe('productValidators - productCreateValidators', () => {
     expect(errors.mapped().stock).toBeDefined();
   });
 
+  it('fails when price is zero or negative (mirrors the Product entity invariant)', async () => {
+    req.body = {
+      nameProduct: 'Super Mario 3D',
+      price: '0',
+      descriptionProduct: 'An awesome action figure',
+      idCategory: '1',
+      idFranchise: '2'
+    };
+    req.file = { originalname: 'mario.png' } as any;
+
+    const errors = await runValidation(req as Request, productCreateValidators);
+    expect(errors.mapped().price).toBeDefined();
+
+    req.body.price = '-5';
+    const negativeErrors = await runValidation(req as Request, productCreateValidators);
+    expect(negativeErrors.mapped().price).toBeDefined();
+  });
+
   it('passes when stock is omitted (optional, defaults handled by the use case)', async () => {
     req.body = {
       nameProduct: 'Super Mario 3D',
@@ -266,6 +284,17 @@ describe('productValidators - productUpdateValidators', () => {
 
     const errors = await runValidation(req as Request, productUpdateValidators);
     expect(errors.mapped().stock).toBeDefined();
+  });
+
+  it('fails when price is provided and zero or negative (mirrors the Product entity invariant)', async () => {
+    req.body = { price: '0' };
+
+    const errors = await runValidation(req as Request, productUpdateValidators);
+    expect(errors.mapped().price).toBeDefined();
+
+    req.body.price = '-10';
+    const negativeErrors = await runValidation(req as Request, productUpdateValidators);
+    expect(negativeErrors.mapped().price).toBeDefined();
   });
 });
 
