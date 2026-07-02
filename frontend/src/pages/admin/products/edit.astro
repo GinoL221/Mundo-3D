@@ -1,0 +1,193 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+---
+
+<Layout title="Editar Producto - Mundo 3D">
+  <main class="form-layout">
+    <!--
+      Client-side UX gate only (visual-admin-hiding spec) — the API's
+      requireRoles guard (ADMIN, STAFF) on PUT /api/products/:id is the real
+      security boundary, not this check.
+    -->
+    <div id="admin-gate-denied" style="display:none; text-align:center; padding:2rem;">
+      <p>No tenés permisos para acceder a esta sección.</p>
+      <a href="/">Volver al inicio</a>
+    </div>
+
+    <div id="admin-edit-loading" style="display:none; text-align:center; padding:2rem;">Cargando producto...</div>
+    <div id="admin-edit-load-error" style="display:none; text-align:center; padding:2rem;">
+      <p>No se pudo cargar el producto.</p>
+      <a href="/admin/products">Volver al listado</a>
+    </div>
+
+    <div id="admin-edit-content" class="form-card--wide" style="display:none;">
+      <!--
+        Catalog fields only — this form intentionally has NO stock field.
+        PUT /api/products/:id MUST NOT modify stock (product-inventory
+        spec, "Product Update"); stock changes go exclusively through the
+        stock-adjust control on the admin products list.
+      -->
+      <form id="edit-product-form" class="form-card__form" novalidate enctype="multipart/form-data">
+        <h2>Editar Producto</h2>
+
+        <div id="edit-error" class="form-card__error" style="display:none;"></div>
+
+        <label for="nameProduct">Nombre:</label>
+        <input type="text" id="nameProduct" name="nameProduct" class="form-card__input" minlength="5" maxlength="20" />
+
+        <label for="price">Precio:</label>
+        <input type="number" id="price" name="price" class="form-card__input" min="0.01" step="0.01" />
+
+        <label for="descriptionProduct">Descripción:</label>
+        <input type="text" id="descriptionProduct" name="descriptionProduct" class="form-card__input" maxlength="40" />
+
+        <label for="idCategory">ID de categoría:</label>
+        <input type="number" id="idCategory" name="idCategory" class="form-card__input" min="1" step="1" />
+
+        <label for="idFranchise">ID de franquicia:</label>
+        <input type="number" id="idFranchise" name="idFranchise" class="form-card__input" min="1" step="1" />
+
+        <label for="material">Material (PLA, Resina, PETG, Flex, u "Otros: detalle"):</label>
+        <input type="text" id="material" name="material" class="form-card__input" placeholder="Opcional" />
+
+        <label for="height">Alto (cm):</label>
+        <input type="number" id="height" name="height" class="form-card__input" min="0" step="0.1" placeholder="Opcional" />
+
+        <label for="width">Ancho (cm):</label>
+        <input type="number" id="width" name="width" class="form-card__input" min="0" step="0.1" placeholder="Opcional" />
+
+        <label for="depth">Profundidad (cm):</label>
+        <input type="number" id="depth" name="depth" class="form-card__input" min="0" step="0.1" placeholder="Opcional" />
+
+        <label for="finish">Acabado:</label>
+        <input type="text" id="finish" name="finish" class="form-card__input" placeholder="Opcional" />
+
+        <label for="productionTime">Tiempo de producción (días):</label>
+        <input type="number" id="productionTime" name="productionTime" class="form-card__input" min="1" max="30" step="1" placeholder="Opcional" />
+
+        <label for="image">Reemplazar imagen (.jpg, .png):</label>
+        <input type="file" id="image" name="image" accept=".jpg,.png" />
+
+        <div class="form-card__actions">
+          <a href="/admin/products" class="form-card__btn" style="text-decoration:none; text-align:center;">Cancelar</a>
+          <button type="submit" id="edit-btn" class="form-card__btn">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  import { API_URL } from '../../../config';
+  import { Role } from '../../../domains/auth';
+  import { ProductAdminService } from '../../../domains/products';
+  import type { AdminProductDTO } from '../../../domains/products';
+
+  interface SessionUser {
+    idRole: number;
+  }
+
+  function getSessionUser(): SessionUser | null {
+    try {
+      const token = localStorage.getItem('token');
+      const userJson = localStorage.getItem('user');
+      if (!token || !userJson) return null;
+      return JSON.parse(userJson) as SessionUser;
+    } catch {
+      return null;
+    }
+  }
+
+  function getProductId(): string | null {
+    const searchParams = new URLSearchParams(window.location.search);
+    return searchParams.get('id');
+  }
+
+  const deniedEl = document.getElementById('admin-gate-denied');
+  const loadingEl = document.getElementById('admin-edit-loading');
+  const loadErrorEl = document.getElementById('admin-edit-load-error');
+  const contentEl = document.getElementById('admin-edit-content');
+
+  const sessionUser = getSessionUser();
+  const isAdminOrStaff = sessionUser?.idRole === Role.ADMIN || sessionUser?.idRole === Role.STAFF;
+
+  const productId = getProductId();
+
+  if (!isAdminOrStaff) {
+    if (deniedEl) deniedEl.style.display = 'block';
+  } else if (!productId) {
+    if (loadErrorEl) loadErrorEl.style.display = 'block';
+  } else {
+    if (loadingEl) loadingEl.style.display = 'block';
+    void loadProduct(productId);
+  }
+
+  async function loadProduct(id: string): Promise<void> {
+    try {
+      const res = await fetch(`${API_URL}/api/product/${id}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const product = (await res.json()) as AdminProductDTO;
+      fillForm(product);
+
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (contentEl) contentEl.style.display = 'block';
+    } catch (err) {
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (loadErrorEl) loadErrorEl.style.display = 'block';
+      console.error('Error loading product for edit:', err);
+    }
+  }
+
+  function fillForm(product: AdminProductDTO): void {
+    const set = (name: string, value: string | number | null) => {
+      const el = document.getElementById(name) as HTMLInputElement | null;
+      if (el && value !== null && value !== undefined) el.value = String(value);
+    };
+
+    set('nameProduct', product.nameProduct);
+    set('price', product.price);
+    set('descriptionProduct', product.descriptionProduct);
+    set('idCategory', product.idCategory);
+    set('idFranchise', product.idFranchise);
+    set('material', product.material);
+    set('height', product.height);
+    set('width', product.width);
+    set('depth', product.depth);
+    set('finish', product.finish);
+    set('productionTime', product.productionTime);
+  }
+
+  const form = document.getElementById('edit-product-form') as HTMLFormElement | null;
+  const errorBox = document.getElementById('edit-error') as HTMLElement | null;
+  const editBtn = document.getElementById('edit-btn') as HTMLButtonElement | null;
+
+  function showError(msg: string): void {
+    if (errorBox) {
+      errorBox.textContent = msg;
+      errorBox.style.display = 'block';
+    }
+  }
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!productId) return;
+    if (errorBox) errorBox.style.display = 'none';
+    if (editBtn) editBtn.disabled = true;
+
+    try {
+      const formData = new FormData(form!);
+      // No stock field exists on this form by design — nothing to strip.
+      await ProductAdminService.update(Number(productId), formData);
+      window.location.href = '/admin/products';
+    } catch (err) {
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError('No se pudo conectar con el servidor. Intentá de nuevo.');
+      }
+    } finally {
+      if (editBtn) editBtn.disabled = false;
+    }
+  });
+</script>

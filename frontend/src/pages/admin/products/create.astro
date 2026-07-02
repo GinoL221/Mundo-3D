@@ -1,0 +1,132 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+---
+
+<Layout title="Nuevo Producto - Mundo 3D">
+  <main class="form-layout">
+    <!--
+      Client-side UX gate only (visual-admin-hiding spec) — the API's
+      requireRoles guard (ADMIN, STAFF) on POST /api/products is the real
+      security boundary, not this check.
+    -->
+    <div id="admin-gate-denied" style="display:none; text-align:center; padding:2rem;">
+      <p>No tenés permisos para acceder a esta sección.</p>
+      <a href="/">Volver al inicio</a>
+    </div>
+
+    <div id="admin-create-content" class="form-card--wide" style="display:none;">
+      <form id="create-product-form" class="form-card__form" novalidate enctype="multipart/form-data">
+        <h2>Nuevo Producto</h2>
+
+        <div id="create-error" class="form-card__error" style="display:none;"></div>
+
+        <label for="nameProduct">Nombre:</label>
+        <input type="text" id="nameProduct" name="nameProduct" class="form-card__input" minlength="5" maxlength="20" required />
+
+        <label for="price">Precio:</label>
+        <input type="number" id="price" name="price" class="form-card__input" min="0.01" step="0.01" required />
+
+        <label for="descriptionProduct">Descripción:</label>
+        <input type="text" id="descriptionProduct" name="descriptionProduct" class="form-card__input" maxlength="40" required />
+
+        <label for="idCategory">ID de categoría:</label>
+        <input type="number" id="idCategory" name="idCategory" class="form-card__input" min="1" step="1" required />
+
+        <label for="idFranchise">ID de franquicia:</label>
+        <input type="number" id="idFranchise" name="idFranchise" class="form-card__input" min="1" step="1" required />
+
+        <label for="material">Material (PLA, Resina, PETG, Flex, u "Otros: detalle"):</label>
+        <input type="text" id="material" name="material" class="form-card__input" placeholder="Opcional" />
+
+        <label for="height">Alto (cm):</label>
+        <input type="number" id="height" name="height" class="form-card__input" min="0" step="0.1" placeholder="Opcional" />
+
+        <label for="width">Ancho (cm):</label>
+        <input type="number" id="width" name="width" class="form-card__input" min="0" step="0.1" placeholder="Opcional" />
+
+        <label for="depth">Profundidad (cm):</label>
+        <input type="number" id="depth" name="depth" class="form-card__input" min="0" step="0.1" placeholder="Opcional" />
+
+        <label for="finish">Acabado:</label>
+        <input type="text" id="finish" name="finish" class="form-card__input" placeholder="Opcional" />
+
+        <label for="productionTime">Tiempo de producción (días):</label>
+        <input type="number" id="productionTime" name="productionTime" class="form-card__input" min="1" max="30" step="1" placeholder="Opcional" />
+
+        <label for="stock">Stock inicial:</label>
+        <input type="number" id="stock" name="stock" class="form-card__input" min="0" step="1" placeholder="0 por defecto" />
+
+        <label for="image">Imagen (.jpg, .png):</label>
+        <input type="file" id="image" name="image" accept=".jpg,.png" required />
+
+        <div class="form-card__actions">
+          <a href="/admin/products" class="form-card__btn" style="text-decoration:none; text-align:center;">Cancelar</a>
+          <button type="submit" id="create-btn" class="form-card__btn">Crear producto</button>
+        </div>
+      </form>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  import { Role } from '../../../domains/auth';
+  import { ProductAdminService } from '../../../domains/products';
+
+  interface SessionUser {
+    idRole: number;
+  }
+
+  function getSessionUser(): SessionUser | null {
+    try {
+      const token = localStorage.getItem('token');
+      const userJson = localStorage.getItem('user');
+      if (!token || !userJson) return null;
+      return JSON.parse(userJson) as SessionUser;
+    } catch {
+      return null;
+    }
+  }
+
+  const deniedEl = document.getElementById('admin-gate-denied');
+  const contentEl = document.getElementById('admin-create-content');
+
+  const sessionUser = getSessionUser();
+  const isAdminOrStaff = sessionUser?.idRole === Role.ADMIN || sessionUser?.idRole === Role.STAFF;
+
+  if (!isAdminOrStaff) {
+    if (deniedEl) deniedEl.style.display = 'block';
+  } else {
+    if (contentEl) contentEl.style.display = 'block';
+  }
+
+  const form = document.getElementById('create-product-form') as HTMLFormElement | null;
+  const errorBox = document.getElementById('create-error') as HTMLElement | null;
+  const createBtn = document.getElementById('create-btn') as HTMLButtonElement | null;
+
+  function showError(msg: string): void {
+    if (errorBox) {
+      errorBox.textContent = msg;
+      errorBox.style.display = 'block';
+    }
+  }
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (errorBox) errorBox.style.display = 'none';
+    if (createBtn) createBtn.disabled = true;
+
+    try {
+      const formData = new FormData(form!);
+      await ProductAdminService.create(formData);
+      window.location.href = '/admin/products';
+    } catch (err) {
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError('No se pudo conectar con el servidor. Intentá de nuevo.');
+      }
+    } finally {
+      if (createBtn) createBtn.disabled = false;
+    }
+  });
+</script>

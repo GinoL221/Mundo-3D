@@ -1,0 +1,188 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+---
+
+<Layout title="Administrar Productos - Mundo 3D">
+  <main class="products">
+    <h2 class="page-heading">ADMINISTRAR PRODUCTOS</h2>
+
+    <!--
+      Client-side UX gate only (visual-admin-hiding spec): this page is
+      shown only when the persisted idRole is ADMIN or STAFF. It is NOT the
+      security boundary — the API's requireRoles guard is authoritative;
+      anyone can still call the API directly and will get 401/403 there.
+    -->
+    <div id="admin-gate-denied" style="display:none; text-align:center; padding:2rem;">
+      <p>No tenés permisos para acceder a esta sección.</p>
+      <a href="/">Volver al inicio</a>
+    </div>
+
+    <div id="admin-products-content" style="display:none;">
+      <div style="text-align:center; margin-bottom: var(--space-md);">
+        <a
+          href="/admin/products/create"
+          class="form-card__btn"
+          style="display:inline-block; width:auto; padding: var(--space-sm) var(--space-lg); text-decoration:none;"
+        >
+          + Nuevo producto
+        </a>
+      </div>
+
+      <div id="admin-error" class="form-card__error" style="display:none; text-align:center;"></div>
+      <p id="admin-loading-msg" style="text-align:center; padding: 2rem;">Cargando productos...</p>
+
+      <div class="users-list" id="admin-products-list"></div>
+    </div>
+  </main>
+
+  <template id="admin-product-row-template">
+    <article class="users-list__card" style="width: 260px;">
+      <h3 class="admin-product-name"></h3>
+      <p class="price admin-product-price"></p>
+      <p>Categoría: <span class="admin-product-category"></span></p>
+      <p>Stock: <strong class="admin-product-stock"></strong></p>
+
+      <div style="display:flex; gap: var(--space-xs); justify-content:center; align-items:center; margin: var(--space-sm) 0;">
+        <input
+          type="number"
+          class="admin-product-delta form-card__input"
+          style="width:70px; margin-bottom:0;"
+          value="1"
+          min="1"
+          step="1"
+          aria-label="Cantidad a ajustar"
+        />
+        <button type="button" class="admin-product-stock-plus form-card__btn" style="width:auto;">+</button>
+        <button type="button" class="admin-product-stock-minus form-card__btn" style="width:auto;">-</button>
+      </div>
+
+      <div style="display:flex; gap: var(--space-xs); justify-content:center;">
+        <a class="admin-product-edit form-card__btn" style="width:auto; text-decoration:none; display:inline-block;">Editar</a>
+        <button type="button" class="admin-product-delete users-list__btn--danger">Eliminar</button>
+      </div>
+    </article>
+  </template>
+</Layout>
+
+<script>
+  import { API_URL } from '../../../config';
+  import { Role } from '../../../domains/auth';
+  import { ProductAdminService } from '../../../domains/products';
+  import type { AdminProductDTO } from '../../../domains/products';
+
+  interface SessionUser {
+    idRole: number;
+  }
+
+  function getSessionUser(): SessionUser | null {
+    try {
+      const token = localStorage.getItem('token');
+      const userJson = localStorage.getItem('user');
+      if (!token || !userJson) return null;
+      return JSON.parse(userJson) as SessionUser;
+    } catch {
+      return null;
+    }
+  }
+
+  const deniedEl = document.getElementById('admin-gate-denied');
+  const contentEl = document.getElementById('admin-products-content');
+
+  const sessionUser = getSessionUser();
+  const isAdmin = sessionUser?.idRole === Role.ADMIN;
+  const isAdminOrStaff = isAdmin || sessionUser?.idRole === Role.STAFF;
+
+  if (!isAdminOrStaff) {
+    if (deniedEl) deniedEl.style.display = 'block';
+  } else {
+    if (contentEl) contentEl.style.display = 'block';
+    loadProducts();
+  }
+
+  async function loadProducts(): Promise<void> {
+    const listEl = document.getElementById('admin-products-list');
+    const loadingMsg = document.getElementById('admin-loading-msg');
+    const errorEl = document.getElementById('admin-error');
+    if (!listEl) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/products`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = (await res.json()) as { products: AdminProductDTO[] };
+      const products = data?.products || [];
+
+      if (loadingMsg) loadingMsg.remove();
+
+      const rowTemp = document.getElementById('admin-product-row-template') as HTMLTemplateElement | null;
+      if (!rowTemp) return;
+
+      const fragment = document.createDocumentFragment();
+      for (const product of products) {
+        const clone = rowTemp.content.cloneNode(true) as DocumentFragment;
+        renderRow(clone, product);
+        fragment.appendChild(clone);
+      }
+      listEl.appendChild(fragment);
+    } catch (err) {
+      if (loadingMsg) loadingMsg.remove();
+      if (errorEl) {
+        errorEl.textContent = 'No se pudieron cargar los productos.';
+        errorEl.style.display = 'block';
+      }
+      console.error('Error loading admin products:', err);
+    }
+  }
+
+  function renderRow(clone: DocumentFragment, product: AdminProductDTO): void {
+    const nameEl = clone.querySelector('.admin-product-name');
+    const priceEl = clone.querySelector('.admin-product-price');
+    const categoryEl = clone.querySelector('.admin-product-category');
+    const stockEl = clone.querySelector('.admin-product-stock');
+    const deltaInput = clone.querySelector('.admin-product-delta') as HTMLInputElement | null;
+    const plusBtn = clone.querySelector('.admin-product-stock-plus') as HTMLButtonElement | null;
+    const minusBtn = clone.querySelector('.admin-product-stock-minus') as HTMLButtonElement | null;
+    const editLink = clone.querySelector('.admin-product-edit') as HTMLAnchorElement | null;
+    const deleteBtn = clone.querySelector('.admin-product-delete') as HTMLButtonElement | null;
+
+    if (nameEl) nameEl.textContent = product.nameProduct;
+    if (priceEl) priceEl.textContent = `$${product.price}`;
+    if (categoryEl) categoryEl.textContent = product.category;
+    if (stockEl) stockEl.textContent = String(product.stock);
+    if (editLink) editLink.href = `/admin/products/edit?id=${product.idProduct}`;
+
+    async function applyDelta(sign: 1 | -1): Promise<void> {
+      const magnitude = Number(deltaInput?.value);
+      if (!Number.isInteger(magnitude) || magnitude <= 0) return;
+      try {
+        const updated = await ProductAdminService.adjustStock(product.idProduct, magnitude * sign);
+        if (stockEl) stockEl.textContent = String(updated.stock);
+      } catch (err) {
+        alert(err instanceof Error ? err.message : 'No se pudo ajustar el stock.');
+      }
+    }
+
+    plusBtn?.addEventListener('click', () => void applyDelta(1));
+    minusBtn?.addEventListener('click', () => void applyDelta(-1));
+
+    // Delete Control Visibility (visual-admin-hiding spec): visible/enabled
+    // for ADMIN only. STAFF must not see it at all — mirrors the backend's
+    // ADMIN-only DELETE guard, which stays authoritative regardless.
+    if (deleteBtn) {
+      if (isAdmin) {
+        deleteBtn.addEventListener('click', () => {
+          if (!confirm(`¿Eliminar "${product.nameProduct}"?`)) return;
+          ProductAdminService.remove(product.idProduct)
+            .then(() => {
+              deleteBtn.closest('article')?.remove();
+            })
+            .catch((err) => {
+              alert(err instanceof Error ? err.message : 'No se pudo eliminar el producto.');
+            });
+        });
+      } else {
+        deleteBtn.remove();
+      }
+    }
+  }
+</script>
