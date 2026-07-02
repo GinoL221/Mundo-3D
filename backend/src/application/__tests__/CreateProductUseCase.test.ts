@@ -63,6 +63,7 @@ describe('CreateProductUseCase', () => {
       depth: null,
       finish: null,
       productionTime: null,
+      stock: 0,
     });
 
     expect(mockProductRepo.create).toHaveBeenCalledWith({
@@ -78,8 +79,52 @@ describe('CreateProductUseCase', () => {
       depth: null,
       finish: null,
       productionTime: null,
+      stock: 0,
     });
     expect(mockCategoryRepo.findById).toHaveBeenCalledWith(1);
+  });
+
+  it('should default stock to 0 when omitted from input', async () => {
+    const input: CreateProductInput = {
+      nameProduct: 'New Product',
+      price: 100,
+      descriptionProduct: 'Brand new',
+      image: 'new.jpg',
+      idCategory: 1,
+      idFranchise: 2,
+    };
+
+    const createdProduct = new Product(10, 'New Product', 100, 'Brand new', 'new.jpg', 1, 2, undefined, undefined, null, null, null, null, null, null, 0);
+    mockProductRepo.create.mockResolvedValue(createdProduct);
+
+    const result = await useCase.execute(input);
+
+    expect(result.stock).toBe(0);
+    expect(mockProductRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ stock: 0 })
+    );
+  });
+
+  it('should propagate an explicit stock value into the DTO and repository call', async () => {
+    const input: CreateProductInput = {
+      nameProduct: 'New Product',
+      price: 100,
+      descriptionProduct: 'Brand new',
+      image: 'new.jpg',
+      idCategory: 1,
+      idFranchise: 2,
+      stock: 15,
+    };
+
+    const createdProduct = new Product(10, 'New Product', 100, 'Brand new', 'new.jpg', 1, 2, undefined, undefined, null, null, null, null, null, null, 15);
+    mockProductRepo.create.mockResolvedValue(createdProduct);
+
+    const result = await useCase.execute(input);
+
+    expect(result.stock).toBe(15);
+    expect(mockProductRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ stock: 15 })
+    );
   });
 
   it('should use Category name from relation if already populated', async () => {

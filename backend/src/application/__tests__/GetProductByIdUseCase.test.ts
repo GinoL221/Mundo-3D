@@ -43,6 +43,7 @@ describe('GetProductByIdUseCase', () => {
       depth: null,
       finish: null,
       productionTime: null,
+      stock: 0,
     });
     expect(mockProductRepo.findById).toHaveBeenCalledWith(1);
   });

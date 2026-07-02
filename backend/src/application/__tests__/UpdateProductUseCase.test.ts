@@ -37,7 +37,7 @@ describe('UpdateProductUseCase', () => {
     };
 
     const mockCategory = new Category(1, 'Figures');
-    const updatedProduct = new Product(10, 'Updated Product', 150, 'Desc', 'img.jpg', 1, 2, mockCategory);
+    const updatedProduct = new Product(10, 'Updated Product', 150, 'Desc', 'img.jpg', 1, 2, mockCategory, undefined, null, null, null, null, null, null, 7);
 
     mockProductRepo.update.mockResolvedValue(updatedProduct);
 
@@ -58,6 +58,7 @@ describe('UpdateProductUseCase', () => {
       depth: null,
       finish: null,
       productionTime: null,
+      stock: 7,
     });
 
     expect(mockProductRepo.update).toHaveBeenCalledWith(10, input);
@@ -70,5 +71,22 @@ describe('UpdateProductUseCase', () => {
 
     expect(result).toBeNull();
     expect(mockProductRepo.update).toHaveBeenCalledWith(999, { nameProduct: 'Nonexistent' });
+  });
+
+  it('should not accept a stock override: the returned stock always comes from the repository result, never from the input', async () => {
+    // `stock` is not part of `UpdateProductInput` at the type level (compile-time
+    // enforcement lives in IProductRepository.update()'s `Omit<Partial<Product>, 'stock'>`
+    // signature). This test proves the runtime behavior: even if a caller smuggles a
+    // `stock` value into the input via an unsafe cast, the use case's output DTO reflects
+    // only what the repository actually persisted/returned — never the attempted input value.
+    const maliciousInput = { nameProduct: 'Updated Product', stock: 999 } as unknown as UpdateProductInput;
+    const updatedProduct = new Product(10, 'Updated Product', 150, 'Desc', 'img.jpg', 1, 2, undefined, undefined, null, null, null, null, null, null, 3);
+
+    mockProductRepo.update.mockResolvedValue(updatedProduct);
+
+    const result = await useCase.execute(10, maliciousInput);
+
+    expect(result?.stock).toBe(3);
+    expect(result?.stock).not.toBe(999);
   });
 });

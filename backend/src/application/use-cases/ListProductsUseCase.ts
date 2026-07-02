@@ -54,6 +54,7 @@ export class ListProductsUseCase {
         depth: p.Depth,
         finish: p.Finish,
         productionTime: p.ProductionTime,
+        stock: p.Stock ?? 0,
       };
     });
 
