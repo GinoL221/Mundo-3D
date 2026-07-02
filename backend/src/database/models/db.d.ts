@@ -14,6 +14,7 @@ export interface ProductAttributes {
   depth?: number | null;
   finish?: string | null;
   productionTime?: number | null;
+  stock?: number;
 }
 
 export interface CategoryAttributes {
