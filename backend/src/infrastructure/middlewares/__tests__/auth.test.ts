@@ -6,7 +6,8 @@ import {
   guestMiddleware,
   authMiddleware,
   apiAuthMiddleware,
-  adminGuard
+  adminGuard,
+  requireRoles
 } from '../auth';
 import { getJwtSecret } from '../../security/JwtSecret';
 import { Role } from '../../../domain/Role';
@@ -150,67 +151,98 @@ describe('apiAuthMiddleware', () => {
   });
 });
 
-describe('adminGuard', () => {
+describe('requireRoles', () => {
   let req: Partial<Request>;
   let res: Partial<Response>;
   let next: NextFunction;
 
   beforeEach(() => {
-    req = { path: '/admin', session: {} };
+    req = { path: '/api/products', session: {} };
     res = {
       status: jest.fn().mockReturnThis() as any,
-      json: jest.fn().mockReturnThis() as any,
-      redirect: jest.fn() as any,
-      render: jest.fn().mockReturnThis() as any
+      json: jest.fn().mockReturnThis() as any
     };
     next = jest.fn();
   });
 
-  it('redirects to /login for non-authenticated web requests', () => {
-    adminGuard(req as Request, res as Response, next);
-    expect(res.redirect).toHaveBeenCalledWith('/login');
+  it('returns 401 JSON error when there is no principal (no session, no req.user)', () => {
+    const guard = requireRoles(Role.ADMIN, Role.STAFF);
+    guard(req as Request, res as Response, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Autenticación requerida' });
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('returns 401 JSON error for non-authenticated API requests', () => {
-    (req as any).path = '/api/users';
+  it('returns 403 JSON error when the authenticated role is not in the allow-list', () => {
+    req.user = { userId: 2, email: 'user@test.com', category: 'User', idRole: Role.USER };
+    const guard = requireRoles(Role.ADMIN, Role.STAFF);
+    guard(req as Request, res as Response, next);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Acceso restringido' });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('calls next() when the authenticated role is in the allow-list', () => {
+    req.user = { userId: 3, email: 'staff@test.com', category: 'Staff', idRole: Role.STAFF };
+    const guard = requireRoles(Role.ADMIN, Role.STAFF);
+    guard(req as Request, res as Response, next);
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('accepts the principal from req.session.userLogged when present', () => {
+    req.session!.userLogged = { idUser: 1, firstName: 'Admin', lastName: 'User', email: 'admin@test.com', image: null, idRole: Role.ADMIN, category: 'Admin' };
+    const guard = requireRoles(Role.ADMIN);
+    guard(req as Request, res as Response, next);
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a single-role allow-list when the role does not match', () => {
+    req.user = { userId: 3, email: 'staff@test.com', category: 'Staff', idRole: Role.STAFF };
+    const guard = requireRoles(Role.ADMIN);
+    guard(req as Request, res as Response, next);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+});
+
+describe('adminGuard (alias for requireRoles(Role.ADMIN))', () => {
+  let req: Partial<Request>;
+  let res: Partial<Response>;
+  let next: NextFunction;
+
+  beforeEach(() => {
+    req = { path: '/api/users', session: {} };
+    res = {
+      status: jest.fn().mockReturnThis() as any,
+      json: jest.fn().mockReturnThis() as any
+    };
+    next = jest.fn();
+  });
+
+  it('returns 401 JSON error for non-authenticated requests', () => {
     adminGuard(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({ error: 'Autenticación requerida' });
+    expect(next).not.toHaveBeenCalled();
   });
 
-  it('returns 401 JSON error for non-authenticated API requests where path does not start with /api but originalUrl does', () => {
-    (req as any).path = '/users';
-    (req as any).originalUrl = '/api/users';
-    adminGuard(req as Request, res as Response, next);
-    expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Autenticación requerida' });
-  });
-
-  it('returns 403 JSON error for authenticated API requests if role is not admin', () => {
-    (req as any).path = '/api/users';
+  it('returns 403 JSON error for authenticated requests if role is not admin', () => {
     req.user = { userId: 2, email: 'user@test.com', category: 'User', idRole: Role.USER };
     adminGuard(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Acceso restringido a administradores' });
+    expect(res.json).toHaveBeenCalledWith({ error: 'Acceso restringido' });
+    expect(next).not.toHaveBeenCalled();
   });
 
-  it('renders 403Forbidden page for authenticated web requests if role is not admin', () => {
-    req.session!.userLogged = { idUser: 2, firstName: 'John', lastName: 'Doe', email: 'user@test.com', image: null, idRole: Role.USER, category: 'User' };
+  it('returns 403 JSON error for authenticated STAFF requests (admin-only route)', () => {
+    req.user = { userId: 3, email: 'staff@test.com', category: 'Staff', idRole: Role.STAFF };
     adminGuard(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.render).toHaveBeenCalledWith(expect.stringContaining('403Forbidden.ejs'), expect.any(Object));
+    expect(next).not.toHaveBeenCalled();
   });
 
-  it('calls next() for admin web sessions (Role.ADMIN)', () => {
-    req.session!.userLogged = { idUser: 1, firstName: 'Admin', lastName: 'User', email: 'admin@test.com', image: null, idRole: Role.ADMIN, category: 'Admin' };
-    adminGuard(req as Request, res as Response, next);
-    expect(next).toHaveBeenCalledTimes(1);
-    expect(res.redirect).not.toHaveBeenCalled();
-  });
-
-  it('calls next() for admin API requests (Role.ADMIN)', () => {
-    (req as any).path = '/api/users';
+  it('calls next() for admin requests (Role.ADMIN)', () => {
     req.user = { userId: 1, email: 'admin@test.com', category: 'Admin', idRole: Role.ADMIN };
     adminGuard(req as Request, res as Response, next);
     expect(next).toHaveBeenCalledTimes(1);

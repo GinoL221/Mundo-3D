@@ -143,6 +143,42 @@ describe('Domain Entities', () => {
     }).toThrow('Production time must not exceed 30 days');
   });
 
+  it('should create a Product with stock correctly', () => {
+    const product = new Product(
+      10,
+      'Action Figure',
+      29.99,
+      'Detailed figure',
+      'figure.jpg',
+      1,
+      2,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      7
+    );
+
+    expect(product.stock).toBe(7);
+    expect(product.Stock).toBe(7);
+  });
+
+  it('should throw an error when stock is negative', () => {
+    expect(() => {
+      new Product(10, 'Action Figure', 10, 'Desc', 'img.jpg', 1, 2, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, -1);
+    }).toThrow('Stock must be a non-negative integer');
+  });
+
+  it('should throw an error when stock is non-integer', () => {
+    expect(() => {
+      new Product(10, 'Action Figure', 10, 'Desc', 'img.jpg', 1, 2, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 2.5);
+    }).toThrow('Stock must be a non-negative integer');
+  });
+
   it('should throw an error when dimension attributes are negative', () => {
     expect(() => {
       new Product(10, 'Action Figure', 10, 'Desc', 'img.jpg', 1, 2, undefined, undefined, 'PLA', -1, 5, 5);

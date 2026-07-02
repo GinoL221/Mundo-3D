@@ -68,6 +68,12 @@ module.exports = (sequelize) => {
         allowNull: true,
         field: 'production_time',
       },
+      stock: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        field: 'stock',
+      },
     },
     {
       tableName: 'Product',
@@ -112,6 +118,9 @@ module.exports = (sequelize) => {
         },
         ProductionTime() {
           return this.productionTime;
+        },
+        Stock() {
+          return this.stock;
         },
       },
     },

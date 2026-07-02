@@ -90,7 +90,7 @@ describe('REST API Security & Role Gating', () => {
         .get('/api/users')
         .set('Authorization', `Bearer ${userToken}`);
       expect(res.status).toBe(403);
-      expect(res.body.error).toBe('Acceso restringido a administradores');
+      expect(res.body.error).toBe('Acceso restringido');
       expect(mockListUsersExecute).not.toHaveBeenCalled();
     });
 

@@ -46,6 +46,13 @@ jobs:
       - name: Run unit/integration tests
         run: pnpm test
 
+      - name: Run backend real-DB concurrency integration tests
+        run: pnpm --filter backend test:integration
+        env:
+          DB_HOST: 127.0.0.1
+          DB_USER: root
+          DB_PASS: ""
+
       - name: Get Playwright version
         id: playwright-version
         run: echo "PLAYWRIGHT_VERSION=$(pnpm --filter e2e exec playwright --version | cut -d' ' -f2)" >> $GITHUB_OUTPUT

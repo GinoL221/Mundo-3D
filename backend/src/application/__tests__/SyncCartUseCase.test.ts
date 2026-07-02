@@ -22,6 +22,7 @@ describe('SyncCartUseCase', () => {
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      adjustStock: jest.fn(),
     };
 
     useCase = new SyncCartUseCase(cartRepoMock, productRepoMock);

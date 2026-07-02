@@ -12,4 +12,13 @@ describe('Role', () => {
   it('ADMIN and USER are distinct values', () => {
     expect(Role.ADMIN).not.toBe(Role.USER);
   });
+
+  it('exports STAFF === 3', () => {
+    expect(Role.STAFF).toBe(3);
+  });
+
+  it('ADMIN, USER, and STAFF are all distinct values', () => {
+    const values = [Role.ADMIN, Role.USER, Role.STAFF];
+    expect(new Set(values).size).toBe(3);
+  });
 });
