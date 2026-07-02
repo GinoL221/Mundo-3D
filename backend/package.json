@@ -8,6 +8,7 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "test": "jest",
+    "test:integration": "jest --config jest.integration.config.js",
     "lint": "eslint src/",
     "format": "prettier --write \"src/**/*.js\"",
     "type-check": "tsc --noEmit",
