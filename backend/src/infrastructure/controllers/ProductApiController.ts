@@ -40,6 +40,10 @@ export class ProductApiController {
   show = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const id = parseInt(req.params.id as string, 10);
+      if (Number.isNaN(id)) {
+        res.status(400).json({ error: 'Id de producto inválido' });
+        return;
+      }
       const product = await this.getProductByIdUseCase.execute(id);
       res.json(product);
     } catch (error) {
@@ -114,6 +118,11 @@ export class ProductApiController {
       }
 
       const id = parseInt(req.params.id as string, 10);
+      if (Number.isNaN(id)) {
+        res.status(400).json({ error: 'Id de producto inválido' });
+        return;
+      }
+
       const {
         nameProduct,
         price,
@@ -170,6 +179,10 @@ export class ProductApiController {
       }
 
       const id = parseInt(req.params.id as string, 10);
+      if (Number.isNaN(id)) {
+        res.status(400).json({ error: 'Id de producto inválido' });
+        return;
+      }
       const deleted = await this.deleteProductUseCase.execute(id);
       if (!deleted) {
         res.status(404).json({ error: 'Producto no encontrado' });
@@ -188,6 +201,10 @@ export class ProductApiController {
       }
 
       const id = parseInt(req.params.id as string, 10);
+      if (Number.isNaN(id)) {
+        res.status(400).json({ error: 'Id de producto inválido' });
+        return;
+      }
       const delta = Number(req.body?.delta);
 
       const product = await this.adjustProductStockUseCase.execute(id, delta);

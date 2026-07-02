@@ -131,6 +131,16 @@ describe('ProductApiController', () => {
       expect(res.status).not.toHaveBeenCalled();
       expect(res.json).not.toHaveBeenCalled();
     });
+
+    it('returns 400 when :id is not numeric, instead of falling through to a 500', async () => {
+      req.params = { id: 'not-a-number' };
+
+      await controller.show(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(mockGetProductByIdUseCase.execute).not.toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    });
   });
 
   describe('latest', () => {
@@ -273,6 +283,17 @@ describe('ProductApiController', () => {
 
       expect(next).toHaveBeenCalledWith(error);
     });
+
+    it('returns 400 when :id is not numeric, instead of falling through to a 500', async () => {
+      req.params = { id: 'not-a-number' };
+      req.body = { nameProduct: 'Updated Name' };
+
+      await controller.update(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(mockUpdateProductUseCase.execute).not.toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    });
   });
 
   describe('destroy', () => {
@@ -306,6 +327,16 @@ describe('ProductApiController', () => {
       await controller.destroy(req as Request, res as Response, next);
 
       expect(next).toHaveBeenCalledWith(error);
+    });
+
+    it('returns 400 when :id is not numeric, instead of falling through to a 500', async () => {
+      req.params = { id: 'not-a-number' };
+
+      await controller.destroy(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(mockDeleteProductUseCase.execute).not.toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
     });
   });
 
@@ -366,6 +397,17 @@ describe('ProductApiController', () => {
       await controller.adjustStock(req as Request, res as Response, next);
 
       expect(next).toHaveBeenCalledWith(error);
+    });
+
+    it('returns 400 when :id is not numeric, instead of falling through to a 500', async () => {
+      req.params = { id: 'not-a-number' };
+      req.body = { delta: 1 };
+
+      await controller.adjustStock(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(mockAdjustProductStockUseCase.execute).not.toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
     });
   });
 });
