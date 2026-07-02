@@ -21,7 +21,8 @@ export class Product {
     public readonly width?: number | null,
     public readonly depth?: number | null,
     public readonly finish?: string | null,
-    public readonly productionTime?: number | null
+    public readonly productionTime?: number | null,
+    public readonly stock?: number | null
   ) {
     if (price <= 0.00) {
       throw new Error('Price must be greater than 0.00');
@@ -48,6 +49,11 @@ export class Product {
       }
       if (productionTime > MAX_PRODUCTION_TIME_DAYS) {
         throw new Error('Production time must not exceed 30 days');
+      }
+    }
+    if (stock !== null && stock !== undefined) {
+      if (!Number.isInteger(stock) || stock < 0) {
+        throw new Error('Stock must be a non-negative integer');
       }
     }
   }
@@ -102,5 +108,9 @@ export class Product {
 
   get ProductionTime(): number | null {
     return this.productionTime ?? null;
+  }
+
+  get Stock(): number | null {
+    return this.stock ?? null;
   }
 }
