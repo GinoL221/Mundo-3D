@@ -22,6 +22,21 @@ export interface AdminProductDTO {
   stock: number;
 }
 
+/**
+ * Thrown for any non-ok response from the admin product API. Carries the
+ * HTTP status so callers can branch on it (e.g. 401 → clear session and
+ * redirect to /login) instead of only having an untyped message string.
+ */
+export class ProductAdminApiError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'ProductAdminApiError';
+    this.status = status;
+  }
+}
+
 function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem('token');
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -34,6 +49,10 @@ async function parseErrorMessage(res: Response): Promise<string> {
   } catch {
     return `Error ${res.status}`;
   }
+}
+
+async function throwApiError(res: Response): Promise<never> {
+  throw new ProductAdminApiError(res.status, await parseErrorMessage(res));
 }
 
 export class ProductAdminService {
@@ -50,7 +69,7 @@ export class ProductAdminService {
     });
 
     if (!res.ok) {
-      throw new Error(await parseErrorMessage(res));
+      return throwApiError(res);
     }
 
     return res.json();
@@ -69,7 +88,7 @@ export class ProductAdminService {
     });
 
     if (!res.ok) {
-      throw new Error(await parseErrorMessage(res));
+      return throwApiError(res);
     }
 
     return res.json();
@@ -87,7 +106,7 @@ export class ProductAdminService {
     });
 
     if (!res.ok) {
-      throw new Error(await parseErrorMessage(res));
+      return throwApiError(res);
     }
   }
 
@@ -107,7 +126,7 @@ export class ProductAdminService {
     });
 
     if (!res.ok) {
-      throw new Error(await parseErrorMessage(res));
+      return throwApiError(res);
     }
 
     return res.json();

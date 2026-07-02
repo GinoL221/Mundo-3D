@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ProductAdminService } from './product.admin.service';
+import { ProductAdminApiError, ProductAdminService } from './product.admin.service';
 
 function createLocalStorageMock() {
   let store: Record<string, string> = {};
@@ -15,6 +15,18 @@ function createLocalStorageMock() {
       store = {};
     }),
   };
+}
+
+async function expectApiError(fn: () => Promise<unknown>, status: number, message: string) {
+  let error: unknown;
+  try {
+    await fn();
+  } catch (err) {
+    error = err;
+  }
+  expect(error).toBeInstanceOf(ProductAdminApiError);
+  expect((error as ProductAdminApiError).status).toBe(status);
+  expect((error as Error).message).toBe(message);
 }
 
 describe('ProductAdminService', () => {
@@ -53,11 +65,11 @@ describe('ProductAdminService', () => {
       expect(result).toEqual(dto);
     });
 
-    it('throws the backend error message when the response is not ok', async () => {
+    it('throws a ProductAdminApiError carrying status 400 when the response is not ok', async () => {
       localStorageMock.getItem.mockImplementation((key: string) => (key === 'token' ? 'abc123' : null));
       fetchMock.mockResolvedValue({ ok: false, status: 400, json: async () => ({ error: 'Debe ingresar un nombre' }) });
 
-      await expect(ProductAdminService.create(new FormData())).rejects.toThrow('Debe ingresar un nombre');
+      await expectApiError(() => ProductAdminService.create(new FormData()), 400, 'Debe ingresar un nombre');
     });
   });
 
@@ -79,11 +91,11 @@ describe('ProductAdminService', () => {
       expect(result).toEqual(dto);
     });
 
-    it('throws a 404-derived error when the product does not exist', async () => {
+    it('throws a ProductAdminApiError carrying status 404 when the product does not exist', async () => {
       localStorageMock.getItem.mockImplementation((key: string) => (key === 'token' ? 'abc123' : null));
       fetchMock.mockResolvedValue({ ok: false, status: 404, json: async () => ({ error: 'Producto no encontrado' }) });
 
-      await expect(ProductAdminService.update(999, new FormData())).rejects.toThrow('Producto no encontrado');
+      await expectApiError(() => ProductAdminService.update(999, new FormData()), 404, 'Producto no encontrado');
     });
   });
 
@@ -101,11 +113,11 @@ describe('ProductAdminService', () => {
       expect(options.headers.Authorization).toBe('Bearer abc123');
     });
 
-    it('throws a 403-derived error when the caller lacks permission (e.g. STAFF)', async () => {
+    it('throws a ProductAdminApiError carrying status 403 when the caller lacks permission (e.g. STAFF)', async () => {
       localStorageMock.getItem.mockImplementation((key: string) => (key === 'token' ? 'staff-token' : null));
       fetchMock.mockResolvedValue({ ok: false, status: 403, json: async () => ({ error: 'Forbidden' }) });
 
-      await expect(ProductAdminService.remove(3)).rejects.toThrow('Forbidden');
+      await expectApiError(() => ProductAdminService.remove(3), 403, 'Forbidden');
     });
   });
 
@@ -127,11 +139,31 @@ describe('ProductAdminService', () => {
       expect(result).toEqual(dto);
     });
 
-    it('throws a 409-derived error when the delta would make stock negative', async () => {
+    it('throws a ProductAdminApiError carrying status 409 when the delta would make stock negative', async () => {
       localStorageMock.getItem.mockImplementation((key: string) => (key === 'token' ? 'abc123' : null));
       fetchMock.mockResolvedValue({ ok: false, status: 409, json: async () => ({ error: 'Stock insuficiente' }) });
 
-      await expect(ProductAdminService.adjustStock(3, -50)).rejects.toThrow('Stock insuficiente');
+      await expectApiError(() => ProductAdminService.adjustStock(3, -50), 409, 'Stock insuficiente');
+    });
+  });
+
+  describe('when there is no token (logged out)', () => {
+    it('sends the request without an Authorization header', async () => {
+      localStorageMock.getItem.mockReturnValue(null);
+      fetchMock.mockResolvedValue({ ok: true, json: async () => ({ idProduct: 1, stock: 0 }) });
+
+      await ProductAdminService.create(new FormData());
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [, options] = fetchMock.mock.calls[0];
+      expect(options.headers.Authorization).toBeUndefined();
+    });
+
+    it('surfaces a 401 response as a ProductAdminApiError with status 401', async () => {
+      localStorageMock.getItem.mockReturnValue(null);
+      fetchMock.mockResolvedValue({ ok: false, status: 401, json: async () => ({ error: 'No autorizado' }) });
+
+      await expectApiError(() => ProductAdminService.create(new FormData()), 401, 'No autorizado');
     });
   });
 });
