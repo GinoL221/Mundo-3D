@@ -78,6 +78,23 @@ safety) were deliberately deferred — see engram
 - [x] 7.1 Run backend guard-matrix + stock-delta integration suite (from 4.3) green; run full `npm test` (backend jest) and `npm test` (frontend vitest). Depends: all above. (Frontend: 70/70 green. Backend: unchanged from PR2's 350/350 — no backend files touched in PR3, per scope constraint.)
 - [x] 7.2 Manual e2e check: ADMIN full CRUD+stock; STAFF create/update/stock OK, delete 403 + hidden; USER/logged-out cannot see or reach `/admin/products`. Satisfies: proposal Success Criteria. (No browser available in this environment — done as a careful code-level self-review tracing all 3 role paths through the actual implementation; see PR3 apply-progress for the full trace.)
 
+### Phase 6 follow-up: review fix pass (PR3, post-tasks)
+
+Not new scoped tasks — a surgical fix pass closing a BLOCKER, 3 CRITICAL, and
+2 WARNING findings from a 4-lens (risk/resilience/readability/reliability)
+review of PR3's diff, on the same branch/PR. Covers: extracting
+`getSessionUser`/`hasAdminAccess`/`isAdminOnly`/`clearSession` into
+`domains/auth/services/session.service.ts` (closing the BLOCKER — zero test
+coverage of the admin pages' role-gate/delete-visibility logic, now unit
+tested), in-flight/double-click guards on the stock adjust and delete
+buttons, a typed `ProductAdminApiError` carrying `res.status` with a 401 →
+clear-session-and-redirect-to-login handler in each admin page, inline
+validation messaging for invalid stock-delta input, and a clarifying comment
+on the `users-list` CSS reuse. 2 resilience findings (live session
+revalidation on bfcache, fetch timeout/AbortController) were deliberately
+deferred as app-wide tech debt — see engram
+`tech-debt/inventory-resilience-followups`.
+
 ### Known limitation (PR3, out of scope to fix here)
 
 No `GET /api/categories` or `GET /api/franchises` endpoint exists in the
