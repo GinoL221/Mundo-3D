@@ -10,8 +10,8 @@ import loginLimiter from '../../middlewares/loginLimiter';
 import registerLimiter from '../../middlewares/registerLimiter';
 import { apiAuthMiddleware, adminGuard } from '../../middlewares/auth';
 import { loginValidation, validationsUsers } from '../../middlewares/validators/userValidators';
-import { validationResult } from 'express-validator';
 import createUpload from '../../middlewares/upload';
+import handleValidationErrors from '../../middlewares/handleValidationErrors';
 
 const router = Router();
 
@@ -40,15 +40,6 @@ const normalizeLoginBody = (req: Request, res: Response, next: NextFunction) => 
     if (req.body.Password && !req.body.password) {
       req.body.password = req.body.Password;
     }
-  }
-  next();
-};
-
-const handleValidationErrors = (req: Request, res: Response, next: NextFunction): void => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    res.status(400).json({ errors: errors.array() });
-    return;
   }
   next();
 };

@@ -1,5 +1,4 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import { validationResult } from 'express-validator';
+import { Router } from 'express';
 import { SequelizeProductRepository } from '../../repositories/SequelizeProductRepository';
 import { SequelizeCategoryRepository } from '../../repositories/SequelizeCategoryRepository';
 import { ListProductsUseCase } from '../../../application/use-cases/ListProductsUseCase';
@@ -10,10 +9,11 @@ import { UpdateProductUseCase } from '../../../application/use-cases/UpdateProdu
 import { DeleteProductUseCase } from '../../../application/use-cases/DeleteProductUseCase';
 import { AdjustProductStockUseCase } from '../../../application/use-cases/AdjustProductStockUseCase';
 import { ProductApiController } from '../../controllers/ProductApiController';
-import { apiAuthMiddleware, requireRoles } from '../../middlewares/auth';
+import { apiAuthMiddleware, adminGuard, requireRoles } from '../../middlewares/auth';
 import { Role } from '../../../domain/Role';
 import { productCreateValidators, productUpdateValidators } from '../../middlewares/validators/productValidators';
 import createUpload from '../../middlewares/upload';
+import handleValidationErrors from '../../middlewares/handleValidationErrors';
 
 const router = Router();
 
@@ -40,19 +40,6 @@ const controller = new ProductApiController(
 
 const uploadImgProduct = createUpload('products');
 
-// Mirrors `routes/api/users.ts`'s `handleValidationErrors` pattern: run as a
-// dedicated route-level middleware after the field validators, so
-// `ProductApiController.create`/`update` can assume validation already
-// passed and don't need to re-check `validationResult` themselves.
-const handleValidationErrors = (req: Request, res: Response, next: NextFunction): void => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    res.status(400).json({ errors: errors.array() });
-    return;
-  }
-  next();
-};
-
 router.get('/products', controller.index);
 router.get('/product/:id', controller.show);
 router.get('/products/latest', controller.latest);
@@ -77,7 +64,7 @@ router.put(
   controller.update
 );
 
-router.delete('/products/:id', apiAuthMiddleware, requireRoles(Role.ADMIN), controller.destroy);
+router.delete('/products/:id', apiAuthMiddleware, adminGuard, controller.destroy);
 
 router.patch(
   '/products/:id/stock',
