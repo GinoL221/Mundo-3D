@@ -42,11 +42,11 @@ Resolved: stacked-to-main. PR1 (Category domain) and PR3 (Franchise domain) both
 
 ## Phase 3: Category HTTP (Spec: category-api)
 
-- [ ] 3.1 Create `infrastructure/middlewares/validators/categoryValidators.ts` — create/update, `nameCategory` required/trimmed/non-empty.
-- [ ] 3.2 TDD `CategoryApiController` (index/show/create/update/destroy) — 400 NaN-id guard, 404 mapping, 409 mapping on FK message.
-- [ ] 3.3 TDD `infrastructure/routes/api/categories.ts` — DI wiring; `apiAuthMiddleware`+`requireRoles(ADMIN,STAFF)` on write, `adminGuard` on delete; open reads.
-- [ ] 3.4 Supertest `routes/api/__tests__/categories.test.ts` — full auth matrix, CRUD, 400/404/409 scenarios per spec.
-- [ ] 3.5 Mount `categoriesApiRouter` in `infrastructure/routes/api/index.ts`.
+- [x] 3.1 Create `infrastructure/middlewares/validators/categoryValidators.ts` — create/update, `nameCategory` required/trimmed/non-empty.
+- [x] 3.2 TDD `CategoryApiController` (index/show/create/update/destroy) — 400 NaN-id guard, 404 mapping, 409 mapping on FK message.
+- [x] 3.3 TDD `infrastructure/routes/api/categories.ts` — DI wiring; `apiAuthMiddleware`+`requireRoles(ADMIN,STAFF)` on write, `adminGuard` on delete; open reads.
+- [x] 3.4 Supertest `routes/api/__tests__/categories.test.ts` — full auth matrix, CRUD, 400/404/409 scenarios per spec.
+- [x] 3.5 Mount `categoriesApiRouter` in `infrastructure/routes/api/index.ts`.
 
 ## Phase 4: Franchise Domain (TDD, Spec: franchise-api)
 
