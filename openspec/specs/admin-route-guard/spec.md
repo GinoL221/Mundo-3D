@@ -1,40 +1,56 @@
 # Admin Route Guard Specification
 
 ## Purpose
-Restricts access to administrative web routes (such as product creation, editing, deletion, and user deletion) and User API routes to users with administrator privileges (`Role.ADMIN`).
+
+Defines capability-aware role-based access control for guarded API routes, distinguishing between unauthenticated (401) and authenticated-but-unauthorized (403) responses via JSON, and specifying the routes that require ADMIN and/or STAFF roles.
 
 ## Requirements
 
-### Requirement: Authentication and Role Verification
+### Requirement: Capability-Aware Role Guard
 
-Administrative and User API routes (`/api/users`, `/api/users/:id`) MUST be guarded by middleware that verifies whether the user is logged in and possesses administrator privileges. The guard MUST reference the `Role.ADMIN` constant instead of a magic numeric literal (e.g., `1`). For web routes, unauthenticated users MUST redirect to `/login`, and authenticated non-admin users MUST redirect to a custom 403 Forbidden page. For API routes, unauthenticated requests MUST return HTTP 401 JSON, and authenticated non-admin requests MUST return HTTP 403 JSON.
+Guarded API routes MUST be protected by a guard middleware that accepts a per-route allow-list of roles and MUST reference the `Role` enum constants (e.g. `Role.ADMIN`, `Role.STAFF`) — never magic numeric literals. The guard MUST distinguish between an unauthenticated request (no valid principal) and an authenticated request whose role is not permitted for that route.
 
-(Previously: Used `IDRole === 1` magic number directly; now uses `Role.ADMIN` constant.)
+#### Scenario: Missing or invalid Bearer token rejected as unauthenticated
 
-#### Scenario: Guest user on GET request redirects to login
-- GIVEN a guest user (unauthenticated session)
-- WHEN a GET request is sent to any administrative web route (e.g., `/new-product`)
-- THEN the application MUST redirect the user to `/login`
+- GIVEN a request to a guarded route with no `Authorization` header, or a Bearer token that is missing, malformed, or fails verification
+- WHEN the guard middleware processes the request
+- THEN the response MUST be HTTP 401 with a JSON error body
+- AND the request MUST NOT reach the controller
 
-#### Scenario: Guest user on state-changing request is rejected by CSRF protection
-- GIVEN a guest user (unauthenticated session, no valid CSRF token)
-- WHEN a POST/PUT/DELETE request is sent to any administrative web route
-- THEN the global CSRF middleware MUST reject the request with HTTP 403 before `adminGuard`
-- AND the guest cannot perform the administrative action
+#### Scenario: Authenticated role outside the route allow-list rejected
 
-#### Scenario: Authenticated non-admin user redirected to 403
-- GIVEN an authenticated user with `Role.USER` (standard user)
-- WHEN a GET/POST/PUT/DELETE request is sent to any administrative web route
-- THEN the application MUST redirect the user to a custom 403 Forbidden error page
-- AND the HTTP response status code MUST be 403 Forbidden
+- GIVEN an authenticated request with a valid Bearer token whose decoded role is not included in the route's allowed roles
+- WHEN the guard middleware processes the request
+- THEN the response MUST be HTTP 403 with a JSON error body
+- AND the request MUST NOT reach the controller
 
-#### Scenario: Authenticated admin user permitted
-- GIVEN an authenticated user with `Role.ADMIN` (administrator)
-- WHEN a request is sent to any administrative route
-- THEN the application MUST allow the request to proceed to the controller
+#### Scenario: Authenticated role within the route allow-list proceeds
 
-#### Scenario: Authenticated non-admin User API request rejected
-- GIVEN an authenticated user with `Role.USER` (standard user)
-- WHEN a GET/POST/PUT/DELETE request is made to `/api/users` or `/api/users/:id`
-- THEN the response status MUST be 403 Forbidden
-- AND the response body MUST contain an error JSON object
+- GIVEN an authenticated request with a valid Bearer token whose decoded role is included in the route's allowed roles
+- WHEN the guard middleware processes the request
+- THEN the request MUST be allowed to proceed to the controller
+
+### Requirement: Route Capability Matrix
+
+The following routes MUST be guarded with the stated role allow-lists:
+
+| Route | Allowed Roles |
+|-------|---------------|
+| `POST /api/products` | `Role.ADMIN`, `Role.STAFF` |
+| `PUT /api/products/:id` | `Role.ADMIN`, `Role.STAFF` |
+| `PATCH /api/products/:id/stock` | `Role.ADMIN`, `Role.STAFF` |
+| `DELETE /api/products/:id` | `Role.ADMIN` only |
+| `/api/users` (all methods) | `Role.ADMIN` only |
+| `/api/users/:id` (all methods) | `Role.ADMIN` only |
+
+#### Scenario: STAFF permitted on product create, update, and stock routes
+
+- GIVEN an authenticated request with role `Role.STAFF`
+- WHEN the request targets `POST /api/products`, `PUT /api/products/:id`, or `PATCH /api/products/:id/stock`
+- THEN the request MUST be allowed to proceed to the controller
+
+#### Scenario: STAFF rejected on product delete and all user routes
+
+- GIVEN an authenticated request with role `Role.STAFF`
+- WHEN the request targets `DELETE /api/products/:id`, `/api/users`, or `/api/users/:id`
+- THEN the response MUST be HTTP 403 with a JSON error body

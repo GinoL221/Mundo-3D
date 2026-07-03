@@ -1,27 +1,40 @@
 # Visual Admin Hiding Specification
 
 ## Purpose
-Specifies the conditional rendering of administrative controls in the EJS templates, ensuring standard users do not see options for creating, editing, or deleting products and users.
+
+Defines the conditional rendering of administrative controls in the Astro frontend, ensuring standard and staff users do not see options restricted to their role by the backend API, and specifying the role-based visibility for admin navigation links and action controls.
 
 ## Requirements
 
-### Requirement: Admin Navigation Controls Hiding
-In the main navigation header, links to administrative pages (such as the "Nuevo producto" form) MUST only be visible to logged-in users with administrator privileges (`IDRole === 1`).
+### Requirement: Admin Nav Link Visibility
 
-#### Scenario: Admin sees the new product link
-- GIVEN a user is logged in as an administrator (`locals.isLogged` is true and `locals.userLogged.IDRole === 1`)
-- WHEN the header partial renders
-- THEN the "Nuevo producto" link MUST be visible
+`Header.astro` MUST show a navigation link to `/admin/products` only when the persisted `idRole` (read via `frontend/src/domains/auth/adapters/auth.adapter.ts` from localStorage) is `Role.ADMIN` or `Role.STAFF`. This is a presentation-layer convenience only — it MUST NOT be relied upon as the security boundary; the API's `requireRoles` guard (see admin-route-guard capability) is authoritative for authorization.
 
-#### Scenario: Standard user does not see the new product link
-- GIVEN a user is logged in as a standard user (`locals.isLogged` is true and `locals.userLogged.IDRole === 2`)
-- WHEN the header partial renders
-- THEN the "Nuevo producto" link MUST NOT be visible
+#### Scenario: ADMIN or STAFF sees the admin products link
 
-### Requirement: Admin Action Buttons Hiding in Views
-Any product edit, product delete, or user delete buttons present in product cards, details pages, or user management lists MUST only be rendered if the logged-in user is an administrator.
+- GIVEN a logged-in user whose persisted `idRole` is `Role.ADMIN` or `Role.STAFF`
+- WHEN `Header.astro` renders
+- THEN the `/admin/products` navigation link MUST be visible
 
-#### Scenario: Standard user does not see user delete button
-- GIVEN a standard user views a list of users
-- WHEN the template renders a user card
-- THEN the "Borrar" user form and button MUST NOT be rendered
+#### Scenario: USER or logged-out visitor does not see the admin products link
+
+- GIVEN a logged-out visitor, or a logged-in user whose persisted `idRole` is `Role.USER`
+- WHEN `Header.astro` renders
+- THEN the `/admin/products` navigation link MUST NOT be visible
+
+### Requirement: Delete Control Visibility
+
+Within the admin product section, the delete action/button MUST only be visible/enabled for `Role.ADMIN`. `Role.STAFF` MUST see create/edit/stock-adjust controls but MUST NOT see the delete control. This hiding is UX-only: it mirrors the backend Route Capability Matrix (STAFF receives 403 JSON from `DELETE /api/products/:id`), but the client-side check MUST NOT be treated as the security boundary — the API guard is authoritative regardless of what the UI renders.
+
+#### Scenario: ADMIN sees delete control
+
+- GIVEN a logged-in user whose persisted `idRole` is `Role.ADMIN`
+- WHEN the admin product section renders a product row
+- THEN the delete control MUST be visible and enabled
+
+#### Scenario: STAFF does not see delete control
+
+- GIVEN a logged-in user whose persisted `idRole` is `Role.STAFF`
+- WHEN the admin product section renders a product row
+- THEN the delete control MUST NOT be visible
+- AND create, edit, and stock-adjust controls MUST remain visible

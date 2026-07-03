@@ -1,8 +1,12 @@
 # CSRF Error Pages
 
+> **RETIRED**: This capability was completely removed as of the `product-inventory-admin` change (2026-07-02). The application now uses JSON+Bearer authentication exclusively — no EJS-based CSRF middleware exists, and no EJS view layer exists to render 403 error pages. This spec is archived here for historical reference only. See `sdd/product-inventory-admin/specs/csrf-error-pages/spec.md` for the removal rationale.
+
 ## Purpose
 
 The CSRF error pages capability defines the rendering behavior when CSRF token validation fails on a POST request, and the dedicated Forbidden error view that all error pages share. The view must conform to the PICO-8 pixel art design system.
+
+**NOTE**: This capability is superseded by the JSON 401/403 error responses defined in the admin-route-guard capability.
 
 ## Requirements
 
