@@ -1,3 +1,4 @@
+import { ForeignKeyConstraintError } from 'sequelize';
 import { Category } from '../../domain/entities/Category';
 import { ICategoryRepository } from '../../domain/ports/ICategoryRepository';
 import db, { CategoryInstance, CategoryAttributes } from '../../database/models/db';
@@ -39,9 +40,16 @@ export class SequelizeCategoryRepository implements ICategoryRepository {
   }
 
   async delete(id: number): Promise<boolean> {
-    const deletedCount = await db.Category.destroy({
-      where: { idCategory: id },
-    });
-    return deletedCount > 0;
+    try {
+      const deletedCount = await db.Category.destroy({
+        where: { idCategory: id },
+      });
+      return deletedCount > 0;
+    } catch (error) {
+      if (error instanceof ForeignKeyConstraintError) {
+        throw new Error('Category has associated products', { cause: error });
+      }
+      throw error;
+    }
   }
 }
