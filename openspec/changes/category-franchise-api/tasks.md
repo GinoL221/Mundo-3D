@@ -22,14 +22,14 @@ Chain strategy: stacked-to-main
 |------|------|-----------|-------|
 | 1 | Category domain layer: 5 use-cases + repo FK-delete mod, unit tests only | PR 1 | Base: main/tracker. Independent of Franchise. ~475 lines |
 | 2 | Category HTTP layer: validators, controller, route, mount, integration tests | PR 2 | Base: PR 1. ~650 lines |
-| 3 | Franchise domain layer: FranchiseDTO + 5 use-cases + repo FK-delete mod, unit tests | PR 3 | Base: main/tracker (parallel to PR 1, no shared code with Category) |
+| 3 | Franchise domain layer: FranchiseDTO + 5 use-cases + repo FK-delete mod, unit tests | PR 3 | Base/target: PR2 branch `feat/category-franchise-api-2-category-http` (PR #22), per user-approved chain continuation |
 | 4 | Franchise HTTP layer: validators, controller, route, mount, integration tests | PR 4 | Base: PR 3. ~650 lines |
 
-Resolved: stacked-to-main. PR1 (Category domain) and PR3 (Franchise domain) both base off main; PR2 stacks on PR1; PR4 stacks on PR3.
+Resolved: stacked-to-main. PR1 (Category domain) bases off main; PR2 stacks on PR1; PR3 stacks on PR2 branch `feat/category-franchise-api-2-category-http` (PR #22) by explicit user approval; PR4 stacks on PR3.
 
 ## Phase 1: Foundation
 
-- [ ] 1.1 Create `backend/src/application/dtos/FranchiseDTO.ts` (`idFranchise`, `nameFranchise`), mirrors `CategoryDTO`.
+- [x] 1.1 Create `backend/src/application/dtos/FranchiseDTO.ts` (`idFranchise`, `nameFranchise`), mirrors `CategoryDTO`.
 
 ## Phase 2: Category Domain (TDD, Spec: category-api)
 
@@ -50,12 +50,12 @@ Resolved: stacked-to-main. PR1 (Category domain) and PR3 (Franchise domain) both
 
 ## Phase 4: Franchise Domain (TDD, Spec: franchise-api)
 
-- [ ] 4.1 TDD `ListFranchisesUseCase`.
-- [ ] 4.2 TDD `GetFranchiseByIdUseCase` — throws `Error('Franchise not found')`.
-- [ ] 4.3 TDD `CreateFranchiseUseCase`.
-- [ ] 4.4 TDD `UpdateFranchiseUseCase`.
-- [ ] 4.5 TDD `DeleteFranchiseUseCase`.
-- [ ] 4.6 TDD `SequelizeFranchiseRepository.delete()` — catch FK error, rethrow `Error('Franchise has associated products')`.
+- [x] 4.1 TDD `ListFranchisesUseCase`.
+- [x] 4.2 TDD `GetFranchiseByIdUseCase` — throws `Error('Franchise not found')`.
+- [x] 4.3 TDD `CreateFranchiseUseCase`.
+- [x] 4.4 TDD `UpdateFranchiseUseCase` — returns `FranchiseDTO | null`.
+- [x] 4.5 TDD `DeleteFranchiseUseCase`.
+- [x] 4.6 TDD `SequelizeFranchiseRepository.delete()` — catch FK error, rethrow `Error('Franchise has associated products')`.
 
 ## Phase 5: Franchise HTTP (Spec: franchise-api)
 

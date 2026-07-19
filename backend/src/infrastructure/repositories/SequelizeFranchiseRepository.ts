@@ -1,3 +1,4 @@
+import { ForeignKeyConstraintError } from 'sequelize';
 import { Franchise } from '../../domain/entities/Franchise';
 import { IFranchiseRepository } from '../../domain/ports/IFranchiseRepository';
 import db, { FranchiseInstance, FranchiseAttributes } from '../../database/models/db';
@@ -39,9 +40,16 @@ export class SequelizeFranchiseRepository implements IFranchiseRepository {
   }
 
   async delete(id: number): Promise<boolean> {
-    const deletedCount = await db.Franchise.destroy({
-      where: { idFranchise: id },
-    });
-    return deletedCount > 0;
+    try {
+      const deletedCount = await db.Franchise.destroy({
+        where: { idFranchise: id },
+      });
+      return deletedCount > 0;
+    } catch (error) {
+      if (error instanceof ForeignKeyConstraintError) {
+        throw new Error('Franchise has associated products', { cause: error });
+      }
+      throw error;
+    }
   }
 }
