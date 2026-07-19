@@ -3,77 +3,70 @@
 ## Review Workload Forecast
 
 | Field | Value |
-|-------|-------|
-| Estimated changed lines | ~1500-1900 (10 use-cases + 10 tests, 2 controllers + tests, 2 routes + integration tests, 2 validators, 2 repo mods + tests, DTO, index.ts) |
-| 400-line budget risk | High |
-| Chained PRs recommended | Yes |
-| Suggested split | PR1 → PR2 → PR3 → PR4 → PR5 (Franchise HTTP split across controller and route layers) |
-| Delivery strategy | ask-on-risk |
+|---|---|
+| Estimated changed lines | Original chain ~1500–1900; PR6 contract ~160; PR7 implementation/TDD ~180–280 |
+| 400-line budget risk | Low per PR6/PR7 work unit |
+| Chained PRs recommended | Yes — PR6 contract followed by PR7 implementation/TDD |
+| Suggested split | PR6: PR5 → duplicate contract/spec/tasks; PR7: PR6 → duplicate implementation/TDD |
+| Delivery strategy | auto-chain |
 | Chain strategy | stacked-to-main |
 
-Decision needed before apply: Resolved — chained PRs, stacked-to-main
+Decision needed before apply: No
 Chained PRs recommended: Yes
 Chain strategy: stacked-to-main
-400-line budget risk: High
+400-line budget risk: Low
 
-### Suggested Work Units
+### Suggested Work Unit
 
-| Unit | Goal | Likely PR | Notes |
-|------|------|-----------|-------|
-| 1 | Category domain layer: 5 use-cases + repo FK-delete mod, unit tests only | PR 1 | Base: main/tracker. Independent of Franchise. ~475 lines |
-| 2 | Category HTTP layer: validators, controller, route, mount, integration tests | PR 2 | Base: PR 1. ~650 lines |
-| 3 | Franchise domain layer: FranchiseDTO + 5 use-cases + repo FK-delete mod, unit tests | PR 3 | Base/target: PR2 branch `feat/category-franchise-api-2-category-http` (PR #22), per user-approved chain continuation |
-| 4 | Franchise validators + controller + strict-TDD controller unit tests | PR 4 | Base/target: PR3 branch `feat/category-franchise-api-3-franchise-domain` (PR #24). |
-| 5 | Franchise routes + DI + Supertest integration tests + API router mount | PR 5 | Base/target: PR4 branch `feat/category-franchise-api-4-franchise-http`. |
+| Unit | Goal | PR | Focused test | Runtime harness | Rollback boundary |
+|---|---|---|---|---|---|
+| 1 | Duplicate-name contract: unique names and deterministic 409 semantics | PR6 | `git diff --check` | N/A — documentation-only contract | Revert the two delta specs and `tasks.md` metadata only |
+| 2 | Duplicate-name translation and 409 coverage for both entities | PR7 | `npm test -- --runInBand Category Franchise` | Supertest duplicate POST/PUT on both routes | Revert PR7 repository/controller/test changes only |
 
-Resolved: stacked-to-main. PR1 (Category domain) bases off main; PR2 stacks on PR1; PR3 stacks on PR2 branch `feat/category-franchise-api-2-category-http` (PR #22) by explicit user approval; PR4 (validators + controller unit) stacks on PR3 (PR #24); PR5 (routes + integration + mount) stacks on PR4. Final verification and archive follow PR5.
+PR6 starts at `feat/category-franchise-api-5-franchise-routes` (PR5) on `feat/category-franchise-api-6-duplicate-contract` and ends with the duplicate-name contract, delta specs, and delivery plan only. PR7 starts serially from PR6 on `feat/category-franchise-api-7-duplicate-conflicts`, targets the PR6 branch, and owns all repository, controller, route, strict-TDD, and coverage work. No executable code, route, FK-delete, or archive work belongs in PR6.
 
 ## Phase 1: Foundation
 
-- [x] 1.1 Create `backend/src/application/dtos/FranchiseDTO.ts` (`idFranchise`, `nameFranchise`), mirrors `CategoryDTO`.
+- [x] 1.1 Create `backend/src/application/dtos/FranchiseDTO.ts`.
 
-## Phase 2: Category Domain (TDD, Spec: category-api)
+## Phase 2: Category Domain (TDD)
 
-- [x] 2.1 TDD `ListCategoriesUseCase` — test (mock `ICategoryRepository`) + impl; returns `CategoryDTO[]`.
-- [x] 2.2 TDD `GetCategoryByIdUseCase` — throws `Error('Category not found')` on miss.
-- [x] 2.3 TDD `CreateCategoryUseCase` — returns created `CategoryDTO`.
-- [x] 2.4 TDD `UpdateCategoryUseCase` — returns `CategoryDTO | null`.
-- [x] 2.5 TDD `DeleteCategoryUseCase` — returns `boolean`.
-- [x] 2.6 TDD `SequelizeCategoryRepository.delete()` — mock `db.destroy` throwing `ForeignKeyConstraintError`; rethrow `Error('Category has associated products')`.
+- [x] 2.1–2.5 Add and test the five Category use-cases in `backend/src/application/use-cases/`.
+- [x] 2.6 Translate Category FK-delete errors in `backend/src/infrastructure/repositories/SequelizeCategoryRepository.ts`.
 
-## Phase 3: Category HTTP (Spec: category-api)
+## Phase 3: Category HTTP (TDD)
 
-- [x] 3.1 Create `infrastructure/middlewares/validators/categoryValidators.ts` — create/update, `nameCategory` required/trimmed/non-empty.
-- [x] 3.2 TDD `CategoryApiController` (index/show/create/update/destroy) — 400 NaN-id guard, 404 mapping, 409 mapping on FK message.
-- [x] 3.3 TDD `infrastructure/routes/api/categories.ts` — DI wiring; `apiAuthMiddleware`+`requireRoles(ADMIN,STAFF)` on write, `adminGuard` on delete; open reads.
-- [x] 3.4 Supertest `routes/api/__tests__/categories.test.ts` — full auth matrix, CRUD, 400/404/409 scenarios per spec.
-- [x] 3.5 Mount `categoriesApiRouter` in `infrastructure/routes/api/index.ts`.
+- [x] 3.1 Add `categoryValidators.ts`.
+- [x] 3.2 TDD `CategoryApiController.ts` (400/404/409 mapping).
+- [x] 3.3–3.4 Add category router and Supertest matrix in `routes/api/__tests__/categories.test.ts`.
+- [x] 3.5 Mount categories in `infrastructure/routes/api/index.ts`.
 
-## Phase 4: Franchise Domain (TDD, Spec: franchise-api)
+## Phase 4: Franchise Domain (TDD)
 
-- [x] 4.1 TDD `ListFranchisesUseCase`.
-- [x] 4.2 TDD `GetFranchiseByIdUseCase` — throws `Error('Franchise not found')`.
-- [x] 4.3 TDD `CreateFranchiseUseCase`.
-- [x] 4.4 TDD `UpdateFranchiseUseCase` — returns `FranchiseDTO | null`.
-- [x] 4.5 TDD `DeleteFranchiseUseCase`.
-- [x] 4.6 TDD `SequelizeFranchiseRepository.delete()` — catch FK error, rethrow `Error('Franchise has associated products')`.
+- [x] 4.1–4.5 Add and test the five Franchise use-cases.
+- [x] 4.6 Translate Franchise FK-delete errors in `SequelizeFranchiseRepository.ts`.
 
-## Phase 5: Franchise HTTP (Spec: franchise-api)
+## Phase 5: Franchise HTTP (TDD)
 
-- [x] 5.1 Create `infrastructure/middlewares/validators/franchiseValidators.ts`.
-- [x] 5.2 TDD `FranchiseApiController` (index/show/create/update/destroy).
-- [x] 5.3 TDD `infrastructure/routes/api/franchises.ts` — same guard layout as categories.
-- [x] 5.4 Supertest `routes/api/__tests__/franchises.test.ts` — full auth matrix, CRUD, 400/404/409.
-- [x] 5.5 Mount `franchisesApiRouter` in `infrastructure/routes/api/index.ts`.
+- [x] 5.1 Add `franchiseValidators.ts`.
+- [x] 5.2 TDD `FranchiseApiController.ts`.
+- [x] 5.3–5.4 Add franchise router and Supertest matrix in `routes/api/__tests__/franchises.test.ts`.
+- [x] 5.5 Mount franchises in `infrastructure/routes/api/index.ts`.
 
 ## Phase 6: Verification
 
-- [ ] 6.1 Run full Jest suite; confirm coverage ≥ 50%.
-- [ ] 6.2 Manually verify Spanish 409 body wording matches Product's convention (`ProductApiController.ts:201`).
+- [x] 6.1 Run full Jest suite and confirm coverage ≥50%.
+- [x] 6.2 Verify existing Spanish FK-409 bodies against Product convention.
 
-## Dependency Notes
+## Phase 7: Duplicate-Name Conflict Remediation (PR7)
 
-- Phase 1 blocks Phase 4 (FranchiseDTO needed).
-- Phase 2 blocks Phase 3 (use-cases before controller/routes). Phase 4 blocks Phase 5 identically.
-- Phase 2 and Phase 4 are mutually independent — can run in parallel.
-- Phase 6 runs last, after both slices land.
+- [ ] 7.1 RED: add repository tests for Sequelize `UniqueConstraintError` on Category/Franchise create and update.
+- [ ] 7.2 Translate duplicate persistence errors in both repositories to stable domain errors.
+- [ ] 7.3 RED: add controller unit tests for deterministic duplicate create/update `409` mapping in both controllers.
+- [ ] 7.4 Map duplicate domain errors to the stable API error shape; preserve FK-delete `409` behavior.
+- [ ] 7.5 Add route tests for duplicate POST/PUT, unchanged records, and stable `409` bodies in both route suites.
+- [ ] 7.6 Rerun focused tests, regression suites, and `npx jest --coverage --runInBand`.
+
+## Dependency Order
+
+Completed phases 1–5 landed serially through PR5; Phase 6 evidence is preserved. PR6 records the contract and chain split. Phase 7 depends serially on PR6 and proceeds repository → controller → route tests → full verification. Archive remains blocked until Phase 7 passes.

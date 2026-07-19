@@ -32,7 +32,7 @@ Exposes CRUD JSON API for Franchise catalog reference data (`idFranchise`, `name
 
 ### Requirement: Franchise Name Validation
 
-`nameFranchise` MUST be a required, non-empty, trimmed string on create and update. No uniqueness constraint is enforced.
+`nameFranchise` MUST be a required, non-empty, trimmed string on create and update. `nameFranchise` MUST be unique across all Franchise records.
 
 #### Scenario: Missing name rejected on create
 - GIVEN a create request with an empty or missing `nameFranchise`
@@ -43,6 +43,28 @@ Exposes CRUD JSON API for Franchise catalog reference data (`idFranchise`, `name
 - GIVEN a create or update request where `nameFranchise` is only whitespace
 - WHEN the request is submitted
 - THEN the response MUST be HTTP 400 with a validation error body
+
+### Requirement: Franchise Duplicate Name Conflict
+
+Create and update operations MUST reject duplicate `nameFranchise` values deterministically with HTTP 409 Conflict.
+
+#### Scenario: Duplicate create returns 409
+- GIVEN an existing Franchise already has the submitted `nameFranchise`
+- WHEN `POST /franchises` is called with that name
+- THEN the response MUST be HTTP 409 Conflict
+- AND the Franchise collection MUST remain unchanged
+
+#### Scenario: Duplicate update returns 409
+- GIVEN an existing Franchise is updated to a `nameFranchise` already used by another Franchise
+- WHEN `PUT /franchises/:id` is called
+- THEN the response MUST be HTTP 409 Conflict
+- AND the target Franchise MUST remain unchanged
+
+#### Scenario: Unique create or update succeeds
+- GIVEN no other Franchise uses the submitted `nameFranchise`
+- WHEN `POST /franchises` or `PUT /franchises/:id` is called with that name
+- THEN the response MUST follow the normal success status for the operation
+- AND the saved Franchise MUST expose the submitted `nameFranchise`
 
 ### Requirement: Franchise Create and Update Require ADMIN or STAFF
 
@@ -96,3 +118,14 @@ Deleting a Franchise still referenced by one or more Products MUST fail with `40
 - WHEN an authenticated ADMIN calls `DELETE /franchises/:id` for that franchise
 - THEN the response MUST be HTTP 409 Conflict
 - AND the franchise record MUST remain in the database unchanged
+
+### Requirement: Franchise Conflict Response Semantics
+
+Duplicate create/update failures MUST use HTTP 409 Conflict with a stable error response shape from the existing API error contract. This spec does not lock exact public Spanish wording; if wording changes, the 409 semantics and duplicate-detection tests MUST remain deterministic.
+
+#### Scenario: Conflict response is stable
+- GIVEN a duplicate Franchise create or update is rejected
+- WHEN the API responds
+- THEN the status code MUST be 409 Conflict
+- AND the error body shape MUST match the API error contract
+- AND the behavior MUST be testable without relying on locale-specific prose
