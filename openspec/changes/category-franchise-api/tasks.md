@@ -2,14 +2,14 @@
 
 ## Review Workload Forecast
 
-| Field | Value |
-|---|---|
-| Estimated changed lines | Original chain ~1500–1900; PR6 contract ~160; PR7 implementation/TDD ~180–280 |
-| 400-line budget risk | Low per PR6/PR7 work unit |
-| Chained PRs recommended | Yes — PR6 contract followed by PR7 implementation/TDD |
-| Suggested split | PR6: PR5 → duplicate contract/spec/tasks; PR7: PR6 → duplicate implementation/TDD |
-| Delivery strategy | auto-chain |
-| Chain strategy | stacked-to-main |
+| Field                   | Value                                                                |
+| ----------------------- | -------------------------------------------------------------------- |
+| Estimated changed lines | PR7 design/tasks ~120–180; PR8 implementation/tests ~220–360         |
+| 400-line budget risk    | Low per PR7 and PR8 work unit                                        |
+| Chained PRs recommended | Yes — PR7 design/task alignment followed by PR8 implementation/TDD   |
+| Suggested split         | PR6 contract → PR7 design/tasks → PR8 duplicate implementation/tests |
+| Delivery strategy       | auto-chain                                                           |
+| Chain strategy          | stacked-to-main                                                      |
 
 Decision needed before apply: No
 Chained PRs recommended: Yes
@@ -18,12 +18,13 @@ Chain strategy: stacked-to-main
 
 ### Suggested Work Unit
 
-| Unit | Goal | PR | Focused test | Runtime harness | Rollback boundary |
-|---|---|---|---|---|---|
-| 1 | Duplicate-name contract: unique names and deterministic 409 semantics | PR6 | `git diff --check` | N/A — documentation-only contract | Revert the two delta specs and `tasks.md` metadata only |
-| 2 | Duplicate-name translation and 409 coverage for both entities | PR7 | `npm test -- --runInBand Category Franchise` | Supertest duplicate POST/PUT on both routes | Revert PR7 repository/controller/test changes only |
+| Unit | Goal                                                                  | PR  | Focused test                                                                     | Runtime harness                                              | Rollback boundary                                                        |
+| ---- | --------------------------------------------------------------------- | --- | -------------------------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| 1    | Duplicate-name contract: unique names and deterministic 409 semantics | PR6 | `git diff --check`                                                               | N/A — documentation-only contract                            | Revert the two delta specs and `tasks.md` metadata only                  |
+| 2    | Duplicate conflict design/task alignment                              | PR7 | `npx prettier --check openspec/changes/category-franchise-api/{design,tasks}.md` | N/A — documentation-only                                     | Revert `design.md` and `tasks.md` only                                   |
+| 3    | Duplicate-name translation, 409 coverage, and full verification       | PR8 | `npx jest --coverage --runInBand`                                                | Supertest duplicate POST/PUT plus unchanged-state invariants | Restore the preserved PR8 stash/patch and revert only executable changes |
 
-PR6 starts at `feat/category-franchise-api-5-franchise-routes` (PR5) on `feat/category-franchise-api-6-duplicate-contract` and ends with the duplicate-name contract, delta specs, and delivery plan only. PR7 starts serially from PR6 on `feat/category-franchise-api-7-duplicate-conflicts`, targets the PR6 branch, and owns all repository, controller, route, strict-TDD, and coverage work. No executable code, route, FK-delete, or archive work belongs in PR6.
+PR6 starts at `feat/category-franchise-api-5-franchise-routes` (PR5) on `feat/category-franchise-api-6-duplicate-contract` and ends with the duplicate-name contract and delta specs. PR7 starts serially from PR6 on `feat/category-franchise-api-7-duplicate-design`, targets the PR6 branch, and changes only `design.md` and `tasks.md`. PR8 starts serially from PR7 on `feat/category-franchise-api-8-duplicate-conflicts`, targets the PR7 branch, and restores the preserved executable implementation for repository, controller, route, strict-TDD, and full verification. No executable code belongs in PR7.
 
 ## Phase 1: Foundation
 
@@ -58,7 +59,7 @@ PR6 starts at `feat/category-franchise-api-5-franchise-routes` (PR5) on `feat/ca
 - [x] 6.1 Run full Jest suite and confirm coverage ≥50%.
 - [x] 6.2 Verify existing Spanish FK-409 bodies against Product convention.
 
-## Phase 7: Duplicate-Name Conflict Remediation (PR7)
+## Phase 7: Duplicate-Name Conflict Remediation (PR8 delivery)
 
 - [ ] 7.1 RED: add repository tests for Sequelize `UniqueConstraintError` on Category/Franchise create and update.
 - [ ] 7.2 Translate duplicate persistence errors in both repositories to stable domain errors.
@@ -69,4 +70,4 @@ PR6 starts at `feat/category-franchise-api-5-franchise-routes` (PR5) on `feat/ca
 
 ## Dependency Order
 
-Completed phases 1–5 landed serially through PR5; Phase 6 evidence is preserved. PR6 records the contract and chain split. Phase 7 depends serially on PR6 and proceeds repository → controller → route tests → full verification. Archive remains blocked until Phase 7 passes.
+Completed phases 1–5 landed serially through PR5; Phase 6 evidence is preserved. PR6 records the contract. PR7 aligns the Phase 7 design and delivery plan only. Phase 7 executable work is preserved for PR8 and is not credited until PR8 restores it and reruns repository → controller → route tests → full verification. Archive remains blocked until PR8 passes.
