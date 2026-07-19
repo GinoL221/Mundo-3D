@@ -62,9 +62,9 @@ Resolved: stacked-to-main. PR1 (Category domain) bases off main; PR2 stacks on P
 
 - [x] 5.1 Create `infrastructure/middlewares/validators/franchiseValidators.ts`.
 - [x] 5.2 TDD `FranchiseApiController` (index/show/create/update/destroy).
-- [ ] 5.3 TDD `infrastructure/routes/api/franchises.ts` — same guard layout as categories.
-- [ ] 5.4 Supertest `routes/api/__tests__/franchises.test.ts` — full auth matrix, CRUD, 400/404/409.
-- [ ] 5.5 Mount `franchisesApiRouter` in `infrastructure/routes/api/index.ts`.
+- [x] 5.3 TDD `infrastructure/routes/api/franchises.ts` — same guard layout as categories.
+- [x] 5.4 Supertest `routes/api/__tests__/franchises.test.ts` — full auth matrix, CRUD, 400/404/409.
+- [x] 5.5 Mount `franchisesApiRouter` in `infrastructure/routes/api/index.ts`.
 
 ## Phase 6: Verification
 

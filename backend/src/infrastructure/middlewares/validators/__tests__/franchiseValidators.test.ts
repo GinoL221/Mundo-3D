@@ -30,4 +30,13 @@ describe('franchise validators', () => {
       expect(whitespaceErrors.array()).toHaveLength(1);
     },
   );
+
+  it.each([[franchiseCreateValidators], [franchiseUpdateValidators]])(
+    'rejects non-string nameFranchise values without coercion',
+    async (validators) => {
+      const errors = await validate(validators, { nameFranchise: 42 });
+
+      expect(errors.array()).toHaveLength(1);
+    },
+  );
 });
