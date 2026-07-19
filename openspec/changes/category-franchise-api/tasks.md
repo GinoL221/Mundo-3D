@@ -7,7 +7,7 @@
 | Estimated changed lines | ~1500-1900 (10 use-cases + 10 tests, 2 controllers + tests, 2 routes + integration tests, 2 validators, 2 repo mods + tests, DTO, index.ts) |
 | 400-line budget risk | High |
 | Chained PRs recommended | Yes |
-| Suggested split | PR1 → PR2 → PR3 → PR4 (per entity × layer) |
+| Suggested split | PR1 → PR2 → PR3 → PR4 → PR5 (Franchise HTTP split across controller and route layers) |
 | Delivery strategy | ask-on-risk |
 | Chain strategy | stacked-to-main |
 
@@ -23,9 +23,10 @@ Chain strategy: stacked-to-main
 | 1 | Category domain layer: 5 use-cases + repo FK-delete mod, unit tests only | PR 1 | Base: main/tracker. Independent of Franchise. ~475 lines |
 | 2 | Category HTTP layer: validators, controller, route, mount, integration tests | PR 2 | Base: PR 1. ~650 lines |
 | 3 | Franchise domain layer: FranchiseDTO + 5 use-cases + repo FK-delete mod, unit tests | PR 3 | Base/target: PR2 branch `feat/category-franchise-api-2-category-http` (PR #22), per user-approved chain continuation |
-| 4 | Franchise HTTP layer: validators, controller, route, mount, integration tests | PR 4 | Base: PR 3. ~650 lines |
+| 4 | Franchise validators + controller + strict-TDD controller unit tests | PR 4 | Base/target: PR3 branch `feat/category-franchise-api-3-franchise-domain` (PR #24). |
+| 5 | Franchise routes + DI + Supertest integration tests + API router mount | PR 5 | Base/target: PR4 branch `feat/category-franchise-api-4-franchise-http`. |
 
-Resolved: stacked-to-main. PR1 (Category domain) bases off main; PR2 stacks on PR1; PR3 stacks on PR2 branch `feat/category-franchise-api-2-category-http` (PR #22) by explicit user approval; PR4 stacks on PR3.
+Resolved: stacked-to-main. PR1 (Category domain) bases off main; PR2 stacks on PR1; PR3 stacks on PR2 branch `feat/category-franchise-api-2-category-http` (PR #22) by explicit user approval; PR4 (validators + controller unit) stacks on PR3 (PR #24); PR5 (routes + integration + mount) stacks on PR4. Final verification and archive follow PR5.
 
 ## Phase 1: Foundation
 
@@ -59,8 +60,8 @@ Resolved: stacked-to-main. PR1 (Category domain) bases off main; PR2 stacks on P
 
 ## Phase 5: Franchise HTTP (Spec: franchise-api)
 
-- [ ] 5.1 Create `infrastructure/middlewares/validators/franchiseValidators.ts`.
-- [ ] 5.2 TDD `FranchiseApiController` (index/show/create/update/destroy).
+- [x] 5.1 Create `infrastructure/middlewares/validators/franchiseValidators.ts`.
+- [x] 5.2 TDD `FranchiseApiController` (index/show/create/update/destroy).
 - [ ] 5.3 TDD `infrastructure/routes/api/franchises.ts` — same guard layout as categories.
 - [ ] 5.4 Supertest `routes/api/__tests__/franchises.test.ts` — full auth matrix, CRUD, 400/404/409.
 - [ ] 5.5 Mount `franchisesApiRouter` in `infrastructure/routes/api/index.ts`.
