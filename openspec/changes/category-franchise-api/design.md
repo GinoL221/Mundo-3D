@@ -20,7 +20,7 @@ PR7 is design/task alignment only and deliberately contains no executable change
 
 **Choice**: Modify `SequelizeCategoryRepository.delete()` / `SequelizeFranchiseRepository.delete()` to catch Sequelize's `ForeignKeyConstraintError` (import `{ ForeignKeyConstraintError } from 'sequelize'`; runtime name `SequelizeForeignKeyConstraintError`) and rethrow `new Error('Category has associated products')` / `new Error('Franchise has associated products')`. The use-case propagates; the controller's `destroy` catches that message and returns `409 { error: 'No se puede eliminar la categoría porque tiene productos asociados' }` (Spanish message, per convention).
 **Alternatives considered**: (a) Catch `error.name === 'SequelizeForeignKeyConstraintError'` in the controller — leaks ORM specifics past the adapter and breaks the message-mapping convention. (b) Pre-check "has products?" in the use-case — `IProductRepository` has no such query and it's a TOCTOU race. (c) Global `errorHandler` mapping — any FK error anywhere would become 409.
-**Rationale**: In hexagonal terms the Sequelize adapter is the only layer allowed to know Sequelize error types; the application layer stays ORM-free and unit-testable with plain mocks. Matches the existing `'Insufficient stock'` → 409 mapping pattern. **Deviation from "all files new"**: both repositories get a small modification (delete method only).
+**Rationale**: In hexagonal terms the Sequelize adapter is the only layer allowed to know Sequelize error types; the application layer stays ORM-free and unit-testable with plain mocks. Matches the existing `'Insufficient stock'` → 409 mapping pattern. **Deviation from "all files new"**: both repositories get a small modification, extended by the following decision to also cover `create`/`update`.
 
 ### Decision: Unique names use semantic conflict codes
 
@@ -84,7 +84,7 @@ export interface CreateCategoryInput {
   nameCategory: string;
 }
 export interface UpdateCategoryInput {
-  nameCategory?: string;
+  nameCategory?: string; // type-level optional; categoryUpdateValidators enforces non-empty before this is called
 }
 // Franchise mirrors with nameFranchise.
 ```
