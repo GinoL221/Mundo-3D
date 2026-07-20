@@ -130,6 +130,19 @@ describe('SequelizeCategoryRepository', () => {
 
       expect(result).toBe(false);
     });
+
+    it('should rethrow a domain error when destroy fails with ForeignKeyConstraintError', async () => {
+      const { ForeignKeyConstraintError } = jest.requireActual('sequelize');
+      jest.mocked(db.Category.destroy).mockRejectedValue(new ForeignKeyConstraintError({ message: 'FK violation' }));
+
+      await expect(repository.delete(1)).rejects.toThrow('Category has associated products');
+    });
+
+    it('should propagate a non-FK error unchanged', async () => {
+      jest.mocked(db.Category.destroy).mockRejectedValue(new Error('Unexpected database error'));
+
+      await expect(repository.delete(1)).rejects.toThrow('Unexpected database error');
+    });
   });
 });
 

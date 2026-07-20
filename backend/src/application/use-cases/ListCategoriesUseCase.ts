@@ -1,0 +1,14 @@
+import { ICategoryRepository } from '../../domain/ports/ICategoryRepository';
+import { CategoryDTO } from '../dtos/CategoryDTO';
+
+export class ListCategoriesUseCase {
+  constructor(private readonly categoryRepo: ICategoryRepository) {}
+
+  async execute(): Promise<CategoryDTO[]> {
+    const categories = await this.categoryRepo.findAll();
+    return categories.map((category) => ({
+      idCategory: category.idCategory,
+      nameCategory: category.nameCategory,
+    }));
+  }
+}
