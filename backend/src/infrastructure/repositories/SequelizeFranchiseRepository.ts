@@ -1,7 +1,9 @@
-import { ForeignKeyConstraintError } from 'sequelize';
+import { ForeignKeyConstraintError, UniqueConstraintError } from 'sequelize';
 import { Franchise } from '../../domain/entities/Franchise';
 import { IFranchiseRepository } from '../../domain/ports/IFranchiseRepository';
 import db, { FranchiseInstance, FranchiseAttributes } from '../../database/models/db';
+
+const DUPLICATE_FRANCHISE_NAME = 'DUPLICATE_FRANCHISE_NAME';
 
 export class SequelizeFranchiseRepository implements IFranchiseRepository {
   private toEntity(instance: FranchiseInstance): Franchise {
@@ -20,10 +22,17 @@ export class SequelizeFranchiseRepository implements IFranchiseRepository {
   }
 
   async create(franchise: Omit<Franchise, 'idFranchise'>): Promise<Franchise> {
-    const instance = await db.Franchise.create({
-      nameFranchise: franchise.nameFranchise,
-    } as Partial<FranchiseAttributes>);
-    return this.toEntity(instance);
+    try {
+      const instance = await db.Franchise.create({
+        nameFranchise: franchise.nameFranchise,
+      } as Partial<FranchiseAttributes>);
+      return this.toEntity(instance);
+    } catch (error) {
+      if (error instanceof UniqueConstraintError) {
+        throw new Error(DUPLICATE_FRANCHISE_NAME, { cause: error });
+      }
+      throw error;
+    }
   }
 
   async update(id: number, franchise: Partial<Franchise>): Promise<Franchise | null> {
@@ -35,8 +44,15 @@ export class SequelizeFranchiseRepository implements IFranchiseRepository {
       updatedData.nameFranchise = franchise.nameFranchise;
     }
 
-    await instance.update(updatedData);
-    return this.toEntity(instance);
+    try {
+      await instance.update(updatedData);
+      return this.toEntity(instance);
+    } catch (error) {
+      if (error instanceof UniqueConstraintError) {
+        throw new Error(DUPLICATE_FRANCHISE_NAME, { cause: error });
+      }
+      throw error;
+    }
   }
 
   async delete(id: number): Promise<boolean> {

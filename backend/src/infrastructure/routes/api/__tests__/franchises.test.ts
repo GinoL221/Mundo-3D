@@ -113,6 +113,28 @@ describe('api/franchises routes', () => {
     expect(mockCreateExecute).toHaveBeenCalledWith({ nameFranchise: 'Studio Ghibli' });
   });
 
+  it('returns the stable duplicate conflict for an existing franchise name', async () => {
+    const franchises = [{ idFranchise: 1, nameFranchise: 'Existing Franchise' }];
+    const before = structuredClone(franchises);
+    mockCreateExecute.mockImplementation(async ({ nameFranchise }) => {
+      if (franchises.some((franchise) => franchise.nameFranchise === nameFranchise)) {
+        throw new Error('DUPLICATE_FRANCHISE_NAME');
+      }
+      const created = { idFranchise: franchises.length + 1, nameFranchise };
+      franchises.push(created);
+      return created;
+    });
+
+    const res = await request(app)
+      .post('/api/franchises')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ nameFranchise: 'Existing Franchise' });
+
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: 'DUPLICATE_FRANCHISE_NAME' });
+    expect(franchises).toEqual(before);
+  });
+
   it.each([{}, { nameFranchise: '   ' }, { nameFranchise: 42 }])(
     'rejects invalid franchise names before creation',
     async (body) => {
@@ -161,6 +183,36 @@ describe('api/franchises routes', () => {
           .send({ nameFranchise: 'Updated' })
       ).status,
     ).toBe(404);
+  });
+
+  it('returns the stable duplicate conflict without updating the target franchise', async () => {
+    const franchises = [
+      { idFranchise: 1, nameFranchise: 'Target Franchise' },
+      { idFranchise: 2, nameFranchise: 'Existing Franchise' },
+    ];
+    const before = structuredClone(franchises);
+    mockUpdateExecute.mockImplementation(async (id, { nameFranchise }) => {
+      const target = franchises.find((franchise) => franchise.idFranchise === id);
+      if (!target) return null;
+      if (
+        franchises.some(
+          (franchise) => franchise.idFranchise !== id && franchise.nameFranchise === nameFranchise,
+        )
+      ) {
+        throw new Error('DUPLICATE_FRANCHISE_NAME');
+      }
+      target.nameFranchise = nameFranchise;
+      return target;
+    });
+
+    const res = await request(app)
+      .put('/api/franchises/1')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ nameFranchise: 'Existing Franchise' });
+
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: 'DUPLICATE_FRANCHISE_NAME' });
+    expect(franchises).toEqual(before);
   });
 
   it('rejects unauthenticated and STAFF deletes', async () => {

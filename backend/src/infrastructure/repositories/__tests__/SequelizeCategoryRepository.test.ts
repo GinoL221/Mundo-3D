@@ -24,7 +24,9 @@ describe('SequelizeCategoryRepository', () => {
         { idCategory: 1, nameCategory: 'Category A' },
         { idCategory: 2, nameCategory: 'Category B' },
       ];
-      jest.mocked(db.Category.findAll).mockResolvedValue(mockInstances as unknown as CategoryInstance[]);
+      jest
+        .mocked(db.Category.findAll)
+        .mockResolvedValue(mockInstances as unknown as CategoryInstance[]);
 
       const result = await repository.findAll();
 
@@ -40,7 +42,9 @@ describe('SequelizeCategoryRepository', () => {
   describe('findById', () => {
     it('should return mapped category if found', async () => {
       const mockInstance = { idCategory: 1, nameCategory: 'Category A' };
-      jest.mocked(db.Category.findByPk).mockResolvedValue(mockInstance as unknown as CategoryInstance);
+      jest
+        .mocked(db.Category.findByPk)
+        .mockResolvedValue(mockInstance as unknown as CategoryInstance);
 
       const result = await repository.findById(1);
 
@@ -63,13 +67,26 @@ describe('SequelizeCategoryRepository', () => {
   describe('create', () => {
     it('should create and return the category', async () => {
       const mockInstance = { idCategory: 1, nameCategory: 'New Category' };
-      jest.mocked(db.Category.create).mockResolvedValue(mockInstance as unknown as CategoryInstance);
+      jest
+        .mocked(db.Category.create)
+        .mockResolvedValue(mockInstance as unknown as CategoryInstance);
 
       const result = await repository.create({ nameCategory: 'New Category' });
 
       expect(result.idCategory).toBe(1);
       expect(result.nameCategory).toBe('New Category');
       expect(db.Category.create).toHaveBeenCalledWith({ nameCategory: 'New Category' });
+    });
+
+    it('translates a duplicate name into the stable category conflict error', async () => {
+      const { UniqueConstraintError } = jest.requireActual('sequelize');
+      jest
+        .mocked(db.Category.create)
+        .mockRejectedValue(new UniqueConstraintError({ message: 'duplicate name', errors: [] }));
+
+      await expect(repository.create({ nameCategory: 'Existing Category' })).rejects.toThrow(
+        'DUPLICATE_CATEGORY_NAME',
+      );
     });
   });
 
@@ -81,7 +98,9 @@ describe('SequelizeCategoryRepository', () => {
         nameCategory: 'Old Category',
         update: mockUpdate,
       };
-      jest.mocked(db.Category.findByPk).mockResolvedValue(mockInstance as unknown as CategoryInstance);
+      jest
+        .mocked(db.Category.findByPk)
+        .mockResolvedValue(mockInstance as unknown as CategoryInstance);
 
       const result = await repository.update(1, { nameCategory: 'Updated Category' });
 
@@ -96,7 +115,9 @@ describe('SequelizeCategoryRepository', () => {
         nameCategory: 'Old Category',
         update: mockUpdate,
       };
-      jest.mocked(db.Category.findByPk).mockResolvedValue(mockInstance as unknown as CategoryInstance);
+      jest
+        .mocked(db.Category.findByPk)
+        .mockResolvedValue(mockInstance as unknown as CategoryInstance);
 
       const result = await repository.update(1, {});
 
@@ -110,6 +131,25 @@ describe('SequelizeCategoryRepository', () => {
       const result = await repository.update(999, { nameCategory: 'Non-existent' });
 
       expect(result).toBeNull();
+    });
+
+    it('translates a duplicate update without changing the existing category entity', async () => {
+      const { UniqueConstraintError } = jest.requireActual('sequelize');
+      const mockInstance = {
+        idCategory: 1,
+        nameCategory: 'Original Category',
+        update: jest
+          .fn()
+          .mockRejectedValue(new UniqueConstraintError({ message: 'duplicate name', errors: [] })),
+      };
+      jest
+        .mocked(db.Category.findByPk)
+        .mockResolvedValue(mockInstance as unknown as CategoryInstance);
+
+      await expect(repository.update(1, { nameCategory: 'Existing Category' })).rejects.toThrow(
+        'DUPLICATE_CATEGORY_NAME',
+      );
+      expect(mockInstance.nameCategory).toBe('Original Category');
     });
   });
 
@@ -133,7 +173,9 @@ describe('SequelizeCategoryRepository', () => {
 
     it('should rethrow a domain error when destroy fails with ForeignKeyConstraintError', async () => {
       const { ForeignKeyConstraintError } = jest.requireActual('sequelize');
-      jest.mocked(db.Category.destroy).mockRejectedValue(new ForeignKeyConstraintError({ message: 'FK violation' }));
+      jest
+        .mocked(db.Category.destroy)
+        .mockRejectedValue(new ForeignKeyConstraintError({ message: 'FK violation' }));
 
       await expect(repository.delete(1)).rejects.toThrow('Category has associated products');
     });
@@ -145,4 +187,3 @@ describe('SequelizeCategoryRepository', () => {
     });
   });
 });
-

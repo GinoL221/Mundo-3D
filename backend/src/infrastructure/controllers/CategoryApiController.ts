@@ -5,13 +5,15 @@ import { CreateCategoryUseCase } from '../../application/use-cases/CreateCategor
 import { UpdateCategoryUseCase } from '../../application/use-cases/UpdateCategoryUseCase';
 import { DeleteCategoryUseCase } from '../../application/use-cases/DeleteCategoryUseCase';
 
+const DUPLICATE_CATEGORY_NAME = 'DUPLICATE_CATEGORY_NAME';
+
 export class CategoryApiController {
   constructor(
     private readonly listCategoriesUseCase: ListCategoriesUseCase,
     private readonly getCategoryByIdUseCase: GetCategoryByIdUseCase,
     private readonly createCategoryUseCase: CreateCategoryUseCase,
     private readonly updateCategoryUseCase: UpdateCategoryUseCase,
-    private readonly deleteCategoryUseCase: DeleteCategoryUseCase
+    private readonly deleteCategoryUseCase: DeleteCategoryUseCase,
   ) {}
 
   index = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -47,6 +49,10 @@ export class CategoryApiController {
       const category = await this.createCategoryUseCase.execute({ nameCategory });
       res.status(201).json(category);
     } catch (error) {
+      if (error instanceof Error && error.message === DUPLICATE_CATEGORY_NAME) {
+        res.status(409).json({ error: DUPLICATE_CATEGORY_NAME });
+        return;
+      }
       next(error);
     }
   };
@@ -69,6 +75,10 @@ export class CategoryApiController {
       }
       res.json(category);
     } catch (error) {
+      if (error instanceof Error && error.message === DUPLICATE_CATEGORY_NAME) {
+        res.status(409).json({ error: DUPLICATE_CATEGORY_NAME });
+        return;
+      }
       next(error);
     }
   };
@@ -88,7 +98,9 @@ export class CategoryApiController {
       res.status(204).send();
     } catch (error) {
       if (error instanceof Error && error.message === 'Category has associated products') {
-        res.status(409).json({ error: 'No se puede eliminar la categoría porque tiene productos asociados' });
+        res
+          .status(409)
+          .json({ error: 'No se puede eliminar la categoría porque tiene productos asociados' });
         return;
       }
       next(error);

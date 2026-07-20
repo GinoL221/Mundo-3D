@@ -5,6 +5,8 @@ import { CreateFranchiseUseCase } from '../../application/use-cases/CreateFranch
 import { UpdateFranchiseUseCase } from '../../application/use-cases/UpdateFranchiseUseCase';
 import { DeleteFranchiseUseCase } from '../../application/use-cases/DeleteFranchiseUseCase';
 
+const DUPLICATE_FRANCHISE_NAME = 'DUPLICATE_FRANCHISE_NAME';
+
 const parseFranchiseId = (value: string): number | null =>
   /^\d+$/.test(value) ? Number(value) : null;
 
@@ -44,10 +46,15 @@ export class FranchiseApiController {
 
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      res
-        .status(201)
-        .json(await this.createFranchiseUseCase.execute({ nameFranchise: req.body.nameFranchise }));
+      const franchise = await this.createFranchiseUseCase.execute({
+        nameFranchise: req.body.nameFranchise,
+      });
+      res.status(201).json(franchise);
     } catch (error) {
+      if (error instanceof Error && error.message === DUPLICATE_FRANCHISE_NAME) {
+        res.status(409).json({ error: DUPLICATE_FRANCHISE_NAME });
+        return;
+      }
       next(error);
     }
   };
@@ -68,6 +75,10 @@ export class FranchiseApiController {
       }
       res.json(franchise);
     } catch (error) {
+      if (error instanceof Error && error.message === DUPLICATE_FRANCHISE_NAME) {
+        res.status(409).json({ error: DUPLICATE_FRANCHISE_NAME });
+        return;
+      }
       next(error);
     }
   };

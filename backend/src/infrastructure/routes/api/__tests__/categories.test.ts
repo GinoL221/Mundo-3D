@@ -111,7 +111,9 @@ describe('api/categories routes', () => {
 
   describe('POST /api/categories', () => {
     it('returns 401 without an Authorization header', async () => {
-      const res = await request(app).post('/api/categories').send({ nameCategory: 'Action Figures' });
+      const res = await request(app)
+        .post('/api/categories')
+        .send({ nameCategory: 'Action Figures' });
 
       expect(res.status).toBe(401);
       expect(mockCreateExecute).not.toHaveBeenCalled();
@@ -180,11 +182,35 @@ describe('api/categories routes', () => {
       expect(res.status).toBe(400);
       expect(mockCreateExecute).not.toHaveBeenCalled();
     });
+
+    it('returns the stable duplicate conflict for an existing category name', async () => {
+      const categories = [{ idCategory: 1, nameCategory: 'Existing Category' }];
+      const before = structuredClone(categories);
+      mockCreateExecute.mockImplementation(async ({ nameCategory }) => {
+        if (categories.some((category) => category.nameCategory === nameCategory)) {
+          throw new Error('DUPLICATE_CATEGORY_NAME');
+        }
+        const created = { idCategory: categories.length + 1, nameCategory };
+        categories.push(created);
+        return created;
+      });
+
+      const res = await request(app)
+        .post('/api/categories')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ nameCategory: 'Existing Category' });
+
+      expect(res.status).toBe(409);
+      expect(res.body).toEqual({ error: 'DUPLICATE_CATEGORY_NAME' });
+      expect(categories).toEqual(before);
+    });
   });
 
   describe('PUT /api/categories/:id', () => {
     it('returns 401 without an Authorization header', async () => {
-      const res = await request(app).put('/api/categories/1').send({ nameCategory: 'Updated Name' });
+      const res = await request(app)
+        .put('/api/categories/1')
+        .send({ nameCategory: 'Updated Name' });
 
       expect(res.status).toBe(401);
       expect(mockUpdateExecute).not.toHaveBeenCalled();
@@ -244,6 +270,36 @@ describe('api/categories routes', () => {
       expect(res.status).toBe(400);
       expect(mockUpdateExecute).not.toHaveBeenCalled();
     });
+
+    it('returns the stable duplicate conflict without updating the target category', async () => {
+      const categories = [
+        { idCategory: 1, nameCategory: 'Target Category' },
+        { idCategory: 2, nameCategory: 'Existing Category' },
+      ];
+      const before = structuredClone(categories);
+      mockUpdateExecute.mockImplementation(async (id, { nameCategory }) => {
+        const target = categories.find((category) => category.idCategory === id);
+        if (!target) return null;
+        if (
+          categories.some(
+            (category) => category.idCategory !== id && category.nameCategory === nameCategory,
+          )
+        ) {
+          throw new Error('DUPLICATE_CATEGORY_NAME');
+        }
+        target.nameCategory = nameCategory;
+        return target;
+      });
+
+      const res = await request(app)
+        .put('/api/categories/1')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ nameCategory: 'Existing Category' });
+
+      expect(res.status).toBe(409);
+      expect(res.body).toEqual({ error: 'DUPLICATE_CATEGORY_NAME' });
+      expect(categories).toEqual(before);
+    });
   });
 
   describe('DELETE /api/categories/:id', () => {
@@ -255,7 +311,9 @@ describe('api/categories routes', () => {
     });
 
     it('returns 403 for STAFF (delete is ADMIN-only)', async () => {
-      const res = await request(app).delete('/api/categories/1').set('Authorization', `Bearer ${staffToken}`);
+      const res = await request(app)
+        .delete('/api/categories/1')
+        .set('Authorization', `Bearer ${staffToken}`);
 
       expect(res.status).toBe(403);
       expect(mockDeleteExecute).not.toHaveBeenCalled();
@@ -264,7 +322,9 @@ describe('api/categories routes', () => {
     it('returns 204 for ADMIN', async () => {
       mockDeleteExecute.mockResolvedValue(true);
 
-      const res = await request(app).delete('/api/categories/1').set('Authorization', `Bearer ${adminToken}`);
+      const res = await request(app)
+        .delete('/api/categories/1')
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(204);
       expect(mockDeleteExecute).toHaveBeenCalledWith(1);
@@ -273,7 +333,9 @@ describe('api/categories routes', () => {
     it('returns 404 when the category does not exist', async () => {
       mockDeleteExecute.mockResolvedValue(false);
 
-      const res = await request(app).delete('/api/categories/999').set('Authorization', `Bearer ${adminToken}`);
+      const res = await request(app)
+        .delete('/api/categories/999')
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(404);
     });
@@ -281,7 +343,9 @@ describe('api/categories routes', () => {
     it('returns 409 when the category is referenced by existing products', async () => {
       mockDeleteExecute.mockRejectedValue(new Error('Category has associated products'));
 
-      const res = await request(app).delete('/api/categories/1').set('Authorization', `Bearer ${adminToken}`);
+      const res = await request(app)
+        .delete('/api/categories/1')
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(409);
     });

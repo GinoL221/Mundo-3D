@@ -1,7 +1,9 @@
-import { ForeignKeyConstraintError } from 'sequelize';
+import { ForeignKeyConstraintError, UniqueConstraintError } from 'sequelize';
 import { Category } from '../../domain/entities/Category';
 import { ICategoryRepository } from '../../domain/ports/ICategoryRepository';
 import db, { CategoryInstance, CategoryAttributes } from '../../database/models/db';
+
+const DUPLICATE_CATEGORY_NAME = 'DUPLICATE_CATEGORY_NAME';
 
 export class SequelizeCategoryRepository implements ICategoryRepository {
   private toEntity(instance: CategoryInstance): Category {
@@ -20,10 +22,17 @@ export class SequelizeCategoryRepository implements ICategoryRepository {
   }
 
   async create(category: Omit<Category, 'idCategory'>): Promise<Category> {
-    const instance = await db.Category.create({
-      nameCategory: category.nameCategory,
-    } as Partial<CategoryAttributes>);
-    return this.toEntity(instance);
+    try {
+      const instance = await db.Category.create({
+        nameCategory: category.nameCategory,
+      } as Partial<CategoryAttributes>);
+      return this.toEntity(instance);
+    } catch (error) {
+      if (error instanceof UniqueConstraintError) {
+        throw new Error(DUPLICATE_CATEGORY_NAME, { cause: error });
+      }
+      throw error;
+    }
   }
 
   async update(id: number, category: Partial<Category>): Promise<Category | null> {
@@ -35,8 +44,15 @@ export class SequelizeCategoryRepository implements ICategoryRepository {
       updatedData.nameCategory = category.nameCategory;
     }
 
-    await instance.update(updatedData);
-    return this.toEntity(instance);
+    try {
+      await instance.update(updatedData);
+      return this.toEntity(instance);
+    } catch (error) {
+      if (error instanceof UniqueConstraintError) {
+        throw new Error(DUPLICATE_CATEGORY_NAME, { cause: error });
+      }
+      throw error;
+    }
   }
 
   async delete(id: number): Promise<boolean> {

@@ -77,6 +77,17 @@ describe('SequelizeFranchiseRepository', () => {
       expect(result.nameFranchise).toBe('New Franchise');
       expect(db.Franchise.create).toHaveBeenCalledWith({ nameFranchise: 'New Franchise' });
     });
+
+    it('translates a duplicate name into the stable franchise conflict error', async () => {
+      const { UniqueConstraintError } = jest.requireActual('sequelize');
+      jest
+        .mocked(db.Franchise.create)
+        .mockRejectedValue(new UniqueConstraintError({ message: 'duplicate name', errors: [] }));
+
+      await expect(repository.create({ nameFranchise: 'Existing Franchise' })).rejects.toThrow(
+        'DUPLICATE_FRANCHISE_NAME',
+      );
+    });
   });
 
   describe('update', () => {
@@ -120,6 +131,25 @@ describe('SequelizeFranchiseRepository', () => {
       const result = await repository.update(999, { nameFranchise: 'Non-existent' });
 
       expect(result).toBeNull();
+    });
+
+    it('translates a duplicate update without changing the existing franchise entity', async () => {
+      const { UniqueConstraintError } = jest.requireActual('sequelize');
+      const mockInstance = {
+        idFranchise: 1,
+        nameFranchise: 'Original Franchise',
+        update: jest
+          .fn()
+          .mockRejectedValue(new UniqueConstraintError({ message: 'duplicate name', errors: [] })),
+      };
+      jest
+        .mocked(db.Franchise.findByPk)
+        .mockResolvedValue(mockInstance as unknown as FranchiseInstance);
+
+      await expect(repository.update(1, { nameFranchise: 'Existing Franchise' })).rejects.toThrow(
+        'DUPLICATE_FRANCHISE_NAME',
+      );
+      expect(mockInstance.nameFranchise).toBe('Original Franchise');
     });
   });
 
