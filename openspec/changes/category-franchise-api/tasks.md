@@ -61,12 +61,12 @@ PR6 starts at `feat/category-franchise-api-5-franchise-routes` (PR5) on `feat/ca
 
 ## Phase 7: Duplicate-Name Conflict Remediation (PR8 delivery)
 
-- [ ] 7.1 RED: add repository tests for Sequelize `UniqueConstraintError` on Category/Franchise create and update.
-- [ ] 7.2 Translate duplicate persistence errors in both repositories to stable domain errors.
-- [ ] 7.3 RED: add controller unit tests for deterministic duplicate create/update `409` mapping in both controllers.
-- [ ] 7.4 Map duplicate domain errors to the stable API error shape; preserve FK-delete `409` behavior.
-- [ ] 7.5 Add route tests for duplicate POST/PUT, unchanged records, and stable `409` bodies in both route suites.
-- [ ] 7.6 Rerun focused tests, regression suites, and `npx jest --coverage --runInBand`.
+- [x] 7.1 RED: add repository tests for Sequelize `UniqueConstraintError` on Category/Franchise create and update.
+- [x] 7.2 Translate duplicate persistence errors in both repositories to stable domain errors.
+- [x] 7.3 RED: add controller unit tests for deterministic duplicate create/update `409` mapping in both controllers.
+- [x] 7.4 Map duplicate domain errors to the stable API error shape; preserve FK-delete `409` behavior.
+- [x] 7.5 Add route tests for duplicate POST/PUT, unchanged records, and stable `409` bodies in both route suites.
+- [x] 7.6 Rerun focused tests, regression suites, and `npx jest --coverage --runInBand`.
 
 ## Dependency Order
 

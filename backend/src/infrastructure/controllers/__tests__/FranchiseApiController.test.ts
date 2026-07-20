@@ -73,6 +73,17 @@ describe('FranchiseApiController', () => {
     expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'DB is down' }));
   });
 
+  it('maps duplicate franchise creates to a stable 409 error body', async () => {
+    req.body = { nameFranchise: 'Existing Franchise' };
+    create.execute.mockRejectedValue(new Error('DUPLICATE_FRANCHISE_NAME'));
+
+    await controller.create(req as Request, res as Response, next);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith({ error: 'DUPLICATE_FRANCHISE_NAME' });
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('updates a franchise, maps a miss to 404, and rejects non-numeric ids', async () => {
     req.params = { id: '1' };
     req.body = { nameFranchise: 'Updated' };
@@ -90,6 +101,18 @@ describe('FranchiseApiController', () => {
     req.params = { id: '1junk' };
     await controller.update(req as Request, res as Response, next);
     expect(update.execute).toHaveBeenCalledTimes(2);
+  });
+
+  it('maps duplicate franchise updates to a stable 409 error body', async () => {
+    req.params = { id: '1' };
+    req.body = { nameFranchise: 'Existing Franchise' };
+    update.execute.mockRejectedValue(new Error('DUPLICATE_FRANCHISE_NAME'));
+
+    await controller.update(req as Request, res as Response, next);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith({ error: 'DUPLICATE_FRANCHISE_NAME' });
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('deletes, maps missing and referenced franchises, and rejects non-numeric ids', async () => {
