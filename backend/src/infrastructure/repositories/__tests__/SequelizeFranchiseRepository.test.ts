@@ -24,7 +24,9 @@ describe('SequelizeFranchiseRepository', () => {
         { idFranchise: 1, nameFranchise: 'Franchise A' },
         { idFranchise: 2, nameFranchise: 'Franchise B' },
       ];
-      jest.mocked(db.Franchise.findAll).mockResolvedValue(mockInstances as unknown as FranchiseInstance[]);
+      jest
+        .mocked(db.Franchise.findAll)
+        .mockResolvedValue(mockInstances as unknown as FranchiseInstance[]);
 
       const result = await repository.findAll();
 
@@ -40,7 +42,9 @@ describe('SequelizeFranchiseRepository', () => {
   describe('findById', () => {
     it('should return mapped franchise if found', async () => {
       const mockInstance = { idFranchise: 1, nameFranchise: 'Franchise A' };
-      jest.mocked(db.Franchise.findByPk).mockResolvedValue(mockInstance as unknown as FranchiseInstance);
+      jest
+        .mocked(db.Franchise.findByPk)
+        .mockResolvedValue(mockInstance as unknown as FranchiseInstance);
 
       const result = await repository.findById(1);
 
@@ -63,7 +67,9 @@ describe('SequelizeFranchiseRepository', () => {
   describe('create', () => {
     it('should create and return the franchise', async () => {
       const mockInstance = { idFranchise: 1, nameFranchise: 'New Franchise' };
-      jest.mocked(db.Franchise.create).mockResolvedValue(mockInstance as unknown as FranchiseInstance);
+      jest
+        .mocked(db.Franchise.create)
+        .mockResolvedValue(mockInstance as unknown as FranchiseInstance);
 
       const result = await repository.create({ nameFranchise: 'New Franchise' });
 
@@ -81,7 +87,9 @@ describe('SequelizeFranchiseRepository', () => {
         nameFranchise: 'Old Franchise',
         update: mockUpdate,
       };
-      jest.mocked(db.Franchise.findByPk).mockResolvedValue(mockInstance as unknown as FranchiseInstance);
+      jest
+        .mocked(db.Franchise.findByPk)
+        .mockResolvedValue(mockInstance as unknown as FranchiseInstance);
 
       const result = await repository.update(1, { nameFranchise: 'Updated Franchise' });
 
@@ -96,7 +104,9 @@ describe('SequelizeFranchiseRepository', () => {
         nameFranchise: 'Old Franchise',
         update: mockUpdate,
       };
-      jest.mocked(db.Franchise.findByPk).mockResolvedValue(mockInstance as unknown as FranchiseInstance);
+      jest
+        .mocked(db.Franchise.findByPk)
+        .mockResolvedValue(mockInstance as unknown as FranchiseInstance);
 
       const result = await repository.update(1, {});
 
@@ -130,6 +140,20 @@ describe('SequelizeFranchiseRepository', () => {
 
       expect(result).toBe(false);
     });
+
+    it('translates a foreign-key violation into the franchise domain error', async () => {
+      const { ForeignKeyConstraintError } = jest.requireActual('sequelize');
+      jest
+        .mocked(db.Franchise.destroy)
+        .mockRejectedValue(new ForeignKeyConstraintError({ message: 'FK violation' }));
+
+      await expect(repository.delete(1)).rejects.toThrow('Franchise has associated products');
+    });
+
+    it('preserves non-foreign-key errors from the database', async () => {
+      jest.mocked(db.Franchise.destroy).mockRejectedValue(new Error('Unexpected database error'));
+
+      await expect(repository.delete(1)).rejects.toThrow('Unexpected database error');
+    });
   });
 });
-
