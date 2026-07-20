@@ -5,6 +5,9 @@ import { CreateFranchiseUseCase } from '../../application/use-cases/CreateFranch
 import { UpdateFranchiseUseCase } from '../../application/use-cases/UpdateFranchiseUseCase';
 import { DeleteFranchiseUseCase } from '../../application/use-cases/DeleteFranchiseUseCase';
 
+const parseFranchiseId = (value: string): number | null =>
+  /^\d+$/.test(value) ? Number(value) : null;
+
 export class FranchiseApiController {
   constructor(
     private readonly listFranchisesUseCase: ListFranchisesUseCase,
@@ -24,8 +27,8 @@ export class FranchiseApiController {
 
   show = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const id = parseInt(req.params.id as string, 10);
-      if (Number.isNaN(id)) {
+      const id = parseFranchiseId(req.params.id as string);
+      if (id === null) {
         res.status(400).json({ error: 'Id de franquicia inválido' });
         return;
       }
@@ -51,8 +54,8 @@ export class FranchiseApiController {
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const id = parseInt(req.params.id as string, 10);
-      if (Number.isNaN(id)) {
+      const id = parseFranchiseId(req.params.id as string);
+      if (id === null) {
         res.status(400).json({ error: 'Id de franquicia inválido' });
         return;
       }
@@ -71,8 +74,8 @@ export class FranchiseApiController {
 
   destroy = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const id = parseInt(req.params.id as string, 10);
-      if (Number.isNaN(id)) {
+      const id = parseFranchiseId(req.params.id as string);
+      if (id === null) {
         res.status(400).json({ error: 'Id de franquicia inválido' });
         return;
       }

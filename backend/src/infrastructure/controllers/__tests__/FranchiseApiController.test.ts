@@ -53,7 +53,7 @@ describe('FranchiseApiController', () => {
     await controller.show(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(404);
 
-    req.params = { id: 'invalid' };
+    req.params = { id: '1junk' };
     await controller.show(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(getById.execute).toHaveBeenCalledTimes(2);
@@ -87,7 +87,7 @@ describe('FranchiseApiController', () => {
     await controller.update(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(404);
 
-    req.params = { id: 'invalid' };
+    req.params = { id: '1junk' };
     await controller.update(req as Request, res as Response, next);
     expect(update.execute).toHaveBeenCalledTimes(2);
   });
@@ -111,7 +111,7 @@ describe('FranchiseApiController', () => {
       error: 'No se puede eliminar la franquicia porque tiene productos asociados',
     });
 
-    req.params = { id: 'invalid' };
+    req.params = { id: '1junk' };
     await controller.destroy(req as Request, res as Response, next);
     expect(destroy.execute).toHaveBeenCalledTimes(3);
   });
