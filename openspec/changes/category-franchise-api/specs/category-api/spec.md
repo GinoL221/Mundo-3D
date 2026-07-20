@@ -32,7 +32,7 @@ Exposes CRUD JSON API for Category catalog reference data (`idCategory`, `nameCa
 
 ### Requirement: Category Name Validation
 
-`nameCategory` MUST be a required, non-empty, trimmed string on create and update. No uniqueness constraint is enforced.
+`nameCategory` MUST be a required, non-empty, trimmed string on create and update. `nameCategory` MUST be unique across all Category records.
 
 #### Scenario: Missing name rejected on create
 - GIVEN a create request with an empty or missing `nameCategory`
@@ -43,6 +43,28 @@ Exposes CRUD JSON API for Category catalog reference data (`idCategory`, `nameCa
 - GIVEN a create or update request where `nameCategory` is only whitespace
 - WHEN the request is submitted
 - THEN the response MUST be HTTP 400 with a validation error body
+
+### Requirement: Category Duplicate Name Conflict
+
+Create and update operations MUST reject duplicate `nameCategory` values deterministically with HTTP 409 Conflict.
+
+#### Scenario: Duplicate create returns 409
+- GIVEN an existing Category already has the submitted `nameCategory`
+- WHEN `POST /categories` is called with that name
+- THEN the response MUST be HTTP 409 Conflict
+- AND the Category collection MUST remain unchanged
+
+#### Scenario: Duplicate update returns 409
+- GIVEN an existing Category is updated to a `nameCategory` already used by another Category
+- WHEN `PUT /categories/:id` is called
+- THEN the response MUST be HTTP 409 Conflict
+- AND the target Category MUST remain unchanged
+
+#### Scenario: Unique create or update succeeds
+- GIVEN no other Category uses the submitted `nameCategory`
+- WHEN `POST /categories` or `PUT /categories/:id` is called with that name
+- THEN the response MUST follow the normal success status for the operation
+- AND the saved Category MUST expose the submitted `nameCategory`
 
 ### Requirement: Category Create and Update Require ADMIN or STAFF
 
@@ -96,3 +118,14 @@ Deleting a Category still referenced by one or more Products MUST fail with `409
 - WHEN an authenticated ADMIN calls `DELETE /categories/:id` for that category
 - THEN the response MUST be HTTP 409 Conflict
 - AND the category record MUST remain in the database unchanged
+
+### Requirement: Category Conflict Response Semantics
+
+Duplicate create/update failures MUST use HTTP 409 Conflict with a stable error response shape from the existing API error contract. This spec does not lock exact public Spanish wording; if wording changes, the 409 semantics and duplicate-detection tests MUST remain deterministic.
+
+#### Scenario: Conflict response is stable
+- GIVEN a duplicate Category create or update is rejected
+- WHEN the API responds
+- THEN the status code MUST be 409 Conflict
+- AND the error body shape MUST match the API error contract
+- AND the behavior MUST be testable without relying on locale-specific prose
