@@ -24,14 +24,14 @@ Astro's default component scripts are processed, support TypeScript and imports,
 
 ### Evidence and Responsibility Map
 
-| Responsibility | Current contract | Recommended boundary |
-|---|---|---|
-| Session UI | Reads `token`/`user`; toggles `.guest-only`, `.user-only`, `.admin-only`; supports `firstName`/`FirstName` and `image`/`Image`; calls `hasAdminAccess`; cleans corrupt auth storage | `scripts/sessionUI.ts` |
-| Logout | `#navbar-logout` is an anchor; prevents default; removes auth storage, then calls `CartService.clearCart()`, then redirects to `/login` | Keep with session transition in `sessionUI.ts`; preserve the removal-before-clear order. Do not combine it with cart badge rendering. |
-| Theme toggle | `theme` key, default `dark`; sets `html[data-theme]`; toggles `light`/`dark`; updates `.theme-toggle-btn__icon` | `scripts/themeToggle.ts` |
-| CRT toggle | `retro-theme-preference` key, default `enabled`; toggles `html.crt-theme-active`; updates `.crt-toggle-btn__icon` | `scripts/crtToggle.ts` |
-| Cart badge | `cartItems.get().length` (distinct product count, not quantity sum); hides when zero; calls `CartService.loadCartFromStorage()` and subscribes to the store | Prefer a separate `scripts/cartBadge.ts`; otherwise this responsibility remains in Header and the split is incomplete. |
-| Search | No event handler; visual-only input/button | Remain in Header unchanged and out of scope |
+| Responsibility | Current contract                                                                                                                                                                    | Recommended boundary                                                                                                                  |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Session UI     | Reads `token`/`user`; toggles `.guest-only`, `.user-only`, `.admin-only`; supports `firstName`/`FirstName` and `image`/`Image`; calls `hasAdminAccess`; cleans corrupt auth storage | `scripts/sessionUI.ts`                                                                                                                |
+| Logout         | `#navbar-logout` is an anchor; prevents default; removes auth storage, then calls `CartService.clearCart()`, then redirects to `/login`                                             | Keep with session transition in `sessionUI.ts`; preserve the removal-before-clear order. Do not combine it with cart badge rendering. |
+| Theme toggle   | `theme` key, default `dark`; sets `html[data-theme]`; toggles `light`/`dark`; updates `.theme-toggle-btn__icon`                                                                     | `scripts/themeToggle.ts`                                                                                                              |
+| CRT toggle     | `retro-theme-preference` key, default `enabled`; toggles `html.crt-theme-active`; updates `.crt-toggle-btn__icon`                                                                   | `scripts/crtToggle.ts`                                                                                                                |
+| Cart badge     | `cartItems.get().length` (distinct product count, not quantity sum); hides when zero; calls `CartService.loadCartFromStorage()` and subscribes to the store                         | Prefer a separate `scripts/cartBadge.ts`; otherwise this responsibility remains in Header and the split is incomplete.                |
+| Search         | No event handler; visual-only input/button                                                                                                                                          | Remain in Header unchanged and out of scope                                                                                           |
 
 Observed DOM/event/storage contracts that must remain stable:
 
