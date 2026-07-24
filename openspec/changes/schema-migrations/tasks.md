@@ -41,10 +41,10 @@ Chain strategy: pending
 
 ## Phase 3: Boot Cutover & CI Proof (PR 3)
 
-- [ ] 3.1 RED: boot test (mock `ensureDatabaseExists`/`db.sequelize`/`seedInitialData`, `jest.isolateModules` with `NODE_ENV=production`) asserting `ensureDatabaseExists` is called with resolved `env`, `sync({alter:true})` is never called, `authenticate()` is called (Req: Boot Must Not Mutate or Auto-Migrate Schema; Environment-Aware Database Existence Check)
-- [ ] 3.2 GREEN: modify `backend/index.js` — remove `sync({alter:true})`, chain `db.sequelize.authenticate()`, change `ensureDatabaseExists("development")` to `ensureDatabaseExists(env)`
-- [ ] 3.3 Modify `.github/workflows/ci.yml` — add "Verify migrations build schema on a fresh database" step after Install dependencies, before tests: create `mundo_3d_migrate_ci`, run `pnpm --filter backend db:migrate` (Req: Migration Runner Applies and Tracks Migrations)
-- [ ] 3.4 Confirm `backend/src/database/test-prepare.js` and `backend/src/__tests__/helpers/testDb.ts` have zero diff (Req: Test/E2E Bootstrap Paths Remain Unchanged)
+- [x] 3.1 RED: boot test (mock `ensureDatabaseExists`/`db.sequelize`/`seedInitialData`, `jest.isolateModules` with `NODE_ENV=production`) asserting `ensureDatabaseExists` is called with resolved `env`, `sync({alter:true})` is never called, `authenticate()` is called (Req: Boot Must Not Mutate or Auto-Migrate Schema; Environment-Aware Database Existence Check)
+- [x] 3.2 GREEN: modify `backend/index.js` — remove `sync({alter:true})`, chain `db.sequelize.authenticate()`, change `ensureDatabaseExists("development")` to `ensureDatabaseExists(env)`
+- [x] 3.3 Modify `.github/workflows/ci.yml` — add "Verify migrations build schema on a fresh database" step after Install dependencies, before tests: create `mundo_3d_migrate_ci`, run `pnpm --filter backend db:migrate` (Req: Migration Runner Applies and Tracks Migrations)
+- [x] 3.4 Confirm `backend/src/database/test-prepare.js` and `backend/src/__tests__/helpers/testDb.ts` have zero diff (Req: Test/E2E Bootstrap Paths Remain Unchanged)
 
 ## Phase 4: Manual Verification
 

@@ -25,8 +25,8 @@ if (env === "test") {
     console.log(`El servidor de prueba esta corriendo en http://localhost:${PORT}`);
   });
 } else {
-  ensureDatabaseExists("development")
-    .then(() => db.sequelize.sync({ alter: true }))
+  ensureDatabaseExists(env)
+    .then(() => db.sequelize.authenticate())
     .then(() => seedInitialData(db))
     .then(() => {
       server.listen(PORT, () => {
@@ -35,7 +35,7 @@ if (env === "test") {
     })
     .catch((err) => {
       console.error(
-        "Error al crear la base de datos, sincronizar modelos o insertar datos iniciales:",
+        "Error al conectar con la base de datos o insertar datos iniciales:",
         err
       );
       process.exit(1);
