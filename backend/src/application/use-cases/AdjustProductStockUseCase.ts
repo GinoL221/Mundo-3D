@@ -1,15 +1,15 @@
-import { IProductRepository } from '../../domain/ports/IProductRepository';
-import { ILogger } from '../../domain/ports/ILogger';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { LoggerPort } from '../../domain/ports/LoggerPort';
 import { ProductDTO } from '../dtos/ProductDTO';
 
 export class AdjustProductStockUseCase {
   constructor(
-    private readonly productRepo: IProductRepository,
-    private readonly logger: ILogger
+    private readonly productRepo: ProductRepositoryPort,
+    private readonly logger: LoggerPort
   ) {}
 
   // Delegates the atomic delta math and invariant enforcement entirely to
-  // `IProductRepository.adjustStock` (implemented as a single conditional SQL
+  // `ProductRepositoryPort.adjustStock` (implemented as a single conditional SQL
   // UPDATE — see SequelizeProductRepository). That method already:
   //   - throws `Error('Delta must be a non-zero integer')` for a zero or
   //     non-integer delta (mapped by the controller to HTTP 400),

@@ -1,12 +1,12 @@
 import { RegisterUserUseCase, RegisterUserInput } from '../use-cases/RegisterUserUseCase';
-import { IUserRepository } from '../../domain/ports/IUserRepository';
-import { IPasswordHasher } from '../../domain/ports/IPasswordHasher';
+import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
+import { PasswordHasherPort } from '../../domain/ports/PasswordHasherPort';
 import { UserAlreadyExistsException } from '../../domain/exceptions/UserAlreadyExistsException';
 import { User } from '../../domain/entities/User';
 
 describe('RegisterUserUseCase', () => {
-  let mockUserRepo: jest.Mocked<IUserRepository>;
-  let mockPasswordHasher: jest.Mocked<IPasswordHasher>;
+  let mockUserRepo: jest.Mocked<UserRepositoryPort>;
+  let mockPasswordHasher: jest.Mocked<PasswordHasherPort>;
   let useCase: RegisterUserUseCase;
 
   beforeEach(() => {
@@ -14,12 +14,12 @@ describe('RegisterUserUseCase', () => {
       findById: jest.fn(),
       findByEmail: jest.fn(),
       create: jest.fn(),
-    } as unknown as jest.Mocked<IUserRepository>;
+    } as unknown as jest.Mocked<UserRepositoryPort>;
 
     mockPasswordHasher = {
       hash: jest.fn(),
       compare: jest.fn(),
-    } as unknown as jest.Mocked<IPasswordHasher>;
+    } as unknown as jest.Mocked<PasswordHasherPort>;
 
     useCase = new RegisterUserUseCase(mockUserRepo, mockPasswordHasher);
   });

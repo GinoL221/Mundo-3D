@@ -1,4 +1,4 @@
-import { IFranchiseRepository } from '../../domain/ports/IFranchiseRepository';
+import { FranchiseRepositoryPort } from '../../domain/ports/FranchiseRepositoryPort';
 import { FranchiseDTO } from '../dtos/FranchiseDTO';
 
 export interface CreateFranchiseInput {
@@ -6,7 +6,7 @@ export interface CreateFranchiseInput {
 }
 
 export class CreateFranchiseUseCase {
-  constructor(private readonly franchiseRepo: IFranchiseRepository) {}
+  constructor(private readonly franchiseRepo: FranchiseRepositoryPort) {}
 
   async execute(input: CreateFranchiseInput): Promise<FranchiseDTO> {
     const created = await this.franchiseRepo.create({

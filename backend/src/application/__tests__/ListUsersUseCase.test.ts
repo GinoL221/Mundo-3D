@@ -1,9 +1,9 @@
 import { ListUsersUseCase } from '../use-cases/ListUsersUseCase';
-import { IUserRepository } from '../../domain/ports/IUserRepository';
+import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
 import { User } from '../../domain/entities/User';
 
 describe('ListUsersUseCase', () => {
-  let mockUserRepo: jest.Mocked<IUserRepository>;
+  let mockUserRepo: jest.Mocked<UserRepositoryPort>;
   let useCase: ListUsersUseCase;
 
   beforeEach(() => {
@@ -12,7 +12,7 @@ describe('ListUsersUseCase', () => {
       findByEmail: jest.fn(),
       create: jest.fn(),
       findAll: jest.fn(),
-    } as unknown as jest.Mocked<IUserRepository>;
+    } as unknown as jest.Mocked<UserRepositoryPort>;
 
     useCase = new ListUsersUseCase(mockUserRepo);
   });

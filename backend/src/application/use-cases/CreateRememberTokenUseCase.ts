@@ -1,5 +1,5 @@
-import { IRememberTokenRepository } from '../../domain/ports/IRememberTokenRepository';
-import { ITokenHasher } from '../../domain/ports/ITokenHasher';
+import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
+import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
 import { RememberToken } from '../../domain/entities/RememberToken';
 import { RememberTokenDTO } from '../dtos/RememberTokenDTO';
 
@@ -11,8 +11,8 @@ export interface CreateRememberTokenInput {
 
 export class CreateRememberTokenUseCase {
   constructor(
-    private readonly rememberTokenRepo: IRememberTokenRepository,
-    private readonly tokenHasher: ITokenHasher
+    private readonly rememberTokenRepo: RememberTokenRepositoryPort,
+    private readonly tokenHasher: TokenHasherPort
   ) {}
 
   async execute(input: CreateRememberTokenInput): Promise<RememberTokenDTO> {

@@ -1,9 +1,9 @@
-import { IShoppingCartRepository } from '../../domain/ports/IShoppingCartRepository';
+import { ShoppingCartRepositoryPort } from '../../domain/ports/ShoppingCartRepositoryPort';
 import { GetCartResult, mapToShoppingCartDTO } from '../dtos/ShoppingCartDTO';
 import { CartStatus } from '../../domain/entities/ShoppingCart';
 
 export class GetCartByUserIdUseCase {
-  constructor(private readonly cartRepo: IShoppingCartRepository) {}
+  constructor(private readonly cartRepo: ShoppingCartRepositoryPort) {}
 
   async execute(userId: number): Promise<GetCartResult> {
     const cartEntities = await this.cartRepo.findByUserId(userId);

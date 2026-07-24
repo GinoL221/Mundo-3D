@@ -1,11 +1,11 @@
 import { ForeignKeyConstraintError, UniqueConstraintError } from 'sequelize';
 import { Franchise } from '../../domain/entities/Franchise';
-import { IFranchiseRepository } from '../../domain/ports/IFranchiseRepository';
+import { FranchiseRepositoryPort } from '../../domain/ports/FranchiseRepositoryPort';
 import db, { FranchiseInstance, FranchiseAttributes } from '../../database/models/db';
 
 const DUPLICATE_FRANCHISE_NAME = 'DUPLICATE_FRANCHISE_NAME';
 
-export class SequelizeFranchiseRepository implements IFranchiseRepository {
+export class SequelizeFranchiseRepository implements FranchiseRepositoryPort {
   private toEntity(instance: FranchiseInstance): Franchise {
     return new Franchise(instance.idFranchise, instance.nameFranchise);
   }

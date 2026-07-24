@@ -1,8 +1,8 @@
-import { ICategoryRepository } from '../../domain/ports/ICategoryRepository';
+import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
 import { CategoryDTO } from '../dtos/CategoryDTO';
 
 export class GetCategoryByIdUseCase {
-  constructor(private readonly categoryRepo: ICategoryRepository) {}
+  constructor(private readonly categoryRepo: CategoryRepositoryPort) {}
 
   async execute(id: number): Promise<CategoryDTO> {
     const category = await this.categoryRepo.findById(id);

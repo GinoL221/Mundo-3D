@@ -2,7 +2,7 @@ import { QueryTypes } from 'sequelize';
 import { Product } from '../../domain/entities/Product';
 import { Category } from '../../domain/entities/Category';
 import { Franchise } from '../../domain/entities/Franchise';
-import { IProductRepository } from '../../domain/ports/IProductRepository';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
 import db, { ProductInstance, ProductAttributes } from '../../database/models/db';
 
 // Raw column names as defined in `database/models/Product.js` (field mappings).
@@ -11,7 +11,7 @@ const PRODUCT_TABLE = '`Product`';
 const PRODUCT_ID_COLUMN = '`id_product`';
 const PRODUCT_STOCK_COLUMN = '`stock`';
 
-export class SequelizeProductRepository implements IProductRepository {
+export class SequelizeProductRepository implements ProductRepositoryPort {
   private toEntity(instance: ProductInstance): Product {
     const category = instance.Category
       ? new Category(instance.Category.idCategory, instance.Category.nameCategory)
@@ -139,7 +139,7 @@ export class SequelizeProductRepository implements IProductRepository {
     return created;
   }
 
-  // NOTE: `stock` is intentionally NOT accepted here — see IProductRepository's
+  // NOTE: `stock` is intentionally NOT accepted here — see ProductRepositoryPort's
   // `Omit<Partial<Product>, 'stock'>` signature. Per product-inventory spec
   // ("Product Update"), PUT /api/products/:id MUST NOT modify stock; stock is
   // exclusively mutated via `adjustStock` (PATCH .../stock).

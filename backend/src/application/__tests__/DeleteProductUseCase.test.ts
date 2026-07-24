@@ -1,8 +1,8 @@
 import { DeleteProductUseCase } from '../use-cases/DeleteProductUseCase';
-import { IProductRepository } from '../../domain/ports/IProductRepository';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
 
 describe('DeleteProductUseCase', () => {
-  let mockProductRepo: jest.Mocked<IProductRepository>;
+  let mockProductRepo: jest.Mocked<ProductRepositoryPort>;
   let useCase: DeleteProductUseCase;
 
   beforeEach(() => {
@@ -13,7 +13,7 @@ describe('DeleteProductUseCase', () => {
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
-    } as unknown as jest.Mocked<IProductRepository>;
+    } as unknown as jest.Mocked<ProductRepositoryPort>;
 
     useCase = new DeleteProductUseCase(mockProductRepo);
   });

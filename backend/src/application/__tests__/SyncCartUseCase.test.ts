@@ -1,11 +1,11 @@
 import { SyncCartUseCase } from '../use-cases/SyncCartUseCase';
-import { IShoppingCartRepository } from '../../domain/ports/IShoppingCartRepository';
-import { IProductRepository } from '../../domain/ports/IProductRepository';
+import { ShoppingCartRepositoryPort } from '../../domain/ports/ShoppingCartRepositoryPort';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
 import { Product } from '../../domain/entities/Product';
 
 describe('SyncCartUseCase', () => {
-  let cartRepoMock: jest.Mocked<IShoppingCartRepository>;
-  let productRepoMock: jest.Mocked<IProductRepository>;
+  let cartRepoMock: jest.Mocked<ShoppingCartRepositoryPort>;
+  let productRepoMock: jest.Mocked<ProductRepositoryPort>;
   let useCase: SyncCartUseCase;
 
   beforeEach(() => {
@@ -13,7 +13,7 @@ describe('SyncCartUseCase', () => {
       findByUserId: jest.fn(),
       getDistinctCount: jest.fn(),
       syncCart: jest.fn(),
-    } as unknown as jest.Mocked<IShoppingCartRepository>;
+    } as unknown as jest.Mocked<ShoppingCartRepositoryPort>;
 
     productRepoMock = {
       findAll: jest.fn(),

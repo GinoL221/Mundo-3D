@@ -1,10 +1,10 @@
 import { GetLatestProductUseCase } from '../use-cases/GetLatestProductUseCase';
-import { IProductRepository } from '../../domain/ports/IProductRepository';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
 import { Product } from '../../domain/entities/Product';
 import { Category } from '../../domain/entities/Category';
 
 describe('GetLatestProductUseCase', () => {
-  let mockProductRepo: jest.Mocked<IProductRepository>;
+  let mockProductRepo: jest.Mocked<ProductRepositoryPort>;
   let useCase: GetLatestProductUseCase;
 
   beforeEach(() => {
@@ -15,7 +15,7 @@ describe('GetLatestProductUseCase', () => {
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
-    } as unknown as jest.Mocked<IProductRepository>;
+    } as unknown as jest.Mocked<ProductRepositoryPort>;
 
     useCase = new GetLatestProductUseCase(mockProductRepo);
   });

@@ -1,4 +1,4 @@
-import { IProductRepository } from '../../domain/ports/IProductRepository';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
 import { ProductDTO } from '../dtos/ProductDTO';
 
 export interface CategoryCountInfo {
@@ -15,7 +15,7 @@ export interface ListProductsResponse {
 }
 
 export class ListProductsUseCase {
-  constructor(private readonly productRepo: IProductRepository) {}
+  constructor(private readonly productRepo: ProductRepositoryPort) {}
 
   async execute(): Promise<ListProductsResponse> {
     const products = await this.productRepo.findAll();

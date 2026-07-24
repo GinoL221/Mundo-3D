@@ -1,5 +1,5 @@
-import { IUserRepository } from '../../domain/ports/IUserRepository';
-import { IPasswordHasher } from '../../domain/ports/IPasswordHasher';
+import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
+import { PasswordHasherPort } from '../../domain/ports/PasswordHasherPort';
 import { UserAlreadyExistsException } from '../../domain/exceptions/UserAlreadyExistsException';
 import { UserDTO } from '../dtos/UserDTO';
 import { User } from '../../domain/entities/User';
@@ -15,8 +15,8 @@ export interface RegisterUserInput {
 
 export class RegisterUserUseCase {
   constructor(
-    private readonly userRepo: IUserRepository,
-    private readonly passwordHasher: IPasswordHasher
+    private readonly userRepo: UserRepositoryPort,
+    private readonly passwordHasher: PasswordHasherPort
   ) {}
 
   async execute(input: RegisterUserInput): Promise<UserDTO> {

@@ -1,6 +1,6 @@
 import { Franchise } from '../entities/Franchise';
 
-export interface IFranchiseRepository {
+export interface FranchiseRepositoryPort {
   findAll(): Promise<Franchise[]>;
   findById(id: number): Promise<Franchise | null>;
   create(franchise: Omit<Franchise, 'idFranchise'>): Promise<Franchise>;

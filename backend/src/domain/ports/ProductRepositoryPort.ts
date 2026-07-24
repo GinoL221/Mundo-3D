@@ -1,6 +1,6 @@
 import { Product } from '../entities/Product';
 
-export interface IProductRepository {
+export interface ProductRepositoryPort {
   findAll(): Promise<Product[]>;
   findById(id: number): Promise<Product | null>;
   findLatest(): Promise<Product | null>;

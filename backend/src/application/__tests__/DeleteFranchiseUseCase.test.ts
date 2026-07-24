@@ -1,8 +1,8 @@
 import { DeleteFranchiseUseCase } from '../use-cases/DeleteFranchiseUseCase';
-import { IFranchiseRepository } from '../../domain/ports/IFranchiseRepository';
+import { FranchiseRepositoryPort } from '../../domain/ports/FranchiseRepositoryPort';
 
 describe('DeleteFranchiseUseCase', () => {
-  let franchiseRepo: jest.Mocked<IFranchiseRepository>;
+  let franchiseRepo: jest.Mocked<FranchiseRepositoryPort>;
   let useCase: DeleteFranchiseUseCase;
 
   beforeEach(() => {
@@ -12,7 +12,7 @@ describe('DeleteFranchiseUseCase', () => {
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
-    } as unknown as jest.Mocked<IFranchiseRepository>;
+    } as unknown as jest.Mocked<FranchiseRepositoryPort>;
 
     useCase = new DeleteFranchiseUseCase(franchiseRepo);
   });

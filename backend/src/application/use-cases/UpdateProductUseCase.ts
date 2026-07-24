@@ -1,5 +1,5 @@
-import { IProductRepository } from '../../domain/ports/IProductRepository';
-import { ICategoryRepository } from '../../domain/ports/ICategoryRepository';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
 import { ProductDTO } from '../dtos/ProductDTO';
 
 export interface UpdateProductInput {
@@ -19,8 +19,8 @@ export interface UpdateProductInput {
 
 export class UpdateProductUseCase {
   constructor(
-    private readonly productRepo: IProductRepository,
-    private readonly categoryRepo?: ICategoryRepository
+    private readonly productRepo: ProductRepositoryPort,
+    private readonly categoryRepo?: CategoryRepositoryPort
   ) {}
 
   async execute(id: number, input: UpdateProductInput): Promise<ProductDTO | null> {

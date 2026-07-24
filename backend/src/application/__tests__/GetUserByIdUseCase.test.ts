@@ -1,9 +1,9 @@
 import { GetUserByIdUseCase } from '../use-cases/GetUserByIdUseCase';
-import { IUserRepository } from '../../domain/ports/IUserRepository';
+import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
 import { User } from '../../domain/entities/User';
 
 describe('GetUserByIdUseCase', () => {
-  let mockUserRepo: jest.Mocked<IUserRepository>;
+  let mockUserRepo: jest.Mocked<UserRepositoryPort>;
   let useCase: GetUserByIdUseCase;
 
   beforeEach(() => {
@@ -12,7 +12,7 @@ describe('GetUserByIdUseCase', () => {
       findByEmail: jest.fn(),
       create: jest.fn(),
       findAll: jest.fn(),
-    } as unknown as jest.Mocked<IUserRepository>;
+    } as unknown as jest.Mocked<UserRepositoryPort>;
 
     useCase = new GetUserByIdUseCase(mockUserRepo);
   });

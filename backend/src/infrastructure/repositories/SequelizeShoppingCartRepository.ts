@@ -1,9 +1,9 @@
 import { ShoppingCart, CartStatus } from '../../domain/entities/ShoppingCart';
 import { Product } from '../../domain/entities/Product';
-import { IShoppingCartRepository } from '../../domain/ports/IShoppingCartRepository';
+import { ShoppingCartRepositoryPort } from '../../domain/ports/ShoppingCartRepositoryPort';
 import db, { ShoppingCartInstance } from '../../database/models/db';
 
-export class SequelizeShoppingCartRepository implements IShoppingCartRepository {
+export class SequelizeShoppingCartRepository implements ShoppingCartRepositoryPort {
   private toEntity(instance: ShoppingCartInstance): ShoppingCart {
     const product = instance.product
       ? new Product(

@@ -1,8 +1,8 @@
-import { IProductRepository } from '../../domain/ports/IProductRepository';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
 import { ProductDTO } from '../dtos/ProductDTO';
 
 export class GetProductByIdUseCase {
-  constructor(private readonly productRepo: IProductRepository) {}
+  constructor(private readonly productRepo: ProductRepositoryPort) {}
 
   async execute(id: number): Promise<ProductDTO> {
     const product = await this.productRepo.findById(id);

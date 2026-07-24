@@ -1,5 +1,5 @@
-import { IUserRepository } from '../../domain/ports/IUserRepository';
-import { IPasswordHasher } from '../../domain/ports/IPasswordHasher';
+import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
+import { PasswordHasherPort } from '../../domain/ports/PasswordHasherPort';
 import { InvalidCredentialsException } from '../../domain/exceptions/InvalidCredentialsException';
 import { UserDTO } from '../dtos/UserDTO';
 
@@ -11,8 +11,8 @@ export interface AuthenticateUserInput {
 
 export class AuthenticateUserUseCase {
   constructor(
-    private readonly userRepo: IUserRepository,
-    private readonly passwordHasher: IPasswordHasher
+    private readonly userRepo: UserRepositoryPort,
+    private readonly passwordHasher: PasswordHasherPort
   ) {}
 
   async execute(input: AuthenticateUserInput): Promise<UserDTO> {

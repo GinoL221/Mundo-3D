@@ -1,12 +1,12 @@
 import { CreateProductUseCase, CreateProductInput } from '../use-cases/CreateProductUseCase';
-import { IProductRepository } from '../../domain/ports/IProductRepository';
-import { ICategoryRepository } from '../../domain/ports/ICategoryRepository';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
 import { Product } from '../../domain/entities/Product';
 import { Category } from '../../domain/entities/Category';
 
 describe('CreateProductUseCase', () => {
-  let mockProductRepo: jest.Mocked<IProductRepository>;
-  let mockCategoryRepo: jest.Mocked<ICategoryRepository>;
+  let mockProductRepo: jest.Mocked<ProductRepositoryPort>;
+  let mockCategoryRepo: jest.Mocked<CategoryRepositoryPort>;
   let useCase: CreateProductUseCase;
 
   beforeEach(() => {
@@ -17,7 +17,7 @@ describe('CreateProductUseCase', () => {
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
-    } as unknown as jest.Mocked<IProductRepository>;
+    } as unknown as jest.Mocked<ProductRepositoryPort>;
 
     mockCategoryRepo = {
       findAll: jest.fn(),
@@ -25,7 +25,7 @@ describe('CreateProductUseCase', () => {
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
-    } as unknown as jest.Mocked<ICategoryRepository>;
+    } as unknown as jest.Mocked<CategoryRepositoryPort>;
 
     useCase = new CreateProductUseCase(mockProductRepo, mockCategoryRepo);
   });

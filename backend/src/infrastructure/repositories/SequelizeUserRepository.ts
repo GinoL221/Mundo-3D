@@ -1,8 +1,8 @@
 import { User } from '../../domain/entities/User';
-import { IUserRepository } from '../../domain/ports/IUserRepository';
+import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
 import db, { UserInstance, UserAttributes } from '../../database/models/db';
 
-export class SequelizeUserRepository implements IUserRepository {
+export class SequelizeUserRepository implements UserRepositoryPort {
   private toEntity(instance: UserInstance): User {
     return new User(
       instance.idUser,

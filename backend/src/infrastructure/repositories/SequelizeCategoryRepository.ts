@@ -1,11 +1,11 @@
 import { ForeignKeyConstraintError, UniqueConstraintError } from 'sequelize';
 import { Category } from '../../domain/entities/Category';
-import { ICategoryRepository } from '../../domain/ports/ICategoryRepository';
+import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
 import db, { CategoryInstance, CategoryAttributes } from '../../database/models/db';
 
 const DUPLICATE_CATEGORY_NAME = 'DUPLICATE_CATEGORY_NAME';
 
-export class SequelizeCategoryRepository implements ICategoryRepository {
+export class SequelizeCategoryRepository implements CategoryRepositoryPort {
   private toEntity(instance: CategoryInstance): Category {
     return new Category(instance.idCategory, instance.nameCategory);
   }

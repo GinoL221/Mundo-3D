@@ -1,8 +1,8 @@
-import { IFranchiseRepository } from '../../domain/ports/IFranchiseRepository';
+import { FranchiseRepositoryPort } from '../../domain/ports/FranchiseRepositoryPort';
 import { FranchiseDTO } from '../dtos/FranchiseDTO';
 
 export class ListFranchisesUseCase {
-  constructor(private readonly franchiseRepo: IFranchiseRepository) {}
+  constructor(private readonly franchiseRepo: FranchiseRepositoryPort) {}
 
   async execute(): Promise<FranchiseDTO[]> {
     const franchises = await this.franchiseRepo.findAll();

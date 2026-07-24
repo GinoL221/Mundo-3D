@@ -1,10 +1,10 @@
 import { ListProductsUseCase } from '../use-cases/ListProductsUseCase';
-import { IProductRepository } from '../../domain/ports/IProductRepository';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
 import { Product } from '../../domain/entities/Product';
 import { Category } from '../../domain/entities/Category';
 
 describe('ListProductsUseCase', () => {
-  let mockProductRepo: jest.Mocked<IProductRepository>;
+  let mockProductRepo: jest.Mocked<ProductRepositoryPort>;
   let useCase: ListProductsUseCase;
 
   beforeEach(() => {
@@ -15,7 +15,7 @@ describe('ListProductsUseCase', () => {
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
-    } as unknown as jest.Mocked<IProductRepository>;
+    } as unknown as jest.Mocked<ProductRepositoryPort>;
 
     useCase = new ListProductsUseCase(mockProductRepo);
   });

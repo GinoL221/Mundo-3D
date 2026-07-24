@@ -1,8 +1,8 @@
 // @ts-expect-error: bcryptjs does not provide native TypeScript types in all environments
 import bcryptjs from 'bcryptjs';
-import { IPasswordHasher } from '../../domain/ports/IPasswordHasher';
+import { PasswordHasherPort } from '../../domain/ports/PasswordHasherPort';
 
-export class BcryptPasswordHasher implements IPasswordHasher {
+export class BcryptPasswordHasher implements PasswordHasherPort {
   private readonly saltRounds = 10;
 
   async hash(plain: string): Promise<string> {

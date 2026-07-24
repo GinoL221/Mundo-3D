@@ -1,4 +1,4 @@
-import { ICategoryRepository } from '../../domain/ports/ICategoryRepository';
+import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
 import { CategoryDTO } from '../dtos/CategoryDTO';
 
 export interface CreateCategoryInput {
@@ -6,7 +6,7 @@ export interface CreateCategoryInput {
 }
 
 export class CreateCategoryUseCase {
-  constructor(private readonly categoryRepo: ICategoryRepository) {}
+  constructor(private readonly categoryRepo: CategoryRepositoryPort) {}
 
   async execute(input: CreateCategoryInput): Promise<CategoryDTO> {
     const created = await this.categoryRepo.create({

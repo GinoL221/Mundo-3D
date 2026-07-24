@@ -1,33 +1,33 @@
 import { CreateRememberTokenUseCase } from '../use-cases/CreateRememberTokenUseCase';
 import { VerifyRememberTokenUseCase } from '../use-cases/VerifyRememberTokenUseCase';
 import { DeleteRememberTokenUseCase } from '../use-cases/DeleteRememberTokenUseCase';
-import { IRememberTokenRepository } from '../../domain/ports/IRememberTokenRepository';
-import { IUserRepository } from '../../domain/ports/IUserRepository';
-import { ITokenHasher } from '../../domain/ports/ITokenHasher';
+import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
+import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
+import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
 import { RememberToken } from '../../domain/entities/RememberToken';
 import { User } from '../../domain/entities/User';
 
 describe('RememberToken Use Cases', () => {
-  let mockRememberTokenRepo: jest.Mocked<IRememberTokenRepository>;
-  let mockUserRepo: jest.Mocked<IUserRepository>;
-  let mockTokenHasher: jest.Mocked<ITokenHasher>;
+  let mockRememberTokenRepo: jest.Mocked<RememberTokenRepositoryPort>;
+  let mockUserRepo: jest.Mocked<UserRepositoryPort>;
+  let mockTokenHasher: jest.Mocked<TokenHasherPort>;
 
   beforeEach(() => {
     mockRememberTokenRepo = {
       create: jest.fn(),
       findByHash: jest.fn(),
       deleteByHash: jest.fn(),
-    } as unknown as jest.Mocked<IRememberTokenRepository>;
+    } as unknown as jest.Mocked<RememberTokenRepositoryPort>;
 
     mockUserRepo = {
       findById: jest.fn(),
       findByEmail: jest.fn(),
       create: jest.fn(),
-    } as unknown as jest.Mocked<IUserRepository>;
+    } as unknown as jest.Mocked<UserRepositoryPort>;
 
     mockTokenHasher = {
       hash: jest.fn(),
-    } as unknown as jest.Mocked<ITokenHasher>;
+    } as unknown as jest.Mocked<TokenHasherPort>;
   });
 
   describe('CreateRememberTokenUseCase', () => {

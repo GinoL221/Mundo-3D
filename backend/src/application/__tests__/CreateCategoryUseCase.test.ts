@@ -1,9 +1,9 @@
 import { CreateCategoryUseCase, CreateCategoryInput } from '../use-cases/CreateCategoryUseCase';
-import { ICategoryRepository } from '../../domain/ports/ICategoryRepository';
+import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
 import { Category } from '../../domain/entities/Category';
 
 describe('CreateCategoryUseCase', () => {
-  let mockCategoryRepo: jest.Mocked<ICategoryRepository>;
+  let mockCategoryRepo: jest.Mocked<CategoryRepositoryPort>;
   let useCase: CreateCategoryUseCase;
 
   beforeEach(() => {
@@ -13,7 +13,7 @@ describe('CreateCategoryUseCase', () => {
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
-    } as unknown as jest.Mocked<ICategoryRepository>;
+    } as unknown as jest.Mocked<CategoryRepositoryPort>;
 
     useCase = new CreateCategoryUseCase(mockCategoryRepo);
   });

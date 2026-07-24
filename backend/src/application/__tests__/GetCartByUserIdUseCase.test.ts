@@ -1,10 +1,10 @@
 import { GetCartByUserIdUseCase } from '../use-cases/GetCartByUserIdUseCase';
-import { IShoppingCartRepository } from '../../domain/ports/IShoppingCartRepository';
+import { ShoppingCartRepositoryPort } from '../../domain/ports/ShoppingCartRepositoryPort';
 import { ShoppingCart, CartStatus } from '../../domain/entities/ShoppingCart';
 import { Product } from '../../domain/entities/Product';
 
 describe('GetCartByUserIdUseCase', () => {
-  let repositoryMock: jest.Mocked<IShoppingCartRepository>;
+  let repositoryMock: jest.Mocked<ShoppingCartRepositoryPort>;
   let useCase: GetCartByUserIdUseCase;
 
   beforeEach(() => {

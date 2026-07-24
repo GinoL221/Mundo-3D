@@ -1,8 +1,8 @@
-import { IUserRepository } from '../../domain/ports/IUserRepository';
+import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
 import { UserDTO } from '../dtos/UserDTO';
 
 export class GetUserByIdUseCase {
-  constructor(private readonly userRepository: IUserRepository) {}
+  constructor(private readonly userRepository: UserRepositoryPort) {}
 
   async execute(id: number): Promise<UserDTO> {
     const user = await this.userRepository.findById(id);

@@ -1,10 +1,10 @@
-import { IShoppingCartRepository } from '../../domain/ports/IShoppingCartRepository';
-import { IProductRepository } from '../../domain/ports/IProductRepository';
+import { ShoppingCartRepositoryPort } from '../../domain/ports/ShoppingCartRepositoryPort';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
 
 export class SyncCartUseCase {
   constructor(
-    private readonly cartRepo: IShoppingCartRepository,
-    private readonly productRepo: IProductRepository
+    private readonly cartRepo: ShoppingCartRepositoryPort,
+    private readonly productRepo: ProductRepositoryPort
   ) {}
 
   async execute(

@@ -1,4 +1,4 @@
-import { ICategoryRepository } from '../../domain/ports/ICategoryRepository';
+import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
 import { CategoryDTO } from '../dtos/CategoryDTO';
 
 export interface UpdateCategoryInput {
@@ -6,7 +6,7 @@ export interface UpdateCategoryInput {
 }
 
 export class UpdateCategoryUseCase {
-  constructor(private readonly categoryRepo: ICategoryRepository) {}
+  constructor(private readonly categoryRepo: CategoryRepositoryPort) {}
 
   async execute(id: number, input: UpdateCategoryInput): Promise<CategoryDTO | null> {
     const updated = await this.categoryRepo.update(id, input);

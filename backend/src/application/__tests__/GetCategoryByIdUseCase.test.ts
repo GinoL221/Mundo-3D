@@ -1,9 +1,9 @@
 import { GetCategoryByIdUseCase } from '../use-cases/GetCategoryByIdUseCase';
-import { ICategoryRepository } from '../../domain/ports/ICategoryRepository';
+import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
 import { Category } from '../../domain/entities/Category';
 
 describe('GetCategoryByIdUseCase', () => {
-  let mockCategoryRepo: jest.Mocked<ICategoryRepository>;
+  let mockCategoryRepo: jest.Mocked<CategoryRepositoryPort>;
   let useCase: GetCategoryByIdUseCase;
 
   beforeEach(() => {
@@ -13,7 +13,7 @@ describe('GetCategoryByIdUseCase', () => {
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
-    } as unknown as jest.Mocked<ICategoryRepository>;
+    } as unknown as jest.Mocked<CategoryRepositoryPort>;
 
     useCase = new GetCategoryByIdUseCase(mockCategoryRepo);
   });

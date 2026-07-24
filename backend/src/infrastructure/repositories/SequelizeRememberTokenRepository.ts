@@ -1,8 +1,8 @@
 import { RememberToken } from '../../domain/entities/RememberToken';
-import { IRememberTokenRepository } from '../../domain/ports/IRememberTokenRepository';
+import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
 import db, { RememberTokenInstance, RememberTokenAttributes } from '../../database/models/db';
 
-export class SequelizeRememberTokenRepository implements IRememberTokenRepository {
+export class SequelizeRememberTokenRepository implements RememberTokenRepositoryPort {
   private toEntity(instance: RememberTokenInstance): RememberToken {
     return new RememberToken(
       instance.idRememberToken,

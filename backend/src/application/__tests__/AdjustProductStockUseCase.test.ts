@@ -1,12 +1,12 @@
 import { AdjustProductStockUseCase } from '../use-cases/AdjustProductStockUseCase';
-import { IProductRepository } from '../../domain/ports/IProductRepository';
-import { ILogger } from '../../domain/ports/ILogger';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { LoggerPort } from '../../domain/ports/LoggerPort';
 import { Product } from '../../domain/entities/Product';
 import { Category } from '../../domain/entities/Category';
 
 describe('AdjustProductStockUseCase', () => {
-  let mockProductRepo: jest.Mocked<IProductRepository>;
-  let mockLogger: jest.Mocked<ILogger>;
+  let mockProductRepo: jest.Mocked<ProductRepositoryPort>;
+  let mockLogger: jest.Mocked<LoggerPort>;
   let useCase: AdjustProductStockUseCase;
 
   beforeEach(() => {
@@ -18,7 +18,7 @@ describe('AdjustProductStockUseCase', () => {
       update: jest.fn(),
       delete: jest.fn(),
       adjustStock: jest.fn(),
-    } as unknown as jest.Mocked<IProductRepository>;
+    } as unknown as jest.Mocked<ProductRepositoryPort>;
 
     mockLogger = {
       info: jest.fn(),

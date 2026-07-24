@@ -1,8 +1,8 @@
 import { GetCartDistinctCountUseCase } from '../use-cases/GetCartDistinctCountUseCase';
-import { IShoppingCartRepository } from '../../domain/ports/IShoppingCartRepository';
+import { ShoppingCartRepositoryPort } from '../../domain/ports/ShoppingCartRepositoryPort';
 
 describe('GetCartDistinctCountUseCase', () => {
-  let repositoryMock: jest.Mocked<IShoppingCartRepository>;
+  let repositoryMock: jest.Mocked<ShoppingCartRepositoryPort>;
   let useCase: GetCartDistinctCountUseCase;
 
   beforeEach(() => {

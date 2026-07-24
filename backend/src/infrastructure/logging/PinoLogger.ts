@@ -1,7 +1,7 @@
-import { ILogger } from '../../domain/ports/ILogger';
+import { LoggerPort } from '../../domain/ports/LoggerPort';
 import { logger } from './logger';
 
-export class PinoLogger implements ILogger {
+export class PinoLogger implements LoggerPort {
   info(obj: object, msg?: string): void {
     logger.info(obj, msg);
   }

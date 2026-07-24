@@ -1,10 +1,10 @@
-import { IRememberTokenRepository } from '../../domain/ports/IRememberTokenRepository';
-import { ITokenHasher } from '../../domain/ports/ITokenHasher';
+import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
+import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
 
 export class DeleteRememberTokenUseCase {
   constructor(
-    private readonly rememberTokenRepo: IRememberTokenRepository,
-    private readonly tokenHasher: ITokenHasher
+    private readonly rememberTokenRepo: RememberTokenRepositoryPort,
+    private readonly tokenHasher: TokenHasherPort
   ) {}
 
   async execute(plainToken: string): Promise<boolean> {

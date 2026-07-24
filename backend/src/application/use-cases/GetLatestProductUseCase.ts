@@ -1,8 +1,8 @@
-import { IProductRepository } from '../../domain/ports/IProductRepository';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
 import { ProductDTO } from '../dtos/ProductDTO';
 
 export class GetLatestProductUseCase {
-  constructor(private readonly productRepo: IProductRepository) {}
+  constructor(private readonly productRepo: ProductRepositoryPort) {}
 
   async execute(): Promise<ProductDTO> {
     const product = await this.productRepo.findLatest();
