@@ -96,6 +96,30 @@ describe('index.js boot sequence', () => {
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 
+  it('fails fast without listening when seedInitialData() rejects (missing/incompatible table)', async () => {
+    process.env.NODE_ENV = 'production';
+    const ensureDatabaseExists = jest.fn().mockResolvedValue(undefined);
+    const authenticate = jest.fn().mockResolvedValue(undefined);
+    const sync = jest.fn().mockResolvedValue(undefined);
+    const seedInitialData = jest.fn().mockRejectedValue(new Error("Table 'mundo_3d_db.Product' doesn't exist"));
+    const listen = jest.fn((port, cb) => cb && cb());
+
+    jest.isolateModules(() => {
+      jest.doMock('../app', () => ({ listen }));
+      jest.doMock('../database/config/ensureDatabase', () => ({ ensureDatabaseExists }));
+      jest.doMock('../database/models/db', () => ({ sequelize: { authenticate, sync } }));
+      jest.doMock('../database/seed', () => ({ seedInitialData }));
+      require('../../index');
+    });
+
+    await flushPromiseChain();
+
+    expect(authenticate).toHaveBeenCalledTimes(1);
+    expect(seedInitialData).toHaveBeenCalledTimes(1);
+    expect(listen).not.toHaveBeenCalled();
+    expect(exitSpy).toHaveBeenCalledWith(1);
+  });
+
   it('keeps the test env boot path listening directly, without touching the database', async () => {
     process.env.NODE_ENV = 'test';
     const ensureDatabaseExists = jest.fn().mockResolvedValue(undefined);
