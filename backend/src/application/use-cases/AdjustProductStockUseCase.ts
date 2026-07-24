@@ -1,9 +1,12 @@
 import { IProductRepository } from '../../domain/ports/IProductRepository';
+import { ILogger } from '../../domain/ports/ILogger';
 import { ProductDTO } from '../dtos/ProductDTO';
-import { logger } from '../../infrastructure/logging/logger';
 
 export class AdjustProductStockUseCase {
-  constructor(private readonly productRepo: IProductRepository) {}
+  constructor(
+    private readonly productRepo: IProductRepository,
+    private readonly logger: ILogger
+  ) {}
 
   // Delegates the atomic delta math and invariant enforcement entirely to
   // `IProductRepository.adjustStock` (implemented as a single conditional SQL
@@ -27,7 +30,7 @@ export class AdjustProductStockUseCase {
       updated = await this.productRepo.adjustStock(id, delta);
     } catch (error) {
       const reason = error instanceof Error ? error.message : 'Unknown error';
-      logger.warn(
+      this.logger.warn(
         {
           event: 'stock_adjustment',
           productId: id,
@@ -42,7 +45,7 @@ export class AdjustProductStockUseCase {
     }
 
     if (!updated) {
-      logger.warn(
+      this.logger.warn(
         {
           event: 'stock_adjustment',
           productId: id,
@@ -56,7 +59,7 @@ export class AdjustProductStockUseCase {
       return null;
     }
 
-    logger.info(
+    this.logger.info(
       {
         event: 'stock_adjustment',
         productId: id,

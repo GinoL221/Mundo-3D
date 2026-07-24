@@ -9,7 +9,7 @@ module.exports = {
     "^.+\\.jsx?$": "babel-jest",
     "^.+\\.tsx?$": ["ts-jest", { isolatedModules: true }],
   },
-  collectCoverageFrom: ["src/services/**/*.js", "src/**/*.ts"],
+  collectCoverageFrom: ["src/**/*.ts"],
   coverageDirectory: "coverage",
   coverageThreshold: {
     global: {

@@ -1,5 +1,6 @@
 export * from './ICategoryRepository';
 export * from './IFranchiseRepository';
+export * from './ILogger';
 export * from './IPasswordHasher';
 export * from './IProductRepository';
 export * from './IRememberTokenRepository';

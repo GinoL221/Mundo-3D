@@ -8,6 +8,7 @@ import { CreateProductUseCase } from '../../../application/use-cases/CreateProdu
 import { UpdateProductUseCase } from '../../../application/use-cases/UpdateProductUseCase';
 import { DeleteProductUseCase } from '../../../application/use-cases/DeleteProductUseCase';
 import { AdjustProductStockUseCase } from '../../../application/use-cases/AdjustProductStockUseCase';
+import { PinoLogger } from '../../logging/PinoLogger';
 import { ProductApiController } from '../../controllers/ProductApiController';
 import { apiAuthMiddleware, adminGuard, requireRoles } from '../../middlewares/auth';
 import { Role } from '../../../domain/Role';
@@ -26,7 +27,7 @@ const getLatestProductUseCase = new GetLatestProductUseCase(productRepo);
 const createProductUseCase = new CreateProductUseCase(productRepo, categoryRepo);
 const updateProductUseCase = new UpdateProductUseCase(productRepo, categoryRepo);
 const deleteProductUseCase = new DeleteProductUseCase(productRepo);
-const adjustProductStockUseCase = new AdjustProductStockUseCase(productRepo);
+const adjustProductStockUseCase = new AdjustProductStockUseCase(productRepo, new PinoLogger());
 
 const controller = new ProductApiController(
   listProductsUseCase,

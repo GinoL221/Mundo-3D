@@ -1,14 +1,13 @@
 import { AdjustProductStockUseCase } from '../use-cases/AdjustProductStockUseCase';
 import { IProductRepository } from '../../domain/ports/IProductRepository';
+import { ILogger } from '../../domain/ports/ILogger';
 import { Product } from '../../domain/entities/Product';
 import { Category } from '../../domain/entities/Category';
-import { logger } from '../../infrastructure/logging/logger';
 
 describe('AdjustProductStockUseCase', () => {
   let mockProductRepo: jest.Mocked<IProductRepository>;
+  let mockLogger: jest.Mocked<ILogger>;
   let useCase: AdjustProductStockUseCase;
-  let loggerInfoSpy: jest.SpyInstance;
-  let loggerWarnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     mockProductRepo = {
@@ -21,14 +20,13 @@ describe('AdjustProductStockUseCase', () => {
       adjustStock: jest.fn(),
     } as unknown as jest.Mocked<IProductRepository>;
 
-    useCase = new AdjustProductStockUseCase(mockProductRepo);
-    loggerInfoSpy = jest.spyOn(logger, 'info').mockImplementation(() => undefined as never);
-    loggerWarnSpy = jest.spyOn(logger, 'warn').mockImplementation(() => undefined as never);
-  });
+    mockLogger = {
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    };
 
-  afterEach(() => {
-    loggerInfoSpy.mockRestore();
-    loggerWarnSpy.mockRestore();
+    useCase = new AdjustProductStockUseCase(mockProductRepo, mockLogger);
   });
 
   it('increases stock and maps the updated product to a ProductDTO on a valid positive delta', async () => {
@@ -39,7 +37,7 @@ describe('AdjustProductStockUseCase', () => {
     const result = await useCase.execute(10, 3);
 
     expect(mockProductRepo.adjustStock).toHaveBeenCalledWith(10, 3);
-    expect(loggerInfoSpy).toHaveBeenCalledWith(
+    expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         event: 'stock_adjustment',
         productId: 10,
@@ -85,7 +83,7 @@ describe('AdjustProductStockUseCase', () => {
     const result = await useCase.execute(999, 1);
 
     expect(result).toBeNull();
-    expect(loggerWarnSpy).toHaveBeenCalledWith(
+    expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         event: 'stock_adjustment',
         productId: 999,
@@ -103,7 +101,7 @@ describe('AdjustProductStockUseCase', () => {
 
     await expect(useCase.execute(10, -5)).rejects.toThrow('Insufficient stock');
 
-    expect(loggerWarnSpy).toHaveBeenCalledWith(
+    expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         event: 'stock_adjustment',
         productId: 10,
@@ -121,7 +119,7 @@ describe('AdjustProductStockUseCase', () => {
 
     await expect(useCase.execute(10, 0)).rejects.toThrow('Delta must be a non-zero integer');
 
-    expect(loggerWarnSpy).toHaveBeenCalledWith(
+    expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         event: 'stock_adjustment',
         productId: 10,
