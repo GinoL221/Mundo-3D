@@ -4,6 +4,7 @@ Source of truth for AI agents working in this repo (OpenCode, Claude Code, Codex
 
 ## Code quality
 - Max 250 lines per source file — when exceeded, split by extracting components, route modules, or dedicated services.
+- Test/spec files (`*.test.js`, `*.spec.js`, and equivalents) are exempt from the 250-line cap — their length tracks scenario count, not complexity. Split them only when a file mixes unrelated concerns, not just to hit a line count.
 - No `console.log` in production code paths; no dead code or commented-out blocks in commits.
 
 ## Secrets
