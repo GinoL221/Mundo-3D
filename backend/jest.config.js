@@ -4,7 +4,7 @@ module.exports = {
   // Real-DB integration tests (*.integration.test.ts) run separately via
   // `npm run test:integration` (see jest.integration.config.js) so plain
   // `npm test` stays fast, mock-only, and DB-independent for local devs.
-  testPathIgnorePatterns: ["/node_modules/", "\\.integration\\.test\\.ts$"],
+  testPathIgnorePatterns: ["/node_modules/", "\\.integration\\.test\\.(ts|js)$"],
   transform: {
     "^.+\\.jsx?$": "babel-jest",
     "^.+\\.tsx?$": ["ts-jest", { isolatedModules: true }],
