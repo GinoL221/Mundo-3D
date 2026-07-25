@@ -6,6 +6,10 @@ const config = require('./config');
  */
 async function ensureDatabaseExists(env = 'development') {
   const dbConfig = config[env];
+  if (!dbConfig) {
+    const supportedEnvs = Object.keys(config).join(', ');
+    throw new Error(`Unsupported NODE_ENV: '${env}' — expected one of: ${supportedEnvs}`);
+  }
   const dbName = dbConfig.database;
   const dbUser = dbConfig.username;
   const dbPass = dbConfig.password;
