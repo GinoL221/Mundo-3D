@@ -1,27 +1,38 @@
 #!/usr/bin/env node
 const { buildMigrator } = require('./migrator');
 
-// Marks every currently pending migration as applied WITHOUT running its
-// `up()` DDL — for environments (e.g. the existing dev DB) whose schema was
-// already built by the legacy `sync({ alter: true })` mechanism and already
-// matches the target schema.
-async function adoptBaseline(migrator) {
+// The only migration safe to "adopt" (mark applied without running its DDL)
+// by default is the baseline itself — the dev DB it targets was already
+// built to match this exact schema by the legacy `sync({ alter: true })`
+// mechanism. Any migration added AFTER the baseline must actually run its
+// DDL for real; silently marking it "applied" without executing it would
+// cause schema drift on the exact environment this command exists to
+// converge. Pass explicit migration names to `adopt-baseline` to adopt a
+// different (deliberate) scope instead of relying on this default.
+const BASELINE_MIGRATION_NAME = '20260724000000-baseline.js';
+
+// Marks the given migration name(s) (default: only the baseline) as applied
+// WITHOUT running their `up()` DDL. Any other currently-pending migration is
+// left untouched and pending.
+async function adoptBaseline(migrator, migrationNames = [BASELINE_MIGRATION_NAME]) {
   const pending = await migrator.pending();
-  for (const migration of pending) {
+  const toAdopt = pending.filter((migration) => migrationNames.includes(migration.name));
+  for (const migration of toAdopt) {
     await migrator.storage.logMigration({ name: migration.name });
   }
-  return pending.map((migration) => migration.name);
+  return toAdopt.map((migration) => migration.name);
 }
 
 async function run(argv = process.argv.slice(2)) {
   const migrator = buildMigrator();
 
   if (argv[0] === 'adopt-baseline') {
-    const adopted = await adoptBaseline(migrator);
+    const explicitNames = argv.slice(1);
+    const adopted = await adoptBaseline(migrator, explicitNames.length > 0 ? explicitNames : undefined);
     console.log(
       adopted.length > 0
         ? `Adopted baseline: marked ${adopted.join(', ')} as applied (no DDL executed).`
-        : 'Nothing to adopt — no pending migrations.'
+        : 'Nothing to adopt — no pending migrations matched the requested scope.'
     );
     return true;
   }
@@ -42,4 +53,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { run, adoptBaseline };
+module.exports = { run, adoptBaseline, BASELINE_MIGRATION_NAME };
