@@ -41,10 +41,10 @@ Chain strategy: pending
 
 ## Phase 3: Boot Cutover & CI Proof (PR 3)
 
-- [ ] 3.1 RED: boot test (mock `ensureDatabaseExists`/`db.sequelize`/`seedInitialData`, `jest.isolateModules` with `NODE_ENV=production`) asserting `ensureDatabaseExists` is called with resolved `env`, `sync({alter:true})` is never called, `authenticate()` is called (Req: Boot Must Not Mutate or Auto-Migrate Schema; Environment-Aware Database Existence Check)
-- [ ] 3.2 GREEN: modify `backend/index.js` — remove `sync({alter:true})`, chain `db.sequelize.authenticate()`, change `ensureDatabaseExists("development")` to `ensureDatabaseExists(env)`
-- [ ] 3.3 Modify `.github/workflows/ci.yml` — add "Verify migrations build schema on a fresh database" step after Install dependencies, before tests: create `mundo_3d_migrate_ci`, run `pnpm --filter backend db:migrate` (Req: Migration Runner Applies and Tracks Migrations)
-- [ ] 3.4 Confirm `backend/src/database/test-prepare.js` and `backend/src/__tests__/helpers/testDb.ts` have zero diff (Req: Test/E2E Bootstrap Paths Remain Unchanged)
+- [x] 3.1 RED: boot test (mock `ensureDatabaseExists`/`db.sequelize`/`seedInitialData`, `jest.isolateModules` with `NODE_ENV=production`) asserting `ensureDatabaseExists` is called with resolved `env`, `sync({alter:true})` is never called, `authenticate()` is called (Req: Boot Must Not Mutate or Auto-Migrate Schema; Environment-Aware Database Existence Check)
+- [x] 3.2 GREEN: modify `backend/index.js` — remove `sync({alter:true})`, chain `db.sequelize.authenticate()`, change `ensureDatabaseExists("development")` to `ensureDatabaseExists(env)`
+- [x] 3.3 Modify `.github/workflows/ci.yml` — add "Verify migrations build schema on a fresh database" step after Install dependencies, before tests: create `mundo_3d_migrate_ci`, run `pnpm --filter backend db:migrate` (Req: Migration Runner Applies and Tracks Migrations)
+- [x] 3.4 Confirm `backend/src/database/test-prepare.js` and `backend/src/__tests__/helpers/testDb.ts` have zero diff (Req: Test/E2E Bootstrap Paths Remain Unchanged)
 
 ## Phase 4: Manual Verification
 
@@ -58,3 +58,10 @@ Chain strategy: pending
 - [x] 5.3 WARNING: fix the dead `Product.stock` comment referencing a non-existent `apply-progress.md` file; now points to `tasks.md` task 4.1.
 - [x] 5.4 WARNING: scope `adoptBaseline()` in `migrate.js` to only the baseline migration name by default (`BASELINE_MIGRATION_NAME` constant) instead of an unfiltered `pending()` sweep, so a future second migration is never silently marked applied without running its DDL. Explicit migration names can still be passed to adopt a different scope deliberately. Covered by `database/__tests__/migrate.test.js`.
 - [x] 5.5 Add integration test coverage for a genuine migration failure and the CLI's exit-code contract (`process.exitCode = 1`) in `migrate.integration.test.js`, using a real invalid-DDL migration fixture against the scratch DB.
+
+## Phase 6: Post-Archive Adversarial Review Fixes (PR 3 branch, found before merge)
+
+- [x] 6.1 CRITICAL: `seedInitialData()`'s catch block logged internal errors but never rethrew, so the promise always resolved even when a real seeding failure occurred (e.g. a missing table), defeating the boot chain's fail-fast contract. Fixed by rethrowing after logging. Idempotency (`if (count === 0)` skip logic) is unaffected — it runs before the try's risk points. Covered by `backend/src/database/__tests__/seed.test.js`.
+- [x] 6.2 CRITICAL/design-completeness: boot had no positive schema-consistency gate — `seedInitialData` only incidentally covers Category/Franchise/User/Product, giving zero protection for `ShoppingCart`/`RememberToken` schema drift. Added `backend/src/database/checkPendingMigrations.js` exporting `checkNoPendingMigrations()`, which calls `buildMigrator().pending()` and rejects with a clear, actionable error when any migration is pending. Wired into `backend/index.js`'s boot chain between `authenticate()` and `seedInitialData()` (non-`test` env only). Covered by `backend/src/database/__tests__/checkPendingMigrations.test.js` and boot-level tests in `backend/src/__tests__/index.test.js`.
+- [x] 6.3 WARNING: `ensureDatabaseExists()` had no guard for an unsupported `NODE_ENV`, causing a generic `TypeError` instead of a clear configuration error. Added a guard in `backend/src/database/config/ensureDatabase.js` that throws `Unsupported NODE_ENV: '<env>' — expected one of: development, test, production`. Covered by `backend/src/database/config/__tests__/ensureDatabase.test.js` and a real-module boot-level test in `index.test.js`.
+- [x] 6.4 Updated `backend/src/__tests__/index.test.js` (5 -> 9 cases): added a real-module test for fix 6.1's rethrow (mocks only `db.Category.count`, not `seedInitialData` itself), two tests for fix 6.2's gate (pending found -> fail fast; pending empty -> proceeds, mocking only `buildMigrator().pending()`), and a real-module test for fix 6.3's unsupported-env guard (mocks nothing under `../database/config/ensureDatabase`).
