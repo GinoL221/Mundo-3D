@@ -18,6 +18,8 @@
 process.env.NODE_ENV = 'development';
 process.env.DB_NAME = 'mundo_3d_migrate_scratch';
 
+const fs = require('fs');
+const path = require('path');
 const { ensureDatabaseExists } = require('../config/ensureDatabase');
 const db = require('../models/db');
 const { run } = require('../migrate');
@@ -114,5 +116,46 @@ describe('migrate CLI — real scratch DB', () => {
     }
     const executed = await buildMigrator().executed();
     expect(executed.map((m) => m.name)).toEqual([BASELINE_NAME]);
+  });
+
+  it('a genuine migration failure surfaces via run() resolving false and sets the CLI failure exit code', async () => {
+    // Baseline is already logged as executed by the previous test, so this
+    // fixture (invalid DDL, guaranteed to reject) is the only pending
+    // migration `up` will attempt — a real failure against a real DB, not a
+    // mocked rejection.
+    const brokenMigrationPath = path.join(
+      __dirname,
+      '../migrations/20260724999999-broken-test-migration.js'
+    );
+    fs.writeFileSync(
+      brokenMigrationPath,
+      "'use strict';\n" +
+        'module.exports = {\n' +
+        '  async up({ context: queryInterface }) {\n' +
+        "    await queryInterface.sequelize.query('THIS IS NOT VALID SQL AND MUST FAIL');\n" +
+        '  },\n' +
+        '  async down() {},\n' +
+        '};\n'
+    );
+    const previousExitCode = process.exitCode;
+
+    try {
+      const success = await run(['up']);
+
+      expect(success).toBe(false);
+      // Mirrors the exact contract `migrate.js`'s `require.main === module`
+      // block relies on (`if (success === false) { process.exitCode = 1; }`)
+      // — proving a real migration failure surfaces as a failing CLI run
+      // instead of being silently swallowed.
+      expect(process.exitCode).toBe(1);
+
+      const executed = await buildMigrator().executed();
+      expect(executed.map((m) => m.name)).not.toContain(
+        '20260724999999-broken-test-migration.js'
+      );
+    } finally {
+      process.exitCode = previousExitCode;
+      fs.unlinkSync(brokenMigrationPath);
+    }
   });
 });
