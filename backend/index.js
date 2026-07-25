@@ -17,6 +17,9 @@ const PORT = process.env.PORT || 3031;
 
 const db = require("./src/database/models/db");
 const { seedInitialData } = require("./src/database/seed");
+const {
+  checkNoPendingMigrations,
+} = require("./src/database/checkPendingMigrations");
 
 const env = process.env.NODE_ENV || "development";
 
@@ -27,6 +30,7 @@ if (env === "test") {
 } else {
   ensureDatabaseExists(env)
     .then(() => db.sequelize.authenticate())
+    .then(() => checkNoPendingMigrations())
     .then(() => seedInitialData(db))
     .then(() => {
       server.listen(PORT, () => {
