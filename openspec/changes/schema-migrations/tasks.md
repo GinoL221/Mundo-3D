@@ -32,12 +32,12 @@ Chain strategy: pending
 
 ## Phase 2: Baseline Migration (PR 2)
 
-- [ ] 2.1 Run `mysqldump --no-data` (or `SHOW CREATE TABLE`) against the dev DB for User, Category, Franchise, Product, ShoppingCart, RememberToken; capture exact DDL (FK-safe order) — prep for 2.2
-- [ ] 2.2 GREEN: create `backend/src/database/migrations/20260724000000-baseline.js` — `up()` executes captured DDL via `queryInterface.sequelize.query`; `down()` = `dropTable` reverse order (Req: Baseline for Pre-Existing Schemas; Existing SQL Migrations Preserved as Tracked Migrations)
-- [ ] 2.3 Delete `backend/src/database/migrations/20260627-rename-category-franchise-columns.sql`, `20260627-rename-product-columns.sql`, `20260701-add-product-stock.sql`
-- [ ] 2.4 RED: `backend/src/database/__tests__/migrate.integration.test.js` — scratch DB: `up` creates all 6 tables; re-`up` is no-op; `down` drops; `adopt-baseline` logs without DDL (Req: Migration Runner Applies and Tracks Migrations; Rollback of Most Recent Migration; Baseline for Pre-Existing Schemas)
-- [ ] 2.5 GREEN: create `backend/src/database/migrate.js` CLI — `adopt-baseline` -> `storage.logMigration`; else `migrator.runAsCLI()`; non-zero exit on failure
-- [ ] 2.6 Add `db:migrate`, `db:migrate:status`, `db:migrate:down`, `db:migrate:adopt-baseline` scripts to `backend/package.json`
+- [x] 2.1 Run `mysqldump --no-data` (or `SHOW CREATE TABLE`) against the dev DB for User, Category, Franchise, Product, ShoppingCart, RememberToken; capture exact DDL (FK-safe order) — prep for 2.2
+- [x] 2.2 GREEN: create `backend/src/database/migrations/20260724000000-baseline.js` — `up()` executes captured DDL via `queryInterface.sequelize.query`; `down()` = `dropTable` reverse order (Req: Baseline for Pre-Existing Schemas; Existing SQL Migrations Preserved as Tracked Migrations)
+- [x] 2.3 Delete `backend/src/database/migrations/20260627-rename-category-franchise-columns.sql`, `20260627-rename-product-columns.sql`, `20260701-add-product-stock.sql`
+- [x] 2.4 RED: `backend/src/database/__tests__/migrate.integration.test.js` — scratch DB: `up` creates all 6 tables; re-`up` is no-op; `down` drops; `adopt-baseline` logs without DDL (Req: Migration Runner Applies and Tracks Migrations; Rollback of Most Recent Migration; Baseline for Pre-Existing Schemas)
+- [x] 2.5 GREEN: create `backend/src/database/migrate.js` CLI — `adopt-baseline` -> `storage.logMigration`; else `migrator.runAsCLI()`; non-zero exit on failure
+- [x] 2.6 Add `db:migrate`, `db:migrate:status`, `db:migrate:down`, `db:migrate:adopt-baseline` scripts to `backend/package.json`
 
 ## Phase 3: Boot Cutover & CI Proof (PR 3)
 
@@ -48,5 +48,13 @@ Chain strategy: pending
 
 ## Phase 4: Manual Verification
 
-- [ ] 4.1 Manual: run `db:migrate:adopt-baseline` then `db:migrate` against the live dev DB; confirm no DDL executes and product images are intact
+- [ ] 4.1 Manual: **before** adopting, run `ALTER TABLE Product ADD COLUMN stock INT NOT NULL DEFAULT 0;` against the live dev DB — the live schema is missing this column (see PR 2 apply-progress "Risks"); the baseline's Product DDL includes `stock` to match the model, so `adopt-baseline` (no-DDL) will otherwise leave the real dev DB inconsistent with what it claims. Then run `db:migrate:adopt-baseline` followed by `db:migrate`; confirm no further DDL executes and product images are intact
 - [ ] 4.2 Run `pnpm --filter backend test` and `pnpm --filter backend test:integration` full suites to confirm no regressions
+
+## Phase 5: Post-Archive Adversarial Review Fixes (PR 2 branch, found before merge)
+
+- [x] 5.1 CRITICAL: rename the bare numeric FK constraint symbols (`` `10` ``, `` `9` ``, `` `1` ``) in `20260724000000-baseline.js` to globally unique, descriptive names (`fk_product_franchise`, `fk_product_category`, `fk_cart_product`, `fk_cart_user`, `fk_remember_token_user`) — MySQL 8.0 (the real CI/production engine) rejects duplicate FK constraint names schema-wide with `ERROR 1826`; local MariaDB silently tolerated it. Verified by reproducing `ERROR 1826` against a disposable `mysql:8.0` Docker container with the original names, then confirming all 6 `CREATE TABLE`s (via the real `migrate.js up` CLI) succeed with the new names on the same container.
+- [x] 5.2 WARNING: wrap the baseline migration's `up()`/`down()` DDL loops in `queryInterface.sequelize.transaction()` and add try/catch diagnostics naming exactly which tables were already created/dropped before a failure, since MySQL DDL auto-commits per statement and cannot be rolled back by the transaction wrapper alone. Covered by `migrations/__tests__/20260724000000-baseline.test.js` (mocked, asserts call order and failure diagnostics).
+- [x] 5.3 WARNING: fix the dead `Product.stock` comment referencing a non-existent `apply-progress.md` file; now points to `tasks.md` task 4.1.
+- [x] 5.4 WARNING: scope `adoptBaseline()` in `migrate.js` to only the baseline migration name by default (`BASELINE_MIGRATION_NAME` constant) instead of an unfiltered `pending()` sweep, so a future second migration is never silently marked applied without running its DDL. Explicit migration names can still be passed to adopt a different scope deliberately. Covered by `database/__tests__/migrate.test.js`.
+- [x] 5.5 Add integration test coverage for a genuine migration failure and the CLI's exit-code contract (`process.exitCode = 1`) in `migrate.integration.test.js`, using a real invalid-DDL migration fixture against the scratch DB.

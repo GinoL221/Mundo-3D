@@ -56,7 +56,7 @@ module.exports = tseslint.config(
     },
   },
   {
-    files: ["src/database/reset-db.js", "src/database/seed.js"],
+    files: ["src/database/reset-db.js", "src/database/seed.js", "src/database/migrate.js"],
     rules: {
       "no-console": "off",
     },
