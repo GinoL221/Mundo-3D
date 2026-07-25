@@ -93,6 +93,7 @@ async function seedInitialData(db) {
     }
   } catch (err) {
     console.error('Error al insertar datos iniciales:', err);
+    throw err;
   }
 }
 
