@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { extractEdges } = require('../../../tools/architecture/ast');
-const { resolveEdges } = require('../../../tools/architecture/engine');
+const { resolveEdges, evaluateEdges } = require('../../../tools/architecture/engine');
 const { loadCompilerOptions, classifyFile } = require('../../../tools/architecture/config');
 
 describe('AST and resolution foundations', () => {
@@ -49,6 +49,53 @@ describe('AST and resolution foundations', () => {
     expect(classifyFile('/repo/database/migrations/1.js')).toBe('migration');
     expect(classifyFile('/repo/tools/check.js')).toBe('tool');
     expect(extractEdges('/repo/README.md', "import x from './x'")).toEqual([]);
+  });
+});
+
+describe('rules, allowlists, and diagnostics', () => {
+  const root = '/repo';
+  const edge = (source, target, kind = 'import') => ({ source: `${root}/${source}`, line: 2, column: 3, kind, specifier: './target', classification: 'local', resolvedTarget: `${root}/${target}` });
+
+  test.each([
+    ['S1 domain contract', edge('backend/src/domain/entities/a.ts', 'backend/src/domain/ports/p.ts'), null],
+    ['S2 domain outward', edge('backend/src/domain/entities/a.ts', 'backend/src/infrastructure/x.ts'), 'backend.domain.inward'],
+    ['domain local UI/unclassified', edge('backend/src/domain/entities/a.ts', 'backend/src/ui/x.ts'), 'backend.domain.inward'],
+    ['S2 domain framework', { ...edge('backend/src/domain/a.ts', 'node_modules/express/index.js'), classification: 'external', specifier: 'express' }, 'backend.domain.inward'],
+    ['S3 application port', edge('backend/src/application/use-cases/a.ts', 'backend/src/domain/ports/p.ts'), null],
+    ['application DTO', edge('backend/src/application/use-cases/a.ts', 'backend/src/application/dtos/a.ts'), null],
+    ['application arbitrary module', edge('backend/src/application/use-cases/a.ts', 'backend/src/application/use-cases/b.ts'), 'backend.application.contracts'],
+    ['S4 application adapter', edge('backend/src/application/use-cases/a.ts', 'backend/src/infrastructure/repositories/r.ts'), 'backend.application.contracts'],
+    ['S4 application I/O', { ...edge('backend/src/application/a.ts', 'node_modules/x/index.js'), classification: 'external', specifier: 'node:fs' }, 'backend.application.contracts'],
+    ['domain other I/O package', { ...edge('backend/src/domain/a.ts', 'node_modules/mysql2/index.js'), classification: 'external', specifier: 'mysql2' }, 'backend.domain.inward'],
+    ['domain bare Node I/O', { ...edge('backend/src/domain/a.ts', 'node_modules/fs/index.js'), classification: 'external', specifier: 'fs' }, 'backend.domain.inward'],
+    ['S5 database ORM', { ...edge('backend/src/database/models/a.ts', 'node_modules/sequelize/index.js'), classification: 'external' }, null],
+    ['S6 database inward', edge('backend/src/database/models/a.ts', 'backend/src/domain/entities/a.ts'), 'backend.database.isolation'],
+    ['infrastructure database edge', edge('backend/src/infrastructure/repositories/a.ts', 'backend/src/database/models/a.ts'), null],
+    ['S7 CommonJS outward', edge('backend/src/domain/a.js', 'backend/src/database/a.js', 'require'), 'backend.domain.inward'],
+    ['S8 test edge', edge('backend/src/domain/__tests__/a.test.ts', 'backend/src/infrastructure/a.ts'), null],
+    ['S9 frontend local/config/external', edge('frontend/src/domains/auth/a.ts', 'frontend/src/domains/auth/b.ts'), null],
+    ['S10/S12 frontend cross-boundary', edge('frontend/src/domains/auth/a.ts', 'frontend/src/components/Header.ts'), 'frontend.domain.locality'],
+    ['S13 unresolved local', { ...edge('backend/src/domain/a.ts', 'missing.ts'), classification: 'unresolved-local', resolvedTarget: null }, 'resolution.local'],
+    ['S14 external', { ...edge('backend/src/domain/a.ts', 'node_modules/pkg/index.js'), classification: 'external' }, null],
+    ['S16 migration edge', edge('backend/src/database/migrations/a.ts', 'backend/src/domain/a.ts'), null],
+  ])('%s', (_, input, rule) => {
+    expect(evaluateEdges([input], root).map((item) => item.rule)).toEqual(rule ? [rule] : []);
+  });
+
+  test('S11/S17-S19 use exact composition paths without inheritance and leave Astro unparsed', () => {
+    const allowed = edge('backend/src/infrastructure/routes/api/products.ts', 'backend/src/database/models/a.ts');
+    const sibling = edge('backend/src/infrastructure/routes/api/orders.ts', 'backend/src/database/models/a.ts');
+    expect(evaluateEdges([allowed, sibling], root).map((item) => item.rule)).toEqual(['composition.allowlist']);
+    expect(extractEdges(`${root}/frontend/src/pages/index.astro`, "--- import x from '../domains/auth/a'; ---")).toEqual([]);
+  });
+
+  test('S20/S21 diagnostics include source target/rule and sort deterministically', () => {
+    const later = { ...edge('backend/src/domain/a.ts', 'backend/src/database/z.ts'), line: 3, column: 1 };
+    const earlier = { ...edge('backend/src/domain/a.ts', 'backend/src/database/a.ts'), line: 2, column: 3 };
+    expect(evaluateEdges([later, earlier], root)).toEqual([
+      expect.objectContaining({ source: earlier.source, targetOrSpecifier: earlier.resolvedTarget, rule: 'backend.domain.inward', line: 2, column: 3 }),
+      expect.objectContaining({ source: later.source, targetOrSpecifier: later.resolvedTarget, rule: 'backend.domain.inward', line: 3, column: 1 }),
+    ]);
   });
 });
 

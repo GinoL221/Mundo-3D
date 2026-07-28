@@ -47,8 +47,8 @@ Before apply: review seven PR 0 artifacts and authorize `docs/architecture-bound
 
 ## Phase 2: PR 2 — Rules, Allowlists, and Diagnostics
 
-- [ ] 2.1 RED: add R1–R9/S1–S21 tests for backend/CommonJS, isolation, frontend/Astro scope, resolution, allowlists, fixtures, diagnostics, and ordering.
-- [ ] 2.2 GREEN: implement `config.js` allowlists/classifications and `engine.js` rules; preserve exact paths, no inheritance, sorted diagnostics, and no suppression.
+- [x] 2.1 RED: add R1–R9/S1–S21 tests for backend/CommonJS, isolation, frontend/Astro scope, resolution, allowlists, fixtures, diagnostics, and ordering.
+- [x] 2.2 GREEN: implement `config.js` allowlists/classifications and `engine.js` rules; preserve exact paths, no inheritance, sorted diagnostics, and no suppression.
 
 ## Phase 3: PR 3 — CLI, Package, CI, and Final Proof
 
