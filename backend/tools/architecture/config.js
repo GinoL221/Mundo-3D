@@ -16,4 +16,19 @@ function classifyFile(file) {
   return 'production';
 }
 
-module.exports = { classifyFile, loadCompilerOptions };
+const compositionRoots = new Set([
+  'backend/index.js', 'backend/src/app.js',
+  ...['index', 'products', 'users', 'cart', 'categories', 'franchises'].map((name) => `backend/src/infrastructure/routes/api/${name}.ts`),
+  ...['sessionUI', 'cartBadge', 'crtToggle', 'themeToggle'].map((name) => `frontend/src/scripts/${name}.ts`),
+  ...['index', 'products', 'product', 'cart', 'login', 'register', 'aboutUs', 'help', 'faq', 'privacy', 'terms', 'step-by-step'].map((name) => `frontend/src/pages/${name}.astro`),
+  ...['index', 'create', 'edit'].map((name) => `frontend/src/pages/admin/products/${name}.astro`),
+  'frontend/src/layouts/Layout.astro', ...['Header', 'Footer', 'Welcome'].map((name) => `frontend/src/components/${name}.astro`),
+  'frontend/src/domains/auth/components/LoginForm.astro', 'frontend/src/domains/auth/components/RegisterForm.astro',
+  'frontend/src/domains/cart/components/CartList.astro', 'frontend/src/domains/products/components/ProductCard.astro',
+]);
+
+function isCompositionRoot(root, file) {
+  return compositionRoots.has(path.relative(root, file).replaceAll(path.sep, '/'));
+}
+
+module.exports = { classifyFile, isCompositionRoot, loadCompilerOptions };
