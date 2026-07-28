@@ -129,6 +129,35 @@ describe('rules, allowlists, and diagnostics', () => {
   });
 });
 
+describe('architecture check CLI', () => {
+  test('S22 exits zero when discovered edges are valid', () => withTree((root) => {
+    write(root, 'backend/src/domain/a.ts', "import './ports/p';");
+    write(root, 'backend/src/domain/ports/p.ts', 'export {};');
+    expect(run(root)).toEqual({ code: 0, output: [] });
+  }));
+
+  test('S23 exits non-zero for an architecture violation', () => withTree((root) => {
+    write(root, 'backend/src/domain/a.ts', "import '../infrastructure/x';");
+    write(root, 'backend/src/infrastructure/x.ts', 'export {};');
+    expect(run(root)).toEqual({ code: 1, output: [`backend.domain.inward: ${path.join(root, 'backend/src/domain/a.ts')} -> ${path.join(root, 'backend/src/infrastructure/x.ts')}`] });
+  }));
+
+  test('S23 blocks unavailable source discovery errors', () => {
+    expect(run(path.join(os.tmpdir(), 'missing-architecture-root')).code).toBe(1);
+  });
+
+  test('S24 runs without a verification-baseline-and-ci-gates path', () => withTree((root) => {
+    write(root, 'backend/src/domain/a.ts', 'export {};');
+    expect(run(root).code).toBe(0);
+  }));
+
+  test('S25 only discovers source files and does not execute runtime entrypoints', () => withTree((root) => {
+    write(root, 'backend/index.js', 'throw new Error("runtime must not run");');
+    write(root, 'backend/src/domain/a.ts', 'export {};');
+    expect(run(root)).toEqual({ code: 0, output: [] });
+  }));
+});
+
 function withTree(run) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'architecture-'));
   try { return run(root); } finally { fs.rmSync(root, { recursive: true, force: true }); }
@@ -138,4 +167,10 @@ function write(root, file, value) {
   const target = path.join(root, file);
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.writeFileSync(target, value);
+}
+
+function run(root) {
+  const output = [];
+  const { runCheck } = require('../../../tools/architecture/check');
+  return { code: runCheck(root, (line) => output.push(line)), output };
 }
