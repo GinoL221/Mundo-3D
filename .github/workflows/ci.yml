@@ -40,6 +40,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check architecture boundaries
+        run: pnpm --filter backend architecture:check
+
       - name: Verify migrations build schema on a fresh database
         run: |
           mysql -h 127.0.0.1 -u root -e "CREATE DATABASE IF NOT EXISTS mundo_3d_migrate_ci;"
@@ -91,4 +94,3 @@ jobs:
           DB_USER: root
           DB_PASS: ""
           SESSION_SECRET: ci_test_secret_key_9876543210
-

@@ -77,3 +77,30 @@
 | Rules selection | Same command with `-t "rules|allowlist|diagnostics"` — exit 0, 1 suite, 23 passed, 6 skipped |
 | Runtime harness | N/A — CLI/runtime integration is explicitly PR 3 scope; this correction changes only pure evaluator behavior |
 | Rollback | Revert the PR-2 test/evaluator changes for the five confirmed contracts; parser/resolution, allowlist data, and PR-1 behavior remain intact |
+
+## PR 3 — CLI, Package, and CI (final port)
+
+- Delivery: stacked-to-main final slice; remediated `main@7385a2a` → CLI/discovery, package command, CI gate, and S22–S25 only.
+- Native authority: ordinal 6 active, revision `sha256:f8b6f40e1ef537544e625e2318760d72c725254f59799dfe128d0a44d6fce97b`; prior native outcome passed; correction finish revision not yet issued.
+- Prior blocked draft was used as semantic reference only. The prior 16 barrel-export and 4 `.astro` resolution findings were remediated in prerequisite `d0b1334`; current package command has zero diagnostics and exits 0.
+
+## TDD Cycle Evidence
+
+| Task | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|
+| 3.1 | 32/32 focused Jest passed on remediated main | Added five S22–S25 tests first; 5 failed because `check` was missing | 37/37 focused Jest passed | Valid fixture, violation, unavailable root, baseline absence, and runtime-entrypoint fixture cover distinct paths | None needed |
+| 3.2 | 32/32 focused Jest passed | Same missing-module RED preceded CLI/package/CI wiring | 37/37 focused Jest passed; `architecture:check` exit 0, zero diagnostics | `-t "S23"`: 2 passed (35 skipped); corrected fixture proves `backend.domain.inward` resolved target, unavailable root returns 1 | None needed |
+| 3.3 | 37/37 focused Jest passed | N/A — verification task | Package harness, frontend build, and diff check passed | Backend suite disposition recorded below | None needed |
+
+## Work Unit Evidence
+
+| Evidence | Result |
+|---|---|
+| Focused test | `pnpm --filter backend exec jest src/architecture/__tests__/architecture-boundaries.test.js --runInBand` — exit 0; 1 suite, 37/37 passed |
+| Runtime harness | `pnpm --filter backend architecture:check` — exit 0; zero diagnostics. S23 targeted Jest — exit 0; 2 passed, proving both deliberate forbidden fixture and unavailable root yield code 1. |
+| Relevant backend suite | `pnpm --filter backend exec jest --runInBand` — exit 1 only for pre-existing unavailable MySQL: 81/82 suites and 531/537 tests passed; 6 failures in `migrate.integration.test.js` (`AggregateError` / `SequelizeConnectionRefusedError`). The architecture suite is green; no wiring-related regression observed. |
+| Frontend build | `pnpm run frontend:build` — exit 0; 15 pages built. |
+| CI/package ordering | `architecture:check` is declared as `node tools/architecture/check.js`; CI invokes it immediately after frozen install and before migrations, lint, tests, and E2E. A non-zero command blocks the step. |
+| File size / diff | `check.js` 42 lines; all architecture production sources 25/42/34/78 (≤250). `git diff --check` exit 0. Implementation diff: +81/-1 (82 changed lines); final candidate including task/progress artifacts: +111/-4 (115 changed lines), below the 190-line slice cap. Exact implementation paths: `check.js`, `backend/package.json`, CI workflow, architecture test. |
+| Runtime scope | `git status --short` includes untracked `check.js`; tracked `git diff --name-only` plus status show only checker/test/package/CI and SDD artifacts, with no product runtime source changed. |
+| Rollback | Revert `backend/tools/architecture/check.js`, its five S22–S25 tests, `backend/package.json` script, and CI step; then revert only parent task/progress marks. PR 1/2 checker behavior and all product runtime files remain intact. |

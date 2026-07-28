@@ -52,6 +52,6 @@ Before apply: review seven PR 0 artifacts and authorize `docs/architecture-bound
 
 ## Phase 3: PR 3 — CLI, Package, CI, and Final Proof
 
-- [ ] 3.1 RED: add R10/S22–S25 tests for success, failure/unavailable blocking, baseline independence, and rollback without runtime changes.
-- [ ] 3.2 GREEN: create `backend/tools/architecture/check.js`, add `architecture:check` to `backend/package.json`, and add the blocking step to `.github/workflows/ci.yml`.
-- [ ] 3.3 Verify PR 3 locally with package check, tests/build, diff check, and rollback evidence; delivery remains outside final SDD verification.
+- [x] 3.1 RED: add R10/S22–S25 tests for success, failure/unavailable blocking, baseline independence, and rollback without runtime changes.
+- [x] 3.2 GREEN: create `backend/tools/architecture/check.js`, add `architecture:check` to `backend/package.json`, and add the blocking step to `.github/workflows/ci.yml`.
+- [x] 3.3 Verify PR 3 locally with package check, tests/build, diff check, and rollback evidence; delivery remains outside final SDD verification.
