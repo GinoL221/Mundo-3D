@@ -44,6 +44,36 @@ describe('AST and resolution foundations', () => {
     ]);
   });
 
+  test('resolves only exact local Astro files as opaque local edges', () => withTree((root) => {
+    const source = path.join(root, 'backend/src/domain/nested/source.ts');
+    ['backend/src/domain/nested/Local.astro', 'backend/src/domain/Sibling.astro', 'backend/src/shared/Multi.astro', 'backend/src/domain/nested/dir/index.astro'].forEach((file) => write(root, file, '--- import hidden from "./hidden"; ---'));
+    write(root, 'backend/src/domain/nested/source.ts', '');
+    fs.symlinkSync(path.join(root, 'backend/src/domain/Sibling.astro'), path.join(root, 'backend/src/domain/nested/linked.astro'));
+    const edges = resolveEdges(extractEdges(source, "import './Local.astro'; import '../Sibling.astro'; import '../../shared/Multi.astro'; import './dir/index.astro'; import './linked.astro';"), {});
+    expect(edges.map(({ classification, resolvedTarget }) => [classification, path.relative(root, resolvedTarget)])).toEqual([
+      ['local', 'backend/src/domain/nested/Local.astro'], ['local', 'backend/src/domain/Sibling.astro'], ['local', 'backend/src/shared/Multi.astro'], ['local', 'backend/src/domain/nested/dir/index.astro'], ['local', 'backend/src/domain/nested/linked.astro'],
+    ]);
+    expect(extractEdges(edges[0].resolvedTarget, fs.readFileSync(edges[0].resolvedTarget, 'utf8'))).toEqual([]);
+  }));
+
+  test('fails closed for invalid Astro fallback forms and unsafe targets', () => withTree((root) => {
+    const source = path.join(root, 'backend/src/domain/source.ts');
+    const outside = path.join(os.tmpdir(), `outside-${path.basename(root)}.astro`);
+    write(root, 'backend/src/domain/source.ts', ''); write(root, 'backend/src/domain/dir.astro/child', ''); write(root, 'backend/src/domain/file.astro', ''); write(root, 'backend/src/domain/dir/..\\file.astro', ''); fs.writeFileSync(outside, '');
+    fs.symlinkSync(outside, path.join(root, 'backend/src/domain/outside.astro'));
+    fs.symlinkSync(path.join(root, 'missing.astro'), path.join(root, 'backend/src/domain/dangling.astro'));
+    const specifiers = ['./missing.astro', './dir.astro', './dir/', './dir/index', './file.astro?x', './file.astro#x', './file.js', '/file.astro', 'C:\\\\file.astro', '\\\\\\\\server\\\\file.astro', '@/file.astro', 'package/file.astro', '././file.astro', './dir/../file.astro', './outside.astro', './dangling.astro'];
+    specifiers.splice(-2, 0, './dir/..\\\\file.astro');
+    const edges = resolveEdges(extractEdges(source, specifiers.map((specifier) => `import '${specifier}';`).join(' ')), {});
+    expect(edges.map(({ classification }) => classification)).toEqual(specifiers.map((specifier) => specifier === 'package/file.astro' ? 'external' : 'unresolved-local'));
+    expect(resolveEdges(extractEdges(path.join(root, 'other/source.ts'), "import './file.astro';"), {}).map(({ classification }) => classification)).toEqual(['unresolved-local']);
+    fs.unlinkSync(outside);
+  }));
+
+  test('does not retain the unused application use-case barrel', () => {
+    expect(fs.existsSync(path.join(__dirname, '../../application/use-cases/index.ts'))).toBe(false);
+  });
+
   test('classifies non-production files and documentation without extracting documentation edges', () => {
     expect(classifyFile('/repo/src/domain/__tests__/edge.test.ts')).toBe('test');
     expect(classifyFile('/repo/database/migrations/1.js')).toBe('migration');
