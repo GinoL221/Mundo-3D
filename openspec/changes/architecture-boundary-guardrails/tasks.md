@@ -41,9 +41,9 @@ Before apply: review seven PR 0 artifacts and authorize `docs/architecture-bound
 
 ## Phase 1: PR 1 — Parser and Resolution
 
-- [ ] 1.1 RED: extend `backend/src/architecture/__tests__/architecture-boundaries.test.js` for ESM/CJS/type edges; alias resolution; unresolved locals; non-production/docs; dynamic forms; `.astro` non-parsing.
-- [ ] 1.2 GREEN: create `backend/tools/architecture/ast.js` and resolution in `engine.js`/`config.js`; produce deterministic edges and fail-closed diagnostics without rules/wiring.
-- [ ] 1.3 Verify PR 1 with focused Jest, file-size, and `git diff --name-only`; keep later files out of the diff.
+- [x] 1.1 RED: extend `backend/src/architecture/__tests__/architecture-boundaries.test.js` for ESM/CJS/type edges; alias resolution; unresolved locals; non-production/docs; dynamic forms; `.astro` non-parsing.
+- [x] 1.2 GREEN: create `backend/tools/architecture/ast.js` and resolution in `engine.js`/`config.js`; produce deterministic edges and fail-closed diagnostics without rules/wiring.
+- [x] 1.3 Verify PR 1 with focused Jest, file-size, and `git diff --name-only`; keep later files out of the diff.
 
 ## Phase 2: PR 2 — Rules, Allowlists, and Diagnostics
 
