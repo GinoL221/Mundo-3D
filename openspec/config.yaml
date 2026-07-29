@@ -23,7 +23,7 @@ stack:
   file_upload: multer
   validation: express-validator
   state_management: Nanostores (frontend)
-  package_manager: npm
+  package_manager: "pnpm 11.0.9 (workspaces: backend, frontend, e2e)"
 
 architecture:
   style: Hexagonal / Clean Architecture
@@ -73,19 +73,26 @@ conventions:
 
 testing:
   strict_tdd: true
-  runner: Jest 30.x
-  coverage_tool: Jest built-in
-  test_command: "npm test"
+  runner: Jest 30.x (backend), Vitest 4.x (frontend)
+  coverage_tool: Jest built-in (backend; JS+TS under backend/src/)
+  test_command: "pnpm test"
+  fast_command: "pnpm test:fast"
+  integration_command: "pnpm test:integration"
+  coverage_command: "pnpm test:coverage"
+  frontend_check_command: "pnpm frontend:check"
   test_layers:
     - unit: domain entities, use cases, DTOs
     - integration: repositories (Sequelize), controllers, middlewares
-    - e2e: API routes via supertest
-  test_count: 50 test files
+    - "real-db integration: *.integration.test.(ts|js), isolated from the fast suite via jest.config.js testPathIgnorePatterns; runs only via test:integration"
+    - e2e: API routes via supertest; full flows via Playwright
+  test_count: 50+ test files
+  coverage_scope: "backend/src/**/*.{js,ts}, excluding tests, .d.ts, __tests__/, database/migrations/, and live-DB-only CLI scripts (reset-db.js, test-prepare.js)"
   coverage_threshold:
     branches: 50
     functions: 50
     lines: 50
     statements: 50
+  coverage_risk_map: backend/scripts/generate-coverage-risk-map.js -> backend/coverage/risk-map.json (Tier 0 = security, migrations, cart, stock; honest gap reporting, never silently marked fixed)
   transform:
     js: babel-jest
     ts: ts-jest (isolatedModules)
@@ -97,7 +104,12 @@ quality:
   linter: ESLint 10.x (flat config)
   formatter: "Prettier 3.x (singleQuote, trailingComma: all, printWidth: 100)"
   type_checker: TypeScript 6.x (strict mode, target ES2022)
-  ci: GitHub Actions (lint + test on Node 22)
+  ci: >
+    GitHub Actions, fail-closed. Jobs: quality (lint, type-check, test:fast,
+    test:coverage, frontend:check, frontend:build), integration (real-DB
+    Jest against MySQL 8), e2e (Playwright/Chromium against MySQL 8), and
+    verification-gate (always-run; passes only if quality, integration, and
+    e2e all succeeded).
 
 persistence:
   mode: hybrid
@@ -119,9 +131,9 @@ rules:
     - Follow hexagonal architecture layer boundaries
     - Domain entities MUST NOT import from infrastructure
     - Use cases depend on ports (interfaces), not concrete implementations
-    - TDD enabled, test_command = npm test
+    - TDD enabled, test_command = pnpm test
   verify:
-    - test_command = npm test
+    - test_command = pnpm test
     - coverage_threshold = 50
   archive:
     - Warn before merging destructive deltas
