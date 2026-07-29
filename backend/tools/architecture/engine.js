@@ -50,8 +50,8 @@ function evaluateEdges(edges, root) {
     let rule = null;
     if (edge.classification === 'external') rule = externalRule(sourceLayer, edge.specifier);
     if (edge.classification === 'external') return rule ? [violation(edge, rule)] : [];
-    if (sourceLayer === 'domain' && targetLayer !== 'domain') rule = 'backend.domain.inward';
-    if (sourceLayer === 'application' && !(targetLayer === 'domain' || target.startsWith('backend/src/application/dtos/'))) rule = 'backend.application.contracts';
+    if (sourceLayer === 'domain' && !isDomainContract(target)) rule = 'backend.domain.inward';
+    if (sourceLayer === 'application' && !(isDomainContract(target) || target.startsWith('backend/src/application/dtos/'))) rule = 'backend.application.contracts';
     if (sourceLayer === 'database' && ['domain', 'application', 'infrastructure'].includes(targetLayer)) rule = 'backend.database.isolation';
     if (sourceLayer === 'frontend-domain' && !(target.startsWith(`frontend/src/domains/${domain(source)}/`) || target === 'frontend/src/config.ts')) rule = 'frontend.domain.locality';
     if (sourceLayer === 'infrastructure' && source.startsWith('backend/src/infrastructure/routes/') && targetLayer && !isCompositionRoot(root, edge.source)) rule = 'composition.allowlist';
@@ -61,6 +61,7 @@ function evaluateEdges(edges, root) {
 
 function relative(root, file) { return path.relative(root, file || '').replaceAll(path.sep, '/'); }
 function domain(file) { return file.split('/')[3]; }
+function isDomainContract(file) { return /^backend\/src\/domain\/(entities|ports|exceptions)\//.test(file); }
 function layer(file) {
   if (file.startsWith('backend/src/domain/')) return 'domain';
   if (file.startsWith('backend/src/application/')) return 'application';
