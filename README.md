@@ -1,122 +1,231 @@
-# Mundo3D
+# Mundo-3D
 
-Mundo3D es un e-commerce moderno y desacoplado, especializado en la venta de productos personalizados mediante impresión 3D. El proyecto está estructurado como un monorepo simétrico administrado con `pnpm`, compuesto por un frontend estático e interactivo en Astro y una API REST headless en Express/TypeScript bajo arquitectura limpia/hexagonal.
+Mundo-3D es un e-commerce de productos impresos en 3D. El repositorio contiene una API REST de catálogo, autenticación, administración y carrito, junto con un frontend Astro de estética pixel art. Es un monorepo `pnpm` con persistencia MySQL y una arquitectura hexagonal pragmática en el backend.
 
----
+## Inicio rápido
 
-## Inicio Rápido (Quick Start)
+### Requisitos
 
-### 1. Clonar e Instalar
-Cloná el repositorio e instalá las dependencias desde la raíz del monorepo:
+- Node.js `>=22.12.0` (el frontend establece el requisito más estricto del workspace).
+- `pnpm 11.0.9`, declarado en `package.json`.
+- MySQL 8 compatible y un usuario con permiso para crear bases de datos.
+
+### 1. Instalar dependencias
+
 ```bash
-git clone https://github.com/GinoL221/Mundo-3D.git
-cd Mundo-3D
-pnpm install
+corepack enable
+pnpm install --frozen-lockfile
 ```
 
-### 2. Configurar Entorno
-Creá el archivo de configuración `.env` dentro de la carpeta `backend/` basándote en `backend/.env.example`:
+### 2. Configurar el entorno
+
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+Complete `backend/.env` con credenciales locales y secretos aleatorios. Los valores versionados son placeholders; no deben usarse en producción.
+
 ```env
-PORT=3000
-JWT_SECRET=tu_secreto_super_seguro
-CORS_ORIGIN=http://localhost:4321
+PORT=3031
 DB_USER=root
-DB_PASS=tu_password
+DB_PASS=
 DB_NAME=mundo_3d_db
 DB_HOST=localhost
+SESSION_SECRET=change-me-to-a-random-secret
+COOKIE_SECRET=change-me-to-a-random-secret
+JWT_SECRET=change-me-to-a-random-secret
 ```
 
-### 3. Base de Datos Local (opcional)
+El frontend apunta a la API mediante:
+
+```env
+PUBLIC_API_URL=http://localhost:3031
+```
+
+### 3. Crear y migrar la base
+
 Si no tenés MySQL instalado, podés levantar una instancia local con Docker (mismo `mysql:8.0` que usa CI):
+
 ```bash
 docker compose up -d
 ```
 
-### 4. Levantar los Servidores
-Podés correr ambos entornos de desarrollo (backend y frontend) de la siguiente manera:
-```bash
-# Iniciar la API REST Express (Servidor backend en el puerto 3000)
-pnpm dev
+La aplicación crea la base configurada si no existe, pero no inicia mientras haya migraciones pendientes. Para un entorno nuevo, créela y aplique las migraciones antes del primer arranque:
 
-# Iniciar el Frontend Astro (Servidor de desarrollo en el puerto 4321)
+```bash
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS mundo_3d_db;"
+pnpm --filter backend db:migrate
+pnpm --filter backend db:migrate:status
+```
+
+Si cambia `DB_NAME`, use el mismo nombre en el comando SQL. Al iniciar, el backend autentica la conexión, verifica que no haya migraciones pendientes y carga datos iniciales de forma idempotente.
+
+> **Base preexistente:** `db:migrate:adopt-baseline` solo registra la migración baseline sin ejecutar DDL. Úselo únicamente para una base heredada cuyo esquema ya coincide con esa baseline; no lo use para una base vacía.
+
+### 4. Iniciar el proyecto
+
+Ejecute cada servidor en una terminal distinta:
+
+```bash
+pnpm dev
+```
+
+```bash
 pnpm frontend:dev
 ```
 
----
+- API: `http://localhost:3031`
+- Frontend: `http://localhost:4321`
 
-## Estructura del Monorepo
+## Comandos
 
-El proyecto implementa una estructura de **Monorepo Simétrico**:
+Todos los comandos de esta tabla se ejecutan desde la raíz.
 
-```
-Mundo-3D/
-├── backend/              # API REST Headless (Express.js + TypeScript)
-│   ├── src/              # Código fuente de arquitectura limpia/hexagonal
-│   │   ├── domain/       # Entidades puras de dominio y puertos (TypeScript)
-│   │   ├── application/  # Casos de uso de negocio (Auth, Cart, Products)
-│   │   └── infrastructure/ # Controladores API, adaptadores Sequelize y middlewares
-│   ├── public/           # Archivos estáticos servidos por Express (pixel art localizados)
-│   ├── tsconfig.json     # Configuración de compilación de TypeScript
-│   └── package.json      # Dependencias del servidor backend
-├── frontend/             # Aplicación Frontend (Astro 6.x)
-│   ├── src/
-│   │   ├── components/   # Componentes interactivos y reutilizables
-│   │   ├── layouts/      # Estructura de layout base con theme-inject
-│   │   ├── pages/        # Rutas estáticas (SSG) y dinámicas (Login, Cart, etc.)
-│   │   ├── store/        # Nano Stores para sincronización asíncrona de Carrito
-│   │   └── styles/       # Sistema de diseño modular en Vanilla CSS
-│   └── public/           # Assets estáticos y assets locales
-├── openspec/             # Especificaciones de diseño del sistema bajo metodología SDD
-└── package.json          # Orquestador del monorepo (scripts globales y Prettier)
-```
-
----
-
-## Tecnologías Utilizadas
-
-| Capa | Tecnologías | Propósito |
+| Objetivo | Comando | Alcance y condiciones |
 |---|---|---|
-| **Root (Monorepo)** | pnpm Workspaces, Prettier | Orquestación de dependencias y formato de código global. |
-| **Frontend** | Astro 6.x, Vanilla CSS, HTML5, Nano Stores | Generación de páginas SSG y manejo reactivo del carrito de compras. |
-| **Backend** | Node.js, Express.js, TypeScript | API REST Headless, JWT, CORS. |
-| **Persistencia** | MySQL, Sequelize 6.x (ORM) | Modelos relacionales con mapeo camelCase en código y snake_case en DB. |
-| **Pruebas** | Jest, Supertest | Testing unitario e integración con TDD estricto. |
+| Backend en desarrollo | `pnpm dev` | Express con Nodemon; requiere MySQL, entorno backend y migraciones al día. |
+| Frontend en desarrollo | `pnpm frontend:dev` | Astro en el puerto `4321`. |
+| Lint | `pnpm lint` | Ejecuta los scripts disponibles en el workspace; actualmente ESLint sobre `backend/src/`. |
+| Type-check | `pnpm type-check` | TypeScript del backend. CI no ejecuta este comando de forma independiente. |
+| Pruebas por defecto | `pnpm test` | Jest backend y Vitest frontend; excluye E2E e integración real, independiente de MySQL. |
+| Jest backend | `pnpm --filter backend test` | Excluye `*.integration.test.(ts\|js)`; independiente de MySQL. |
+| Vitest frontend | `pnpm --filter frontend test` | Servicios, adaptadores y scripts del frontend. |
+| Integración MySQL | `pnpm --filter backend test:integration` | Requiere MySQL local; usa bases de prueba desechables, incluida `mundo_3d_migrate_scratch`. |
+| Preparar base E2E | `pnpm --filter backend db:test:prepare` | **Recrea con `force: true` la base fija `mundo_3d_test` y carga fixtures.** |
+| E2E Chromium | `pnpm test:e2e` | Playwright levanta backend `3032` y frontend `4322`; recrea `mundo_3d_test`. |
+| Todos los proyectos E2E configurados | `pnpm test:e2e:all` | Actualmente la configuración solo declara Chromium. |
+| Estado de migraciones | `pnpm --filter backend db:migrate:status` | Requiere conexión a la base configurada. |
+| Aplicar migraciones | `pnpm --filter backend db:migrate` | Ejecuta las migraciones Umzug pendientes. |
+| Revertir última migración | `pnpm --filter backend db:migrate:down` | Operación destructiva; revise la migración antes de usarla. |
+| Adoptar baseline heredada | `pnpm --filter backend db:migrate:adopt-baseline` | Solo para un esquema preexistente compatible; no ejecuta DDL. |
+| Build frontend | `pnpm frontend:build` | Genera la salida Astro. No hay un script de build del backend: se ejecuta con `ts-node/register`. |
+| Formatear | `pnpm format` | Modifica fuentes backend y frontend con Prettier. |
 
----
+Antes del primer E2E local, instale Chromium y sus dependencias:
 
-## Funcionalidades Clave
-
-- **Autenticación:** JWT con Bearer Token y almacenamiento local en `localStorage` (sin sesiones en cookies del servidor).
-- **Carrito de Compras Asíncrono:** Carrito reactivo del lado del cliente hidratado por Nano Stores con sincronización en tiempo real mediante `/api/cart`.
-- **Pre-rendering SSG:** Páginas estáticas informativas pre-renderizadas en build-time con Astro para velocidad de carga máxima.
-- **Validación Robusta (TDD):** Validación de formularios en frontend y backend (fuerza de contraseña en tiempo real, validación multipart en subida de imágenes de productos y perfiles).
-
----
-
-## Sistema de Diseño (Visual System)
-
-El proyecto utiliza un sistema de diseño estético **PICO-8 pixel art**:
-- **Tipografías:** **Press Start 2P** para títulos y **VT323** para textos de lectura.
-- **Paleta de Colores:** Colores semánticos definidos mediante CSS custom properties mapeados de la paleta oficial de PICO-8.
-- **Ajuste Pixelado:** Renderizado óptimo en imágenes usando `image-rendering: pixelated`.
-- **Tema:** Soporte de Tema Dark/Light nativo con script anti-flash para evitar parpadeos en carga.
-
----
-
-## Pruebas (Testing)
-
-El backend cuenta con una suite completa de pruebas unitarias e integración en Jest bajo la metodología **Strict TDD** ejecutadas recursivamente:
 ```bash
-# Correr todas las pruebas unitarias e integración de forma recursiva en el monorepo
-pnpm test
+pnpm --filter e2e exec playwright install --with-deps chromium
 ```
-* **Estado:** 52 suites de pruebas ejecutadas de forma limpia (244 tests pasando), 0 fallados, 0 omitidos.
 
----
+## Arquitectura
 
-## Colaboradores y Referencias
+### Backend
 
-- [Tiendamia](https://tiendamia.com/ar/)
-- [Mercadolibre](https://www.mercadolibre.com.ar/)
-- [Doctor Ink](https://www.doctorink.com.ar/)
-- [Eldon](https://www.eldon.com.ar/)
+El backend combina un bootstrap CommonJS con módulos JavaScript y TypeScript cargados mediante `ts-node`. El flujo principal mantiene las dependencias orientadas hacia el dominio:
+
+```text
+HTTP /api
+  -> routes + middlewares
+  -> controllers
+  -> application use cases
+  -> domain entities and ports
+  -> Sequelize repository adapters
+  -> MySQL
+```
+
+- `domain/` contiene entidades, excepciones y contratos de repositorio o seguridad.
+- `application/` contiene DTOs y casos de uso para usuarios, productos, categorías, franquicias y carrito.
+- `infrastructure/` adapta Express, Sequelize, JWT/bcrypt, logging, validación y uploads.
+- `database/` contiene modelos Sequelize, seed, configuración y migraciones Umzug.
+
+El arranque ya no usa `sequelize.sync({ alter: true })` para evolucionar el esquema. Umzug controla las migraciones y el proceso falla antes de escuchar conexiones si detecta alguna pendiente.
+
+### Frontend
+
+Astro organiza las rutas en `frontend/src/pages/` y el comportamiento por dominio en `frontend/src/domains/`:
+
+- `auth/`: login, registro, sesión y adaptadores de API.
+- `cart/`: estado Nanostores, persistencia local, sincronización y componentes.
+- `products/`: catálogo, detalle y administración de productos.
+- `components/`, `layouts/` y `styles/`: interfaz compartida y sistema visual pixel art.
+
+El frontend consume `PUBLIC_API_URL`; en desarrollo usa `http://localhost:3031` como fallback.
+
+## Capacidades actuales
+
+- Catálogo y detalle de productos, categorías y franquicias.
+- Registro y login mediante JWT, con roles para operaciones administrativas.
+- Administración de productos con stock e imágenes, categorías, franquicias y usuarios.
+- Carrito local con Nanostores y sincronización por API para usuarios autenticados.
+- Páginas informativas, tema claro/oscuro y diseño responsive de estética PICO-8.
+- Seguridad HTTP con Helmet, CORS, rate limiting, validación y logging estructurado con identificadores de request.
+
+## Estrategia de pruebas
+
+| Capa | Herramienta | Qué cubre |
+|---|---|---|
+| Backend rápida | Jest, ts-jest, Supertest | Dominio, casos de uso, controladores, rutas, middlewares y adaptadores con dobles o aislamiento local. |
+| Backend con base real | Jest + MySQL | Repositorios, concurrencia y ciclo de migraciones contra bases desechables. |
+| Frontend | Vitest | Servicios de auth, carrito y productos, adaptadores y scripts del navegador. |
+| Flujo completo | Playwright | Navegación y escenarios integrados con servidores y MySQL reales. |
+
+El patrón de exclusión de Jest (`*.integration.test.(ts|js)`) separa la suite rápida de la integración real, así que `pnpm test` no depende de MySQL. El script `test:integration` selecciona explícitamente los archivos de integración JavaScript y TypeScript.
+
+## Configuración
+
+| Variable | Consumidor | Uso actual |
+|---|---|---|
+| `PORT` | Backend | Puerto HTTP; el ejemplo usa `3031`. |
+| `DB_USER` | Backend | Usuario MySQL. |
+| `DB_PASS` | Backend | Contraseña MySQL. |
+| `DB_NAME` | Backend | Base de desarrollo y producción; el ejemplo usa `mundo_3d_db`. |
+| `DB_HOST` | Backend | Host MySQL; el ejemplo usa `localhost`. |
+| `SESSION_SECRET` | Backend | Obligatoria en el entrypoint actual. |
+| `COOKIE_SECRET` | Backend | Está reservada en la plantilla; el código de runtime actual no la consulta. |
+| `JWT_SECRET` | Backend | Firma y verificación de JWT; obligatoria fuera de tests. |
+| `PUBLIC_API_URL` | Frontend | URL pública de la API; el ejemplo usa `http://localhost:3031`. |
+
+Nunca versionar `backend/.env` ni `frontend/.env`. Las normas de contribución y secretos están en [AGENTS.md](AGENTS.md).
+
+## Integración continua
+
+El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en pushes y pull requests dirigidos a `main`. Usa Node 22, `pnpm 11.0.9` y MySQL 8, y realiza en orden:
+
+1. Instalación con lockfile congelado.
+2. Aplicación de migraciones sobre una base nueva.
+3. Lint del workspace.
+4. Pruebas backend y frontend mediante `pnpm test`; con la selección actual, este paso también ejecuta la integración JavaScript de migraciones contra MySQL.
+5. Integración backend contra MySQL real.
+6. E2E Playwright en Chromium.
+
+En el estado actual, CI no ejecuta `pnpm type-check` ni `pnpm frontend:build` como pasos independientes. Esos comandos deben verificarse localmente cuando el cambio los afecte.
+
+## Estructura del repositorio
+
+```text
+Mundo-3D/
+|-- .github/workflows/ci.yml    # CI con MySQL y Playwright
+|-- backend/
+|   |-- index.js                # Entry point y secuencia de arranque
+|   |-- public/                 # Assets y uploads servidos por Express
+|   `-- src/
+|       |-- application/        # DTOs y casos de uso
+|       |-- database/           # Sequelize, Umzug, seed y configuración
+|       |-- domain/             # Entidades, puertos y excepciones
+|       `-- infrastructure/     # HTTP, repositorios, seguridad y logging
+|-- frontend/
+|   |-- public/                 # Assets estáticos
+|   `-- src/
+|       |-- domains/            # auth, cart y products
+|       |-- pages/              # Rutas Astro
+|       |-- components/         # UI compartida
+|       |-- layouts/            # Layout base
+|       `-- styles/             # Sistema visual
+|-- e2e/                        # Configuración y escenarios Playwright
+|-- openspec/                   # Especificaciones y cambios SDD
+|-- package.json                # Scripts del monorepo
+`-- pnpm-workspace.yaml         # backend, frontend y e2e
+```
+
+Las especificaciones aceptadas están en [`openspec/specs/`](openspec/specs/). Los cambios bajo `openspec/changes/` pueden ser propuestas o trabajo pendiente y no implican que una capacidad esté disponible en `main`.
+
+## Limitaciones actuales
+
+Estas son restricciones del comportamiento implementado, no una promesa de roadmap:
+
+- El JWT, los datos básicos de usuario y el carrito se almacenan en `localStorage`; no existe autenticación del frontend basada exclusivamente en cookies `httpOnly`.
+- El checkout actual vacía y sincroniza el carrito. No crea órdenes ni integra pagos o logística.
+- Los uploads se escriben en el filesystem local bajo `backend/public/img/`; no hay almacenamiento de objetos externo ni persistencia compartida entre instancias.
+- El carrito aplica cambios optimistas y sincroniza en segundo plano, pero no dispone de una lectura de reconciliación desde el backend. Un fallo de red sin respuesta puede dejar el estado local y remoto divergentes hasta otra mutación.
+- La preparación E2E recrea `mundo_3d_test`; nunca debe apuntarse esa ejecución a una base con datos que deban conservarse.
