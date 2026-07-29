@@ -26,7 +26,13 @@ DB_NAME=mundo_3d_db
 DB_HOST=localhost
 ```
 
-### 3. Levantar los Servidores
+### 3. Base de Datos Local (opcional)
+Si no tenés MySQL instalado, podés levantar una instancia local con Docker (mismo `mysql:8.0` que usa CI):
+```bash
+docker compose up -d
+```
+
+### 4. Levantar los Servidores
 Podés correr ambos entornos de desarrollo (backend y frontend) de la siguiente manera:
 ```bash
 # Iniciar la API REST Express (Servidor backend en el puerto 3000)
