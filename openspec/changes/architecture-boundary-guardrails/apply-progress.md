@@ -8,11 +8,13 @@
 
 ## TDD Cycle Evidence
 
-| Task | RED | GREEN | REFACTOR |
-|---|---|---|---|
-| 1.1 | `pnpm --filter backend exec jest src/architecture/__tests__/architecture-boundaries.test.js --runInBand` failed: missing `ast`; alias case then failed as `external` | 6/6 passed after parser/resolver implementation | Added generic alias, ImportEquals, static-template coverage; 6/6 passed |
-| 1.2 | Same task-1.1 test was written before all production modules | 6/6 passed | None needed; pure extraction/resolution functions |
-| 1.3 | N/A — verification-only task | 6/6 focused Jest passed | N/A |
+| Task | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|
+| 1.1 | N/A — first task of the change; no prior architecture suite existed | `pnpm --filter backend exec jest src/architecture/__tests__/architecture-boundaries.test.js --runInBand` failed: missing `ast`; alias case then failed as `external` | 6/6 passed after parser/resolver implementation | Generic alias, ImportEquals, and static-template forms exercise distinct extraction/resolution paths | Added generic alias, ImportEquals, static-template coverage; 6/6 passed |
+| 1.2 | 6/6 focused Jest passed (from 1.1) | Same task-1.1 test was written before all production modules | 6/6 passed | Same fixture suite proves extraction and resolution together; no case beyond 1.1's coverage was needed for these pure functions | None needed; pure extraction/resolution functions |
+| 1.3 | 6/6 focused Jest passed (from 1.2) | N/A — verification-only task | 6/6 focused Jest passed | N/A — verification-only task | N/A |
+
+*Safety Net / TRIANGULATE columns backfilled 2026-07-29 for format parity with PR 2/PR 3 tables below; no behavior, test, or evidence changed — see verify-report.md Issue 6.*
 
 ## Work Unit Evidence
 
