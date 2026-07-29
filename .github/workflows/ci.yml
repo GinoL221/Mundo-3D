@@ -7,7 +7,61 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  quality:
+    name: Quality (lint, types, fast tests, coverage, Astro)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.0.9
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check architecture boundaries
+        run: pnpm --filter backend architecture:check
+
+      - name: Run linter
+        run: pnpm run lint
+
+      - name: Run backend strict type-check
+        run: pnpm run type-check
+
+      - name: Run fast tests (DB-independent)
+        run: pnpm run test:fast
+
+      - name: Run backend coverage and generate risk map
+        run: pnpm run test:coverage
+
+      - name: Run frontend Astro check
+        run: pnpm run frontend:check
+
+      - name: Build frontend
+        run: pnpm run frontend:build
+
+      - name: Upload coverage and risk-map evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: |
+            backend/coverage/lcov.info
+            backend/coverage/coverage-summary.json
+            backend/coverage/risk-map.json
+          if-no-files-found: warn
+
+  integration:
+    name: Real-DB integration tests
     runs-on: ubuntu-latest
 
     services:
@@ -19,10 +73,6 @@ jobs:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
-    strategy:
-      matrix:
-        node-version: [22]
-
     steps:
       - uses: actions/checkout@v4
 
@@ -31,17 +81,14 @@ jobs:
         with:
           version: 11.0.9
 
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22
           cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Check architecture boundaries
-        run: pnpm --filter backend architecture:check
 
       - name: Verify migrations build schema on a fresh database
         run: |
@@ -53,18 +100,42 @@ jobs:
           DB_PASS: ""
           DB_NAME: mundo_3d_migrate_ci
 
-      - name: Run linter
-        run: pnpm run lint
-
-      - name: Run unit/integration tests
-        run: pnpm test
-
-      - name: Run backend real-DB concurrency integration tests
-        run: pnpm --filter backend test:integration
+      - name: Run backend real-DB integration tests
+        run: pnpm run test:integration
         env:
           DB_HOST: 127.0.0.1
           DB_USER: root
           DB_PASS: ""
+
+  e2e:
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.0.9
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Get Playwright version
         id: playwright-version
@@ -94,3 +165,31 @@ jobs:
           DB_USER: root
           DB_PASS: ""
           SESSION_SECRET: ci_test_secret_key_9876543210
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          if-no-files-found: ignore
+
+  verification-gate:
+    name: Verification gate
+    runs-on: ubuntu-latest
+    needs: [quality, integration, e2e]
+    if: always()
+
+    steps:
+      - name: Require every mandatory check to have succeeded
+        run: |
+          echo "quality: ${{ needs.quality.result }}"
+          echo "integration: ${{ needs.integration.result }}"
+          echo "e2e: ${{ needs.e2e.result }}"
+          if [ "${{ needs.quality.result }}" != "success" ] || \
+             [ "${{ needs.integration.result }}" != "success" ] || \
+             [ "${{ needs.e2e.result }}" != "success" ]; then
+            echo "One or more mandatory checks failed or could not run. Blocking integration." >&2
+            exit 1
+          fi
+          echo "All mandatory checks succeeded."
