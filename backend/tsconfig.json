@@ -10,7 +10,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["jest", "node"],
+    "types": ["jest", "node", "supertest"],
     "ignoreDeprecations": "6.0"
   },
   "include": ["src/**/*"],

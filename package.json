@@ -8,10 +8,15 @@
   "scripts": {
     "dev": "pnpm --filter backend dev",
     "test": "pnpm --filter \"!e2e\" test",
+    "test:fast": "pnpm --filter backend test:fast && pnpm --filter frontend test",
+    "test:integration": "pnpm --filter backend test:integration",
+    "test:coverage": "pnpm --filter backend test:coverage",
     "lint": "pnpm -r lint",
     "format": "prettier --write \"backend/src/**/*.{js,ts}\" \"frontend/src/**/*.{js,ts,astro}\"",
     "type-check": "pnpm --filter backend type-check",
     "frontend:dev": "pnpm --filter frontend dev",
+    "frontend:check": "pnpm --filter frontend check",
+    "frontend:test": "pnpm --filter frontend test",
     "frontend:build": "pnpm --filter frontend build",
     "test:e2e": "pnpm --filter e2e test --project=chromium",
     "test:e2e:all": "pnpm --filter e2e test"
