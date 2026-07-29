@@ -4,7 +4,25 @@
 
 ### Requirement: Static Imports Resolve Fail Closed
 
-The check MUST inspect static ESM import/export and CommonJS `require()`. Every local specifier MUST resolve; an unresolved local MUST block verification. External packages MUST be classified separately. Production, test, migration, tool, and configuration files MUST be distinct classes.
+The check MUST inspect static ESM import/export and CommonJS `require()`. Every local specifier MUST resolve; unresolved locals MUST block verification. Explicit local `.astro` specifiers MUST resolve only to exact existing files under the repository root; resolved targets are ordinary local edges and MUST NOT be parsed. Missing, outside-repository, non-local, directory, and ambiguous `.astro` references MUST remain unresolved; no broad fallback is permitted. External packages MUST be classified separately. Production, test, migration, tool, and configuration files MUST be distinct classes.
+
+#### Scenario: Existing Astro target resolves
+
+- GIVEN an in-scope file references an explicit local `.astro` specifier with an exact repository-root file
+- WHEN the standalone check resolves the edge
+- THEN it resolves as a local edge under the applicable rule
+
+#### Scenario: Astro target is opaque
+
+- GIVEN an explicit local `.astro` target exists
+- WHEN the edge is resolved
+- THEN it is an ordinary local edge and its internals are not parsed
+
+#### Scenario: Invalid Astro fails closed
+
+- GIVEN a `.astro` reference is missing, outside, non-local, a directory, or ambiguous
+- WHEN the standalone check resolves it
+- THEN it remains unresolved, blocks verification, with no broad fallback
 
 #### Scenario: Unresolved local blocks verification
 
