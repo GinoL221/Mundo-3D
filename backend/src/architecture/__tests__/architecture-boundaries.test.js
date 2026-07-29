@@ -87,12 +87,18 @@ describe('rules, allowlists, and diagnostics', () => {
   const edge = (source, target, kind = 'import') => ({ source: `${root}/${source}`, line: 2, column: 3, kind, specifier: './target', classification: 'local', resolvedTarget: `${root}/${target}` });
 
   test.each([
+    ['S1 domain entity', edge('backend/src/domain/entities/a.ts', 'backend/src/domain/entities/b.ts'), null],
     ['S1 domain contract', edge('backend/src/domain/entities/a.ts', 'backend/src/domain/ports/p.ts'), null],
+    ['S1 domain exception', edge('backend/src/domain/entities/a.ts', 'backend/src/domain/exceptions/e.ts'), null],
+    ['domain unapproved subtree', edge('backend/src/domain/entities/a.ts', 'backend/src/domain/services/s.ts'), 'backend.domain.inward'],
     ['S2 domain outward', edge('backend/src/domain/entities/a.ts', 'backend/src/infrastructure/x.ts'), 'backend.domain.inward'],
     ['domain local UI/unclassified', edge('backend/src/domain/entities/a.ts', 'backend/src/ui/x.ts'), 'backend.domain.inward'],
     ['S2 domain framework', { ...edge('backend/src/domain/a.ts', 'node_modules/express/index.js'), classification: 'external', specifier: 'express' }, 'backend.domain.inward'],
+    ['S3 application entity', edge('backend/src/application/use-cases/a.ts', 'backend/src/domain/entities/e.ts'), null],
     ['S3 application port', edge('backend/src/application/use-cases/a.ts', 'backend/src/domain/ports/p.ts'), null],
+    ['S3 application exception', edge('backend/src/application/use-cases/a.ts', 'backend/src/domain/exceptions/e.ts'), null],
     ['application DTO', edge('backend/src/application/use-cases/a.ts', 'backend/src/application/dtos/a.ts'), null],
+    ['application unapproved domain subtree', edge('backend/src/application/use-cases/a.ts', 'backend/src/domain/services/s.ts'), 'backend.application.contracts'],
     ['application arbitrary module', edge('backend/src/application/use-cases/a.ts', 'backend/src/application/use-cases/b.ts'), 'backend.application.contracts'],
     ['S4 application adapter', edge('backend/src/application/use-cases/a.ts', 'backend/src/infrastructure/repositories/r.ts'), 'backend.application.contracts'],
     ['S4 application I/O', { ...edge('backend/src/application/a.ts', 'node_modules/x/index.js'), classification: 'external', specifier: 'node:fs' }, 'backend.application.contracts'],

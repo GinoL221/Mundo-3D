@@ -104,3 +104,31 @@
 | File size / diff | `check.js` 42 lines; all architecture production sources 25/42/34/78 (≤250). `git diff --check` exit 0. Implementation diff: +81/-1 (82 changed lines); final candidate including task/progress artifacts: +111/-4 (115 changed lines), below the 190-line slice cap. Exact implementation paths: `check.js`, `backend/package.json`, CI workflow, architecture test. |
 | Runtime scope | `git status --short` includes untracked `check.js`; tracked `git diff --name-only` plus status show only checker/test/package/CI and SDD artifacts, with no product runtime source changed. |
 | Rollback | Revert `backend/tools/architecture/check.js`, its five S22–S25 tests, `backend/package.json` script, and CI step; then revert only parent task/progress marks. PR 1/2 checker behavior and all product runtime files remain intact. |
+
+## Focused Remediation — Domain Contract Subtrees (fix batch 1)
+
+- Scope: only the two independently confirmed evaluator gaps. Parent tasks remain 8/8 complete and unchanged.
+- Binding: lineage `review-dae010dbafb95cd7`, generation `1`, fix batch `1`, failed evidence revision `sha256:b17cdabda4d968733785b0235615f7817bbfd5ea53a5f6f0c769e32f5b7c316c`.
+- Evidence preimage: `sha256:2b29d1765ce6c7c5c3019692f1c60739889bbc61ed5b5e0b489a0aec90547e7a` (`apply-progress.md` before this append).
+
+{"schema":"gentle-ai.remediation-result/v1","status":"success","lineage_id":"review-dae010dbafb95cd7","generation":1,"fix_batch":1,"failed_evidence_revision":"sha256:b17cdabda4d968733785b0235615f7817bbfd5ea53a5f6f0c769e32f5b7c316c","review_binding_revision":"sha256:db1ffc38a129fcb60ac306cb0cf4269373993caee8fca63c7a5e56700e1e8eae","evidence_preimage_hash":"sha256:2b29d1765ce6c7c5c3019692f1c60739889bbc61ed5b5e0b489a0aec90547e7a"}
+{"schema":"gentle-ai.remediation-evidence/v1","lineage_id":"review-dae010dbafb95cd7","generation":1,"fix_batch":1,"failed_evidence_revision":"sha256:b17cdabda4d968733785b0235615f7817bbfd5ea53a5f6f0c769e32f5b7c316c","red":{"command":"pnpm --dir backend test src/architecture/__tests__/architecture-boundaries.test.js --runInBand","exit_code":1,"tests":{"failed":2,"passed":41,"total":43},"output_hash":"sha256:accbd942026ae5f180735c39c58a97d7f0ba5e66fb891a8154e6c0f778774bd9"},"green":{"command":"pnpm --dir backend test src/architecture/__tests__/architecture-boundaries.test.js --runInBand","exit_code":0,"tests":{"passed":43,"total":43},"output_hash":"sha256:0bb46c693ee12310771a1a63123d251751cb272d90cc8cf38597365986adcc82"}}
+
+### TDD Cycle Evidence
+
+| Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| Focused remediation batch 1 | `backend/src/architecture/__tests__/architecture-boundaries.test.js` | Unit | 37/37 passed | 2 expected failures: domain/application → `domain/services` | 43/43 passed after evaluator restriction | Allowed domain entities/ports/exceptions and application entities/ports/exceptions/DTOs; two forbidden service edges | None needed; shared contract predicate removes duplication |
+
+### Work Unit Evidence
+
+| Evidence | Result |
+|---|---|
+| Focused RED | `pnpm --dir backend test src/architecture/__tests__/architecture-boundaries.test.js --runInBand` — exit 1; 2 failed, 41 passed, 43 total; `sha256:accbd942026ae5f180735c39c58a97d7f0ba5e66fb891a8154e6c0f778774bd9` |
+| Focused GREEN | same command — exit 0; 1 suite, 43/43 passed; `sha256:0bb46c693ee12310771a1a63123d251751cb272d90cc8cf38597365986adcc82` |
+| Runtime harness | `pnpm --dir backend architecture:check` — exit 0, zero diagnostics; `sha256:4acb2a2974ee2ae578426173f72717a47d4b1c43b37fca0e6da1e6304f6534d3` |
+| Narrow quality | ESLint changed test/engine — exit 0; `sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`. Jest engine coverage — 43/43, 100% lines, 94.64% branches; `sha256:4f1882a47014666e0f556c3f1ed94e74f6dae84c39a575d2a17bdb340ccd6353` |
+| Frontend build | `pnpm run frontend:build` — exit 0; 15 pages; `sha256:5d144f0299a94dc3279bfd637180700352e8a3655ecec967e805a70598251de8` |
+| Diff check | `git diff --check` — exit 0; `sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| Cleanup/process | Temp fixture helper retains `finally` recursive cleanup; no background process was started by this work unit. |
+| Rollback | Revert only the six test additions and `isDomainContract` evaluator restriction; this restores prior behavior without touching parent tasks, CLI/CI, or product runtime files. |
