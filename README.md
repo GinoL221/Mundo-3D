@@ -87,11 +87,14 @@ Todos los comandos de esta tabla se ejecutan desde la raíz.
 | Backend en desarrollo | `pnpm dev` | Express con Nodemon; requiere MySQL, entorno backend y migraciones al día. |
 | Frontend en desarrollo | `pnpm frontend:dev` | Astro en el puerto `4321`. |
 | Lint | `pnpm lint` | Ejecuta los scripts disponibles en el workspace; actualmente ESLint sobre `backend/src/`. |
-| Type-check | `pnpm type-check` | TypeScript del backend. CI no ejecuta este comando de forma independiente. |
+| Type-check | `pnpm type-check` | TypeScript estricto del backend. CI lo ejecuta como paso obligatorio del job `quality`. |
 | Pruebas por defecto | `pnpm test` | Jest backend y Vitest frontend; excluye E2E e integración real, independiente de MySQL. |
-| Jest backend | `pnpm --filter backend test` | Excluye `*.integration.test.(ts\|js)`; independiente de MySQL. |
-| Vitest frontend | `pnpm --filter frontend test` | Servicios, adaptadores y scripts del frontend. |
-| Integración MySQL | `pnpm --filter backend test:integration` | Requiere MySQL local; usa bases de prueba desechables, incluida `mundo_3d_migrate_scratch`. |
+| Pruebas rápidas (contrato CI) | `pnpm test:fast` | Equivalente explícito al job `quality`: Jest backend (`test:fast`) + Vitest frontend, sin MySQL. |
+| Jest backend | `pnpm --filter backend test` (alias: `pnpm --filter backend test:fast`) | Excluye `*.integration.test.(ts\|js)`; independiente de MySQL. |
+| Vitest frontend | `pnpm --filter frontend test` (alias: `pnpm frontend:test`) | Servicios, adaptadores y scripts del frontend. |
+| Cobertura backend + mapa de riesgo | `pnpm test:coverage` | Jest con cobertura JS+TS (`backend/src/**/*.{js,ts}`) y guardas globales del 50%; genera `backend/coverage/{lcov.info,coverage-summary.json,risk-map.json}` clasificando gaps Tier 0 (seguridad, migraciones, carrito, stock). |
+| Astro check | `pnpm frontend:check` | `astro check` (diagnóstico TypeScript/Astro real); falla con código distinto de cero ante errores. |
+| Integración MySQL | `pnpm --filter backend test:integration` (alias raíz: `pnpm test:integration`) | Requiere MySQL local; usa bases de prueba desechables, incluida `mundo_3d_migrate_scratch`. |
 | Preparar base E2E | `pnpm --filter backend db:test:prepare` | **Recrea con `force: true` la base fija `mundo_3d_test` y carga fixtures.** |
 | E2E Chromium | `pnpm test:e2e` | Playwright levanta backend `3032` y frontend `4322`; recrea `mundo_3d_test`. |
 | Todos los proyectos E2E configurados | `pnpm test:e2e:all` | Actualmente la configuración solo declara Chromium. |
@@ -160,7 +163,9 @@ El frontend consume `PUBLIC_API_URL`; en desarrollo usa `http://localhost:3031` 
 | Frontend | Vitest | Servicios de auth, carrito y productos, adaptadores y scripts del navegador. |
 | Flujo completo | Playwright | Navegación y escenarios integrados con servidores y MySQL reales. |
 
-El patrón de exclusión de Jest (`*.integration.test.(ts|js)`) separa la suite rápida de la integración real, así que `pnpm test` no depende de MySQL. El script `test:integration` selecciona explícitamente los archivos de integración JavaScript y TypeScript.
+El patrón de exclusión de Jest (`*.integration.test.(ts|js)`) separa la suite rápida de la integración real, así que `pnpm test`/`pnpm test:fast` no dependen de MySQL. El script `test:integration` selecciona explícitamente los archivos de integración JavaScript y TypeScript.
+
+`pnpm test:coverage` mide producción JS+TS bajo `backend/src/` (excluye tests, tipos, migraciones declarativas y scripts CLI de base de datos que requieren infraestructura viva) y mantiene sin cambios las guardas globales del 50% en branches/functions/lines/statements hasta que una base medida y revisada justifique modificarlas. `backend/scripts/generate-coverage-risk-map.js` clasifica cada archivo por riesgo — Tier 0 cubre seguridad, migraciones, carrito y stock — y reporta honestamente los gaps preexistentes en `backend/coverage/risk-map.json`; un gap Tier 0 visible no se declara resuelto, se prioriza como seguimiento.
 
 ## Configuración
 
@@ -180,16 +185,16 @@ Nunca versionar `backend/.env` ni `frontend/.env`. Las normas de contribución y
 
 ## Integración continua
 
-El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en pushes y pull requests dirigidos a `main`. Usa Node 22, `pnpm 11.0.9` y MySQL 8, y realiza en orden:
+El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en pushes y pull requests dirigidos a `main`. Usa Node 22, `pnpm 11.0.9` y MySQL 8, con cuatro jobs obligatorios y política fail-closed (ningún paso usa `continue-on-error`; un check que falla o no puede ejecutarse bloquea la integración, nunca se trata como éxito):
 
-1. Instalación con lockfile congelado.
-2. Aplicación de migraciones sobre una base nueva.
-3. Lint del workspace.
-4. Pruebas backend y frontend mediante `pnpm test`; con la selección actual, este paso también ejecuta la integración JavaScript de migraciones contra MySQL.
-5. Integración backend contra MySQL real.
-6. E2E Playwright en Chromium.
+| Job | Contenido | Requiere MySQL |
+|---|---|---|
+| `quality` | Instalación, `architecture:check`, lint, `type-check`, `test:fast`, `test:coverage` (sube `backend/coverage/{lcov.info,coverage-summary.json,risk-map.json}` como artefacto), `frontend:check`, `frontend:build`. | No |
+| `integration` | Migraciones sobre una base nueva (`mundo_3d_migrate_ci`) y `test:integration` real contra MySQL. | Sí |
+| `e2e` | Instalación/cache de navegadores Playwright y `test:e2e` (Chromium); sube el reporte Playwright como artefacto. | Sí |
+| `verification-gate` | Se ejecuta siempre (`if: always()`) y solo pasa si `quality`, `integration` y `e2e` resultaron en `success`; cualquier fallo o cancelación bloquea. | — |
 
-En el estado actual, CI no ejecuta `pnpm type-check` ni `pnpm frontend:build` como pasos independientes. Esos comandos deben verificarse localmente cuando el cambio los afecte.
+Los tres jobs de verificación corren en paralelo; `verification-gate` es el único check pensado para exigirse en la protección de la rama `main` (decisión pendiente de autorización explícita del mantenedor fuera de este repositorio — ver `openspec/changes/verification-baseline-and-ci-gates/`).
 
 ## Estructura del repositorio
 

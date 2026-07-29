@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { initializeCartBadge } from './cartBadge';
 import { initializeCrtToggle } from './crtToggle';
 import { initializeSessionUI } from './sessionUI';
@@ -68,9 +68,13 @@ class FakeDocument {
 function createStorage() {
   const values = new Map<string, string>();
   return {
-    getItem: vi.fn((key: string) => values.get(key) ?? null),
-    setItem: vi.fn((key: string, value: string) => values.set(key, value)),
-    removeItem: vi.fn((key: string) => values.delete(key)),
+    getItem: vi.fn((key: string): string | null => values.get(key) ?? null),
+    setItem: vi.fn((key: string, value: string): void => {
+      values.set(key, value);
+    }),
+    removeItem: vi.fn((key: string): void => {
+      values.delete(key);
+    }),
   };
 }
 
@@ -122,7 +126,11 @@ describe('Header browser modules', () => {
     storage.setItem('token', 'token');
     storage.setItem('user', JSON.stringify({ firstName: 'Ada', idRole: 1, image: 'ada.png' }));
 
-    initializeSessionUI(document as unknown as Document, window as unknown as Window, storage);
+    initializeSessionUI(
+      document as unknown as Document,
+      window as unknown as Window,
+      storage as unknown as Storage,
+    );
 
     expect(document.elements.get('guest')!.style.display).toBe('none');
     expect(document.elements.get('user')!.style.display).toBe('block');
@@ -150,7 +158,11 @@ describe('Header browser modules', () => {
     storage.setItem('token', 'token');
     storage.setItem('user', JSON.stringify({ firstName: 'Ada', idRole: 1 }));
 
-    initializeSessionUI(document as unknown as Document, window as unknown as Window, storage);
+    initializeSessionUI(
+      document as unknown as Document,
+      window as unknown as Window,
+      storage as unknown as Storage,
+    );
 
     expect(document.elements.get('product-link')!.href).toBe('/products');
     expect(document.elements.get('profile-link')!.href).toBe('/profile');
@@ -168,12 +180,18 @@ describe('Header browser modules', () => {
     storage.setItem('token', 'token');
     storage.setItem('user', '{bad');
     const order: string[] = [];
-    storage.removeItem.mockImplementation((key: string) => order.push(`remove:${key}`));
+    storage.removeItem.mockImplementation((key: string) => {
+      order.push(`remove:${key}`);
+    });
     storage.setItem.mockImplementation((key: string, value: string) => {
       if (key === 'cart' && value === '[]') order.push('clear-cart');
     });
 
-    initializeSessionUI(document as unknown as Document, window as unknown as Window, storage);
+    initializeSessionUI(
+      document as unknown as Document,
+      window as unknown as Window,
+      storage as unknown as Storage,
+    );
     expect(storage.removeItem).toHaveBeenCalledWith('token');
     expect(storage.removeItem).toHaveBeenCalledWith('user');
 
@@ -185,11 +203,17 @@ describe('Header browser modules', () => {
   it('normalizes and persists color theme, including the dark default', () => {
     const fixture = createFixture();
     fixture.storage.setItem('theme', 'invalid');
-    initializeThemeToggle(fixture.document as unknown as Document, fixture.storage);
+    initializeThemeToggle(
+      fixture.document as unknown as Document,
+      fixture.storage as unknown as Storage,
+    );
     expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
     expect(fixture.document.elements.get('theme-icon')!.textContent).toBe('🌙');
 
-    const cleanup = initializeThemeToggle(fixture.document as unknown as Document, fixture.storage);
+    const cleanup = initializeThemeToggle(
+      fixture.document as unknown as Document,
+      fixture.storage as unknown as Storage,
+    );
     expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
     fixture.document.elements.get('theme-toggle')!.click();
     expect(fixture.storage.setItem).toHaveBeenCalledWith('theme', 'light');
@@ -199,13 +223,19 @@ describe('Header browser modules', () => {
 
   it('hydrates an absent light theme and persists the toggle back to dark', () => {
     const absentFixture = createFixture();
-    initializeThemeToggle(absentFixture.document as unknown as Document, absentFixture.storage);
+    initializeThemeToggle(
+      absentFixture.document as unknown as Document,
+      absentFixture.storage as unknown as Storage,
+    );
     expect(absentFixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
     expect(absentFixture.document.elements.get('theme-icon')!.textContent).toBe('🌙');
 
     const lightFixture = createFixture();
     lightFixture.storage.setItem('theme', 'light');
-    initializeThemeToggle(lightFixture.document as unknown as Document, lightFixture.storage);
+    initializeThemeToggle(
+      lightFixture.document as unknown as Document,
+      lightFixture.storage as unknown as Storage,
+    );
     expect(lightFixture.document.documentElement.getAttribute('data-theme')).toBe('light');
     expect(lightFixture.document.elements.get('theme-icon')!.textContent).toBe('☀️');
 
@@ -218,21 +248,30 @@ describe('Header browser modules', () => {
   it('persists CRT toggles and cleans up duplicate initialization', () => {
     const fixture = createFixture();
     fixture.storage.setItem('retro-theme-preference', 'disabled');
-    const cleanup = initializeCrtToggle(fixture.document as unknown as Document, fixture.storage);
+    const cleanup = initializeCrtToggle(
+      fixture.document as unknown as Document,
+      fixture.storage as unknown as Storage,
+    );
     expect(fixture.document.documentElement.classList.contains('crt-theme-active')).toBe(false);
     expect(fixture.document.elements.get('crt-icon')!.textContent).toBe('🔌');
     fixture.document.elements.get('crt-toggle')!.click();
     expect(fixture.storage.setItem).toHaveBeenCalledWith('retro-theme-preference', 'enabled');
-    expect(initializeCrtToggle(fixture.document as unknown as Document, fixture.storage)).toBe(
-      cleanup,
-    );
+    expect(
+      initializeCrtToggle(
+        fixture.document as unknown as Document,
+        fixture.storage as unknown as Storage,
+      ),
+    ).toBe(cleanup);
     cleanup();
     cleanup();
   });
 
   it('starts CRT enabled and persists the disabled state when toggled off', () => {
     const fixture = createFixture();
-    const cleanup = initializeCrtToggle(fixture.document as unknown as Document, fixture.storage);
+    const cleanup = initializeCrtToggle(
+      fixture.document as unknown as Document,
+      fixture.storage as unknown as Storage,
+    );
 
     expect(fixture.document.documentElement.classList.contains('crt-theme-active')).toBe(true);
     expect(fixture.document.elements.get('crt-icon')!.textContent).toBe('📺');

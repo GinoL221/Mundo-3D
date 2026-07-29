@@ -17,3 +17,20 @@ allowBuilds:
   esbuild: true
   sharp: true
   unrs-resolver: true
+
+# Steer @astrojs/check's transitive chokidar@^4.0.3 to the already-trusted
+# 3.6.0 already used elsewhere in this lockfile, instead of weakening
+# trustPolicy — chokidar@4.0.3 lost provenance attestation (possible
+# takeover) and is blocked by the no-downgrade policy above.
+overrides:
+  chokidar: 3.6.0
+
+# `astro check` dynamically `import()`s "typescript" from astro's own
+# module scope, not the caller's cwd; astro declares no peerDependency on
+# typescript, so pnpm's strict/isolated node_modules leaves it
+# unresolvable even though typescript is a direct devDependency of every
+# workspace project. Hoisting it to the root node_modules keeps `astro
+# check` working. No effect on trustPolicy/audit/script-blocking hardening
+# above.
+publicHoistPattern:
+  - typescript
