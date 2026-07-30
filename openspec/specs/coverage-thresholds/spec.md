@@ -4,32 +4,46 @@
 
 ### Requirement: Jest Coverage Collection Configuration
 
-The system SHALL configure Jest to collect coverage from all source files under `backend/src/`, excluding `backend/src/database/seed.js` and `backend/src/app.js`.
+The system SHALL measure production JavaScript and TypeScript under `backend/src/`, explicitly classify and report exclusions, and retain the existing 50% global guardrails for branches, functions, lines, and statements until a measured, reviewed baseline justifies a change. Guardrails MUST NOT increase before that baseline.
 
-The `backend/jest.config.js` MUST include:
-- `collectCoverageFrom`: array of glob patterns targeting `src/**/*.js` (relative to configuration root) with negative patterns for `src/database/seed.js` and `src/app.js`
-- `coverageDirectory`: set to `coverage`
-- `coverageThresholds`: global thresholds set to 50% for branches, functions, lines, and statements
+#### Scenario: Source scope is reported
 
-#### Scenario: Coverage is collected from source files only
+- GIVEN coverage is enabled
+- WHEN the baseline is generated
+- THEN production JavaScript and TypeScript under `backend/src/` are included, and exclusions are reported
 
-- GIVEN the Jest configuration is applied
-- WHEN `pnpm --filter backend test` is run with coverage enabled
-- THEN Jest SHALL collect coverage from files matching `backend/src/**/*.js`
-- AND SHALL exclude `backend/src/database/seed.js` and `backend/src/app.js` from coverage collection
+#### Scenario: Guardrail fails below value
 
-#### Scenario: Build fails below 50% coverage
+- GIVEN a guardrail is not met
+- WHEN the coverage check runs
+- THEN it returns non-zero and mandatory verification fails
 
-- GIVEN the global coverage thresholds are set to 50%
-- WHEN any coverage metric (branches, functions, lines, statements) falls below 50%
-- THEN Jest SHALL exit with a non-zero status code
-- AND the CI pipeline MUST fail
+#### Scenario: Guardrail passes at value
 
-#### Scenario: Build passes at or above 50% coverage
+- GIVEN all guardrails are met
+- WHEN the coverage check runs
+- THEN it returns zero without requiring global 100% coverage
 
-- GIVEN the global coverage thresholds are set to 50%
-- WHEN all coverage metrics are at or above 50%
-- THEN Jest SHALL exit with status code 0
+### Requirement: Reproducible Risk Baseline
+
+The baseline MUST be reproducible from the same revision, dependencies, classification, and prerequisites. Uncovered behavior MUST be risk-classified; Tier 0 security, integrity, cart, stock, and migration gaps MUST be visible and prioritized.
+
+#### Scenario: Baseline is honest
+
+- GIVEN the baseline repeats or a pre-existing Tier 0 gap is found
+- WHEN evidence is reviewed
+- THEN classification is comparable; the gap is visible, not claimed fixed, and blocks only a declared mandatory check or current-change criterion
+- AND remediation is assigned to a bounded follow-up unless explicitly included here
+
+### Requirement: Meaningful High-Coverage Policy
+
+High coverage MUST mean executable contracts at the cheapest useful layer, with stronger boundary evidence where infrastructure changes outcomes. A percentage alone MUST NOT define correctness.
+
+#### Scenario: Behavior evidence leads
+
+- GIVEN a behavior has an appropriate unit, boundary, integration, or E2E contract
+- WHEN coverage quality is reviewed
+- THEN contract evidence and risk classification are considered before percentage targets
 
 ### Requirement: Coverage Directory Output
 
