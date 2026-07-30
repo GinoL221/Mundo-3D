@@ -23,27 +23,27 @@ stack:
   file_upload: multer
   validation: express-validator
   state_management: Nanostores (frontend)
-  package_manager: "pnpm 11.0.9 (workspaces: backend, frontend, e2e)"
+  package_manager: 'pnpm 11.0.9 (workspaces: backend, frontend, e2e)'
 
 architecture:
   style: Hexagonal / Clean Architecture
   layers:
     domain:
-      entities: backend/src/domain/entities/        # Product, User, Category, Franchise, ShoppingCart, RememberToken
-      ports: backend/src/domain/ports/              # IRepository interfaces, IPasswordHasher, ITokenHasher
-      exceptions: backend/src/domain/exceptions/    # Domain-specific exceptions
+      entities: backend/src/domain/entities/ # Product, User, Category, Franchise, ShoppingCart, RememberToken
+      ports: backend/src/domain/ports/ # IRepository interfaces, IPasswordHasher, ITokenHasher
+      exceptions: backend/src/domain/exceptions/ # Domain-specific exceptions
     application:
       use_cases: backend/src/application/use-cases/ # 16 use cases
-      dtos: backend/src/application/dtos/           # DTOs per aggregate
+      dtos: backend/src/application/dtos/ # DTOs per aggregate
     infrastructure:
-      controllers: backend/src/infrastructure/controllers/  # API controllers
+      controllers: backend/src/infrastructure/controllers/ # API controllers
       repositories: backend/src/infrastructure/repositories/ # Sequelize implementations
-      routes: backend/src/infrastructure/routes/api/        # Express routers
-      middlewares: backend/src/infrastructure/middlewares/  # auth, csrf, validators, etc.
-      security: backend/src/infrastructure/security/        # Bcrypt, Sha256 adapters
-      logging: backend/src/infrastructure/logging/          # Pino logger
+      routes: backend/src/infrastructure/routes/api/ # Express routers
+      middlewares: backend/src/infrastructure/middlewares/ # auth, csrf, validators, etc.
+      security: backend/src/infrastructure/security/ # Bcrypt, Sha256 adapters
+      logging: backend/src/infrastructure/logging/ # Pino logger
     database:
-      models: backend/src/database/models/          # Sequelize model definitions
+      models: backend/src/database/models/ # Sequelize model definitions
       config: backend/src/database/config/
       seeds: backend/src/database/seed.js
     frontend:
@@ -51,7 +51,7 @@ architecture:
       components: frontend/src/components/
       pages: frontend/src/pages/
       layouts: frontend/src/layouts/
-      store: frontend/src/store/
+      domains: frontend/src/domains/
       styles: frontend/src/styles/
 
 structure:
@@ -75,18 +75,18 @@ testing:
   strict_tdd: true
   runner: Jest 30.x (backend), Vitest 4.x (frontend)
   coverage_tool: Jest built-in (backend; JS+TS under backend/src/)
-  test_command: "pnpm test"
-  fast_command: "pnpm test:fast"
-  integration_command: "pnpm test:integration"
-  coverage_command: "pnpm test:coverage"
-  frontend_check_command: "pnpm frontend:check"
+  test_command: 'pnpm test'
+  fast_command: 'pnpm test:fast'
+  integration_command: 'pnpm test:integration'
+  coverage_command: 'pnpm test:coverage'
+  frontend_check_command: 'pnpm frontend:check'
   test_layers:
     - unit: domain entities, use cases, DTOs
     - integration: repositories (Sequelize), controllers, middlewares
-    - "real-db integration: *.integration.test.(ts|js), isolated from the fast suite via jest.config.js testPathIgnorePatterns; runs only via test:integration"
+    - 'real-db integration: *.integration.test.(ts|js), isolated from the fast suite via jest.config.js testPathIgnorePatterns; runs only via test:integration'
     - e2e: API routes via supertest; full flows via Playwright
   test_count: 50+ test files
-  coverage_scope: "backend/src/**/*.{js,ts}, excluding tests, .d.ts, __tests__/, database/migrations/, and live-DB-only CLI scripts (reset-db.js, test-prepare.js)"
+  coverage_scope: 'backend/src/**/*.{js,ts}, excluding tests, .d.ts, __tests__/, database/migrations/, and live-DB-only CLI scripts (reset-db.js, test-prepare.js)'
   coverage_threshold:
     branches: 50
     functions: 50
@@ -97,12 +97,12 @@ testing:
     js: babel-jest
     ts: ts-jest (isolatedModules)
   test_match:
-    - "**/src/**/*.test.js"
-    - "**/src/**/*.test.ts"
+    - '**/src/**/*.test.js'
+    - '**/src/**/*.test.ts'
 
 quality:
   linter: ESLint 10.x (flat config)
-  formatter: "Prettier 3.x (singleQuote, trailingComma: all, printWidth: 100)"
+  formatter: 'Prettier 3.x (singleQuote, trailingComma: all, printWidth: 100)'
   type_checker: TypeScript 6.x (strict mode, target ES2022)
   ci: >
     GitHub Actions, fail-closed. Jobs: quality (lint, type-check, test:fast,
