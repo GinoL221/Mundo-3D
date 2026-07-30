@@ -18,6 +18,7 @@ if (!process.env.JEST_WORKER_ID) {
 const requestIdMiddleware = require('./infrastructure/middlewares/requestId').default;
 const requestLoggerMiddleware = require('./infrastructure/middlewares/requestLogger').default;
 const apiRouter = require('./infrastructure/routes/api/index').default;
+const healthRouter = require('./infrastructure/routes/health').default;
 
 const server = express();
 
@@ -28,6 +29,10 @@ server.use(requestIdMiddleware);
 
 // 1. Security headers (first)
 server.use(helmet());
+
+// 1.5 Health checks (path-prefixed only — never a global gate; must not spam
+// request logs or go through body parsing)
+server.use('/health', healthRouter);
 
 // 2. CORS headers
 server.use(
