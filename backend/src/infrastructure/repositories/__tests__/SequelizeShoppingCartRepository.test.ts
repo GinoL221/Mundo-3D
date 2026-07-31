@@ -202,5 +202,38 @@ describe('SequelizeShoppingCartRepository', () => {
       expect(mockTx.rollback).toHaveBeenCalled();
       expect(mockTx.commit).not.toHaveBeenCalled();
     });
+
+    it('should write a quantity-99 item that reads back cleanly through findByUserId (split-brain regression)', async () => {
+      const userId = 5;
+      const items = [{ productId: 10, quantity: 99, unitPrice: 15 }];
+
+      (db.ShoppingCart.destroy as jest.Mock).mockResolvedValue(1);
+      (db.ShoppingCart.create as jest.Mock).mockResolvedValue({});
+
+      await repository.syncCart(userId, items);
+
+      const createdRow = (db.ShoppingCart.create as jest.Mock).mock.calls[0][0];
+
+      const roundTrippedInstance = {
+        idCart: 1,
+        idUser: userId,
+        idProduct: createdRow.idProduct,
+        quantity: createdRow.quantity,
+        unitPrice: String(createdRow.unitPrice),
+        cartStatus: createdRow.cartStatus,
+        product: null,
+      };
+
+      jest
+        .mocked(db.ShoppingCart.findAll)
+        .mockResolvedValue([roundTrippedInstance] as unknown as ShoppingCartInstance[]);
+
+      // If toEntity() threw (e.g. a stale ceiling rejecting a valid quantity-99
+      // row on read), this await would reject and fail the test.
+      const result = await repository.findByUserId(userId);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].quantity).toBe(99);
+    });
   });
 });

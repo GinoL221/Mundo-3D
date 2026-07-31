@@ -1,6 +1,7 @@
 import { body, validationResult } from 'express-validator';
 import { Request, Response, NextFunction } from 'express';
 import { CartValidationException } from '../../../domain/exceptions/CartValidationException';
+import { MAX_CART_ITEM_QUANTITY } from '../../../domain/entities/ShoppingCart';
 
 export const validationsCart = [
   // `items` may be an empty array: PUT /api/cart performs a full-replace sync
@@ -14,8 +15,8 @@ export const validationsCart = [
     .isInt({ min: 1 })
     .withMessage('productId must be an integer >= 1'),
   body('items.*.quantity')
-    .isInt({ min: 1, max: 99 })
-    .withMessage('quantity must be an integer between 1 and 99')
+    .isInt({ min: 1, max: MAX_CART_ITEM_QUANTITY })
+    .withMessage(`quantity must be an integer between 1 and ${MAX_CART_ITEM_QUANTITY}`)
 ];
 
 export const cartSyncValidation = [

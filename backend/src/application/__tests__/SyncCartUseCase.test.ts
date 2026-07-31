@@ -2,6 +2,7 @@ import { SyncCartUseCase } from '../use-cases/SyncCartUseCase';
 import { ShoppingCartRepositoryPort } from '../../domain/ports/ShoppingCartRepositoryPort';
 import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
 import { Product } from '../../domain/entities/Product';
+import { CartValidationException } from '../../domain/exceptions/CartValidationException';
 
 describe('SyncCartUseCase', () => {
   let cartRepoMock: jest.Mocked<ShoppingCartRepositoryPort>;
@@ -63,5 +64,42 @@ describe('SyncCartUseCase', () => {
 
     expect(productRepoMock.findById).toHaveBeenCalledWith(999);
     expect(cartRepoMock.syncCart).toHaveBeenCalledWith(5, []);
+  });
+
+  it('should merge duplicate productId entries into a single summed row before persisting', async () => {
+    const productA = new Product(10, 'Product A', 100.0, 'Desc A', 'imgA.png', 1, 2);
+    productRepoMock.findById.mockResolvedValue(productA);
+
+    const items = [
+      { productId: 10, quantity: 20 },
+      { productId: 10, quantity: 15 },
+    ];
+
+    await useCase.execute(5, items);
+
+    expect(productRepoMock.findById).toHaveBeenCalledTimes(1);
+    expect(productRepoMock.findById).toHaveBeenCalledWith(10);
+    expect(cartRepoMock.syncCart).toHaveBeenCalledWith(5, [
+      { productId: 10, quantity: 35, unitPrice: 100.0 },
+    ]);
+  });
+
+  it('should reject with CartValidationException when merged duplicate quantity exceeds the ceiling, without calling the repository', async () => {
+    const items = [
+      { productId: 10, quantity: 60 },
+      { productId: 10, quantity: 60 },
+    ];
+
+    await expect(useCase.execute(5, items)).rejects.toThrow(CartValidationException);
+
+    expect(cartRepoMock.syncCart).not.toHaveBeenCalled();
+  });
+
+  it('should reject with CartValidationException when a single non-duplicate item quantity exceeds the ceiling, without calling the repository', async () => {
+    const items = [{ productId: 10, quantity: 100 }];
+
+    await expect(useCase.execute(5, items)).rejects.toThrow(CartValidationException);
+
+    expect(cartRepoMock.syncCart).not.toHaveBeenCalled();
   });
 });
