@@ -157,3 +157,20 @@ e2e/.auth/
 
 # Local AI tool state
 .pi/
+
+# Local development tool configuration and state
+.codegraph/
+.mcp.json
+mcp.json
+opencode.json
+.zed/
+**/.claude/scheduled_tasks.lock
+**/.claude/scheduled_tasks.json
+**/.claude/routines/.state/
+**/.claude/worktrees/
+**/.claude/checkpoints/
+**/.claude/mailbox/
+**/.claude/agent-registry.json
+**/.claude/agent-memory-local
+**/.claude/first-run
+**/.claude/assistant-daemon-state.json
