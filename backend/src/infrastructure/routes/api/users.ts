@@ -58,6 +58,7 @@ router.post(
   registerLimiter,
   uploadImgUser.single('image'),
   validationsUsers,
+  handleValidationErrors,
   controller.register
 );
 

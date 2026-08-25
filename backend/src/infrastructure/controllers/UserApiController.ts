@@ -6,8 +6,8 @@ import { GetUserByIdUseCase } from '../../application/use-cases/GetUserByIdUseCa
 import { RegisterUserUseCase } from '../../application/use-cases/RegisterUserUseCase';
 import { InvalidCredentialsException } from '../../domain/exceptions/InvalidCredentialsException';
 import { UserAlreadyExistsException } from '../../domain/exceptions/UserAlreadyExistsException';
-import { validationResult } from 'express-validator';
 import { getJwtSecret } from '../security/JwtSecret';
+import { cleanupUploadedFile } from '../utils/cleanupUploadedFile';
 
 export class UserApiController {
   constructor(
@@ -57,16 +57,14 @@ export class UserApiController {
     }
   };
 
-  register = async (req: Request & { file?: { filename: string } }, res: Response, next: NextFunction): Promise<void> => {
+  register = async (
+    req: Request & { file?: { filename: string; path?: string } },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       if (!this.registerUserUseCase) {
         throw new Error('RegisterUserUseCase not injected');
-      }
-
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        res.status(400).json({ errors: errors.mapped() });
-        return;
       }
 
       if (!req.file) {
@@ -108,6 +106,9 @@ export class UserApiController {
       });
     } catch (error) {
       if (error instanceof UserAlreadyExistsException) {
+        if (req.file?.path) {
+          cleanupUploadedFile(req.file.path);
+        }
         res.status(400).json({ error: error.message });
         return;
       }

@@ -6,10 +6,10 @@ import { ListUsersUseCase } from '../../../application/use-cases/ListUsersUseCas
 import { GetUserByIdUseCase } from '../../../application/use-cases/GetUserByIdUseCase';
 import { RegisterUserUseCase } from '../../../application/use-cases/RegisterUserUseCase';
 import { UserAlreadyExistsException } from '../../../domain/exceptions/UserAlreadyExistsException';
-import { validationResult } from 'express-validator';
+import { cleanupUploadedFile } from '../../utils/cleanupUploadedFile';
 
-jest.mock('express-validator', () => ({
-  validationResult: jest.fn(),
+jest.mock('../../utils/cleanupUploadedFile', () => ({
+  cleanupUploadedFile: jest.fn(),
 }));
 
 describe('UserApiController', () => {
@@ -54,10 +54,7 @@ describe('UserApiController', () => {
     };
     next = jest.fn();
 
-    (validationResult as unknown as jest.Mock).mockReturnValue({
-      isEmpty: () => true,
-      mapped: () => ({}),
-    });
+    (cleanupUploadedFile as jest.Mock).mockClear();
   });
 
   describe('register', () => {
@@ -100,33 +97,14 @@ describe('UserApiController', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('returns 400 Bad Request with validation errors if inputs fail validation', async () => {
-      (validationResult as unknown as jest.Mock).mockReturnValue({
-        isEmpty: () => false,
-        mapped: () => ({
-          email: { msg: 'Email inválido' },
-        }),
-      });
-
-      await (controller as any).register(req as Request, res as Response, next);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        errors: {
-          email: { msg: 'Email inválido' },
-        },
-      });
-      expect(mockRegisterUserUseCase.execute).not.toHaveBeenCalled();
-    });
-
-    it('returns 400 if user email is already registered', async () => {
+    it('returns 400 if user email is already registered and removes the orphaned upload', async () => {
       req.body = {
         firstName: 'John',
         lastName: 'Doe',
         email: 'john@example.com',
         password: 'password123',
       };
-      req.file = { filename: 'avatar.png' } as any;
+      req.file = { filename: 'avatar.png', path: '/uploads/users/avatar.png' } as any;
 
       mockRegisterUserUseCase.execute.mockRejectedValue(
         new UserAlreadyExistsException('Este email ya está registrado')
@@ -138,6 +116,7 @@ describe('UserApiController', () => {
       expect(res.json).toHaveBeenCalledWith({
         error: 'Este email ya está registrado',
       });
+      expect(cleanupUploadedFile).toHaveBeenCalledWith('/uploads/users/avatar.png');
       expect(next).not.toHaveBeenCalled();
     });
 
