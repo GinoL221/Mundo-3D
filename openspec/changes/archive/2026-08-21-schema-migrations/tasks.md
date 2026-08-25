@@ -2,14 +2,14 @@
 
 ## Review Workload Forecast
 
-| Field | Value |
-|-------|-------|
+| Field                   | Value                                                                                                                   |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Estimated changed lines | ~600-650 (baseline DDL ~200, migrator/migrate.js ~110, tests ~230, index.js/package.json/ci.yml ~40, SQL deletions ~60) |
-| 400-line budget risk | High |
-| Chained PRs recommended | Yes |
-| Suggested split | PR 1 -> PR 2 -> PR 3 |
-| Delivery strategy | ask-on-risk |
-| Chain strategy | pending |
+| 400-line budget risk    | High                                                                                                                    |
+| Chained PRs recommended | Yes                                                                                                                     |
+| Suggested split         | PR 1 -> PR 2 -> PR 3                                                                                                    |
+| Delivery strategy       | ask-on-risk                                                                                                             |
+| Chain strategy          | pending                                                                                                                 |
 
 Decision needed before apply: Yes
 Chained PRs recommended: Yes
@@ -18,11 +18,11 @@ Chain strategy: pending
 
 ### Suggested Work Units
 
-| Unit | Goal | Likely PR | Focused test command | Runtime harness | Rollback boundary |
-|------|------|-----------|----------------------|-----------------|-------------------|
-| 1 | Migrator infra: `migrator.js`, `migrate.js` CLI, `umzug` dep, scripts. Boot untouched. | PR 1 | `pnpm --filter backend test -- migrator` | N/A — no live DB target until baseline exists | Revert new files + package.json entries; no schema/boot impact |
-| 2 | Baseline migration from live dump + delete 3 legacy `.sql` | PR 2 | `pnpm --filter backend test:integration -- migrate` | `mysql -e "CREATE DATABASE IF NOT EXISTS mundo_3d_migrate_scratch;"` then `DB_NAME=mundo_3d_migrate_scratch pnpm --filter backend db:migrate` (and `db:migrate:down`) | Revert `baseline.js`, restore 3 `.sql` files; infra from Unit 1 unaffected |
-| 3 | Boot cutover (remove sync, authenticate, env fix) + CI fresh-env proof | PR 3 | `pnpm --filter backend test -- index` | CI step `pnpm --filter backend db:migrate` in `.github/workflows/ci.yml` against `mundo_3d_migrate_ci`; manual `db:migrate:adopt-baseline` on dev DB | Revert `index.js`/`ci.yml`, restoring `sync({alter:true})`; Units 1-2 stay merged harmlessly |
+| Unit | Goal                                                                                   | Likely PR | Focused test command                                | Runtime harness                                                                                                                                                       | Rollback boundary                                                                            |
+| ---- | -------------------------------------------------------------------------------------- | --------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| 1    | Migrator infra: `migrator.js`, `migrate.js` CLI, `umzug` dep, scripts. Boot untouched. | PR 1      | `pnpm --filter backend test -- migrator`            | N/A — no live DB target until baseline exists                                                                                                                         | Revert new files + package.json entries; no schema/boot impact                               |
+| 2    | Baseline migration from live dump + delete 3 legacy `.sql`                             | PR 2      | `pnpm --filter backend test:integration -- migrate` | `mysql -e "CREATE DATABASE IF NOT EXISTS mundo_3d_migrate_scratch;"` then `DB_NAME=mundo_3d_migrate_scratch pnpm --filter backend db:migrate` (and `db:migrate:down`) | Revert `baseline.js`, restore 3 `.sql` files; infra from Unit 1 unaffected                   |
+| 3    | Boot cutover (remove sync, authenticate, env fix) + CI fresh-env proof                 | PR 3      | `pnpm --filter backend test -- index`               | CI step `pnpm --filter backend db:migrate` in `.github/workflows/ci.yml` against `mundo_3d_migrate_ci`; manual `db:migrate:adopt-baseline` on dev DB                  | Revert `index.js`/`ci.yml`, restoring `sync({alter:true})`; Units 1-2 stay merged harmlessly |
 
 ## Phase 1: Migrator Infrastructure (PR 1)
 
@@ -48,8 +48,8 @@ Chain strategy: pending
 
 ## Phase 4: Manual Verification
 
-- [ ] 4.1 Manual: **before** adopting, run `ALTER TABLE Product ADD COLUMN stock INT NOT NULL DEFAULT 0;` against the live dev DB — the live schema is missing this column (see PR 2 apply-progress "Risks"); the baseline's Product DDL includes `stock` to match the model, so `adopt-baseline` (no-DDL) will otherwise leave the real dev DB inconsistent with what it claims. Then run `db:migrate:adopt-baseline` followed by `db:migrate`; confirm no further DDL executes and product images are intact
-- [ ] 4.2 Run `pnpm --filter backend test` and `pnpm --filter backend test:integration` full suites to confirm no regressions
+- [x] 4.1 Manual: **before** adopting, inspect the live dev DB and add `Product.stock` only if missing; then run `db:migrate:adopt-baseline` followed by `db:migrate`; confirm no further DDL executes and product images are intact. Evidence 2026-08-21: target `mundo_3d_db` already had `Product.stock`, so no ALTER was needed; `adopt-baseline` recorded `20260724000000-baseline.js` without DDL, and a subsequent `db:migrate` found no pending migrations.
+- [x] 4.2 Run `pnpm --filter backend test` and `pnpm --filter backend test:integration` full suites to confirm no regressions. Evidence 2026-08-21: backend 80/80 suites and 494/494 tests passed; integration 2/2 suites and 8/8 tests passed; `git diff --check` passed. Only the existing ts-jest `isolatedModules` deprecation warning remains.
 
 ## Phase 5: Post-Archive Adversarial Review Fixes (PR 2 branch, found before merge)
 
@@ -65,3 +65,7 @@ Chain strategy: pending
 - [x] 6.2 CRITICAL/design-completeness: boot had no positive schema-consistency gate — `seedInitialData` only incidentally covers Category/Franchise/User/Product, giving zero protection for `ShoppingCart`/`RememberToken` schema drift. Added `backend/src/database/checkPendingMigrations.js` exporting `checkNoPendingMigrations()`, which calls `buildMigrator().pending()` and rejects with a clear, actionable error when any migration is pending. Wired into `backend/index.js`'s boot chain between `authenticate()` and `seedInitialData()` (non-`test` env only). Covered by `backend/src/database/__tests__/checkPendingMigrations.test.js` and boot-level tests in `backend/src/__tests__/index.test.js`.
 - [x] 6.3 WARNING: `ensureDatabaseExists()` had no guard for an unsupported `NODE_ENV`, causing a generic `TypeError` instead of a clear configuration error. Added a guard in `backend/src/database/config/ensureDatabase.js` that throws `Unsupported NODE_ENV: '<env>' — expected one of: development, test, production`. Covered by `backend/src/database/config/__tests__/ensureDatabase.test.js` and a real-module boot-level test in `index.test.js`.
 - [x] 6.4 Updated `backend/src/__tests__/index.test.js` (5 -> 9 cases): added a real-module test for fix 6.1's rethrow (mocks only `db.Category.count`, not `seedInitialData` itself), two tests for fix 6.2's gate (pending found -> fail fast; pending empty -> proceeds, mocking only `buildMigrator().pending()`), and a real-module test for fix 6.3's unsupported-env guard (mocks nothing under `../database/config/ensureDatabase`).
+
+## Phase 7: Final-Verification Remediation (physical schema compatibility gate)
+
+- [x] 7.1 CRITICAL (from verify-report.md finding #2): `checkNoPendingMigrations()` verified only Umzug bookkeeping (`migrator.pending()`), not the physical presence of required tables/columns — a DB with the baseline recorded but a manually dropped/altered table or column could report "no pending migrations" and still reach `seedInitialData()`/`listen()`. RED: extended `backend/src/database/__tests__/checkPendingMigrations.test.js` with 3 scenarios (missing required table, missing required column, compatible schema) plus preserved the original pending-migrations test unchanged. GREEN: added `checkPhysicalSchema()` and `REQUIRED_SCHEMA` (all 6 models' snake_case DB columns, cross-checked against `migrations/20260724000000-baseline.js`) to `backend/src/database/checkPendingMigrations.js`; `checkNoPendingMigrations()` now runs the physical check via `queryInterface.showAllTables()`/`describeTable()` after the pending-migration check passes, reading `queryInterface` from the migrator's own Umzug `context` (no separate DB handle, no `index.js` wiring change needed — the call site was already correct). Updated `backend/src/__tests__/index.test.js`'s "proceeds ... nothing pending" boot test to supply a compatible `queryInterface` stub (the only boot test that reaches the new layer); the "pending found" boot test is unaffected since it throws before reaching it. `backend/src/database/test-prepare.js` and `backend/src/__tests__/helpers/testDb.ts` were not touched (zero diff, confirmed via `git status`). Evidence 2026-08-21: `pnpm --filter backend test` 80/80 suites, 496/496 tests; `pnpm --filter backend test:integration` 2/2 suites, 8/8 tests; focused `eslint` on the 3 changed files clean (0 errors, 0 warnings); `git diff --check` clean. No database was modified — the gate is read-only.

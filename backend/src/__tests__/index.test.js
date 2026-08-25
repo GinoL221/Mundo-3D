@@ -1,4 +1,5 @@
 const { createFakeHttpServer } = require('./helpers/fakeHttpServer');
+const { REQUIRED_SCHEMA, REQUIRED_COLUMN_DEFINITIONS } = require('../database/checkPendingMigrations');
 
 async function flushPromiseChain() {
   for (let i = 0; i < 10; i += 1) {
@@ -14,6 +15,28 @@ function createMockLogger() {
     flush: jest.fn((cb) => {
       if (cb) cb();
     }),
+  };
+}
+
+// Builds a queryInterface stub reporting every REQUIRED_SCHEMA table/column
+// as present — the boot gate's physical-schema layer only reaches
+// `describeTable`/`showAllTables` once bookkeeping reports nothing pending.
+// See `checkPendingMigrations.test.js` for the missing-table/missing-column
+// rejection scenarios.
+function makeCompatibleQueryInterface() {
+  const columnsByTable = {};
+  for (const [table, columns] of Object.entries(REQUIRED_SCHEMA)) {
+    columnsByTable[table] = Object.fromEntries(
+      columns.map((column) => {
+        const expected = REQUIRED_COLUMN_DEFINITIONS[table][column];
+        return [column, { type: expected.replace(/!$/, ''), allowNull: !expected.endsWith('!') }];
+      })
+    );
+  }
+
+  return {
+    showAllTables: jest.fn().mockResolvedValue(Object.keys(REQUIRED_SCHEMA)),
+    describeTable: jest.fn((tableName) => Promise.resolve(columnsByTable[tableName])),
   };
 }
 
@@ -261,7 +284,9 @@ describe('index.js boot sequence', () => {
     const close = jest.fn().mockResolvedValue(undefined);
     const seedInitialData = jest.fn().mockResolvedValue(undefined);
     const pending = jest.fn().mockResolvedValue([]);
-    const buildMigrator = jest.fn().mockReturnValue({ pending });
+    const queryInterface = makeCompatibleQueryInterface();
+    const buildMigrator = jest.fn().mockReturnValue({ pending, options: { context: queryInterface } });
+    const listen = jest.fn((port, cb) => cb && cb());
 
     jest.isolateModules(() => {
       jest.doMock('../app', () => fake.app);
