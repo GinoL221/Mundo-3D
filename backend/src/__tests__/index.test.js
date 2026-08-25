@@ -49,7 +49,7 @@ describe('index.js boot sequence', () => {
 
   beforeEach(() => {
     jest.resetModules();
-    process.env = { ...originalEnv, SESSION_SECRET: 'test-secret' };
+    process.env = { ...originalEnv };
     delete process.env.SHUTDOWN_TIMEOUT_MS;
     exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => {});
     mockLogger = createMockLogger();

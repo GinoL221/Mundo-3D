@@ -10,12 +10,6 @@ const server = require("./src/app");
 const { markReady, markUnready } = require("./src/infrastructure/health/readinessState");
 const { logger } = require("./src/infrastructure/logging/logger");
 
-// Validate required environment variables
-if (!process.env.SESSION_SECRET) {
-  logger.error("FATAL: SESSION_SECRET environment variable is required. Set it in .env file.");
-  process.exit(1);
-}
-
 const {
   ensureDatabaseExists,
 } = require("./src/database/config/ensureDatabase");

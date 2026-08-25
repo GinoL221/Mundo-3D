@@ -59,7 +59,6 @@ describe('boot.integration: real `node index.js` process', () => {
       delete env.JEST_WORKER_ID;
       env.NODE_ENV = 'test';
       env.PORT = '0';
-      env.SESSION_SECRET = env.SESSION_SECRET || 'integration-test-secret';
       // logger.ts defaults to `silent` under NODE_ENV=test; force structured
       // output for this one spawn so the OS-assigned ephemeral port
       // (PORT=0) can be read back from the boot log line.
