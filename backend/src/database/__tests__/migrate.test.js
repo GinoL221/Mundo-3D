@@ -67,4 +67,59 @@ describe('run — adopt-baseline CLI wiring', () => {
     expect(migrator.storage.logMigration).toHaveBeenCalledWith({ name: BASELINE_MIGRATION_NAME });
     logSpy.mockRestore();
   });
+
+  it('logs the nothing-to-adopt message and still resolves true when the requested scope has nothing pending', async () => {
+    const migrator = makeMigrator(['20260901000000-add-orders.js']);
+    buildMigrator.mockReturnValue(migrator);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    const success = await run(['adopt-baseline']);
+
+    expect(success).toBe(true);
+    expect(migrator.storage.logMigration).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(
+      'Nothing to adopt — no pending migrations matched the requested scope.'
+    );
+    logSpy.mockRestore();
+  });
+
+  it('forwards explicit migration names from argv instead of the default baseline scope', async () => {
+    const migrator = makeMigrator([BASELINE_MIGRATION_NAME, '20260901000000-add-orders.js']);
+    buildMigrator.mockReturnValue(migrator);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    const success = await run(['adopt-baseline', '20260901000000-add-orders.js']);
+
+    expect(success).toBe(true);
+    expect(migrator.storage.logMigration).toHaveBeenCalledTimes(1);
+    expect(migrator.storage.logMigration).toHaveBeenCalledWith({
+      name: '20260901000000-add-orders.js',
+    });
+    logSpy.mockRestore();
+  });
+});
+
+describe('run — non-adopt-baseline commands', () => {
+  beforeEach(() => {
+    buildMigrator.mockReset();
+  });
+
+  it('delegates any other command straight to the migrator\'s own CLI runner', async () => {
+    const runAsCLI = jest.fn().mockResolvedValue(true);
+    buildMigrator.mockReturnValue({ runAsCLI });
+
+    const success = await run(['up']);
+
+    expect(success).toBe(true);
+    expect(runAsCLI).toHaveBeenCalledWith(['up']);
+  });
+
+  it('surfaces the migrator CLI runner\'s own failure result unchanged', async () => {
+    const runAsCLI = jest.fn().mockResolvedValue(false);
+    buildMigrator.mockReturnValue({ runAsCLI });
+
+    const success = await run(['down']);
+
+    expect(success).toBe(false);
+  });
 });
