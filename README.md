@@ -32,7 +32,6 @@ DB_USER=root
 DB_PASS=
 DB_NAME=mundo_3d_db
 DB_HOST=localhost
-SESSION_SECRET=change-me-to-a-random-secret
 COOKIE_SECRET=change-me-to-a-random-secret
 JWT_SECRET=change-me-to-a-random-secret
 ```
@@ -176,7 +175,6 @@ El patrón de exclusión de Jest (`*.integration.test.(ts|js)`) separa la suite 
 | `DB_PASS` | Backend | Contraseña MySQL. |
 | `DB_NAME` | Backend | Base de desarrollo y producción; el ejemplo usa `mundo_3d_db`. |
 | `DB_HOST` | Backend | Host MySQL; el ejemplo usa `localhost`. |
-| `SESSION_SECRET` | Backend | Obligatoria en el entrypoint actual. |
 | `COOKIE_SECRET` | Backend | Está reservada en la plantilla; el código de runtime actual no la consulta. |
 | `JWT_SECRET` | Backend | Firma y verificación de JWT; obligatoria fuera de tests. |
 | `PUBLIC_API_URL` | Frontend | URL pública de la API; el ejemplo usa `http://localhost:3031`. |
