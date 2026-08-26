@@ -33,15 +33,15 @@ The two integration test files are the bulk of the estimate: the cart barrier te
 
 ## Phase 2: Registration Fix — Domain Exception (depends on Phase 1 for later integration use, independent of Phase 3-6 sequencing)
 
-- [ ] 2.1 Modify `backend/src/domain/exceptions/UserAlreadyExistsException.ts` — add optional `options?: ErrorOptions` param forwarded to `super`; confirm no existing constructor-arity test breaks (single-arg call sites stay valid per design.md's fallback note)
+- [x] 2.1 Modify `backend/src/domain/exceptions/UserAlreadyExistsException.ts` — add optional `options?: ErrorOptions` param forwarded to `super`; confirm no existing constructor-arity test breaks (single-arg call sites stay valid per design.md's fallback note)
 
 ## Phase 3: Registration Fix — Repository Translation (RED)
 
-- [ ] 3.1 RED: `backend/src/infrastructure/repositories/SequelizeUserRepository.test.ts` — `create` rejecting with a mocked `UniqueConstraintError` throws `UserAlreadyExistsException` with the byte-identical message `'Este email ya está registrado'`; any other error rethrown unchanged (unmodified pass-through)
+- [x] 3.1 RED: `backend/src/infrastructure/repositories/SequelizeUserRepository.test.ts` — `create` rejecting with a mocked `UniqueConstraintError` throws `UserAlreadyExistsException` with the byte-identical message `'Este email ya está registrado'`; any other error rethrown unchanged (unmodified pass-through)
 
 ## Phase 4: Registration Fix — Repository Translation (GREEN, depends on 2.1, 3.1)
 
-- [ ] 4.1 GREEN: `backend/src/infrastructure/repositories/SequelizeUserRepository.ts` — wrap only the existing `db.User.create(...)` call in try/catch; `UniqueConstraintError` → `throw new UserAlreadyExistsException('Este email ya está registrado', { cause: error })`; any other error rethrown unchanged; `findByEmail`/`findById`/`findAll` untouched (exact 6-line diff per design.md)
+- [x] 4.1 GREEN: `backend/src/infrastructure/repositories/SequelizeUserRepository.ts` — wrap only the existing `db.User.create(...)` call in try/catch; `UniqueConstraintError` → `throw new UserAlreadyExistsException('Este email ya está registrado', { cause: error })`; any other error rethrown unchanged; `findByEmail`/`findById`/`findAll` untouched (exact 6-line diff per design.md)
 
 ## Phase 5: Cart Race Integration Test (depends on Phase 1 only — independently shippable, may run in parallel with Phases 2-4)
 
@@ -53,12 +53,12 @@ The two integration test files are the bulk of the estimate: the cart barrier te
 
 ## Phase 6: Registration Race Integration Test (depends on Phases 1, 2, 4)
 
-- [ ] 6.1 Create `backend/src/infrastructure/repositories/__tests__/SequelizeUserRepository.integration.test.ts` — set `process.env.JWT_SECRET`/`process.env.COOKIE_SECRET` before constructing the controller (env prerequisite for `setSessionCookies`/`getJwtSecret`/`issueCsrfToken`)
-- [ ] 6.2 Same file — wire the real object graph: `new UserApiController(authStub, listStub, getStub, new RegisterUserUseCase(new SequelizeUserRepository(), new BcryptPasswordHasher()))`; `res` doubles copy `UserApiController.test.ts:60-66` (`status/json/cookie/clearCookie` as `jest.fn().mockReturnThis()`)
-- [ ] 6.3 Same file — each `req.file` = `{ filename, path }` pointing at a real file written into `fs.mkdtempSync(path.join(os.tmpdir(), 'm3d-race-'))`; remove the temp dir in `afterAll`
-- [ ] 6.4 Same file — fire two concurrent `register` calls with the same, previously-unused email (same-email fixture generated once, reused by both requests)
-- [ ] 6.5 Same file — assert: exactly one `res.status(201)` whose `idUser` matches the single DB row; exactly one `res.status(400)` with `{ error: 'Este email ya está registrado' }`; `next` never called on either call (no 500 path)
-- [ ] 6.6 Same file — assert `db.User.count({ where: { email } }) === 1`; poll `fs.existsSync` on the loser's temp file on a bounded retry (≤2s, 50ms interval) to confirm it is gone; confirm the winner's temp file still exists
+- [x] 6.1 Create `backend/src/infrastructure/repositories/__tests__/SequelizeUserRepository.integration.test.ts` — set `process.env.JWT_SECRET`/`process.env.COOKIE_SECRET` before constructing the controller (env prerequisite for `setSessionCookies`/`getJwtSecret`/`issueCsrfToken`)
+- [x] 6.2 Same file — wire the real object graph: `new UserApiController(authStub, listStub, getStub, new RegisterUserUseCase(new SequelizeUserRepository(), new BcryptPasswordHasher()))`; `res` doubles copy `UserApiController.test.ts:60-66` (`status/json/cookie/clearCookie` as `jest.fn().mockReturnThis()`)
+- [x] 6.3 Same file — each `req.file` = `{ filename, path }` pointing at a real file written into `fs.mkdtempSync(path.join(os.tmpdir(), 'm3d-race-'))`; remove the temp dir in `afterAll`
+- [x] 6.4 Same file — fire two concurrent `register` calls with the same, previously-unused email (same-email fixture generated once, reused by both requests)
+- [x] 6.5 Same file — assert: exactly one `res.status(201)` whose `idUser` matches the single DB row; exactly one `res.status(400)` with `{ error: 'Este email ya está registrado' }`; `next` never called on either call (no 500 path)
+- [x] 6.6 Same file — assert `db.User.count({ where: { email } }) === 1`; poll `fs.existsSync` on the loser's temp file on a bounded retry (≤2s, 50ms interval) to confirm it is gone; confirm the winner's temp file still exists
 
 ## Phase 7: Verification
 

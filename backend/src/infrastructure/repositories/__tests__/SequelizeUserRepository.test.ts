@@ -2,6 +2,7 @@ import { Sequelize } from 'sequelize';
 import db from '../../../database/models/db';
 import { SequelizeUserRepository } from '../SequelizeUserRepository';
 import { User } from '../../../domain/entities/User';
+import { UserAlreadyExistsException } from '../../../domain/exceptions/UserAlreadyExistsException';
 
 let isSqliteAvailable = false;
 let sequelize: Sequelize | null = null;
@@ -68,6 +69,43 @@ describe('SequelizeUserRepository Integration Tests', () => {
         expect(created.idUser).toBe(1);
         expect(created.firstName).toBe('John');
         expect(db.User.create).toHaveBeenCalled();
+      }
+    });
+
+    it('translates a UniqueConstraintError into UserAlreadyExistsException with the byte-identical message', async () => {
+      const { UniqueConstraintError } = jest.requireActual('sequelize');
+      // Restore the original `create` after mutating it — in the sqlite
+      // branch db.User is the shared sqliteUserModel (same reference across
+      // tests), so an unrestored mock would break later findById/findByEmail/
+      // findAll sqlite-backed tests. Harmless in the mocked branch (beforeEach
+      // rebuilds a fresh db.User anyway), but this keeps the test correct
+      // regardless of which branch is active.
+      const originalCreate = db.User.create;
+      (db.User as any).create = jest
+        .fn()
+        .mockRejectedValue(new UniqueConstraintError({ message: 'duplicate email', errors: [] }));
+
+      try {
+        const userData = new User(0, 'Jane', 'Doe', 'jane.doe@example.com', 'hashedpassword', null);
+
+        await expect(repository.create(userData)).rejects.toBeInstanceOf(UserAlreadyExistsException);
+        await expect(repository.create(userData)).rejects.toThrow('Este email ya está registrado');
+      } finally {
+        (db.User as any).create = originalCreate;
+      }
+    });
+
+    it('rethrows any other error unchanged', async () => {
+      const dbError = new Error('connection lost');
+      const originalCreate = db.User.create;
+      (db.User as any).create = jest.fn().mockRejectedValue(dbError);
+
+      try {
+        const userData = new User(0, 'Jane', 'Doe', 'jane.doe@example.com', 'hashedpassword', null);
+
+        await expect(repository.create(userData)).rejects.toBe(dbError);
+      } finally {
+        (db.User as any).create = originalCreate;
       }
     });
   });
