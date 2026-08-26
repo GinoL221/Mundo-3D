@@ -10,6 +10,7 @@ import {
   requireRoles
 } from '../auth';
 import { getJwtSecret } from '../../security/JwtSecret';
+import { AUTH_COOKIE } from '../../security/cookieOptions';
 import { Role } from '../../../domain/Role';
 
 jest.mock('../../security/JwtSecret', () => ({
@@ -111,7 +112,7 @@ describe('apiAuthMiddleware', () => {
   let next: NextFunction;
 
   beforeEach(() => {
-    req = { headers: {} };
+    req = { headers: {}, cookies: {} };
     res = {
       status: jest.fn().mockReturnThis() as any,
       json: jest.fn().mockReturnThis() as any
@@ -119,35 +120,46 @@ describe('apiAuthMiddleware', () => {
     next = jest.fn();
   });
 
-  it('returns 401 JSON error when authorization header is missing', () => {
+  it('returns 401 JSON error when no auth cookie is present', () => {
     apiAuthMiddleware(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({ error: 'Token de autenticación no proporcionado' });
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('returns 401 JSON error when authorization scheme is not Bearer', () => {
-    req.headers!.authorization = 'Basic token123';
+  it('returns 401 JSON error when the auth cookie value is empty', () => {
+    req.cookies = { [AUTH_COOKIE]: '' };
     apiAuthMiddleware(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({ error: 'Token de autenticación no proporcionado' });
   });
 
-  it('returns 401 JSON error when token is invalid or expired', () => {
-    req.headers!.authorization = 'Bearer invalid-token-value';
+  it('returns 401 JSON error when the auth cookie holds an invalid or expired token', () => {
+    req.cookies = { [AUTH_COOKIE]: 'invalid-token-value' };
     apiAuthMiddleware(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({ error: 'Token de autenticación inválido o expirado' });
   });
 
-  it('attaches payload to req.user and calls next() on valid token', () => {
+  it('attaches payload to req.user and calls next() on a valid auth cookie', () => {
+    const payload = { userId: 1, email: 'user@test.com', category: 'User', idRole: 2 };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '2h' });
+    req.cookies = { [AUTH_COOKIE]: token };
+
+    apiAuthMiddleware(req as Request, res as Response, next);
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(req.user).toMatchObject(payload);
+  });
+
+  it('returns 401 when a valid JWT is sent only as an Authorization: Bearer header (no cookie)', () => {
     const payload = { userId: 1, email: 'user@test.com', category: 'User', idRole: 2 };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '2h' });
     req.headers!.authorization = `Bearer ${token}`;
 
     apiAuthMiddleware(req as Request, res as Response, next);
-    expect(next).toHaveBeenCalledTimes(1);
-    expect(req.user).toMatchObject(payload);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Token de autenticación no proporcionado' });
+    expect(next).not.toHaveBeenCalled();
   });
 });
 

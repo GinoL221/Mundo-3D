@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import { getJwtSecret } from '../security/JwtSecret';
+import { AUTH_COOKIE } from '../security/cookieOptions';
 import { Role } from '../../domain/Role';
 
 export const isUser = (req: Request, res: Response, next: NextFunction): void => {
@@ -33,13 +34,11 @@ interface DecodedToken {
 }
 
 export const apiAuthMiddleware = (req: Request, res: Response, next: NextFunction): void | Response => {
-  const authHeader = req.headers.authorization;
+  const token = req.cookies?.[AUTH_COOKIE];
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!token) {
     return res.status(401).json({ error: 'Token de autenticación no proporcionado' });
   }
-
-  const token = authHeader.slice('Bearer '.length);
 
   try {
     const decoded = jwt.verify(token, getJwtSecret()) as DecodedToken;
