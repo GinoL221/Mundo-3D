@@ -20,7 +20,6 @@ declare global {
           idRole: number;
           category: string;
         };
-        csrfToken?: string;
       };
       file?: {
         fieldname?: string;

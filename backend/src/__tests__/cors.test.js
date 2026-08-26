@@ -44,4 +44,22 @@ describe('CORS Integration Tests', () => {
 
     expect(res.headers['access-control-allow-origin']).toBeUndefined();
   });
+
+  it('sets Access-Control-Allow-Credentials: true for an allowed origin, since the auth cookie now travels with credentialed cross-origin requests', async () => {
+    delete process.env.CORS_ORIGIN;
+    const res = await request(app)
+      .get('/api/non-existent')
+      .set('Origin', 'http://localhost:3000');
+
+    expect(res.headers['access-control-allow-credentials']).toBe('true');
+  });
+
+  it('never echoes a wildcard origin, even when the request origin is allowed', async () => {
+    delete process.env.CORS_ORIGIN;
+    const res = await request(app)
+      .get('/api/non-existent')
+      .set('Origin', 'http://localhost:3000');
+
+    expect(res.headers['access-control-allow-origin']).not.toBe('*');
+  });
 });
