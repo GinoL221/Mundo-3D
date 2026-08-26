@@ -193,3 +193,14 @@ Confirmed via source read: `adminGuard = requireRoles(Role.ADMIN)` uses the `Rol
 ### Verdict
 
 **FAIL** — one CRITICAL spec-vs-implementation contradiction on the logout endpoint's edge-case behavior blocks a clean archive; 4 WARNINGs (partial E2E/UI coverage gaps and an unresolved `.env.example`/README documentation mismatch) should be triaged before or shortly after merge but do not by themselves block. All declared test/build commands pass with 100% green (664+106+9+17 = 796 tests), and the overwhelming majority of the spec surface (30/34 scenarios, 9/13 requirements fully compliant) is genuinely, runtime-verified compliant — this is a narrow, well-scoped set of findings, not a systemic failure.
+
+### Post-verification corrections (orchestrator, same PR4 branch, after this report was generated)
+
+This report's YAML header/hashes are left untouched as the historical record of the original run — the following were fixed afterward and independently re-verified, but did not trigger a formal re-run of `sdd-verify-validate`:
+
+- **CRITICAL-1 (logout 401) — RESOLVED.** Removed `apiAuthMiddleware` from `POST /users/logout`; the controller never read `req.user`, so cookie-clearing behaves identically with or without a valid auth cookie. Updated the covering test (`users.test.ts`) to assert `204` without a cookie, matching the spec's "MUST NOT error" wording verbatim. `design.md` and `tasks.md` updated to record the correction (commit `60cf4d7`).
+- **WARNING-2 (Recuérdame checkbox untested) — RESOLVED.** Added two E2E scenarios in `e2e/tests/auth.spec.ts`: checking `#remember` issues a ~30-day `m3d_auth` cookie; leaving it unchecked keeps the 2h default. This is the first test anywhere that actually interacts with the `#remember` DOM element (commit `2ce3adc`).
+  - Side effect found while adding this coverage: the extra login attempts pushed this test file over `loginLimiter`'s real 5-per-window limit, causing the unrelated `cross-tab-session.spec.ts` test to fail on an unexpected `429`. Root cause: `loginLimiter` had no `NODE_ENV==='test'` bypass, unlike `registerLimiter`'s existing identical pattern. Fixed by mirroring `registerLimiter`'s bypass exactly (same commit).
+- **WARNING-1, WARNING-3, WARNING-4, SUGGESTION-1 — deferred as follow-up**, per explicit user decision: none are behavioral bugs (WARNING-1 is redundant coverage of a universally-honored browser contract; WARNING-3 was never a confirmed requirement, only logout-direction cross-tab sync was; WARNING-4 needs a human to hand-edit `.env.example`, which no tool in this session — orchestrator or sub-agent — has permission to touch; SUGGESTION-1 is cosmetic).
+
+Full suite re-verified green after both fixes: `pnpm run lint` (clean), `tsc --noEmit` (clean), `pnpm run test:fast` (90 suites/665 tests), `pnpm test:e2e` (19/19, up from 17 — the 2 new Recuérdame scenarios).
