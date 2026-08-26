@@ -29,13 +29,30 @@ export function isAdminOnly(user: SessionUser | null): boolean {
 }
 
 /**
+ * Broadcasts a session change on `BroadcastChannel('m3d-session')` so other
+ * open tabs re-read their cookies and update their gating without a reload
+ * (design.md "Decision: Cross-tab sync"). Used symmetrically by both
+ * directions of a session change — login/register (LoginForm.astro,
+ * RegisterForm.astro) and logout (clearSession() below) — so cross-tab sync
+ * doesn't depend on the focus/visibilitychange fallback layer in
+ * sessionUI.ts, which real browsers only fire on an actual tab switch.
+ */
+export function broadcastSessionChanged(): void {
+  try {
+    new BroadcastChannel(SESSION_BROADCAST_CHANNEL).postMessage({ type: 'session-changed' });
+  } catch {
+    // BroadcastChannel unsupported — visibilitychange/focus fallback in
+    // sessionUI.ts covers this case.
+  }
+}
+
+/**
  * Ends the server-side session: calls `POST /users/logout` (clears the
  * httpOnly auth cookie plus the CSRF/display cookies — CSRF-exempt, see
- * design.md), then broadcasts the change on `BroadcastChannel('m3d-session')`
- * so other open tabs update their gating without a reload (design.md
- * "Decision: Cross-tab sync"). Best-effort: broadcasts even if the network
- * call fails, so the UI never gets stuck showing a stale logged-in state
- * (same "never block on cleanup" spirit as
+ * design.md), then broadcasts the change so other open tabs update their
+ * gating without a reload. Best-effort: broadcasts even if the network call
+ * fails, so the UI never gets stuck showing a stale logged-in state (same
+ * "never block on cleanup" spirit as
  * backend/src/infrastructure/utils/cleanupUploadedFile.ts). Used both by
  * explicit logout (Header.astro) and by admin pages reacting to a 401 from
  * the API (stale/invalid session) before redirecting to /login.
@@ -50,11 +67,6 @@ export async function clearSession(): Promise<void> {
     // Best-effort — still broadcast below so open tabs don't stay stuck
     // showing a logged-in UI.
   } finally {
-    try {
-      new BroadcastChannel(SESSION_BROADCAST_CHANNEL).postMessage({ type: 'session-changed' });
-    } catch {
-      // BroadcastChannel unsupported — visibilitychange/focus fallback in
-      // sessionUI.ts covers this case.
-    }
+    broadcastSessionChanged();
   }
 }

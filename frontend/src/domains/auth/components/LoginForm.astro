@@ -38,6 +38,7 @@
 
 <script>
   import { AuthService } from '../services/auth.service';
+  import { broadcastSessionChanged } from '../services/session.service';
 
   const form = document.getElementById('login-form') as HTMLFormElement | null;
   const errorBox = document.getElementById('login-error') as HTMLElement | null;
@@ -89,8 +90,10 @@
       // client-side storage write needed (design.md "No Script-Readable
       // Auth Token Storage").
 
-      // Notify header and other components
+      // Notify header and other components in this tab, and any other open
+      // tab (symmetric with clearSession()'s broadcast on logout).
       window.dispatchEvent(new CustomEvent('session-changed'));
+      broadcastSessionChanged();
 
       // Redirect to homepage
       window.location.href = '/';
