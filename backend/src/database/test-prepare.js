@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 // Force environment to 'test'
 process.env.NODE_ENV = 'test';
 

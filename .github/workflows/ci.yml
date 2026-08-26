@@ -46,6 +46,9 @@ jobs:
       - name: Run frontend Astro check
         run: pnpm run frontend:check
 
+      - name: Run frontend quality check (no console.log, 250-line cap)
+        run: pnpm run frontend:quality-check
+
       - name: Build frontend
         run: pnpm run frontend:build
         env:

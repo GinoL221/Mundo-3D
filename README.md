@@ -104,7 +104,9 @@ Todos los comandos de esta tabla se ejecutan desde la raíz.
 | Aplicar migraciones | `pnpm --filter backend db:migrate` | Ejecuta las migraciones Umzug pendientes. |
 | Revertir última migración | `pnpm --filter backend db:migrate:down` | Operación destructiva; revise la migración antes de usarla. |
 | Adoptar baseline heredada | `pnpm --filter backend db:migrate:adopt-baseline` | Solo para un esquema preexistente compatible; no ejecuta DDL. |
-| Build frontend | `pnpm frontend:build` | Genera la salida Astro. No hay un script de build del backend: se ejecuta con `ts-node/register`. |
+| Build frontend | `pnpm frontend:build` | Genera la salida Astro. Falla si falta `PUBLIC_API_URL` (evita un build de producción que caiga en `localhost` en silencio). |
+| Build backend | `pnpm --filter backend build` | Compila `src/` a `dist/` con `tsc` (excluye tests). En desarrollo el backend sigue corriendo sin compilar, vía `ts-node/register`. |
+| Quality check frontend | `pnpm frontend:quality-check` | Astro no tiene pipeline de ESLint; este script propio prohíbe `console.log` y el límite de 250 líneas por archivo bajo `frontend/src/`. |
 | Formatear | `pnpm format` | Modifica fuentes backend y frontend con Prettier. |
 
 Antes del primer E2E local, instale Chromium y sus dependencias:
@@ -117,7 +119,7 @@ pnpm --filter e2e exec playwright install --with-deps chromium
 
 ### Backend
 
-El backend combina un bootstrap CommonJS con módulos JavaScript y TypeScript cargados mediante `ts-node`. El flujo principal mantiene las dependencias orientadas hacia el dominio:
+El backend combina un bootstrap CommonJS con módulos JavaScript y TypeScript. En desarrollo se cargan mediante `ts-node/register`; en producción, `pnpm --filter backend build` compila a `dist/` y `RUN_COMPILED=true` (junto a `NODE_ENV=production`) hace que `index.js` sirva ese build compilado sin depender de `ts-node` en runtime. `RUN_COMPILED` es deliberadamente independiente de `NODE_ENV`: los tests de arranque usan `NODE_ENV=production` como escenario contra el árbol sin compilar. El flujo principal mantiene las dependencias orientadas hacia el dominio:
 
 ```text
 HTTP /api
@@ -145,7 +147,7 @@ Astro organiza las rutas en `frontend/src/pages/` y el comportamiento por domini
 - `products/`: catálogo, detalle y administración de productos.
 - `components/`, `layouts/` y `styles/`: interfaz compartida y sistema visual pixel art.
 
-El frontend consume `PUBLIC_API_URL`; en desarrollo usa `http://localhost:3031` como fallback.
+El frontend consume `PUBLIC_API_URL`; en desarrollo usa `http://localhost:3031` como fallback. En un build de producción (`astro build`) es obligatoria: si falta, el build falla en vez de arriesgarse a servir esa URL de fallback en producción.
 
 ## Capacidades actuales
 
@@ -154,7 +156,8 @@ El frontend consume `PUBLIC_API_URL`; en desarrollo usa `http://localhost:3031` 
 - Administración de productos con stock e imágenes, categorías, franquicias y usuarios.
 - Carrito local con Nanostores y sincronización por API para usuarios autenticados.
 - Páginas informativas, tema claro/oscuro y diseño responsive de estética PICO-8.
-- Seguridad HTTP con Helmet, CORS, rate limiting, validación y logging estructurado con identificadores de request.
+- Seguridad HTTP con Helmet (política CSP explícita, no los defaults genéricos), CORS, rate limiting, validación y logging estructurado con identificadores de request.
+- Endpoints de liveness/readiness (`GET /health/live`, `GET /health/ready`) para orquestadores externos.
 
 ## Estrategia de pruebas
 

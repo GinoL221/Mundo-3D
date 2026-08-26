@@ -11,7 +11,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check",
-    "test": "vitest run"
+    "test": "vitest run",
+    "quality:check": "node tools/quality-check.js"
   },
   "dependencies": {
     "astro": "^6.4.6",

@@ -21,6 +21,18 @@ module.exports = tseslint.config(
     rules: {
       "no-unused-vars": "warn",
       "no-console": "warn",
+      "no-restricted-properties": [
+        "error",
+        {
+          object: "console",
+          property: "log",
+          message: "Use the structured logger (pino) instead of console.log in production code paths.",
+        },
+      ],
+      "max-lines": [
+        "error",
+        { max: 250, skipBlankLines: false, skipComments: false },
+      ],
     },
   },
   {
@@ -60,10 +72,12 @@ module.exports = tseslint.config(
       "src/database/reset-db.js",
       "src/database/seed.js",
       "src/database/migrate.js",
+      "src/database/test-prepare.js",
       "tools/architecture/check.js",
     ],
     rules: {
       "no-console": "off",
+      "no-restricted-properties": "off",
     },
   },
   {
@@ -73,6 +87,7 @@ module.exports = tseslint.config(
       "@typescript-eslint/no-require-imports": "off",
       "@typescript-eslint/no-unused-vars": "off",
       "no-unused-vars": "off",
+      "max-lines": "off",
     },
   },
   eslintConfigPrettier
