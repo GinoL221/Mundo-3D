@@ -1,6 +1,6 @@
 import { getSessionUser } from '../../../config';
 import { cartItems, cartTotal, persistCart, type APICartSyncPayload, type CartItem } from './cartState';
-import { syncToBackend } from './cartSync';
+import { discardPendingSync, flushCartSync, scheduleSync } from './cartSync';
 
 export { cartItems, cartTotal };
 export type { CartItem, APICartSyncPayload };
@@ -18,6 +18,10 @@ export class CartService {
       }
     } catch {
       // Ignored
+    } finally {
+      // Re-establishing the baseline from localStorage invalidates any
+      // open debounce burst.
+      discardPendingSync();
     }
     cartItems.set([]);
   }
@@ -46,7 +50,7 @@ export class CartService {
 
     cartItems.set(updated);
     persistCart(updated);
-    void syncToBackend(updated, current);
+    scheduleSync(updated, current);
   }
 
   static removeFromCart(productId: number): void {
@@ -54,14 +58,14 @@ export class CartService {
     const updated = current.filter((i) => i.productId !== productId);
     cartItems.set(updated);
     persistCart(updated);
-    void syncToBackend(updated, current);
+    scheduleSync(updated, current);
   }
 
   static clearCart(): void {
     const current = cartItems.get();
     cartItems.set([]);
     persistCart([]);
-    void syncToBackend([], current);
+    scheduleSync([], current);
   }
 
   static hasToken(): boolean {
@@ -76,7 +80,15 @@ export class CartService {
     const current = cartItems.get();
     cartItems.set([]);
     persistCart([]);
-    void syncToBackend([], current);
+    // Schedule then flush synchronously (never call syncToBackend directly):
+    // if a burst is already pending, scheduleSync overwrites pendingItems
+    // with [] (the correct end state) while leaving burstPreviousItems at
+    // the burst's original baseline (the correct rollback target). A direct
+    // call would strand that pending burst. flushCartSync() runs
+    // synchronously here, so fetch() is invoked before checkout() returns —
+    // identical timing to the previous `void syncToBackend([], current)`.
+    scheduleSync([], current);
+    flushCartSync();
     return true;
   }
 }

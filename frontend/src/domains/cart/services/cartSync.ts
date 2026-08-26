@@ -81,3 +81,102 @@ export async function syncToBackend(items: CartItem[], previousItems: CartItem[]
     );
   }
 }
+
+// Trailing-edge debounce sitting between the mutation methods and
+// syncToBackend: rapid mutations coalesce into a single PUT carrying the
+// cart state as of the last mutation in the burst. A mutation stream
+// sustained past SYNC_MAX_WAIT_MS still flushes without waiting for a quiet
+// period, so a continuous stream of mutations cannot postpone the sync
+// indefinitely.
+export const SYNC_DEBOUNCE_MS = 300;
+export const SYNC_MAX_WAIT_MS = 1000;
+
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+let maxWaitTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingItems: CartItem[] | null = null;
+// null doubles as "is a burst open?" and "what is the rollback baseline?".
+// previousItems can legitimately be [], so the sentinel must be null, never
+// `.length` or `debounceTimer !== null` (the cap timer can fire and leave
+// the debounce handle stale for one tick).
+let burstPreviousItems: CartItem[] | null = null;
+
+export function scheduleSync(items: CartItem[], previousItems: CartItem[]): void {
+  if (!getSessionUser()) return; // Guest carts never arm a timer.
+
+  pendingItems = items; // Latest snapshot wins.
+
+  if (burstPreviousItems === null) {
+    // First mutation of this burst: capture the rollback baseline once and
+    // arm the ceiling timer once — never re-armed for the rest of the burst.
+    burstPreviousItems = previousItems;
+    maxWaitTimer = setTimeout(flushCartSync, SYNC_MAX_WAIT_MS);
+  }
+
+  if (debounceTimer !== null) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(flushCartSync, SYNC_DEBOUNCE_MS); // Quiet window, re-armed every call.
+}
+
+// Clears both timers and resets all scheduler state without issuing a
+// request. Production caller: CartService.loadCartFromStorage(), which
+// re-establishes the baseline from localStorage and therefore invalidates
+// any open burst. Also the test-suite reset hook — module state here is a
+// singleton shared across a whole test file.
+export function discardPendingSync(): void {
+  if (debounceTimer !== null) clearTimeout(debounceTimer);
+  if (maxWaitTimer !== null) clearTimeout(maxWaitTimer);
+  debounceTimer = null;
+  maxWaitTimer = null;
+  pendingItems = null;
+  burstPreviousItems = null;
+}
+
+export function flushCartSync(): void {
+  const items = pendingItems;
+  const previous = burstPreviousItems;
+  // Reset BEFORE issuing the request, so a mutation arriving during the
+  // in-flight PUT opens a genuinely new burst instead of being folded into
+  // the one that is already in flight.
+  discardPendingSync();
+  if (items === null || previous === null) return;
+  void syncToBackend(items, previous);
+}
+
+let teardownFlushListeners: (() => void) | null = null;
+
+// Binds forced-flush triggers so a pending burst is never lost to page
+// unload: `pagehide` on `win`, `visibilitychange` (filtered to `hidden`) on
+// `doc`. Idempotent — a second call while already registered returns the
+// same teardown without re-binding, mirroring cartBadge.ts's register-once/
+// return-cleanup convention. `beforeunload` is deliberately not used.
+export function registerCartFlushListeners(
+  win: Window = window,
+  doc: Document = document
+): () => void {
+  if (teardownFlushListeners) return teardownFlushListeners;
+
+  const onPagehide = () => flushCartSync();
+  const onVisibilityChange = () => {
+    if (doc.visibilityState === 'hidden') flushCartSync();
+  };
+
+  win.addEventListener('pagehide', onPagehide);
+  doc.addEventListener('visibilitychange', onVisibilityChange);
+
+  let active = true;
+  const teardown = () => {
+    if (!active) return;
+    active = false;
+    win.removeEventListener('pagehide', onPagehide);
+    doc.removeEventListener('visibilitychange', onVisibilityChange);
+    teardownFlushListeners = null;
+  };
+  teardownFlushListeners = teardown;
+  return teardown;
+}
+
+// Self-register at import so no entry point can forget to wire the forced
+// flush. No-op during Astro SSR and under vitest's default `node` test
+// environment, where `window`/`document` are undefined at import time.
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  registerCartFlushListeners();
+}

@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CartService, cartItems, cartTotal, type CartItem } from './CartService';
+import {
+  discardPendingSync,
+  registerCartFlushListeners,
+  SYNC_DEBOUNCE_MS,
+  SYNC_MAX_WAIT_MS,
+} from './cartSync';
 
 function createLocalStorageMock() {
   let store: Record<string, string> = {};
@@ -37,10 +43,46 @@ function buildProduct(overrides: Partial<{ id: number; name: string; image: stri
   };
 }
 
-// Waits for pending microtasks/macrotasks (e.g. the fire-and-forget
-// syncToBackend promise chain triggered by addToCart/removeFromCart/clearCart).
-function flushPromises(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 0));
+// Fires the trailing-edge debounce window under fake timers, draining the
+// resulting scheduleSync -> flushCartSync -> syncToBackend promise chain.
+async function flushSync(): Promise<void> {
+  await vi.advanceTimersByTimeAsync(SYNC_DEBOUNCE_MS);
+}
+
+// Builds window/document stubs rich enough for registerCartFlushListeners:
+// captures registered handlers by event type so a test can invoke them
+// directly. `dispatchEvent` is forwarded to the given spy — the SAME stub
+// is also installed as the global `window` (via vi.stubGlobal) so it is
+// also what persistCart's `window.dispatchEvent(...)` call reaches; the
+// default `{ dispatchEvent }`-only global stub has no addEventListener.
+function createFlushListenerStubs(dispatchEventSpy: ReturnType<typeof vi.fn>) {
+  const handlers: Record<string, () => void> = {};
+  const winStub = {
+    dispatchEvent: dispatchEventSpy,
+    addEventListener: (type: string, handler: () => void) => {
+      handlers[type] = handler;
+    },
+    removeEventListener: (type: string) => {
+      delete handlers[type];
+    },
+  };
+  const docStub = {
+    visibilityState: 'visible' as DocumentVisibilityState,
+    addEventListener: (type: string, handler: () => void) => {
+      handlers[type] = handler;
+    },
+    removeEventListener: (type: string) => {
+      delete handlers[type];
+    },
+  };
+  return {
+    winStub: winStub as unknown as Window,
+    docStub: docStub as unknown as Document,
+    handlers,
+    setVisibility: (state: DocumentVisibilityState) => {
+      docStub.visibilityState = state;
+    },
+  };
 }
 
 describe('CartService', () => {
@@ -49,6 +91,9 @@ describe('CartService', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    vi.useFakeTimers();
+    discardPendingSync();
+
     cartItems.set([]);
     localStorageMock = createLocalStorageMock();
     dispatchEventSpy = vi.fn();
@@ -72,6 +117,8 @@ describe('CartService', () => {
   });
 
   afterEach(() => {
+    discardPendingSync();
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -224,7 +271,7 @@ describe('CartService', () => {
       stubCookie('');
 
       CartService.addToCart(buildProduct());
-      await flushPromises();
+      await flushSync();
 
       expect(fetchMock).not.toHaveBeenCalled();
     });
@@ -234,7 +281,7 @@ describe('CartService', () => {
       fetchMock.mockResolvedValue({ ok: true });
 
       CartService.addToCart(buildProduct({ id: 7 }), 2);
-      await flushPromises();
+      await flushSync();
 
       expect(fetchMock).toHaveBeenCalledTimes(1);
       const [url, options] = fetchMock.mock.calls[0];
@@ -260,7 +307,8 @@ describe('CartService', () => {
       // should be optimistically applied and then rolled back on sync failure.
       CartService.addToCart(buildProduct({ id: 7 }));
 
-      await vi.waitFor(() => expect(cartItems.get()).toEqual([]));
+      await flushSync();
+      expect(cartItems.get()).toEqual([]);
       expect(localStorageMock.setItem).toHaveBeenLastCalledWith('cart', JSON.stringify([]));
     });
 
@@ -274,7 +322,7 @@ describe('CartService', () => {
       // catch block for why a thrown fetch() is treated differently from a
       // confirmed non-ok response.
       expect(cartItems.get()).toEqual([expect.objectContaining({ productId: 7 })]);
-      await flushPromises();
+      await flushSync();
       expect(cartItems.get()).toEqual([expect.objectContaining({ productId: 7 })]);
     });
 
@@ -284,12 +332,11 @@ describe('CartService', () => {
 
       CartService.addToCart(buildProduct({ id: 7 }));
 
-      await vi.waitFor(() => {
-        const errorEventCall = dispatchEventSpy.mock.calls.find(
-          (call) => call[0].type === 'cart-sync-error'
-        );
-        expect(errorEventCall).toBeDefined();
-      });
+      await flushSync();
+      const errorEventCall = dispatchEventSpy.mock.calls.find(
+        (call) => call[0].type === 'cart-sync-error'
+      );
+      expect(errorEventCall).toBeDefined();
     });
 
     it('dispatches a cart-sync-error event when the sync fails', async () => {
@@ -298,16 +345,11 @@ describe('CartService', () => {
 
       CartService.addToCart(buildProduct({ id: 7 }));
 
-      await vi.waitFor(() => {
-        const errorEventCall = dispatchEventSpy.mock.calls.find(
-          (call) => call[0].type === 'cart-sync-error'
-        );
-        expect(errorEventCall).toBeDefined();
-      });
-
+      await flushSync();
       const errorEventCall = dispatchEventSpy.mock.calls.find(
         (call) => call[0].type === 'cart-sync-error'
       );
+      expect(errorEventCall).toBeDefined();
       expect(errorEventCall?.[0].detail.message).toBe(
         'No se pudo sincronizar el carrito con el servidor.'
       );
@@ -318,25 +360,27 @@ describe('CartService', () => {
       fetchMock.mockResolvedValue({ ok: true });
 
       CartService.addToCart(buildProduct({ id: 7 }));
-      await flushPromises();
+      await flushSync();
 
       expect(cartItems.get()).toEqual([
         expect.objectContaining({ productId: 7 }),
       ]);
     });
 
-    // Regression test for a real concurrency bug: syncToBackend calls are
-    // fire-and-forget with no sequencing between them. If an OLDER call's
-    // PUT resolves LATE (after a NEWER call's PUT already resolved and
-    // succeeded), the older call's failure handler used to roll back to
+    // Regression test for a real concurrency bug: coalesced flushes are
+    // fire-and-forget with no sequencing between them. If an OLDER flush's
+    // PUT resolves LATE (after a NEWER flush's PUT already resolved and
+    // succeeded), the older flush's failure handler used to roll back to
     // ITS OWN captured previousItems — stomping the newer, already-confirmed
     // state with stale data. The sequence guard in syncToBackend must skip
-    // that stale rollback.
+    // that stale rollback. Each mutation here is separated by a full
+    // flushSync() so it becomes its own distinct coalesced burst, matching
+    // the two distinct syncToBackend calls this test asserted before batching.
     it('does not let a late-arriving failed sync roll back state that a newer sync already confirmed', async () => {
       stubCookie(LOGGED_IN_COOKIE);
 
-      // First call (older): addToCart(id: 7). Its PUT will resolve LATE and
-      // fail. Second call (newer): removeFromCart(7). Its PUT resolves
+      // First burst (older): addToCart(id: 7). Its PUT will resolve LATE and
+      // fail. Second burst (newer): removeFromCart(7). Its PUT resolves
       // FIRST and succeeds, leaving the store at [] (correct, confirmed
       // state).
       let resolveFirstFetch: (value: { ok: boolean; status?: number }) => void;
@@ -347,17 +391,18 @@ describe('CartService', () => {
       fetchMock.mockImplementationOnce(() => firstFetchPromise);
       fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true }));
 
-      // Older call starts: cart goes from [] -> [{productId: 7}], previousItems = [].
+      // Older burst flushes: cart goes from [] -> [{productId: 7}],
+      // previousItems = [].
       CartService.addToCart(buildProduct({ id: 7 }));
-      // Newer call starts before the older one resolves: cart goes from
+      await flushSync();
+      // Newer burst flushes before the older one resolves: cart goes from
       // [{productId: 7}] -> [], previousItems = [{productId: 7}].
       CartService.removeFromCart(7);
+      await flushSync();
 
-      // Newer call's fetch resolves first and succeeds.
-      await flushPromises();
       expect(cartItems.get()).toEqual([]);
 
-      // Older call's fetch now resolves LATE with a failure. Its captured
+      // Older flush's fetch now resolves LATE with a failure. Its captured
       // previousItems happens to also be [], so the cartItems value alone
       // wouldn't distinguish a fired-but-coincidentally-harmless rollback
       // from a correctly-skipped one. The localStorage write is the
@@ -366,7 +411,7 @@ describe('CartService', () => {
       // setItem even though the value happens to match.
       localStorageMock.setItem.mockClear();
       resolveFirstFetch!({ ok: false, status: 500 });
-      await flushPromises();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(cartItems.get()).toEqual([]);
       // The stale rollback must not fire at all: no extra persist call from
@@ -385,28 +430,145 @@ describe('CartService', () => {
       fetchMock.mockImplementationOnce(() => firstFetchPromise);
       fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true }));
 
-      // Older call: addToCart(id: 7). previousItems = [].
+      // Older burst: addToCart(id: 7). previousItems = [].
       CartService.addToCart(buildProduct({ id: 7 }));
-      // Newer call: addToCart(id: 8). previousItems = [{productId: 7}].
+      await flushSync();
+      // Newer burst: addToCart(id: 8). previousItems = [{productId: 7}].
       // Its PUT resolves first and succeeds, confirming [7, 8].
       CartService.addToCart(buildProduct({ id: 8 }));
+      await flushSync();
 
-      await flushPromises();
       expect(cartItems.get()).toEqual([
         expect.objectContaining({ productId: 7 }),
         expect.objectContaining({ productId: 8 }),
       ]);
 
-      // Older call's fetch resolves LATE with a failure. If the stale
+      // Older flush's fetch resolves LATE with a failure. If the stale
       // rollback fired, it would reset state to [] (its own previousItems),
       // discarding both confirmed items.
       resolveFirstFetch!({ ok: false, status: 500 });
-      await flushPromises();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(cartItems.get()).toEqual([
         expect.objectContaining({ productId: 7 }),
         expect.objectContaining({ productId: 8 }),
       ]);
+    });
+
+    it('coalesces rapid mutations into a single PUT carrying the last state of the burst', async () => {
+      stubCookie(LOGGED_IN_COOKIE);
+      fetchMock.mockResolvedValue({ ok: true });
+
+      CartService.addToCart(buildProduct({ id: 1 }));
+      await vi.advanceTimersByTimeAsync(100);
+      CartService.addToCart(buildProduct({ id: 2 }));
+      await vi.advanceTimersByTimeAsync(100);
+      CartService.addToCart(buildProduct({ id: 3 }));
+
+      expect(fetchMock).not.toHaveBeenCalled();
+
+      await flushSync();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [, options] = fetchMock.mock.calls[0];
+      expect(JSON.parse(options.body)).toEqual({
+        items: [
+          { productId: 1, quantity: 1 },
+          { productId: 2, quantity: 1 },
+          { productId: 3, quantity: 1 },
+        ],
+      });
+      expect(options.keepalive).toBe(true);
+    });
+
+    it('dispatches cart-updated once per mutation, independent of the coalesced network flush', async () => {
+      stubCookie(LOGGED_IN_COOKIE);
+      fetchMock.mockResolvedValue({ ok: true });
+
+      CartService.addToCart(buildProduct({ id: 1 }));
+      await vi.advanceTimersByTimeAsync(100);
+      CartService.addToCart(buildProduct({ id: 2 }));
+      await vi.advanceTimersByTimeAsync(100);
+      CartService.addToCart(buildProduct({ id: 3 }));
+
+      const cartUpdatedCalls = dispatchEventSpy.mock.calls.filter(
+        (call) => call[0].type === 'cart-updated'
+      );
+      expect(cartUpdatedCalls).toHaveLength(3);
+
+      await flushSync();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('flushes via the max-wait cap when mutations never leave a quiet window', async () => {
+      stubCookie(LOGGED_IN_COOKIE);
+      fetchMock.mockResolvedValue({ ok: true });
+
+      CartService.addToCart(buildProduct({ id: 1 })); // t=0
+      await vi.advanceTimersByTimeAsync(200); // t=200
+      CartService.addToCart(buildProduct({ id: 2 }));
+      await vi.advanceTimersByTimeAsync(200); // t=400
+      CartService.addToCart(buildProduct({ id: 3 }));
+      await vi.advanceTimersByTimeAsync(200); // t=600
+      CartService.addToCart(buildProduct({ id: 4 }));
+      await vi.advanceTimersByTimeAsync(200); // t=800
+      CartService.addToCart(buildProduct({ id: 5 }));
+
+      expect(fetchMock).not.toHaveBeenCalled();
+
+      // t=800 -> t=1000, the max-wait cap fires without a quiet period ever
+      // having elapsed (each mutation lands 200ms apart, well inside the
+      // 300ms debounce window).
+      await vi.advanceTimersByTimeAsync(SYNC_MAX_WAIT_MS - 800);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [, options] = fetchMock.mock.calls[0];
+      expect(JSON.parse(options.body)).toEqual({
+        items: [1, 2, 3, 4, 5].map((productId) => ({ productId, quantity: 1 })),
+      });
+    });
+
+    it('flushes immediately when pagehide fires, bypassing the remaining debounce window', () => {
+      stubCookie(LOGGED_IN_COOKIE);
+      fetchMock.mockResolvedValue({ ok: true });
+      const { winStub, docStub, handlers } = createFlushListenerStubs(dispatchEventSpy);
+      vi.stubGlobal('window', winStub);
+      const cleanup = registerCartFlushListeners(winStub, docStub);
+
+      CartService.addToCart(buildProduct({ id: 7 }));
+      expect(fetchMock).not.toHaveBeenCalled();
+
+      handlers.pagehide();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      cleanup();
+    });
+
+    it('flushes when the tab becomes hidden, but not while it stays visible', () => {
+      stubCookie(LOGGED_IN_COOKIE);
+      fetchMock.mockResolvedValue({ ok: true });
+
+      const hidden = createFlushListenerStubs(dispatchEventSpy);
+      vi.stubGlobal('window', hidden.winStub);
+      const hiddenCleanup = registerCartFlushListeners(hidden.winStub, hidden.docStub);
+      hidden.setVisibility('hidden');
+      CartService.addToCart(buildProduct({ id: 7 }));
+
+      hidden.handlers.visibilitychange();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      hiddenCleanup();
+
+      const visible = createFlushListenerStubs(dispatchEventSpy);
+      vi.stubGlobal('window', visible.winStub);
+      const visibleCleanup = registerCartFlushListeners(visible.winStub, visible.docStub);
+      visible.setVisibility('visible');
+      CartService.addToCart(buildProduct({ id: 8 }));
+
+      visible.handlers.visibilitychange();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      visibleCleanup();
     });
   });
 
@@ -450,6 +612,18 @@ describe('CartService', () => {
       expect(cartItems.get()).toEqual([]);
     });
 
+    it('dispatches the sync flush synchronously, before checkout() returns', () => {
+      stubCookie(LOGGED_IN_COOKIE);
+      fetchMock.mockResolvedValue({ ok: true });
+      CartService.addToCart(buildProduct());
+
+      // No debounce window has elapsed at all — checkout() must still have
+      // issued the fetch by the time it returns.
+      CartService.checkout();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
     // Regression test for a real bug: PUT /api/cart used to reject an empty
     // `items` array (400 "Items must be a non-empty array"), which made
     // syncToBackend's failure handler roll the local cart back to its
@@ -457,18 +631,26 @@ describe('CartService', () => {
     // success. The backend validator now accepts an empty array (full-replace
     // semantics), but CartService's rollback-on-failure behavior itself is
     // still correct and should be preserved for genuine sync failures.
+    //
+    // The add-to-cart burst must be flushed and confirmed BEFORE checkout()
+    // runs. Otherwise the add and the checkout would coalesce into a single
+    // burst whose baseline is [], and cartBeforeCheckout would no longer be
+    // the last-confirmed state the rollback assertion depends on.
     it('rolls back to the pre-checkout cart if the backend rejects the empty-items sync', async () => {
       stubCookie(LOGGED_IN_COOKIE);
-      fetchMock.mockResolvedValue({ ok: false, status: 400 });
+      fetchMock.mockResolvedValueOnce({ ok: true });
       CartService.addToCart(buildProduct());
+      await flushSync();
       const cartBeforeCheckout = cartItems.get();
 
+      fetchMock.mockResolvedValueOnce({ ok: false, status: 400 });
       const result = CartService.checkout();
 
       expect(result).toBe(true);
       expect(cartItems.get()).toEqual([]);
 
-      await vi.waitFor(() => expect(cartItems.get()).toEqual(cartBeforeCheckout));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(cartItems.get()).toEqual(cartBeforeCheckout);
       expect(localStorageMock.setItem).toHaveBeenLastCalledWith(
         'cart',
         JSON.stringify(cartBeforeCheckout)
