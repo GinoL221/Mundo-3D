@@ -1,5 +1,6 @@
 const request = require('supertest');
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 
 const mockAuthenticateUserExecute = jest.fn();
@@ -32,12 +33,14 @@ jest.mock('../application/use-cases/GetUserByIdUseCase', () => {
 
 const apiUsersRouter = require('../infrastructure/routes/api/users').default;
 const { getJwtSecret } = require('../infrastructure/security/JwtSecret');
+const { AUTH_COOKIE } = require('../infrastructure/security/cookieOptions');
 
 const JWT_SECRET = getJwtSecret();
 
 const buildApp = () => {
   const app = express();
   app.use(express.json());
+  app.use(cookieParser());
   app.use('/api', apiUsersRouter);
   return app;
 };
@@ -50,12 +53,14 @@ describe('POST /api/users/login', () => {
     app = buildApp();
   });
 
-  it('returns 200 with a signed JWT token on successful login', async () => {
+  it('returns 200, sets an httpOnly m3d_auth cookie with a signed JWT, and omits the token from the body', async () => {
     mockAuthenticateUserExecute.mockResolvedValue({
       idUser: 1,
       email: 'user@test.com',
       category: 'User',
       idRole: 2,
+      firstName: 'Jane',
+      image: null,
     });
 
     const res = await request(app)
@@ -63,9 +68,16 @@ describe('POST /api/users/login', () => {
       .send({ Email: 'user@test.com', Password: 'password123' });
 
     expect(res.status).toBe(200);
-    expect(res.body.token).toBeDefined();
+    expect(res.body.token).toBeUndefined();
 
-    const decoded = jwt.verify(res.body.token, JWT_SECRET);
+    const setCookieHeaders = res.headers['set-cookie'];
+    expect(setCookieHeaders).toBeDefined();
+    const authCookieHeader = setCookieHeaders.find((c) => c.startsWith(`${AUTH_COOKIE}=`));
+    expect(authCookieHeader).toBeDefined();
+    expect(authCookieHeader).toMatch(/HttpOnly/i);
+
+    const authTokenValue = authCookieHeader.split(';')[0].split('=')[1];
+    const decoded = jwt.verify(authTokenValue, JWT_SECRET);
     expect(decoded).toMatchObject({
       userId: 1,
       email: 'user@test.com',
@@ -230,8 +242,23 @@ describe('apiAuthMiddleware mounted on /api/users routes', () => {
     expect(mockGetUserByIdExecute).not.toHaveBeenCalled();
   });
 
-  it('allows GET /api/users with a valid Bearer token', async () => {
+  it('allows GET /api/users with a valid auth cookie', async () => {
     mockListUsersExecute.mockResolvedValue([]);
+    const token = jwt.sign(
+      { userId: 1, email: 'admin@test.com', category: 'Admin', idRole: 1 },
+      JWT_SECRET,
+      { expiresIn: '1h' },
+    );
+
+    const res = await request(app)
+      .get('/api/users')
+      .set('Cookie', `${AUTH_COOKIE}=${token}`);
+
+    expect(res.status).toBe(200);
+    expect(mockListUsersExecute).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects GET /api/users when a valid JWT is sent only as an Authorization: Bearer header', async () => {
     const token = jwt.sign(
       { userId: 1, email: 'admin@test.com', category: 'Admin', idRole: 1 },
       JWT_SECRET,
@@ -242,7 +269,7 @@ describe('apiAuthMiddleware mounted on /api/users routes', () => {
       .get('/api/users')
       .set('Authorization', `Bearer ${token}`);
 
-    expect(res.status).toBe(200);
-    expect(mockListUsersExecute).toHaveBeenCalledTimes(1);
+    expect(res.status).toBe(401);
+    expect(mockListUsersExecute).not.toHaveBeenCalled();
   });
 });

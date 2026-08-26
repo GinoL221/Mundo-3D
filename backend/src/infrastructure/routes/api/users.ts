@@ -62,6 +62,8 @@ router.post(
   controller.register
 );
 
+router.post('/users/logout', apiAuthMiddleware, controller.logout);
+
 router.get('/users', apiAuthMiddleware, adminGuard, controller.index);
 router.get('/users/:id', apiAuthMiddleware, adminGuard, controller.show);
 

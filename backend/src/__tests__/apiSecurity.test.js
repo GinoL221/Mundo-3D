@@ -1,6 +1,6 @@
 const request = require('supertest');
 const express = require('express');
-const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 
 const mockListUsersExecute = jest.fn();
 const mockGetUserByIdExecute = jest.fn();
@@ -33,13 +33,12 @@ jest.mock('../application/use-cases/SyncCartUseCase', () => ({
 
 const apiRouter = require('../infrastructure/routes/api/index').default;
 const errorHandler = require('../infrastructure/middlewares/errorHandler').default;
-const { getJwtSecret } = require('../infrastructure/security/JwtSecret');
-
-const JWT_SECRET = getJwtSecret();
+const { authCookie, authAndCsrf } = require('./helpers/apiAuthTestHelpers');
 
 const buildApp = () => {
   const app = express();
   app.use(express.json());
+  app.use(cookieParser());
   app.use('/api', apiRouter);
   app.use(errorHandler);
   return app;
@@ -47,20 +46,12 @@ const buildApp = () => {
 
 describe('REST API Security & Role Gating', () => {
   let app;
-  let adminToken;
-  let userToken;
-  let invalidToken;
+  let adminAuth;
+  let userAuth;
 
   beforeAll(() => {
-    adminToken = jwt.sign(
-      { userId: 1, email: 'admin@test.com', category: 'Admin', idRole: 1 },
-      JWT_SECRET
-    );
-    userToken = jwt.sign(
-      { userId: 2, email: 'user@test.com', category: 'User', idRole: 2 },
-      JWT_SECRET
-    );
-    invalidToken = 'invalid-token-signature-value';
+    adminAuth = authAndCsrf({ userId: 1, email: 'admin@test.com', category: 'Admin', idRole: 1 });
+    userAuth = authAndCsrf({ userId: 2, email: 'user@test.com', category: 'User', idRole: 2 });
   });
 
   beforeEach(() => {
@@ -69,17 +60,17 @@ describe('REST API Security & Role Gating', () => {
   });
 
   describe('GET /api/users (Admin restriction)', () => {
-    it('returns 401 when Authorization header is missing', async () => {
+    it('returns 401 when the auth cookie is missing', async () => {
       const res = await request(app).get('/api/users');
       expect(res.status).toBe(401);
       expect(res.body.error).toBe('Token de autenticación no proporcionado');
       expect(mockListUsersExecute).not.toHaveBeenCalled();
     });
 
-    it('returns 401 when Authorization token is invalid', async () => {
+    it('returns 401 when the auth cookie is invalid', async () => {
       const res = await request(app)
         .get('/api/users')
-        .set('Authorization', `Bearer ${invalidToken}`);
+        .set('Cookie', authCookie('invalid-token-signature-value'));
       expect(res.status).toBe(401);
       expect(res.body.error).toBe('Token de autenticación inválido o expirado');
       expect(mockListUsersExecute).not.toHaveBeenCalled();
@@ -88,7 +79,7 @@ describe('REST API Security & Role Gating', () => {
     it('returns 403 when authenticated user is not an admin (idRole !== Role.ADMIN)', async () => {
       const res = await request(app)
         .get('/api/users')
-        .set('Authorization', `Bearer ${userToken}`);
+        .set('Cookie', userAuth.cookie);
       expect(res.status).toBe(403);
       expect(res.body.error).toBe('Acceso restringido');
       expect(mockListUsersExecute).not.toHaveBeenCalled();
@@ -98,14 +89,14 @@ describe('REST API Security & Role Gating', () => {
       mockListUsersExecute.mockResolvedValue([]);
       const res = await request(app)
         .get('/api/users')
-        .set('Authorization', `Bearer ${adminToken}`);
+        .set('Cookie', adminAuth.cookie);
       expect(res.status).toBe(200);
       expect(mockListUsersExecute).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('GET /api/users/:id (Admin restriction)', () => {
-    it('returns 401 when Authorization header is missing', async () => {
+    it('returns 401 when the auth cookie is missing', async () => {
       const res = await request(app).get('/api/users/2');
       expect(res.status).toBe(401);
       expect(mockGetUserByIdExecute).not.toHaveBeenCalled();
@@ -114,7 +105,7 @@ describe('REST API Security & Role Gating', () => {
     it('returns 403 when authenticated user is not an admin', async () => {
       const res = await request(app)
         .get('/api/users/2')
-        .set('Authorization', `Bearer ${userToken}`);
+        .set('Cookie', userAuth.cookie);
       expect(res.status).toBe(403);
       expect(mockGetUserByIdExecute).not.toHaveBeenCalled();
     });
@@ -123,14 +114,14 @@ describe('REST API Security & Role Gating', () => {
       mockGetUserByIdExecute.mockResolvedValue({ idUser: 2, email: 'user@test.com' });
       const res = await request(app)
         .get('/api/users/2')
-        .set('Authorization', `Bearer ${adminToken}`);
+        .set('Cookie', adminAuth.cookie);
       expect(res.status).toBe(200);
       expect(mockGetUserByIdExecute).toHaveBeenCalledWith(2);
     });
   });
 
   describe('GET /api/cart (User Authentication restriction)', () => {
-    it('returns 401 when Authorization header is missing', async () => {
+    it('returns 401 when the auth cookie is missing', async () => {
       const res = await request(app).get('/api/cart');
       expect(res.status).toBe(401);
       expect(mockGetCartByUserIdExecute).not.toHaveBeenCalled();
@@ -140,16 +131,25 @@ describe('REST API Security & Role Gating', () => {
       mockGetCartByUserIdExecute.mockResolvedValue({ items: [], total: 0 });
       const res = await request(app)
         .get('/api/cart')
-        .set('Authorization', `Bearer ${userToken}`);
+        .set('Cookie', userAuth.cookie);
       expect(res.status).toBe(200);
       expect(mockGetCartByUserIdExecute).toHaveBeenCalledWith(2);
     });
   });
 
   describe('PUT /api/cart (User Authentication restriction)', () => {
-    it('returns 401 when Authorization header is missing', async () => {
+    it('returns 401 when the auth cookie is missing', async () => {
       const res = await request(app).put('/api/cart').send({ items: [] });
       expect(res.status).toBe(401);
+      expect(mockSyncCartExecute).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 when the CSRF token is missing', async () => {
+      const res = await request(app)
+        .put('/api/cart')
+        .set('Cookie', userAuth.cookie)
+        .send({ items: [] });
+      expect(res.status).toBe(403);
       expect(mockSyncCartExecute).not.toHaveBeenCalled();
     });
 
@@ -158,7 +158,8 @@ describe('REST API Security & Role Gating', () => {
       mockGetCartByUserIdExecute.mockResolvedValue({ items: [], total: 0 });
       const res = await request(app)
         .put('/api/cart')
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', userAuth.cookie)
+        .set('X-CSRF-Token', userAuth.csrfToken)
         .send({ items: [{ productId: 10, quantity: 2 }] });
 
       expect(res.status).toBe(200);
@@ -169,7 +170,8 @@ describe('REST API Security & Role Gating', () => {
     it('returns 400 when quantity is 0 (validation failure)', async () => {
       const res = await request(app)
         .put('/api/cart')
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', userAuth.cookie)
+        .set('X-CSRF-Token', userAuth.csrfToken)
         .send({ items: [{ productId: 10, quantity: 0 }] });
 
       expect(res.status).toBe(400);
@@ -195,7 +197,7 @@ describe('REST API Security & Role Gating', () => {
       mockListUsersExecute.mockRejectedValue(new Error('Test uncaught exception'));
       const res = await request(app)
         .get('/api/users')
-        .set('Authorization', `Bearer ${adminToken}`);
+        .set('Cookie', adminAuth.cookie);
 
       expect(res.status).toBe(500);
       expect(loggerErrorSpy).toHaveBeenCalled();

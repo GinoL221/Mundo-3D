@@ -8,6 +8,42 @@ import { InvalidCredentialsException } from '../../domain/exceptions/InvalidCred
 import { UserAlreadyExistsException } from '../../domain/exceptions/UserAlreadyExistsException';
 import { getJwtSecret } from '../security/JwtSecret';
 import { cleanupUploadedFile } from '../utils/cleanupUploadedFile';
+import {
+  AUTH_COOKIE,
+  CSRF_COOKIE,
+  USER_COOKIE,
+  cookieOptions,
+  authMaxAge,
+  authExpiresInSeconds,
+} from '../security/cookieOptions';
+import { issueCsrfToken } from '../security/csrfToken';
+
+interface UserDisplayData {
+  firstName: string;
+  image: string | null;
+  idRole?: number | null;
+  category?: string | null;
+}
+
+const setSessionCookies = (
+  res: Response,
+  userId: number,
+  jwtPayload: { userId: number; email: string; category?: string | null; idRole?: number | null },
+  display: UserDisplayData,
+  remember?: boolean
+): void => {
+  const maxAge = authMaxAge(remember);
+  const token = jwt.sign(jwtPayload, getJwtSecret(), { expiresIn: authExpiresInSeconds(remember) });
+  const csrfToken = issueCsrfToken(userId);
+
+  res.cookie(AUTH_COOKIE, token, cookieOptions({ httpOnly: true, maxAge }));
+  res.cookie(CSRF_COOKIE, csrfToken, cookieOptions({ httpOnly: false, maxAge }));
+  res.cookie(
+    USER_COOKIE,
+    JSON.stringify(display),
+    cookieOptions({ httpOnly: false, maxAge })
+  );
+};
 
 export class UserApiController {
   constructor(
@@ -21,6 +57,7 @@ export class UserApiController {
     try {
       const email = req.body.Email || req.body.email;
       const password = req.body.Password || req.body.password;
+      const remember = req.body.remember === true || req.body.remember === 'true';
 
       const userDto = await this.authenticateUserUseCase.execute({
         email: email,
@@ -34,10 +71,20 @@ export class UserApiController {
         idRole: userDto.idRole,
       };
 
-      const token = jwt.sign(payload, getJwtSecret(), { expiresIn: '2h' });
+      setSessionCookies(
+        res,
+        userDto.idUser,
+        payload,
+        {
+          firstName: userDto.firstName,
+          image: userDto.image,
+          idRole: userDto.idRole,
+          category: userDto.category,
+        },
+        remember
+      );
 
       res.json({
-        token,
         user: {
           idUser: userDto.idUser,
           firstName: userDto.firstName,
@@ -53,6 +100,18 @@ export class UserApiController {
         res.status(401).json({ error: 'El email o la contraseña no coinciden' });
         return;
       }
+      next(error);
+    }
+  };
+
+  logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const clearOptions = cookieOptions({ httpOnly: true });
+      res.clearCookie(AUTH_COOKIE, clearOptions);
+      res.clearCookie(CSRF_COOKIE, { ...clearOptions, httpOnly: false });
+      res.clearCookie(USER_COOKIE, { ...clearOptions, httpOnly: false });
+      res.sendStatus(204);
+    } catch (error) {
       next(error);
     }
   };
@@ -90,10 +149,14 @@ export class UserApiController {
         idRole: userDto.idRole,
       };
 
-      const token = jwt.sign(payload, getJwtSecret(), { expiresIn: '2h' });
+      setSessionCookies(res, userDto.idUser, payload, {
+        firstName: userDto.firstName,
+        image: userDto.image,
+        idRole: userDto.idRole,
+        category: userDto.category,
+      });
 
       res.status(201).json({
-        token,
         user: {
           idUser: userDto.idUser,
           firstName: userDto.firstName,

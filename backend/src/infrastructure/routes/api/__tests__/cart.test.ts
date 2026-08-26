@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express, { Express } from 'express';
-import jwt from 'jsonwebtoken';
+import cookieParser from 'cookie-parser';
 
 const mockGetCartByUserIdExecute = jest.fn();
 const mockSyncCartExecute = jest.fn();
@@ -22,24 +22,19 @@ jest.mock('../../../../application/use-cases/SyncCartUseCase', () => {
 });
 
 import errorHandler from '../../../middlewares/errorHandler';
-import { getJwtSecret } from '../../../security/JwtSecret';
-
-const JWT_SECRET = getJwtSecret();
+import { authAndCsrf } from '../../../../__tests__/helpers/apiAuthTestHelpers';
 
 const buildApp = (): Express => {
   const cartRouter = require('../cart').default;
   const app = express();
   app.use(express.json());
+  app.use(cookieParser());
   app.use('/api', cartRouter);
   app.use(errorHandler);
   return app;
 };
 
-const authToken = jwt.sign(
-  { userId: 5, email: 'user@test.com', category: 'User', idRole: 2 },
-  JWT_SECRET,
-  { expiresIn: '1h' }
-);
+const auth = authAndCsrf({ userId: 5, email: 'user@test.com', category: 'User', idRole: 2 });
 
 describe('api/cart routes', () => {
   let app: Express;
@@ -77,7 +72,8 @@ describe('api/cart routes', () => {
 
       const res = await request(app)
         .get('/api/cart')
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', auth.cookie)
+        .set('X-CSRF-Token', auth.csrfToken);
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual(mockCart);
@@ -92,6 +88,16 @@ describe('api/cart routes', () => {
         .send({ items: [{ productId: 10, quantity: 1 }] });
 
       expect(res.status).toBe(401);
+      expect(mockSyncCartExecute).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 without an X-CSRF-Token header even with a valid auth cookie', async () => {
+      const res = await request(app)
+        .put('/api/cart')
+        .set('Cookie', auth.cookie)
+        .send({ items: [{ productId: 10, quantity: 1 }] });
+
+      expect(res.status).toBe(403);
       expect(mockSyncCartExecute).not.toHaveBeenCalled();
     });
 
@@ -116,7 +122,8 @@ describe('api/cart routes', () => {
 
       const res = await request(app)
         .put('/api/cart')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', auth.cookie)
+        .set('X-CSRF-Token', auth.csrfToken)
         .send({ items: [{ productId: 10, quantity: 1 }] });
 
       expect(res.status).toBe(200);
@@ -150,7 +157,8 @@ describe('api/cart routes', () => {
 
       const res = await request(app)
         .put('/api/cart')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', auth.cookie)
+        .set('X-CSRF-Token', auth.csrfToken)
         .send({ items: [{ productId: 20, quantity: 1 }] });
 
       expect(res.status).toBe(200);
@@ -184,7 +192,8 @@ describe('api/cart routes', () => {
 
       const res = await request(app)
         .put('/api/cart')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', auth.cookie)
+        .set('X-CSRF-Token', auth.csrfToken)
         .send({ items: [{ productId: 10, quantity: 5 }] });
 
       expect(res.status).toBe(200);
@@ -195,7 +204,8 @@ describe('api/cart routes', () => {
     it('returns 400 and does not call SyncCartUseCase when items fails validation (quantity out of range)', async () => {
       const res = await request(app)
         .put('/api/cart')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', auth.cookie)
+        .set('X-CSRF-Token', auth.csrfToken)
         .send({ items: [{ productId: 10, quantity: 0 }] });
 
       expect(res.status).toBe(400);
@@ -209,7 +219,8 @@ describe('api/cart routes', () => {
 
       const res = await request(app)
         .put('/api/cart')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', auth.cookie)
+        .set('X-CSRF-Token', auth.csrfToken)
         .send({ items: [] });
 
       expect(res.status).toBe(200);

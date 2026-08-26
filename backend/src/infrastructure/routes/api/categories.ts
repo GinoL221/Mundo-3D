@@ -7,6 +7,7 @@ import { UpdateCategoryUseCase } from '../../../application/use-cases/UpdateCate
 import { DeleteCategoryUseCase } from '../../../application/use-cases/DeleteCategoryUseCase';
 import { CategoryApiController } from '../../controllers/CategoryApiController';
 import { apiAuthMiddleware, adminGuard, requireRoles } from '../../middlewares/auth';
+import { csrfGuard } from '../../middlewares/csrf';
 import { Role } from '../../../domain/Role';
 import { categoryCreateValidators, categoryUpdateValidators } from '../../middlewares/validators/categoryValidators';
 import handleValidationErrors from '../../middlewares/handleValidationErrors';
@@ -35,6 +36,7 @@ router.get('/categories/:id', controller.show);
 router.post(
   '/categories',
   apiAuthMiddleware,
+  csrfGuard,
   requireRoles(Role.ADMIN, Role.STAFF),
   categoryCreateValidators,
   handleValidationErrors,
@@ -44,12 +46,13 @@ router.post(
 router.put(
   '/categories/:id',
   apiAuthMiddleware,
+  csrfGuard,
   requireRoles(Role.ADMIN, Role.STAFF),
   categoryUpdateValidators,
   handleValidationErrors,
   controller.update
 );
 
-router.delete('/categories/:id', apiAuthMiddleware, adminGuard, controller.destroy);
+router.delete('/categories/:id', apiAuthMiddleware, csrfGuard, adminGuard, controller.destroy);
 
 export default router;
