@@ -51,6 +51,12 @@ jobs:
 
       - name: Build frontend
         run: pnpm run frontend:build
+        env:
+          # astro.config.mjs fails the build when this is unset (see
+          # feat(frontend): fail the build when PUBLIC_API_URL is missing).
+          # CI only validates the build, it never deploys this output, so a
+          # placeholder is fine here — never the real production API URL.
+          PUBLIC_API_URL: https://api.example.invalid
 
       - name: Upload coverage and risk-map evidence
         if: always()
