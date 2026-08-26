@@ -108,7 +108,9 @@ import Layout from '../../../layouts/Layout.astro';
   // server-side): clear it and send the admin back to /login instead of
   // showing a confusing generic error.
   function handleUnauthorized(): void {
-    clearSession();
+    // clearSession() is now async (it calls POST /users/logout to clear
+    // the httpOnly cookie) — fire-and-forget, don't block the redirect.
+    void clearSession();
     window.location.href = '/login';
   }
 
