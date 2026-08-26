@@ -4,6 +4,8 @@ import { CartService } from '../domains/cart/services/CartService';
 type Cleanup = () => void;
 
 const cleanups = new WeakMap<Document, Cleanup>();
+const USER_COOKIE_NAME = 'm3d_user';
+const SESSION_BROADCAST_CHANNEL = 'm3d-session';
 
 function setVisibility(elements: NodeListOf<Element> | Element[], display: string) {
   elements.forEach((element) => {
@@ -11,7 +13,21 @@ function setVisibility(elements: NodeListOf<Element> | Element[], display: strin
   });
 }
 
-export function initializeSessionUI(document: Document, window: Window, storage: Storage): Cleanup {
+function readCookie(document: Document, name: string): string | null {
+  const entry = document.cookie.split('; ').find((piece) => piece.startsWith(`${name}=`));
+  if (!entry) return null;
+  return entry.slice(name.length + 1) || null;
+}
+
+/**
+ * Wires the navbar's guest/user/admin visibility, greeting, and avatar to
+ * the current session, and keeps it in sync across same-tab events,
+ * cross-tab logout (BroadcastChannel), and cookie-expiry/visibility
+ * fallbacks (design.md "Decision: Cross-tab sync"). No longer takes a
+ * `storage` param — cookies replace localStorage as of the JWT cookie
+ * migration, and `update()` reads `document.cookie` directly.
+ */
+export function initializeSessionUI(document: Document, window: Window): Cleanup {
   const existing = cleanups.get(document);
   if (existing) return existing;
 
@@ -22,18 +38,17 @@ export function initializeSessionUI(document: Document, window: Window, storage:
   };
 
   const update = () => {
-    const token = storage.getItem('token');
-    const userJson = storage.getItem('user');
+    const raw = readCookie(document, USER_COOKIE_NAME);
     const greeting = document.getElementById('navbar-greeting');
     const avatar = document.getElementById('navbar-avatar') as HTMLImageElement | null;
 
-    if (!token || !userJson) {
+    if (!raw) {
       resetToGuest();
       return;
     }
 
     try {
-      const user = JSON.parse(userJson) as {
+      const user = JSON.parse(decodeURIComponent(raw)) as {
         firstName?: string;
         FirstName?: string;
         image?: string;
@@ -50,23 +65,36 @@ export function initializeSessionUI(document: Document, window: Window, storage:
       if (avatar && (user.image || user.Image))
         avatar.src = `/img/users/${user.image || user.Image}`;
     } catch {
-      storage.removeItem('token');
-      storage.removeItem('user');
       resetToGuest();
     }
   };
 
   const logout = (event: Event) => {
     event.preventDefault();
-    clearSession();
+    // Fire-and-forget: the redirect never waits on the network call (same
+    // "best-effort, never block" spirit as session.service.ts's
+    // clearSession()).
+    void clearSession();
     CartService.clearCart();
     window.location.href = '/login';
   };
   const logoutButton = document.getElementById('navbar-logout');
   const logoutListener = logoutButton ? logout : null;
   logoutButton?.addEventListener('click', logout);
-  window.addEventListener('storage', update);
+
+  // Cookies fire no `storage` event, so cross-tab sync is composed instead
+  // of the three layers below (design.md "Decision: Cross-tab sync").
+  let channel: BroadcastChannel | null = null;
+  try {
+    channel = new BroadcastChannel(SESSION_BROADCAST_CHANNEL);
+    channel.onmessage = () => update();
+  } catch {
+    channel = null;
+  }
+
   window.addEventListener('session-changed', update);
+  window.addEventListener('focus', update);
+  document.addEventListener('visibilitychange', update);
   update();
 
   let active = true;
@@ -74,8 +102,10 @@ export function initializeSessionUI(document: Document, window: Window, storage:
     if (!active) return;
     active = false;
     if (logoutListener) logoutButton?.removeEventListener('click', logoutListener);
-    window.removeEventListener('storage', update);
     window.removeEventListener('session-changed', update);
+    window.removeEventListener('focus', update);
+    document.removeEventListener('visibilitychange', update);
+    channel?.close();
     cleanups.delete(document);
   };
   cleanups.set(document, cleanup);

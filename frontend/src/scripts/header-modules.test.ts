@@ -29,6 +29,8 @@ class FakeElement {
 
 class FakeDocument {
   elements = new Map<string, FakeElement>();
+  cookie = '';
+  listeners = new Map<string, (event: Event) => void>();
   documentElement = {
     attributes: new Map<string, string>(),
     classList: {
@@ -44,6 +46,14 @@ class FakeDocument {
     setAttribute: (name: string, value: string) => this.documentElement.attributes.set(name, value),
     getAttribute: (name: string) => this.documentElement.attributes.get(name) ?? null,
   };
+
+  addEventListener(type: string, listener: (event: Event) => void) {
+    this.listeners.set(type, listener);
+  }
+
+  removeEventListener(type: string, listener: (event: Event) => void) {
+    if (this.listeners.get(type) === listener) this.listeners.delete(type);
+  }
 
   getElementById(id: string) {
     return this.elements.get(id) ?? null;
@@ -63,6 +73,23 @@ class FakeDocument {
     };
     return this.elements.get(ids[selector]) ?? null;
   }
+}
+
+class FakeBroadcastChannel {
+  static instances: FakeBroadcastChannel[] = [];
+  name: string;
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  postMessage = vi.fn();
+  close = vi.fn();
+
+  constructor(name: string) {
+    this.name = name;
+    FakeBroadcastChannel.instances.push(this);
+  }
+}
+
+function setUserCookie(document: FakeDocument, user: Record<string, unknown>) {
+  document.cookie = `m3d_user=${encodeURIComponent(JSON.stringify(user))}`;
 }
 
 function createStorage() {
@@ -120,17 +147,14 @@ function createFixture() {
 describe('Header browser modules', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it('renders guest, user, and admin visibility and reacts to session events', () => {
+  it('renders guest, user, and admin visibility and reacts to session-changed and BroadcastChannel events', () => {
+    FakeBroadcastChannel.instances = [];
+    vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
     const fixture = createFixture();
-    const { document, window, storage } = fixture;
-    storage.setItem('token', 'token');
-    storage.setItem('user', JSON.stringify({ firstName: 'Ada', idRole: 1, image: 'ada.png' }));
+    const { document, window } = fixture;
+    setUserCookie(document, { firstName: 'Ada', idRole: 1, image: 'ada.png' });
 
-    initializeSessionUI(
-      document as unknown as Document,
-      window as unknown as Window,
-      storage as unknown as Storage,
-    );
+    initializeSessionUI(document as unknown as Document, window as unknown as Window);
 
     expect(document.elements.get('guest')!.style.display).toBe('none');
     expect(document.elements.get('user')!.style.display).toBe('block');
@@ -139,30 +163,42 @@ describe('Header browser modules', () => {
     expect(document.elements.get('navbar-avatar')!.src).toBe('/img/users/ada.png');
     expect(document.elements.get('search-button')!.listeners.has('click')).toBe(false);
 
-    storage.removeItem('token');
-    storage.removeItem('user');
+    document.cookie = '';
     window.listeners.get('session-changed')?.({} as Event);
     expect(document.elements.get('guest')!.style.display).toBe('block');
     expect(document.elements.get('user')!.style.display).toBe('none');
 
-    storage.setItem('token', 'token');
-    storage.setItem('user', JSON.stringify({ firstName: 'User', idRole: 2 }));
-    window.listeners.get('storage')?.({} as Event);
+    // A BroadcastChannel message from another tab (e.g. that tab logging
+    // out and back in as staff) re-reads the cookie the same way.
+    setUserCookie(document, { firstName: 'User', idRole: 3 });
+    const channel = FakeBroadcastChannel.instances.at(-1)!;
+    channel.onmessage?.({} as MessageEvent);
     expect(document.elements.get('user')!.style.display).toBe('block');
-    expect(document.elements.get('admin')!.style.display).toBe('none');
+    expect(document.elements.get('admin')!.style.display).toBe('block');
+  });
+
+  it('falls back to visibilitychange and focus to refresh stale session state', () => {
+    const fixture = createFixture();
+    const { document, window } = fixture;
+
+    initializeSessionUI(document as unknown as Document, window as unknown as Window);
+    expect(document.elements.get('user')!.style.display).toBe('none');
+
+    setUserCookie(document, { firstName: 'Ada', idRole: 2 });
+    document.listeners.get('visibilitychange')?.({} as Event);
+    expect(document.elements.get('user')!.style.display).toBe('block');
+
+    document.cookie = '';
+    window.listeners.get('focus')?.({} as Event);
+    expect(document.elements.get('user')!.style.display).toBe('none');
   });
 
   it('preserves navigation and dropdown links while search remains visual-only', () => {
     const fixture = createFixture();
-    const { document, window, storage } = fixture;
-    storage.setItem('token', 'token');
-    storage.setItem('user', JSON.stringify({ firstName: 'Ada', idRole: 1 }));
+    const { document, window } = fixture;
+    setUserCookie(document, { firstName: 'Ada', idRole: 1 });
 
-    initializeSessionUI(
-      document as unknown as Document,
-      window as unknown as Window,
-      storage as unknown as Storage,
-    );
+    initializeSessionUI(document as unknown as Document, window as unknown as Window);
 
     expect(document.elements.get('product-link')!.href).toBe('/products');
     expect(document.elements.get('profile-link')!.href).toBe('/profile');
@@ -174,30 +210,53 @@ describe('Header browser modules', () => {
     expect(window.location.href).toBe('');
   });
 
-  it('clears corrupt sessions and performs logout in order', () => {
+  it('resets to guest without throwing on a corrupt session cookie', () => {
     const fixture = createFixture();
-    const { document, window, storage } = fixture;
-    storage.setItem('token', 'token');
-    storage.setItem('user', '{bad');
-    const order: string[] = [];
-    storage.removeItem.mockImplementation((key: string) => {
-      order.push(`remove:${key}`);
-    });
-    storage.setItem.mockImplementation((key: string, value: string) => {
-      if (key === 'cart' && value === '[]') order.push('clear-cart');
-    });
+    const { document, window } = fixture;
+    document.cookie = 'm3d_user=%7Bnot-valid-json';
 
-    initializeSessionUI(
-      document as unknown as Document,
-      window as unknown as Window,
-      storage as unknown as Storage,
-    );
-    expect(storage.removeItem).toHaveBeenCalledWith('token');
-    expect(storage.removeItem).toHaveBeenCalledWith('user');
+    expect(() =>
+      initializeSessionUI(document as unknown as Document, window as unknown as Window),
+    ).not.toThrow();
+    expect(document.elements.get('guest')!.style.display).toBe('block');
+    expect(document.elements.get('user')!.style.display).toBe('none');
+  });
+
+  it('performs logout by clearing the cart, best-effort clearing the session, and redirecting', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 204 });
+    vi.stubGlobal('fetch', fetchMock);
+    const fixture = createFixture();
+    const { document, window } = fixture;
+    setUserCookie(document, { firstName: 'Ada', idRole: 1 });
+
+    initializeSessionUI(document as unknown as Document, window as unknown as Window);
 
     document.elements.get('navbar-logout')!.click();
-    expect(order.slice(-3)).toEqual(['remove:token', 'remove:user', 'clear-cart']);
+
+    // Redirect happens immediately — logout never blocks on the network
+    // call (fire-and-forget, see session.service.ts clearSession()).
     expect(window.location.href).toBe('/login');
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toContain('/api/users/logout');
+  });
+
+  it('closes the BroadcastChannel and removes all listeners on cleanup', () => {
+    FakeBroadcastChannel.instances = [];
+    vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
+    const fixture = createFixture();
+    const { document, window } = fixture;
+
+    const cleanup = initializeSessionUI(document as unknown as Document, window as unknown as Window);
+    const channel = FakeBroadcastChannel.instances.at(-1)!;
+
+    cleanup();
+
+    expect(channel.close).toHaveBeenCalledTimes(1);
+    expect(window.listeners.has('session-changed')).toBe(false);
+    expect(window.listeners.has('focus')).toBe(false);
+    expect(document.listeners.has('visibilitychange')).toBe(false);
   });
 
   it('normalizes and persists color theme, including the dark default', () => {
