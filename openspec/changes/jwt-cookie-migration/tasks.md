@@ -52,8 +52,8 @@ Chain strategy: pending
 
 - [x] 4.1 RED: `UserApiController.test.ts` — login sets 3 `Set-Cookie`, no `token` in body; `remember:true` → 30d on all 3; omitted → 2h; JWT `exp` matches
 - [x] 4.2 GREEN: modify `UserApiController.ts` `login`/`register` — set cookies via `cookieOptions`/`authMaxAge`, drop `token` from body; add `logout` (`clearCookie` ×3, byte-identical flags, 204)
-- [x] 4.3 RED: `users.ts` route test — `POST /users/logout` 204 with cookie, 401 without, no body required
-- [x] 4.4 GREEN: modify `routes/api/users.ts` — `router.post('/users/logout', apiAuthMiddleware, controller.logout)`
+- [x] 4.3 RED: `users.ts` route test — `POST /users/logout` 204 with cookie, no body required. **Corrected post-`sdd-verify`**: originally written/tested as "401 without cookie," which contradicted `specs/api-jwt-auth/spec.md`'s "Logout without an active session" (MUST NOT error). Now asserts 204 without a cookie too.
+- [x] 4.4 GREEN: modify `routes/api/users.ts` — `router.post('/users/logout', controller.logout)`, no `apiAuthMiddleware` (corrected post-`sdd-verify`, see 4.3)
 - [x] 4.5 RED: assert `POST /users/login` and `POST /users/register` succeed with no `X-CSRF-Token` header (pre-auth exemption)
 - [x] 4.6 GREEN: confirm `csrfGuard` is not mounted on login/register/logout in `users.ts` (satisfied by 4.4 scope)
 

@@ -149,10 +149,10 @@ describe('api/users admin routes — guard matrix', () => {
       expect(res.status).toBe(204);
     });
 
-    it('returns 401 without an auth cookie', async () => {
+    it('returns 204 without an auth cookie (idempotent — logout must never error)', async () => {
       const res = await request(app).post('/api/users/logout');
 
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(204);
     });
 
     it('does not require an X-CSRF-Token header (pre-auth/fail-safe exemption)', async () => {
