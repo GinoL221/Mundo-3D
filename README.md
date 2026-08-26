@@ -230,6 +230,10 @@ Mundo-3D/
 
 Las especificaciones aceptadas están en [`openspec/specs/`](openspec/specs/). Los cambios bajo `openspec/changes/` pueden ser propuestas o trabajo pendiente y no implican que una capacidad esté disponible en `main`.
 
+## Operación
+
+Procedimientos ante incidentes (backend que no arranca, `/health/ready` trabado, CI en rojo, rotación de secretos, rollback de migraciones) en [`docs/RUNBOOKS.md`](docs/RUNBOOKS.md).
+
 ## Limitaciones actuales
 
 Estas son restricciones del comportamiento implementado, no una promesa de roadmap:
