@@ -128,10 +128,11 @@
     try {
       const formData = new FormData(form!);
 
-      const authData = await AuthService.register(formData);
+      await AuthService.register(formData);
 
-      localStorage.setItem('token', authData.token);
-      localStorage.setItem('user', JSON.stringify(authData.user));
+      // Server issues the session as httpOnly/CSRF/display cookies — no
+      // client-side storage write needed (design.md "No Script-Readable
+      // Auth Token Storage").
 
       window.dispatchEvent(new CustomEvent('session-changed'));
       window.location.href = '/';
