@@ -48,9 +48,7 @@ describe('AuthService', () => {
     });
 
     it('posts credentials and returns adapted auth data on success', async () => {
-      fetchMock.mockResolvedValue(
-        jsonResponse(200, { token: 'jwt-token', user: buildAPIUser() })
-      );
+      fetchMock.mockResolvedValue(jsonResponse(200, { user: buildAPIUser() }));
 
       const result = await AuthService.login('ada@test.com', 'password123');
 
@@ -58,12 +56,30 @@ describe('AuthService', () => {
       const [url, options] = fetchMock.mock.calls[0];
       expect(url).toContain('/api/users/login');
       expect(options.method).toBe('POST');
+      expect(options.credentials).toBe('include');
       expect(options.headers['Content-Type']).toBe('application/json');
-      expect(JSON.parse(options.body)).toEqual({ email: 'ada@test.com', password: 'password123' });
+      expect(JSON.parse(options.body)).toEqual({
+        email: 'ada@test.com',
+        password: 'password123',
+        remember: false,
+      });
 
       expect(result).toEqual({
-        token: 'jwt-token',
         user: { id: 1, firstName: 'Ada', lastName: 'Lovelace', email: 'ada@test.com', image: '' },
+      });
+      expect(result).not.toHaveProperty('token');
+    });
+
+    it('sends remember:true in the body when the caller opts in', async () => {
+      fetchMock.mockResolvedValue(jsonResponse(200, { user: buildAPIUser() }));
+
+      await AuthService.login('ada@test.com', 'password123', true);
+
+      const [, options] = fetchMock.mock.calls[0];
+      expect(JSON.parse(options.body)).toEqual({
+        email: 'ada@test.com',
+        password: 'password123',
+        remember: true,
       });
     });
 
@@ -100,9 +116,7 @@ describe('AuthService', () => {
     }
 
     it('posts the FormData as-is and returns adapted auth data on success', async () => {
-      fetchMock.mockResolvedValue(
-        jsonResponse(201, { token: 'jwt-token', user: buildAPIUser() })
-      );
+      fetchMock.mockResolvedValue(jsonResponse(201, { user: buildAPIUser() }));
       const formData = buildFormData();
 
       const result = await AuthService.register(formData);
@@ -111,8 +125,10 @@ describe('AuthService', () => {
       const [url, options] = fetchMock.mock.calls[0];
       expect(url).toContain('/api/users/register');
       expect(options.method).toBe('POST');
+      expect(options.credentials).toBe('include');
       expect(options.body).toBe(formData);
       expect(result.user.email).toBe('ada@test.com');
+      expect(result).not.toHaveProperty('token');
     });
 
     it('extracts the first field error when "errors" is a field-keyed object', async () => {

@@ -19,7 +19,6 @@ export interface APIUser {
 }
 
 export interface APILoginResponse {
-  token: string;
   user: APIUser;
 }
 
@@ -33,13 +32,11 @@ export interface User {
 }
 
 export interface AuthData {
-  token: string;
   user: User;
 }
 
 export const createAuthAdapter = (apiAuth: APILoginResponse): AuthData => {
   return {
-    token: apiAuth.token,
     user: {
       id: apiAuth.user.idUser,
       firstName: apiAuth.user.firstName,
