@@ -46,12 +46,12 @@ The `.nav-item` MUST contain `.nav-item__dropdown` (replacing `.dropdown-menu`) 
 
 ### Requirement: Header Session and Navigation
 
-The Header MUST preserve session visibility, identity, links, dropdowns, and visual-only search through selectors, storage, and events.
+The Header MUST preserve session visibility, identity, links, dropdowns, and visual-only search through selectors, cookies, and events.
 
 #### Scenario: Session state updates Header visibility
 
-- GIVEN `token` and `user` represent a guest, user, or administrator
-- WHEN Header loads or receives `storage` or `session-changed`
+- GIVEN the non-httpOnly `m3d_user` cookie represents a guest, user, or administrator
+- WHEN Header loads or receives a same-tab `session-changed` event, a `BroadcastChannel('m3d-session')` message from another tab, or a `focus`/`visibilitychange` fallback trigger
 - THEN existing visibility, greeting, and avatar MUST reflect that state
 
 #### Scenario: Header navigation remains unchanged
@@ -62,10 +62,10 @@ The Header MUST preserve session visibility, identity, links, dropdowns, and vis
 
 ### Requirement: Header Logout Transition
 
-The keyboard-activatable Header logout MUST remove `token`/`user`, clear the cart, then navigate to `/login`.
+The keyboard-activatable Header logout MUST end the server-side session (clearing the httpOnly auth cookie plus the CSRF/display cookies), clear the cart, then navigate to `/login`.
 
 #### Scenario: Authenticated user logs out
 
 - GIVEN an authenticated user activates logout
 - WHEN the transition runs
-- THEN storage MUST precede cart clearing, which MUST precede `/login` navigation as guest
+- THEN ending the session MUST precede cart clearing, which MUST precede `/login` navigation as guest

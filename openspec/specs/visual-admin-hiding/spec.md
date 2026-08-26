@@ -8,17 +8,17 @@ Defines the conditional rendering of administrative controls in the Astro fronte
 
 ### Requirement: Admin Nav Link Visibility
 
-`Header.astro` MUST show a navigation link to `/admin/products` only when the persisted `idRole` (read via `frontend/src/domains/auth/adapters/auth.adapter.ts` from localStorage) is `Role.ADMIN` or `Role.STAFF`. This is a presentation-layer convenience only — it MUST NOT be relied upon as the security boundary; the API's `requireRoles` guard (see admin-route-guard capability) is authoritative for authorization.
+`Header.astro` MUST show a navigation link to `/admin/products` only when `idRole`, read from the non-httpOnly `m3d_user` display cookie via `frontend/src/config.ts`'s `getSessionUser()` (`hasAdminAccess()` in `frontend/src/domains/auth/services/session.service.ts`), is `Role.ADMIN` or `Role.STAFF`. This is a presentation-layer convenience only — it MUST NOT be relied upon as the security boundary; the API's `requireRoles` guard (see admin-route-guard capability) is authoritative for authorization.
 
 #### Scenario: ADMIN or STAFF sees the admin products link
 
-- GIVEN a logged-in user whose persisted `idRole` is `Role.ADMIN` or `Role.STAFF`
+- GIVEN a logged-in user whose `m3d_user` cookie carries `idRole` `Role.ADMIN` or `Role.STAFF`
 - WHEN `Header.astro` renders
 - THEN the `/admin/products` navigation link MUST be visible
 
 #### Scenario: USER or logged-out visitor does not see the admin products link
 
-- GIVEN a logged-out visitor, or a logged-in user whose persisted `idRole` is `Role.USER`
+- GIVEN a logged-out visitor (no `m3d_user` cookie), or a logged-in user whose `m3d_user` cookie carries `idRole` `Role.USER`
 - WHEN `Header.astro` renders
 - THEN the `/admin/products` navigation link MUST NOT be visible
 
@@ -28,13 +28,13 @@ Within the admin product section, the delete action/button MUST only be visible/
 
 #### Scenario: ADMIN sees delete control
 
-- GIVEN a logged-in user whose persisted `idRole` is `Role.ADMIN`
+- GIVEN a logged-in user whose `m3d_user` cookie carries `idRole` `Role.ADMIN`
 - WHEN the admin product section renders a product row
 - THEN the delete control MUST be visible and enabled
 
 #### Scenario: STAFF does not see delete control
 
-- GIVEN a logged-in user whose persisted `idRole` is `Role.STAFF`
+- GIVEN a logged-in user whose `m3d_user` cookie carries `idRole` `Role.STAFF`
 - WHEN the admin product section renders a product row
 - THEN the delete control MUST NOT be visible
 - AND create, edit, and stock-adjust controls MUST remain visible
