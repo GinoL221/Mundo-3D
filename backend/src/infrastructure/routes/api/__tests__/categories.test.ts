@@ -1,6 +1,8 @@
 import request from 'supertest';
 import express, { Express } from 'express';
-import jwt from 'jsonwebtoken';
+import cookieParser from 'cookie-parser';
+import { Role } from '../../../../domain/Role';
+import { authCookie, authAndCsrf } from '../../../../__tests__/helpers/apiAuthTestHelpers';
 
 const mockListExecute = jest.fn();
 const mockGetByIdExecute = jest.fn();
@@ -29,33 +31,26 @@ jest.mock('../../../../application/use-cases/DeleteCategoryUseCase', () => ({
 }));
 
 import errorHandler from '../../../middlewares/errorHandler';
-import { getJwtSecret } from '../../../security/JwtSecret';
-import { Role } from '../../../../domain/Role';
-
-const JWT_SECRET = getJwtSecret();
 
 // Integration-level guard-matrix + CRUD test for the category routes
-// (category-franchise-api PR2). Exercises the real Express pipeline —
-// apiAuthMiddleware → requireRoles/adminGuard → validators → controller —
-// with only the use-case classes mocked at the module boundary, so it never
-// touches a real database (mirrors routes/api/__tests__/products.test.ts).
+// (category-franchise-api PR2, cookie/CSRF-migrated in jwt-cookie-migration
+// PR2). Exercises the real Express pipeline — apiAuthMiddleware → csrfGuard →
+// requireRoles/adminGuard → validators → controller — with only the use-case
+// classes mocked at the module boundary, so it never touches a real database
+// (mirrors routes/api/__tests__/products.test.ts).
 const buildApp = (): Express => {
   const categoriesRouter = require('../categories').default;
   const app = express();
   app.use(express.json());
+  app.use(cookieParser());
   app.use('/api', categoriesRouter);
   app.use(errorHandler);
   return app;
 };
 
-const signToken = (idRole: number) =>
-  jwt.sign({ userId: 1, email: 'principal@test.com', category: 'test', idRole }, JWT_SECRET, {
-    expiresIn: '1h',
-  });
-
-const adminToken = signToken(Role.ADMIN);
-const staffToken = signToken(Role.STAFF);
-const userToken = signToken(Role.USER);
+const adminAuth = authAndCsrf({ userId: 1, email: 'principal@test.com', category: 'test', idRole: Role.ADMIN });
+const staffAuth = authAndCsrf({ userId: 1, email: 'principal@test.com', category: 'test', idRole: Role.STAFF });
+const userAuth = authAndCsrf({ userId: 1, email: 'principal@test.com', category: 'test', idRole: Role.USER });
 
 describe('api/categories routes', () => {
   let app: Express;
@@ -110,7 +105,7 @@ describe('api/categories routes', () => {
   });
 
   describe('POST /api/categories', () => {
-    it('returns 401 without an Authorization header', async () => {
+    it('returns 401 without an auth cookie', async () => {
       const res = await request(app)
         .post('/api/categories')
         .send({ nameCategory: 'Action Figures' });
@@ -119,10 +114,10 @@ describe('api/categories routes', () => {
       expect(mockCreateExecute).not.toHaveBeenCalled();
     });
 
-    it('returns 401 with a bad/malformed Bearer token', async () => {
+    it('returns 401 with a bad/malformed auth cookie', async () => {
       const res = await request(app)
         .post('/api/categories')
-        .set('Authorization', 'Bearer not-a-real-token')
+        .set('Cookie', authCookie('not-a-real-token'))
         .send({ nameCategory: 'Action Figures' });
 
       expect(res.status).toBe(401);
@@ -132,7 +127,8 @@ describe('api/categories routes', () => {
     it('returns 403 for an authenticated USER (not in the create allow-list)', async () => {
       const res = await request(app)
         .post('/api/categories')
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', userAuth.cookie)
+        .set('X-CSRF-Token', userAuth.csrfToken)
         .send({ nameCategory: 'Action Figures' });
 
       expect(res.status).toBe(403);
@@ -144,7 +140,8 @@ describe('api/categories routes', () => {
 
       const res = await request(app)
         .post('/api/categories')
-        .set('Authorization', `Bearer ${staffToken}`)
+        .set('Cookie', staffAuth.cookie)
+        .set('X-CSRF-Token', staffAuth.csrfToken)
         .send({ nameCategory: 'Action Figures' });
 
       expect(res.status).toBe(201);
@@ -156,17 +153,29 @@ describe('api/categories routes', () => {
 
       const res = await request(app)
         .post('/api/categories')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Cookie', adminAuth.cookie)
+        .set('X-CSRF-Token', adminAuth.csrfToken)
         .send({ nameCategory: 'Action Figures' });
 
       expect(res.status).toBe(201);
       expect(mockCreateExecute).toHaveBeenCalledWith({ nameCategory: 'Action Figures' });
     });
 
+    it('returns 403 when the CSRF token is missing', async () => {
+      const res = await request(app)
+        .post('/api/categories')
+        .set('Cookie', adminAuth.cookie)
+        .send({ nameCategory: 'Action Figures' });
+
+      expect(res.status).toBe(403);
+      expect(mockCreateExecute).not.toHaveBeenCalled();
+    });
+
     it('returns 400 when nameCategory is missing', async () => {
       const res = await request(app)
         .post('/api/categories')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Cookie', adminAuth.cookie)
+        .set('X-CSRF-Token', adminAuth.csrfToken)
         .send({});
 
       expect(res.status).toBe(400);
@@ -176,7 +185,8 @@ describe('api/categories routes', () => {
     it('returns 400 when nameCategory is whitespace-only', async () => {
       const res = await request(app)
         .post('/api/categories')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Cookie', adminAuth.cookie)
+        .set('X-CSRF-Token', adminAuth.csrfToken)
         .send({ nameCategory: '   ' });
 
       expect(res.status).toBe(400);
@@ -197,7 +207,8 @@ describe('api/categories routes', () => {
 
       const res = await request(app)
         .post('/api/categories')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Cookie', adminAuth.cookie)
+        .set('X-CSRF-Token', adminAuth.csrfToken)
         .send({ nameCategory: 'Existing Category' });
 
       expect(res.status).toBe(409);
@@ -207,7 +218,7 @@ describe('api/categories routes', () => {
   });
 
   describe('PUT /api/categories/:id', () => {
-    it('returns 401 without an Authorization header', async () => {
+    it('returns 401 without an auth cookie', async () => {
       const res = await request(app)
         .put('/api/categories/1')
         .send({ nameCategory: 'Updated Name' });
@@ -219,7 +230,8 @@ describe('api/categories routes', () => {
     it('returns 403 for an authenticated USER (not in the update allow-list)', async () => {
       const res = await request(app)
         .put('/api/categories/1')
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', userAuth.cookie)
+        .set('X-CSRF-Token', userAuth.csrfToken)
         .send({ nameCategory: 'Updated Name' });
 
       expect(res.status).toBe(403);
@@ -231,7 +243,8 @@ describe('api/categories routes', () => {
 
       const res = await request(app)
         .put('/api/categories/1')
-        .set('Authorization', `Bearer ${staffToken}`)
+        .set('Cookie', staffAuth.cookie)
+        .set('X-CSRF-Token', staffAuth.csrfToken)
         .send({ nameCategory: 'Updated Name' });
 
       expect(res.status).toBe(200);
@@ -243,11 +256,22 @@ describe('api/categories routes', () => {
 
       const res = await request(app)
         .put('/api/categories/1')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Cookie', adminAuth.cookie)
+        .set('X-CSRF-Token', adminAuth.csrfToken)
         .send({ nameCategory: 'Updated Name' });
 
       expect(res.status).toBe(200);
       expect(mockUpdateExecute).toHaveBeenCalledWith(1, { nameCategory: 'Updated Name' });
+    });
+
+    it('returns 403 when the CSRF token is missing', async () => {
+      const res = await request(app)
+        .put('/api/categories/1')
+        .set('Cookie', adminAuth.cookie)
+        .send({ nameCategory: 'Updated Name' });
+
+      expect(res.status).toBe(403);
+      expect(mockUpdateExecute).not.toHaveBeenCalled();
     });
 
     it('returns 404 when the category does not exist', async () => {
@@ -255,7 +279,8 @@ describe('api/categories routes', () => {
 
       const res = await request(app)
         .put('/api/categories/999')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Cookie', adminAuth.cookie)
+        .set('X-CSRF-Token', adminAuth.csrfToken)
         .send({ nameCategory: 'Updated Name' });
 
       expect(res.status).toBe(404);
@@ -264,7 +289,8 @@ describe('api/categories routes', () => {
     it('returns 400 when nameCategory is missing', async () => {
       const res = await request(app)
         .put('/api/categories/1')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Cookie', adminAuth.cookie)
+        .set('X-CSRF-Token', adminAuth.csrfToken)
         .send({});
 
       expect(res.status).toBe(400);
@@ -293,7 +319,8 @@ describe('api/categories routes', () => {
 
       const res = await request(app)
         .put('/api/categories/1')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Cookie', adminAuth.cookie)
+        .set('X-CSRF-Token', adminAuth.csrfToken)
         .send({ nameCategory: 'Existing Category' });
 
       expect(res.status).toBe(409);
@@ -303,7 +330,7 @@ describe('api/categories routes', () => {
   });
 
   describe('DELETE /api/categories/:id', () => {
-    it('returns 401 without an Authorization header', async () => {
+    it('returns 401 without an auth cookie', async () => {
       const res = await request(app).delete('/api/categories/1');
 
       expect(res.status).toBe(401);
@@ -313,7 +340,15 @@ describe('api/categories routes', () => {
     it('returns 403 for STAFF (delete is ADMIN-only)', async () => {
       const res = await request(app)
         .delete('/api/categories/1')
-        .set('Authorization', `Bearer ${staffToken}`);
+        .set('Cookie', staffAuth.cookie)
+        .set('X-CSRF-Token', staffAuth.csrfToken);
+
+      expect(res.status).toBe(403);
+      expect(mockDeleteExecute).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 when the CSRF token is missing', async () => {
+      const res = await request(app).delete('/api/categories/1').set('Cookie', adminAuth.cookie);
 
       expect(res.status).toBe(403);
       expect(mockDeleteExecute).not.toHaveBeenCalled();
@@ -324,7 +359,8 @@ describe('api/categories routes', () => {
 
       const res = await request(app)
         .delete('/api/categories/1')
-        .set('Authorization', `Bearer ${adminToken}`);
+        .set('Cookie', adminAuth.cookie)
+        .set('X-CSRF-Token', adminAuth.csrfToken);
 
       expect(res.status).toBe(204);
       expect(mockDeleteExecute).toHaveBeenCalledWith(1);
@@ -335,7 +371,8 @@ describe('api/categories routes', () => {
 
       const res = await request(app)
         .delete('/api/categories/999')
-        .set('Authorization', `Bearer ${adminToken}`);
+        .set('Cookie', adminAuth.cookie)
+        .set('X-CSRF-Token', adminAuth.csrfToken);
 
       expect(res.status).toBe(404);
     });
@@ -345,7 +382,8 @@ describe('api/categories routes', () => {
 
       const res = await request(app)
         .delete('/api/categories/1')
-        .set('Authorization', `Bearer ${adminToken}`);
+        .set('Cookie', adminAuth.cookie)
+        .set('X-CSRF-Token', adminAuth.csrfToken);
 
       expect(res.status).toBe(409);
     });

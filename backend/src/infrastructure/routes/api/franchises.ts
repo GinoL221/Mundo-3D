@@ -7,6 +7,7 @@ import { DeleteFranchiseUseCase } from '../../../application/use-cases/DeleteFra
 import { Role } from '../../../domain/Role';
 import { FranchiseApiController } from '../../controllers/FranchiseApiController';
 import { apiAuthMiddleware, adminGuard, requireRoles } from '../../middlewares/auth';
+import { csrfGuard } from '../../middlewares/csrf';
 import handleValidationErrors from '../../middlewares/handleValidationErrors';
 import {
   franchiseCreateValidators,
@@ -29,6 +30,7 @@ router.get('/franchises/:id', controller.show);
 router.post(
   '/franchises',
   apiAuthMiddleware,
+  csrfGuard,
   requireRoles(Role.ADMIN, Role.STAFF),
   franchiseCreateValidators,
   handleValidationErrors,
@@ -37,11 +39,12 @@ router.post(
 router.put(
   '/franchises/:id',
   apiAuthMiddleware,
+  csrfGuard,
   requireRoles(Role.ADMIN, Role.STAFF),
   franchiseUpdateValidators,
   handleValidationErrors,
   controller.update,
 );
-router.delete('/franchises/:id', apiAuthMiddleware, adminGuard, controller.destroy);
+router.delete('/franchises/:id', apiAuthMiddleware, csrfGuard, adminGuard, controller.destroy);
 
 export default router;

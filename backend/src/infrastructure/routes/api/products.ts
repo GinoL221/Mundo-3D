@@ -11,6 +11,7 @@ import { AdjustProductStockUseCase } from '../../../application/use-cases/Adjust
 import { PinoLogger } from '../../logging/PinoLogger';
 import { ProductApiController } from '../../controllers/ProductApiController';
 import { apiAuthMiddleware, adminGuard, requireRoles } from '../../middlewares/auth';
+import { csrfGuard } from '../../middlewares/csrf';
 import { Role } from '../../../domain/Role';
 import { productCreateValidators, productUpdateValidators } from '../../middlewares/validators/productValidators';
 import createUpload from '../../middlewares/upload';
@@ -48,6 +49,7 @@ router.get('/products/latest', controller.latest);
 router.post(
   '/products',
   apiAuthMiddleware,
+  csrfGuard,
   requireRoles(Role.ADMIN, Role.STAFF),
   uploadImgProduct.single('image'),
   productCreateValidators,
@@ -58,6 +60,7 @@ router.post(
 router.put(
   '/products/:id',
   apiAuthMiddleware,
+  csrfGuard,
   requireRoles(Role.ADMIN, Role.STAFF),
   uploadImgProduct.single('image'),
   productUpdateValidators,
@@ -65,11 +68,12 @@ router.put(
   controller.update
 );
 
-router.delete('/products/:id', apiAuthMiddleware, adminGuard, controller.destroy);
+router.delete('/products/:id', apiAuthMiddleware, csrfGuard, adminGuard, controller.destroy);
 
 router.patch(
   '/products/:id/stock',
   apiAuthMiddleware,
+  csrfGuard,
   requireRoles(Role.ADMIN, Role.STAFF),
   controller.adjustStock
 );

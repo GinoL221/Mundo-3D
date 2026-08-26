@@ -50,23 +50,23 @@ Chain strategy: pending
 
 ## Phase 4: Login / Register / Logout
 
-- [ ] 4.1 RED: `UserApiController.test.ts` — login sets 3 `Set-Cookie`, no `token` in body; `remember:true` → 30d on all 3; omitted → 2h; JWT `exp` matches
-- [ ] 4.2 GREEN: modify `UserApiController.ts` `login`/`register` — set cookies via `cookieOptions`/`authMaxAge`, drop `token` from body; add `logout` (`clearCookie` ×3, byte-identical flags, 204)
-- [ ] 4.3 RED: `users.ts` route test — `POST /users/logout` 204 with cookie, 401 without, no body required
-- [ ] 4.4 GREEN: modify `routes/api/users.ts` — `router.post('/users/logout', apiAuthMiddleware, controller.logout)`
-- [ ] 4.5 RED: assert `POST /users/login` and `POST /users/register` succeed with no `X-CSRF-Token` header (pre-auth exemption)
-- [ ] 4.6 GREEN: confirm `csrfGuard` is not mounted on login/register/logout in `users.ts` (satisfied by 4.4 scope)
+- [x] 4.1 RED: `UserApiController.test.ts` — login sets 3 `Set-Cookie`, no `token` in body; `remember:true` → 30d on all 3; omitted → 2h; JWT `exp` matches
+- [x] 4.2 GREEN: modify `UserApiController.ts` `login`/`register` — set cookies via `cookieOptions`/`authMaxAge`, drop `token` from body; add `logout` (`clearCookie` ×3, byte-identical flags, 204)
+- [x] 4.3 RED: `users.ts` route test — `POST /users/logout` 204 with cookie, 401 without, no body required
+- [x] 4.4 GREEN: modify `routes/api/users.ts` — `router.post('/users/logout', apiAuthMiddleware, controller.logout)`
+- [x] 4.5 RED: assert `POST /users/login` and `POST /users/register` succeed with no `X-CSRF-Token` header (pre-auth exemption)
+- [x] 4.6 GREEN: confirm `csrfGuard` is not mounted on login/register/logout in `users.ts` (satisfied by 4.4 scope)
 
 ## Phase 5: Mount `csrfGuard` on Every Write Route
 
-- [ ] 5.1 RED: `cart.routes` test — `PUT /api/cart` without CSRF token → 403
-- [ ] 5.2 GREEN: mount `csrfGuard` after `apiAuthMiddleware` on `PUT /api/cart` in `routes/api/cart.ts`
-- [ ] 5.3 RED: `franchises.routes` test — `POST /franchises`, `PUT /franchises/:id`, `DELETE /franchises/:id` without CSRF → 403 each
-- [ ] 5.4 GREEN: mount `csrfGuard` on those 3 routes in `routes/api/franchises.ts`
-- [ ] 5.5 RED: `categories.routes` test — `POST /categories`, `PUT /categories/:id`, `DELETE /categories/:id` without CSRF → 403 each
-- [ ] 5.6 GREEN: mount `csrfGuard` on those 3 routes in `routes/api/categories.ts`
-- [ ] 5.7 RED: `products.routes` test — `POST /products`, `PUT /products/:id`, `DELETE /products/:id`, `PATCH /products/:id/stock` without CSRF → 403 each
-- [ ] 5.8 GREEN: mount `csrfGuard` on those 4 routes in `routes/api/products.ts`
+- [x] 5.1 RED: `cart.routes` test — `PUT /api/cart` without CSRF token → 403
+- [x] 5.2 GREEN: mount `csrfGuard` after `apiAuthMiddleware` on `PUT /api/cart` in `routes/api/cart.ts`
+- [x] 5.3 RED: `franchises.routes` test — `POST /franchises`, `PUT /franchises/:id`, `DELETE /franchises/:id` without CSRF → 403 each
+- [x] 5.4 GREEN: mount `csrfGuard` on those 3 routes in `routes/api/franchises.ts`
+- [x] 5.5 RED: `categories.routes` test — `POST /categories`, `PUT /categories/:id`, `DELETE /categories/:id` without CSRF → 403 each
+- [x] 5.6 GREEN: mount `csrfGuard` on those 3 routes in `routes/api/categories.ts`
+- [x] 5.7 RED: `products.routes` test — `POST /products`, `PUT /products/:id`, `DELETE /products/:id`, `PATCH /products/:id/stock` without CSRF → 403 each
+- [x] 5.8 GREEN: mount `csrfGuard` on those 4 routes in `routes/api/products.ts`
 
 ## Phase 6: Frontend CSRF & Session Services
 

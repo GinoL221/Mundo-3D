@@ -1,4 +1,5 @@
 import express, { Express } from 'express';
+import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 
@@ -27,11 +28,13 @@ jest.mock('../../../../application/use-cases/DeleteFranchiseUseCase', () => ({
 import { Role } from '../../../../domain/Role';
 import errorHandler from '../../../middlewares/errorHandler';
 import { getJwtSecret } from '../../../security/JwtSecret';
+import { authCookie, authAndCsrf } from '../../../../__tests__/helpers/apiAuthTestHelpers';
 
 const buildApp = (): Express => {
   const apiRouter = require('../index').default;
   const app = express();
   app.use(express.json());
+  app.use(cookieParser());
   app.use('/api', apiRouter);
   app.use(errorHandler);
   return app;
@@ -43,8 +46,10 @@ const signToken = (idRole: Role) =>
   });
 
 const adminToken = signToken(Role.ADMIN);
-const staffToken = signToken(Role.STAFF);
 const userToken = signToken(Role.USER);
+
+const adminAuth = authAndCsrf({ userId: 1, email: 'principal@test.com', category: 'test', idRole: Role.ADMIN });
+const staffAuth = authAndCsrf({ userId: 1, email: 'principal@test.com', category: 'test', idRole: Role.STAFF });
 
 describe('api/franchises routes', () => {
   let app: Express;
@@ -88,25 +93,36 @@ describe('api/franchises routes', () => {
 
   it.each([
     ['missing token', undefined, 401],
-    ['malformed token', 'Bearer invalid', 401],
-    ['USER token', `Bearer ${userToken}`, 403],
-  ])('rejects POST for %s', async (_caseName, authorization, status) => {
+    ['malformed token', 'invalid', 401],
+    ['USER token', userToken, 403],
+  ])('rejects POST for %s', async (_caseName, tokenValue, status) => {
     const req = request(app).post('/api/franchises').send({ nameFranchise: 'Studio Ghibli' });
-    const res = authorization ? await req.set('Authorization', authorization) : await req;
+    const res = tokenValue ? await req.set('Cookie', authCookie(tokenValue)) : await req;
 
     expect(res.status).toBe(status);
     expect(mockCreateExecute).not.toHaveBeenCalled();
   });
 
+  it('returns 403 for a valid ADMIN cookie without an X-CSRF-Token header', async () => {
+    const res = await request(app)
+      .post('/api/franchises')
+      .set('Cookie', authCookie(adminToken))
+      .send({ nameFranchise: 'Studio Ghibli' });
+
+    expect(res.status).toBe(403);
+    expect(mockCreateExecute).not.toHaveBeenCalled();
+  });
+
   it.each([
-    ['ADMIN', adminToken],
-    ['STAFF', staffToken],
-  ])('creates for %s', async (_role, token) => {
+    ['ADMIN', adminAuth],
+    ['STAFF', staffAuth],
+  ])('creates for %s', async (_role, auth) => {
     mockCreateExecute.mockResolvedValue({ idFranchise: 1, nameFranchise: 'Studio Ghibli' });
 
     const res = await request(app)
       .post('/api/franchises')
-      .set('Authorization', `Bearer ${token}`)
+      .set('Cookie', auth.cookie)
+      .set('X-CSRF-Token', auth.csrfToken)
       .send({ nameFranchise: 'Studio Ghibli' });
 
     expect(res.status).toBe(201);
@@ -127,7 +143,8 @@ describe('api/franchises routes', () => {
 
     const res = await request(app)
       .post('/api/franchises')
-      .set('Authorization', `Bearer ${adminToken}`)
+      .set('Cookie', adminAuth.cookie)
+      .set('X-CSRF-Token', adminAuth.csrfToken)
       .send({ nameFranchise: 'Existing Franchise' });
 
     expect(res.status).toBe(409);
@@ -140,7 +157,8 @@ describe('api/franchises routes', () => {
     async (body) => {
       const res = await request(app)
         .post('/api/franchises')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Cookie', adminAuth.cookie)
+        .set('X-CSRF-Token', adminAuth.csrfToken)
         .send(body);
 
       expect(res.status).toBe(400);
@@ -150,19 +168,29 @@ describe('api/franchises routes', () => {
 
   it.each([
     ['missing token', undefined, 401],
-    ['USER token', `Bearer ${userToken}`, 403],
-  ])('rejects PUT for %s', async (_caseName, authorization, status) => {
+    ['USER token', userToken, 403],
+  ])('rejects PUT for %s', async (_caseName, tokenValue, status) => {
     const req = request(app).put('/api/franchises/1').send({ nameFranchise: 'Updated' });
-    const res = authorization ? await req.set('Authorization', authorization) : await req;
+    const res = tokenValue ? await req.set('Cookie', authCookie(tokenValue)) : await req;
 
     expect(res.status).toBe(status);
     expect(mockUpdateExecute).not.toHaveBeenCalled();
   });
 
+  it('returns 403 for a valid ADMIN cookie without an X-CSRF-Token header', async () => {
+    const res = await request(app)
+      .put('/api/franchises/1')
+      .set('Cookie', authCookie(adminToken))
+      .send({ nameFranchise: 'Updated' });
+
+    expect(res.status).toBe(403);
+    expect(mockUpdateExecute).not.toHaveBeenCalled();
+  });
+
   it.each([
-    ['ADMIN', adminToken],
-    ['STAFF', staffToken],
-  ])('updates for %s and maps a missing franchise to 404', async (_role, token) => {
+    ['ADMIN', adminAuth],
+    ['STAFF', staffAuth],
+  ])('updates for %s and maps a missing franchise to 404', async (_role, auth) => {
     mockUpdateExecute
       .mockResolvedValueOnce({ idFranchise: 1, nameFranchise: 'Updated' })
       .mockResolvedValueOnce(null);
@@ -171,7 +199,8 @@ describe('api/franchises routes', () => {
       (
         await request(app)
           .put('/api/franchises/1')
-          .set('Authorization', `Bearer ${token}`)
+          .set('Cookie', auth.cookie)
+          .set('X-CSRF-Token', auth.csrfToken)
           .send({ nameFranchise: 'Updated' })
       ).status,
     ).toBe(200);
@@ -179,7 +208,8 @@ describe('api/franchises routes', () => {
       (
         await request(app)
           .put('/api/franchises/999')
-          .set('Authorization', `Bearer ${token}`)
+          .set('Cookie', auth.cookie)
+          .set('X-CSRF-Token', auth.csrfToken)
           .send({ nameFranchise: 'Updated' })
       ).status,
     ).toBe(404);
@@ -207,7 +237,8 @@ describe('api/franchises routes', () => {
 
     const res = await request(app)
       .put('/api/franchises/1')
-      .set('Authorization', `Bearer ${adminToken}`)
+      .set('Cookie', adminAuth.cookie)
+      .set('X-CSRF-Token', adminAuth.csrfToken)
       .send({ nameFranchise: 'Existing Franchise' });
 
     expect(res.status).toBe(409);
@@ -218,9 +249,20 @@ describe('api/franchises routes', () => {
   it('rejects unauthenticated and STAFF deletes', async () => {
     expect((await request(app).delete('/api/franchises/1')).status).toBe(401);
     expect(
-      (await request(app).delete('/api/franchises/1').set('Authorization', `Bearer ${staffToken}`))
-        .status,
+      (
+        await request(app)
+          .delete('/api/franchises/1')
+          .set('Cookie', staffAuth.cookie)
+          .set('X-CSRF-Token', staffAuth.csrfToken)
+      ).status,
     ).toBe(403);
+    expect(mockDeleteExecute).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 for a valid ADMIN cookie delete without an X-CSRF-Token header', async () => {
+    const res = await request(app).delete('/api/franchises/1').set('Cookie', adminAuth.cookie);
+
+    expect(res.status).toBe(403);
     expect(mockDeleteExecute).not.toHaveBeenCalled();
   });
 
@@ -230,7 +272,10 @@ describe('api/franchises routes', () => {
       .mockResolvedValueOnce(false)
       .mockRejectedValueOnce(new Error('Franchise has associated products'));
     const authorizedDelete = (id: number) =>
-      request(app).delete(`/api/franchises/${id}`).set('Authorization', `Bearer ${adminToken}`);
+      request(app)
+        .delete(`/api/franchises/${id}`)
+        .set('Cookie', adminAuth.cookie)
+        .set('X-CSRF-Token', adminAuth.csrfToken);
 
     expect((await authorizedDelete(1)).status).toBe(204);
     expect((await authorizedDelete(999)).status).toBe(404);
