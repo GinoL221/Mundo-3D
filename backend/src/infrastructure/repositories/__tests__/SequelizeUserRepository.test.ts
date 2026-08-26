@@ -74,23 +74,39 @@ describe('SequelizeUserRepository Integration Tests', () => {
 
     it('translates a UniqueConstraintError into UserAlreadyExistsException with the byte-identical message', async () => {
       const { UniqueConstraintError } = jest.requireActual('sequelize');
+      // Restore the original `create` after mutating it — in the sqlite
+      // branch db.User is the shared sqliteUserModel (same reference across
+      // tests), so an unrestored mock would break later findById/findByEmail/
+      // findAll sqlite-backed tests. Harmless in the mocked branch (beforeEach
+      // rebuilds a fresh db.User anyway), but this keeps the test correct
+      // regardless of which branch is active.
+      const originalCreate = db.User.create;
       (db.User as any).create = jest
         .fn()
         .mockRejectedValue(new UniqueConstraintError({ message: 'duplicate email', errors: [] }));
 
-      const userData = new User(0, 'Jane', 'Doe', 'jane.doe@example.com', 'hashedpassword', null);
+      try {
+        const userData = new User(0, 'Jane', 'Doe', 'jane.doe@example.com', 'hashedpassword', null);
 
-      await expect(repository.create(userData)).rejects.toBeInstanceOf(UserAlreadyExistsException);
-      await expect(repository.create(userData)).rejects.toThrow('Este email ya está registrado');
+        await expect(repository.create(userData)).rejects.toBeInstanceOf(UserAlreadyExistsException);
+        await expect(repository.create(userData)).rejects.toThrow('Este email ya está registrado');
+      } finally {
+        (db.User as any).create = originalCreate;
+      }
     });
 
     it('rethrows any other error unchanged', async () => {
       const dbError = new Error('connection lost');
+      const originalCreate = db.User.create;
       (db.User as any).create = jest.fn().mockRejectedValue(dbError);
 
-      const userData = new User(0, 'Jane', 'Doe', 'jane.doe@example.com', 'hashedpassword', null);
+      try {
+        const userData = new User(0, 'Jane', 'Doe', 'jane.doe@example.com', 'hashedpassword', null);
 
-      await expect(repository.create(userData)).rejects.toBe(dbError);
+        await expect(repository.create(userData)).rejects.toBe(dbError);
+      } finally {
+        (db.User as any).create = originalCreate;
+      }
     });
   });
 
