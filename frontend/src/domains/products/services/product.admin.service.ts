@@ -1,4 +1,5 @@
 import { API_URL } from '../../../config';
+import { withCredentials } from '../../auth/services/csrf';
 
 // Mirrors backend/src/application/dtos/ProductDTO.ts. This is the admin
 // mutation surface — server-side validation (express-validator) is the
@@ -37,11 +38,6 @@ export class ProductAdminApiError extends Error {
   }
 }
 
-function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem('token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 async function parseErrorMessage(res: Response): Promise<string> {
   try {
     const data = await res.json();
@@ -62,11 +58,13 @@ export class ProductAdminService {
    * (defaults to 0 server-side when omitted).
    */
   static async create(formData: FormData): Promise<AdminProductDTO> {
-    const res = await fetch(`${API_URL}/api/products`, {
-      method: 'POST',
-      headers: { ...getAuthHeaders() },
-      body: formData,
-    });
+    const res = await fetch(
+      `${API_URL}/api/products`,
+      withCredentials({
+        method: 'POST',
+        body: formData,
+      })
+    );
 
     if (!res.ok) {
       return throwApiError(res);
@@ -81,11 +79,13 @@ export class ProductAdminService {
    * on this endpoint entirely; use `adjustStock` instead.
    */
   static async update(id: number, formData: FormData): Promise<AdminProductDTO> {
-    const res = await fetch(`${API_URL}/api/products/${id}`, {
-      method: 'PUT',
-      headers: { ...getAuthHeaders() },
-      body: formData,
-    });
+    const res = await fetch(
+      `${API_URL}/api/products/${id}`,
+      withCredentials({
+        method: 'PUT',
+        body: formData,
+      })
+    );
 
     if (!res.ok) {
       return throwApiError(res);
@@ -100,10 +100,12 @@ export class ProductAdminService {
    * that hiding is UX-only — this call still goes through the real guard.
    */
   static async remove(id: number): Promise<void> {
-    const res = await fetch(`${API_URL}/api/products/${id}`, {
-      method: 'DELETE',
-      headers: { ...getAuthHeaders() },
-    });
+    const res = await fetch(
+      `${API_URL}/api/products/${id}`,
+      withCredentials({
+        method: 'DELETE',
+      })
+    );
 
     if (!res.ok) {
       return throwApiError(res);
@@ -116,14 +118,16 @@ export class ProductAdminService {
    * delta that would take stock negative with 409.
    */
   static async adjustStock(id: number, delta: number): Promise<AdminProductDTO> {
-    const res = await fetch(`${API_URL}/api/products/${id}/stock`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders(),
-      },
-      body: JSON.stringify({ delta }),
-    });
+    const res = await fetch(
+      `${API_URL}/api/products/${id}/stock`,
+      withCredentials({
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ delta }),
+      })
+    );
 
     if (!res.ok) {
       return throwApiError(res);
