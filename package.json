@@ -16,6 +16,7 @@
     "type-check": "pnpm --filter backend type-check",
     "frontend:dev": "pnpm --filter frontend dev",
     "frontend:check": "pnpm --filter frontend check",
+    "frontend:quality-check": "pnpm --filter frontend quality:check",
     "frontend:test": "pnpm --filter frontend test",
     "frontend:build": "pnpm --filter frontend build",
     "test:e2e": "pnpm --filter e2e test --project=chromium",
