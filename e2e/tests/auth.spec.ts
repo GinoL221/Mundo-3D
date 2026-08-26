@@ -53,6 +53,71 @@ test.describe('Authentication E2E Tests', () => {
     await expect(errorBox).not.toBeEmpty();
   });
 
+  test('Recuérdame checkbox issues a 30-day auth cookie instead of the 2h default', async ({ page }) => {
+    const rememberEmail = `remember_${Date.now()}@example.com`;
+
+    // Register a dedicated user so this test doesn't depend on run order
+    // relative to the "Successful User Login" test above.
+    await page.goto('/register');
+    await page.fill('#firstName', 'Remember');
+    await page.fill('#lastName', 'Me');
+    await page.fill('#email', rememberEmail);
+    await page.fill('#password', testPassword);
+    await page.fill('#confirmPassword', testPassword);
+    await page.setInputFiles('#image', {
+      name: 'avatar.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('fake image content'),
+    });
+    await page.click('#register-btn');
+    await expect(page).toHaveURL('/');
+
+    // Log back out so the next login actually exercises the checkbox instead
+    // of reusing the session register() already created.
+    await page.locator('.nav-item__trigger').hover();
+    await page.locator('#navbar-logout').click();
+    await expect(page).toHaveURL('/login');
+
+    await page.fill('#email', rememberEmail);
+    await page.fill('#password', testPassword);
+    await page.check('#remember');
+    await page.click('#login-btn');
+    await expect(page).toHaveURL('/');
+
+    const cookies = await page.context().cookies();
+    const authCookie = cookies.find((c) => c.name === 'm3d_auth');
+    expect(authCookie).toBeDefined();
+
+    const nowSeconds = Date.now() / 1000;
+    const remainingSeconds = (authCookie!.expires as number) - nowSeconds;
+    const thirtyDaysSeconds = 30 * 24 * 60 * 60;
+
+    // Generous tolerance for test/CI clock skew and request latency — the
+    // point is distinguishing "~30 days" from the 2h default, not asserting
+    // an exact second.
+    expect(remainingSeconds).toBeGreaterThan(thirtyDaysSeconds - 3600);
+    expect(remainingSeconds).toBeLessThan(thirtyDaysSeconds + 3600);
+  });
+
+  test('Leaving Recuérdame unchecked keeps the 2h default auth cookie lifetime', async ({ page }) => {
+    await page.goto('/login');
+    await page.fill('#email', testEmail);
+    await page.fill('#password', testPassword);
+    await page.click('#login-btn');
+    await expect(page).toHaveURL('/');
+
+    const cookies = await page.context().cookies();
+    const authCookie = cookies.find((c) => c.name === 'm3d_auth');
+    expect(authCookie).toBeDefined();
+
+    const nowSeconds = Date.now() / 1000;
+    const remainingSeconds = (authCookie!.expires as number) - nowSeconds;
+    const twoHoursSeconds = 2 * 60 * 60;
+
+    expect(remainingSeconds).toBeGreaterThan(twoHoursSeconds - 300);
+    expect(remainingSeconds).toBeLessThan(twoHoursSeconds + 300);
+  });
+
   test('User Logout', async ({ page }) => {
     // First, login
     await page.goto('/login');

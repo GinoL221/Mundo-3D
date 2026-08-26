@@ -15,14 +15,19 @@ test('applies persisted visual preferences before Header hydration', async ({ pa
 
 test('preserves real Header navigation, keyboard dropdown access, and visual-only search', async ({
   page,
+  context,
 }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem('token', 'header-test-token');
-    localStorage.setItem(
-      'user',
-      JSON.stringify({ firstName: 'Header', idRole: 2, image: 'usuarioSinImagen.jpg' }),
-    );
-  });
+  // Session state is now a non-httpOnly cookie (m3d_user), not localStorage
+  // (JWT cookie migration) — sessionUI.ts reads document.cookie only.
+  await context.addCookies([
+    {
+      name: 'm3d_user',
+      value: encodeURIComponent(
+        JSON.stringify({ firstName: 'Header', idRole: 2, image: 'usuarioSinImagen.jpg' }),
+      ),
+      url: 'http://localhost:4322',
+    },
+  ]);
 
   await page.goto('/');
 

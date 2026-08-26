@@ -62,7 +62,10 @@ router.post(
   controller.register
 );
 
-router.post('/users/logout', apiAuthMiddleware, controller.logout);
+// No apiAuthMiddleware: logout only ever removes authority, so it must
+// succeed (204) even with no/expired auth cookie — see specs/api-jwt-auth
+// spec.md "Logout without an active session" (MUST NOT error).
+router.post('/users/logout', controller.logout);
 
 router.get('/users', apiAuthMiddleware, adminGuard, controller.index);
 router.get('/users/:id', apiAuthMiddleware, adminGuard, controller.show);

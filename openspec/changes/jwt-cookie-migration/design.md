@@ -124,7 +124,7 @@ export const SESSION_MAX_AGE  = 2 * 60 * 60 * 1000;        // 2h
 export function cookieOptions(opts: { httpOnly: boolean; maxAge?: number }): CookieOptions;
 ```
 
-`POST /api/users/logout` — auth required, CSRF exempt, **no request body**. Clears all three cookies via `res.clearCookie(name, cookieOptions({...}))` with **byte-identical** `path`/`domain`/`sameSite`/`secure` (a mismatch silently leaves the cookie in place). Responds `204 No Content`. `401` if no valid auth cookie.
+`POST /api/users/logout` — **no auth required**, CSRF exempt, **no request body**. Clears all three cookies via `res.clearCookie(name, cookieOptions({...}))` with **byte-identical** `path`/`domain`/`sameSite`/`secure` (a mismatch silently leaves the cookie in place). Always responds `204 No Content`, even with no/expired auth cookie — logout only ever removes authority, so it must be idempotent and never error (`specs/api-jwt-auth/spec.md` "Logout without an active session"). Corrected during `sdd-verify`: the original decision gated this behind `apiAuthMiddleware` (401 without a cookie), which directly contradicted the spec's "MUST NOT error" requirement written during `sdd-spec` — an inconsistency between two SDD artifacts that slipped past 4 apply runs because the covering test asserted the spec-violating behavior as correct.
 
 ## Testing Strategy
 

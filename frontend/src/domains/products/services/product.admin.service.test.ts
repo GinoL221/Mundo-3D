@@ -1,20 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProductAdminApiError, ProductAdminService } from './product.admin.service';
 
-function createLocalStorageMock() {
-  let store: Record<string, string> = {};
-  return {
-    getItem: vi.fn((key: string) => (key in store ? store[key] : null)),
-    setItem: vi.fn((key: string, value: string) => {
-      store[key] = value;
-    }),
-    removeItem: vi.fn((key: string) => {
-      delete store[key];
-    }),
-    clear: vi.fn(() => {
-      store = {};
-    }),
-  };
+// Mirrors the cookie-stubbing pattern from csrf.test.ts — the admin service
+// now attaches CSRF via withCredentials() (m3d_csrf cookie) instead of a
+// manual Bearer header (CSRF protection is what guards these routes now).
+function stubCookie(cookie: string) {
+  vi.stubGlobal('document', { cookie });
 }
 
 async function expectApiError(fn: () => Promise<unknown>, status: number, message: string) {
@@ -30,14 +21,12 @@ async function expectApiError(fn: () => Promise<unknown>, status: number, messag
 }
 
 describe('ProductAdminService', () => {
-  let localStorageMock: ReturnType<typeof createLocalStorageMock>;
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    localStorageMock = createLocalStorageMock();
     fetchMock = vi.fn();
-    vi.stubGlobal('localStorage', localStorageMock);
     vi.stubGlobal('fetch', fetchMock);
+    stubCookie('m3d_csrf=random.hmac');
   });
 
   afterEach(() => {
@@ -46,8 +35,7 @@ describe('ProductAdminService', () => {
   });
 
   describe('create', () => {
-    it('POSTs the FormData with a Bearer auth header and returns the parsed ProductDTO', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) => (key === 'token' ? 'abc123' : null));
+    it('POSTs the FormData with credentials + CSRF token and returns the parsed ProductDTO', async () => {
       const dto = { idProduct: 1, nameProduct: 'Figura Mario', stock: 0 };
       fetchMock.mockResolvedValue({ ok: true, json: async () => dto });
 
@@ -60,13 +48,14 @@ describe('ProductAdminService', () => {
       const [url, options] = fetchMock.mock.calls[0];
       expect(url).toContain('/api/products');
       expect(options.method).toBe('POST');
-      expect(options.headers.Authorization).toBe('Bearer abc123');
+      expect(options.credentials).toBe('include');
+      expect(options.headers['X-CSRF-Token']).toBe('random.hmac');
+      expect(options.headers.Authorization).toBeUndefined();
       expect(options.body).toBe(formData);
       expect(result).toEqual(dto);
     });
 
     it('throws a ProductAdminApiError carrying status 400 when the response is not ok', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) => (key === 'token' ? 'abc123' : null));
       fetchMock.mockResolvedValue({ ok: false, status: 400, json: async () => ({ error: 'Debe ingresar un nombre' }) });
 
       await expectApiError(() => ProductAdminService.create(new FormData()), 400, 'Debe ingresar un nombre');
@@ -74,8 +63,7 @@ describe('ProductAdminService', () => {
   });
 
   describe('update', () => {
-    it('PUTs to /api/products/:id with a Bearer auth header', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) => (key === 'token' ? 'abc123' : null));
+    it('PUTs to /api/products/:id with credentials + CSRF token', async () => {
       const dto = { idProduct: 7, nameProduct: 'Figura Sonic', stock: 5 };
       fetchMock.mockResolvedValue({ ok: true, json: async () => dto });
 
@@ -86,13 +74,13 @@ describe('ProductAdminService', () => {
       const [url, options] = fetchMock.mock.calls[0];
       expect(url).toContain('/api/products/7');
       expect(options.method).toBe('PUT');
-      expect(options.headers.Authorization).toBe('Bearer abc123');
+      expect(options.credentials).toBe('include');
+      expect(options.headers['X-CSRF-Token']).toBe('random.hmac');
       expect(options.body).toBe(formData);
       expect(result).toEqual(dto);
     });
 
     it('throws a ProductAdminApiError carrying status 404 when the product does not exist', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) => (key === 'token' ? 'abc123' : null));
       fetchMock.mockResolvedValue({ ok: false, status: 404, json: async () => ({ error: 'Producto no encontrado' }) });
 
       await expectApiError(() => ProductAdminService.update(999, new FormData()), 404, 'Producto no encontrado');
@@ -100,8 +88,7 @@ describe('ProductAdminService', () => {
   });
 
   describe('remove', () => {
-    it('DELETEs /api/products/:id with a Bearer auth header and no body', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) => (key === 'token' ? 'abc123' : null));
+    it('DELETEs /api/products/:id with credentials + CSRF token and no body', async () => {
       fetchMock.mockResolvedValue({ ok: true, status: 204 });
 
       await ProductAdminService.remove(3);
@@ -110,11 +97,11 @@ describe('ProductAdminService', () => {
       const [url, options] = fetchMock.mock.calls[0];
       expect(url).toContain('/api/products/3');
       expect(options.method).toBe('DELETE');
-      expect(options.headers.Authorization).toBe('Bearer abc123');
+      expect(options.credentials).toBe('include');
+      expect(options.headers['X-CSRF-Token']).toBe('random.hmac');
     });
 
     it('throws a ProductAdminApiError carrying status 403 when the caller lacks permission (e.g. STAFF)', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) => (key === 'token' ? 'staff-token' : null));
       fetchMock.mockResolvedValue({ ok: false, status: 403, json: async () => ({ error: 'Forbidden' }) });
 
       await expectApiError(() => ProductAdminService.remove(3), 403, 'Forbidden');
@@ -122,8 +109,7 @@ describe('ProductAdminService', () => {
   });
 
   describe('adjustStock', () => {
-    it('PATCHes /api/products/:id/stock with a JSON delta body and Bearer auth header', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) => (key === 'token' ? 'abc123' : null));
+    it('PATCHes /api/products/:id/stock with a JSON delta body, credentials, and CSRF token', async () => {
       const dto = { idProduct: 3, stock: 8 };
       fetchMock.mockResolvedValue({ ok: true, json: async () => dto });
 
@@ -133,34 +119,35 @@ describe('ProductAdminService', () => {
       const [url, options] = fetchMock.mock.calls[0];
       expect(url).toContain('/api/products/3/stock');
       expect(options.method).toBe('PATCH');
-      expect(options.headers.Authorization).toBe('Bearer abc123');
+      expect(options.credentials).toBe('include');
+      expect(options.headers['X-CSRF-Token']).toBe('random.hmac');
       expect(options.headers['Content-Type']).toBe('application/json');
       expect(JSON.parse(options.body)).toEqual({ delta: 3 });
       expect(result).toEqual(dto);
     });
 
     it('throws a ProductAdminApiError carrying status 409 when the delta would make stock negative', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) => (key === 'token' ? 'abc123' : null));
       fetchMock.mockResolvedValue({ ok: false, status: 409, json: async () => ({ error: 'Stock insuficiente' }) });
 
       await expectApiError(() => ProductAdminService.adjustStock(3, -50), 409, 'Stock insuficiente');
     });
   });
 
-  describe('when there is no token (logged out)', () => {
-    it('sends the request without an Authorization header', async () => {
-      localStorageMock.getItem.mockReturnValue(null);
+  describe('when there is no CSRF cookie (no active session)', () => {
+    it('still sends credentials:"include" without an X-CSRF-Token header', async () => {
+      stubCookie('');
       fetchMock.mockResolvedValue({ ok: true, json: async () => ({ idProduct: 1, stock: 0 }) });
 
       await ProductAdminService.create(new FormData());
 
       expect(fetchMock).toHaveBeenCalledTimes(1);
       const [, options] = fetchMock.mock.calls[0];
-      expect(options.headers.Authorization).toBeUndefined();
+      expect(options.credentials).toBe('include');
+      expect(options.headers['X-CSRF-Token']).toBeUndefined();
     });
 
     it('surfaces a 401 response as a ProductAdminApiError with status 401', async () => {
-      localStorageMock.getItem.mockReturnValue(null);
+      stubCookie('');
       fetchMock.mockResolvedValue({ ok: false, status: 401, json: async () => ({ error: 'No autorizado' }) });
 
       await expectApiError(() => ProductAdminService.create(new FormData()), 401, 'No autorizado');
