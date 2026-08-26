@@ -11,8 +11,13 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 
-// Register ts-node dynamically to require TypeScript modules in JavaScript
-if (!process.env.JEST_WORKER_ID) {
+// Register ts-node dynamically to require TypeScript modules in JavaScript.
+// Never when compiled (RUN_COMPILED=true, set by index.js's caller): `pnpm
+// build` compiles this file into dist/app.js, and a production install
+// prunes ts-node (a devDependency) — this line must never execute there, or
+// it MODULE_NOT_FOUNDs on boot. Deliberately not keyed on NODE_ENV — see
+// index.js's RUN_COMPILED comment.
+if (!process.env.JEST_WORKER_ID && process.env.RUN_COMPILED !== 'true') {
   require('ts-node/register');
 }
 
@@ -28,8 +33,30 @@ const errorHandler = require('./infrastructure/middlewares/errorHandler').defaul
 // 0. Request correlation ID
 server.use(requestIdMiddleware);
 
-// 1. Security headers (first)
-server.use(helmet());
+// 1. Security headers (first). Explicit CSP, stricter than helmet's
+// defaults (which allow 'unsafe-inline' styles and any https: font source):
+// this API serves no HTML document today (no view engine, no .ejs, no
+// res.render — see design.md), only JSON, health checks, and static assets
+// (public/css, public/js, public/images) — default-src 'none' denies
+// everything not explicitly allowed below, so a future HTML route starts
+// locked down instead of inheriting a permissive default.
+server.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'none'"],
+        imgSrc: ["'self'"],
+        styleSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        connectSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+      },
+    },
+  }),
+);
 
 // 1.5 Health checks (path-prefixed only — never a global gate; must not spam
 // request logs or go through body parsing)

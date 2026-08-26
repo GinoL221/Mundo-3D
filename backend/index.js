@@ -1,29 +1,45 @@
 require("dotenv").config();
 
+const env = process.env.NODE_ENV || "development";
+
+// Deliberately independent of NODE_ENV — index.test.js sets NODE_ENV to
+// "production" (and other values) purely to test index.js's own behavioral
+// branches (e.g. which env string reaches ensureDatabaseExists), still
+// against the unbuilt src/ tree. RUN_COMPILED is the operator's explicit,
+// separate opt-in for "run the pnpm build output" (design.md "Decision:
+// compiled production entry point").
+const isCompiled = process.env.RUN_COMPILED === "true";
+
 // Register ts-node dynamically so TypeScript modules can be required from
 // this entry point without depending on ./src/app already having done so.
-if (!process.env.JEST_WORKER_ID) {
+// Never when compiled: `pnpm build` compiles src/ into dist/, and a
+// production install prunes ts-node (a devDependency) — this must never
+// execute there, or it MODULE_NOT_FOUNDs on boot.
+if (!process.env.JEST_WORKER_ID && !isCompiled) {
   require("ts-node/register");
 }
 
-const server = require("./src/app");
-const { markReady, markUnready } = require("./src/infrastructure/health/readinessState");
-const { logger } = require("./src/infrastructure/logging/logger");
+// RUN_COMPILED=true runs the compiled dist/ output (`pnpm build`, then
+// RUN_COMPILED=true NODE_ENV=production pnpm start); every other run uses
+// src/ via the ts-node registration above.
+const base = isCompiled ? "./dist" : "./src";
+
+const server = require(`${base}/app`);
+const { markReady, markUnready } = require(`${base}/infrastructure/health/readinessState`);
+const { logger } = require(`${base}/infrastructure/logging/logger`);
 
 const {
   ensureDatabaseExists,
-} = require("./src/database/config/ensureDatabase");
+} = require(`${base}/database/config/ensureDatabase`);
 
 //variable de entorno
 const PORT = process.env.PORT || 3031;
 
-const db = require("./src/database/models/db");
-const { seedInitialData } = require("./src/database/seed");
+const db = require(`${base}/database/models/db`);
+const { seedInitialData } = require(`${base}/database/seed`);
 const {
   checkNoPendingMigrations,
-} = require("./src/database/checkPendingMigrations");
-
-const env = process.env.NODE_ENV || "development";
+} = require(`${base}/database/checkPendingMigrations`);
 
 // Forced-shutdown deadline is external-orchestrator-tunable (see
 // design.md's "Forced-shutdown timeout is env-configurable" decision).
