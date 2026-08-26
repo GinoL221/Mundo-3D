@@ -8,6 +8,7 @@ const express = require('express');
 const methodOverride = require('method-override');
 const helmet = require('helmet');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 
 // Register ts-node dynamically to require TypeScript modules in JavaScript
@@ -70,6 +71,10 @@ server.use(requestLoggerMiddleware);
 // 5. Body parsing
 server.use(express.urlencoded({ extended: false }));
 server.use(express.json());
+
+// 5.5 Cookie parsing (unsigned — nothing uses signed cookies; needed before
+// /api so apiAuthMiddleware/csrfGuard can read req.cookies)
+server.use(cookieParser());
 
 // 6. Method override
 server.use(methodOverride('_method'));
