@@ -118,6 +118,29 @@ test.describe('Authentication E2E Tests', () => {
     expect(remainingSeconds).toBeLessThan(twoHoursSeconds + 300);
   });
 
+  test('m3d_auth is httpOnly (invisible to document.cookie) while m3d_user/m3d_csrf are readable', async ({ page }) => {
+    await page.goto('/login');
+    await page.fill('#email', testEmail);
+    await page.fill('#password', testPassword);
+    await page.click('#login-btn');
+    await expect(page).toHaveURL('/');
+
+    // Proves httpOnly is actually enforced by the real browser, not just
+    // declared server-side (cookieOptions.ts) — session.service.ts and
+    // sessionUI.ts both depend on document.cookie exposing m3d_user/m3d_csrf
+    // but never m3d_auth.
+    const clientVisibleCookies = await page.evaluate(() => document.cookie);
+    expect(clientVisibleCookies).not.toMatch(/(?:^|; )m3d_auth=/);
+    expect(clientVisibleCookies).toMatch(/(?:^|; )m3d_user=/);
+    expect(clientVisibleCookies).toMatch(/(?:^|; )m3d_csrf=/);
+
+    // The httpOnly cookie still exists server-side (Playwright's cookie jar
+    // reads it via CDP, bypassing the httpOnly JS restriction) — it's just
+    // absent from the page's own document.cookie above.
+    const cookies = await page.context().cookies();
+    expect(cookies.find((c) => c.name === 'm3d_auth')).toBeDefined();
+  });
+
   test('User Logout', async ({ page }) => {
     // First, login
     await page.goto('/login');
