@@ -56,9 +56,7 @@ jest.mock('../application/use-cases/SyncCartUseCase', () => ({
   })),
 }));
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const apiRouter = require('../infrastructure/routes/api/index').default;
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const errorHandler = require('../infrastructure/middlewares/errorHandler').default;
 
 const JWT_SECRET = getJwtSecret();
