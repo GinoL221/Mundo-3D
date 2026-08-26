@@ -31,6 +31,19 @@ export interface TestProductFixture {
   productId: number;
 }
 
+export interface TestCartFixture {
+  userId: number;
+  categoryId: number;
+  franchiseId: number;
+  productIds: [number, number, number];
+}
+
+export interface CartRow {
+  idProduct: number;
+  quantity: number;
+  unitPrice: number;
+}
+
 let bootstrapped = false;
 
 /**
@@ -125,6 +138,80 @@ export async function cleanupProductFixture(fixture: TestProductFixture): Promis
   await deleteTestProduct(fixture.productId);
   await deleteTestFranchise(fixture.franchiseId);
   await deleteTestCategory(fixture.categoryId);
+}
+
+/** Creates a minimal, uniquely-named User row for test isolation. */
+export async function seedTestUser(
+  overrides: { firstName?: string; lastName?: string; email?: string; passwordUser?: string } = {}
+): Promise<number> {
+  const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const user = await db.User.create({
+    firstName: overrides.firstName ?? 'IntegrationTest',
+    lastName: overrides.lastName ?? 'User',
+    email: overrides.email ?? `integration-test-${unique}@example.com`,
+    passwordUser: overrides.passwordUser ?? 'placeholder-hashed-password',
+  });
+  return user.idUser;
+}
+
+/** Deletes a single User row by id. Safe to call even if already deleted. */
+export async function deleteTestUser(userId: number): Promise<void> {
+  await db.User.destroy({ where: { idUser: userId } });
+}
+
+/**
+ * Reads the persisted ACTIVE `ShoppingCart` rows for a user directly from the
+ * DB (bypasses any cache), normalized to the fields relevant for cart-content
+ * comparisons.
+ */
+export async function readActiveCartRows(userId: number): Promise<CartRow[]> {
+  const rows = await db.ShoppingCart.findAll({
+    where: { idUser: userId, cartStatus: 'ACTIVE' },
+  });
+  return rows.map((row: { idProduct: number; quantity: number; unitPrice: number }) => ({
+    idProduct: row.idProduct,
+    quantity: row.quantity,
+    unitPrice: Number(row.unitPrice),
+  }));
+}
+
+/**
+ * Seeds a User + 3 Products (sharing one Category/Franchise) + one
+ * pre-existing ACTIVE `ShoppingCart` row for that user against the first
+ * product. The pre-existing row is the one the cart-race test's barrier
+ * locks via `SELECT ... FOR UPDATE` before releasing two concurrent
+ * `syncCart` calls to contend for real.
+ */
+export async function seedCartFixture(): Promise<TestCartFixture> {
+  const userId = await seedTestUser();
+  const categoryId = await createTestCategory();
+  const franchiseId = await createTestFranchise();
+  const productIds: [number, number, number] = [
+    await createTestProduct(categoryId, franchiseId, { nameProduct: 'Cart Race Product 1' }),
+    await createTestProduct(categoryId, franchiseId, { nameProduct: 'Cart Race Product 2' }),
+    await createTestProduct(categoryId, franchiseId, { nameProduct: 'Cart Race Product 3' }),
+  ];
+
+  await db.ShoppingCart.create({
+    idUser: userId,
+    idProduct: productIds[0],
+    quantity: 1,
+    unitPrice: 1.0,
+    cartStatus: 'ACTIVE',
+  });
+
+  return { userId, categoryId, franchiseId, productIds };
+}
+
+/** Deletes everything created by `seedCartFixture`, in FK-safe order. */
+export async function cleanupCartFixture(fixture: TestCartFixture): Promise<void> {
+  await db.ShoppingCart.destroy({ where: { idUser: fixture.userId } });
+  for (const productId of fixture.productIds) {
+    await deleteTestProduct(productId);
+  }
+  await deleteTestFranchise(fixture.franchiseId);
+  await deleteTestCategory(fixture.categoryId);
+  await deleteTestUser(fixture.userId);
 }
 
 /** Escape hatch: raw access to the real Sequelize `db` object (models + `sequelize`). */
