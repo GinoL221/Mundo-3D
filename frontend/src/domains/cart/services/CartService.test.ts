@@ -312,6 +312,29 @@ describe('CartService', () => {
       expect(localStorageMock.setItem).toHaveBeenLastCalledWith('cart', JSON.stringify([]));
     });
 
+    // Spec scenario 6: a failed flush must roll back to the state before the
+    // BURST'S FIRST mutation (S0), not to the state before only the burst's
+    // last mutation (S1). Every other rollback test in this file uses a
+    // single-mutation burst, where S0 and "before the last mutation" are
+    // identical and therefore cannot distinguish the two baselines. This
+    // test uses a genuine 2-mutation burst (S0=[] -> S1=[7] -> S2=[7,8]) so a
+    // sync failure must expose S0, catching a regression that re-captures
+    // the rollback baseline on every mutation instead of only the first.
+    it('rolls back to the state before the burst\'s first mutation, not the state before only the last mutation, when a multi-mutation burst fails to sync', async () => {
+      stubCookie(LOGGED_IN_COOKIE);
+      fetchMock.mockResolvedValue({ ok: false, status: 500 });
+
+      // S0 = [] (cart starts empty).
+      CartService.addToCart(buildProduct({ id: 7 })); // -> S1 = [7]
+      await vi.advanceTimersByTimeAsync(100); // still inside the 300ms debounce window
+      CartService.addToCart(buildProduct({ id: 8 })); // -> S2 = [7, 8], same coalesced burst
+
+      await flushSync();
+
+      expect(cartItems.get()).toEqual([]);
+      expect(localStorageMock.setItem).toHaveBeenLastCalledWith('cart', JSON.stringify([]));
+    });
+
     it('does NOT roll back local cart state when fetch itself throws (ambiguous: real network failure vs. a request cancelled by navigation)', async () => {
       stubCookie(LOGGED_IN_COOKIE);
       fetchMock.mockRejectedValue(new Error('network down'));

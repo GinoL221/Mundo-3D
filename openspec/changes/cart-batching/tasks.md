@@ -101,6 +101,10 @@ The design's own module boundary is also the natural PR boundary: Unit A moves `
 - [x] B11.5 Run `cd backend && npm run architecture:check` — confirm `frontend.domain.locality` still passes (all new/modified code stays inside `frontend/src/domains/cart/services/`).
 - [x] B11.6 Manually re-check the proposal's Success Criteria checklist against the new tests: N rapid mutations → 1 PUT (B9.1); sustained mutations past the cap still sync (B9.3); `checkout()`/`pagehide`/hidden-tab each force an immediate flush (B8.4, B9.4, B9.5); `keepalive: true` present on every flush and the throw path still does not roll back (B9.1, existing throw test via B8.1); both stale-response ordering guarantees still hold (B8.2, B8.3); `cart-updated` still fires once per mutation (B9.2).
 
+### Verify-fix (post-B11, not an original task)
+
+- [x] C1 `sdd-verify` found spec scenario 6 ("rolls back to the state before the burst's FIRST mutation") untested — every prior rollback test used a single-mutation burst where S0 and "before the last mutation" are identical. Added a dedicated 2-mutation-burst rollback test to `CartService.test.ts`; confirmed it kills the described mutant (`burstPreviousItems` overwritten on every mutation) and passes cleanly against the correct implementation.
+
 ## Key Learnings
 
 - The design's module boundary (verbatim move vs. new scheduler logic) doubles as a natural, low-risk PR split: a pure refactor with zero behavior change needs no test-file edits at all, so isolating it first shrinks the risky PR's diff and gives the risky PR a byte-for-byte-verified foundation.
