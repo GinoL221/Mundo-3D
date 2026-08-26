@@ -150,7 +150,7 @@ El frontend consume `PUBLIC_API_URL`; en desarrollo usa `http://localhost:3031` 
 ## Capacidades actuales
 
 - Catálogo y detalle de productos, categorías y franquicias.
-- Registro y login mediante JWT, con roles para operaciones administrativas.
+- Registro y login con sesión JWT en una cookie `httpOnly` (`m3d_auth`), protección CSRF de doble envío firmado (`m3d_csrf`) en cada escritura autenticada, y roles para operaciones administrativas.
 - Administración de productos con stock e imágenes, categorías, franquicias y usuarios.
 - Carrito local con Nanostores y sincronización por API para usuarios autenticados.
 - Páginas informativas, tema claro/oscuro y diseño responsive de estética PICO-8.
@@ -231,7 +231,7 @@ Las especificaciones aceptadas están en [`openspec/specs/`](openspec/specs/). L
 
 Estas son restricciones del comportamiento implementado, no una promesa de roadmap:
 
-- El JWT, los datos básicos de usuario y el carrito se almacenan en `localStorage`; no existe autenticación del frontend basada exclusivamente en cookies `httpOnly`.
+- El frontend no persiste el JWT ni lee `Authorization: Bearer`; toda petición autenticada depende de la cookie `httpOnly` `m3d_auth` (`credentials: 'include'`) más el token CSRF de `m3d_csrf`. Solo el carrito sigue en `localStorage` (ver limitación de reconciliación más abajo). `SameSite=Lax` asume que producción sirve el frontend y la API desde el mismo dominio registrable (p. ej. `mundo3d.com` y `api.mundo3d.com`); dos dominios no relacionados invalidarían esa decisión.
 - El checkout actual vacía y sincroniza el carrito. No crea órdenes ni integra pagos o logística.
 - Los uploads se escriben en el filesystem local bajo `backend/public/img/`; no hay almacenamiento de objetos externo ni persistencia compartida entre instancias.
 - El carrito aplica cambios optimistas y sincroniza en segundo plano, pero no dispone de una lectura de reconciliación desde el backend. Un fallo de red sin respuesta puede dejar el estado local y remoto divergentes hasta otra mutación.

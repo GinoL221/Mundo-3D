@@ -84,10 +84,10 @@ Chain strategy: pending
 
 ## Phase 8: Consumer Call Sites
 
-- [ ] 8.1 RED: `CartService.test.ts` — request at :50/:61 includes `credentials:'include'`+`X-CSRF-Token`, no `Authorization` header
-- [ ] 8.2 GREEN: modify `CartService.ts` (:50,:61) via `withCredentials`
-- [ ] 8.3 RED: `product.admin.service.test.ts` — same assertion for `getAuthHeaders()` call sites
-- [ ] 8.4 GREEN: modify `product.admin.service.ts` — `getAuthHeaders()` becomes CSRF-only
+- [x] 8.1 RED: `CartService.test.ts` — request at :50/:61 includes `credentials:'include'`+`X-CSRF-Token`, no `Authorization` header
+- [x] 8.2 GREEN: modify `CartService.ts` (:50,:61) via `withCredentials`
+- [x] 8.3 RED: `product.admin.service.test.ts` — same assertion for `getAuthHeaders()` call sites
+- [x] 8.4 GREEN: modify `product.admin.service.ts` — `getAuthHeaders()` becomes CSRF-only
 
 ## Phase 9: Cross-Tab Sync
 
@@ -97,11 +97,11 @@ Chain strategy: pending
 
 ## Phase 10: Integration & E2E
 
-- [ ] 10.1 Integration (supertest agent): login → 3 `Set-Cookie`, no body token; protected GET with jar → 200; write w/o CSRF → 403; logout → 3 clearing `Set-Cookie` + 204
-- [ ] 10.2 Integration: `remember:true` → 30d Max-Age all 3 cookies; unchecked → 2h; `jwt.decode` matches
-- [ ] 10.3 Playwright E2E: cross-origin login → cart write → admin page → logout → second tab reflects logout (`4322→3032`)
+- [x] 10.1 Integration (supertest agent): login → 3 `Set-Cookie`, no body token; protected GET with jar → 200; write w/o CSRF → 403; logout → 3 clearing `Set-Cookie` + 204
+- [x] 10.2 Integration: `remember:true` → 30d Max-Age all 3 cookies; unchecked → 2h; `jwt.decode` matches
+- [x] 10.3 Playwright E2E: cross-origin login → cart write → admin page → logout → second tab reflects logout (`4322→3032`)
 
 ## Phase 11: Docs / Follow-Up Note
 
-- [ ] 11.1 Confirm `README.md` auth section reflects cookie-only flow end to end
+- [x] 11.1 Confirm `README.md` auth section reflects cookie-only flow end to end
 - [ ] 11.2 Known follow-up (no task here): `openspec/specs/navbar-and-footer/spec.md` and `openspec/specs/visual-admin-hiding/spec.md` still describe localStorage-based gating — deliberately left stale by `sdd-spec` since neither is a Modified Capability of this change; a future change must update them
