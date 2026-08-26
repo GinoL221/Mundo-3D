@@ -2,6 +2,7 @@ import { Sequelize } from 'sequelize';
 import db from '../../../database/models/db';
 import { SequelizeUserRepository } from '../SequelizeUserRepository';
 import { User } from '../../../domain/entities/User';
+import { UserAlreadyExistsException } from '../../../domain/exceptions/UserAlreadyExistsException';
 
 let isSqliteAvailable = false;
 let sequelize: Sequelize | null = null;
@@ -69,6 +70,27 @@ describe('SequelizeUserRepository Integration Tests', () => {
         expect(created.firstName).toBe('John');
         expect(db.User.create).toHaveBeenCalled();
       }
+    });
+
+    it('translates a UniqueConstraintError into UserAlreadyExistsException with the byte-identical message', async () => {
+      const { UniqueConstraintError } = jest.requireActual('sequelize');
+      (db.User as any).create = jest
+        .fn()
+        .mockRejectedValue(new UniqueConstraintError({ message: 'duplicate email', errors: [] }));
+
+      const userData = new User(0, 'Jane', 'Doe', 'jane.doe@example.com', 'hashedpassword', null);
+
+      await expect(repository.create(userData)).rejects.toBeInstanceOf(UserAlreadyExistsException);
+      await expect(repository.create(userData)).rejects.toThrow('Este email ya está registrado');
+    });
+
+    it('rethrows any other error unchanged', async () => {
+      const dbError = new Error('connection lost');
+      (db.User as any).create = jest.fn().mockRejectedValue(dbError);
+
+      const userData = new User(0, 'Jane', 'Doe', 'jane.doe@example.com', 'hashedpassword', null);
+
+      await expect(repository.create(userData)).rejects.toBe(dbError);
     });
   });
 

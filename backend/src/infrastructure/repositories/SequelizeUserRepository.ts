@@ -1,5 +1,7 @@
+import { UniqueConstraintError } from 'sequelize';
 import { User } from '../../domain/entities/User';
 import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
+import { UserAlreadyExistsException } from '../../domain/exceptions/UserAlreadyExistsException';
 import db, { UserInstance, UserAttributes } from '../../database/models/db';
 
 export class SequelizeUserRepository implements UserRepositoryPort {
@@ -31,14 +33,21 @@ export class SequelizeUserRepository implements UserRepositoryPort {
   }
 
   async create(user: Omit<User, 'idUser'>): Promise<User> {
-    const instance = await db.User.create({
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      passwordUser: user.password,
-      image: user.image,
-    } as Partial<UserAttributes>);
-    return this.toEntity(instance);
+    try {
+      const instance = await db.User.create({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        passwordUser: user.password,
+        image: user.image,
+      } as Partial<UserAttributes>);
+      return this.toEntity(instance);
+    } catch (error) {
+      if (error instanceof UniqueConstraintError) {
+        throw new UserAlreadyExistsException('Este email ya está registrado', { cause: error });
+      }
+      throw error;
+    }
   }
 
   async findAll(): Promise<User[]> {
