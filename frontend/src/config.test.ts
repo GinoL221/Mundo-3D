@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { readCsrfToken, withCredentials } from './csrf';
+import { readCsrfToken, withCredentials } from './config';
 
 function stubCookie(cookie: string) {
   vi.stubGlobal('document', { cookie });

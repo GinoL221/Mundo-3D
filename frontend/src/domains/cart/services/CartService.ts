@@ -1,7 +1,5 @@
 import { atom, computed } from 'nanostores';
-import { API_URL } from '../../../config';
-import { getSessionUser } from '../../auth/services/session.service';
-import { withCredentials } from '../../auth/services/csrf';
+import { API_URL, getSessionUser, withCredentials } from '../../../config';
 
 export interface CartItem {
   productId: number;

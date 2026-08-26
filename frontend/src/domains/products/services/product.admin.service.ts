@@ -1,5 +1,4 @@
-import { API_URL } from '../../../config';
-import { withCredentials } from '../../auth/services/csrf';
+import { API_URL, withCredentials } from '../../../config';
 
 // Mirrors backend/src/application/dtos/ProductDTO.ts. This is the admin
 // mutation surface — server-side validation (express-validator) is the

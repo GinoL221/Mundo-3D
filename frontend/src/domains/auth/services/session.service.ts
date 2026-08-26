@@ -1,41 +1,15 @@
-import { API_URL } from '../../../config';
+import { API_URL, getSessionUser } from '../../../config';
+import type { SessionUser } from '../../../config';
 import { Role } from '../adapters/auth.adapter';
 
-// Mirrors backend/src/infrastructure/security/cookieOptions.ts USER_COOKIE.
-const USER_COOKIE_NAME = 'm3d_user';
+// `getSessionUser`/`SessionUser` live in `config.ts` (cross-domain shared
+// utility — see its own comment for why) and are re-exported here so
+// existing auth-domain imports and the `domains/auth` barrel keep working
+// unchanged.
+export { getSessionUser };
+export type { SessionUser };
+
 const SESSION_BROADCAST_CHANNEL = 'm3d-session';
-
-/**
- * Minimal shape read from the non-httpOnly `m3d_user` display cookie.
- * Centralized here so admin pages/components share one source of truth
- * for session reads and role checks instead of each redefining it.
- */
-export interface SessionUser {
-  idRole: number;
-}
-
-function readCookie(name: string): string | null {
-  const entry = document.cookie.split('; ').find((piece) => piece.startsWith(`${name}=`));
-  if (!entry) return null;
-  return entry.slice(name.length + 1) || null;
-}
-
-/**
- * Reads the current session user from the `m3d_user` cookie (design.md
- * "Decision: Display data in a non-httpOnly m3d_user cookie"). Returns null
- * when logged out (no cookie) or when the stored value is malformed —
- * never throws. Express's `res.cookie` URL-encodes the value by default, so
- * it must be decoded before parsing.
- */
-export function getSessionUser(): SessionUser | null {
-  try {
-    const raw = readCookie(USER_COOKIE_NAME);
-    if (!raw) return null;
-    return JSON.parse(decodeURIComponent(raw)) as SessionUser;
-  } catch {
-    return null;
-  }
-}
 
 /**
  * True when the user has admin-area access — ADMIN or STAFF. Used to gate
