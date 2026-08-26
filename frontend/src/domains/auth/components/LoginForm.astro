@@ -43,6 +43,13 @@
   const errorBox = document.getElementById('login-error') as HTMLElement | null;
   const loginBtn = document.getElementById('login-btn') as HTMLButtonElement | null;
 
+  // One-time cleanup of stale localStorage session keys left over from
+  // before the cookie-based auth migration (design.md "Migration/Rollout").
+  // Nothing writes/reads them anymore, so leaving them would let a dead
+  // "logged in" navbar render forever in already-visited browsers.
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+
   function showError(msg: string): void {
     if (errorBox) {
       errorBox.textContent = msg;
@@ -62,9 +69,11 @@
 
     const emailEl = document.getElementById('email') as HTMLInputElement | null;
     const passwordEl = document.getElementById('password') as HTMLInputElement | null;
+    const rememberEl = document.getElementById('remember') as HTMLInputElement | null;
 
     const email = emailEl?.value?.trim() || '';
     const password = passwordEl?.value || '';
+    const remember = rememberEl?.checked ?? false;
 
     if (!email || !password) {
       showError('Por favor completá todos los campos.');
@@ -74,11 +83,11 @@
     if (loginBtn) loginBtn.disabled = true;
 
     try {
-      const authData = await AuthService.login(email, password);
+      await AuthService.login(email, password, remember);
 
-      // Store session
-      localStorage.setItem('token', authData.token);
-      localStorage.setItem('user', JSON.stringify(authData.user));
+      // Server issues the session as httpOnly/CSRF/display cookies — no
+      // client-side storage write needed (design.md "No Script-Readable
+      // Auth Token Storage").
 
       // Notify header and other components
       window.dispatchEvent(new CustomEvent('session-changed'));

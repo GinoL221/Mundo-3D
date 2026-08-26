@@ -43,16 +43,20 @@ describe('createUserAdapter', () => {
 describe('createAuthAdapter', () => {
   function buildAPILoginResponse(overrides: Partial<APILoginResponse> = {}): APILoginResponse {
     return {
-      token: 'jwt-token',
       user: buildAPIUser(),
       ...overrides,
     };
   }
 
-  it('maps token and user into AuthData', () => {
+  it('does not carry a token field (the JWT lives in an httpOnly cookie)', () => {
     const auth = createAuthAdapter(buildAPILoginResponse());
 
-    expect(auth.token).toBe('jwt-token');
+    expect(auth).not.toHaveProperty('token');
+  });
+
+  it('maps user into AuthData', () => {
+    const auth = createAuthAdapter(buildAPILoginResponse());
+
     expect(auth.user).toEqual({
       id: 1,
       firstName: 'Ada',

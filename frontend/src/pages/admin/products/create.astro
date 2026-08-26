@@ -106,7 +106,8 @@ import Layout from '../../../layouts/Layout.astro';
       window.location.href = '/admin/products';
     } catch (err) {
       if (err instanceof ProductAdminApiError && err.status === 401) {
-        clearSession();
+        // clearSession() is now async (POST /users/logout) — fire-and-forget.
+        void clearSession();
         window.location.href = '/login';
       } else if (err instanceof Error) {
         showError(err.message);

@@ -70,17 +70,17 @@ Chain strategy: pending
 
 ## Phase 6: Frontend CSRF & Session Services
 
-- [ ] 6.1 RED: `csrf.test.ts` — `readCsrfToken()` parses `m3d_csrf`; `withCredentials(init)` adds `credentials:'include'` + `X-CSRF-Token`
-- [ ] 6.2 GREEN: create `frontend/src/domains/auth/services/csrf.ts`
-- [ ] 6.3 RED: update `session.service.test.ts` — `getSessionUser()` reads `m3d_user`; `clearSession()` calls `POST /users/logout` + broadcasts
-- [ ] 6.4 GREEN: modify `session.service.ts`
-- [ ] 6.5 RED: update `auth.service.test.ts` — `login(email,password,remember)` sends `credentials:'include'`, no token persisted
-- [ ] 6.6 GREEN: modify `auth.service.ts`; update `auth.adapter.ts`/`auth.adapter.test.ts` — drop `token` from `AuthData`/`APILoginResponse`
+- [x] 6.1 RED: `csrf.test.ts` — `readCsrfToken()` parses `m3d_csrf`; `withCredentials(init)` adds `credentials:'include'` + `X-CSRF-Token`
+- [x] 6.2 GREEN: create `frontend/src/domains/auth/services/csrf.ts`
+- [x] 6.3 RED: update `session.service.test.ts` — `getSessionUser()` reads `m3d_user`; `clearSession()` calls `POST /users/logout` + broadcasts
+- [x] 6.4 GREEN: modify `session.service.ts`
+- [x] 6.5 RED: update `auth.service.test.ts` — `login(email,password,remember)` sends `credentials:'include'`, no token persisted
+- [x] 6.6 GREEN: modify `auth.service.ts`; update `auth.adapter.ts`/`auth.adapter.test.ts` — drop `token` from `AuthData`/`APILoginResponse`
 
 ## Phase 7: Forms & Stale-Storage Cleanup
 
-- [ ] 7.1 modify `LoginForm.astro` — read `#remember` checkbox into login call; drop `localStorage.setItem`; one-time `removeItem('token')`+`removeItem('user')` on init
-- [ ] 7.2 modify `RegisterForm.astro` — drop `localStorage.setItem`
+- [x] 7.1 modify `LoginForm.astro` — read `#remember` checkbox into login call; drop `localStorage.setItem`; one-time `removeItem('token')`+`removeItem('user')` on init
+- [x] 7.2 modify `RegisterForm.astro` — drop `localStorage.setItem`
 
 ## Phase 8: Consumer Call Sites
 
@@ -91,9 +91,9 @@ Chain strategy: pending
 
 ## Phase 9: Cross-Tab Sync
 
-- [ ] 9.1 RED: `sessionUI.test.ts` — `BroadcastChannel` message triggers `update()`; `visibilitychange`/`focus` triggers `update()`; `cleanup()` closes channel + removes listeners; `storage` param dropped
-- [ ] 9.2 GREEN: modify `frontend/src/scripts/sessionUI.ts`
-- [ ] 9.3 modify `Header.astro` — `initializeSessionUI(document, window)`, drop `localStorage` arg
+- [x] 9.1 RED: `sessionUI.test.ts` — `BroadcastChannel` message triggers `update()`; `visibilitychange`/`focus` triggers `update()`; `cleanup()` closes channel + removes listeners; `storage` param dropped
+- [x] 9.2 GREEN: modify `frontend/src/scripts/sessionUI.ts`
+- [x] 9.3 modify `Header.astro` — `initializeSessionUI(document, window)`, drop `localStorage` arg
 
 ## Phase 10: Integration & E2E
 

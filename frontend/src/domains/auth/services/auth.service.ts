@@ -3,15 +3,16 @@ import { createAuthAdapter } from '../adapters/auth.adapter';
 import type { AuthData, APILoginResponse } from '../adapters/auth.adapter';
 
 export class AuthService {
-  static async login(email: string, password: string): Promise<AuthData> {
+  static async login(email: string, password: string, remember = false): Promise<AuthData> {
     if (!email || !password) {
       throw new Error('Por favor completá todos los campos.');
     }
 
     const res = await fetch(`${API_URL}/api/users/login`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, remember }),
     });
 
     const data = await res.json();
@@ -27,6 +28,7 @@ export class AuthService {
   static async register(formData: FormData): Promise<AuthData> {
     const res = await fetch(`${API_URL}/api/users/register`, {
       method: 'POST',
+      credentials: 'include',
       body: formData,
     });
 
