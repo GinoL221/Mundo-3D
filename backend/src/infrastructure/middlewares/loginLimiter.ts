@@ -1,4 +1,5 @@
 import rateLimit from 'express-rate-limit';
+import { Request, Response, NextFunction } from 'express';
 
 const windowMs = process.env.LOGIN_LIMIT_WINDOW
   ? parseInt(process.env.LOGIN_LIMIT_WINDOW, 10)
@@ -8,7 +9,7 @@ const max = process.env.LOGIN_LIMIT_MAX
   ? parseInt(process.env.LOGIN_LIMIT_MAX, 10)
   : 5;
 
-const loginLimiter = rateLimit({
+const limiter = rateLimit({
   windowMs,
   max,
   standardHeaders: true,
@@ -18,5 +19,12 @@ const loginLimiter = rateLimit({
   },
   statusCode: 429,
 });
+
+const loginLimiter = (req: Request, res: Response, next: NextFunction) => {
+  if (process.env.NODE_ENV === 'test') {
+    return next();
+  }
+  return limiter(req, res, next);
+};
 
 export default loginLimiter;

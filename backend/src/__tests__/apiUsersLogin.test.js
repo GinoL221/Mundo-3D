@@ -118,21 +118,15 @@ describe('POST /api/users/login', () => {
 
 describe('normalizeLoginBody (Email/Password casing normalization)', () => {
   // This describe block issues more login attempts than loginLimiter's
-  // default max (5 per window), and the limiter is a module-level singleton
-  // shared across every `request(app)` call in this file. Reset the module
-  // registry with a bumped LOGIN_LIMIT_MAX so these tests don't trip the
-  // rate limiter and get false 429s instead of exercising normalizeLoginBody.
+  // default max (5 per window). `loginLimiter` bypasses entirely under
+  // NODE_ENV=test (Jest's default), so no per-file workaround is needed
+  // here — the fresh require just isolates this block's router instance.
   let app;
   let freshRouter;
 
   beforeAll(() => {
-    process.env.LOGIN_LIMIT_MAX = '20';
     jest.resetModules();
     freshRouter = require('../infrastructure/routes/api/users').default;
-  });
-
-  afterAll(() => {
-    delete process.env.LOGIN_LIMIT_MAX;
   });
 
   beforeEach(() => {

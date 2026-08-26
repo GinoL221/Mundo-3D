@@ -24,8 +24,8 @@ describe('loginLimiter middleware', () => {
   it('uses default values (max=5, windowMs=15min) if env vars are not set', () => {
     delete process.env.LOGIN_LIMIT_MAX;
     delete process.env.LOGIN_LIMIT_WINDOW;
+    process.env.NODE_ENV = 'production'; // so it's not bypassed
 
-    // Load the module after modifying env vars
     let loginLimiter: any;
     let rateLimitMock: any;
     jest.isolateModules(() => {
@@ -52,13 +52,13 @@ describe('loginLimiter middleware', () => {
     const res = {} as Response;
     const next = jest.fn();
     loginLimiter(req, res, next);
-    expect(loginLimiter).toHaveBeenCalledWith(req, res, next);
     expect(next).toHaveBeenCalled();
   });
 
   it('correctly loads and configures with custom env values', () => {
     process.env.LOGIN_LIMIT_MAX = '10';
     process.env.LOGIN_LIMIT_WINDOW = '60000'; // 1 minute
+    process.env.NODE_ENV = 'production';
 
     let loginLimiter: any;
     let rateLimitMock: any;
@@ -85,8 +85,22 @@ describe('loginLimiter middleware', () => {
     const res = {} as Response;
     const next = jest.fn();
     loginLimiter(req, res, next);
-    expect(loginLimiter).toHaveBeenCalledWith(req, res, next);
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('bypasses limit checks when NODE_ENV is test', () => {
+    process.env.NODE_ENV = 'test';
+
+    let loginLimiter: any;
+    jest.isolateModules(() => {
+      loginLimiter = require('../loginLimiter').default;
+    });
+
+    const req = {} as Request;
+    const res = {} as Response;
+    const next = jest.fn();
+
+    loginLimiter(req, res, next);
     expect(next).toHaveBeenCalled();
   });
 });
-
