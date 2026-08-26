@@ -25,19 +25,33 @@ When the Use Case successfully completes its execution
 Then it MUST return a plain JavaScript/TypeScript DTO object containing camelCase properties (`idUser`, `firstName`, `lastName`, `email`, `image`, `idRole`, `category` for `UserDTO`; `idRememberToken`, `tokenHash`, `idUser`, `expiryDate`, `createdAt` for `RememberTokenDTO`)
 And it MUST NOT return Sequelize model instances or any active database transaction/connection references
 
-### Scenario 3: Business Error Propagation
+### Scenario 3: Business Error Propagation (Sequential Path)
 Given an application Use Case running a business action
 When a business rule is violated (e.g., duplicate email during registration or invalid credentials during login)
 Then the Use Case MUST throw a custom Domain Exception
 And it MUST NOT throw generic database, network, or framework errors
 
-### Scenario 4: Controller Dependency Injection and API JSON Authentication
+### Scenario 3b: Business Error Propagation (Concurrent Duplicate Email)
+Given two registration requests submitted concurrently with the same, previously-unused email
+When both requests race the check-then-insert path and the database's `UNIQUE KEY` on `email` rejects the losing insert
+Then the losing request MUST result in `UserAlreadyExistsException`
+And it MUST NOT result in an unmapped `SequelizeUniqueConstraintError` reaching the controller
+
+### Scenario 4: Controller Dependency Injection and API JSON Authentication (Sequential Path)
 Given an Express Controller handling user registration or login
 When an HTTP request is received
 Then the controller MUST validate syntactic inputs
 And it MUST call the appropriate Use Case by injecting the correct infrastructure adapters (Sequelize repositories, Bcrypt/SHA-256 security services)
 And it MUST catch Domain Exceptions to return structured JSON responses with an appropriate HTTP status (e.g., 400 Bad Request, 401 Unauthorized)
 And on successful authentication (login or register), the response MUST contain the generated JWT token in the JSON body, and the controller MUST NOT issue session cookies or render HTML views
+
+### Scenario 4b: Controller Handling of Concurrent Duplicate Email Registration
+Given two `POST /api/users/register` requests submitted concurrently with the same email, each with its own uploaded avatar file
+When both requests are processed concurrently against the database
+Then exactly one request MUST receive HTTP 201 Created
+And the other request MUST receive the same HTTP 400 response shape and message as the sequential duplicate-email path
+And neither request MUST receive an HTTP 500 response
+And the losing request's uploaded avatar file MUST be cleaned up, not orphaned
 
 ### Scenario 5: Infrastructure Adapter Verification
 Given a repository adapter in the infrastructure layer (`src/infrastructure/repositories`)

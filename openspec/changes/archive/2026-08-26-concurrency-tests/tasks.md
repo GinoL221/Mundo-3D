@@ -62,12 +62,12 @@ The two integration test files are the bulk of the estimate: the cart barrier te
 
 ## Phase 7: Verification
 
-- [ ] 7.1 Run `pnpm --filter backend test` — full fast/unit suite green, including the new `SequelizeUserRepository.test.ts` RED→GREEN cases
-- [ ] 7.2 Run `pnpm --filter backend test:integration` — **requires a reachable real MySQL/MariaDB** (`DB_HOST`/`DB_USER`/`DB_PASS`); confirm both new integration tests pass repeatedly without flaking (run at least twice for the cart race test to build confidence in the invariant assertions)
-- [ ] 7.3 Run `pnpm run lint`
-- [ ] 7.4 Run `pnpm run type-check`
-- [ ] 7.5 Confirm `SequelizeShoppingCartRepository.integration.test.ts` and `SequelizeUserRepository.integration.test.ts` are matched by `jest.integration.config.js`'s `testMatch: ["**/src/**/*.integration.test.ts", ...]`, excluded from fast `npm test` by `jest.config.js`'s `testPathIgnorePatterns`, and picked up by the CI `integration` job (`.github/workflows/ci.yml:103-108`) — this was already verified as a fact by `sdd-design`; this task re-confirms it post-implementation against the actual new file paths, not re-derives it
-- [ ] 7.6 Manually trace proposal's Success Criteria: exactly one 201 + one duplicate response matching the sequential path on concurrent registration; no orphaned avatar file; cart race test passes repeatedly without flaking and documents last-write-wins; no cart production code changed; `npm run test:integration` green and CI `integration` job exercises both tests
+- [x] 7.1 Run `pnpm --filter backend test` — full fast/unit suite green, including the new `SequelizeUserRepository.test.ts` RED→GREEN cases (verified post-merge: 667/667 unit tests passed)
+- [x] 7.2 Run `pnpm --filter backend test:integration` — **requires a reachable real MySQL/MariaDB** (`DB_HOST`/`DB_USER`/`DB_PASS`); confirm both new integration tests pass repeatedly without flaking (run at least twice for the cart race test to build confidence in the invariant assertions) (verified: 12/12 integration tests passed; 6 consecutive cart-race runs green, 3 registration-race runs green)
+- [x] 7.3 Run `pnpm run lint` (verified post-merge: 0 findings)
+- [x] 7.4 Run `pnpm run type-check` (verified post-merge: 0 errors)
+- [x] 7.5 Confirm `SequelizeShoppingCartRepository.integration.test.ts` and `SequelizeUserRepository.integration.test.ts` are matched by `jest.integration.config.js`'s `testMatch: ["**/src/**/*.integration.test.ts", ...]`, excluded from fast `npm test` by `jest.config.js`'s `testPathIgnorePatterns`, and picked up by the CI `integration` job (`.github/workflows/ci.yml:103-108`) — this was already verified as a fact by `sdd-design`; this task re-confirms it post-implementation against the actual new file paths, not re-derives it (verified: both files matched by jest.integration.config.js, excluded from jest.config.js fast suite, CI integration job required check confirmed)
+- [x] 7.6 Manually trace proposal's Success Criteria: exactly one 201 + one duplicate response matching the sequential path on concurrent registration; no orphaned avatar file; cart race test passes repeatedly without flaking and documents last-write-wins; no cart production code changed; `npm run test:integration` green and CI `integration` job exercises both tests (verified per verify-report Success Criteria Cross-Check table: all 5 criteria Met)
 
 Checkbox task count: 20.
 
