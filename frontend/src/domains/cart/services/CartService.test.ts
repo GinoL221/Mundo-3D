@@ -17,6 +17,16 @@ function createLocalStorageMock() {
   };
 }
 
+// Mirrors the cookie-stubbing pattern from session.service.test.ts and
+// csrf.test.ts — CartService now gates auth via getSessionUser() (m3d_user
+// cookie) and attaches CSRF via withCredentials() (m3d_csrf cookie), not
+// localStorage.
+function stubCookie(cookie: string) {
+  vi.stubGlobal('document', { cookie });
+}
+
+const LOGGED_IN_COOKIE = `m3d_user=${encodeURIComponent(JSON.stringify({ idRole: 2 }))}; m3d_csrf=random.hmac`;
+
 function buildProduct(overrides: Partial<{ id: number; name: string; image: string; price: number }> = {}) {
   return {
     id: 1,
@@ -58,6 +68,7 @@ describe('CartService', () => {
       }
     );
     vi.stubGlobal('fetch', fetchMock);
+    stubCookie(''); // default: logged out
   });
 
   afterEach(() => {
@@ -209,8 +220,8 @@ describe('CartService', () => {
   });
 
   describe('backend sync (syncToBackend, triggered via addToCart/removeFromCart/clearCart)', () => {
-    it('does not call fetch when there is no auth token', async () => {
-      localStorageMock.getItem.mockReturnValue(null);
+    it('does not call fetch when there is no active session', async () => {
+      stubCookie('');
 
       CartService.addToCart(buildProduct());
       await flushPromises();
@@ -218,10 +229,8 @@ describe('CartService', () => {
       expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it('calls the cart sync endpoint with the bearer token and serialized items when authenticated', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) =>
-        key === 'token' ? 'abc123' : null
-      );
+    it('sends the cart sync request with credentials + CSRF token and serialized items when a session is active', async () => {
+      stubCookie(LOGGED_IN_COOKIE);
       fetchMock.mockResolvedValue({ ok: true });
 
       CartService.addToCart(buildProduct({ id: 7 }), 2);
@@ -231,7 +240,9 @@ describe('CartService', () => {
       const [url, options] = fetchMock.mock.calls[0];
       expect(url).toContain('/api/cart');
       expect(options.method).toBe('PUT');
-      expect(options.headers.Authorization).toBe('Bearer abc123');
+      expect(options.credentials).toBe('include');
+      expect(options.headers['X-CSRF-Token']).toBe('random.hmac');
+      expect(options.headers.Authorization).toBeUndefined();
       expect(JSON.parse(options.body)).toEqual({ items: [{ productId: 7, quantity: 2 }] });
       // Regression guard: keepalive lets this request survive a navigation
       // that happens right after addToCart/removeFromCart/checkout redirect.
@@ -242,9 +253,7 @@ describe('CartService', () => {
     });
 
     it('rolls back local cart state and re-persists when the backend responds with a non-ok status', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) =>
-        key === 'token' ? 'abc123' : null
-      );
+      stubCookie(LOGGED_IN_COOKIE);
       fetchMock.mockResolvedValue({ ok: false, status: 500 });
 
       // Cart starts empty (previousItems === []), then we add a product which
@@ -256,9 +265,7 @@ describe('CartService', () => {
     });
 
     it('does NOT roll back local cart state when fetch itself throws (ambiguous: real network failure vs. a request cancelled by navigation)', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) =>
-        key === 'token' ? 'abc123' : null
-      );
+      stubCookie(LOGGED_IN_COOKIE);
       fetchMock.mockRejectedValue(new Error('network down'));
 
       CartService.addToCart(buildProduct({ id: 7 }));
@@ -272,9 +279,7 @@ describe('CartService', () => {
     });
 
     it('still dispatches a cart-sync-error event when fetch() throws, even without rolling back', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) =>
-        key === 'token' ? 'abc123' : null
-      );
+      stubCookie(LOGGED_IN_COOKIE);
       fetchMock.mockRejectedValue(new Error('network down'));
 
       CartService.addToCart(buildProduct({ id: 7 }));
@@ -288,9 +293,7 @@ describe('CartService', () => {
     });
 
     it('dispatches a cart-sync-error event when the sync fails', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) =>
-        key === 'token' ? 'abc123' : null
-      );
+      stubCookie(LOGGED_IN_COOKIE);
       fetchMock.mockResolvedValue({ ok: false, status: 500 });
 
       CartService.addToCart(buildProduct({ id: 7 }));
@@ -311,9 +314,7 @@ describe('CartService', () => {
     });
 
     it('does not roll back state when the backend sync succeeds', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) =>
-        key === 'token' ? 'abc123' : null
-      );
+      stubCookie(LOGGED_IN_COOKIE);
       fetchMock.mockResolvedValue({ ok: true });
 
       CartService.addToCart(buildProduct({ id: 7 }));
@@ -332,9 +333,7 @@ describe('CartService', () => {
     // state with stale data. The sequence guard in syncToBackend must skip
     // that stale rollback.
     it('does not let a late-arriving failed sync roll back state that a newer sync already confirmed', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) =>
-        key === 'token' ? 'abc123' : null
-      );
+      stubCookie(LOGGED_IN_COOKIE);
 
       // First call (older): addToCart(id: 7). Its PUT will resolve LATE and
       // fail. Second call (newer): removeFromCart(7). Its PUT resolves
@@ -376,9 +375,7 @@ describe('CartService', () => {
     });
 
     it('does not let a late-arriving failed sync roll back a DIFFERENT newer mutation', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) =>
-        key === 'token' ? 'abc123' : null
-      );
+      stubCookie(LOGGED_IN_COOKIE);
 
       let resolveFirstFetch: (value: { ok: boolean; status?: number }) => void;
       const firstFetchPromise = new Promise<{ ok: boolean; status?: number }>((resolve) => {
@@ -414,29 +411,25 @@ describe('CartService', () => {
   });
 
   describe('hasToken', () => {
-    it('returns true when a token is stored', () => {
-      localStorageMock.getItem.mockImplementation((key: string) =>
-        key === 'token' ? 'abc123' : null
-      );
+    it('returns true when a session cookie is present', () => {
+      stubCookie(LOGGED_IN_COOKIE);
       expect(CartService.hasToken()).toBe(true);
     });
 
-    it('returns false when there is no token', () => {
-      localStorageMock.getItem.mockReturnValue(null);
+    it('returns false when there is no session', () => {
+      stubCookie('');
       expect(CartService.hasToken()).toBe(false);
     });
 
-    it('returns false when localStorage access throws', () => {
-      localStorageMock.getItem.mockImplementation(() => {
-        throw new Error('storage disabled');
-      });
+    it('returns false when the session cookie is malformed', () => {
+      stubCookie('m3d_user=%7Bnot-valid-json');
       expect(CartService.hasToken()).toBe(false);
     });
   });
 
   describe('checkout', () => {
-    it('returns false and leaves the cart untouched when there is no token', () => {
-      localStorageMock.getItem.mockReturnValue(null);
+    it('returns false and leaves the cart untouched when there is no session', () => {
+      stubCookie('');
       CartService.addToCart(buildProduct());
 
       const result = CartService.checkout();
@@ -446,10 +439,8 @@ describe('CartService', () => {
       expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it('clears the cart and returns true when a token is present', () => {
-      localStorageMock.getItem.mockImplementation((key: string) =>
-        key === 'token' ? 'abc123' : null
-      );
+    it('clears the cart and returns true when a session is active', () => {
+      stubCookie(LOGGED_IN_COOKIE);
       fetchMock.mockResolvedValue({ ok: true });
       CartService.addToCart(buildProduct());
 
@@ -457,14 +448,6 @@ describe('CartService', () => {
 
       expect(result).toBe(true);
       expect(cartItems.get()).toEqual([]);
-    });
-
-    it('returns false when localStorage access throws', () => {
-      localStorageMock.getItem.mockImplementation(() => {
-        throw new Error('storage disabled');
-      });
-
-      expect(CartService.checkout()).toBe(false);
     });
 
     // Regression test for a real bug: PUT /api/cart used to reject an empty
@@ -475,9 +458,7 @@ describe('CartService', () => {
     // semantics), but CartService's rollback-on-failure behavior itself is
     // still correct and should be preserved for genuine sync failures.
     it('rolls back to the pre-checkout cart if the backend rejects the empty-items sync', async () => {
-      localStorageMock.getItem.mockImplementation((key: string) =>
-        key === 'token' ? 'abc123' : null
-      );
+      stubCookie(LOGGED_IN_COOKIE);
       fetchMock.mockResolvedValue({ ok: false, status: 400 });
       CartService.addToCart(buildProduct());
       const cartBeforeCheckout = cartItems.get();

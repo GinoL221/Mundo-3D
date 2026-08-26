@@ -1,5 +1,7 @@
 import { atom, computed } from 'nanostores';
 import { API_URL } from '../../../config';
+import { getSessionUser } from '../../auth/services/session.service';
+import { withCredentials } from '../../auth/services/csrf';
 
 export interface CartItem {
   productId: number;
@@ -47,30 +49,32 @@ let syncSeq = 0;
 // `previousItems` must reflect the cart state BEFORE the optimistic local
 // update, so that a failed sync can roll back to a known-good state.
 async function syncToBackend(items: CartItem[], previousItems: CartItem[]): Promise<void> {
-  const token = localStorage.getItem('token');
-  if (!token) return; // Not authenticated — skip sync
+  const sessionUser = getSessionUser();
+  if (!sessionUser) return; // Not authenticated — skip sync
 
   const mySeq = ++syncSeq;
 
   try {
     const payload = items.map((i) => ({ productId: i.productId, quantity: i.quantity }));
-    const res = await fetch(`${API_URL}/api/cart`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ items: payload }),
-      // `keepalive` gives this request its best chance of actually reaching
-      // the server if the page navigates away right after this call (e.g.
-      // addToCart immediately followed by the user opening /cart, or
-      // checkout()'s redirect to '/'). It does not cover the CORS preflight
-      // that a cross-origin PUT with a JSON body + Authorization header
-      // triggers, so a fast-enough navigation can still cancel the request
-      // before we ever get a response — see the catch block below for how
-      // that case is handled.
-      keepalive: true,
-    });
+    const res = await fetch(
+      `${API_URL}/api/cart`,
+      withCredentials({
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ items: payload }),
+        // `keepalive` gives this request its best chance of actually reaching
+        // the server if the page navigates away right after this call (e.g.
+        // addToCart immediately followed by the user opening /cart, or
+        // checkout()'s redirect to '/'). It does not cover the CORS preflight
+        // that a cross-origin PUT with a JSON body + credentials triggers, so
+        // a fast-enough navigation can still cancel the request before we
+        // ever get a response — see the catch block below for how that case
+        // is handled.
+        keepalive: true,
+      })
+    );
 
     if (!res.ok) {
       // The backend saw the request and explicitly rejected this cart
@@ -173,27 +177,18 @@ export class CartService {
   }
 
   static hasToken(): boolean {
-    try {
-      return !!localStorage.getItem('token');
-    } catch {
-      return false;
-    }
+    return getSessionUser() !== null;
   }
 
   static checkout(): boolean {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        return false;
-      }
-      // Clear local cart
-      const current = cartItems.get();
-      cartItems.set([]);
-      persistCart([]);
-      void syncToBackend([], current);
-      return true;
-    } catch {
+    if (!getSessionUser()) {
       return false;
     }
+    // Clear local cart
+    const current = cartItems.get();
+    cartItems.set([]);
+    persistCart([]);
+    void syncToBackend([], current);
+    return true;
   }
 }
