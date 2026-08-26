@@ -69,4 +69,33 @@ test.describe('Cross-tab session synchronization', () => {
     await expect(page2.locator('a.navbar__link[href="/login"]')).toBeVisible();
     await expect(page2.locator('.admin-only').first()).toBeHidden();
   });
+
+  test('login in one tab updates a second open tab without a reload', async ({ page, context }) => {
+    // Tab 2 opens first, as a guest, in the SAME browser context as tab 1
+    // (shares cookies once tab 1 logs in below).
+    const page2 = await context.newPage();
+    await page2.goto('/');
+    await expect(page2.locator('a.navbar__link[href="/login"]')).toBeVisible();
+
+    // Tab 1: log in as the seeded ADMIN fixture.
+    await page.goto('/login');
+    await page.fill('#email', 'admin@email.com');
+    await page.fill('#password', 'admin123');
+    await page.click('#login-btn');
+    await expect(page).toHaveURL('/');
+    await expect(page.locator('#navbar-greeting')).toContainText('Hola');
+
+    // Tab 2: never navigated or reloaded. LoginForm.astro broadcasts on the
+    // m3d-session BroadcastChannel symmetrically with clearSession()'s
+    // logout broadcast (session.service.ts), so tab 2 updates immediately —
+    // it doesn't need the focus/visibilitychange fallback layer in
+    // sessionUI.ts, which real browsers only fire on an actual tab switch.
+    await expect(async () => {
+      const greetingVisible = await page2.locator('#navbar-greeting').isVisible();
+      expect(greetingVisible).toBe(true);
+    }).toPass({ timeout: 10_000 });
+
+    await expect(page2.locator('#navbar-greeting')).toContainText('Hola');
+    await expect(page2.locator('.admin-only').first()).toBeVisible();
+  });
 });
