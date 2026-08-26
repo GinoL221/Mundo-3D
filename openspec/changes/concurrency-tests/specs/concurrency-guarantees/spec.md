@@ -26,7 +26,11 @@ Document which concurrent-access behaviors of the backend are guaranteed, which 
 
 ### Requirement: Documented Concurrency Non-Guarantees
 
-The system SHOULD document, rather than fix, two known concurrency boundaries: migration checks and rate limiting. Boot-time migration verification (`checkNoPendingMigrations()`) is read-only and MUST NOT perform schema writes, so it introduces no migration race. The request rate limiter's `MemoryStore` is scoped per Node.js process; in a multi-process deployment, effective limits apply per process, not globally. This is an accepted scaling limitation, not a correctness guarantee, and is out of scope for a fix here. Stock decrement concurrency is explicitly OUT of scope for this capability — it is covered by its own existing test and behavior.
+The system SHOULD document, rather than fix, two known concurrency boundaries: migration checks and rate limiting. Boot-time migration verification (`checkNoPendingMigrations()`) is read-only and MUST NOT perform schema writes, so it introduces no migration race — this is testable in-process and MUST hold per the scenario below.
+
+Separately, the request rate limiter's `MemoryStore` is scoped per Node.js process: in a multi-process deployment, each process enforces the configured limit independently against its own store, so the effective combined limit across processes may exceed the configured single-process value. This is an accepted scaling limitation, not a correctness guarantee, and is out of scope for a fix here. It is a property of a multi-process deployment topology, not of a single process, so it is NOT expressed as an executable scenario — an in-process test suite cannot exercise it. Source inspection confirms neither `loginLimiter` nor `registerLimiter` passes a `store` option, so both use the default per-process `MemoryStore`.
+
+Stock decrement concurrency is explicitly OUT of scope for this capability — it is covered by its own existing test and behavior.
 
 #### Scenario: Boot-time migration check performs no writes
 
@@ -34,10 +38,3 @@ The system SHOULD document, rather than fix, two known concurrency boundaries: m
 - WHEN `checkNoPendingMigrations()` runs
 - THEN it MUST only read migration state
 - AND it MUST NOT execute any schema-altering (DDL) or data-writing operation
-
-#### Scenario: Rate limit is enforced per process, not globally
-
-- GIVEN a deployment running multiple backend processes behind a load balancer
-- WHEN requests from the same client are distributed across processes
-- THEN each process MUST enforce the configured limit independently against its own `MemoryStore`
-- AND the effective combined limit across processes MAY exceed the configured single-process value
