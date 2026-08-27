@@ -1,7 +1,7 @@
 <form id="login-form" class="form-card__form" novalidate>
   <h2>Iniciar Sesión</h2>
 
-  <div id="login-error" class="form-card__error" style="display: none;"></div>
+  <div id="login-error" class="form-card__error" role="alert" style="display: none;"></div>
 
   <label for="email">Correo Electrónico:</label>
   <input
@@ -31,10 +31,18 @@
     <button type="submit" id="login-btn" class="form-card__btn">Iniciar Sesión</button>
   </div>
 
-  <p style="margin-top: 1rem; text-align: center; font-size: 0.9rem;">
+  <p class="form-card__hint">
     ¿No tenés cuenta? <a href="/register">Registrate</a>
   </p>
 </form>
+
+<style>
+  .form-card__hint {
+    margin-top: var(--space-md);
+    text-align: center;
+    font-size: var(--text-small);
+  }
+</style>
 
 <script>
   import { AuthService } from '../services/auth.service';
