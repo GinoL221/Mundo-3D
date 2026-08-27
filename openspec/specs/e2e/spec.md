@@ -8,7 +8,7 @@ Defines end-to-end (E2E) testing specifications for verification of the authenti
 
 ### Requirement: E2E Authentication Verification
 
-E2E suite MUST validate registration, login, invalid credentials, and logout. Logout MUST verify session destruction and redirection to `/login` as guest.
+E2E suite MUST validate registration (success and rejection), login, invalid credentials, and logout. Logout MUST verify session destruction and redirection to `/login` as guest. Registration rejections MUST be asserted via the frontend's error surface, not raw API calls, and MUST NOT create a user.
 
 #### Scenario: Successful User Registration
 
@@ -16,6 +16,20 @@ E2E suite MUST validate registration, login, invalid credentials, and logout. Lo
 - WHEN they fill in valid registration details and submit the form
 - THEN they MUST be redirected to the homepage
 - AND their session state MUST show them as successfully authenticated
+
+#### Scenario: Duplicate Email Registration Rejected
+
+- GIVEN a guest submits registration with an email already in use
+- WHEN the form is submitted
+- THEN the backend MUST respond 400 and no user MUST be created
+- AND the page MUST render the rejection
+
+#### Scenario: Missing Image Registration Rejected
+
+- GIVEN a guest submits registration without an image
+- WHEN the form is submitted
+- THEN the backend MUST respond 400 with message "Tienes que subir una imagen"
+- AND the page MUST render that exact message; no user MUST be created
 
 #### Scenario: Successful User Login
 
