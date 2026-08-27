@@ -130,6 +130,14 @@ export function discardPendingSync(): void {
   burstPreviousItems = null;
 }
 
+// Additive accessor consumed by cartHydration.ts's replace-mode guard: true
+// while a debounce burst is open (armed by scheduleSync, cleared by
+// discardPendingSync/flushCartSync). See burstPreviousItems above for why
+// null is the sentinel.
+export function hasPendingSync(): boolean {
+  return burstPreviousItems !== null;
+}
+
 export function flushCartSync(): void {
   const items = pendingItems;
   const previous = burstPreviousItems;

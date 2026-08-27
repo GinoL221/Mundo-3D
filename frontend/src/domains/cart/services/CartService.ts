@@ -1,9 +1,10 @@
 import { getSessionUser } from '../../../config';
 import { cartItems, cartTotal, persistCart, type APICartSyncPayload, type CartItem } from './cartState';
 import { discardPendingSync, flushCartSync, scheduleSync } from './cartSync';
+import { hydrateFromServer, type HydrationResult, type PriceDrift } from './cartHydration';
 
 export { cartItems, cartTotal };
-export type { CartItem, APICartSyncPayload };
+export type { CartItem, APICartSyncPayload, HydrationResult, PriceDrift };
 
 export class CartService {
   static loadCartFromStorage(): void {
@@ -70,6 +71,13 @@ export class CartService {
 
   static hasToken(): boolean {
     return getSessionUser() !== null;
+  }
+
+  // Sole entry point for reconciling local cart state against
+  // GET /api/cart (cart-hydration spec: "Hydration Entry Point and
+  // Triggers"). Thin delegating static — all logic lives in cartHydration.ts.
+  static hydrateFromServer(options?: { mergeLocal?: boolean }): Promise<HydrationResult> {
+    return hydrateFromServer(options);
   }
 
   static checkout(): boolean {
