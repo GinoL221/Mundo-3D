@@ -34,6 +34,7 @@ Semantic tokens, default (dark) theme:
 | `--fg` | `#ffffff` |
 | `--accent` | `#ed407f` |
 | `--danger` | `#8a0032` |
+| `--danger-text` | `var(--pico-red)` (`#ff004d`) |
 | `--warning` | `var(--pico-orange)` |
 | `--surface` | `#121214` |
 | `--border` | `#2b2c2f` |
@@ -43,7 +44,11 @@ Semantic tokens, default (dark) theme:
 | `--lcd-bg` | `#121214` |
 | `--lcd-fg` | `#ed407f` |
 
-`[data-theme="light"]` overrides: `--bg #c2c3c7`, `--fg #000000`, `--accent #bf1251`, `--surface #ffffff`, `--border #a0a1a5`, `--input-bg`/`--input-fg` flip to white/black, `--title-highlight #bf1251`, `--lcd-bg #ffffff`, `--lcd-fg #bf1251`.
+`--danger` vs `--danger-text` is a deliberate split, not duplication: `--danger` is only for a filled background with white text on top (cart badge, danger buttons) — that pairing already passes AA in both themes with one value. `--danger-text` is for danger-colored *text or borders directly on a page surface* (form errors, invalid-field borders, the 404/500 page heading) — `#8a0032` there is unreadable on the dark theme's near-black surfaces (~1.9:1), so `--danger-text` needs its own per-theme value. Never use `--danger` for text/border color, or `--danger-text` for a filled background.
+
+`[data-theme="light"]` overrides: `--bg #c2c3c7`, `--fg #000000`, `--accent #bf1251`, `--surface #ffffff`, `--border #a0a1a5`, `--input-bg`/`--input-fg` flip to white/black, `--danger-text` equals `--danger` (`#8a0032` already passes AA on light surfaces), `--title-highlight #8a0d39`, `--lcd-bg #ffffff`, `--lcd-fg #bf1251`.
+
+`--title-highlight` is darker than `--accent`/`--lcd-fg` on light theme (`#8a0d39` vs `#bf1251`) even though all three share the same crimson hue family — `#bf1251` only clears AA against `--surface` (white), not against `--bg` (`--pico-light`, a mid-gray), and `--title-highlight` is the one used as text color directly on `--bg` (page headings, feature-strip titles).
 
 Toggled via `data-theme` on `<html>`, controlled by `frontend/src/scripts/themeToggle.ts` (`localStorage.theme`, `'dark'`/`'light'`, button `#theme-toggle`, icon ☀️/🌙).
 
@@ -79,11 +84,18 @@ Two independent, user-toggleable layers on top of the base theme:
 
 - Strict BEM (`block__element--modifier`), one file per component under `frontend/src/styles/components/`. Examples: `.navbar__link`, `.navbar__list--left`, `.product-card__action`, `.carousel--lcd`, `.form-card--wide`.
 - A visual variant is a BEM modifier on the existing block (e.g. `.carousel--lcd`), never a new parallel component.
-- `utilities.css` holds flat, non-BEM helper classes only (`.text-center`, `.mt-md`, `.mb-lg`, `.hidden`).
+- `utilities.css` holds flat, non-BEM helper classes only (`.text-center`, `.mt-md`, `.mb-lg`, `.hidden`, `.sr-only`).
 - No CSS bundler/build step — plain `<link>` tags, fixed load order: tokens → reset → typography → layout → components → utilities. Don't reorder these imports in `Layout.astro`.
 - Pixel-art constraints: `image-rendering: pixelated` on raster art; `border-radius: 0` globally (no rounded corners).
 - `--bp-*` is the only accepted breakpoint token naming; a `--breakpoint-*` alias was deliberately removed — don't reintroduce it.
 
+## Accessibility conventions
+
+- Every page has exactly one `<h1 class="sr-only">Page name — Mundo 3D</h1>` right after `<Layout>` opens, naming the page for screen readers/SEO without a visible top-level heading (the CRT/pixel-art hero already carries that role visually). Visible headings on a page start at `<h2>` and never skip a level.
+- A control disabled during an async action (form submit) or not-yet-implemented (search) gets `opacity: 0.5; cursor: not-allowed;` and drops its `:hover` accent state — established on `.navbar__search-input/-btn:disabled` and `.form-card__btn:disabled`. Don't rely on the browser default alone.
+- A small decorative control (carousel indicator) keeps its tiny visible size via a `::before`/inner element while the actual interactive box is grown to at least 24×24px (WCAG 2.2 SC 2.5.8) — see `.carousel__indicator`.
+- Async state changes users need to notice (form errors, add-to-cart confirmation) use `role="alert"` or `aria-live="polite"`, not a silent DOM update.
+
 ## Known drift (tracked, not fixed by this document)
 
-`backend/public/css/` and `frontend/src/styles/` are **not** identical. Tokens (`colors`, `typography`, `spacing`), `forms.css`, and `about.css` are byte-identical. `navbar.css` and `product-card.css` have diverged: the backend copy lacks the CRT toggle button and all JRPG hover-cursor rules (the `retro-crt-jrpg-effects` change was never backported), and still uses plain `<img>` icons instead of the frontend's pixel-art panel treatment. This is the pre-existing "unify duplicated CSS" item on the improvement roadmap — resolving it (single source + build/copy step) is a separate, deliberate change, not something to patch incidentally while touching styles for other reasons.
+`backend/public/css/` and `frontend/src/styles/` are **not** identical. Tokens (`colors`, `typography`, `spacing`), `about.css`, and `utilities.css` are byte-identical; `forms.css` is identical except one frontend-only mobile-width rule for `.form-card` (login's fixed-width card, a class backend's EJS views don't use). `navbar.css` and `product-card.css` have diverged further: the backend copy lacks the CRT toggle button and all JRPG hover-cursor rules (the `retro-crt-jrpg-effects` change was never backported), and still uses plain `<img>` icons instead of the frontend's pixel-art panel treatment. This is the pre-existing "unify duplicated CSS" item on the improvement roadmap — resolving it (single source + build/copy step) is a separate, deliberate change, not something to patch incidentally while touching styles for other reasons.
