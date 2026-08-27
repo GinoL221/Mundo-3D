@@ -1,5 +1,6 @@
 import { test, expect, request } from '@playwright/test';
 import type { APIRequestContext, Page } from '@playwright/test';
+import { mkdirSync } from 'fs';
 
 const API_URL = process.env.PUBLIC_API_URL ?? 'http://localhost:3032';
 
@@ -115,15 +116,30 @@ async function sweepFixtureProducts(): Promise<void> {
 const row = (page: Page, name: string) => page.locator('.users-list__card').filter({ hasText: name });
 
 test.beforeAll(async () => {
-  adminApi = await request.newContext({ baseURL: API_URL });
+  // Two Playwright quirks, both required for a clean checkout (CI) where
+  // `.auth/` has never been written to:
+  // 1. `APIRequestContext.storageState({ path })`, unlike
+  //    `BrowserContext.storageState({ path })`, does not create the parent
+  //    directory — it only ever worked locally because an earlier UI-driven
+  //    spec (auth.spec.ts) happened to create `.auth/` first.
+  // 2. `request.newContext()` inherits a default `storageState` from the
+  //    nearest `test.use({ storageState: ... })` in this file (the several
+  //    describe-scoped ones below), even when called from this file-scope
+  //    `beforeAll` before any test has run — so without an explicit
+  //    `storageState: undefined` override, Playwright tries to *read* that
+  //    file before this hook has had a chance to create it, and throws
+  //    ENOENT on the very first login.
+  mkdirSync('.auth', { recursive: true });
+
+  adminApi = await request.newContext({ baseURL: API_URL, storageState: undefined });
   await loginAs(adminApi, 'admin@email.com', 'admin123', '.auth/admin.json');
   adminCsrfToken = await readCsrfToken(adminApi);
 
-  const staffApi = await request.newContext({ baseURL: API_URL });
+  const staffApi = await request.newContext({ baseURL: API_URL, storageState: undefined });
   await loginAs(staffApi, 'staff@email.com', 'staff123', '.auth/staff.json');
   await staffApi.dispose();
 
-  const regularApi = await request.newContext({ baseURL: API_URL });
+  const regularApi = await request.newContext({ baseURL: API_URL, storageState: undefined });
   await registerRegularUser(regularApi, '.auth/regular-user.json');
   await regularApi.dispose();
 });
