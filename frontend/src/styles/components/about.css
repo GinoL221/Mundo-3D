@@ -28,6 +28,15 @@
   margin-bottom: var(--space-sm);
 }
 
+/* ── FAQ-style sub-headings (e.g. individual questions) ────── */
+.about-content h3 {
+  margin-bottom: var(--space-xs);
+}
+
+.about-content p + h3 {
+  margin-top: var(--space-lg);
+}
+
 .about-content p {
   font-family: var(--font-body);
   font-size: var(--text-body);
