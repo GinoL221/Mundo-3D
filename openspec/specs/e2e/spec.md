@@ -67,6 +67,28 @@ The E2E testing suite MUST validate guest shopping cart interactions, header car
 - WHEN they click the "Proceed to Checkout" button
 - THEN the system MUST redirect them to the login page to authenticate before completing checkout
 
+### Requirement: E2E Product Listing/Detail Error & Empty State Verification
+
+The E2E suite MUST validate that the product listing and detail pages render explicit fallback UI when the products API returns an error, an empty result set, or an invalid product id.
+
+#### Scenario: Listing Renders Error State on API Failure
+
+- GIVEN a user is on the products listing page
+- WHEN the products API responds with a server error
+- THEN the page MUST render the error-state template inside the product grid container
+
+#### Scenario: Listing Renders Empty State on Zero Products
+
+- GIVEN a user is on the products listing page
+- WHEN the products API responds successfully with zero products
+- THEN the page MUST render the empty-state template inside the product grid container
+
+#### Scenario: Detail Page Renders Error State for Invalid Product
+
+- GIVEN a user navigates to the product detail page with a nonexistent or invalid product id
+- WHEN the product API request fails or returns no matching product
+- THEN the page MUST render the error state and MUST NOT render the standard product content
+
 ## Technical Notes & CI Infrastructure
 
 ### CI Workflow Warnings (Infrastructure Debt)
