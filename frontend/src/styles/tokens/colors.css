@@ -43,7 +43,11 @@
   --input-bg:  #ffffff;
   --input-fg:  #000000;
 
-  --title-highlight:   #bf1251;
+  /* Darkened from #bf1251 — that value only hit ~3.47:1 against --bg
+     (#c2c3c7), failing WCAG AA (4.5:1) on .page-heading, feature-strip
+     titles, about/product-detail headings, etc. #8a0d39 keeps the same
+     crimson hue at ~5.4:1 against --bg (Impeccable audit finding). */
+  --title-highlight:   #8a0d39;
   --lcd-bg:            #ffffff;
   --lcd-fg:            #bf1251;
 }

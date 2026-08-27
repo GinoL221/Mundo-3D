@@ -71,16 +71,30 @@
   z-index: 10;
 }
 
+/* The button is the tap target (24x24, WCAG 2.2 SC 2.5.8 minimum); ::before
+   draws the small visible dot so the pixel-art look doesn't change
+   (Impeccable audit finding). */
 .carousel__indicator {
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel__indicator::before {
+  content: "";
   width: 12px;
   height: 12px;
   background-color: var(--border);
   border: 2px solid var(--pico-black);
-  cursor: pointer;
-  padding: 0;
 }
 
-.carousel__indicator.active {
+.carousel__indicator.active::before {
   background-color: var(--accent);
 }
 
@@ -182,14 +196,14 @@
   bottom: var(--space-xs);
 }
 
-.carousel--lcd .carousel__indicator {
+.carousel--lcd .carousel__indicator::before {
   width: 8px;
   height: 8px;
   background-color: transparent;
   border: 1px solid currentColor;
 }
 
-.carousel--lcd .carousel__indicator.active {
+.carousel--lcd .carousel__indicator.active::before {
   background-color: currentColor;
 }
 

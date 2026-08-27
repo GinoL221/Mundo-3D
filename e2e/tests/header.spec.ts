@@ -13,7 +13,7 @@ test('applies persisted visual preferences before Header hydration', async ({ pa
   await expect(page.locator('#theme-toggle')).toBeVisible();
 });
 
-test('preserves real Header navigation, keyboard dropdown access, and visual-only search', async ({
+test('preserves real Header navigation, keyboard dropdown access, and disabled search', async ({
   page,
   context,
 }) => {
@@ -31,10 +31,10 @@ test('preserves real Header navigation, keyboard dropdown access, and visual-onl
 
   await page.goto('/');
 
-  const searchUrl = page.url();
-  await page.locator('.navbar__search-btn').click();
-  await expect(page).toHaveURL(searchUrl);
-  await expect(page.locator('.navbar__search-input')).toHaveValue('');
+  // Search has no backend yet (roadmap item) — disabled rather than a
+  // silently-do-nothing control (Impeccable audit finding).
+  await expect(page.locator('.navbar__search-input')).toBeDisabled();
+  await expect(page.locator('.navbar__search-btn')).toBeDisabled();
 
   await page.locator('.navbar__link[href="/products"]').click();
   await expect(page).toHaveURL(/\/products$/);

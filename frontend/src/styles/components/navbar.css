@@ -58,6 +58,12 @@
 .navbar__search-input:focus {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.navbar__search-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .navbar__search-btn {
@@ -75,6 +81,18 @@
 .navbar__search-btn:hover {
   background-color: var(--input-bg);
   border-color: var(--accent);
+}
+
+.navbar__search-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--border);
+  border-color: var(--border);
+}
+
+.navbar__search-btn:disabled:hover {
+  background-color: var(--border);
+  border-color: var(--border);
 }
 
 /* Nav list (replaces nav.barra-navegacion) */
@@ -247,13 +265,13 @@
 }
 
 /* ── JRPG Hover Cursors on Navbar Links ────────────────────── */
+/* Space for the arrow is reserved unconditionally (once, when CRT turns on),
+   not animated on every hover — animating padding-left forced a reflow of
+   every sibling nav item per hover (Impeccable audit finding). Only opacity
+   (already compositor-only) changes on :hover now. */
 html.crt-theme-active .navbar__link {
   position: relative;
-  transition: padding-left 0.2s ease-out;
-}
-
-html.crt-theme-active .navbar__link:hover {
-  padding-left: calc(var(--space-sm) + 14px); /* Shift right slightly to make space for arrow */
+  padding-left: calc(var(--space-sm) + 14px);
 }
 
 html.crt-theme-active .navbar__link::before {

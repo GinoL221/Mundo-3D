@@ -9,10 +9,24 @@
         MUNDO 3D
       </a>
 
-      <!-- Search bar (visual only, non-functional) -->
+      <!-- Search bar: disabled until real search ships (roadmap item), so the
+      UI doesn't present a fake control that silently does nothing. -->
       <div class="navbar__search">
-        <input type="text" placeholder="Buscar productos..." aria-label="Buscar productos" class="navbar__search-input" />
-        <button type="button" aria-label="Buscar" class="navbar__search-btn">
+        <input
+          type="text"
+          placeholder="Búsqueda próximamente"
+          aria-label="Búsqueda de productos (próximamente)"
+          class="navbar__search-input"
+          disabled
+          title="La búsqueda todavía no está disponible"
+        />
+        <button
+          type="button"
+          aria-label="Búsqueda de productos (próximamente)"
+          class="navbar__search-btn"
+          disabled
+          title="La búsqueda todavía no está disponible"
+        >
           <svg class="navbar__icon" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle; image-rendering: pixelated;">
             <rect x="3" y="2" width="8" height="1" />
             <rect x="3" y="9" width="8" height="1" />

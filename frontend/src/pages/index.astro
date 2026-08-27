@@ -4,6 +4,8 @@ import { ProductCard } from '../domains/products';
 ---
 
 <Layout title="Mundo 3D - Inicio">
+  <h1 class="sr-only">Mundo 3D — modelado y fabricación 3D</h1>
+
   <!-- Carousel -->
   <section class="carousel carousel--lcd" id="homepage-carousel">
     <div class="carousel__container">
@@ -35,15 +37,15 @@ import { ProductCard } from '../domains/products';
   <!-- Feature Strip -->
   <section class="feature-strip">
     <div class="feature-strip__tile">
-      <h3 class="feature-strip__title">Calidad Premium</h3>
+      <h2 class="feature-strip__title">Calidad Premium</h2>
       <p class="feature-strip__description">Materiales de alta resistencia para cada proyecto.</p>
     </div>
     <div class="feature-strip__tile">
-      <h3 class="feature-strip__title">Envío Rápido</h3>
+      <h2 class="feature-strip__title">Envío Rápido</h2>
       <p class="feature-strip__description">Recibí tu pedido en tiempo récord, preparado con cuidado.</p>
     </div>
     <div class="feature-strip__tile">
-      <h3 class="feature-strip__title">Soporte 24/7</h3>
+      <h2 class="feature-strip__title">Soporte 24/7</h2>
       <p class="feature-strip__description">Estamos para vos en cada paso del proceso.</p>
     </div>
   </section>
@@ -72,8 +74,8 @@ import { ProductCard } from '../domains/products';
   <template id="error-state-template">
     <div class="empty-state">
       <img src="/images/illustrations/empty-state.svg" alt="Error" class="empty-state-img" style="image-rendering: pixelated;" />
-      <h2>Próximamente</h2>
-      <p>Estamos preparando productos increíbles para vos.</p>
+      <h2>No se pudo cargar</h2>
+      <p>Verificá tu conexión e intentá de nuevo.</p>
     </div>
   </template>
 </Layout>

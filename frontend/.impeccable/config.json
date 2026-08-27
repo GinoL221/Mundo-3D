@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "frontend/src/domains/products/components/ProductCard.astro"
+        ],
+        "createdAt": "2026-08-27T14:33:47.224Z",
+        "reason": "template element cloned and populated by JS (img.src set per product in index.astro/products.astro loadProducts()); empty src is the intended template placeholder, not a shipped broken image"
+      }
+    ]
+  }
+}

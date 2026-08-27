@@ -22,3 +22,7 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Impeccable session-local hook cache (per-machine, keyed by session id) —
+# .impeccable/config.json (shared ignore rules) is tracked
+.impeccable/hook.cache.json
