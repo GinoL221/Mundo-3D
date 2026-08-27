@@ -155,11 +155,21 @@ test.describe('Cart E2E Tests - Authenticated Flow', () => {
     // empty, which was causing this test to flake.
     await page.goto('/product?id=1');
     await expect(page.locator('#product-name')).not.toBeEmpty();
+    const addToCartPut = page.waitForResponse(
+      (res) => res.url().includes('/api/cart') && res.request().method() === 'PUT'
+    );
     await page.click('#add-to-cart-btn');
     await expect(async () => {
       const cart = await page.evaluate(() => localStorage.getItem('cart'));
       expect(cart).toContain('"productId":1');
     }).toPass();
+    // Cart-page hydration now reads server state (cart-authority), so the
+    // add must actually land server-side before navigating away — Astro has
+    // no ClientRouter, so navigation is a full page load that resets
+    // cartSync.ts's module state, and the pagehide-triggered flush racing
+    // the cart page's GET is a real, accepted, client-unsolvable race
+    // (design.md) if this PUT hasn't landed yet.
+    await addToCartPut;
 
     // Go to cart page and click checkout
     await page.goto('/cart');
