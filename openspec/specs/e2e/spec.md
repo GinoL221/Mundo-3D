@@ -8,7 +8,7 @@ Defines end-to-end (E2E) testing specifications for verification of the authenti
 
 ### Requirement: E2E Authentication Verification
 
-E2E suite MUST validate registration, login, invalid credentials, and logout. Logout MUST verify session destruction and redirection to `/login` as guest.
+E2E suite MUST validate registration (success and rejection), login, invalid credentials, and logout. Logout MUST verify session destruction and redirection to `/login` as guest. Registration rejections MUST be asserted via the frontend's error surface, not raw API calls, and MUST NOT create a user.
 
 #### Scenario: Successful User Registration
 
@@ -16,6 +16,20 @@ E2E suite MUST validate registration, login, invalid credentials, and logout. Lo
 - WHEN they fill in valid registration details and submit the form
 - THEN they MUST be redirected to the homepage
 - AND their session state MUST show them as successfully authenticated
+
+#### Scenario: Duplicate Email Registration Rejected
+
+- GIVEN a guest submits registration with an email already in use
+- WHEN the form is submitted
+- THEN the backend MUST respond 400 and no user MUST be created
+- AND the page MUST render the rejection
+
+#### Scenario: Missing Image Registration Rejected
+
+- GIVEN a guest submits registration without an image
+- WHEN the form is submitted
+- THEN the backend MUST respond 400 with message "Tienes que subir una imagen"
+- AND the page MUST render that exact message; no user MUST be created
 
 #### Scenario: Successful User Login
 
@@ -103,6 +117,28 @@ The E2E suite MUST validate role-gated visibility, CRUD, and session-loss handli
 - WHEN an action receives a 401
 - THEN the client MUST clear the session and redirect to `/login` silently
 - AND no message shows and no form state persists
+
+### Requirement: E2E Product Listing/Detail Error & Empty State Verification
+
+The E2E suite MUST validate that the product listing and detail pages render explicit fallback UI when the products API returns an error, an empty result set, or an invalid product id.
+
+#### Scenario: Listing Renders Error State on API Failure
+
+- GIVEN a user is on the products listing page
+- WHEN the products API responds with a server error
+- THEN the page MUST render the error-state template inside the product grid container
+
+#### Scenario: Listing Renders Empty State on Zero Products
+
+- GIVEN a user is on the products listing page
+- WHEN the products API responds successfully with zero products
+- THEN the page MUST render the empty-state template inside the product grid container
+
+#### Scenario: Detail Page Renders Error State for Invalid Product
+
+- GIVEN a user navigates to the product detail page with a nonexistent or invalid product id
+- WHEN the product API request fails or returns no matching product
+- THEN the page MUST render the error state and MUST NOT render the standard product content
 
 ## Technical Notes & CI Infrastructure
 
