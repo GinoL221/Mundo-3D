@@ -4,6 +4,7 @@ import Layout from '../../../layouts/Layout.astro';
 
 <Layout title="Administrar Productos - Mundo 3D">
   <main class="products">
+    <h1 class="sr-only">Administrar productos — Mundo 3D</h1>
     <h2 class="page-heading">ADMINISTRAR PRODUCTOS</h2>
 
     <!--
@@ -28,7 +29,7 @@ import Layout from '../../../layouts/Layout.astro';
         </a>
       </div>
 
-      <div id="admin-error" class="form-card__error" style="display:none; text-align:center;"></div>
+      <div id="admin-error" class="form-card__error" role="alert" style="display:none; text-align:center;"></div>
       <p id="admin-loading-msg" style="text-align:center; padding: 2rem;">Cargando productos...</p>
 
       <!--
@@ -160,7 +161,16 @@ import Layout from '../../../layouts/Layout.astro';
     if (priceEl) priceEl.textContent = `$${product.price}`;
     if (categoryEl) categoryEl.textContent = product.category;
     if (stockEl) stockEl.textContent = String(product.stock);
-    if (editLink) editLink.href = `/admin/products/edit?id=${product.idProduct}`;
+    if (editLink) {
+      editLink.href = `/admin/products/edit?id=${product.idProduct}`;
+      // Every card renders the same "Editar" link text; a screen reader
+      // user pulling up a links list would otherwise see many identical
+      // entries with no way to tell them apart.
+      editLink.setAttribute('aria-label', `Editar ${product.nameProduct}`);
+    }
+    if (deltaInput) deltaInput.setAttribute('aria-label', `Cantidad a ajustar - ${product.nameProduct}`);
+    if (plusBtn) plusBtn.setAttribute('aria-label', `Aumentar stock de ${product.nameProduct}`);
+    if (minusBtn) minusBtn.setAttribute('aria-label', `Disminuir stock de ${product.nameProduct}`);
 
     async function applyDelta(sign: 1 | -1): Promise<void> {
       const magnitude = Number(deltaInput?.value);
@@ -198,13 +208,16 @@ import Layout from '../../../layouts/Layout.astro';
     // for ADMIN only. STAFF must not see it at all — mirrors the backend's
     // ADMIN-only DELETE guard, which stays authoritative regardless.
     if (deleteBtn) {
+      deleteBtn.setAttribute('aria-label', `Eliminar ${product.nameProduct}`);
       if (isAdmin) {
+        const originalLabel = deleteBtn.textContent;
         deleteBtn.addEventListener('click', () => {
-          if (!confirm(`¿Eliminar "${product.nameProduct}"?`)) return;
+          if (!confirm(`¿Eliminar "${product.nameProduct}"? Esta acción no se puede deshacer.`)) return;
           // In-flight guard: a rapid double-click must not fire two DELETE
           // requests (the second would otherwise surface a confusing 404
           // right after a successful delete).
           deleteBtn.disabled = true;
+          deleteBtn.textContent = 'Eliminando...';
           ProductAdminService.remove(product.idProduct)
             .then(() => {
               deleteBtn.closest('article')?.remove();
@@ -216,6 +229,7 @@ import Layout from '../../../layouts/Layout.astro';
               }
               alert(err instanceof Error ? err.message : 'No se pudo eliminar el producto.');
               deleteBtn.disabled = false;
+              deleteBtn.textContent = originalLabel;
             });
         });
       } else {
