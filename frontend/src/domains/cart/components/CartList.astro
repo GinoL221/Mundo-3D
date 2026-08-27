@@ -9,12 +9,12 @@
 
   <section class="cart__summary" id="cart-summary" style="display:none;">
     <div class="cart__item-details">
-      <h4>Resumen de su compra</h4>
+      <h3>Resumen de su compra</h3>
       <p class="cart__summary-count" id="cart-count">Cantidad de productos: 0</p>
       <p class="cart__summary-shipping">Envio: $ 000</p>
-      <h4>Total del carrito: $<span id="cart-total">0</span></h4>
+      <h3>Total del carrito: $<span id="cart-total">0</span></h3>
     </div>
-    <a href="/products" class="cart__btn-continue" style="display:inline-block; text-align:center;">Seguir comprando</a>
+    <a href="/products" class="cart__btn-continue">Seguir comprando</a>
     <button class="cart__btn-checkout" type="button">Finalizar compra</button>
   </section>
 </div>
@@ -22,13 +22,13 @@
 <!-- Templates for dynamic rendering -->
 <template id="cart-item-template">
   <article class="cart__item">
-    <h4 class="cart__item-name"></h4>
+    <h3 class="cart__item-name"></h3>
     <div class="cart__item-details">
-      <img class="cart__item-image" src="" alt="" />
+      <img class="cart__item-image" src="" alt="" loading="lazy" />
       <p class="cart__item-price"></p>
       <p class="cart__item-qty"></p>
       <p class="cart__item-subtotal"></p>
-      <button class="form-card__btn cart__item-remove" style="font-size:0.75rem;" type="button">
+      <button class="form-card__btn cart__item-remove" type="button">
         Eliminar
       </button>
     </div>

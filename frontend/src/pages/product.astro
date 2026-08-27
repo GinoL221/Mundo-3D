@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Detalle del Producto - Mundo 3D">
+  <h1 class="sr-only">Mundo 3D — Detalle del producto</h1>
   <h2 class="product-detail__title" id="product-title">Cargando...</h2>
   <main class="product-detail__main">
     <div class="product-detail__card">
@@ -13,13 +14,13 @@ import Layout from '../layouts/Layout.astro';
           <h3 id="product-name"></h3>
           <p class="price price--lg" id="product-price"></p>
           <p id="product-description"></p>
-          <button id="add-to-cart-btn" class="product-detail__action product-detail__action--secondary">
+          <button id="add-to-cart-btn" class="product-detail__action product-detail__action--secondary" aria-live="polite">
             AGREGAR AL CARRITO
           </button>
           <a href="/cart" class="product-detail__action">IR AL CARRITO</a>
         </section>
         <div class="product-specs">
-          <h4 class="product-specs__title">Especificaciones 3D</h4>
+          <h3 class="product-specs__title">Especificaciones 3D</h3>
           <table class="product-specs__table">
             <tbody>
               <tr>
@@ -77,7 +78,7 @@ import Layout from '../layouts/Layout.astro';
   async function loadProduct(): Promise<void> {
     const productId = getProductId();
     if (!productId) {
-      showError();
+      showError('not-found');
       return;
     }
 
@@ -146,15 +147,18 @@ import Layout from '../layouts/Layout.astro';
       });
     } catch (err) {
       console.error('Error loading product:', err);
-      showError();
+      const message = err instanceof Error ? err.message : '';
+      showError(message.includes('404') ? 'not-found' : 'load-error');
     }
   }
 
-  function showError(): void {
+  function showError(reason: 'not-found' | 'load-error'): void {
     const errorEl = document.getElementById('product-error');
     const titleEl = document.getElementById('product-title');
     if (errorEl) errorEl.style.display = 'block';
-    if (titleEl) titleEl.textContent = 'Producto no encontrado';
+    if (titleEl) {
+      titleEl.textContent = reason === 'not-found' ? 'Producto no encontrado' : 'No se pudo cargar';
+    }
   }
 
   loadProduct();

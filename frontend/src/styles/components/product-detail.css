@@ -119,6 +119,10 @@
     gap: var(--space-lg);
     align-items: start;
   }
+
+  .product-specs {
+    grid-column: 1 / -1;
+  }
 }
 
 /* ── Product Specs Section ────────────────────────────────── */
@@ -163,7 +167,7 @@
 }
 
 .product-specs__table tr {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border);
 }
 
 .product-specs__table tr:last-child {
