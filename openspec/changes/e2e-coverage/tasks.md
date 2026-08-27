@@ -68,26 +68,26 @@ No threat matrix applies (design.md: N/A — no routing/shell/subprocess/VCS bou
 
 ## Phase 8: PR 3 — `product-states.spec.ts` listing states (independent of Phases 1-7)
 
-- [ ] 8.1 Create `e2e/tests/product-states.spec.ts`.
-- [ ] 8.2 Test listing error state: `page.route()` the listing API to `fulfill({ status: 500 })`; assert the listing page renders its error-state template.
-- [ ] 8.3 Test listing empty state: `page.route()` the listing API to `fulfill({ status: 200, body: JSON.stringify({ products: [] }) })`; assert `#product-grid-container .empty-state h2` renders the empty-state copy.
+- [x] 8.1 Create `e2e/tests/product-states.spec.ts`.
+- [x] 8.2 Test listing error state: `page.route()` the listing API to `fulfill({ status: 500 })`; assert the listing page renders its error-state template.
+- [x] 8.3 Test listing empty state: `page.route()` the listing API to `fulfill({ status: 200, body: JSON.stringify({ products: [] }) })`; assert `#product-grid-container .empty-state h2` renders the empty-state copy.
 
 ## Phase 9: PR 3 — `product-states.spec.ts` detail states (depends on Phase 8's file)
 
-- [ ] 9.1 Test detail error for a real nonexistent id (`/product?id=999999`, never allocated since `sync({force:true})` resets auto-increment each run); assert `#product-error` renders and `#product-title` does not.
-- [ ] 9.2 Test detail error via an intercepted 500 on the detail API (network-failure branch); assert `#product-error` renders.
+- [x] 9.1 Test detail error for a real nonexistent id (`/product?id=999999`, never allocated since `sync({force:true})` resets auto-increment each run); assert `#product-error` renders. (Adapted: `#product-title` is never conditionally hidden — it just swaps text via `showError()` — so the "does not render" half of this assertion targets `#product-content`, the element that actually toggles, instead.)
+- [x] 9.2 Test detail error via an intercepted 500 on the detail API (network-failure branch); assert `#product-error` renders.
 
 ## Phase 10: PR 3 — remaining spec delta
 
-- [ ] 10.1 Merge the MODIFIED "E2E Authentication Verification" requirement's two added scenarios (Duplicate Email Registration Rejected, Missing Image Registration Rejected) into `openspec/specs/e2e/spec.md`.
-- [ ] 10.2 Merge the ADDED "E2E Product Listing/Detail Error & Empty State Verification" requirement (3 scenarios) into `openspec/specs/e2e/spec.md`.
+- [x] 10.1 Merge the MODIFIED "E2E Authentication Verification" requirement's two added scenarios (Duplicate Email Registration Rejected, Missing Image Registration Rejected) into `openspec/specs/e2e/spec.md`.
+- [x] 10.2 Merge the ADDED "E2E Product Listing/Detail Error & Empty State Verification" requirement (3 scenarios) into `openspec/specs/e2e/spec.md`.
 
 ## Phase 11: Verification (run per PR independently)
 
 - [x] 11.1 Run `pnpm --filter e2e test --project=chromium tests/admin-products.spec.ts` 3 consecutive times — green, no flakes; confirm no seeded row is touched.
 - [x] 11.2 Run `pnpm --filter e2e test --project=chromium tests/auth.spec.ts` — green, including pre-existing cases.
-- [ ] 11.3 Run `pnpm --filter e2e test --project=chromium tests/product-states.spec.ts` — green.
-- [ ] 11.4 Confirm each PR's spec-delta hunk validates independently (`openspec validate e2e-coverage --strict` or equivalent) and merges without conflict against the other.
+- [x] 11.3 Run `pnpm --filter e2e test --project=chromium tests/product-states.spec.ts` — green (4/4, multiple runs, no flakes).
+- [x] 11.4 No `openspec` CLI exists in this repo (file-convention only, confirmed). Manually confirmed instead: PR 1 and PR 3 both insert a new requirement block at the same location in `openspec/specs/e2e/spec.md` (right after "E2E Cart & Navigation Verification", right before "Technical Notes & CI Infrastructure") — this produces a textual (not semantic) merge conflict when the second PR merges after the first, resolved by keeping both inserted blocks, same pattern as this session's earlier cart-batching merge conflicts.
 
 Checkbox task count: 22.
 
