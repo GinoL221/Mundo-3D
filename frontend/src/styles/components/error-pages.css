@@ -19,7 +19,7 @@
 .error-page h1 {
   font-family: var(--font-heading);
   font-size: 24px;
-  color: var(--danger);
+  color: var(--danger-text);
   margin-bottom: var(--space-lg);
 }
 

@@ -95,6 +95,22 @@
   border-color: var(--accent);
 }
 
+/* Disabled during an async submit shouldn't read as still-clickable
+   (Impeccable audit finding — admin forms pass). */
+.form-card__btn:disabled,
+.form-card__form button:disabled,
+.form-card--wide button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form-card__btn:disabled:hover,
+.form-card__form button:disabled:hover,
+.form-card--wide button:disabled:hover {
+  background-color: var(--input-bg);
+  border-color: var(--border);
+}
+
 .form-card__actions {
   display: flex;
   gap: var(--space-sm);
@@ -121,7 +137,7 @@
 
 /* ── Invalid Input ─────────────────────────────────────────── */
 .form-card__input--invalid {
-  border-color: var(--danger) !important;
+  border-color: var(--danger-text) !important;
 }
 
 /* ── Register Form ─────────────────────────────────────────── */
@@ -163,7 +179,7 @@ form {
 
 /* ── Form Error ────────────────────────────────────────────── */
 .form-card__error {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 
 /* ── Mobile (< 640px) ──────────────────────────────────────── */

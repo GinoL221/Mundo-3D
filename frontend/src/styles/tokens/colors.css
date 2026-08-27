@@ -27,6 +27,14 @@
   --input-bg:  #18191b;
   --input-fg:  #ffffff;
 
+  /* --danger (#8a0032) is only meant for a filled background with white
+     text on top (cart badge, danger buttons) — that pairing is
+     theme-independent and already passes AA in both themes. Used directly
+     as TEXT/border color on a dark surface it's ~1.9:1, failing WCAG AA
+     (Impeccable audit finding, auth pages pass). --danger-text is the
+     theme-aware color for that case: error copy, invalid-field borders. */
+  --danger-text:       var(--pico-red);
+
   --title-highlight:   #ed407f;
   --lcd-bg:            #121214;
   --lcd-fg:            #ed407f;
@@ -42,6 +50,10 @@
   --border:    #a0a1a5;
   --input-bg:  #ffffff;
   --input-fg:  #000000;
+
+  /* #8a0032 already passes AA as text/border on light --bg/--surface
+     (~9.9:1 / ~5.6:1) — only dark theme needed a different value. */
+  --danger-text:       var(--danger);
 
   /* Darkened from #bf1251 — that value only hit ~3.47:1 against --bg
      (#c2c3c7), failing WCAG AA (4.5:1) on .page-heading, feature-strip
