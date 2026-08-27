@@ -157,4 +157,46 @@ test.describe('Authentication E2E Tests', () => {
     await expect(page.locator('a.navbar__link[href="/login"]')).toBeVisible();
     await expect(page.locator('#navbar-greeting')).not.toBeVisible();
   });
+
+  test('Duplicate Email Registration Rejected', async ({ page }) => {
+    // Reuses the seeded gino@email.com instead of testEmail, so this test
+    // has no ordering dependency on the earlier registration test in this file.
+    await page.goto('/register');
+    await page.fill('#firstName', 'Dup');
+    await page.fill('#lastName', 'Licate');
+    await page.fill('#email', 'gino@email.com');
+    await page.fill('#password', testPassword);
+    await page.fill('#confirmPassword', testPassword);
+    await page.setInputFiles('#image', {
+      name: 'avatar.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('fake image content'),
+    });
+
+    await page.click('#register-btn');
+
+    const errorBox = page.locator('#register-error');
+    await expect(errorBox).toBeVisible();
+    await expect(errorBox).toHaveText('Este email ya está registrado');
+    await expect(page).toHaveURL('/register');
+  });
+
+  test('Missing Image Registration Rejected', async ({ page }) => {
+    const noImageEmail = `no_image_${Date.now()}@example.com`;
+
+    await page.goto('/register');
+    await page.fill('#firstName', 'No');
+    await page.fill('#lastName', 'Image');
+    await page.fill('#email', noImageEmail);
+    await page.fill('#password', testPassword);
+    await page.fill('#confirmPassword', testPassword);
+    // #image intentionally left empty.
+
+    await page.click('#register-btn');
+
+    const errorBox = page.locator('#register-error');
+    await expect(errorBox).toBeVisible();
+    await expect(errorBox).toHaveText('Tienes que subir una imagen');
+    await expect(page).toHaveURL('/register');
+  });
 });
