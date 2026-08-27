@@ -30,24 +30,24 @@ The natural PR boundary mirrors the design's own decomposition: `cartHydration.t
 
 ## Phase 1: Types and DTO Mapping (`mapServerCart`)
 
-- [ ] 1.1 RED: create `frontend/src/domains/cart/services/cartHydration.test.ts` with `mapServerCart` tests: a null `product.image` maps to `image: ''`; `unitPrice` comes from `product.price` (not any row-level price); `productId`/`quantity` map straight through. *(cart-hydration spec: "Server DTO to CartItem Mapping")*
-- [ ] 1.2 GREEN: create `frontend/src/domains/cart/services/cartHydration.ts` with `ServerCartItemDTO`, `ServerCartResponse`, `PriceDrift`, `HydrationResult` interfaces, `MAX_ITEM_QUANTITY = 99`, and `mapServerCart()` per the design's Interfaces/Mapping sections.
+- [x] 1.1 RED: create `frontend/src/domains/cart/services/cartHydration.test.ts` with `mapServerCart` tests: a null `product.image` maps to `image: ''`; `unitPrice` comes from `product.price` (not any row-level price); `productId`/`quantity` map straight through. *(cart-hydration spec: "Server DTO to CartItem Mapping")*
+- [x] 1.2 GREEN: create `frontend/src/domains/cart/services/cartHydration.ts` with `ServerCartItemDTO`, `ServerCartResponse`, `PriceDrift`, `HydrationResult` interfaces, `MAX_ITEM_QUANTITY = 99`, and `mapServerCart()` per the design's Interfaces/Mapping sections. **Deviation**: `HydrationResult` intentionally NOT added in this PR — it is only meaningful alongside `hydrateFromServer()`, which is phase 5+ scope; adding an unused type now would be dead surface in a PR meant to stay pure/unwired. Will be added in the PR that implements `hydrateFromServer()`.
 
 ## Phase 2: Merge Logic (`mergeCartItems`)
 
-- [ ] 2.1 RED: add `mergeCartItems` tests — overlapping `productId` sums quantities; `name`/`image`/`unitPrice` on overlap take the server's value (server wins); a summed overlap exceeding 99 clamps to 99; a local-only item already over 99 also clamps to 99; an item with a non-finite or `< 1` quantity is dropped; server-only items pass through unchanged; local-only items pass through unchanged; output order is server items in server order, then local-only items appended. *(cart-hydration spec: "Guest-to-Account Cart Merge on Login", scenario "Merged quantity over 99 clamps silently"; design's merge rules table)*
-- [ ] 2.2 GREEN: implement `mergeCartItems(local, server)` in `cartHydration.ts` per the design's merge rules table (key by `productId`, sum, server-wins fields, `Math.min(99, sum)` clamp on every merged item, drop non-finite/`<1`, deterministic ordering).
+- [x] 2.1 RED: add `mergeCartItems` tests — overlapping `productId` sums quantities; `name`/`image`/`unitPrice` on overlap take the server's value (server wins); a summed overlap exceeding 99 clamps to 99; a local-only item already over 99 also clamps to 99; an item with a non-finite or `< 1` quantity is dropped; server-only items pass through unchanged; local-only items pass through unchanged; output order is server items in server order, then local-only items appended. *(cart-hydration spec: "Guest-to-Account Cart Merge on Login", scenario "Merged quantity over 99 clamps silently"; design's merge rules table)*
+- [x] 2.2 GREEN: implement `mergeCartItems(local, server)` in `cartHydration.ts` per the design's merge rules table (key by `productId`, sum, server-wins fields, `Math.min(99, sum)` clamp on every merged item, drop non-finite/`<1`, deterministic ordering).
 
 ## Phase 3: Price-Drift Detection (`detectPriceDrift`)
 
-- [ ] 3.1 RED: add `detectPriceDrift` tests — a product present in both sets with differing prices produces one `PriceDrift` entry with `{name, oldPrice, newPrice}`; a product present in both sets with equal prices produces no entry; a server-only product (no local record) produces no entry; multiple drifted products each produce their own entry. *(cart-hydration spec: "Price-Drift Notice on Hydration")*
-- [ ] 3.2 GREEN: implement `detectPriceDrift(local, server)` in `cartHydration.ts` — compare only products present in both sets, ignore the DTO's own `hasPriceDrift` field entirely (design decision: different comparands).
+- [x] 3.1 RED: add `detectPriceDrift` tests — a product present in both sets with differing prices produces one `PriceDrift` entry with `{name, oldPrice, newPrice}`; a product present in both sets with equal prices produces no entry; a server-only product (no local record) produces no entry; multiple drifted products each produce their own entry. *(cart-hydration spec: "Price-Drift Notice on Hydration")*
+- [x] 3.2 GREEN: implement `detectPriceDrift(local, server)` in `cartHydration.ts` — compare only products present in both sets, ignore the DTO's own `hasPriceDrift` field entirely (design decision: different comparands).
 
 ## Phase 4: Work Unit 1 Verification
 
-- [ ] 4.1 Run `cd frontend && npx vitest run cartHydration` — all pure-function tests green.
-- [ ] 4.2 Run `pnpm frontend:check` — no new type errors.
-- [ ] 4.3 Confirm `frontend/src/domains/cart/services/CartService.test.ts` is untouched and still passes unmodified (regression gate — this file is never a target of this change).
+- [x] 4.1 Run `cd frontend && npx vitest run cartHydration` — all pure-function tests green. (17/17 passed)
+- [x] 4.2 Run `pnpm frontend:check` — no new type errors. (`npm run check` in `frontend/`: 0 errors, 0 warnings, 0 hints across 52 files)
+- [x] 4.3 Confirm `frontend/src/domains/cart/services/CartService.test.ts` is untouched and still passes unmodified (regression gate — this file is never a target of this change). (`git status` confirms it is not in the diff; full `npm test` run: 9 files / 130 tests passed, including that file)
 
 ## Phase 5: Test Harness for Flow Tests
 
