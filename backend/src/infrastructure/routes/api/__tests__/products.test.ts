@@ -134,6 +134,21 @@ describe('api/products mutation routes — guard matrix', () => {
       expect(res.status).toBe(403);
       expect(mockCreateExecute).not.toHaveBeenCalled();
     });
+
+    it('coerces a blank material field to null instead of forwarding an empty string (#69)', async () => {
+      mockCreateExecute.mockResolvedValue({ idProduct: 1, ...validProductFields, stock: 0 });
+
+      const res = await request(app)
+        .post('/api/products')
+        .set('Cookie', adminAuth.cookie)
+        .set('X-CSRF-Token', adminAuth.csrfToken)
+        .field({ ...validProductFields, material: '' })
+        .attach('image', Buffer.from('fake-image-bytes'), 'test.png');
+
+      expect(res.status).toBe(201);
+      const calledInput = mockCreateExecute.mock.calls[0][0];
+      expect(calledInput.material).toBeNull();
+    });
   });
 
   describe('PUT /api/products/:id', () => {
@@ -212,6 +227,20 @@ describe('api/products mutation routes — guard matrix', () => {
 
       const calledInput = mockUpdateExecute.mock.calls[0][1];
       expect(calledInput).not.toHaveProperty('stock');
+    });
+
+    it('coerces a blank material field to null instead of forwarding an empty string (#69)', async () => {
+      mockUpdateExecute.mockResolvedValue({ idProduct: 1, nameProduct: 'Updated Name Here', stock: 5 });
+
+      const res = await request(app)
+        .put('/api/products/1')
+        .set('Cookie', adminAuth.cookie)
+        .set('X-CSRF-Token', adminAuth.csrfToken)
+        .send({ nameProduct: 'Updated Name Here', material: '' });
+
+      expect(res.status).toBe(200);
+      const calledInput = mockUpdateExecute.mock.calls[0][1];
+      expect(calledInput.material).toBeNull();
     });
   });
 

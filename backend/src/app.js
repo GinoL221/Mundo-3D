@@ -4,6 +4,13 @@ if (process.env.NODE_ENV !== 'test') {
   }
 }
 
+// Fail loud, not open: without this, a production boot with no CORS_ORIGIN
+// silently falls back to the localhost dev defaults below, which denies
+// every real origin instead of alerting anyone to the misconfiguration.
+if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
+  throw new Error('CORS_ORIGIN is required but not set in production environment.');
+}
+
 const express = require('express');
 const methodOverride = require('method-override');
 const helmet = require('helmet');

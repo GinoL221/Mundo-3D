@@ -31,7 +31,13 @@ const imageValidator = (required: boolean) =>
 // PUT; on create they are also optional (not part of the required set).
 const optionalProductAttributeValidators = [
   body('material')
-    .optional({ values: 'falsy' })
+    // Coerce '' and whitespace-only strings to null BEFORE `.optional()`
+    // evaluates the value — otherwise '' skips this validator chain (it's
+    // falsy) but still reaches CreateProductUseCase/UpdateProductUseCase as
+    // '', which the Product entity treats as "present but invalid" and
+    // throws on (#69).
+    .customSanitizer((value) => (typeof value === 'string' && value.trim() === '' ? null : value))
+    .optional({ values: 'null' })
     .trim()
     .custom((value) => {
       if (ALLOWED_MATERIALS.includes(value) || value.startsWith(CUSTOM_MATERIAL_PREFIX)) {

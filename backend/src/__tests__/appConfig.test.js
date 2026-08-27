@@ -40,4 +40,26 @@ describe('app startup requirements', () => {
       });
     }).toThrow(/JWT_SECRET is required/);
   });
+
+  it('throws error if CORS_ORIGIN is missing in production', () => {
+    process.env.JWT_SECRET = 'some-jwt-secret';
+    delete process.env.CORS_ORIGIN;
+    process.env.NODE_ENV = 'production';
+    expect(() => {
+      jest.isolateModules(() => {
+        require('../app');
+      });
+    }).toThrow(/CORS_ORIGIN is required/);
+  });
+
+  it('does NOT throw error if CORS_ORIGIN is missing outside production', () => {
+    process.env.JWT_SECRET = 'some-jwt-secret';
+    delete process.env.CORS_ORIGIN;
+    process.env.NODE_ENV = 'development';
+    expect(() => {
+      jest.isolateModules(() => {
+        require('../app');
+      });
+    }).not.toThrow();
+  });
 });
