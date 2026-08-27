@@ -63,8 +63,8 @@ No threat matrix applies (design.md: N/A — no routing/shell/subprocess/VCS bou
 
 ## Phase 7: PR 2 — `auth.spec.ts` registration rejections (independent of Phases 1-6)
 
-- [ ] 7.1 Test "Duplicate Email Registration Rejected": submit registration reusing the seeded `gino@email.com`; assert `#register-error` visible with the exact string `Este email ya está registrado`, URL stays `/register`, no new user created.
-- [ ] 7.2 Test "Missing Image Registration Rejected": submit the form with `#image` left empty; assert `#register-error` shows exactly `Tienes que subir una imagen`, URL stays `/register`, no new user created.
+- [x] 7.1 Test "Duplicate Email Registration Rejected": submit registration reusing the seeded `gino@email.com`; assert `#register-error` visible with the exact string `Este email ya está registrado`, URL stays `/register`, no new user created.
+- [x] 7.2 Test "Missing Image Registration Rejected": submit the form with `#image` left empty; assert `#register-error` shows exactly `Tienes que subir una imagen`, URL stays `/register`, no new user created.
 
 ## Phase 8: PR 3 — `product-states.spec.ts` listing states (independent of Phases 1-7)
 
@@ -85,7 +85,7 @@ No threat matrix applies (design.md: N/A — no routing/shell/subprocess/VCS bou
 ## Phase 11: Verification (run per PR independently)
 
 - [x] 11.1 Run `pnpm --filter e2e test --project=chromium tests/admin-products.spec.ts` 3 consecutive times — green, no flakes; confirm no seeded row is touched.
-- [ ] 11.2 Run `pnpm --filter e2e test --project=chromium tests/auth.spec.ts` — green, including pre-existing cases.
+- [x] 11.2 Run `pnpm --filter e2e test --project=chromium tests/auth.spec.ts` — green, including pre-existing cases.
 - [ ] 11.3 Run `pnpm --filter e2e test --project=chromium tests/product-states.spec.ts` — green.
 - [ ] 11.4 Confirm each PR's spec-delta hunk validates independently (`openspec validate e2e-coverage --strict` or equivalent) and merges without conflict against the other.
 
