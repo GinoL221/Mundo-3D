@@ -67,6 +67,43 @@ The E2E testing suite MUST validate guest shopping cart interactions, header car
 - WHEN they click the "Proceed to Checkout" button
 - THEN the system MUST redirect them to the login page to authenticate before completing checkout
 
+### Requirement: E2E Admin Product Management Verification
+
+The E2E suite MUST validate role-gated visibility, CRUD, and session-loss handling for the admin product area. Tests MUST create and clean fixture products; seeded rows MUST NOT be touched.
+
+#### Scenario: Role-Based Visibility
+
+- GIVEN ADMIN, STAFF, regular USER, and guest users
+- WHEN each navigates to the admin products area
+- THEN it MUST be reachable and render only for ADMIN and STAFF
+
+#### Scenario: Delete Restricted to Admin
+
+- GIVEN STAFF and ADMIN each view a product row in the admin area
+- WHEN row actions are inspected
+- THEN only ADMIN MUST see a delete action
+
+#### Scenario: Full Product CRUD Lifecycle
+
+- GIVEN an ADMIN user in the admin products area
+- WHEN they create a product, edit it, then trigger delete
+- THEN create and edit MUST persist and reflect in the UI
+- AND delete MUST require confirmation, leaving the product intact on decline and removed on confirm
+
+#### Scenario: Stock Adjust Client-Side Double-Click Guard
+
+- GIVEN a stock-adjust request is in flight for a test-created product
+- WHEN the ADMIN clicks the control again before it resolves
+- THEN the second click MUST have no additional effect
+- AND backend atomicity remains out of scope
+
+#### Scenario: 401 Mid-Session Redirects Silently
+
+- GIVEN an ADMIN session becomes invalid server-side in the admin area
+- WHEN an action receives a 401
+- THEN the client MUST clear the session and redirect to `/login` silently
+- AND no message shows and no form state persists
+
 ## Technical Notes & CI Infrastructure
 
 ### CI Workflow Warnings (Infrastructure Debt)
