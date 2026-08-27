@@ -138,15 +138,20 @@ export function hasPendingSync(): boolean {
   return burstPreviousItems !== null;
 }
 
-export function flushCartSync(): void {
+// Returns a Promise so a caller that needs the flushed PUT to actually land
+// before doing something else (cartHydration.ts's pre-GET flush) can await
+// it. Existing fire-and-forget callers (pagehide/hidden-tab listeners,
+// checkout(), the debounce/max-wait timers) are unaffected — they already
+// ignore the return value.
+export function flushCartSync(): Promise<void> {
   const items = pendingItems;
   const previous = burstPreviousItems;
   // Reset BEFORE issuing the request, so a mutation arriving during the
   // in-flight PUT opens a genuinely new burst instead of being folded into
   // the one that is already in flight.
   discardPendingSync();
-  if (items === null || previous === null) return;
-  void syncToBackend(items, previous);
+  if (items === null || previous === null) return Promise.resolve();
+  return syncToBackend(items, previous);
 }
 
 let teardownFlushListeners: (() => void) | null = null;

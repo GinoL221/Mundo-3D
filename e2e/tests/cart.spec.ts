@@ -155,11 +155,21 @@ test.describe('Cart E2E Tests - Authenticated Flow', () => {
     // empty, which was causing this test to flake.
     await page.goto('/product?id=1');
     await expect(page.locator('#product-name')).not.toBeEmpty();
+    const addToCartPut = page.waitForResponse(
+      (res) => res.url().includes('/api/cart') && res.request().method() === 'PUT'
+    );
     await page.click('#add-to-cart-btn');
     await expect(async () => {
       const cart = await page.evaluate(() => localStorage.getItem('cart'));
       expect(cart).toContain('"productId":1');
     }).toPass();
+    // Cart-page hydration now reads server state (cart-authority), so the
+    // add must actually land server-side before navigating away — Astro has
+    // no ClientRouter, so navigation is a full page load that resets
+    // cartSync.ts's module state, and the pagehide-triggered flush racing
+    // the cart page's GET is a real, accepted, client-unsolvable race
+    // (design.md) if this PUT hasn't landed yet.
+    await addToCartPut;
 
     // Go to cart page and click checkout
     await page.goto('/cart');
@@ -182,5 +192,74 @@ test.describe('Cart E2E Tests - Authenticated Flow', () => {
       return raw ? JSON.parse(raw) : [];
     });
     expect(cart).toHaveLength(0);
+  });
+});
+
+test.describe('Cart E2E Tests - Guest-to-Account Merge on Login', () => {
+  test.beforeEach(({ page }) => {
+    page.on('console', msg => console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`));
+  });
+
+  test('Guest cart merges with an existing account cart item on login', async ({ page }) => {
+    const email = `merge_${Date.now()}@example.com`;
+    const password = 'Password123!';
+
+    // Register a fresh account (auto-logs in) so this test doesn't depend
+    // on any other test's account state.
+    await page.goto('/register');
+    await page.fill('#firstName', 'Merge');
+    await page.fill('#lastName', 'Test');
+    await page.fill('#email', email);
+    await page.fill('#password', password);
+    await page.fill('#confirmPassword', password);
+    await page.setInputFiles('#image', {
+      name: 'avatar.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('fake image content'),
+    });
+    await page.click('#register-btn');
+    await expect(page).toHaveURL('/');
+
+    // While still logged in, add product 2 — a real, server-synced item —
+    // to the account's cart. This is the merge target already living on the
+    // server before the guest ever logs in.
+    await page.goto('/product?id=2');
+    await expect(page.locator('#product-name')).not.toBeEmpty();
+    const accountCartPut = page.waitForResponse(
+      (res) => res.url().includes('/api/cart') && res.request().method() === 'PUT'
+    );
+    await page.click('#add-to-cart-btn');
+    await accountCartPut;
+
+    // Log out and clear the local cart, so product 2 now lives only
+    // server-side, tied to the account.
+    await page.locator('.nav-item__trigger').hover();
+    await page.locator('#navbar-logout').click();
+    await expect(page).toHaveURL('/login');
+    await page.evaluate(() => localStorage.removeItem('cart'));
+
+    // Add a DIFFERENT product to the cart as a guest (no session).
+    await page.goto('/product?id=1');
+    await expect(page.locator('#product-name')).not.toBeEmpty();
+    await page.click('#add-to-cart-btn');
+    await expect(async () => {
+      const cart = await page.evaluate(() => localStorage.getItem('cart'));
+      expect(cart).toContain('"productId":1');
+    }).toPass();
+
+    // Log back in with the same account. This is the guest-to-account merge
+    // trigger (cart-hydration spec: "Guest-to-Account Cart Merge on Login").
+    await page.goto('/login');
+    await page.fill('#email', email);
+    await page.fill('#password', password);
+    await page.click('#login-btn');
+    await expect(page).toHaveURL('/');
+
+    // The union of the guest's local item (product 1) and the account's
+    // pre-existing server item (product 2) must both render on the cart
+    // page — the core regression this change fixes. Without the merge, the
+    // guest-to-server GET would silently drop one side of the union.
+    await page.goto('/cart');
+    await expect(page.locator('.cart__item')).toHaveCount(2);
   });
 });

@@ -2,6 +2,8 @@
 // CartList Component
 ---
 
+<div class="alert" id="cart-price-drift" style="display:none;"></div>
+
 <div class="cart__container">
   <section class="cart__items" id="cart-items-container">
     <p id="cart-loading" style="text-align:center; padding:2rem;">Cargando carrito...</p>
@@ -45,6 +47,28 @@
 
 <script>
   import { cartItems, cartTotal, CartService } from '../services/CartService';
+  import type { PriceDrift } from '../services/CartService';
+
+  function renderPriceDrift(drifts: PriceDrift[]): void {
+    const driftEl = document.getElementById('cart-price-drift');
+    if (!driftEl) return;
+
+    driftEl.innerHTML = '';
+
+    if (drifts.length === 0) {
+      driftEl.style.display = 'none';
+      return;
+    }
+
+    drifts.forEach((drift) => {
+      const line = document.createElement('p');
+      line.className = 'alert__text';
+      line.textContent = `El precio de "${drift.name}" cambió de $ ${drift.oldPrice} a $ ${drift.newPrice}.`;
+      driftEl.appendChild(line);
+    });
+
+    driftEl.style.display = 'block';
+  }
 
   function renderCart(): void {
     const container = document.getElementById('cart-items-container');
@@ -122,6 +146,13 @@
   // Listen to store updates
   cartItems.subscribe(() => {
     renderCart();
+  });
+
+  // Reconcile against the server after the local snapshot has already
+  // painted (cart-hydration spec: "Cart-page load triggers hydration").
+  // Replace mode always: cart-page hydration never merges.
+  void CartService.hydrateFromServer().then((result) => {
+    renderPriceDrift(result.priceDrifts);
   });
 
   // Checkout click handler

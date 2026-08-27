@@ -121,7 +121,12 @@ export async function hydrateFromServer(options?: { mergeLocal?: boolean }): Pro
       return { ok: false, items: initialLocal, priceDrifts: [], syncScheduled: false, reason: 'guest' };
     }
 
-    flushCartSync();
+    // Awaited: the GET below must observe this PUT's result, not race it.
+    // flushCartSync() fires the PUT with keepalive but does not itself
+    // guarantee it has landed server-side — without this await, a burst
+    // flushed here could still be in flight when the GET resolves, and its
+    // (stale) response would overwrite the very state we just flushed.
+    await flushCartSync();
 
     let res: Response;
     try {
@@ -173,6 +178,9 @@ export async function hydrateFromServer(options?: { mergeLocal?: boolean }): Pro
     // burst opened during the GET (rollback baseline: the server snapshot;
     // an already-open mid-flight burst keeps ITS OWN older baseline).
     scheduleSync(merged, server);
+    // Deliberately not awaited: nothing after this point re-reads server
+    // state, and the PUT's own `keepalive: true` already covers the
+    // redirect that immediately follows in LoginForm.astro.
     flushCartSync();
     return { ok: true, items: merged, priceDrifts: [], syncScheduled: true };
   } catch {
