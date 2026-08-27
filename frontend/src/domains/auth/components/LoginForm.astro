@@ -47,6 +47,14 @@
 <script>
   import { AuthService } from '../services/auth.service';
   import { broadcastSessionChanged } from '../services/session.service';
+  import { CartService } from '../../cart/services/CartService';
+
+  // Bounded race, not fire-and-forget (design.md "Resolved: the
+  // redirect-vs-GET race"): the redirect must never be delayed beyond this
+  // cap, but a true fire-and-forget would let the document unload before the
+  // GET resolves, silently dropping the merge. Whichever settles first wins;
+  // hydration errors or a timeout must never fail or skip the redirect.
+  const HYDRATION_REDIRECT_TIMEOUT_MS = 1500;
 
   const form = document.getElementById('login-form') as HTMLFormElement | null;
   const errorBox = document.getElementById('login-error') as HTMLElement | null;
@@ -103,8 +111,17 @@
       window.dispatchEvent(new CustomEvent('session-changed'));
       broadcastSessionChanged();
 
-      // Redirect to homepage
-      window.location.href = '/';
+      // Merge the guest cart into the account's server cart before
+      // redirecting, bounded so a slow/failed GET never blocks navigation
+      // beyond the cap (cart-hydration spec: "Hydration Entry Point and
+      // Triggers").
+      const redirect = () => {
+        window.location.href = '/';
+      };
+      await Promise.race([
+        CartService.hydrateFromServer({ mergeLocal: true }),
+        new Promise((resolve) => setTimeout(resolve, HYDRATION_REDIRECT_TIMEOUT_MS)),
+      ]).then(redirect, redirect);
     } catch (err) {
       if (err instanceof Error) {
         showError(err.message);
