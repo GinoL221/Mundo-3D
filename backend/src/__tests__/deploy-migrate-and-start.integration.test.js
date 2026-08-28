@@ -141,6 +141,8 @@ describe('deploy-migrate-and-start.integration: real migrate-then-start against 
         // once this test has already failed, but this avoids leaking a
         // live server + DB connection pool past the end of the test run.
         child.kill('SIGTERM');
+        child.stdout.destroy();
+        child.stderr.destroy();
         throw new Error(
           `Never reported a listening port.\n--- stdout ---\n${stdout}\n--- stderr ---\n${stderr}\n${waitErr.message}`,
           { cause: waitErr }
@@ -155,6 +157,16 @@ describe('deploy-migrate-and-start.integration: real migrate-then-start against 
         child.kill('SIGTERM');
       });
       expect(exitCode).toBe(0);
+
+      // `migrate-and-start.js` reporting its own exit only proves ITS process
+      // is gone — its inherited-stdio grandchild (the real `node index.js`
+      // spawned by `pnpm --filter backend start`) can still hold this
+      // process's read end of the piped stdout/stderr open a moment longer,
+      // which Jest correctly flags as a lingering PIPEWRAP handle
+      // (`--detectOpenHandles` on CI, never reproduced locally). Destroying
+      // our own read end releases it immediately regardless of the writer.
+      child.stdout.destroy();
+      child.stderr.destroy();
     },
     60000
   );
