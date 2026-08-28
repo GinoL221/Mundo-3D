@@ -124,6 +124,14 @@ describe('SequelizeOrderRepository', () => {
       const orders = await repository.findAll();
       expect(orders).toHaveLength(2);
     });
+
+    it('orders most-recent-first and caps the result set at 100 — endpoint hygiene, not a caller-controlled page size', async () => {
+      jest.mocked(db.Order.findAll).mockResolvedValueOnce([]);
+      await repository.findAll();
+      expect(db.Order.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ order: [['idOrder', 'DESC']], limit: 100 })
+      );
+    });
   });
 
   describe('transitionStatus', () => {

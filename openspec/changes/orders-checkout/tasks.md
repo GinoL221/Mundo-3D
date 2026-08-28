@@ -109,16 +109,16 @@ Chain strategy: stacked-to-main
 
 ### Phase 11: `GetOrderByIdUseCase` + `ListOrdersUseCase`
 
-- [ ] 11.1 RED+GREEN: `GetOrderByIdUseCase.ts` — returns the order for its owner or an ADMIN; test covers owner success and non-owner denial (403/404 decided at controller layer in Work Unit 6 — use case just signals "not authorized to view").
-- [ ] 11.2 RED+GREEN: `ListOrdersUseCase.ts` — returns `orderRepo.findAll()` verbatim, **no pagination or cap** — already-resolved decision per proposal (fine at current data volume, explicitly deferred, not an open question to re-litigate).
+- [x] 11.1 RED+GREEN: `GetOrderByIdUseCase.ts` — returns the order for its owner or an ADMIN; test covers owner success and non-owner denial (403/404 decided at controller layer in Work Unit 6 — use case just signals "not authorized to view").
+- [x] 11.2 RED+GREEN: `ListOrdersUseCase.ts` — returns `orderRepo.findAll()`. **Correction (2026-08-28)**: design.md left the result-set cap as an open question and tasks.md's original wording ("no pagination or cap") contradicted the proposal's actual resolution (a fixed cap as endpoint hygiene, not the deferred pagination feature). Fixed post-apply: `SequelizeOrderRepository.findAll` now orders most-recent-first and caps at `MAX_LISTED = 100`, with no caller-controlled parameter.
 
 ### Phase 12: `ConfirmOrderPaymentUseCase` + `CancelOrderUseCase`
 
-- [ ] 12.1 RED: `ConfirmOrderPaymentUseCase.test.ts` — `AWAITING_PAYMENT→PAID` succeeds; confirming a `PAID` order is rejected/no-op via the `transitionStatus` affected-row guard (spec: "Double-confirm is rejected").
-- [ ] 12.2 GREEN: `ConfirmOrderPaymentUseCase.ts` calling `orderRepo.transitionStatus(id, AWAITING_PAYMENT, PAID)`, throwing `IllegalOrderTransitionException` on `affectedRows===0`.
-- [ ] 12.3 RED: `CancelOrderUseCase.test.ts` — cancel restores exactly the decremented stock per line item; a line item with `idProduct===null` (product deleted) is **skipped** during restock, not errored; second cancel on an already-`CANCELLED` order is a no-op restoring no stock (transition guard runs first, inside the same transaction).
-- [ ] 12.4 GREEN: `CancelOrderUseCase.ts` — `uow.runInTransaction(tx => transitionStatus(...) then per-item adjustStock(+quantity, tx) skipping null-product items)`. Run 12.3 to GREEN.
-- [ ] 12.5 Integration test: real cancel-then-restock against MySQL, plus a second cancel proving no double-restock (`cd backend && npm run test:integration -- cancel-restock`).
+- [x] 12.1 RED: `ConfirmOrderPaymentUseCase.test.ts` — `AWAITING_PAYMENT→PAID` succeeds; confirming a `PAID` order is rejected/no-op via the `transitionStatus` affected-row guard (spec: "Double-confirm is rejected").
+- [x] 12.2 GREEN: `ConfirmOrderPaymentUseCase.ts` calling `orderRepo.transitionStatus(id, AWAITING_PAYMENT, PAID)`, throwing `IllegalOrderTransitionException` on `affectedRows===0`.
+- [x] 12.3 RED: `CancelOrderUseCase.test.ts` — cancel restores exactly the decremented stock per line item; a line item with `idProduct===null` (product deleted) is **skipped** during restock, not errored; second cancel on an already-`CANCELLED` order is a no-op restoring no stock (transition guard runs first, inside the same transaction).
+- [x] 12.4 GREEN: `CancelOrderUseCase.ts` — `uow.runInTransaction(tx => transitionStatus(...) then per-item adjustStock(+quantity, tx) skipping null-product items)`. Run 12.3 to GREEN.
+- [ ] 12.5 Integration test: real cancel-then-restock against MySQL, plus a second cancel proving no double-restock (`cd backend && npm run test:integration -- cancel-restock`). **Deferred**: explicitly out of scope for this apply batch per orchestrator instruction ("you do NOT need real-DB integration tests for this unit"); use-case logic is proven against mocks (`CancelOrderUseCase.test.ts`). Pick this up before archive or alongside Work Unit 6.
 
 ## Work Unit 6: Controller + Routes + Architecture Allowlist
 
