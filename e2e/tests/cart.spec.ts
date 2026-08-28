@@ -199,16 +199,11 @@ test.describe('Cart E2E Tests - Authenticated Flow', () => {
     await page.goto('/cart');
     await expect(page.locator('.cart__item')).toHaveCount(1);
 
-    // Setup dialog handler for the checkout alert
-    page.once('dialog', async dialog => {
-      expect(dialog.message()).toContain('Compra finalizada con éxito');
-      await dialog.accept();
-    });
-
+    // Checkout is now a real POST /api/orders — no dialog, redirects to the
+    // order-detail page (order-checkout spec, "CartService.checkout() becomes
+    // genuinely async").
     await page.click('.cart__btn-checkout');
-
-    // Verify redirect back to homepage after checkout
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL(/\/order\?id=\d+/);
 
     // Verify cart was cleared
     const cart = await page.evaluate(() => {

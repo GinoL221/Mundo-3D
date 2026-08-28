@@ -3,6 +3,7 @@
 ---
 
 <div class="alert" id="cart-price-drift" style="display:none;"></div>
+<div class="alert" id="checkout-error" role="alert" aria-live="polite" style="display:none;"></div>
 
 <div class="cart__container">
   <section class="cart__items" id="cart-items-container">
@@ -47,7 +48,7 @@
 
 <script>
   import { cartItems, cartTotal, CartService } from '../services/CartService';
-  import type { PriceDrift } from '../services/CartService';
+  import type { PriceDrift, CheckoutResult } from '../services/CartService';
 
   function renderPriceDrift(drifts: PriceDrift[]): void {
     const driftEl = document.getElementById('cart-price-drift');
@@ -155,20 +156,65 @@
     renderPriceDrift(result.priceDrifts);
   });
 
+  // Checkout state — real pending/error UI, replacing the old synchronous
+  // alert()-based flow (design.md "CartList.astro loading/error UI").
+  function setCheckoutBusy(busy: boolean): void {
+    const btn = document.querySelector('.cart__btn-checkout') as HTMLButtonElement | null;
+    if (!btn) return;
+    btn.disabled = busy;
+    btn.textContent = busy ? 'Procesando…' : 'Finalizar compra';
+  }
+
+  function clearCheckoutError(): void {
+    const el = document.getElementById('checkout-error');
+    if (!el) return;
+    el.replaceChildren();
+    el.style.display = 'none';
+  }
+
+  function renderCheckoutError(result: Extract<CheckoutResult, { ok: false }>): void {
+    const el = document.getElementById('checkout-error');
+    if (!el) return;
+
+    el.replaceChildren();
+
+    const lines: string[] =
+      result.code === 'INSUFFICIENT_STOCK' && result.shortages && result.shortages.length > 0
+        ? result.shortages.map(
+            (s) => `Sin stock suficiente de "${s.productName}": pediste ${s.requested}, quedan ${s.available}.`
+          )
+        : [result.message];
+
+    lines.forEach((text) => {
+      const line = document.createElement('p');
+      line.className = 'alert__text';
+      line.textContent = text;
+      el.appendChild(line);
+    });
+
+    el.style.display = 'block';
+  }
+
   // Checkout click handler
   const checkoutBtn = document.querySelector('.cart__btn-checkout');
   if (checkoutBtn) {
-    checkoutBtn.addEventListener('click', () => {
+    checkoutBtn.addEventListener('click', async () => {
       if (!CartService.hasToken()) {
         window.location.href = '/login';
-      } else {
-        const success = CartService.checkout();
-        if (success) {
-          alert('¡Compra finalizada con éxito!');
-          window.location.href = '/';
-        } else {
-          alert('Hubo un problema al procesar su compra.');
+        return;
+      }
+
+      setCheckoutBusy(true);
+      clearCheckoutError();
+      try {
+        const result = await CartService.checkout();
+        if (result.ok) {
+          window.location.href = `/order?id=${result.idOrder}`;
+          return;
         }
+        renderCheckoutError(result);
+      } finally {
+        setCheckoutBusy(false);
       }
     });
   }
