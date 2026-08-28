@@ -20,7 +20,8 @@
     "frontend:test": "pnpm --filter frontend test",
     "frontend:build": "pnpm --filter frontend build",
     "test:e2e": "pnpm --filter e2e test --project=chromium",
-    "test:e2e:all": "pnpm --filter e2e test"
+    "test:e2e:all": "pnpm --filter e2e test",
+    "test:deploy-scripts": "node --test \"scripts/deploy/**/*.test.js\""
   },
   "devDependencies": {
     "prettier": "3.8.3"
