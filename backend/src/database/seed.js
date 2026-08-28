@@ -86,6 +86,13 @@ async function seedInitialData(db) {
           depth: p.Depth !== undefined ? p.Depth : p.depth,
           finish: p.Finish !== undefined ? p.Finish : p.finish,
           productionTime: p.ProductionTime !== undefined ? p.ProductionTime : p.productionTime,
+          // Neither products.json nor this mapping ever set `stock` before
+          // checkout could actually decrement it (orders-checkout) — every
+          // seeded product silently got the model's `stock` column default
+          // of 0, making the whole catalog unsellable out of the box. A
+          // real per-product value belongs in products.json once inventory
+          // has a real source of truth; a non-zero seed default until then.
+          stock: p.Stock !== undefined ? p.Stock : (p.stock ?? 50),
         }));
         await db.Product.bulkCreate(productsMapped);
         console.log('✔ Productos insertados desde JSON');
