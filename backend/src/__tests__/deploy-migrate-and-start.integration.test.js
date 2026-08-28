@@ -173,16 +173,43 @@ describe('deploy-migrate-and-start.integration: real migrate-then-start against 
       const response = await fetch(`http://127.0.0.1:${port}/health/ready`);
       expect(response.status).toBe(200);
 
-      const { exitCode, signal } = await new Promise((resolve) => {
-        child.once('exit', (code, exitSignal) => resolve({ exitCode: code, signal: exitSignal }));
+      // 'close', not 'exit', is the assertion that matters. 'exit' only says
+      // migrate-and-start.js's own process is gone; 'close' fires only once
+      // EVERY process holding the inherited stdio write end has gone with it.
+      // An orphaned `node index.js` grandchild — the real bug here, pnpm on CI
+      // dying from SIGTERM without ever relaying it — passes the first and
+      // fails the second.
+      const { exitCode, signal } = await new Promise((resolve, reject) => {
+        const orphanTimer = setTimeout(() => {
+          reject(
+            new Error(
+              'Stdio never closed after SIGTERM: something in the process tree outlived the shutdown'
+            )
+          );
+        }, 20000);
+        let exited;
+        child.once('exit', (code, exitSignal) => {
+          exited = { exitCode: code, signal: exitSignal };
+        });
+        child.once('close', () => {
+          clearTimeout(orphanTimer);
+          resolve(exited);
+        });
         child.kill('SIGTERM');
       });
-      // A signal-killed child reports `code === null`, so asserting on the code
-      // alone would read that null as a clean exit. Requiring a null SIGNAL is
-      // what actually proves the wrapper shut itself down under its own
-      // control after forwarding SIGTERM, rather than being torn down by it.
+
+      // The wrapper installs its own signal handlers, so it always exits under
+      // its own control; a non-null signal would mean forwarding never ran.
       expect(signal).toBeNull();
-      expect(exitCode).toBe(0);
+      // Deliberately not pinned to a number: it reflects how this environment's
+      // pnpm reacts to SIGTERM (relaying it and exiting 0, or dying from it,
+      // which migrate-and-start.js maps to 128 + signal). What must never come
+      // back is null — Node's "killed by a signal" code, which
+      // `process.exitCode = null` silently turned into a successful 0 and which
+      // is what hid the orphaned server from this test in the first place. The
+      // exit-code contract itself is pinned deterministically in
+      // scripts/deploy/migrate-and-start.test.js.
+      expect(exitCode).not.toBeNull();
     },
     60000
   );

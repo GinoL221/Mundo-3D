@@ -39,12 +39,27 @@ function run() {
       cwd: REPO_ROOT,
       stdio: 'inherit',
       shell: false,
+      // Own process group. pnpm is not a dependable signal relay: on CI it
+      // dies from SIGTERM without ever passing it to the `node index.js` it
+      // spawned, leaving that server orphaned — still listening, still
+      // holding its inherited stdio — instead of draining. A group is what
+      // lets the signal reach the server no matter how pnpm reacts.
+      detached: true,
     });
 
     // A container/PaaS orchestrator signals PID 1 (this wrapper), not the
     // grandchild `node index.js` — without forwarding, index.js's graceful
     // shutdown drain (SHUTDOWN_TIMEOUT_MS) would never run on deploy/restart.
-    const forward = (signal) => () => child.kill(signal);
+    // The negative pid targets the whole group, so the grandchild is signalled
+    // directly rather than through pnpm. index.js's shutdown is idempotent, so
+    // also receiving pnpm's own relayed signal is harmless.
+    const forward = (signal) => () => {
+      try {
+        process.kill(-child.pid, signal);
+      } catch {
+        // The group is already gone — there is nothing left to signal.
+      }
+    };
     const onSigterm = forward('SIGTERM');
     const onSigint = forward('SIGINT');
     process.on('SIGTERM', onSigterm);

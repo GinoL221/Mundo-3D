@@ -10,6 +10,7 @@ const REPO_ROOT = path.resolve(__dirname, '..', '..');
 
 function fakeSpawnedChild() {
   const child = new EventEmitter();
+  child.pid = 4242;
   child.kill = mock.fn();
   return child;
 }
@@ -68,34 +69,72 @@ test('spawn calls use a fixed argv array with no shell interpolation', async () 
   assert.ok(Array.isArray(spawnMock.mock.calls[0].arguments[1]));
 });
 
-test('forwards SIGTERM to the spawned start child while it is active', async () => {
+// pnpm is not a reliable signal relay: on CI it dies from SIGTERM without
+// ever passing it to the `node index.js` it spawned, which orphans the real
+// server instead of draining it (and is what hung the integration suite).
+// Signalling the whole process group — negative pid — reaches that server
+// directly whether or not pnpm survives long enough to forward anything.
+test('starts the child in its own process group so signals can reach the server', async () => {
+  mock.method(childProcess, 'spawnSync', () => ({ status: 0 }));
+  const child = fakeSpawnedChild();
+  const spawnMock = mock.method(childProcess, 'spawn', () => child);
+
+  const { run } = require('./migrate-and-start');
+  const resultPromise = run();
+  child.emit('exit', 0);
+  await resultPromise;
+
+  assert.equal(spawnMock.mock.calls[0].arguments[2].detached, true);
+});
+
+test('forwards SIGTERM to the whole start process group while it is active', async () => {
   mock.method(childProcess, 'spawnSync', () => ({ status: 0 }));
   const child = fakeSpawnedChild();
   mock.method(childProcess, 'spawn', () => child);
+  const killMock = mock.method(process, 'kill', () => true);
 
   const { run } = require('./migrate-and-start');
   const resultPromise = run();
   process.emit('SIGTERM');
-  child.emit('exit', 143);
+  child.emit('exit', null, 'SIGTERM');
   await resultPromise;
 
-  assert.equal(child.kill.mock.calls.length, 1);
-  assert.equal(child.kill.mock.calls[0].arguments[0], 'SIGTERM');
+  assert.equal(killMock.mock.calls.length, 1);
+  assert.deepEqual(killMock.mock.calls[0].arguments, [-child.pid, 'SIGTERM']);
 });
 
-test('forwards SIGINT to the spawned start child while it is active', async () => {
+test('forwards SIGINT to the whole start process group while it is active', async () => {
   mock.method(childProcess, 'spawnSync', () => ({ status: 0 }));
   const child = fakeSpawnedChild();
   mock.method(childProcess, 'spawn', () => child);
+  const killMock = mock.method(process, 'kill', () => true);
 
   const { run } = require('./migrate-and-start');
   const resultPromise = run();
   process.emit('SIGINT');
-  child.emit('exit', 130);
+  child.emit('exit', null, 'SIGINT');
   await resultPromise;
 
-  assert.equal(child.kill.mock.calls.length, 1);
-  assert.equal(child.kill.mock.calls[0].arguments[0], 'SIGINT');
+  assert.equal(killMock.mock.calls.length, 1);
+  assert.deepEqual(killMock.mock.calls[0].arguments, [-child.pid, 'SIGINT']);
+});
+
+test('a signal arriving after the group is already gone is swallowed', async () => {
+  mock.method(childProcess, 'spawnSync', () => ({ status: 0 }));
+  const child = fakeSpawnedChild();
+  mock.method(childProcess, 'spawn', () => child);
+  mock.method(process, 'kill', () => {
+    const gone = new Error('kill ESRCH');
+    gone.code = 'ESRCH';
+    throw gone;
+  });
+
+  const { run } = require('./migrate-and-start');
+  const resultPromise = run();
+  process.emit('SIGTERM');
+  child.emit('exit', null, 'SIGTERM');
+
+  assert.equal(await resultPromise, 128 + os.constants.signals.SIGTERM);
 });
 
 // A child killed by a signal is reported by Node as `code === null`, with the
