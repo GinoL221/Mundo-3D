@@ -10,6 +10,8 @@ describe('GetCartDistinctCountUseCase', () => {
       findByUserId: jest.fn(),
       getDistinctCount: jest.fn(),
       syncCart: jest.fn(),
+      findActiveForUpdate: jest.fn(),
+      markOrdered: jest.fn(),
     };
     useCase = new GetCartDistinctCountUseCase(repositoryMock);
   });

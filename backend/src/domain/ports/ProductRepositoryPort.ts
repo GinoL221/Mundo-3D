@@ -1,4 +1,5 @@
 import { Product } from '../entities/Product';
+import { TransactionContext } from './UnitOfWorkPort';
 
 export interface ProductRepositoryPort {
   findAll(): Promise<Product[]>;
@@ -10,5 +11,5 @@ export interface ProductRepositoryPort {
   // `adjustStock` below.
   update(id: number, product: Omit<Partial<Product>, 'stock'>): Promise<Product | null>;
   delete(id: number): Promise<boolean>;
-  adjustStock(id: number, delta: number): Promise<Product | null>;
+  adjustStock(id: number, delta: number, tx?: TransactionContext): Promise<Product | null>;
 }
