@@ -101,9 +101,9 @@ Chain strategy: stacked-to-main
 
 ### Phase 10: Real-DB integration tests
 
-- [ ] 10.1 Create `backend/src/__tests__/order-checkout.integration.test.ts` (`*.integration.test.ts`, `pnpm test:integration`, real MySQL 8). Cases: rollback on shortage leaves stock+cart untouched; two concurrent checkouts from the same user with the `FOR UPDATE` lock yield exactly one order (spec: "Two concurrent checkouts from the same user yield one order"); unique-violation retry replays the original committed order without a second decrement; `markOrdered` updates existing row ids in place (never reinserts — assert `id_cart` values unchanged before/after).
-- [ ] 10.2 **Explicit regression task** (do not leave to memory): create/extend an integration test proving `DELETE /api/products/:id` still returns 204 for a product that has been ordered — the entire reason for `ON DELETE SET NULL` over `CASCADE`/`RESTRICT`. Assert the surviving `OrderItem` row has `id_product = NULL` and its `product_name` snapshot intact after the delete.
-- [ ] 10.3 Run `cd backend && npm run test:integration -- order` — all new integration cases green; confirm no regression in existing integration suites.
+- [x] 10.1 Create `backend/src/__tests__/order-checkout.integration.test.ts` (`*.integration.test.ts`, `pnpm test:integration`, real MySQL 8). Cases: rollback on shortage leaves stock+cart untouched; two concurrent checkouts from the same user with the `FOR UPDATE` lock yield exactly one order (spec: "Two concurrent checkouts from the same user yield one order"); unique-violation retry replays the original committed order without a second decrement; `markOrdered` updates existing row ids in place (never reinserts — assert `id_cart` values unchanged before/after).
+- [x] 10.2 **Explicit regression task** (do not leave to memory): create/extend an integration test proving `DELETE /api/products/:id` still returns 204 for a product that has been ordered — the entire reason for `ON DELETE SET NULL` over `CASCADE`/`RESTRICT`. Assert the surviving `OrderItem` row has `id_product = NULL` and its `product_name` snapshot intact after the delete.
+- [x] 10.3 Run `cd backend && npm run test:integration -- order` — all new integration cases green; confirm no regression in existing integration suites.
 
 ## Work Unit 5: Admin Use-Cases
 
@@ -158,6 +158,7 @@ Chain strategy: stacked-to-main
 2. `CreateOrderUseCase` can ship and be fully unit-tested (via fakes for all 6 ports) before any real Sequelize adapter exists, which is what allows splitting "use-case logic" from "infra adapters" into independent stacked PRs.
 3. The `ON DELETE SET NULL` FK decision only pays off if a regression test explicitly proves `DELETE /api/products/:id` still returns 204 for an ordered product — this must be a named task, not inferred from the migration alone.
 4. `architecture/config.js`'s composition-root allowlist edit must land before routes are wired, mirroring the exact CI-failure mode design flagged (`composition.allowlist` fails every import otherwise).
+5. **Work Unit 4 deviation, found by the real-DB test itself**: `database/models/Order.js` needed an explicit `indexes: [{ unique: true, fields: ['id_user','idempotency_key'] }]` model-level declaration. The migration's raw-SQL `UNIQUE KEY uq_order_user_idempotency` is invisible to `sequelize.sync({force:false})`, which the real-DB test bootstrap (`testDb.ts`) uses — so without this addition, `SequelizeOrderRepository`'s `DuplicateIdempotencyKeyException` mapping was untestable (and unreachable) against the test database. Added to `Order.js`, mirroring `Product.js`'s existing `indexes` precedent.
 
 ## Result Contract
 
