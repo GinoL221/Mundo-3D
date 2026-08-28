@@ -140,6 +140,36 @@ describe('CreateOrderUseCase — real DB, real adapters', () => {
     });
   });
 
+  describe("price freeze: the committed order uses the cart row's unit_price, not the product's current price", () => {
+    let fixture: CheckoutFixture;
+
+    beforeEach(async () => {
+      // Product is seeded at price 10 (seedCheckoutFixture's per-index
+      // price); the cart row is deliberately overridden to a different
+      // price (80), simulating a product price change that happened after
+      // the item was added to the cart.
+      fixture = await seedCheckoutFixture([5], [2], [80]);
+    });
+
+    afterEach(async () => {
+      await cleanupCheckoutFixture(fixture);
+    });
+
+    it("commits the order line item at the cart's frozen unit_price (80), never the product's current price (10)", async () => {
+      const useCase = buildUseCase();
+
+      const dto = await useCase.execute(fixture.userId, 'price-freeze-key');
+
+      expect(dto.items).toHaveLength(1);
+      expect(dto.items[0].unitPrice).toBe(80);
+      expect(dto.totalAmount).toBe(160);
+
+      const db = getTestDb();
+      const product = await db.Product.findByPk(fixture.productIds[0]);
+      expect(Number(product.price)).toBe(10);
+    });
+  });
+
   describe('FOR UPDATE cart lock serializes concurrent checkouts', () => {
     let fixture: CheckoutFixture;
 

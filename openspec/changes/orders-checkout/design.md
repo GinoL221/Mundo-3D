@@ -359,13 +359,18 @@ never re-derived inline as `requireRoles(Role.ADMIN)`. `requireRoles` returns 40
 principal and 403 for a wrong role (`auth.ts:59-66`), satisfying "non-ADMIN receives 403".
 
 ```ts
-router.post('/orders',                 apiAuthMiddleware, csrfGuard, orderCreateValidation,
-                                       handleValidationErrors, controller.create);
+router.post('/orders',                 apiAuthMiddleware, csrfGuard, orderCreateValidation, controller.create);
 router.get('/orders/:id',              apiAuthMiddleware,                    controller.show);
 router.get('/orders',                  apiAuthMiddleware, adminGuard,        controller.index);
 router.post('/orders/:id/confirm-payment', apiAuthMiddleware, csrfGuard, adminGuard, controller.confirmPayment);
 router.post('/orders/:id/cancel',          apiAuthMiddleware, csrfGuard, adminGuard, controller.cancel);
 ```
+
+`orderCreateValidation` is a standalone Express middleware (not a `express-validator` chain), so it
+short-circuits itself with `{ error, code: 'IDEMPOTENCY_KEY_REQUIRED' }` on a missing/blank header
+and calls `next()` otherwise. `handleValidationErrors` is deliberately **not** chained after it:
+the generic validator emits an `{ errors: [...] }` body, which cannot produce the
+`{ error, code: 'IDEMPOTENCY_KEY_REQUIRED' }` shape the error-map table above requires.
 
 `GET /orders/:id` deliberately carries no `adminGuard`: `OrderApiController.show` compares
 `req.user.userId` against `order.idUser` and returns **404** for a non-owner (avoids order-id

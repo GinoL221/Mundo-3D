@@ -358,6 +358,25 @@ describe('CreateOrderUseCase', () => {
     expect(callLog).toEqual(['transaction:commit', 'gateway:initiate']);
   });
 
+  it('(f) freezes the order line item price at the cart row\'s own unit_price, never re-reading the product\'s current price', async () => {
+    // Product is priced 100 (see `makeProduct`), but the cart row carries a
+    // deliberately different, stale price (80) — simulating a product price
+    // change that happened after the item was added to the cart. The order
+    // must record the cart's price, not the product's current one.
+    const productA = makeProduct(10, 'Figure A', 5);
+    const staleCartPrice = 80;
+    const cartRows = [makeCartRow(1, userId, productA, 2, staleCartPrice)];
+    const { useCase } = build(cartRows, [productA]);
+
+    const dto = await useCase.execute(userId, 'key-price-freeze');
+
+    expect(dto.items).toHaveLength(1);
+    expect(dto.items[0].unitPrice).toBe(staleCartPrice);
+    expect(dto.items[0].unitPrice).not.toBe(productA.price);
+    expect(dto.items[0].subtotal).toBe(staleCartPrice * 2);
+    expect(dto.totalAmount).toBe(staleCartPrice * 2);
+  });
+
   it('swallows a payment gateway failure after commit, logging a warning instead of rethrowing', async () => {
     const productA = makeProduct(10, 'Figure A', 5);
     const cartRows = [makeCartRow(1, userId, productA, 1)];

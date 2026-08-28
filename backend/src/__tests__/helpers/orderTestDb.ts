@@ -29,10 +29,17 @@ export interface CheckoutFixture {
  * Seeds a user + one product per entry in `productStocks` (sharing one
  * Category/Franchise) + one pre-existing ACTIVE `ShoppingCart` row per
  * product, at the matching index in `quantities` (defaults to 1 each).
+ *
+ * `cartPriceOverrides[i]`, when present, seeds that cart row's `unitPrice`
+ * at a value DIFFERENT from the product's current `price` — simulating a
+ * product price change that happened after the item was added to the cart.
+ * Any index without an override falls back to the product's own price
+ * (the pre-existing behavior every other caller relies on).
  */
 export async function seedCheckoutFixture(
   productStocks: number[],
-  quantities: number[] = productStocks.map(() => 1)
+  quantities: number[] = productStocks.map(() => 1),
+  cartPriceOverrides: (number | undefined)[] = []
 ): Promise<CheckoutFixture> {
   const db = getTestDb();
   const userId = await seedTestUser();
@@ -41,18 +48,19 @@ export async function seedCheckoutFixture(
   const productIds: number[] = [];
 
   for (let i = 0; i < productStocks.length; i += 1) {
-    const unitPrice = 10 + i;
+    const productPrice = 10 + i;
+    const cartUnitPrice = cartPriceOverrides[i] ?? productPrice;
     const productId = await createTestProduct(categoryId, franchiseId, {
       nameProduct: `Checkout Product ${i + 1}`,
       stock: productStocks[i],
-      price: unitPrice,
+      price: productPrice,
     });
     productIds.push(productId);
     await db.ShoppingCart.create({
       idUser: userId,
       idProduct: productId,
       quantity: quantities[i],
-      unitPrice,
+      unitPrice: cartUnitPrice,
       cartStatus: CartStatus.ACTIVE,
     });
   }
