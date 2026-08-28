@@ -181,7 +181,7 @@ export async function hydrateFromServer(options?: { mergeLocal?: boolean }): Pro
     // Deliberately not awaited: nothing after this point re-reads server
     // state, and the PUT's own `keepalive: true` already covers the
     // redirect that immediately follows in LoginForm.astro.
-    flushCartSync();
+    void flushCartSync();
     return { ok: true, items: merged, priceDrifts: [], syncScheduled: true };
   } catch {
     return { ok: false, items: cartItems.get(), priceDrifts: [], syncScheduled: false, reason: 'network' };
