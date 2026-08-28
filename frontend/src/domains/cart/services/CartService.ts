@@ -1,10 +1,12 @@
 import { getSessionUser } from '../../../config';
 import { cartItems, cartTotal, persistCart, type APICartSyncPayload, type CartItem } from './cartState';
-import { discardPendingSync, flushCartSync, scheduleSync } from './cartSync';
+import { discardPendingSync, scheduleSync } from './cartSync';
 import { hydrateFromServer, type HydrationResult, type PriceDrift } from './cartHydration';
+import { checkout, type CheckoutErrorCode, type CheckoutResult, type StockShortage } from './checkout';
 
 export { cartItems, cartTotal };
 export type { CartItem, APICartSyncPayload, HydrationResult, PriceDrift };
+export type { CheckoutErrorCode, CheckoutResult, StockShortage };
 
 export class CartService {
   static loadCartFromStorage(): void {
@@ -80,23 +82,11 @@ export class CartService {
     return hydrateFromServer(options);
   }
 
-  static checkout(): boolean {
-    if (!getSessionUser()) {
-      return false;
-    }
-    // Clear local cart
-    const current = cartItems.get();
-    cartItems.set([]);
-    persistCart([]);
-    // Schedule then flush synchronously (never call syncToBackend directly):
-    // if a burst is already pending, scheduleSync overwrites pendingItems
-    // with [] (the correct end state) while leaving burstPreviousItems at
-    // the burst's original baseline (the correct rollback target). A direct
-    // call would strand that pending burst. flushCartSync() runs
-    // synchronously here, so fetch() is invoked before checkout() returns —
-    // identical timing to the previous `void syncToBackend([], current)`.
-    scheduleSync([], current);
-    flushCartSync();
-    return true;
+  // Sole entry point for POST /api/orders (order-checkout spec). Thin
+  // delegating static — all logic lives in checkout.ts, mirroring
+  // hydrateFromServer()'s delegation pattern above. Replaces the old fake
+  // destroy-and-return-`true` implementation entirely.
+  static checkout(): Promise<CheckoutResult> {
+    return checkout();
   }
 }

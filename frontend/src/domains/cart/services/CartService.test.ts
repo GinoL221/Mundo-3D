@@ -612,72 +612,35 @@ describe('CartService', () => {
     });
   });
 
-  describe('checkout', () => {
-    it('returns false and leaves the cart untouched when there is no session', () => {
+  // Full behavioral coverage (awaited flush ordering, no-clear-on-failure,
+  // idempotency key caching) lives in checkout.test.ts, co-located with the
+  // real implementation module. This describe block only proves the
+  // delegation itself, per the same thin-static pattern as hydrateFromServer
+  // below.
+  describe('checkout (delegation)', () => {
+    it('returns UNAUTHENTICATED without calling fetch when there is no session', async () => {
       stubCookie('');
       CartService.addToCart(buildProduct());
 
-      const result = CartService.checkout();
+      const result = await CartService.checkout();
 
-      expect(result).toBe(false);
+      expect(result).toEqual({ ok: false, code: 'UNAUTHENTICATED', message: expect.any(String) });
       expect(cartItems.get()).toHaveLength(1);
-      expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it('clears the cart and returns true when a session is active', () => {
+    it('delegates to the real checkout flow and resolves a CheckoutResult on success', async () => {
       stubCookie(LOGGED_IN_COOKIE);
-      fetchMock.mockResolvedValue({ ok: true });
-      CartService.addToCart(buildProduct());
+      cartItems.set([{ productId: 1, name: 'Figura Mario', image: 'a.jpg', unitPrice: 1500, quantity: 1 }]);
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        json: () => Promise.resolve({ idOrder: 41, totalAmount: 1500 }),
+      });
 
-      const result = CartService.checkout();
+      const result = await CartService.checkout();
 
-      expect(result).toBe(true);
+      expect(result).toEqual({ ok: true, idOrder: 41, totalAmount: 1500 });
       expect(cartItems.get()).toEqual([]);
-    });
-
-    it('dispatches the sync flush synchronously, before checkout() returns', () => {
-      stubCookie(LOGGED_IN_COOKIE);
-      fetchMock.mockResolvedValue({ ok: true });
-      CartService.addToCart(buildProduct());
-
-      // No debounce window has elapsed at all — checkout() must still have
-      // issued the fetch by the time it returns.
-      CartService.checkout();
-
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-    });
-
-    // Regression test for a real bug: PUT /api/cart used to reject an empty
-    // `items` array (400 "Items must be a non-empty array"), which made
-    // syncToBackend's failure handler roll the local cart back to its
-    // pre-checkout contents right after checkout() had already reported
-    // success. The backend validator now accepts an empty array (full-replace
-    // semantics), but CartService's rollback-on-failure behavior itself is
-    // still correct and should be preserved for genuine sync failures.
-    //
-    // The add-to-cart burst must be flushed and confirmed BEFORE checkout()
-    // runs. Otherwise the add and the checkout would coalesce into a single
-    // burst whose baseline is [], and cartBeforeCheckout would no longer be
-    // the last-confirmed state the rollback assertion depends on.
-    it('rolls back to the pre-checkout cart if the backend rejects the empty-items sync', async () => {
-      stubCookie(LOGGED_IN_COOKIE);
-      fetchMock.mockResolvedValueOnce({ ok: true });
-      CartService.addToCart(buildProduct());
-      await flushSync();
-      const cartBeforeCheckout = cartItems.get();
-
-      fetchMock.mockResolvedValueOnce({ ok: false, status: 400 });
-      const result = CartService.checkout();
-
-      expect(result).toBe(true);
-      expect(cartItems.get()).toEqual([]);
-
-      await vi.advanceTimersByTimeAsync(0);
-      expect(cartItems.get()).toEqual(cartBeforeCheckout);
-      expect(localStorageMock.setItem).toHaveBeenLastCalledWith(
-        'cart',
-        JSON.stringify(cartBeforeCheckout)
-      );
     });
   });
 });
