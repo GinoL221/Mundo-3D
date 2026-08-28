@@ -102,4 +102,31 @@ describe('checkNoPendingMigrations', () => {
       /missing required column "token_hash" on table "RememberToken"/
     );
   });
+
+  // MySQL 8.0.19+ dropped the display-width attribute from DESCRIBE/SHOW
+  // COLUMNS output for integer types that weren't given an explicit width
+  // at CREATE TABLE time (a purely cosmetic MySQL notation, not a real type
+  // difference) — a real MySQL 8.0.46 instance reports `INT`, never
+  // `INT(11)`, for every integer column this schema defines. This test
+  // reproduces that exact live server behavior; without the fix it fails
+  // the same way a real boot against any current MySQL 8.0.19+ would.
+  it('accepts an integer column reported without its display width, matching modern MySQL DESCRIBE output', async () => {
+    const queryInterface = makeCompatibleQueryInterface();
+    const userColumns = await queryInterface.describeTable('User');
+    userColumns.id_user = { type: 'INT', allowNull: false }; // no "(11)" — real MySQL 8.0.19+ behavior
+    buildMigrator.mockReturnValue(makeMigrator([], queryInterface));
+
+    await expect(checkNoPendingMigrations()).resolves.toBeUndefined();
+  });
+
+  it('still rejects a genuinely different integer width, not just any display-width difference', async () => {
+    const queryInterface = makeCompatibleQueryInterface();
+    const userColumns = await queryInterface.describeTable('User');
+    userColumns.id_user = { type: 'BIGINT', allowNull: false };
+    buildMigrator.mockReturnValue(makeMigrator([], queryInterface));
+
+    await expect(checkNoPendingMigrations()).rejects.toThrow(
+      /incompatible definition for column "id_user" on table "User"/
+    );
+  });
 });
