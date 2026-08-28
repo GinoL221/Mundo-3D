@@ -50,23 +50,23 @@ Chain strategy: stacked-to-main
 
 ### Phase 3: `Order`/`OrderItem` entities
 
-- [ ] 3.1 RED: create `backend/src/domain/entities/Order.test.ts` covering `order-domain` spec scenarios — valid construction (status `AWAITING_PAYMENT`, `totalAmount` derived), no shipping/contact/notes property, all 3 `LEGAL_TRANSITIONS` scenarios (`AWAITING_PAYMENT→PAID`, `→CANCELLED`, terminal-state rejection for both `PAID` and `CANCELLED`), zero-quantity rejection, `totalAmount` sum across 2 items = 130.
-- [ ] 3.2 RED: create `OrderItem.test.ts` covering quantity-must-be-positive-integer and unitPrice-must-be-non-negative invariants, plus `subtotal` computation.
-- [ ] 3.3 GREEN: create `backend/src/domain/entities/Order.ts` and `OrderItem.ts` per design's exact class shape (`LEGAL_TRANSITIONS` table, `canTransition`/`canTransitionTo`, `totalAmount` getter, `subtotal` getter). Run 3.1-3.2 to GREEN.
+- [x] 3.1 RED: create `backend/src/domain/entities/Order.test.ts` covering `order-domain` spec scenarios — valid construction (status `AWAITING_PAYMENT`, `totalAmount` derived), no shipping/contact/notes property, all 3 `LEGAL_TRANSITIONS` scenarios (`AWAITING_PAYMENT→PAID`, `→CANCELLED`, terminal-state rejection for both `PAID` and `CANCELLED`), zero-quantity rejection, `totalAmount` sum across 2 items = 130.
+- [x] 3.2 RED: create `OrderItem.test.ts` covering quantity-must-be-positive-integer and unitPrice-must-be-non-negative invariants, plus `subtotal` computation.
+- [x] 3.3 GREEN: create `backend/src/domain/entities/Order.ts` and `OrderItem.ts` per design's exact class shape (`LEGAL_TRANSITIONS` table, `canTransition`/`canTransitionTo`, `totalAmount` getter, `subtotal` getter). Run 3.1-3.2 to GREEN.
 
 ### Phase 4: Ports
 
-- [ ] 4.1 Create `backend/src/domain/ports/UnitOfWorkPort.ts` — opaque `TransactionContext` brand + `runInTransaction<T>()`.
-- [ ] 4.2 Create `backend/src/domain/ports/OrderRepositoryPort.ts` — `NewOrderItemInput`, `createWithItems`, `findByIdempotencyKey`, `findById`, `findAll`, `transitionStatus`, `attachPaymentReference`, per design's exact signatures.
-- [ ] 4.3 Create `backend/src/domain/ports/PaymentGatewayPort.ts` — `PaymentIntentStatus`, `PaymentIntent` (nullable `redirectUrl`), `InitiatePaymentInput`, `initiate`/`confirm`/`cancel`.
-- [ ] 4.4 Modify `backend/src/domain/ports/ProductRepositoryPort.ts` — `adjustStock(id, delta, tx?)` optional third parameter; modify `backend/src/domain/ports/ShoppingCartRepositoryPort.ts` — add `findActiveForUpdate(userId, tx)` and `markOrdered(userId, cartIds, tx)`.
-- [ ] 4.5 Modify `backend/src/domain/ports/index.ts` — add the 3 new barrel exports alphabetically.
+- [x] 4.1 Create `backend/src/domain/ports/UnitOfWorkPort.ts` — opaque `TransactionContext` brand + `runInTransaction<T>()`.
+- [x] 4.2 Create `backend/src/domain/ports/OrderRepositoryPort.ts` — `NewOrderItemInput`, `createWithItems`, `findByIdempotencyKey`, `findById`, `findAll`, `transitionStatus`, `attachPaymentReference`, per design's exact signatures.
+- [x] 4.3 Create `backend/src/domain/ports/PaymentGatewayPort.ts` — `PaymentIntentStatus`, `PaymentIntent` (nullable `redirectUrl`), `InitiatePaymentInput`, `initiate`/`confirm`/`cancel`.
+- [x] 4.4 Modify `backend/src/domain/ports/ProductRepositoryPort.ts` — `adjustStock(id, delta, tx?)` optional third parameter; modify `backend/src/domain/ports/ShoppingCartRepositoryPort.ts` — add `findActiveForUpdate(userId, tx)` and `markOrdered(userId, cartIds, tx)`.
+- [x] 4.5 Modify `backend/src/domain/ports/index.ts` — add the 3 new barrel exports alphabetically.
 
 ### Phase 5: Exceptions + `OrderDTO`
 
-- [ ] 5.1 Create `OrderValidationException.ts`, `InsufficientStockException.ts` (carries `shortages: {idProduct,productName,requested,available}[]`), `EmptyCartException.ts`, `IllegalOrderTransitionException.ts`, `DuplicateIdempotencyKeyException.ts` under `backend/src/domain/exceptions/`.
-- [ ] 5.2 RED: create `backend/src/application/dtos/OrderDTO.test.ts` — `mapToOrderDTO` produces the exact response shape from design (idempotencyKey deliberately absent, `idProduct: number|null`, `subtotal` per item, `totalAmount`).
-- [ ] 5.3 GREEN: create `backend/src/application/dtos/OrderDTO.ts` — `OrderDTO`, `OrderItemDTO`, `mapToOrderDTO`. Run 5.2 to GREEN.
+- [x] 5.1 Create `OrderValidationException.ts`, `InsufficientStockException.ts` (carries `shortages: {idProduct,productName,requested,available}[]`), `EmptyCartException.ts`, `IllegalOrderTransitionException.ts`, `DuplicateIdempotencyKeyException.ts` under `backend/src/domain/exceptions/`.
+- [x] 5.2 RED: create `backend/src/application/dtos/OrderDTO.test.ts` — `mapToOrderDTO` produces the exact response shape from design (idempotencyKey deliberately absent, `idProduct: number|null`, `subtotal` per item, `totalAmount`).
+- [x] 5.3 GREEN: create `backend/src/application/dtos/OrderDTO.ts` — `OrderDTO`, `OrderItemDTO`, `mapToOrderDTO`. Run 5.2 to GREEN.
 
 ## Work Unit 3: `CreateOrderUseCase` (Checkout Logic)
 
@@ -85,6 +85,8 @@ Chain strategy: stacked-to-main
 - [ ] 7.3 Run 7.1 + regression suite for `products.test.ts` / stock PATCH — all green, no behavior change on the standalone path.
 
 ### Phase 8: `SequelizeShoppingCartRepository` — lock + non-destructive transition
+
+**Note (added during Work Unit 2 apply)**: `findActiveForUpdate`/`markOrdered` already exist on `SequelizeShoppingCartRepository.ts` as throwing stubs (`Error('... is not implemented yet')`), added only to keep `ShoppingCartRepositoryPort`'s new required methods from breaking `tsc`/`implements` for the existing class between stacked PRs. Phase 8 replaces those stub bodies with the real implementation — it does not need to add new method signatures to the class.
 
 - [ ] 8.1 RED: extend `SequelizeShoppingCartRepository.test.ts` — `findActiveForUpdate(userId, tx)` locks only `ShoppingCart` rows; assert (via a real-DB integration case, not a mock) that a concurrent transaction attempting to read/lock the same user's `Product` rows is **not** blocked by this call, proving no `include`-triggered join lock leaked onto `Product`.
 - [ ] 8.2 GREEN: implement `findActiveForUpdate` as **two separate queries**, per design's explicit rejection of `include`: (1) `db.ShoppingCart.findAll({ where: {idUser, cartStatus:'ACTIVE'}, transaction, lock: Transaction.LOCK.UPDATE })` — **no `include`**; (2) a second, **non-locking** `db.Product.findAll({ where: { idProduct: ids }, transaction })` to source product names, merged into the returned `ShoppingCart[]` in application code. Do not collapse these into one Sequelize call.

@@ -1,6 +1,7 @@
 import { ShoppingCart, CartStatus } from '../../domain/entities/ShoppingCart';
 import { Product } from '../../domain/entities/Product';
 import { ShoppingCartRepositoryPort } from '../../domain/ports/ShoppingCartRepositoryPort';
+import { TransactionContext } from '../../domain/ports/UnitOfWorkPort';
 import db, { ShoppingCartInstance } from '../../database/models/db';
 
 export class SequelizeShoppingCartRepository implements ShoppingCartRepositoryPort {
@@ -77,5 +78,16 @@ export class SequelizeShoppingCartRepository implements ShoppingCartRepositoryPo
       await transaction.rollback();
       throw error;
     }
+  }
+
+  // Real implementation lands in the orders-checkout Work Unit 4 (checkout infra
+  // adapters), with dedicated real-DB tests for the no-`include` lock and the
+  // in-place UPDATE semantics. This unit only introduces the port contract.
+  async findActiveForUpdate(_userId: number, _tx: TransactionContext): Promise<ShoppingCart[]> {
+    throw new Error('SequelizeShoppingCartRepository.findActiveForUpdate is not implemented yet');
+  }
+
+  async markOrdered(_userId: number, _cartIds: number[], _tx: TransactionContext): Promise<number> {
+    throw new Error('SequelizeShoppingCartRepository.markOrdered is not implemented yet');
   }
 }
