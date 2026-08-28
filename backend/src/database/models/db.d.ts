@@ -55,6 +55,24 @@ export interface ShoppingCartAttributes {
   cartStatus: string;
 }
 
+export interface OrderAttributes {
+  idOrder: number;
+  idUser: number;
+  idempotencyKey: string;
+  orderStatus: string;
+  paymentReference: string | null;
+  createdAt: Date;
+}
+
+export interface OrderItemAttributes {
+  idOrderItem: number;
+  idOrder: number;
+  idProduct: number | null;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+}
+
 export interface ProductInstance extends Model<ProductAttributes, Partial<ProductAttributes>>, ProductAttributes {
   Category?: CategoryInstance;
   Franchise?: FranchiseInstance;
@@ -77,10 +95,21 @@ export interface ShoppingCartInstance extends Model<ShoppingCartAttributes, Part
   User?: UserInstance;
 }
 
+export interface OrderInstance extends Model<OrderAttributes, Partial<OrderAttributes>>, OrderAttributes {
+  items?: OrderItemInstance[];
+  User?: UserInstance;
+}
+
+export interface OrderItemInstance extends Model<OrderItemAttributes, Partial<OrderItemAttributes>>, OrderItemAttributes {
+  product?: ProductInstance;
+}
+
 export const Product: ModelCtor<ProductInstance>;
 export const Category: ModelCtor<CategoryInstance>;
 export const Franchise: ModelCtor<FranchiseInstance>;
 export const User: ModelCtor<UserInstance>;
 export const RememberToken: ModelCtor<RememberTokenInstance>;
 export const ShoppingCart: ModelCtor<ShoppingCartInstance>;
+export const Order: ModelCtor<OrderInstance>;
+export const OrderItem: ModelCtor<OrderItemInstance>;
 export const sequelize: Sequelize;

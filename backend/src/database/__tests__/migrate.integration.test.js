@@ -28,7 +28,15 @@ const { buildMigrator } = require('../migrator');
 jest.setTimeout(30000);
 
 const BASELINE_NAME = '20260724000000-baseline.js';
+const ORDERS_MIGRATION_NAME = '20260828000000-orders.js';
 const ALL_TABLES = ['User', 'Category', 'Franchise', 'Product', 'ShoppingCart', 'RememberToken'];
+// Order/OrderItem come from a second migration (`20260828000000-orders.js`),
+// applied/reverted in addition to the baseline — kept separate from
+// ALL_TABLES because the "down reverts the baseline" test below reverts
+// migrations one at a time (Umzug's `down` with no args only undoes the
+// most recently applied migration), so these two are dropped by a distinct
+// `run(['down'])` call rather than the same one that drops ALL_TABLES.
+const ORDER_TABLES = ['Order', 'OrderItem'];
 
 async function showTables() {
   const [rows] = await db.sequelize.query('SHOW TABLES');
@@ -42,22 +50,22 @@ describe('migrate CLI — real scratch DB', () => {
 
   afterAll(async () => {
     await db.sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
-    for (const table of ['SequelizeMeta', ...[...ALL_TABLES].reverse()]) {
+    for (const table of ['SequelizeMeta', ...[...ALL_TABLES, ...ORDER_TABLES].reverse()]) {
       await db.sequelize.query(`DROP TABLE IF EXISTS \`${table}\`;`);
     }
     await db.sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
     await db.sequelize.close();
   });
 
-  it('up applies the baseline migration, creating all 6 tables and recording it', async () => {
+  it('up applies the baseline and orders migrations, creating all 8 tables and recording both', async () => {
     const success = await run(['up']);
 
     expect(success).toBe(true);
     const tables = await showTables();
-    expect(tables).toEqual(expect.arrayContaining(ALL_TABLES));
+    expect(tables).toEqual(expect.arrayContaining([...ALL_TABLES, ...ORDER_TABLES]));
 
     const executed = await buildMigrator().executed();
-    expect(executed.map((m) => m.name)).toEqual([BASELINE_NAME]);
+    expect(executed.map((m) => m.name)).toEqual([BASELINE_NAME, ORDERS_MIGRATION_NAME]);
   });
 
   it('created tables enforce real FK constraints and the Product.stock default', async () => {
@@ -94,12 +102,23 @@ describe('migrate CLI — real scratch DB', () => {
     expect(tables.filter((t) => t === 'Product')).toHaveLength(1);
   });
 
-  it('down reverts the baseline migration and drops its tables', async () => {
-    const success = await run(['down']);
+  it('down twice reverts both migrations (orders, then baseline) and drops their tables', async () => {
+    // Umzug's `down` with no args reverts only the most recently applied
+    // migration — with two migrations now applied, a full rollback needs two
+    // calls, exactly like the manual `db:migrate:down` verification described
+    // in the orders-checkout migration task.
+    const firstDown = await run(['down']);
+    expect(firstDown).toBe(true);
+    let tables = await showTables();
+    for (const table of ORDER_TABLES) {
+      expect(tables).not.toContain(table);
+    }
+    expect(tables).toEqual(expect.arrayContaining(ALL_TABLES));
 
-    expect(success).toBe(true);
-    const tables = await showTables();
-    for (const table of ALL_TABLES) {
+    const secondDown = await run(['down']);
+    expect(secondDown).toBe(true);
+    tables = await showTables();
+    for (const table of [...ALL_TABLES, ...ORDER_TABLES]) {
       expect(tables).not.toContain(table);
     }
     const executed = await buildMigrator().executed();
@@ -119,10 +138,11 @@ describe('migrate CLI — real scratch DB', () => {
   });
 
   it('a genuine migration failure surfaces via run() resolving false and sets the CLI failure exit code', async () => {
-    // Baseline is already logged as executed by the previous test, so this
-    // fixture (invalid DDL, guaranteed to reject) is the only pending
-    // migration `up` will attempt — a real failure against a real DB, not a
-    // mocked rejection.
+    // Baseline is already logged as executed by the previous test. This
+    // fixture's timestamp (`20260724999999`) sorts before the still-pending
+    // `20260828000000-orders.js`, so `up` attempts it first, fails, and
+    // halts before ever reaching the orders migration — a real failure
+    // against a real DB, not a mocked rejection.
     const brokenMigrationPath = path.join(
       __dirname,
       '../migrations/20260724999999-broken-test-migration.js'
