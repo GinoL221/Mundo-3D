@@ -16,6 +16,8 @@ function initializeModels() {
   const CategoryModel = require('./Category')(sequelize, Sequelize.DataTypes);
   const FranchiseModel = require('./Franchise')(sequelize, Sequelize.DataTypes);
   const RememberTokenModel = require('./RememberToken')(sequelize, Sequelize.DataTypes);
+  const OrderModel = require('./Order')(sequelize, Sequelize.DataTypes);
+  const OrderItemModel = require('./OrderItem')(sequelize, Sequelize.DataTypes);
 
   db['User'] = UserModel;
   db['Product'] = ProductModel;
@@ -23,6 +25,8 @@ function initializeModels() {
   db['Category'] = CategoryModel;
   db['Franchise'] = FranchiseModel;
   db['RememberToken'] = RememberTokenModel;
+  db['Order'] = OrderModel;
+  db['OrderItem'] = OrderItemModel;
 
   UserModel.hasMany(ShoppingCartModel, { foreignKey: 'idUser' });
   ShoppingCartModel.belongsTo(UserModel, { foreignKey: 'idUser' });
@@ -56,6 +60,14 @@ function initializeModels() {
     foreignKey: 'idFranchise',
     as: 'Products',
   });
+
+  // Asociación User -> Order -> OrderItem -> Product
+  UserModel.hasMany(OrderModel, { foreignKey: 'idUser' });
+  OrderModel.belongsTo(UserModel, { foreignKey: 'idUser' });
+  OrderModel.hasMany(OrderItemModel, { foreignKey: 'idOrder', as: 'items' });
+  OrderItemModel.belongsTo(OrderModel, { foreignKey: 'idOrder' });
+  ProductModel.hasMany(OrderItemModel, { foreignKey: 'idProduct', as: 'OrderItems' });
+  OrderItemModel.belongsTo(ProductModel, { foreignKey: 'idProduct', as: 'product' });
 
   db.sequelize = sequelize;
   db.Sequelize = Sequelize;
