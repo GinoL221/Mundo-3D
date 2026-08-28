@@ -1,6 +1,7 @@
 import { QueryTypes } from 'sequelize';
 import { SequelizeProductRepository } from '../SequelizeProductRepository';
 import db, { ProductInstance } from '../../../database/models/db';
+import { TransactionContext } from '../../../domain/ports/UnitOfWorkPort';
 
 jest.mock('../../../database/models/db', () => ({
   Product: {
@@ -553,7 +554,7 @@ describe('SequelizeProductRepository', () => {
     // under MySQL's REPEATABLE READ isolation (design.md's explicit warning).
     describe('optional transaction parameter (orders-checkout)', () => {
       it('passes the transaction through to the atomic UPDATE and the tx-scoped follow-up read when provided', async () => {
-        const mockTx = { id: 'fake-tx' } as unknown as import('sequelize').Transaction;
+        const mockTx = { id: 'fake-tx' } as unknown as TransactionContext;
         mockSequelizeQuery.mockResolvedValueOnce([undefined, 1]);
         const mockFetchedInstance = {
           idProduct: 1,
