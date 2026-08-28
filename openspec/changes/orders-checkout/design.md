@@ -583,5 +583,6 @@ flag or data backfill.
 
 - [ ] Currency code for `PaymentGatewayPort.initiate` — design assumes a hard-coded `'ARS'`
       constant in `CreateOrderUseCase`; there is no currency column or config anywhere today.
-- [ ] Whether ADMIN `GET /api/orders` should cap its result set. No pagination exists in this
-      change's scope, so it returns all orders — fine at current data volume, revisit later.
+- [x] **Resolved (2026-08-28)**: ADMIN `GET /api/orders` caps its result set at 100 most-recent
+      orders (`SequelizeOrderRepository.MAX_LISTED`) — endpoint hygiene, not the deferred
+      pagination feature. No caller-controlled page size.

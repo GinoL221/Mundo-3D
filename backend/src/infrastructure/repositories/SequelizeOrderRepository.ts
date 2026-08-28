@@ -97,8 +97,18 @@ export class SequelizeOrderRepository implements OrderRepositoryPort {
     return this.findByIdInternal(idOrder);
   }
 
+  // Capped at the most recent MAX_LISTED orders — endpoint hygiene against an
+  // unbounded full-table scan, not the deferred order-history/pagination
+  // feature. No caller-controlled parameter: this is a safety floor, not a
+  // page size a client can request.
+  private static readonly MAX_LISTED = 100;
+
   async findAll(): Promise<Order[]> {
-    const instances = await db.Order.findAll({ include: [{ model: db.OrderItem, as: 'items' }] });
+    const instances = await db.Order.findAll({
+      include: [{ model: db.OrderItem, as: 'items' }],
+      order: [['idOrder', 'DESC']],
+      limit: SequelizeOrderRepository.MAX_LISTED,
+    });
     return instances.map((instance) => this.toEntity(instance));
   }
 
