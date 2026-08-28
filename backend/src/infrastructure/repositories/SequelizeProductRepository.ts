@@ -1,8 +1,9 @@
-import { QueryTypes } from 'sequelize';
+import { QueryTypes, Transaction } from 'sequelize';
 import { Product } from '../../domain/entities/Product';
 import { Category } from '../../domain/entities/Category';
 import { Franchise } from '../../domain/entities/Franchise';
 import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { TransactionContext } from '../../domain/ports/UnitOfWorkPort';
 import db, { ProductInstance, ProductAttributes } from '../../database/models/db';
 
 // Raw column names as defined in `database/models/Product.js` (field mappings).
@@ -60,6 +61,16 @@ export class SequelizeProductRepository implements ProductRepositoryPort {
   }
 
   async findById(id: number): Promise<Product | null> {
+    return this.findByIdInternal(id);
+  }
+
+  // Private, transaction-aware follow-up read used by `adjustStock`. The
+  // public port surface (`findById`) stays single-arg per design.md — only
+  // this internal method accepts a transaction, and only `adjustStock`'s
+  // own follow-up read needs it: under MySQL REPEATABLE READ, reading on a
+  // different connection than the one that just wrote would observe
+  // pre-decrement state.
+  private async findByIdInternal(id: number, transaction?: Transaction): Promise<Product | null> {
     const instance = await db.Product.findByPk(id, {
       include: [
         {
@@ -73,6 +84,7 @@ export class SequelizeProductRepository implements ProductRepositoryPort {
           attributes: ['idFranchise', 'nameFranchise'],
         },
       ],
+      transaction,
     });
     if (!instance) return null;
     return this.toEntity(instance);
@@ -181,10 +193,17 @@ export class SequelizeProductRepository implements ProductRepositoryPort {
   // MySQL dialect used by this project resolves to `[undefined, affectedRowCount]`,
   // giving us a reliable affected-row count to distinguish "not found" from
   // "floor condition failed" without a second read-then-write race window.
-  async adjustStock(id: number, delta: number): Promise<Product | null> {
+  // `tx` is optional and purely additive (orders-checkout Work Unit 4): the
+  // standalone PATCH /api/products/:id/stock path calls this with no `tx`,
+  // behaving exactly as before. `CreateOrderUseCase` passes its
+  // `TransactionContext` so the decrement participates in the checkout
+  // transaction and rolls back with it.
+  async adjustStock(id: number, delta: number, tx?: TransactionContext): Promise<Product | null> {
     if (!Number.isInteger(delta) || delta === 0) {
       throw new Error('Delta must be a non-zero integer');
     }
+
+    const transaction = tx as unknown as Transaction | undefined;
 
     const [, affectedRows] = await db.sequelize.query(
       `UPDATE ${PRODUCT_TABLE} SET ${PRODUCT_STOCK_COLUMN} = ${PRODUCT_STOCK_COLUMN} + :delta ` +
@@ -192,15 +211,16 @@ export class SequelizeProductRepository implements ProductRepositoryPort {
       {
         replacements: { id, delta },
         type: QueryTypes.UPDATE,
+        transaction,
       }
     );
 
     if (affectedRows === 0) {
-      const existing = await db.Product.findByPk(id);
+      const existing = await db.Product.findByPk(id, { transaction });
       if (!existing) return null;
       throw new Error('Insufficient stock');
     }
 
-    return this.findById(id);
+    return this.findByIdInternal(id, transaction);
   }
 }

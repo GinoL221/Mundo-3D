@@ -545,6 +545,51 @@ describe('SequelizeProductRepository', () => {
       await expect(repository.adjustStock(1, 0)).rejects.toThrow('Delta must be a non-zero integer');
       expect(mockSequelizeQuery).not.toHaveBeenCalled();
     });
+
+    // orders-checkout Work Unit 4: `adjustStock` gains an optional `tx` third
+    // parameter so checkout can decrement stock inside its own transaction.
+    // The follow-up read MUST run on that same transaction's connection —
+    // reading on a separate connection would observe pre-decrement state
+    // under MySQL's REPEATABLE READ isolation (design.md's explicit warning).
+    describe('optional transaction parameter (orders-checkout)', () => {
+      it('passes the transaction through to the atomic UPDATE and the tx-scoped follow-up read when provided', async () => {
+        const mockTx = { id: 'fake-tx' } as unknown as import('sequelize').Transaction;
+        mockSequelizeQuery.mockResolvedValueOnce([undefined, 1]);
+        const mockFetchedInstance = {
+          idProduct: 1,
+          nameProduct: 'Product A',
+          price: '100.50',
+          descriptionProduct: 'Desc A',
+          image: 'imageA.jpg',
+          idCategory: 10,
+          idFranchise: 20,
+          stock: 8,
+        };
+        jest.mocked(db.Product.findByPk).mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
+
+        const result = await repository.adjustStock(1, 3, mockTx);
+
+        expect(mockSequelizeQuery).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({ transaction: mockTx })
+        );
+        expect(db.Product.findByPk).toHaveBeenCalledWith(1, expect.objectContaining({ transaction: mockTx }));
+        expect(result?.stock).toBe(8);
+      });
+
+      it('leaves standalone (no-tx) behavior identical to today — transaction is undefined, not omitted', async () => {
+        mockSequelizeQuery.mockResolvedValueOnce([undefined, 1]);
+        const mockFetchedInstance = { idProduct: 1, nameProduct: 'Product A', price: '100.50', stock: 8 };
+        jest.mocked(db.Product.findByPk).mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
+
+        await repository.adjustStock(1, 3);
+
+        expect(mockSequelizeQuery).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({ transaction: undefined })
+        );
+      });
+    });
   });
 
   describe('delete', () => {

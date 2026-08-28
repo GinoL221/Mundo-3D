@@ -16,6 +16,7 @@
  * (`DB_HOST`/`DB_USER`/`DB_PASS` env vars, see `database/config/config.js`).
  */
 import { SequelizeShoppingCartRepository } from '../SequelizeShoppingCartRepository';
+import { TransactionContext } from '../../../domain/ports/UnitOfWorkPort';
 import {
   bootstrapTestDatabase,
   closeTestDatabase,
@@ -157,6 +158,56 @@ describe('SequelizeShoppingCartRepository.syncCart — real DB concurrency', () 
       const expected = payloadB.map((i) => ({ idProduct: i.productId, quantity: i.quantity, unitPrice: i.unitPrice }));
 
       expect(normalize(rows)).toEqual(normalize(expected));
+    });
+  });
+
+  // orders-checkout Work Unit 4, Phase 8.1: `findActiveForUpdate` must issue
+  // `SELECT ... FOR UPDATE` against `ShoppingCart` ONLY — never combined with
+  // an `include`, which Sequelize would extend across the join and lock
+  // `Product` rows as an unintended side effect (design.md's explicit
+  // rejection). Proven here against a real DB with a real concurrent
+  // transaction, not a mock.
+  describe('findActiveForUpdate — no include-triggered lock leaks onto Product', () => {
+    let fixture: TestCartFixture;
+
+    beforeEach(async () => {
+      fixture = await seedCartFixture();
+    });
+
+    afterEach(async () => {
+      await cleanupCartFixture(fixture);
+    });
+
+    it('does not block a concurrent transaction from locking the referenced Product row', async () => {
+      const db = getTestDb();
+      const [firstProductId] = fixture.productIds;
+
+      const cartLockTx = await db.sequelize.transaction();
+      try {
+        await repository.findActiveForUpdate(fixture.userId, cartLockTx as unknown as TransactionContext);
+
+        const productLockTx = await db.sequelize.transaction();
+        try {
+          const raceResult = await Promise.race([
+            db.Product.findOne({
+              where: { idProduct: firstProductId },
+              transaction: productLockTx,
+              lock: productLockTx.LOCK.UPDATE,
+            }).then(() => 'LOCK_ACQUIRED'),
+            new Promise((resolve) => setTimeout(() => resolve('TIMED_OUT'), 1500)),
+          ]);
+
+          // If the cart lock had leaked onto Product (the include-triggered
+          // bug this test guards against), this second transaction's
+          // `FOR UPDATE` on the same Product row would block until
+          // `cartLockTx` released it, and we'd observe 'TIMED_OUT' instead.
+          expect(raceResult).toBe('LOCK_ACQUIRED');
+        } finally {
+          await productLockTx.commit();
+        }
+      } finally {
+        await cartLockTx.commit();
+      }
     });
   });
 });
