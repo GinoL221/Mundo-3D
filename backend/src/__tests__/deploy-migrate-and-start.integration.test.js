@@ -75,6 +75,12 @@ function extractPort(output) {
   return null;
 }
 
+// Every child a test spawns is registered here and torn down in afterEach.
+// Cleaning up there rather than inline after the assertions means a failing
+// expectation can never skip it and leave the runner a live process plus a
+// pipe that never reaches EOF.
+const spawnedChildren = [];
+
 function spawnMigrateAndStart(envOverrides) {
   const env = { ...process.env, ...envOverrides };
   delete env.JEST_WORKER_ID;
@@ -89,11 +95,13 @@ function spawnMigrateAndStart(envOverrides) {
   env.LOG_LEVEL = 'info';
   env.CORS_ORIGIN = 'http://localhost:4321';
 
-  return spawn('node', [path.join(REPO_ROOT, 'scripts', 'deploy', 'migrate-and-start.js')], {
+  const child = spawn('node', [path.join(REPO_ROOT, 'scripts', 'deploy', 'migrate-and-start.js')], {
     cwd: REPO_ROOT,
     env,
     shell: false,
   });
+  spawnedChildren.push(child);
+  return child;
 }
 
 describe('deploy-migrate-and-start.integration: real migrate-then-start against a live DB', () => {
@@ -115,6 +123,27 @@ describe('deploy-migrate-and-start.integration: real migrate-then-start against 
     await ensureFreshDatabase(dbEnv);
   });
 
+  // `migrate-and-start.js` exiting only proves ITS process is gone. The
+  // `pnpm --filter backend start` grandchild inherits this pipe's write end
+  // (stdio: 'inherit'), so any descendant outliving it keeps our read end from
+  // ever seeing EOF — Jest reports that as a lingering PIPEWRAP and then waits
+  // on it forever (observed on CI via --detectOpenHandles, never reproducible
+  // locally). Destroying our own read end releases it regardless of who still
+  // holds the writer.
+  //
+  // SIGTERM, never SIGKILL: SIGKILL cannot be intercepted, so it would orphan
+  // migrate-and-start.js's own spawned `start` child instead of letting that
+  // script's signal-forwarding logic shut the real server down.
+  afterEach(() => {
+    for (const child of spawnedChildren.splice(0)) {
+      if (child.exitCode === null && child.signalCode === null) {
+        child.kill('SIGTERM');
+      }
+      child.stdout.destroy();
+      child.stderr.destroy();
+    }
+  });
+
   it(
     'migrates then boots the real server, reaching a healthy /health/ready',
     async () => {
@@ -134,15 +163,7 @@ describe('deploy-migrate-and-start.integration: real migrate-then-start against 
         // exercises (~25-35s observed locally). Generous on purpose.
         port = await waitFor(() => extractPort(stdout), 45000);
       } catch (waitErr) {
-        // SIGKILL cannot be forwarded (it can't be intercepted at all), so
-        // it would orphan migrate-and-start.js's own spawned `start` child
-        // instead of letting its own signal-forwarding logic clean up.
-        // SIGTERM lets that logic run; the process is abandoned either way
-        // once this test has already failed, but this avoids leaking a
-        // live server + DB connection pool past the end of the test run.
-        child.kill('SIGTERM');
-        child.stdout.destroy();
-        child.stderr.destroy();
+        // No cleanup here: afterEach owns it, and runs on this failure path too.
         throw new Error(
           `Never reported a listening port.\n--- stdout ---\n${stdout}\n--- stderr ---\n${stderr}\n${waitErr.message}`,
           { cause: waitErr }
@@ -152,21 +173,16 @@ describe('deploy-migrate-and-start.integration: real migrate-then-start against 
       const response = await fetch(`http://127.0.0.1:${port}/health/ready`);
       expect(response.status).toBe(200);
 
-      const exitCode = await new Promise((resolve) => {
-        child.once('exit', (code) => resolve(code));
+      const { exitCode, signal } = await new Promise((resolve) => {
+        child.once('exit', (code, exitSignal) => resolve({ exitCode: code, signal: exitSignal }));
         child.kill('SIGTERM');
       });
+      // A signal-killed child reports `code === null`, so asserting on the code
+      // alone would read that null as a clean exit. Requiring a null SIGNAL is
+      // what actually proves the wrapper shut itself down under its own
+      // control after forwarding SIGTERM, rather than being torn down by it.
+      expect(signal).toBeNull();
       expect(exitCode).toBe(0);
-
-      // `migrate-and-start.js` reporting its own exit only proves ITS process
-      // is gone — its inherited-stdio grandchild (the real `node index.js`
-      // spawned by `pnpm --filter backend start`) can still hold this
-      // process's read end of the piped stdout/stderr open a moment longer,
-      // which Jest correctly flags as a lingering PIPEWRAP handle
-      // (`--detectOpenHandles` on CI, never reproduced locally). Destroying
-      // our own read end releases it immediately regardless of the writer.
-      child.stdout.destroy();
-      child.stderr.destroy();
     },
     60000
   );
