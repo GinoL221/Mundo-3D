@@ -24,14 +24,19 @@ const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
 // targets are expected to already have their database provisioned (a
 // managed DB service typically creates one on setup) — this mirrors CI's
 // own separate "create database" step ahead of its migrate verification.
-async function ensureDatabaseProvisioned(env) {
+//
+// DROP + CREATE (not just CREATE IF NOT EXISTS) so the baseline migration
+// always runs against a genuinely fresh schema, whether this is CI's first
+// run or a repeated local run against a scratch DB left over from before.
+async function ensureFreshDatabase(env) {
   const mysql = require('mysql2/promise');
   const connection = await mysql.createConnection({
     host: env.DB_HOST,
     user: env.DB_USER,
     password: env.DB_PASS,
   });
-  await connection.query(`CREATE DATABASE IF NOT EXISTS \`${env.DB_NAME}\`;`);
+  await connection.query(`DROP DATABASE IF EXISTS \`${env.DB_NAME}\`;`);
+  await connection.query(`CREATE DATABASE \`${env.DB_NAME}\`;`);
   await connection.end();
 }
 
@@ -96,13 +101,18 @@ describe('deploy-migrate-and-start.integration: real migrate-then-start against 
     DB_HOST: process.env.DB_HOST || '127.0.0.1',
     DB_USER: process.env.DB_USER || 'root',
     DB_PASS: process.env.DB_PASS ?? '',
-    DB_NAME: 'mundo_3d_test',
+    // Dedicated scratch DB (matching database/__tests__/migrate.integration.test.js's
+    // convention) — NOT `mundo_3d_test`, which other integration files share via
+    // testDb.ts's `sequelize.sync()`. Reusing that shared DB made the baseline
+    // migration's CREATE TABLE collide with tables sync() already created,
+    // since sync() never records anything in SequelizeMeta.
+    DB_NAME: 'mundo_3d_migrate_scratch',
     JWT_SECRET: 'integration-test-secret',
     COOKIE_SECRET: 'integration-test-cookie-secret',
   };
 
   beforeAll(async () => {
-    await ensureDatabaseProvisioned(dbEnv);
+    await ensureFreshDatabase(dbEnv);
   });
 
   it(
