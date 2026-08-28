@@ -11,7 +11,7 @@
     "architecture:check": "node tools/architecture/check.js",
     "test": "jest",
     "test:fast": "jest",
-    "test:integration": "jest --config jest.integration.config.js",
+    "test:integration": "jest --config jest.integration.config.js --detectOpenHandles",
     "test:coverage": "jest --coverage && node scripts/generate-coverage-risk-map.js",
     "lint": "eslint src/",
     "format": "prettier --write \"src/**/*.js\"",

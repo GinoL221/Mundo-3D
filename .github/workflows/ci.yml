@@ -110,6 +110,7 @@ jobs:
           DB_NAME: mundo_3d_migrate_ci
 
       - name: Run backend real-DB integration tests
+        timeout-minutes: 5
         run: pnpm run test:integration
         env:
           DB_HOST: 127.0.0.1
