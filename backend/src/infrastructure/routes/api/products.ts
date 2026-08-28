@@ -42,6 +42,164 @@ const controller = new ProductApiController(
 
 const uploadImgProduct = createUpload('products');
 
+/**
+ * @openapi
+ * /products:
+ *   get:
+ *     summary: List all products, with a per-category count breakdown
+ *     tags: [Products]
+ *     responses:
+ *       '200':
+ *         description: Products plus counts.
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/ListProductsResponse' }
+ *   post:
+ *     summary: Create a product (ADMIN/STAFF)
+ *     tags: [Products]
+ *     security: [{ cookieAuth: [], csrfHeader: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nameProduct: { type: string, minLength: 5, maxLength: 20 }
+ *               price: { type: number, exclusiveMinimum: 0 }
+ *               descriptionProduct: { type: string, maxLength: 40 }
+ *               idCategory: { type: integer }
+ *               idFranchise: { type: integer }
+ *               image: { type: string, format: binary, description: 'Required; .jpg/.png only.' }
+ *               material: { type: string, nullable: true }
+ *               height: { type: number, minimum: 0, nullable: true }
+ *               width: { type: number, minimum: 0, nullable: true }
+ *               depth: { type: number, minimum: 0, nullable: true }
+ *               finish: { type: string, nullable: true }
+ *               productionTime: { type: integer, minimum: 1, nullable: true }
+ *               stock: { type: integer, minimum: 0, description: 'Defaults to 0 when omitted.' }
+ *             required: [nameProduct, price, descriptionProduct, idCategory, idFranchise, image]
+ *     responses:
+ *       '201':
+ *         description: Product created.
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Product' }
+ *       '400': { description: Validation error. }
+ *       '401': { description: Not authenticated. }
+ *       '403': { description: Authenticated but not ADMIN/STAFF. }
+ * /product/{id}:
+ *   get:
+ *     summary: Get one product by id
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       '200':
+ *         description: The product.
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Product' }
+ *       '400': { description: Non-numeric id. }
+ *       '404': { description: Product not found. }
+ * /products/latest:
+ *   get:
+ *     summary: Get the most recently created product
+ *     tags: [Products]
+ *     responses:
+ *       '200':
+ *         description: The latest product.
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Product' }
+ *       '404': { description: No products available. }
+ * /products/{id}:
+ *   put:
+ *     summary: Update a product (ADMIN/STAFF) — never modifies stock
+ *     description: All body fields optional (partial update). `stock` is intentionally ignored even if sent — stock mutation happens exclusively via PATCH /products/{id}/stock.
+ *     tags: [Products]
+ *     security: [{ cookieAuth: [], csrfHeader: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nameProduct: { type: string, minLength: 5, maxLength: 20 }
+ *               price: { type: number, exclusiveMinimum: 0 }
+ *               descriptionProduct: { type: string, maxLength: 40 }
+ *               idCategory: { type: integer }
+ *               idFranchise: { type: integer }
+ *               image: { type: string, format: binary, description: 'Optional; .jpg/.png only.' }
+ *               material: { type: string, nullable: true }
+ *               height: { type: number, minimum: 0, nullable: true }
+ *               width: { type: number, minimum: 0, nullable: true }
+ *               depth: { type: number, minimum: 0, nullable: true }
+ *               finish: { type: string, nullable: true }
+ *               productionTime: { type: integer, minimum: 1, nullable: true }
+ *     responses:
+ *       '200':
+ *         description: Updated product.
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Product' }
+ *       '400': { description: Non-numeric id or validation error. }
+ *       '401': { description: Not authenticated. }
+ *       '403': { description: Authenticated but not ADMIN/STAFF. }
+ *       '404': { description: Product not found. }
+ *   delete:
+ *     summary: Delete a product (ADMIN only)
+ *     tags: [Products]
+ *     security: [{ cookieAuth: [], csrfHeader: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       '204': { description: Deleted. }
+ *       '400': { description: Non-numeric id. }
+ *       '401': { description: Not authenticated. }
+ *       '403': { description: Authenticated but not ADMIN. }
+ *       '404': { description: Product not found. }
+ * /products/{id}/stock:
+ *   patch:
+ *     summary: Adjust a product's stock by a signed delta (ADMIN/STAFF)
+ *     tags: [Products]
+ *     security: [{ cookieAuth: [], csrfHeader: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties: { delta: { type: integer, description: 'Non-zero integer; negative decreases stock.' } }
+ *             required: [delta]
+ *     responses:
+ *       '200':
+ *         description: Updated product.
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Product' }
+ *       '400': { description: delta is not a non-zero integer. }
+ *       '401': { description: Not authenticated. }
+ *       '403': { description: Authenticated but not ADMIN/STAFF. }
+ *       '404': { description: Product not found. }
+ *       '409': { description: Insufficient stock for the requested decrease. }
+ */
 router.get('/products', controller.index);
 router.get('/product/:id', controller.show);
 router.get('/products/latest', controller.latest);

@@ -44,6 +44,99 @@ const normalizeLoginBody = (req: Request, res: Response, next: NextFunction) => 
   next();
 };
 
+/**
+ * @openapi
+ * /users/login:
+ *   post:
+ *     summary: Authenticate and receive session cookies
+ *     description: Sets m3d_auth (JWT, httpOnly), m3d_csrf and a display-data cookie. Also accepts `Email`/`Password` (normalized to lowercase before validation).
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email: { type: string, format: email }
+ *               password: { type: string, minLength: 8 }
+ *               remember: { type: boolean }
+ *             required: [email, password]
+ *     responses:
+ *       '200':
+ *         description: Authenticated.
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/AuthResponse' }
+ *       '400': { description: Validation error. }
+ *       '401': { description: Email or password do not match. }
+ *       '429': { description: Rate-limited (loginLimiter). }
+ * /users/register:
+ *   post:
+ *     summary: Register a new user and receive session cookies
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName: { type: string, minLength: 2, maxLength: 10 }
+ *               lastName: { type: string, minLength: 2, maxLength: 10 }
+ *               email: { type: string, format: email }
+ *               password: { type: string, minLength: 8, maxLength: 32, description: 'Needs an uppercase, a digit and a special char.' }
+ *               confirmPassword: { type: string }
+ *               image: { type: string, format: binary, description: 'Required; .jpg/.png only.' }
+ *             required: [firstName, lastName, email, password, confirmPassword, image]
+ *     responses:
+ *       '201':
+ *         description: Registered.
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/AuthResponse' }
+ *       '400': { description: Validation error, or user already exists. }
+ *       '429': { description: Rate-limited (registerLimiter). }
+ * /users/logout:
+ *   post:
+ *     summary: Clear session cookies
+ *     description: No apiAuthMiddleware — logout only ever removes authority, so it must succeed even with no/expired auth cookie (api-jwt-auth spec, "Logout without an active session").
+ *     tags: [Users]
+ *     responses:
+ *       '204': { description: Logged out (always, regardless of prior session state). }
+ * /users:
+ *   get:
+ *     summary: List all users (admin only)
+ *     tags: [Users]
+ *     security: [{ cookieAuth: [] }]
+ *     responses:
+ *       '200':
+ *         description: All users.
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/UsersIndexResponse' }
+ *       '401': { description: Not authenticated. }
+ *       '403': { description: Authenticated but not ADMIN. }
+ * /users/{id}:
+ *   get:
+ *     summary: Get one user by id (admin only)
+ *     tags: [Users]
+ *     security: [{ cookieAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       '200':
+ *         description: The user.
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/User' }
+ *       '401': { description: Not authenticated. }
+ *       '403': { description: Authenticated but not ADMIN. }
+ *       '404': { description: User not found. }
+ */
 router.post(
   '/users/login',
   normalizeLoginBody,
