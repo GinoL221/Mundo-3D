@@ -155,6 +155,10 @@ backend/public/img/products/*
 # Playwright auth state
 e2e/.auth/
 
+# Playwright run artifacts (screenshots, traces, .last-run.json) — every
+# local run dirties these, they carry no reviewable content.
+e2e/test-results/
+
 # Local AI tool state
 .pi/
 

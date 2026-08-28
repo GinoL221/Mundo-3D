@@ -1,4 +1,28 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+// Shared by the hydration-trigger and bounded-race test groups below — each
+// needs a fresh, real account (not a shared fixture) since they manipulate
+// login/logout and network timing directly.
+async function registerFreshUser(page: Page, label: string): Promise<{ email: string; password: string }> {
+  const email = `${label}_${Date.now()}@example.com`;
+  const password = 'Password123!';
+
+  await page.goto('/register');
+  await page.fill('#firstName', label);
+  await page.fill('#lastName', 'Test');
+  await page.fill('#email', email);
+  await page.fill('#password', password);
+  await page.fill('#confirmPassword', password);
+  await page.setInputFiles('#image', {
+    name: 'avatar.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('fake image content'),
+  });
+  await page.click('#register-btn');
+  await expect(page).toHaveURL('/');
+
+  return { email, password };
+}
 
 test.describe('Cart E2E Tests - Guest Flow', () => {
   // Clear localStorage cart before each guest test
@@ -266,24 +290,9 @@ test.describe('Cart E2E Tests - Guest-to-Account Merge on Login', () => {
 
 test.describe('Cart E2E Tests - Login Redirect Bounded Race', () => {
   test('redirect still fires when GET /api/cart never resolves (design.md: HYDRATION_REDIRECT_TIMEOUT_MS = 1500)', async ({ page }) => {
-    const email = `stall_${Date.now()}@example.com`;
-    const password = 'Password123!';
-
     // Register (auto-logs in), then log out so the next login goes through
     // LoginForm.astro's real submit handler.
-    await page.goto('/register');
-    await page.fill('#firstName', 'Stall');
-    await page.fill('#lastName', 'Test');
-    await page.fill('#email', email);
-    await page.fill('#password', password);
-    await page.fill('#confirmPassword', password);
-    await page.setInputFiles('#image', {
-      name: 'avatar.png',
-      mimeType: 'image/png',
-      buffer: Buffer.from('fake image content'),
-    });
-    await page.click('#register-btn');
-    await expect(page).toHaveURL('/');
+    const { email, password } = await registerFreshUser(page, 'Stall');
     await page.locator('.nav-item__trigger').hover();
     await page.locator('#navbar-logout').click();
     await expect(page).toHaveURL('/login');
@@ -312,5 +321,103 @@ test.describe('Cart E2E Tests - Login Redirect Bounded Race', () => {
     // stalled GET would otherwise cause).
     expect(elapsedMs).toBeGreaterThanOrEqual(1400);
     expect(elapsedMs).toBeLessThan(3500);
+  });
+
+  test('redirect proceeds quickly when GET /api/cart fails fast, without waiting out the timeout', async ({ page }) => {
+    const { email, password } = await registerFreshUser(page, 'FastFail');
+    await page.locator('.nav-item__trigger').hover();
+    await page.locator('#navbar-logout').click();
+    await expect(page).toHaveURL('/login');
+
+    // Unlike the stall test above (GET never resolves), this GET resolves
+    // immediately with a server error — hydrateFromServer() should settle
+    // on its own well before the 1500ms cap, so the redirect must not wait
+    // for the remainder of the timeout (cart-hydration spec: "Failing GET
+    // on login still redirects").
+    await page.route('**/api/cart', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({ status: 500, body: '{}' });
+      } else {
+        await route.continue();
+      }
+    });
+
+    const start = Date.now();
+    await page.fill('#email', email);
+    await page.fill('#password', password);
+    await page.click('#login-btn');
+    await expect(page).toHaveURL('/', { timeout: 4000 });
+    const elapsedMs = Date.now() - start;
+
+    // Well under the 1500ms cap — an immediate failure has no reason to
+    // burn the timeout the way an unresolved GET legitimately does.
+    expect(elapsedMs).toBeLessThan(1000);
+  });
+});
+
+test.describe('Cart E2E Tests - Hydration Trigger Scope', () => {
+  test('cart-page load renders a server-only item even with a stale/empty local cart', async ({ page }) => {
+    await registerFreshUser(page, 'CartTrig');
+
+    // Add a real, server-synced item while logged in.
+    await page.goto('/product?id=1');
+    await expect(page.locator('#product-name')).not.toBeEmpty();
+    const put = page.waitForResponse((r) => r.url().includes('/api/cart') && r.request().method() === 'PUT');
+    await page.click('#add-to-cart-btn');
+    await put;
+
+    // Simulate a second device/fresh session for the same account: the
+    // local cart is empty, so only server-side hydration can produce the
+    // item (cart-hydration spec: "Cart-page load triggers hydration"). If
+    // the hydration call were ever deleted, this would render nothing.
+    await page.evaluate(() => localStorage.removeItem('cart'));
+    await page.goto('/cart');
+    await expect(page.locator('.cart__item')).toHaveCount(1);
+  });
+
+  test('navigating to a non-cart page never issues GET /api/cart', async ({ page }) => {
+    await registerFreshUser(page, 'NoTrigger');
+
+    const cartGetRequests: string[] = [];
+    page.on('request', (req) => {
+      if (req.url().includes('/api/cart') && req.method() === 'GET') cartGetRequests.push(req.url());
+    });
+
+    // Home and product pages both call CartService.loadCartFromStorage()
+    // (localStorage only) — neither is one of hydration's two triggers
+    // (login, cart-page load), so neither should ever call GET /api/cart.
+    await page.goto('/');
+    await page.goto('/product?id=1');
+    await expect(page.locator('#product-name')).not.toBeEmpty();
+
+    expect(cartGetRequests).toHaveLength(0);
+  });
+
+  test('a price change since adding the item renders one notice per drifted item', async ({ page }) => {
+    await registerFreshUser(page, 'PriceDrift');
+
+    // Two real, server-synced items with their real current prices.
+    await page.goto('/product?id=1');
+    await expect(page.locator('#product-name')).not.toBeEmpty();
+    let put = page.waitForResponse((r) => r.url().includes('/api/cart') && r.request().method() === 'PUT');
+    await page.click('#add-to-cart-btn');
+    await put;
+
+    await page.goto('/product?id=2');
+    await expect(page.locator('#product-name')).not.toBeEmpty();
+    put = page.waitForResponse((r) => r.url().includes('/api/cart') && r.request().method() === 'PUT');
+    await page.click('#add-to-cart-btn');
+    await put;
+
+    // Fake a price drift on both locally-cached items — hydration compares
+    // this against the server's actual current price for each product.
+    await page.evaluate(() => {
+      const items = JSON.parse(localStorage.getItem('cart') ?? '[]');
+      for (const item of items) item.unitPrice += 100;
+      localStorage.setItem('cart', JSON.stringify(items));
+    });
+
+    await page.goto('/cart');
+    await expect(page.locator('#cart-price-drift .alert__text')).toHaveCount(2);
   });
 });
