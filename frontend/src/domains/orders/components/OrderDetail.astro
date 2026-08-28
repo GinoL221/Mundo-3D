@@ -1,0 +1,123 @@
+---
+// Order-detail view (order-checkout spec, "Buyer order-detail response
+// DTO"). Self-contained per `frontend.domain.locality`: imports only from
+// this domain and `../../../config` — see order.service.ts. Reads the `?id=`
+// query param itself so `frontend/src/pages/order.astro` only needs to wire
+// this component into a page, matching CartList.astro's self-contained
+// script convention.
+---
+
+<div id="order-loading" style="text-align:center; padding:2rem;">Cargando orden...</div>
+
+<div id="order-error" style="display:none;">
+  <p id="order-error-message">No se pudo cargar la orden.</p>
+  <p><a href="/">Volver al inicio</a></p>
+</div>
+
+<div id="order-content" class="order-detail__container" style="display:none;">
+  <h2>Orden #<span id="order-id"></span></h2>
+  <p id="order-status"></p>
+  <p id="order-created-at"></p>
+  <p id="order-payment-reference"></p>
+
+  <table class="order-detail__items">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Cantidad</th>
+        <th>Precio unitario</th>
+        <th>Subtotal</th>
+      </tr>
+    </thead>
+    <tbody id="order-items-body"></tbody>
+  </table>
+
+  <h3>Total: $<span id="order-total"></span></h3>
+</div>
+
+<template id="order-item-row-template">
+  <tr>
+    <td class="order-item-name"></td>
+    <td class="order-item-qty"></td>
+    <td class="order-item-price"></td>
+    <td class="order-item-subtotal"></td>
+  </tr>
+</template>
+
+<script>
+  import { fetchOrder } from '../services/order.service';
+  import type { OrderViewModel } from '../services/order.service';
+  import { presentOrder } from '../services/orderPresenter';
+
+  function getOrderId(): number | null {
+    const raw = new URLSearchParams(window.location.search).get('id');
+    if (!raw) return null;
+    const id = Number.parseInt(raw, 10);
+    return Number.isNaN(id) ? null : id;
+  }
+
+  function showError(message: string): void {
+    const loadingEl = document.getElementById('order-loading');
+    const errorEl = document.getElementById('order-error');
+    const messageEl = document.getElementById('order-error-message');
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (messageEl) messageEl.textContent = message;
+    if (errorEl) errorEl.style.display = 'block';
+  }
+
+  function renderOrder(order: OrderViewModel): void {
+    const presentation = presentOrder(order);
+
+    const loadingEl = document.getElementById('order-loading');
+    const contentEl = document.getElementById('order-content');
+    const idEl = document.getElementById('order-id');
+    const statusEl = document.getElementById('order-status');
+    const createdEl = document.getElementById('order-created-at');
+    const paymentEl = document.getElementById('order-payment-reference');
+    const totalEl = document.getElementById('order-total');
+    const bodyEl = document.getElementById('order-items-body');
+    const rowTemplate = document.getElementById('order-item-row-template') as HTMLTemplateElement | null;
+
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (idEl) idEl.textContent = presentation.idOrderLabel;
+    if (statusEl) statusEl.textContent = presentation.statusLabel;
+    if (createdEl) createdEl.textContent = presentation.createdAtLabel;
+    if (paymentEl) paymentEl.textContent = presentation.paymentReferenceLabel;
+    if (totalEl) totalEl.textContent = presentation.totalLabel;
+
+    if (bodyEl && rowTemplate) {
+      bodyEl.replaceChildren();
+      presentation.items.forEach((item) => {
+        const clone = rowTemplate.content.cloneNode(true) as DocumentFragment;
+        const nameEl = clone.querySelector('.order-item-name');
+        const qtyEl = clone.querySelector('.order-item-qty');
+        const priceEl = clone.querySelector('.order-item-price');
+        const subtotalEl = clone.querySelector('.order-item-subtotal');
+        if (nameEl) nameEl.textContent = item.productName;
+        if (qtyEl) qtyEl.textContent = item.quantityLabel;
+        if (priceEl) priceEl.textContent = item.unitPriceLabel;
+        if (subtotalEl) subtotalEl.textContent = item.subtotalLabel;
+        bodyEl.appendChild(clone);
+      });
+    }
+
+    if (contentEl) contentEl.style.display = 'block';
+  }
+
+  async function loadOrder(): Promise<void> {
+    const idOrder = getOrderId();
+    if (idOrder === null) {
+      showError('Orden no encontrada.');
+      return;
+    }
+
+    const result = await fetchOrder(idOrder);
+    if (result.ok) {
+      renderOrder(result.order);
+    } else {
+      showError(result.message);
+    }
+  }
+
+  void loadOrder();
+</script>
