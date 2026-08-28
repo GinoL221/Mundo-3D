@@ -11,7 +11,7 @@
     "architecture:check": "node tools/architecture/check.js",
     "test": "jest",
     "test:fast": "jest",
-    "test:integration": "jest --config jest.integration.config.js",
+    "test:integration": "jest --config jest.integration.config.js --detectOpenHandles",
     "test:coverage": "jest --coverage && node scripts/generate-coverage-risk-map.js",
     "lint": "eslint src/",
     "format": "prettier --write \"src/**/*.js\"",
@@ -20,7 +20,10 @@
     "db:migrate": "node src/database/migrate.js up",
     "db:migrate:status": "node src/database/migrate.js pending",
     "db:migrate:down": "node src/database/migrate.js down",
-    "db:migrate:adopt-baseline": "node src/database/migrate.js adopt-baseline"
+    "db:migrate:adopt-baseline": "node src/database/migrate.js adopt-baseline",
+    "deploy:migrate-and-start": "node ../scripts/deploy/migrate-and-start.js",
+    "deploy:smoke-test": "node ../scripts/deploy/smoke-test.js",
+    "deploy:env-preflight": "node ../scripts/deploy/env-preflight.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

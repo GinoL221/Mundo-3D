@@ -72,6 +72,21 @@ async function checkNoPendingMigrations(migrator = buildMigrator()) {
   await checkPhysicalSchema(queryInterface);
 }
 
+// MySQL 8.0.19+ dropped the display-width attribute from DESCRIBE/SHOW
+// COLUMNS output for integer types not given an explicit width at CREATE
+// TABLE time — a purely cosmetic, deprecated MySQL notation, not a real
+// type difference. A real MySQL 8.0.19+ server reports `INT`, never
+// `INT(11)`, for every integer column this schema defines, so a literal
+// string comparison always failed here — this only strips a numeric
+// display-width suffix off INT/BIGINT/SMALLINT/TINYINT/MEDIUMINT, never off
+// DECIMAL (where the parenthesized numbers are real precision/scale) or any
+// other type.
+function typesAreCompatible(actualType, expectedType) {
+  if (actualType === expectedType) return true;
+  const stripDisplayWidth = (type) => type.replace(/^(TINY|SMALL|MEDIUM|BIG)?INT\(\d+\)$/, '$1INT');
+  return stripDisplayWidth(actualType) === stripDisplayWidth(expectedType);
+}
+
 async function checkPhysicalSchema(queryInterface) {
   const existingTables = new Set(await queryInterface.showAllTables());
 
@@ -94,7 +109,7 @@ async function checkPhysicalSchema(queryInterface) {
       const expectedType = expected.replace(/!$/, '');
       const expectedAllowNull = !expected.endsWith('!');
       const actualType = String(columns[column].type).toUpperCase().replace(/\s+/g, '');
-      if (actualType !== expectedType || columns[column].allowNull !== expectedAllowNull) {
+      if (!typesAreCompatible(actualType, expectedType) || columns[column].allowNull !== expectedAllowNull) {
         throw new Error(
           `Database schema has incompatible definition for column "${column}" on table "${table}": expected type ${expectedType} with allowNull=${expectedAllowNull}, got type ${actualType} with allowNull=${columns[column].allowNull}. Verify the database manually before starting the server.`
         );

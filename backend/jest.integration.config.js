@@ -18,5 +18,15 @@ module.exports = {
   // `ALTER TABLE ... ADD INDEX`, which fails with a duplicate-key error on
   // the loser. Serial execution is the correct fix: these tests share a live
   // database and shouldn't run schema/bootstrap operations concurrently.
+  //
+  // Worth knowing before changing this: package.json's `test:integration` runs
+  // with `--detectOpenHandles`, which implies `runInBand` and would serialize
+  // the suite regardless — that flag costs nothing here only because serial
+  // execution is already required. Anyone parallelizing this config has to drop
+  // the flag too, or Jest will quietly keep running everything in band.
+  //
+  // That flag also only PRINTS lingering handles; it never fails a run. The
+  // `timeout-minutes` on ci.yml's integration step is what turns a hang into a
+  // failed build. Diagnosis and guard are separate — keep both.
   maxWorkers: 1,
 };

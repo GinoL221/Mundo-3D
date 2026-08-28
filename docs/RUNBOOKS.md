@@ -1,6 +1,6 @@
 # Runbooks
 
-Operational procedures for Mundo-3D's backend. These cover the application's own behavior (boot sequence, health checks, shutdown, migrations, secrets) and CI triage — not a specific hosting platform, because none is defined in this repo yet (no `Dockerfile`, no CI step that installs with `--prod` and runs the compiled build — see the "Compiled production start" note below). Update the deploy-specific steps once a hosting target is chosen.
+Operational procedures for Mundo-3D's backend. These cover the application's own behavior (boot sequence, health checks, shutdown, migrations, secrets), CI triage, and the platform-agnostic deploy pipeline scripts (see "Deploy Pipeline" below) — not a specific hosting platform, because none is defined in this repo yet (no `Dockerfile`, no CI step that installs with `--prod` and runs the compiled build — see the "Compiled production start" note below). Update the deploy-specific steps once a hosting target is chosen.
 
 ## Reading logs
 
@@ -70,3 +70,24 @@ A second `SIGTERM`/`SIGINT` while shutdown is already in progress is a no-op —
 ## Compiled production start (no deploy target defined yet)
 
 Production is meant to run the compiled build, not `ts-node`: `pnpm --filter backend build` (emits `dist/`), then start with both `RUN_COMPILED=true` and `NODE_ENV=production` set. `RUN_COMPILED` is deliberately a separate flag from `NODE_ENV` — see `backend/index.js`'s comments — so setting `NODE_ENV=production` alone is not enough to get the compiled path; both are required together. This repo does not yet define *where* that runs (no `Dockerfile`, no orchestration config) — that's the next real gap before any of the above incidents can happen against a real production instance rather than a local/staging one.
+
+## Deploy Pipeline
+
+Three small, dependency-free Node scripts under `scripts/deploy/` (repo root) implement the platform-agnostic parts of a deploy — they don't provision or target any specific platform, they just sequence and verify what already exists. A future CD job (or a manual deploy) runs them in this order:
+
+1. **Build** — `pnpm --filter backend build` (emits `dist/`; not one of the deploy scripts, it's the existing build step).
+2. **Env preflight** — `pnpm --filter backend deploy:env-preflight`. Fails fast (exit 1) *before* the app process even starts if any required production env var is missing: `JWT_SECRET`, `CORS_ORIGIN`, `COOKIE_SECRET`, `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_HOST`, `PUBLIC_API_URL`. Lists every missing var in one message, not one at a time. `COOKIE_DOMAIN` is warn-only (exit 0 with a warning) — it's genuinely optional per `cookieOptions.ts`, but required for a cross-subdomain deploy topology specifically.
+3. **Migrate, then start** — `pnpm --filter backend deploy:migrate-and-start`. Runs `db:migrate` first; if it fails, the app is never started (exit code propagates, non-zero) — this is what actually enforces "migrations run before the new version serves traffic," since `index.js`'s own boot refuses to auto-migrate (see "Incident: backend process won't start" above). Forwards `SIGTERM`/`SIGINT` to the spawned server process so graceful shutdown still works normally when this wrapper is what the platform sends the signal to (see "Graceful shutdown" above).
+4. **Smoke test** — `pnpm --filter backend deploy:smoke-test` (needs `SMOKE_TEST_BASE_URL` pointed at the just-deployed instance). Polls `GET /health/live` then `GET /health/ready` until both return 200 or `SMOKE_TEST_TIMEOUT_MS` elapses (default 60000ms) — readiness is never checked before liveness succeeds at least once. Non-zero exit means the deploy did not actually come up healthy, regardless of what the platform's own "deploy succeeded" signal says.
+
+A non-zero exit at any step should stop the pipeline there — a build failure is a compile/lint problem, a preflight failure is a config problem, a migrate-and-start failure is a runtime/DB problem, and a smoke-test failure means the app started but never became healthy. Each failure category points somewhere different, so don't advance past a failed step assuming a later one will "recover."
+
+To test any of the three scripts locally without deploying anywhere: `pnpm test:deploy-scripts` (root) runs their `node --test` unit suites; `pnpm --filter backend deploy:smoke-test` against a `pnpm --filter backend dev` instance exercises the real script end-to-end.
+
+### Migration authoring: expand/contract
+
+Schema migrations must stay compatible with **both** the previous and the new app version during a deploy window: additive changes first (nullable columns, new tables), destructive changes (drops, renames, `NOT NULL` tightening) only in a later migration once the old code path is confirmed gone. This is a manual authoring discipline — nothing in `migrate.js`/`checkPendingMigrations.js` enforces it — and it exists so a code rollback never needs a schema rollback. `db:migrate:down` (see "Rolling back a migration" above) remains a manual last resort, not the primary safety net; a deploy that ships code and a migration together should never *need* to roll the schema back if the migration itself followed this discipline.
+
+### Note: physical-schema check now tolerates modern MySQL's integer display-width deprecation
+
+`checkPendingMigrations.js`'s boot-time physical-schema verification used to compare column types as literal strings (e.g. expecting exactly `INT(11)`). MySQL 8.0.19+ stopped reporting that display-width suffix in `DESCRIBE`/`SHOW COLUMNS` output for integer columns not given an explicit width — a real MySQL 8.0.19+ server always reports bare `INT`, never `INT(11)`, which made the boot-time check fail closed against any current MySQL release, discovered while building this deploy pipeline's own real-database integration test. Fixed to tolerate an optional display-width suffix on integer types only (never on `DECIMAL`, where the parenthesized numbers are real precision/scale). If you see a schema-incompatibility error mentioning an integer column on a *very old* MySQL server (pre-8.0.19), that's the one case this fix doesn't paper over — the display width would genuinely differ there.
