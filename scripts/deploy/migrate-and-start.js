@@ -1,7 +1,22 @@
 const childProcess = require('node:child_process');
+const os = require('node:os');
 const path = require('node:path');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
+
+// Node reports a signal-killed child as `code === null`, naming the signal
+// separately — never as an exit code. Forwarding that null to
+// `process.exitCode` resets it to "unset" and this wrapper exits 0, so an
+// orchestrator would read a deploy that was actually torn down as a clean
+// success. Map it the way a shell does (128 + signal number) instead. A child
+// that never spawned at all (status and signal both absent) is a failure too.
+function exitCodeFrom(code, signal) {
+  if (typeof code === 'number') {
+    return code;
+  }
+  const signalNumber = signal ? os.constants.signals[signal] : undefined;
+  return typeof signalNumber === 'number' ? 128 + signalNumber : 1;
+}
 
 // Runs `pnpm --filter backend db:migrate`, then only if that succeeds,
 // `pnpm --filter backend start`. index.js already refuses to auto-migrate
@@ -16,7 +31,7 @@ function run() {
   });
 
   if (migrate.status !== 0) {
-    return Promise.resolve(migrate.status);
+    return Promise.resolve(exitCodeFrom(migrate.status, migrate.signal));
   }
 
   return new Promise((resolve) => {
@@ -35,10 +50,10 @@ function run() {
     process.on('SIGTERM', onSigterm);
     process.on('SIGINT', onSigint);
 
-    child.on('exit', (code) => {
+    child.on('exit', (code, signal) => {
       process.off('SIGTERM', onSigterm);
       process.off('SIGINT', onSigint);
-      resolve(code);
+      resolve(exitCodeFrom(code, signal));
     });
   });
 }
