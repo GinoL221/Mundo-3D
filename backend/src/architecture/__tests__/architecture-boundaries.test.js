@@ -120,7 +120,7 @@ describe('rules, allowlists, and diagnostics', () => {
 
   test('S11/S17-S19 use exact composition paths without inheritance and leave Astro unparsed', () => {
     const allowed = edge('backend/src/infrastructure/routes/api/products.ts', 'backend/src/database/models/a.ts');
-    const sibling = edge('backend/src/infrastructure/routes/api/orders.ts', 'backend/src/database/models/a.ts');
+    const sibling = edge('backend/src/infrastructure/routes/api/reports.ts', 'backend/src/database/models/a.ts');
     expect(evaluateEdges([allowed, sibling], root).map((item) => item.rule)).toEqual(['composition.allowlist']);
     expect(extractEdges(`${root}/frontend/src/pages/index.astro`, "--- import x from '../domains/auth/a'; ---")).toEqual([]);
   });
