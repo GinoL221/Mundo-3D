@@ -40,6 +40,7 @@ module.exports = (sequelize) => {
     {
       tableName: 'Order',
       timestamps: false,
+      indexes: [{ unique: true, fields: ['id_user', 'idempotency_key'] }],
     },
   );
 
