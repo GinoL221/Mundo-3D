@@ -95,9 +95,9 @@ Chain strategy: stacked-to-main
 
 ### Phase 9: `SequelizeOrderRepository`, `SequelizeUnitOfWork`, `ManualPaymentGateway`
 
-- [ ] 9.1 RED+GREEN: create `SequelizeUnitOfWork.ts` implementing `UnitOfWorkPort.runInTransaction` via `db.sequelize.transaction()`, with a unit test asserting commit-on-resolve / rollback-on-throw.
-- [ ] 9.2 RED+GREEN: create `SequelizeOrderRepository.ts` implementing all 6 `OrderRepositoryPort` methods against the `Order`/`OrderItem` reserved-word-quoted tables (`Order` is a MySQL reserved word — every raw SQL reference backtick-quoted). `createWithItems` maps a `UNIQUE(id_user,idempotency_key)` violation to `DuplicateIdempotencyKeyException`. `transitionStatus` issues the guarded `UPDATE ... WHERE order_status=:from` and returns `affectedRows===1`.
-- [ ] 9.3 RED+GREEN: create `ManualPaymentGateway.ts` — `initiate` resolves synchronously with a reference and zero network calls; `confirm`/`cancel` round-trip against that same reference. Unit test asserts no `fetch`/`http` call is ever made.
+- [x] 9.1 RED+GREEN: create `SequelizeUnitOfWork.ts` implementing `UnitOfWorkPort.runInTransaction` via `db.sequelize.transaction()`, with a unit test asserting commit-on-resolve / rollback-on-throw.
+- [x] 9.2 RED+GREEN: create `SequelizeOrderRepository.ts` implementing all 6 `OrderRepositoryPort` methods against the `Order`/`OrderItem` reserved-word-quoted tables (`Order` is a MySQL reserved word — every raw SQL reference backtick-quoted). `createWithItems` maps a `UNIQUE(id_user,idempotency_key)` violation to `DuplicateIdempotencyKeyException`. `transitionStatus` issues the guarded `UPDATE ... WHERE order_status=:from` and returns `affectedRows===1`.
+- [x] 9.3 RED+GREEN: create `ManualPaymentGateway.ts` — `initiate` resolves synchronously with a reference and zero network calls; `confirm`/`cancel` round-trip against that same reference. Unit test asserts no `fetch`/`http` call is ever made.
 
 ### Phase 10: Real-DB integration tests
 
