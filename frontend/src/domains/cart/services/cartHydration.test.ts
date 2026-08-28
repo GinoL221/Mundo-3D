@@ -9,7 +9,7 @@ import {
   type ServerCartItemDTO,
 } from './cartHydration';
 import { cartItems, type CartItem } from './cartState';
-import { discardPendingSync, scheduleSync } from './cartSync';
+import { discardPendingSync, hasPendingSync, scheduleSync } from './cartSync';
 import { CartService } from './CartService';
 
 // Mirrors CartService.test.ts's stubs — hydrateFromServer gates on the same
@@ -391,7 +391,7 @@ describe('hydrateFromServer', () => {
 
       await drain(hydrateFromServer());
 
-      expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
       expect(fetchMock.mock.calls[0][1].method).toBe('PUT');
       expect(fetchMock.mock.calls[1][1].method).toBe('GET');
     });
@@ -430,6 +430,22 @@ describe('hydrateFromServer', () => {
       expect(cartItems.get()).toEqual(expectedServerItems);
       expect(localStorageMock.setItem).toHaveBeenCalledWith('cart', JSON.stringify(expectedServerItems));
       expect(fetchMock).toHaveBeenCalledTimes(1); // GET only, zero PUT
+    });
+
+    it('arms no debounce or max-wait timer as a side effect of the replace write (nano-stores-cart: hydration bypasses the scheduler)', async () => {
+      stubCookie(LOGGED_IN_COOKIE);
+      cartItems.set([{ productId: 1, name: 'Local Mario', image: 'local.jpg', unitPrice: 1500, quantity: 1 }]);
+      stubFetch({ get: () => okGetResponse([buildDto({ idProduct: 1, quantity: 2 })]) });
+
+      await drain(hydrateFromServer());
+
+      // A test that only checks the fetch count right after the GET resolves
+      // cannot tell "no burst was armed" from "a burst was armed but hasn't
+      // flushed yet" — SYNC_DEBOUNCE_MS/SYNC_MAX_WAIT_MS haven't elapsed.
+      // Advancing well past both proves the difference.
+      expect(hasPendingSync()).toBe(false);
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(fetchMock).toHaveBeenCalledTimes(1); // still just the GET — no PUT ever fired
     });
   });
 

@@ -263,3 +263,54 @@ test.describe('Cart E2E Tests - Guest-to-Account Merge on Login', () => {
     await expect(page.locator('.cart__item')).toHaveCount(2);
   });
 });
+
+test.describe('Cart E2E Tests - Login Redirect Bounded Race', () => {
+  test('redirect still fires when GET /api/cart never resolves (design.md: HYDRATION_REDIRECT_TIMEOUT_MS = 1500)', async ({ page }) => {
+    const email = `stall_${Date.now()}@example.com`;
+    const password = 'Password123!';
+
+    // Register (auto-logs in), then log out so the next login goes through
+    // LoginForm.astro's real submit handler.
+    await page.goto('/register');
+    await page.fill('#firstName', 'Stall');
+    await page.fill('#lastName', 'Test');
+    await page.fill('#email', email);
+    await page.fill('#password', password);
+    await page.fill('#confirmPassword', password);
+    await page.setInputFiles('#image', {
+      name: 'avatar.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('fake image content'),
+    });
+    await page.click('#register-btn');
+    await expect(page).toHaveURL('/');
+    await page.locator('.nav-item__trigger').hover();
+    await page.locator('#navbar-logout').click();
+    await expect(page).toHaveURL('/login');
+
+    // A GET /api/cart that never resolves is the worst case the bounded
+    // race exists for. Only GET is intercepted — the login POST itself, and
+    // any incidental PUT, are unaffected.
+    await page.route('**/api/cart', async (route) => {
+      if (route.request().method() === 'GET') {
+        await new Promise(() => {}); // never resolves
+      } else {
+        await route.continue();
+      }
+    });
+
+    const start = Date.now();
+    await page.fill('#email', email);
+    await page.fill('#password', password);
+    await page.click('#login-btn');
+    await expect(page).toHaveURL('/', { timeout: 4000 });
+    const elapsedMs = Date.now() - start;
+
+    // Bounded between the 1500ms cap and a generous ceiling for CI jitter —
+    // proves the redirect actually waited for hydration (not near-zero) AND
+    // that the wait was capped (nowhere near "forever", the failure mode a
+    // stalled GET would otherwise cause).
+    expect(elapsedMs).toBeGreaterThanOrEqual(1400);
+    expect(elapsedMs).toBeLessThan(3500);
+  });
+});

@@ -53,7 +53,7 @@
     const driftEl = document.getElementById('cart-price-drift');
     if (!driftEl) return;
 
-    driftEl.innerHTML = '';
+    driftEl.replaceChildren();
 
     if (drifts.length === 0) {
       driftEl.style.display = 'none';
