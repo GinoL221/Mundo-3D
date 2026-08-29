@@ -87,3 +87,16 @@ export function adaptAPIProduct(apiProduct: APIProduct): Product {
 export function adaptAPIProducts(apiProducts: APIProduct[]): Product[] {
   return apiProducts.map(adaptAPIProduct);
 }
+
+// `GET /api/products/search` response envelope (product-catalog-search spec,
+// "Response Envelope and Empty Results") — mirrors
+// backend/src/application/use-cases/SearchProductsUseCase.ts's
+// `ProductSearchPageDTO` exactly. `APIProduct` already covers every field
+// the storefront cards render, so it is reused as-is here.
+export interface ProductSearchPage {
+  products: APIProduct[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}

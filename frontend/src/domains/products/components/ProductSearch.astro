@@ -1,0 +1,227 @@
+---
+// Public search/filter/pagination view for the storefront `/products` page
+// (product-catalog-search spec). Self-contained per `frontend.domain.locality`:
+// imports only from this domain and `../../../config` — see
+// product.search.service.ts. State is entirely URL-driven: a native
+// `method="get"` form navigates to `/products?...`, and this component reads
+// `window.location.search` on load — no `pushState`, since
+// `astro.config.mjs` builds fully static and `Astro.url.searchParams` is a
+// build-time-only value (design.md decision #5).
+import ProductCard from './ProductCard.astro';
+---
+
+<div class="product-search">
+  <form method="get" action="/products" class="product-search__form" id="product-search-form">
+    <input type="search" name="search" id="product-search-input" placeholder="Buscar productos..." />
+    <select name="idCategory" id="product-search-category">
+      <option value="">Todas las categorías</option>
+    </select>
+    <select name="idFranchise" id="product-search-franchise">
+      <option value="">Todas las franquicias</option>
+    </select>
+    <button type="submit">Buscar</button>
+  </form>
+
+  <section class="product-grid" id="product-grid-container">
+    <p id="loading-msg" style="text-align:center; padding: 2rem;">Cargando productos...</p>
+  </section>
+
+  <nav class="product-search__pagination">
+    <a id="product-search-prev" href="#" style="display:none;">&laquo; Anterior</a>
+    <span id="product-search-page-label"></span>
+    <a id="product-search-next" href="#" style="display:none;">Siguiente &raquo;</a>
+  </nav>
+</div>
+
+<ProductCard />
+
+<template id="empty-state-template">
+  <div class="empty-state">
+    <img src="/images/illustrations/empty-state.svg" alt="Próximamente" class="empty-state-img" style="image-rendering: pixelated;" />
+    <h2>Próximamente</h2>
+    <p>Estamos preparando productos increíbles para vos.</p>
+  </div>
+</template>
+
+<template id="no-results-state-template">
+  <div class="empty-state">
+    <img src="/images/illustrations/empty-state.svg" alt="Sin resultados" class="empty-state-img" style="image-rendering: pixelated;" />
+    <h2>Sin resultados</h2>
+    <p>No encontramos productos para esa búsqueda.</p>
+  </div>
+</template>
+
+<template id="error-state-template">
+  <div class="empty-state">
+    <img src="/images/illustrations/empty-state.svg" alt="Error" class="empty-state-img" style="image-rendering: pixelated;" />
+    <h2>No se pudo cargar</h2>
+    <p>Verificá tu conexión e intentá de nuevo.</p>
+  </div>
+</template>
+
+<script>
+  import { getCategoryImg, isPlaceholderImage } from '../adapters/product.adapter';
+  import type { APIProduct } from '../adapters/product.adapter';
+  import { fetchProductSearch, fetchFilterOptions } from '../services/product.search.service';
+  import type { ProductSearchCriteria } from '../services/product.search.service';
+  import { presentProductSearchPage } from '../services/productSearchPresenter';
+
+  function getCriteria(): ProductSearchCriteria {
+    const params = new URLSearchParams(window.location.search);
+    const criteria: ProductSearchCriteria = {};
+
+    const search = params.get('search');
+    if (search) criteria.search = search;
+
+    const idCategory = params.get('idCategory');
+    if (idCategory) criteria.idCategory = Number.parseInt(idCategory, 10);
+
+    const idFranchise = params.get('idFranchise');
+    if (idFranchise) criteria.idFranchise = Number.parseInt(idFranchise, 10);
+
+    const rawPage = params.get('page');
+    const parsedPage = rawPage ? Number.parseInt(rawPage, 10) : 1;
+    criteria.page = Number.isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage;
+
+    return criteria;
+  }
+
+  function hasActiveFilters(criteria: ProductSearchCriteria): boolean {
+    return Boolean(criteria.search || criteria.idCategory !== undefined || criteria.idFranchise !== undefined);
+  }
+
+  async function rehydrateForm(criteria: ProductSearchCriteria): Promise<void> {
+    const searchInput = document.getElementById('product-search-input') as HTMLInputElement | null;
+    if (searchInput && criteria.search) searchInput.value = criteria.search;
+
+    const categorySelect = document.getElementById('product-search-category') as HTMLSelectElement | null;
+    const franchiseSelect = document.getElementById('product-search-franchise') as HTMLSelectElement | null;
+    const { categories, franchises } = await fetchFilterOptions();
+
+    if (categorySelect) {
+      for (const category of categories) {
+        const option = document.createElement('option');
+        option.value = String(category.id);
+        option.textContent = category.name;
+        categorySelect.appendChild(option);
+      }
+      if (criteria.idCategory !== undefined) categorySelect.value = String(criteria.idCategory);
+    }
+
+    if (franchiseSelect) {
+      for (const franchise of franchises) {
+        const option = document.createElement('option');
+        option.value = String(franchise.id);
+        option.textContent = franchise.name;
+        franchiseSelect.appendChild(option);
+      }
+      if (criteria.idFranchise !== undefined) franchiseSelect.value = String(criteria.idFranchise);
+    }
+  }
+
+  function showState(templateId: string, container: HTMLElement): void {
+    const template = document.getElementById(templateId) as HTMLTemplateElement | null;
+    if (!template) return;
+    container.innerHTML = '';
+    container.appendChild(template.content.cloneNode(true));
+  }
+
+  function renderGrid(products: APIProduct[], container: HTMLElement): void {
+    const cardTemplate = document.getElementById('product-card-template') as HTMLTemplateElement | null;
+    if (!cardTemplate) return;
+
+    const fragment = document.createDocumentFragment();
+    for (const product of products) {
+      const clone = cardTemplate.content.cloneNode(true) as DocumentFragment;
+
+      const catImg = getCategoryImg(product.category || 'Otras');
+      const article = clone.querySelector('article') as HTMLElement | null;
+      if (article) article.dataset.category = catImg;
+
+      const link = clone.querySelector('.product-card-link') as HTMLAnchorElement | null;
+      const img = clone.querySelector('.product-card__category-img') as HTMLImageElement | null;
+      const name = clone.querySelector('.product-card-name') as HTMLElement | null;
+      const price = clone.querySelector('.product-card-price') as HTMLElement | null;
+
+      if (link) link.href = `/product?id=${product.idProduct}`;
+      if (img) {
+        const isPlaceholder = isPlaceholderImage(product.image);
+        if (isPlaceholder) {
+          img.src = `/images/illustrations/${catImg}.svg`;
+          img.alt = product.category || 'Otras';
+          img.classList.add('product-card__category-img--pixelart');
+        } else {
+          img.src = `/img/products/${product.image}`;
+          img.alt = product.nameProduct;
+          img.classList.remove('product-card__category-img--pixelart');
+        }
+        img.addEventListener('error', () => {
+          img.src = '/images/illustrations/Otras.svg';
+          img.classList.add('product-card__category-img--pixelart');
+        });
+      }
+      if (name) name.textContent = product.nameProduct;
+      if (price) price.textContent = `$${product.price}`;
+
+      fragment.appendChild(clone);
+    }
+
+    container.innerHTML = '';
+    container.appendChild(fragment);
+  }
+
+  function renderPagination(pageLabel: string, prevHref: string | null, nextHref: string | null): void {
+    const pageLabelEl = document.getElementById('product-search-page-label');
+    const prevEl = document.getElementById('product-search-prev') as HTMLAnchorElement | null;
+    const nextEl = document.getElementById('product-search-next') as HTMLAnchorElement | null;
+
+    if (pageLabelEl) pageLabelEl.textContent = pageLabel;
+    if (prevEl) {
+      prevEl.style.display = prevHref ? 'inline' : 'none';
+      if (prevHref) prevEl.href = prevHref;
+    }
+    if (nextEl) {
+      nextEl.style.display = nextHref ? 'inline' : 'none';
+      if (nextHref) nextEl.href = nextHref;
+    }
+  }
+
+  async function loadProducts(): Promise<void> {
+    const container = document.getElementById('product-grid-container') as HTMLElement | null;
+    if (!container) return;
+
+    const criteria = getCriteria();
+    await rehydrateForm(criteria);
+
+    const result = await fetchProductSearch(criteria);
+    if (!result.ok) {
+      showState('error-state-template', container);
+      return;
+    }
+
+    const presentation = presentProductSearchPage(result.page, criteria);
+    if (presentation.isEmpty) {
+      showState(hasActiveFilters(criteria) ? 'no-results-state-template' : 'empty-state-template', container);
+      renderPagination(presentation.pageLabel, null, null);
+      return;
+    }
+
+    renderGrid(result.page.products, container);
+    renderPagination(presentation.pageLabel, presentation.prevHref, presentation.nextHref);
+  }
+
+  function disableEmptyControlsBeforeSubmit(): void {
+    const form = document.getElementById('product-search-form') as HTMLFormElement | null;
+    if (!form) return;
+
+    form.addEventListener('submit', () => {
+      const controls = form.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select');
+      controls.forEach((control) => {
+        if (!control.value) control.disabled = true;
+      });
+    });
+  }
+
+  disableEmptyControlsBeforeSubmit();
+  void loadProducts();
+</script>
