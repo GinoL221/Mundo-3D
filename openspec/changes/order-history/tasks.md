@@ -90,8 +90,8 @@ All rows `N/A` per design.md — no shell command, subprocess, git/PR automation
 
 ## Result Contract
 
-- status: pending — tasks defined, not yet applied.
-- executive_summary: 3 stacked-to-main PRs (backend domain/data → backend HTTP → frontend), 8 phases, 25 checkbox tasks, ~834 estimated changed lines.
+- status: done — all 3 stacked-to-main PRs (#89, #90, #91) plus one gap-closing follow-up (#92) merged; 28/28 tasks checked.
+- executive_summary: 3 stacked-to-main PRs (backend domain/data → backend HTTP → frontend), 8 phases, 28 checkbox tasks (25 planned + 3 added during apply for real-DB proofs/regressions), actual ~1,317 changed lines across #89 (447) + #90 (468) + #91 (410) — each PR exceeded its own per-unit estimate by ~50%, all driven by genuinely load-bearing test coverage.
 - artifacts: `openspec/changes/order-history/tasks.md`; Engram `sdd/order-history/tasks`.
 - next_recommended: sdd-apply
 - risks: (1) route-ordering regression (6.1) is the single highest-value test in the whole change — must fail first against the pre-insertion route table; (2) `distinct: true` proof (1.2) requires seeded multi-item orders or the bug stays invisible; (3) Unit 1's `OrderDTO` shared-mapper refactor touches code three other suites depend on — 3.3's full-suite re-run is mandatory, not optional; (4) Unit 2's controller constructor growing to 6 params requires updating every existing 5-arg test fixture (5.3).
