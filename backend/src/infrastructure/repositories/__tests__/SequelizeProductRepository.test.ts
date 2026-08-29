@@ -1,4 +1,4 @@
-import { QueryTypes } from 'sequelize';
+import { QueryTypes, Op, WhereOptions } from 'sequelize';
 import { SequelizeProductRepository } from '../SequelizeProductRepository';
 import db, { ProductInstance } from '../../../database/models/db';
 import { TransactionContext } from '../../../domain/ports/UnitOfWorkPort';
@@ -8,6 +8,7 @@ jest.mock('../../../database/models/db', () => ({
     findAll: jest.fn(),
     findByPk: jest.fn(),
     findOne: jest.fn(),
+    findAndCountAll: jest.fn(),
     create: jest.fn(),
     destroy: jest.fn(),
   },
@@ -590,6 +591,142 @@ describe('SequelizeProductRepository', () => {
           expect.objectContaining({ transaction: undefined })
         );
       });
+    });
+  });
+
+  describe('searchPaged', () => {
+    function mockSearchResult(overrides: { rows?: unknown[]; count?: number } = {}) {
+      jest.mocked(db.Product.findAndCountAll).mockResolvedValueOnce({
+        rows: overrides.rows ?? [],
+        count: overrides.count ?? 0,
+      } as never);
+    }
+
+    it('combines a search term across name_product and description_product with Op.or', async () => {
+      mockSearchResult();
+
+      await repository.searchPaged({ search: 'goku', limit: 20, offset: 0 });
+
+      expect(db.Product.findAndCountAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            [Op.and]: [
+              {
+                [Op.or]: [
+                  { nameProduct: { [Op.like]: '%goku%' } },
+                  { descriptionProduct: { [Op.like]: '%goku%' } },
+                ],
+              },
+            ],
+          },
+        })
+      );
+    });
+
+    it('AND-combines search, idCategory, and idFranchise when all are supplied', async () => {
+      mockSearchResult();
+
+      await repository.searchPaged({ search: 'goku', idCategory: 3, idFranchise: 5, limit: 20, offset: 0 });
+
+      const callArgs = jest.mocked(db.Product.findAndCountAll).mock.calls[0][0] as { where: WhereOptions };
+      const andConditions = (callArgs.where as Record<symbol, Record<string, unknown>[]>)[Op.and];
+      expect(andConditions).toHaveLength(3);
+      expect(andConditions).toContainEqual({ idCategory: 3 });
+      expect(andConditions).toContainEqual({ idFranchise: 5 });
+      expect(andConditions).toContainEqual({
+        [Op.or]: [
+          { nameProduct: { [Op.like]: '%goku%' } },
+          { descriptionProduct: { [Op.like]: '%goku%' } },
+        ],
+      });
+    });
+
+    it('applies only idCategory when search and idFranchise are absent', async () => {
+      mockSearchResult();
+
+      await repository.searchPaged({ idCategory: 3, limit: 20, offset: 0 });
+
+      expect(db.Product.findAndCountAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { [Op.and]: [{ idCategory: 3 }] },
+        })
+      );
+    });
+
+    it('uses an empty where clause when no filters are supplied', async () => {
+      mockSearchResult();
+
+      await repository.searchPaged({ limit: 20, offset: 0 });
+
+      expect(db.Product.findAndCountAll).toHaveBeenCalledWith(
+        expect.objectContaining({ where: {} })
+      );
+    });
+
+    it('escapes literal %, _ and \\ in the search term before building the LIKE pattern', async () => {
+      mockSearchResult();
+
+      await repository.searchPaged({ search: '50%_a\\b', limit: 20, offset: 0 });
+
+      const callArgs = jest.mocked(db.Product.findAndCountAll).mock.calls[0][0] as { where: WhereOptions };
+      const andConditions = (callArgs.where as Record<symbol, Record<symbol, unknown>[]>)[Op.and];
+      const orClause = andConditions[0] as Record<symbol, { nameProduct: Record<symbol, string> }[]>;
+      const [nameCondition] = orClause[Op.or];
+      expect(nameCondition.nameProduct[Op.like]).toBe('%50\\%\\_a\\\\b%');
+    });
+
+    it('orders by idProduct ASC and does not request distinct (belongsTo includes never multiply rows)', async () => {
+      mockSearchResult();
+
+      await repository.searchPaged({ limit: 20, offset: 0 });
+
+      const callArgs = jest.mocked(db.Product.findAndCountAll).mock.calls[0][0] as Record<string, unknown>;
+      expect(callArgs.order).toEqual([['idProduct', 'ASC']]);
+      expect(callArgs).not.toHaveProperty('distinct');
+    });
+
+    it('forwards limit and offset untouched for windowing', async () => {
+      mockSearchResult();
+
+      await repository.searchPaged({ limit: 10, offset: 30 });
+
+      expect(db.Product.findAndCountAll).toHaveBeenCalledWith(
+        expect.objectContaining({ limit: 10, offset: 30 })
+      );
+    });
+
+    it('eager-loads Category and Franchise via belongsTo include and maps rows to entities with total count', async () => {
+      mockSearchResult({
+        rows: [
+          {
+            idProduct: 1,
+            nameProduct: 'Goku Figure',
+            price: '100.00',
+            descriptionProduct: 'Desc',
+            image: 'img.jpg',
+            idCategory: 10,
+            idFranchise: 20,
+            Category: { idCategory: 10, nameCategory: 'Category A' },
+            Franchise: { idFranchise: 20, nameFranchise: 'Franchise A' },
+          },
+        ],
+        count: 1,
+      });
+
+      const result = await repository.searchPaged({ search: 'goku', limit: 20, offset: 0 });
+
+      expect(db.Product.findAndCountAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: [
+            expect.objectContaining({ model: db.Category, as: 'Category' }),
+            expect.objectContaining({ model: db.Franchise, as: 'Franchise' }),
+          ],
+        })
+      );
+      expect(result.total).toBe(1);
+      expect(result.products).toHaveLength(1);
+      expect(result.products[0].nameProduct).toBe('Goku Figure');
+      expect(result.products[0].Category?.nameCategory).toBe('Category A');
     });
   });
 
