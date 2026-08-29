@@ -1,6 +1,8 @@
-import { body } from 'express-validator';
+import { Request, Response, NextFunction } from 'express';
+import { body, query, validationResult } from 'express-validator';
 import path from 'path';
 import { ALLOWED_MATERIALS, CUSTOM_MATERIAL_PREFIX, MAX_PRODUCTION_TIME_DAYS } from '../../../domain/entities/Product';
+import { MAX_PAGE_SIZE } from '../../../application/use-cases/SearchProductsUseCase';
 
 // Image is required on create; optional on update (only validated if a file
 // was actually uploaded, since PUT allows updating a product without
@@ -162,4 +164,40 @@ export const productUpdateValidators = [
   imageValidator(false),
 
   ...optionalProductAttributeValidators,
+];
+
+// `GET /products/search` pagination/filter bounds (product-catalog-search
+// spec, "Pagination and Filter Input Validation"). Two short-circuiting
+// stages, in this order, so INVALID_PAGINATION and INVALID_FILTER stay
+// distinguishable — mirrors `orderCreateValidation`/`listMyOrdersValidation`
+// in emitting `{ error, code }` directly rather than deferring to the shared
+// `handleValidationErrors` (design decision #4). `search` is deliberately
+// unvalidated: any string is legal, trim/escape happen downstream in
+// `SequelizeProductRepository.searchPaged`. `optional({ values: 'falsy' })`
+// on idCategory/idFranchise makes `?idCategory=` (empty string, what a plain
+// HTML form GET emits when a "no filter" option is selected) mean "no
+// filter", not a 400.
+export const searchProductsValidation = [
+  query('page').optional().isInt({ min: 1 }),
+  query('pageSize').optional().isInt({ min: 1, max: MAX_PAGE_SIZE }),
+  (req: Request, res: Response, next: NextFunction): void | Response => {
+    if (!validationResult(req).isEmpty()) {
+      return res.status(400).json({
+        error: 'Parámetros de paginación inválidos',
+        code: 'INVALID_PAGINATION',
+      });
+    }
+    next();
+  },
+  query('idCategory').optional({ values: 'falsy' }).isInt({ min: 1 }),
+  query('idFranchise').optional({ values: 'falsy' }).isInt({ min: 1 }),
+  (req: Request, res: Response, next: NextFunction): void | Response => {
+    if (!validationResult(req).isEmpty()) {
+      return res.status(400).json({
+        error: 'Filtro inválido',
+        code: 'INVALID_FILTER',
+      });
+    }
+    next();
+  },
 ];
