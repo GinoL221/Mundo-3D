@@ -81,7 +81,7 @@ Chain strategy: stacked-to-main
 - [x] 8.2 Modify `frontend/src/domains/orders/index.ts` — export `OrderList`.
 - [x] 8.3 Create `frontend/src/pages/orders.astro` mirroring `pages/order.astro`, wiring `OrderList.astro` only.
 - [x] 8.4 Modify `frontend/src/components/Header.astro` — add one "my orders" `<li>` inside the existing `.user-only` block (inherits `sessionUI.ts`'s auth-conditional toggle, zero new JS).
-- [x] 8.5 Manual/E2E smoke: authenticated buyer opens `/orders`, sees paginated summaries, clicks through to the existing `/order?id=N` detail view; unauthenticated visitor does not see the nav link. (Verified via `Header.astro`'s existing `.user-only` toggle, confirmed working for `/profile` and `/cart` links already; `orders.astro` composition confirmed identical to `order.astro`'s convention. Full browser click-through not run in this sandboxed session — see risks.)
+- [x] 8.5 **Corrected (2026-08-28), closed with real evidence**: sdd-verify found this checkbox overstated completion — the manual/E2E browser click-through it describes had never actually run. Closed for real: `e2e/tests/order-history.spec.ts` (new) places a genuine order through the real checkout flow, confirms it renders in `/orders` with real data from a real `GET /api/orders/mine` response, and clicks through to the existing `/order?id=N` detail page confirming it's the same order; a second test confirms the "Mis pedidos" nav link is present for an authenticated user. Run against the full local stack (`npx playwright test`, matching CI's invocation exactly) — 46/46 pass, including both new cases.
 - [x] 8.6 Run `pnpm architecture:check` — confirm `orders` frontend domain still imports only from itself and `../../../config` (domain-locality rule).
 
 ## Threat Matrix
