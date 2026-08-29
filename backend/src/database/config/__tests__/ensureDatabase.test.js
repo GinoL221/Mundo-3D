@@ -33,4 +33,21 @@ describe('ensureDatabaseExists', () => {
     expect(mysql.createConnection).toHaveBeenCalledTimes(1);
     expect(query).toHaveBeenCalledWith(expect.stringContaining('CREATE DATABASE IF NOT EXISTS'));
   });
+
+  // spec: managed-database-connectivity — "No Database Creation in Production".
+  // The managed DB pre-exists and the scoped user lacks CREATE DATABASE, so the
+  // production path must be a total no-op: no raw mysql2 connection, no
+  // `CREATE DATABASE`, while still resolving `undefined` to keep the boot
+  // chain's `.then()` shape intact.
+  it('is a no-op in production — never opens a raw connection', async () => {
+    await expect(ensureDatabaseExists('production')).resolves.toBeUndefined();
+    expect(mysql.createConnection).not.toHaveBeenCalled();
+  });
+
+  it('still validates an unsupported NODE_ENV before the production short-circuit', async () => {
+    await expect(ensureDatabaseExists('staging')).rejects.toThrow(
+      "Unsupported NODE_ENV: 'staging' — expected one of: development, test, production"
+    );
+    expect(mysql.createConnection).not.toHaveBeenCalled();
+  });
 });
