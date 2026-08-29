@@ -1,4 +1,4 @@
-import type { OrderViewModel } from './order.service';
+import type { OrderViewModel, MyOrdersPageViewModel } from './order.service';
 
 // Pure formatting layer between the fetched OrderViewModel and
 // OrderDetail.astro's DOM-writing script. Extracted so the actual rendering
@@ -41,5 +41,40 @@ export function presentOrder(order: OrderViewModel): OrderPresentation {
       unitPriceLabel: `$ ${formatCurrency(item.unitPrice)}`,
       subtotalLabel: `$ ${formatCurrency(item.subtotal)}`,
     })),
+  };
+}
+
+// Order-history list rows — pure formatting layer for OrderList.astro,
+// mirroring presentOrder's rationale above. Reuses the same private
+// formatCurrency helper.
+export interface OrderSummaryRow {
+  idOrderLabel: string;
+  statusLabel: string;
+  totalLabel: string;
+  createdAtLabel: string;
+  detailHref: string;
+}
+
+export interface MyOrdersPresentation {
+  rows: OrderSummaryRow[];
+  isEmpty: boolean;
+  pageLabel: string;
+  prevHref: string | null;
+  nextHref: string | null;
+}
+
+export function presentMyOrdersPage(page: MyOrdersPageViewModel): MyOrdersPresentation {
+  return {
+    rows: page.orders.map((order) => ({
+      idOrderLabel: String(order.idOrder),
+      statusLabel: `Estado: ${order.status}`,
+      totalLabel: formatCurrency(order.totalAmount),
+      createdAtLabel: new Date(order.createdAt).toLocaleString('es-AR'),
+      detailHref: `/order?id=${order.idOrder}`,
+    })),
+    isEmpty: page.orders.length === 0,
+    pageLabel: `Página ${page.page} de ${Math.max(page.totalPages, 1)}`,
+    prevHref: page.page > 1 ? `/orders?page=${page.page - 1}` : null,
+    nextHref: page.page < page.totalPages ? `/orders?page=${page.page + 1}` : null,
   };
 }

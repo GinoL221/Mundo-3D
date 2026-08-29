@@ -55,3 +55,67 @@ export async function fetchOrder(idOrder: number): Promise<FetchOrderResult> {
   const order = (await res.json()) as OrderViewModel;
   return { ok: true, order };
 }
+
+// Mirrors backend/src/application/dtos/OrderDTO.ts's `OrderSummaryDTO`
+// exactly (order-history spec, "Buyer-Scoped Order Listing") — no `items`
+// key, unlike `OrderViewModel` above.
+export interface OrderSummaryViewModel {
+  idOrder: number;
+  idUser: number;
+  status: string;
+  totalAmount: number;
+  createdAt: string;
+  paymentReference: string | null;
+}
+
+export interface MyOrdersPageViewModel {
+  orders: OrderSummaryViewModel[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+export type FetchMyOrdersErrorCode = 'UNAUTHENTICATED' | 'INVALID_PAGINATION' | 'NETWORK' | 'UNKNOWN';
+
+export type FetchMyOrdersResult =
+  | { ok: true; page: MyOrdersPageViewModel }
+  | { ok: false; code: FetchMyOrdersErrorCode; message: string };
+
+/**
+ * `GET /api/orders/mine` — buyer-scoped, paginated order history
+ * (order-history spec). Same discriminated-union shape as `fetchOrder`
+ * above: try/catch -> NETWORK, 401 -> UNAUTHENTICATED,
+ * 400 -> INVALID_PAGINATION, other non-ok -> UNKNOWN.
+ */
+export async function fetchMyOrders(page?: number, pageSize?: number): Promise<FetchMyOrdersResult> {
+  const params = new URLSearchParams();
+  if (page !== undefined) params.set('page', String(page));
+  if (pageSize !== undefined) params.set('pageSize', String(pageSize));
+  const query = params.toString();
+
+  let res: Response;
+  try {
+    res = await fetch(
+      `${API_URL}/api/orders/mine${query ? `?${query}` : ''}`,
+      withCredentials({ method: 'GET' }),
+    );
+  } catch {
+    return { ok: false, code: 'NETWORK', message: 'No se pudo conectar con el servidor.' };
+  }
+
+  if (res.status === 401) {
+    return { ok: false, code: 'UNAUTHENTICATED', message: 'Necesitás iniciar sesión.' };
+  }
+
+  if (res.status === 400) {
+    return { ok: false, code: 'INVALID_PAGINATION', message: 'Parámetros de paginación inválidos.' };
+  }
+
+  if (!res.ok) {
+    return { ok: false, code: 'UNKNOWN', message: `Error ${res.status}` };
+  }
+
+  const page_ = (await res.json()) as MyOrdersPageViewModel;
+  return { ok: true, page: page_ };
+}

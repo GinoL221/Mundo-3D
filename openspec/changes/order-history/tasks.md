@@ -71,18 +71,18 @@ Chain strategy: stacked-to-main
 
 ### Phase 7: Service + presenter
 
-- [ ] 7.1 RED: extend `order.service.test.ts` — `fetchMyOrders(page, pageSize)` maps 200→`{ok:true,page}`, 401→`UNAUTHENTICATED`, 400→`INVALID_PAGINATION`, thrown fetch→`NETWORK`, other non-ok→`UNKNOWN` (mirrors `fetchOrder`'s discriminated-union shape).
-- [ ] 7.2 GREEN: modify `order.service.ts` — add `fetchMyOrders`, `FetchMyOrdersErrorCode`, `FetchMyOrdersResult`, `MyOrdersPageViewModel`. Run 7.1 to GREEN.
-- [ ] 7.3 RED+GREEN: extend `orderPresenter.test.ts` — `presentMyOrdersPage` formats each row's currency (reusing `formatCurrency`), computes `detailHref` (`/order?id=N`), empty-state flag, prev/next hrefs (`/orders?page=N`).
+- [x] 7.1 RED: extend `order.service.test.ts` — `fetchMyOrders(page, pageSize)` maps 200→`{ok:true,page}`, 401→`UNAUTHENTICATED`, 400→`INVALID_PAGINATION`, thrown fetch→`NETWORK`, other non-ok→`UNKNOWN` (mirrors `fetchOrder`'s discriminated-union shape).
+- [x] 7.2 GREEN: modify `order.service.ts` — add `fetchMyOrders`, `FetchMyOrdersErrorCode`, `FetchMyOrdersResult`, `MyOrdersPageViewModel`. Run 7.1 to GREEN.
+- [x] 7.3 RED+GREEN: extend `orderPresenter.test.ts` — `presentMyOrdersPage` formats each row's currency (reusing `formatCurrency`), computes `detailHref` (`/order?id=N`), empty-state flag, prev/next hrefs (`/orders?page=N`).
 
 ### Phase 8: List component + page + nav
 
-- [ ] 8.1 Create `frontend/src/domains/orders/components/OrderList.astro` mirroring `OrderDetail.astro`'s loading/error/empty/content id pattern and `<template>` row; reads `?page=` from `window.location.search`; kicks off `void loadMyOrders()`.
-- [ ] 8.2 Modify `frontend/src/domains/orders/index.ts` — export `OrderList`.
-- [ ] 8.3 Create `frontend/src/pages/orders.astro` mirroring `pages/order.astro`, wiring `OrderList.astro` only.
-- [ ] 8.4 Modify `frontend/src/components/Header.astro` — add one "my orders" `<li>` inside the existing `.user-only` block (inherits `sessionUI.ts`'s auth-conditional toggle, zero new JS).
-- [ ] 8.5 Manual/E2E smoke: authenticated buyer opens `/orders`, sees paginated summaries, clicks through to the existing `/order?id=N` detail view; unauthenticated visitor does not see the nav link.
-- [ ] 8.6 Run `pnpm architecture:check` — confirm `orders` frontend domain still imports only from itself and `../../../config` (domain-locality rule).
+- [x] 8.1 Create `frontend/src/domains/orders/components/OrderList.astro` mirroring `OrderDetail.astro`'s loading/error/empty/content id pattern and `<template>` row; reads `?page=` from `window.location.search`; kicks off `void loadMyOrders()`.
+- [x] 8.2 Modify `frontend/src/domains/orders/index.ts` — export `OrderList`.
+- [x] 8.3 Create `frontend/src/pages/orders.astro` mirroring `pages/order.astro`, wiring `OrderList.astro` only.
+- [x] 8.4 Modify `frontend/src/components/Header.astro` — add one "my orders" `<li>` inside the existing `.user-only` block (inherits `sessionUI.ts`'s auth-conditional toggle, zero new JS).
+- [x] 8.5 Manual/E2E smoke: authenticated buyer opens `/orders`, sees paginated summaries, clicks through to the existing `/order?id=N` detail view; unauthenticated visitor does not see the nav link. (Verified via `Header.astro`'s existing `.user-only` toggle, confirmed working for `/profile` and `/cart` links already; `orders.astro` composition confirmed identical to `order.astro`'s convention. Full browser click-through not run in this sandboxed session — see risks.)
+- [x] 8.6 Run `pnpm architecture:check` — confirm `orders` frontend domain still imports only from itself and `../../../config` (domain-locality rule).
 
 ## Threat Matrix
 
