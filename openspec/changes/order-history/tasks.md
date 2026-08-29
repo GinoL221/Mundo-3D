@@ -50,22 +50,22 @@ Chain strategy: stacked-to-main
 
 ### Phase 4: Pagination validation (existing file)
 
-- [ ] 4.1 RED: extend the EXISTING `backend/src/infrastructure/middlewares/validators/orderValidators.ts` test file — invalid `page` (0, negative, non-numeric) and invalid `pageSize` (0, negative, 51, non-numeric) each reject with 400 `{ error, code: 'INVALID_PAGINATION' }`; omitted values pass through.
-- [ ] 4.2 GREEN: append `listMyOrdersValidation` to `orderValidators.ts` (NOT a new file) — `query('page').optional().isInt({min:1})`, `query('pageSize').optional().isInt({min:1,max:MAX_PAGE_SIZE})`, terminal middleware emitting `{error, code:'INVALID_PAGINATION'}`, following `orderCreateValidation`'s exact pattern. Run 4.1 to GREEN.
+- [x] 4.1 RED: extend the EXISTING `backend/src/infrastructure/middlewares/validators/orderValidators.ts` test file — invalid `page` (0, negative, non-numeric) and invalid `pageSize` (0, negative, 51, non-numeric) each reject with 400 `{ error, code: 'INVALID_PAGINATION' }`; omitted values pass through. (No dedicated unit test file existed yet for `orderValidators.ts` — created `middlewares/validators/__tests__/orderValidators.test.ts`, matching the sibling `franchiseValidators.test.ts` location convention; the file itself was extended, not replaced.)
+- [x] 4.2 GREEN: append `listMyOrdersValidation` to `orderValidators.ts` (NOT a new file) — `query('page').optional().isInt({min:1})`, `query('pageSize').optional().isInt({min:1,max:MAX_PAGE_SIZE})`, terminal middleware emitting `{error, code:'INVALID_PAGINATION'}`, following `orderCreateValidation`'s exact pattern. Run 4.1 to GREEN.
 
 ### Phase 5: Controller
 
-- [ ] 5.1 RED: extend `OrderApiController.test.ts` — `listMine` reads `req.user!.userId`; defaults `page=1`/`pageSize=20` when query params absent; parses provided query params; delegates to `ListMyOrdersUseCase.execute`; no `handleDomainError` call (a read raises no domain exception).
-- [ ] 5.2 GREEN: add a 6th constructor param `listMyOrdersUseCase` (appended) and `listMine` handler to `OrderApiController.ts`. Run 5.1 to GREEN.
-- [ ] 5.3 Regression: confirm every EXISTING 5-arg `new OrderApiController(...)` test construction still compiles and passes after the constructor grows to 6 params — update each fixture to pass the 6th fake. `cd backend && npx jest OrderApiController`.
+- [x] 5.1 RED: extend `OrderApiController.test.ts` — `listMine` reads `req.user!.userId`; defaults `page=1`/`pageSize=20` when query params absent; parses provided query params; delegates to `ListMyOrdersUseCase.execute`; no `handleDomainError` call (a read raises no domain exception).
+- [x] 5.2 GREEN: add a 6th constructor param `listMyOrdersUseCase` (appended) and `listMine` handler to `OrderApiController.ts`. Run 5.1 to GREEN.
+- [x] 5.3 Regression: confirm every EXISTING 5-arg `new OrderApiController(...)` test construction still compiles and passes after the constructor grows to 6 params — update each fixture to pass the 6th fake. `cd backend && npx jest OrderApiController`. (22/22 pass.)
 
 ### Phase 6: Route wiring + ordering regression
 
-- [ ] 6.1 RED: extend the orders route test suite — `GET /orders/mine` returns the paginated envelope, NOT `show`'s 400 "Id de orden inválido"; this test MUST fail first against today's route order (route not yet inserted) to prove the ordering hazard (`parseInt('mine') → NaN → 400`) is real, not assumed.
-- [ ] 6.2 GREEN: modify `backend/src/infrastructure/routes/api/orders.ts` — wire `ListMyOrdersUseCase`; insert `router.get('/orders/mine', apiAuthMiddleware, listMyOrdersValidation, controller.listMine)` BEFORE `router.get('/orders/:id', ...)`. Run 6.1 to GREEN.
-- [ ] 6.3 RED+GREEN: extend the route suite with full spec coverage — buyer sees only own orders; cross-user isolation across any `page`/`pageSize`; unauthenticated → 401; defaults `page=1`/`pageSize=20`; custom `page=2&pageSize=10`; empty history → 200 `{orders:[],total:0}`; page past last → 200 `{orders:[],total:same}`; summary entries have no `items` key; newest-first ordering.
-- [ ] 6.4 Regression: run the EXISTING admin `GET /api/orders` / `ListOrdersUseCase` suite unchanged — zero code changes required, all green. `cd backend && npx jest orders`.
-- [ ] 6.5 Run `pnpm architecture:check` — confirm no new boundary violations (`orders` composition root already allowlisted from orders-checkout).
+- [x] 6.1 RED: extend the orders route test suite — `GET /orders/mine` returns the paginated envelope, NOT `show`'s 400 "Id de orden inválido"; this test MUST fail first against today's route order (route not yet inserted) to prove the ordering hazard (`parseInt('mine') → NaN → 400`) is real, not assumed. (Confirmed: 14 new tests failed pre-fix, several with the exact 400 "Id de orden inválido" symptom.)
+- [x] 6.2 GREEN: modify `backend/src/infrastructure/routes/api/orders.ts` — wire `ListMyOrdersUseCase`; insert `router.get('/orders/mine', apiAuthMiddleware, listMyOrdersValidation, controller.listMine)` BEFORE `router.get('/orders/:id', ...)`. Run 6.1 to GREEN.
+- [x] 6.3 RED+GREEN: extend the route suite with full spec coverage — buyer sees only own orders; cross-user isolation across any `page`/`pageSize`; unauthenticated → 401; defaults `page=1`/`pageSize=20`; custom `page=2&pageSize=10`; empty history → 200 `{orders:[],total:0}`; page past last → 200 `{orders:[],total:same}`; summary entries have no `items` key; newest-first ordering.
+- [x] 6.4 Regression: run the EXISTING admin `GET /api/orders` / `ListOrdersUseCase` suite unchanged — zero code changes required, all green. `cd backend && npx jest orders`. (Zero code changes to that describe block; all green.)
+- [x] 6.5 Run `pnpm architecture:check` — confirm no new boundary violations (`orders` composition root already allowlisted from orders-checkout). (Clean, zero violations.)
 
 ## Work Unit 3: Frontend
 

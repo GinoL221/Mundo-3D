@@ -10,10 +10,11 @@ import { GetOrderByIdUseCase } from '../../../application/use-cases/GetOrderById
 import { ListOrdersUseCase } from '../../../application/use-cases/ListOrdersUseCase';
 import { ConfirmOrderPaymentUseCase } from '../../../application/use-cases/ConfirmOrderPaymentUseCase';
 import { CancelOrderUseCase } from '../../../application/use-cases/CancelOrderUseCase';
+import { ListMyOrdersUseCase } from '../../../application/use-cases/ListMyOrdersUseCase';
 import { OrderApiController } from '../../controllers/OrderApiController';
 import { apiAuthMiddleware, adminGuard } from '../../middlewares/auth';
 import { csrfGuard } from '../../middlewares/csrf';
-import { orderCreateValidation } from '../../middlewares/validators/orderValidators';
+import { orderCreateValidation, listMyOrdersValidation } from '../../middlewares/validators/orderValidators';
 
 const router = Router();
 
@@ -29,13 +30,15 @@ const getOrderByIdUseCase = new GetOrderByIdUseCase(orderRepo);
 const listOrdersUseCase = new ListOrdersUseCase(orderRepo);
 const confirmOrderPaymentUseCase = new ConfirmOrderPaymentUseCase(orderRepo);
 const cancelOrderUseCase = new CancelOrderUseCase(uow, orderRepo, productRepo);
+const listMyOrdersUseCase = new ListMyOrdersUseCase(orderRepo);
 
 const controller = new OrderApiController(
   createOrderUseCase,
   getOrderByIdUseCase,
   listOrdersUseCase,
   confirmOrderPaymentUseCase,
-  cancelOrderUseCase
+  cancelOrderUseCase,
+  listMyOrdersUseCase
 );
 
 /**
@@ -83,6 +86,43 @@ const controller = new OrderApiController(
  *             schema: { type: array, items: { $ref: '#/components/schemas/Order' } }
  *       '401': { description: Not authenticated. }
  *       '403': { description: Authenticated but not ADMIN. }
+ * /orders/mine:
+ *   get:
+ *     summary: List the caller's own orders, paginated
+ *     description: >
+ *       Buyer-scoped order history (order-history spec). Registered before
+ *       `/orders/{id}` — "mine" must never be captured by that route's `:id`
+ *       param.
+ *     tags: [Orders]
+ *     security: [{ cookieAuth: [] }]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, minimum: 1, default: 1 }
+ *       - in: query
+ *         name: pageSize
+ *         schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+ *     responses:
+ *       '200':
+ *         description: Paginated summary list of the caller's own orders.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 orders:
+ *                   type: array
+ *                   items: { $ref: '#/components/schemas/OrderSummary' }
+ *                 page: { type: integer }
+ *                 pageSize: { type: integer }
+ *                 total: { type: integer }
+ *                 totalPages: { type: integer }
+ *       '400':
+ *         description: Invalid page/pageSize.
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/ErrorWithCode' }
+ *       '401': { description: Not authenticated. }
  * /orders/{id}:
  *   get:
  *     summary: Get one order by id
@@ -165,6 +205,11 @@ const controller = new OrderApiController(
 // non-owner (avoids order-id enumeration), with an ADMIN bypass — design.md
 // "Routes and the ADMIN guard".
 router.post('/orders', apiAuthMiddleware, csrfGuard, orderCreateValidation, controller.create);
+// ORDER-SENSITIVE: MUST be registered before `/orders/:id` — otherwise
+// Express matches "mine" as the `:id` param, `parseInt('mine', 10)` is
+// `NaN`, and the buyer gets `show`'s 400 "Id de orden inválido" instead of
+// their order list (design.md, order-history change).
+router.get('/orders/mine', apiAuthMiddleware, listMyOrdersValidation, controller.listMine);
 router.get('/orders/:id', apiAuthMiddleware, controller.show);
 router.get('/orders', apiAuthMiddleware, adminGuard, controller.index);
 router.post('/orders/:id/confirm-payment', apiAuthMiddleware, csrfGuard, adminGuard, controller.confirmPayment);

@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
+import { query, validationResult } from 'express-validator';
+import { MAX_PAGE_SIZE } from '../../../application/use-cases/ListMyOrdersUseCase';
 
 const IDEMPOTENCY_KEY_HEADER = 'idempotency-key';
 
@@ -28,3 +30,25 @@ export const orderCreateValidation = (
 
   next();
 };
+
+// `GET /orders/mine` pagination bounds (order-history spec, "Pagination
+// Parameter Validation"). Like `orderCreateValidation` above, this emits the
+// `{ error, code }` shape the client branches on rather than deferring to
+// the shared `handleValidationErrors` (design decision #4): there is no
+// domain exception behind an out-of-range page/pageSize, and the generic
+// validator's `{ errors: [...] }` body can't carry a `code` field. Omitted
+// values are valid — `ListMyOrdersUseCase`/the controller apply the
+// page=1/pageSize=20 defaults.
+export const listMyOrdersValidation = [
+  query('page').optional().isInt({ min: 1 }),
+  query('pageSize').optional().isInt({ min: 1, max: MAX_PAGE_SIZE }),
+  (req: Request, res: Response, next: NextFunction): void | Response => {
+    if (!validationResult(req).isEmpty()) {
+      return res.status(400).json({
+        error: 'Parámetros de paginación inválidos',
+        code: 'INVALID_PAGINATION',
+      });
+    }
+    next();
+  },
+];

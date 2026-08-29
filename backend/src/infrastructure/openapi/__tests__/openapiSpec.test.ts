@@ -40,6 +40,7 @@ const EXPECTED_ENDPOINTS: Array<[path: string, method: string]> = [
   // orders.ts
   ['/orders', 'post'],
   ['/orders', 'get'],
+  ['/orders/mine', 'get'],
   ['/orders/{id}', 'get'],
   ['/orders/{id}/confirm-payment', 'post'],
   ['/orders/{id}/cancel', 'post'],

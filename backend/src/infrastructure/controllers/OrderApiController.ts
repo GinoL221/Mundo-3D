@@ -4,6 +4,7 @@ import { GetOrderByIdUseCase } from '../../application/use-cases/GetOrderByIdUse
 import { ListOrdersUseCase } from '../../application/use-cases/ListOrdersUseCase';
 import { ConfirmOrderPaymentUseCase } from '../../application/use-cases/ConfirmOrderPaymentUseCase';
 import { CancelOrderUseCase } from '../../application/use-cases/CancelOrderUseCase';
+import { ListMyOrdersUseCase, DEFAULT_PAGE_SIZE } from '../../application/use-cases/ListMyOrdersUseCase';
 import { EmptyCartException } from '../../domain/exceptions/EmptyCartException';
 import { InsufficientStockException } from '../../domain/exceptions/InsufficientStockException';
 import { IllegalOrderTransitionException } from '../../domain/exceptions/IllegalOrderTransitionException';
@@ -19,7 +20,8 @@ export class OrderApiController {
     private readonly getOrderByIdUseCase: GetOrderByIdUseCase,
     private readonly listOrdersUseCase: ListOrdersUseCase,
     private readonly confirmOrderPaymentUseCase: ConfirmOrderPaymentUseCase,
-    private readonly cancelOrderUseCase: CancelOrderUseCase
+    private readonly cancelOrderUseCase: CancelOrderUseCase,
+    private readonly listMyOrdersUseCase: ListMyOrdersUseCase
   ) {}
 
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -99,6 +101,22 @@ export class OrderApiController {
       if (this.handleDomainError(error, res)) {
         return;
       }
+      next(error);
+    }
+  };
+
+  // Buyer-scoped, paginated order history (order-history spec). A read
+  // raises no domain exception, so unexpected errors go straight to `next`
+  // — no `handleDomainError` call, unlike the mutating handlers above.
+  listMine = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+      const pageSize = req.query.pageSize
+        ? parseInt(req.query.pageSize as string, 10)
+        : DEFAULT_PAGE_SIZE;
+      const result = await this.listMyOrdersUseCase.execute(req.user!.userId, page, pageSize);
+      res.json(result);
+    } catch (error) {
       next(error);
     }
   };

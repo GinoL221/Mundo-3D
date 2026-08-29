@@ -5,6 +5,7 @@ import { GetOrderByIdUseCase } from '../../../application/use-cases/GetOrderById
 import { ListOrdersUseCase } from '../../../application/use-cases/ListOrdersUseCase';
 import { ConfirmOrderPaymentUseCase } from '../../../application/use-cases/ConfirmOrderPaymentUseCase';
 import { CancelOrderUseCase } from '../../../application/use-cases/CancelOrderUseCase';
+import { ListMyOrdersUseCase } from '../../../application/use-cases/ListMyOrdersUseCase';
 import { EmptyCartException } from '../../../domain/exceptions/EmptyCartException';
 import { InsufficientStockException } from '../../../domain/exceptions/InsufficientStockException';
 import { IllegalOrderTransitionException } from '../../../domain/exceptions/IllegalOrderTransitionException';
@@ -17,6 +18,7 @@ describe('OrderApiController', () => {
   let mockListOrdersUseCase: jest.Mocked<ListOrdersUseCase>;
   let mockConfirmOrderPaymentUseCase: jest.Mocked<ConfirmOrderPaymentUseCase>;
   let mockCancelOrderUseCase: jest.Mocked<CancelOrderUseCase>;
+  let mockListMyOrdersUseCase: jest.Mocked<ListMyOrdersUseCase>;
 
   let req: Partial<Request>;
   let res: Partial<Response>;
@@ -38,13 +40,15 @@ describe('OrderApiController', () => {
     mockListOrdersUseCase = { execute: jest.fn() } as any;
     mockConfirmOrderPaymentUseCase = { execute: jest.fn() } as any;
     mockCancelOrderUseCase = { execute: jest.fn() } as any;
+    mockListMyOrdersUseCase = { execute: jest.fn() } as any;
 
     controller = new OrderApiController(
       mockCreateOrderUseCase,
       mockGetOrderByIdUseCase,
       mockListOrdersUseCase,
       mockConfirmOrderPaymentUseCase,
-      mockCancelOrderUseCase
+      mockCancelOrderUseCase,
+      mockListMyOrdersUseCase
     );
 
     req = { params: {}, body: {}, headers: {}, user: { userId: 7, idRole: Role.USER } };
@@ -274,6 +278,56 @@ describe('OrderApiController', () => {
       await controller.cancel(req as Request, res as Response, next);
 
       expect(next).toHaveBeenCalledWith(error);
+    });
+  });
+
+  describe('listMine', () => {
+    const samplePage = {
+      orders: [
+        {
+          idOrder: 41,
+          idUser: 7,
+          status: 'AWAITING_PAYMENT',
+          totalAmount: 3000,
+          createdAt: '2026-08-28T14:03:11.000Z',
+          paymentReference: null,
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 1,
+      totalPages: 1,
+    };
+
+    it('reads req.user.userId and defaults page=1/pageSize=20 when omitted', async () => {
+      req.query = {};
+      mockListMyOrdersUseCase.execute.mockResolvedValue(samplePage as any);
+
+      await controller.listMine(req as Request, res as Response, next);
+
+      expect(mockListMyOrdersUseCase.execute).toHaveBeenCalledWith(7, 1, 20);
+      expect(res.json).toHaveBeenCalledWith(samplePage);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('parses provided page/pageSize query params', async () => {
+      req.query = { page: '2', pageSize: '10' };
+      mockListMyOrdersUseCase.execute.mockResolvedValue(samplePage as any);
+
+      await controller.listMine(req as Request, res as Response, next);
+
+      expect(mockListMyOrdersUseCase.execute).toHaveBeenCalledWith(7, 2, 10);
+    });
+
+    it('forwards unexpected errors to next without calling handleDomainError mappings', async () => {
+      req.query = {};
+      const error = new Error('DB is down');
+      mockListMyOrdersUseCase.execute.mockRejectedValue(error);
+
+      await controller.listMine(req as Request, res as Response, next);
+
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
     });
   });
 });

@@ -7,7 +7,10 @@
 // countByCategory map in ListProductsUseCase, or the `{ error, code }`
 // envelope used by domain-error mapping), against the actual controller code
 // — never guessed. Kept as plain objects (not TS interfaces) so swagger-jsdoc
-// can embed them verbatim into `components.schemas`.
+// can embed them verbatim into `components.schemas`. Order-related schemas
+// live in `orderOpenapiSchemas.ts` (split out to stay under the 250-line cap).
+
+import { orderOpenapiSchemas } from './orderOpenapiSchemas';
 
 const errorSchema = {
   type: 'object',
@@ -192,33 +195,6 @@ const usersIndexResponseSchema = {
   required: ['count', 'users'],
 };
 
-const orderItemSchema = {
-  type: 'object',
-  properties: {
-    idOrderItem: { type: 'integer' },
-    idProduct: { type: 'integer', nullable: true },
-    productName: { type: 'string' },
-    quantity: { type: 'integer' },
-    unitPrice: { type: 'number' },
-    subtotal: { type: 'number' },
-  },
-  required: ['idOrderItem', 'idProduct', 'productName', 'quantity', 'unitPrice', 'subtotal'],
-};
-
-const orderSchema = {
-  type: 'object',
-  properties: {
-    idOrder: { type: 'integer' },
-    idUser: { type: 'integer' },
-    status: { type: 'string' },
-    items: { type: 'array', items: { $ref: '#/components/schemas/OrderItem' } },
-    totalAmount: { type: 'number' },
-    createdAt: { type: 'string', format: 'date-time' },
-    paymentReference: { type: 'string', nullable: true },
-  },
-  required: ['idOrder', 'idUser', 'status', 'items', 'totalAmount', 'createdAt', 'paymentReference'],
-};
-
 export const openapiSchemas = {
   Error: errorSchema,
   ErrorWithCode: errorWithCodeSchema,
@@ -236,6 +212,5 @@ export const openapiSchemas = {
   User: userSchema,
   AuthResponse: authResponseSchema,
   UsersIndexResponse: usersIndexResponseSchema,
-  OrderItem: orderItemSchema,
-  Order: orderSchema,
+  ...orderOpenapiSchemas,
 };
