@@ -5,7 +5,7 @@ import {
 } from '../../domain/ports/UnitOfWorkPort';
 import { OrderRepositoryPort, NewOrderItemInput } from '../../domain/ports/OrderRepositoryPort';
 import { ShoppingCartRepositoryPort } from '../../domain/ports/ShoppingCartRepositoryPort';
-import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { ProductRepositoryPort, ProductSearchOptions, PagedProducts } from '../../domain/ports/ProductRepositoryPort';
 import { PaymentGatewayPort, PaymentIntent, InitiatePaymentInput } from '../../domain/ports/PaymentGatewayPort';
 import { LoggerPort } from '../../domain/ports/LoggerPort';
 import { Order, OrderStatus } from '../../domain/entities/Order';
@@ -184,6 +184,12 @@ class FakeProductRepository implements ProductRepositoryPort {
 
   async delete(): Promise<boolean> {
     throw new Error('delete is not exercised by checkout');
+  }
+
+  // product-catalog-search: not exercised by checkout, stubbed only to
+  // satisfy `ProductRepositoryPort` (see design.md's flagged risk).
+  async searchPaged(_options: ProductSearchOptions): Promise<PagedProducts> {
+    throw new Error('searchPaged is not exercised by checkout');
   }
 
   async adjustStock(id: number, delta: number): Promise<Product | null> {

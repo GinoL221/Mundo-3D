@@ -24,6 +24,7 @@ describe('SyncCartUseCase', () => {
       update: jest.fn(),
       delete: jest.fn(),
       adjustStock: jest.fn(),
+      searchPaged: jest.fn(),
     };
 
     useCase = new SyncCartUseCase(cartRepoMock, productRepoMock);

@@ -2,9 +2,10 @@ import { QueryTypes, Transaction } from 'sequelize';
 import { Product } from '../../domain/entities/Product';
 import { Category } from '../../domain/entities/Category';
 import { Franchise } from '../../domain/entities/Franchise';
-import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { ProductRepositoryPort, ProductSearchOptions, PagedProducts } from '../../domain/ports/ProductRepositoryPort';
 import { TransactionContext } from '../../domain/ports/UnitOfWorkPort';
 import db, { ProductInstance, ProductAttributes } from '../../database/models/db';
+import { buildProductSearchWhere } from './productSearchWhere';
 
 // Raw column names as defined in `database/models/Product.js` (field mappings).
 // Kept in sync manually with that model definition — update both if either changes.
@@ -222,5 +223,26 @@ export class SequelizeProductRepository implements ProductRepositoryPort {
     }
 
     return this.findByIdInternal(id, transaction);
+  }
+
+  // product-catalog-search: public paginated search/filter, additive and
+  // independent of `findAll()`. NO `distinct: true` here — unlike
+  // `SequelizeOrderRepository.findByUserId`'s hasMany `items` include,
+  // `Category`/`Franchise` are belongsTo (N:1, models/index.js:45,55), so
+  // the join cannot multiply rows and `COUNT(*)` is already the product
+  // count.
+  async searchPaged({ search, idCategory, idFranchise, limit, offset }: ProductSearchOptions): Promise<PagedProducts> {
+    const { rows, count } = await db.Product.findAndCountAll({
+      where: buildProductSearchWhere({ search, idCategory, idFranchise }),
+      include: [
+        { model: db.Category, as: 'Category', attributes: ['idCategory', 'nameCategory'] },
+        { model: db.Franchise, as: 'Franchise', attributes: ['idFranchise', 'nameFranchise'] },
+      ],
+      order: [['idProduct', 'ASC']],
+      limit,
+      offset,
+    });
+
+    return { products: rows.map((inst) => this.toEntity(inst)), total: count };
   }
 }

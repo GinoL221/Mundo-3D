@@ -35,6 +35,7 @@ describe('CancelOrderUseCase', () => {
       findLatest: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      searchPaged: jest.fn(),
       delete: jest.fn(),
       adjustStock: jest.fn(),
     };
