@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { presentOrder } from './orderPresenter';
-import type { OrderViewModel } from './order.service';
+import { presentOrder, presentMyOrdersPage } from './orderPresenter';
+import type { OrderViewModel, MyOrdersPageViewModel } from './order.service';
 
 // Sample DTO taken verbatim from design.md's "Buyer order-detail response
 // DTO" section — this is the smoke-test target OrderDetail.astro's script
@@ -62,5 +62,63 @@ describe('presentOrder', () => {
       unitPriceLabel: '$ 5.00',
       subtotalLabel: '$ 15.00',
     });
+  });
+});
+
+const SAMPLE_MY_ORDERS_PAGE: MyOrdersPageViewModel = {
+  orders: [
+    {
+      idOrder: 12,
+      idUser: 3,
+      status: 'PAID',
+      totalAmount: 1499.5,
+      createdAt: '2026-08-20T10:00:00.000Z',
+      paymentReference: 'MP-123',
+    },
+    {
+      idOrder: 11,
+      idUser: 3,
+      status: 'AWAITING_PAYMENT',
+      totalAmount: 200,
+      createdAt: '2026-08-19T10:00:00.000Z',
+      paymentReference: null,
+    },
+  ],
+  page: 1,
+  pageSize: 20,
+  total: 37,
+  totalPages: 2,
+};
+
+describe('presentMyOrdersPage', () => {
+  it('formats one row per order, reusing formatCurrency and linking to the existing detail route', () => {
+    const presentation = presentMyOrdersPage(SAMPLE_MY_ORDERS_PAGE);
+
+    expect(presentation.rows).toHaveLength(2);
+    expect(presentation.rows[0]).toEqual({
+      idOrderLabel: '12',
+      statusLabel: 'Estado: PAID',
+      totalLabel: '1499.50',
+      createdAtLabel: new Date('2026-08-20T10:00:00.000Z').toLocaleString('es-AR'),
+      detailHref: '/order?id=12',
+    });
+    expect(presentation.rows[1].detailHref).toBe('/order?id=11');
+  });
+
+  it('flags an empty page and produces no rows when there are no orders yet', () => {
+    const presentation = presentMyOrdersPage({ ...SAMPLE_MY_ORDERS_PAGE, orders: [], total: 0, totalPages: 0 });
+
+    expect(presentation.isEmpty).toBe(true);
+    expect(presentation.rows).toEqual([]);
+  });
+
+  it('computes prev/next hrefs from page/totalPages, omitting prev on page 1 and next on the last page', () => {
+    const firstPage = presentMyOrdersPage(SAMPLE_MY_ORDERS_PAGE);
+    expect(firstPage.prevHref).toBeNull();
+    expect(firstPage.nextHref).toBe('/orders?page=2');
+
+    const lastPage = presentMyOrdersPage({ ...SAMPLE_MY_ORDERS_PAGE, page: 2 });
+    expect(lastPage.prevHref).toBe('/orders?page=1');
+    expect(lastPage.nextHref).toBeNull();
   });
 });
