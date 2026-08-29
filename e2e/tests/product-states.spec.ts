@@ -6,7 +6,10 @@ test.describe('Product Listing - Error & Empty States', () => {
   });
 
   test('Renders error state when the products API fails', async ({ page }) => {
-    await page.route('**/api/products', async route => {
+    // /products now drives ProductSearch.astro, which fetches
+    // GET /api/products/search (product-catalog-search), not the old
+    // unpaginated GET /api/products the admin pages still use.
+    await page.route('**/api/products/search*', async route => {
       await route.fulfill({ status: 500 });
     });
 
@@ -18,11 +21,11 @@ test.describe('Product Listing - Error & Empty States', () => {
   });
 
   test('Renders empty state when the products API returns zero products', async ({ page }) => {
-    await page.route('**/api/products', async route => {
+    await page.route('**/api/products/search*', async route => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ products: [] }),
+        body: JSON.stringify({ products: [], page: 1, pageSize: 20, total: 0, totalPages: 0 }),
       });
     });
 

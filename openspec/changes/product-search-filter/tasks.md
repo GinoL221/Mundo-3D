@@ -50,15 +50,15 @@ Note: Units 2 and 3 individually still forecast above 400 lines. If the orchestr
 
 ## Phase 4: Frontend (Work Unit 3, PR 3)
 
-- [ ] 4.1 RED: `product.search.service.test.ts` — `fetchProductSearch` URL building (omits undefined/empty, trims search), `fetchFilterOptions` success + failure-to-empty-arrays.
-- [ ] 4.2 GREEN: Add `ProductSearchPage` to `product.adapter.ts`; create `product.search.service.ts`.
-- [ ] 4.3 RED: `productSearchPresenter.test.ts` — `prevHref`/`nextHref` preserve active filters, null at first/last page, `isEmpty`, `pageLabel`.
-- [ ] 4.4 GREEN: Create `productSearchPresenter.ts`.
-- [ ] 4.5 GREEN: Create `ProductSearch.astro` — form GET, URL-driven rehydration, fetch+render via presenter, migrated card/empty/error templates, disable-empty-controls-before-submit listener.
-- [ ] 4.6 GREEN: Replace `products.astro` body with `Layout` + `<ProductSearch />`; remove old inline fetch/grid logic.
-- [ ] 4.7 GREEN: Re-export new modules from `domains/products/index.ts`.
+- [x] 4.1 RED: `product.search.service.test.ts` — `fetchProductSearch` URL building (omits undefined/empty, trims search), `fetchFilterOptions` success + failure-to-empty-arrays.
+- [x] 4.2 GREEN: Add `ProductSearchPage` to `product.adapter.ts`; create `product.search.service.ts`.
+- [x] 4.3 RED: `productSearchPresenter.test.ts` — `prevHref`/`nextHref` preserve active filters, null at first/last page, `isEmpty`, `pageLabel`.
+- [x] 4.4 GREEN: Create `productSearchPresenter.ts`.
+- [x] 4.5 GREEN: Create `ProductSearch.astro` — form GET, URL-driven rehydration, fetch+render via presenter, migrated card/empty/error templates, disable-empty-controls-before-submit listener. Added a third `no-results-state-template` (distinct "Sin resultados" copy) alongside the migrated `empty-state-template`/`error-state-template`, selected based on whether any filter is active, per the proposal's "distinct 'no results for this search' copy" requirement.
+- [x] 4.6 GREEN: Replace `products.astro` body with `Layout` + `<ProductSearch />`; remove old inline fetch/grid logic. Kept the `<h1 class="sr-only">`/`<h2 class="page-heading">` wiring exactly as `orders.astro`'s 12-line shape does.
+- [x] 4.7 GREEN: Re-export new modules from `domains/products/index.ts`.
 
 ## Phase 5: E2E Verification (Work Unit 3, PR 3)
 
-- [ ] 5.1 RED: `e2e/tests/product-search.spec.ts` — type term→submit→filtered grid; pick category→narrowed; click "Siguiente" with term preserved in URL; direct navigation with query params pre-applies state.
-- [ ] 5.2 GREEN: verify against 4.5/4.6 implementation until 5.1 passes.
+- [x] 5.1 RED: `e2e/tests/product-search.spec.ts` — type term→submit→filtered grid; pick category→narrowed; click "Siguiente" with term preserved in URL; direct navigation with query params pre-applies state.
+- [x] 5.2 GREEN: Ran the real Playwright suite (`npx playwright test`, real MySQL test DB reseeded from `backend/src/database/data/products.json`, real backend + Astro dev server) — all 4 new scenarios pass against the real `GET /api/products/search` endpoint and real seeded catalog (17 products; "Llavero" search/category narrows to the 3 real matches). The pagination scenario mocks only the `/api/products/search` network response (the 17-product seed can never fill a second page at the fixed `pageSize=20`, and there is no pageSize control in the UI by design) while still driving a real click on the real rendered `<a>` produced by `productSearchPresenter.ts`/`ProductSearch.astro`. Full local suite: 50/50 passing, including this file. **Deviation**: this rewrite of `products.astro` broke the pre-existing `e2e/tests/product-states.spec.ts`, which mocked the now-unused `GET /api/products` route — fixed its two mocks to intercept `GET /api/products/search*` with the new envelope shape (`{products, page, pageSize, total, totalPages}`); both tests pass again unmodified in assertions/intent.
