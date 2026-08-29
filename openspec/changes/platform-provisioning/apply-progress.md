@@ -46,5 +46,44 @@ None. `config.js` uses a spread-ternary (`...(cond ? { port } : {})`) instead of
 ### Pre-existing issues noted
 `backend/src/database/config/__tests__/ensureDatabase.test.js` was already Prettier-non-conformant before this change; not reformatted to keep the PR1 diff focused. ESLint passes clean on all touched files.
 
-## PR2 — Required-var preflight delta — NOT STARTED
+## PR2 — Required-var preflight delta — COMPLETE
+
+Branch: `feat/platform-provisioning-preflight-vars` (stacked off `feat/platform-provisioning-db-connectivity`).
+Focused test runner: `pnpm test:deploy-scripts` (`node --test`, per design — these are node:test, not Jest).
+
+| Task | Status | Notes |
+|------|--------|-------|
+| 2.1 RED — `env-preflight.test.js` DB_PORT/DB_CA_CERT | [x] | `checkEnv` cases + subprocess cases: `DB_PORT` / `DB_CA_CERT` unset → in `missing`, script exits non-zero naming them. |
+| 2.2 RED — `PUBLIC_API_URL` / `COOKIE_DOMAIN` warn-only | [x] | All hard-required set, `PUBLIC_API_URL` unset → `warnings: ['PUBLIC_API_URL']`, `missing: []`, script exit 0; `COOKIE_DOMAIN` case retained. |
+| 2.3 GREEN — `scripts/deploy/env-preflight.js` | [x] | `REQUIRED` += `DB_PORT`, `DB_CA_CERT` (inserted after `DB_HOST`, matching spec order). `PUBLIC_API_URL` removed from `REQUIRED`, appended to `WARN_ONLY` (same `checkEnv` filter mechanism as `COOKIE_DOMAIN`). WARN message + `WARN_ONLY` comment generalised to cover both keys. |
+| 2.4 RED — start chain | [x] | New `scripts/deploy/deploy-start-chain.test.js`: structural asserts (`backend` `deploy:start` exists, `env-preflight` before `migrate-and-start`, joined by `&&`) + real integration: `pnpm --filter backend deploy:start` with `DB_PORT` unset → exit non-zero, stdout names `DB_PORT`, `db:migrate` never runs. |
+| 2.5 GREEN — chain preflight into start | [x] | Added `backend/package.json` script `deploy:start` = `node ../scripts/deploy/env-preflight.js && node ../scripts/deploy/migrate-and-start.js`. |
+| 2.6 Run `pnpm test:deploy-scripts` | [x] | 30/30 pass, exit 0. Full `pnpm test`: backend 112 suites / 930 tests, frontend 14 files / 181 tests, exit 0. |
+
+### TDD Cycle Evidence
+
+| Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|------|-----------|-------|------------|-----|-------|-------------|----------|
+| 2.1/2.2/2.3 | `scripts/deploy/env-preflight.test.js` | Unit (node:test) + subprocess | ✅ 4/4 pre-existing (1 rewritten for the new contract) | ✅ 9 failing (DB_PORT/DB_CA_CERT not required; PUBLIC_API_URL still hard-required; subprocess exits) | ✅ 16/16 after `env-preflight.js` edit | ✅ DB_PORT vs DB_CA_CERT vs 3-missing-in-order; warn-only PUBLIC_API_URL vs COOKIE_DOMAIN; checkEnv return vs real process exit code | ➖ list is declarative; no refactor needed |
+| 2.4/2.5 | `scripts/deploy/deploy-start-chain.test.js` | Structural + integration (real `pnpm` subprocess) | N/A (new file) | ✅ 3 failing (`deploy:start` absent) | ✅ 3/3 after `backend/package.json` edit | ✅ script-present vs order (`env-preflight` before `migrate-and-start`) vs `&&` short-circuit vs missing-var aborts before `db:migrate` | ➖ 2 assertions reflowed for neighbour-file style |
+
+### Test Summary
+- Tests added/changed: 12 new in `env-preflight.test.js` (1 pre-existing case rewritten to the new contract, 3 pre-existing kept), 3 new in `deploy-start-chain.test.js`.
+- `pnpm test:deploy-scripts`: 30 tests, 30 pass, 0 fail, exit 0.
+- Full `pnpm test`: backend 930 pass / 112 suites, frontend 181 pass / 14 files, exit 0.
+- Layers: Unit (checkEnv), subprocess exit-code, structural (package.json), integration (`pnpm --filter backend deploy:start`).
+
+### Work Unit Evidence
+| Evidence | Value |
+|---|---|
+| Focused test command + result | `pnpm test:deploy-scripts` → 30 tests / 30 pass / exit 0 |
+| Runtime harness command/scenario + result | `pnpm --filter backend deploy:start` spawned with `DB_PORT` unset (all other REQUIRED set) → exit non-zero, stdout names `DB_PORT`, `db:migrate` never reached (asserted in `deploy-start-chain.test.js`). This is the real Render start path. |
+| Rollback boundary | `git revert` of the PR2 commit restores `env-preflight.js` (`REQUIRED`/`WARN_ONLY` lists + messages) and removes the `deploy:start` script; test files are additive. No runtime behaviour outside the deploy preflight/start path is touched; `render.yaml` consumption of `deploy:start` is deferred to PR3. |
+
+### Deviations from design
+Task 2.5 text names the chain as `pnpm --filter backend deploy:env-preflight && pnpm --filter backend deploy:migrate-and-start`. Implemented as a `backend` package script `deploy:start` = `node ../scripts/deploy/env-preflight.js && node ../scripts/deploy/migrate-and-start.js` — the same two steps, same `&&` short-circuit, but using the direct `node ../scripts/deploy/*.js` form the sibling `deploy:*` aliases already use (avoids a nested `pnpm` invocation per step). PR3's `render.yaml` `startCommand` will call `pnpm --filter backend deploy:start`. Design decision "env-preflight is the runtime gate, chained in startCommand" is otherwise honoured exactly.
+
+### Pre-existing issues noted
+`scripts/deploy/*.js` are outside the repo's Prettier gate (root `format` targets only `backend/src` + `frontend/src`); `env-preflight.js` was already Prettier-non-conformant before this change (trailing-comma-in-call-args). Matched the existing `scripts/deploy/` style rather than Prettier defaults. No root ESLint config covers `scripts/`.
+
 ## PR3 — Platform manifest, proxy-awareness, runbook — NOT STARTED

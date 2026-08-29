@@ -23,7 +23,8 @@
     "db:migrate:adopt-baseline": "node src/database/migrate.js adopt-baseline",
     "deploy:migrate-and-start": "node ../scripts/deploy/migrate-and-start.js",
     "deploy:smoke-test": "node ../scripts/deploy/smoke-test.js",
-    "deploy:env-preflight": "node ../scripts/deploy/env-preflight.js"
+    "deploy:env-preflight": "node ../scripts/deploy/env-preflight.js",
+    "deploy:start": "node ../scripts/deploy/env-preflight.js && node ../scripts/deploy/migrate-and-start.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

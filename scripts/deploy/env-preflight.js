@@ -6,13 +6,18 @@ const REQUIRED = [
   'DB_PASS',
   'DB_NAME',
   'DB_HOST',
-  'PUBLIC_API_URL',
+  'DB_PORT',
+  'DB_CA_CERT',
 ];
 
-// COOKIE_DOMAIN is optional in the app's own code (cookieOptions.ts checks
-// `if (process.env.COOKIE_DOMAIN)`) — required only for a cross-subdomain
-// deploy, so this preflight warns rather than hard-fails on it.
-const WARN_ONLY = ['COOKIE_DOMAIN'];
+// Checked but warn-only — a missing value produces a warning, never a non-zero
+// exit:
+//   COOKIE_DOMAIN — `cookieOptions.ts` guards it with `if (process.env.COOKIE_DOMAIN)`,
+//     so it is required only for a cross-subdomain cookie deploy.
+//   PUBLIC_API_URL — a frontend build-time variable enforced by
+//     `frontend/astro.config.mjs`; the backend runtime never reads it, so a
+//     hard-required preflight here would be stricter than the app's own contract.
+const WARN_ONLY = ['COOKIE_DOMAIN', 'PUBLIC_API_URL'];
 
 function checkEnv(env = process.env) {
   return {
@@ -33,7 +38,7 @@ if (require.main === module) {
 
   for (const key of warnings) {
     console.log(
-      `[env-preflight] WARN: ${key} not set — required only for the cross-subdomain cookie topology; safe to ignore on a single-domain deploy.`
+      `[env-preflight] WARN: ${key} not set — warn-only (COOKIE_DOMAIN applies only to the cross-subdomain cookie topology; PUBLIC_API_URL is a frontend build-time variable). Safe to ignore if it does not apply to this deploy.`
     );
   }
 }
