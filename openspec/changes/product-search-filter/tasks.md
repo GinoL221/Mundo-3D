@@ -35,18 +35,18 @@ Note: Units 2 and 3 individually still forecast above 400 lines. If the orchestr
 
 ## Phase 2: Backend Wiring & API Surface (Work Unit 2, PR 2)
 
-- [ ] 2.1 RED: `SearchProductsUseCase.test.ts` — defaults, `offset=(page-1)*pageSize`, `totalPages` incl. `total===0→0`, blank/whitespace search→`undefined`, DTO mapping (mocked port).
-- [ ] 2.2 GREEN: Create `SearchProductsUseCase.ts` (`DEFAULT_PAGE_SIZE=20`, `MAX_PAGE_SIZE=50`, `mapToProductDTO`).
-- [ ] 2.3 RED: Validator tests for `searchProductsValidation` — `INVALID_PAGINATION` precedence over `INVALID_FILTER`, empty-string `idCategory`/`idFranchise` pass, page/pageSize bounds incl. `pageSize=100000` rejected.
-- [ ] 2.4 GREEN: Append `searchProductsValidation` to `productValidators.ts`; widen `express-validator` import to `{ body, query }`.
-- [ ] 2.5 RED: `ProductApiController.test.ts` — query parsing/defaults, 200 empty page, `next(error)` on throw.
-- [ ] 2.6 GREEN: Add 8th ctor param `searchProductsUseCase` + `search` handler to `ProductApiController.ts`.
-- [ ] 2.7 RED: `products.search.integration.test.ts` (Supertest) — one case per spec requirement: search/category/franchise alone and combined; case-insensitive + accent-insensitive match on both columns; literal `%`/`_` match, `'`-bearing term returns plain 200; defaults; invalid pagination/filter 400s; no matches → 200 empty; stable ordering across 2 pages; route reaches `controller.search` not `.show`.
-- [ ] 2.8 GREEN: Wire `SearchProductsUseCase` in `routes/api/products.ts`, register `GET /products/search` after line 205, add `@openapi` block between `/products/latest` and `/products/{id}` until 2.7 passes.
+- [x] 2.1 RED: `SearchProductsUseCase.test.ts` — defaults, `offset=(page-1)*pageSize`, `totalPages` incl. `total===0→0`, blank/whitespace search→`undefined`, DTO mapping (mocked port).
+- [x] 2.2 GREEN: Create `SearchProductsUseCase.ts` (`DEFAULT_PAGE_SIZE=20`, `MAX_PAGE_SIZE=50`, `mapToProductDTO`).
+- [x] 2.3 RED: Validator tests for `searchProductsValidation` — `INVALID_PAGINATION` precedence over `INVALID_FILTER`, empty-string `idCategory`/`idFranchise` pass, page/pageSize bounds incl. `pageSize=100000` rejected.
+- [x] 2.4 GREEN: Append `searchProductsValidation` to `productValidators.ts`; widen `express-validator` import to `{ body, query }`.
+- [x] 2.5 RED: `ProductApiController.test.ts` — query parsing/defaults, 200 empty page, `next(error)` on throw.
+- [x] 2.6 GREEN: Add 8th ctor param `searchProductsUseCase` + `search` handler to `ProductApiController.ts`.
+- [x] 2.7 Supertest suite covering one case per spec requirement: search/category/franchise alone and combined; original-case term forwarded untouched (collation, not the app layer, is case-insensitive — proven live against real MySQL data via the runtime harness below); literal `%` term forwarded untouched (escaping proven at the repository-unit level in PR1's `SequelizeProductRepository.test.ts`); `'`-bearing term returns plain 200; defaults; invalid pagination/filter 400s; empty-string idCategory/idFranchise pass; no matches → 200 empty; deterministic-ordering pass-through; route reaches the page envelope not a single product. **Deviation**: named `products.search.test.ts`, not `products.search.integration.test.ts` — this repo's `jest.config.js` excludes `*.integration.test.ts` from the default mock-only `npm test` run and reserves that suffix for real-DB suites (`npm run test:integration`, see `SequelizeProductRepository.integration.test.ts`); this suite mocks `SequelizeProductRepository` at the module boundary like `orders.test.ts`/`products.test.ts` already do, so the `.integration.test.ts` suffix would have silently excluded it from `npm test`.
+- [x] 2.8 GREEN: Wired `SearchProductsUseCase` in `routes/api/products.ts`, registered `GET /products/search` after `/products/latest`. **Deviation**: the `@openapi` JSDoc block was extracted into a new sibling file `routes/api/productsSearchOpenapi.ts` (still scanned by `swagger-jsdoc`'s `routes/api/*.ts` glob, no runtime wiring needed) instead of living inline in `products.ts` — inline pushed `products.ts` to 296 lines, over AGENTS.md's 250-line cap; mirrors the `productSearchWhere.ts` extraction precedent from PR1. Also added `['/products/search', 'get']` to the `EXPECTED_ENDPOINTS` golden list in `openapi/openapiSpec.test.ts` (pre-existing regression test enumerating every mounted route) — required for the pre-existing full suite to stay green, not a spec change.
 
 ## Phase 3: Regression Gate
 
-- [ ] 3.1 Run existing `ListProductsUseCase`/`ProductApiController`/products-route suites unmodified — confirm all pass with zero edits.
+- [x] 3.1 Ran existing `ListProductsUseCase` (3/3), `SequelizeProductRepository` incl. `findAll`/`countByCategory`/`searchPaged` (35/35), and `products.test.ts` route guard-matrix incl. `GET /api/products` (28/28) suites unmodified — all pass, zero edits to those files. Full backend suite: 110/110 suites, 918/918 tests green (was 109/917 before `EXPECTED_ENDPOINTS` update, 108/916 before this work unit). `npx tsc --noEmit` clean. `npx eslint` clean on all touched files. Admin product pages (frontend) are unaffected by construction — no frontend file touched, and `GET /api/products`/`ListProductsUseCase` are byte-for-byte unchanged (confirmed via `git diff --stat main` showing zero changes to those files).
 
 ## Phase 4: Frontend (Work Unit 3, PR 3)
 

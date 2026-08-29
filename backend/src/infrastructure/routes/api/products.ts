@@ -8,12 +8,17 @@ import { CreateProductUseCase } from '../../../application/use-cases/CreateProdu
 import { UpdateProductUseCase } from '../../../application/use-cases/UpdateProductUseCase';
 import { DeleteProductUseCase } from '../../../application/use-cases/DeleteProductUseCase';
 import { AdjustProductStockUseCase } from '../../../application/use-cases/AdjustProductStockUseCase';
+import { SearchProductsUseCase } from '../../../application/use-cases/SearchProductsUseCase';
 import { PinoLogger } from '../../logging/PinoLogger';
 import { ProductApiController } from '../../controllers/ProductApiController';
 import { apiAuthMiddleware, adminGuard, requireRoles } from '../../middlewares/auth';
 import { csrfGuard } from '../../middlewares/csrf';
 import { Role } from '../../../domain/Role';
-import { productCreateValidators, productUpdateValidators } from '../../middlewares/validators/productValidators';
+import {
+  productCreateValidators,
+  productUpdateValidators,
+  searchProductsValidation,
+} from '../../middlewares/validators/productValidators';
 import createUpload from '../../middlewares/upload';
 import handleValidationErrors from '../../middlewares/handleValidationErrors';
 
@@ -29,6 +34,7 @@ const createProductUseCase = new CreateProductUseCase(productRepo, categoryRepo)
 const updateProductUseCase = new UpdateProductUseCase(productRepo, categoryRepo);
 const deleteProductUseCase = new DeleteProductUseCase(productRepo);
 const adjustProductStockUseCase = new AdjustProductStockUseCase(productRepo, new PinoLogger());
+const searchProductsUseCase = new SearchProductsUseCase(productRepo);
 
 const controller = new ProductApiController(
   listProductsUseCase,
@@ -37,7 +43,8 @@ const controller = new ProductApiController(
   createProductUseCase,
   updateProductUseCase,
   deleteProductUseCase,
-  adjustProductStockUseCase
+  adjustProductStockUseCase,
+  searchProductsUseCase
 );
 
 const uploadImgProduct = createUpload('products');
@@ -203,6 +210,7 @@ const uploadImgProduct = createUpload('products');
 router.get('/products', controller.index);
 router.get('/product/:id', controller.show);
 router.get('/products/latest', controller.latest);
+router.get('/products/search', searchProductsValidation, controller.search);
 
 router.post(
   '/products',

@@ -7,6 +7,7 @@ import { CreateProductUseCase } from '../../../application/use-cases/CreateProdu
 import { UpdateProductUseCase } from '../../../application/use-cases/UpdateProductUseCase';
 import { DeleteProductUseCase } from '../../../application/use-cases/DeleteProductUseCase';
 import { AdjustProductStockUseCase } from '../../../application/use-cases/AdjustProductStockUseCase';
+import { SearchProductsUseCase } from '../../../application/use-cases/SearchProductsUseCase';
 import { cleanupUploadedFile } from '../../utils/cleanupUploadedFile';
 
 jest.mock('../../utils/cleanupUploadedFile', () => ({
@@ -22,6 +23,7 @@ describe('ProductApiController', () => {
   let mockUpdateProductUseCase: jest.Mocked<UpdateProductUseCase>;
   let mockDeleteProductUseCase: jest.Mocked<DeleteProductUseCase>;
   let mockAdjustProductStockUseCase: jest.Mocked<AdjustProductStockUseCase>;
+  let mockSearchProductsUseCase: jest.Mocked<SearchProductsUseCase>;
 
   let req: Partial<Request> & { file?: { filename: string } };
   let res: Partial<Response>;
@@ -50,6 +52,9 @@ describe('ProductApiController', () => {
     mockAdjustProductStockUseCase = {
       execute: jest.fn(),
     } as any;
+    mockSearchProductsUseCase = {
+      execute: jest.fn(),
+    } as any;
 
     controller = new ProductApiController(
       mockListProductsUseCase,
@@ -58,10 +63,11 @@ describe('ProductApiController', () => {
       mockCreateProductUseCase,
       mockUpdateProductUseCase,
       mockDeleteProductUseCase,
-      mockAdjustProductStockUseCase
+      mockAdjustProductStockUseCase,
+      mockSearchProductsUseCase
     );
 
-    req = { params: {}, body: {} };
+    req = { params: {}, body: {}, query: {} };
     res = {
       status: jest.fn().mockReturnThis() as any,
       json: jest.fn().mockReturnThis() as any,
@@ -408,6 +414,66 @@ describe('ProductApiController', () => {
       expect(res.status).toHaveBeenCalledWith(400);
       expect(mockAdjustProductStockUseCase.execute).not.toHaveBeenCalled();
       expect(next).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('search', () => {
+    const samplePage = {
+      products: [{ idProduct: 1, nameProduct: 'Product A', price: 100, image: 'a.png' }],
+      page: 1,
+      pageSize: 20,
+      total: 1,
+      totalPages: 1,
+    };
+
+    it('parses query params and forwards them to the use case, applying defaults', async () => {
+      req.query = { search: '  goku  ' };
+      mockSearchProductsUseCase.execute.mockResolvedValue(samplePage as any);
+
+      await controller.search(req as Request, res as Response, next);
+
+      expect(mockSearchProductsUseCase.execute).toHaveBeenCalledWith({
+        search: '  goku  ',
+        idCategory: undefined,
+        idFranchise: undefined,
+        page: 1,
+        pageSize: 20,
+      });
+      expect(res.json).toHaveBeenCalledWith(samplePage);
+    });
+
+    it('parses page/pageSize/idCategory/idFranchise from the query string', async () => {
+      req.query = { page: '2', pageSize: '10', idCategory: '3', idFranchise: '5' };
+      mockSearchProductsUseCase.execute.mockResolvedValue(samplePage as any);
+
+      await controller.search(req as Request, res as Response, next);
+
+      expect(mockSearchProductsUseCase.execute).toHaveBeenCalledWith({
+        search: undefined,
+        idCategory: 3,
+        idFranchise: 5,
+        page: 2,
+        pageSize: 10,
+      });
+    });
+
+    it('returns 200 with an empty page — never 404', async () => {
+      const emptyPage = { products: [], page: 1, pageSize: 20, total: 0, totalPages: 0 };
+      mockSearchProductsUseCase.execute.mockResolvedValue(emptyPage as any);
+
+      await controller.search(req as Request, res as Response, next);
+
+      expect(res.status).not.toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith(emptyPage);
+    });
+
+    it('forwards unexpected errors to next', async () => {
+      const error = new Error('DB is down');
+      mockSearchProductsUseCase.execute.mockRejectedValue(error);
+
+      await controller.search(req as Request, res as Response, next);
+
+      expect(next).toHaveBeenCalledWith(error);
     });
   });
 });

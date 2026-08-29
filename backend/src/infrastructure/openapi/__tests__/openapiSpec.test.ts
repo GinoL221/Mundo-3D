@@ -49,6 +49,7 @@ const EXPECTED_ENDPOINTS: Array<[path: string, method: string]> = [
   ['/products', 'post'],
   ['/product/{id}', 'get'],
   ['/products/latest', 'get'],
+  ['/products/search', 'get'],
   ['/products/{id}', 'put'],
   ['/products/{id}', 'delete'],
   ['/products/{id}/stock', 'patch'],

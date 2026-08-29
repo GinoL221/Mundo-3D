@@ -6,6 +6,7 @@ import { CreateProductUseCase } from '../../application/use-cases/CreateProductU
 import { UpdateProductUseCase } from '../../application/use-cases/UpdateProductUseCase';
 import { DeleteProductUseCase } from '../../application/use-cases/DeleteProductUseCase';
 import { AdjustProductStockUseCase } from '../../application/use-cases/AdjustProductStockUseCase';
+import { SearchProductsUseCase, DEFAULT_PAGE_SIZE } from '../../application/use-cases/SearchProductsUseCase';
 import { cleanupUploadedFile } from '../utils/cleanupUploadedFile';
 
 type RequestWithFile = Request & { file?: { filename: string; path?: string } };
@@ -25,7 +26,8 @@ export class ProductApiController {
     private readonly createProductUseCase: CreateProductUseCase,
     private readonly updateProductUseCase: UpdateProductUseCase,
     private readonly deleteProductUseCase: DeleteProductUseCase,
-    private readonly adjustProductStockUseCase: AdjustProductStockUseCase
+    private readonly adjustProductStockUseCase: AdjustProductStockUseCase,
+    private readonly searchProductsUseCase: SearchProductsUseCase
   ) {}
 
   index = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -206,6 +208,33 @@ export class ProductApiController {
         res.status(400).json({ error: 'delta debe ser un entero distinto de cero' });
         return;
       }
+      next(error);
+    }
+  };
+
+  // Public, paginated product search-and-filter (product-catalog-search
+  // spec). A read raises no domain exception, so unexpected errors go
+  // straight to `next` — no `handleDomainError`-style branch, mirroring
+  // `OrderApiController.listMine`. No 404 branch: an empty result page is a
+  // 200, never a 404 (spec: "Response Envelope and Empty Results").
+  search = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+      const pageSize = req.query.pageSize
+        ? parseInt(req.query.pageSize as string, 10)
+        : DEFAULT_PAGE_SIZE;
+      const idCategory = req.query.idCategory ? parseInt(req.query.idCategory as string, 10) : undefined;
+      const idFranchise = req.query.idFranchise ? parseInt(req.query.idFranchise as string, 10) : undefined;
+
+      const result = await this.searchProductsUseCase.execute({
+        search: req.query.search as string | undefined,
+        idCategory,
+        idFranchise,
+        page,
+        pageSize,
+      });
+      res.json(result);
+    } catch (error) {
       next(error);
     }
   };
