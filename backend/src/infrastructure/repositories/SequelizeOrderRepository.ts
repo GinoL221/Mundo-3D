@@ -1,7 +1,7 @@
 import { QueryTypes, Transaction, UniqueConstraintError } from 'sequelize';
 import { Order, OrderStatus } from '../../domain/entities/Order';
 import { OrderItem } from '../../domain/entities/OrderItem';
-import { OrderRepositoryPort, NewOrderItemInput } from '../../domain/ports/OrderRepositoryPort';
+import { OrderRepositoryPort, NewOrderItemInput, PaginationOptions, PagedOrders } from '../../domain/ports/OrderRepositoryPort';
 import { TransactionContext } from '../../domain/ports/UnitOfWorkPort';
 import { DuplicateIdempotencyKeyException } from '../../domain/exceptions/DuplicateIdempotencyKeyException';
 import db, { OrderInstance } from '../../database/models/db';
@@ -110,6 +110,24 @@ export class SequelizeOrderRepository implements OrderRepositoryPort {
       limit: SequelizeOrderRepository.MAX_LISTED,
     });
     return instances.map((instance) => this.toEntity(instance));
+  }
+
+  // Buyer-scoped, paginated listing (order-history feature). `items` MUST
+  // stay eager-loaded even though the response DTO omits them: `Order`'s
+  // constructor throws on an empty item list and `totalAmount` reduces over
+  // `items`. `distinct: true` is load-bearing — without it, the `items`
+  // hasMany include makes `findAndCountAll` count joined item rows instead
+  // of orders, silently inflating `total` for any multi-item order.
+  async findByUserId(idUser: number, { limit, offset }: PaginationOptions): Promise<PagedOrders> {
+    const { rows, count } = await db.Order.findAndCountAll({
+      where: { idUser },
+      include: [{ model: db.OrderItem, as: 'items' }],
+      order: [['idOrder', 'DESC']],
+      limit,
+      offset,
+      distinct: true,
+    });
+    return { orders: rows.map((instance) => this.toEntity(instance)), total: count };
   }
 
   // Guarded UPDATE mirroring `adjustStock`'s affected-row-count style — a

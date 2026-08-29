@@ -19,6 +19,7 @@ describe('ConfirmOrderPaymentUseCase', () => {
       findByIdempotencyKey: jest.fn(),
       findById: jest.fn(),
       findAll: jest.fn(),
+      findByUserId: jest.fn(),
       transitionStatus: jest.fn(),
       attachPaymentReference: jest.fn(),
     };

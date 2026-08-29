@@ -8,6 +8,16 @@ export interface NewOrderItemInput {
   unitPrice: number;
 }
 
+export interface PaginationOptions {
+  limit: number;
+  offset: number;
+}
+
+export interface PagedOrders {
+  orders: Order[];
+  total: number;
+}
+
 export interface OrderRepositoryPort {
   createWithItems(
     input: { idUser: number; idempotencyKey: string; items: NewOrderItemInput[] },
@@ -16,6 +26,7 @@ export interface OrderRepositoryPort {
   findByIdempotencyKey(idUser: number, idempotencyKey: string): Promise<Order | null>;
   findById(idOrder: number): Promise<Order | null>;
   findAll(): Promise<Order[]>;
+  findByUserId(idUser: number, options: PaginationOptions): Promise<PagedOrders>;
   transitionStatus(
     idOrder: number,
     from: OrderStatus,

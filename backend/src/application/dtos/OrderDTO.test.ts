@@ -1,6 +1,6 @@
 import { Order, OrderStatus } from '../../domain/entities/Order';
 import { OrderItem } from '../../domain/entities/OrderItem';
-import { mapToOrderDTO } from './OrderDTO';
+import { mapToOrderDTO, mapToOrderSummaryDTO } from './OrderDTO';
 
 describe('mapToOrderDTO', () => {
   it('produces the exact buyer-facing response shape', () => {
@@ -51,5 +51,32 @@ describe('mapToOrderDTO', () => {
     const dto = mapToOrderDTO(order);
 
     expect(dto.items[0].idProduct).toBeNull();
+  });
+});
+
+describe('mapToOrderSummaryDTO', () => {
+  it('returns only scalar fields, with no items key at all (order-history spec)', () => {
+    const item = new OrderItem(88, 41, 12, 'Maceta Groot', 2, 1500);
+    const order = new Order(
+      41,
+      7,
+      'idem-key-should-not-leak',
+      OrderStatus.AWAITING_PAYMENT,
+      [item],
+      new Date('2026-08-28T14:03:11.000Z'),
+      'MANUAL-41-9f2c1a',
+    );
+
+    const dto = mapToOrderSummaryDTO(order);
+
+    expect(dto).toEqual({
+      idOrder: 41,
+      idUser: 7,
+      status: 'AWAITING_PAYMENT',
+      totalAmount: 3000,
+      createdAt: '2026-08-28T14:03:11.000Z',
+      paymentReference: 'MANUAL-41-9f2c1a',
+    });
+    expect((dto as unknown as Record<string, unknown>).items).toBeUndefined();
   });
 });
