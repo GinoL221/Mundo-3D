@@ -11,6 +11,7 @@ jest.mock('../../../database/models/db', () => ({
     findByPk: jest.fn(),
     findOne: jest.fn(),
     findAll: jest.fn(),
+    findAndCountAll: jest.fn(),
     update: jest.fn(),
   },
   OrderItem: {
@@ -130,6 +131,55 @@ describe('SequelizeOrderRepository', () => {
       await repository.findAll();
       expect(db.Order.findAll).toHaveBeenCalledWith(
         expect.objectContaining({ order: [['idOrder', 'DESC']], limit: 100 })
+      );
+    });
+  });
+
+  describe('findByUserId', () => {
+    it('scopes the query by idUser, eager-loads items, orders newest-first, and requests distinct:true to count orders (not joined item rows)', async () => {
+      // The mock stands in for a real multi-item order: 2 orders returned,
+      // one of which has 2 items, but `count` reflects orders — this is what
+      // `distinct: true` guarantees against a real DB (proven for real in
+      // SequelizeOrderRepository.integration.test.ts). Here we assert the
+      // exact call shape that makes that guarantee hold.
+      jest.mocked(db.Order.findAndCountAll).mockResolvedValueOnce({
+        rows: [
+          mockOrderInstance({ idOrder: 2 }),
+          mockOrderInstance({
+            idOrder: 1,
+            items: [
+              { idOrderItem: 100, idOrder: 1, idProduct: 10, productName: 'Figure A', quantity: 2, unitPrice: 15 },
+              { idOrderItem: 101, idOrder: 1, idProduct: 11, productName: 'Figure B', quantity: 1, unitPrice: 5 },
+            ],
+          } as unknown as Partial<OrderInstance>),
+        ],
+        count: 2,
+      } as never);
+
+      const result = await repository.findByUserId(5, { limit: 20, offset: 0 });
+
+      expect(db.Order.findAndCountAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { idUser: 5 },
+          include: [expect.objectContaining({ as: 'items' })],
+          order: [['idOrder', 'DESC']],
+          limit: 20,
+          offset: 0,
+          distinct: true,
+        })
+      );
+      expect(result.total).toBe(2);
+      expect(result.orders).toHaveLength(2);
+      expect(result.orders[1].items).toHaveLength(2);
+    });
+
+    it('passes limit/offset through untouched for windowing', async () => {
+      jest.mocked(db.Order.findAndCountAll).mockResolvedValueOnce({ rows: [], count: 0 } as never);
+
+      await repository.findByUserId(5, { limit: 10, offset: 30 });
+
+      expect(db.Order.findAndCountAll).toHaveBeenCalledWith(
+        expect.objectContaining({ limit: 10, offset: 30 })
       );
     });
   });

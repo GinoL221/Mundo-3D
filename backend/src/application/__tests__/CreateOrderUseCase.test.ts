@@ -83,6 +83,11 @@ class FakeOrderRepository implements OrderRepositoryPort {
     return [...this.orders];
   }
 
+  async findByUserId(idUser: number, options: { limit: number; offset: number }): Promise<{ orders: Order[]; total: number }> {
+    const scoped = this.orders.filter((o) => o.idUser === idUser);
+    return { orders: scoped.slice(options.offset, options.offset + options.limit), total: scoped.length };
+  }
+
   async transitionStatus(idOrder: number, from: OrderStatus, to: OrderStatus): Promise<boolean> {
     const index = this.orders.findIndex((o) => o.idOrder === idOrder && o.status === from);
     if (index === -1) return false;
