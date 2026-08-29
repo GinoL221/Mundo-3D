@@ -11,6 +11,7 @@ const mockGetOrderByIdExecute = jest.fn();
 const mockListOrdersExecute = jest.fn();
 const mockConfirmOrderPaymentExecute = jest.fn();
 const mockCancelOrderExecute = jest.fn();
+const mockListMyOrdersExecute = jest.fn();
 
 jest.mock('../../../../application/use-cases/CreateOrderUseCase', () => ({
   CreateOrderUseCase: jest.fn().mockImplementation(() => ({ execute: mockCreateOrderExecute })),
@@ -27,6 +28,13 @@ jest.mock('../../../../application/use-cases/ConfirmOrderPaymentUseCase', () => 
 jest.mock('../../../../application/use-cases/CancelOrderUseCase', () => ({
   CancelOrderUseCase: jest.fn().mockImplementation(() => ({ execute: mockCancelOrderExecute })),
 }));
+jest.mock('../../../../application/use-cases/ListMyOrdersUseCase', () => {
+  const actual = jest.requireActual('../../../../application/use-cases/ListMyOrdersUseCase');
+  return {
+    ...actual,
+    ListMyOrdersUseCase: jest.fn().mockImplementation(() => ({ execute: mockListMyOrdersExecute })),
+  };
+});
 
 import errorHandler from '../../../middlewares/errorHandler';
 import { authAndCsrf } from '../../../../__tests__/helpers/apiAuthTestHelpers';
@@ -182,6 +190,166 @@ describe('api/orders routes', () => {
 
       expect(res.status).toBe(401);
       expect(mockGetOrderByIdExecute).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('GET /api/orders/mine', () => {
+    const summaryPage = (overrides: Partial<Record<string, unknown>> = {}) => ({
+      orders: [
+        {
+          idOrder: 41,
+          idUser: 7,
+          status: 'AWAITING_PAYMENT',
+          totalAmount: 3000,
+          createdAt: '2026-08-28T14:03:11.000Z',
+          paymentReference: null,
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 1,
+      totalPages: 1,
+      ...overrides,
+    });
+
+    // ORDER-SENSITIVE: this is the regression test for the route-ordering
+    // hazard in design.md. If `/orders/mine` is registered after (or not
+    // registered relative to) `/orders/:id`, Express treats "mine" as the
+    // `:id` param, `parseInt('mine', 10)` is `NaN`, and the buyer gets
+    // `show`'s 400 "Id de orden inválido" instead of their order list.
+    it('returns the paginated envelope, not the 400 from GET /orders/:id', async () => {
+      mockListMyOrdersExecute.mockResolvedValue(summaryPage());
+
+      const res = await request(app)
+        .get('/api/orders/mine')
+        .set('Cookie', buyer.cookie)
+        .set('X-CSRF-Token', buyer.csrfToken);
+
+      expect(res.status).not.toBe(400);
+      expect(res.body).not.toEqual(expect.objectContaining({ error: 'Id de orden inválido' }));
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(summaryPage());
+      expect(mockGetOrderByIdExecute).not.toHaveBeenCalled();
+    });
+
+    it('scopes the call to the authenticated buyer, ignoring any page/pageSize', async () => {
+      mockListMyOrdersExecute.mockResolvedValue(summaryPage());
+
+      await request(app)
+        .get('/api/orders/mine?page=3&pageSize=5')
+        .set('Cookie', buyer.cookie)
+        .set('X-CSRF-Token', buyer.csrfToken);
+
+      expect(mockListMyOrdersExecute).toHaveBeenCalledWith(7, 3, 5);
+    });
+
+    it('scopes a different buyer to their own userId (cross-user isolation)', async () => {
+      mockListMyOrdersExecute.mockResolvedValue(summaryPage({ orders: [], total: 0, totalPages: 0 }));
+      const otherBuyer = authAndCsrf({ userId: 99, email: 'other@test.com', category: 'User', idRole: Role.USER });
+
+      await request(app)
+        .get('/api/orders/mine')
+        .set('Cookie', otherBuyer.cookie)
+        .set('X-CSRF-Token', otherBuyer.csrfToken);
+
+      expect(mockListMyOrdersExecute).toHaveBeenCalledWith(99, 1, 20);
+    });
+
+    it('returns 401 without an auth cookie', async () => {
+      const res = await request(app).get('/api/orders/mine');
+
+      expect(res.status).toBe(401);
+      expect(mockListMyOrdersExecute).not.toHaveBeenCalled();
+    });
+
+    it('defaults to page=1/pageSize=20 when omitted', async () => {
+      mockListMyOrdersExecute.mockResolvedValue(summaryPage());
+
+      await request(app)
+        .get('/api/orders/mine')
+        .set('Cookie', buyer.cookie)
+        .set('X-CSRF-Token', buyer.csrfToken);
+
+      expect(mockListMyOrdersExecute).toHaveBeenCalledWith(7, 1, 20);
+    });
+
+    it('accepts custom page=2&pageSize=10', async () => {
+      mockListMyOrdersExecute.mockResolvedValue(summaryPage({ page: 2, pageSize: 10 }));
+
+      await request(app)
+        .get('/api/orders/mine?page=2&pageSize=10')
+        .set('Cookie', buyer.cookie)
+        .set('X-CSRF-Token', buyer.csrfToken);
+
+      expect(mockListMyOrdersExecute).toHaveBeenCalledWith(7, 2, 10);
+    });
+
+    it.each([['page', '0'], ['page', '-1'], ['page', 'abc'], ['pageSize', '0'], ['pageSize', '51']])(
+      'rejects invalid %s=%s with 400 INVALID_PAGINATION',
+      async (param, value) => {
+        const res = await request(app)
+          .get(`/api/orders/mine?${param}=${value}`)
+          .set('Cookie', buyer.cookie)
+          .set('X-CSRF-Token', buyer.csrfToken);
+
+        expect(res.status).toBe(400);
+        expect(res.body.code).toBe('INVALID_PAGINATION');
+        expect(mockListMyOrdersExecute).not.toHaveBeenCalled();
+      }
+    );
+
+    it('returns 200 with an empty history', async () => {
+      mockListMyOrdersExecute.mockResolvedValue(summaryPage({ orders: [], total: 0, totalPages: 0 }));
+
+      const res = await request(app)
+        .get('/api/orders/mine')
+        .set('Cookie', buyer.cookie)
+        .set('X-CSRF-Token', buyer.csrfToken);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(expect.objectContaining({ orders: [], total: 0 }));
+    });
+
+    it('returns 200 with an empty page past the last page, same total', async () => {
+      mockListMyOrdersExecute.mockResolvedValue(summaryPage({ orders: [], page: 9, total: 1, totalPages: 1 }));
+
+      const res = await request(app)
+        .get('/api/orders/mine?page=9')
+        .set('Cookie', buyer.cookie)
+        .set('X-CSRF-Token', buyer.csrfToken);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(expect.objectContaining({ orders: [], total: 1 }));
+    });
+
+    it('summary entries carry no items key', async () => {
+      mockListMyOrdersExecute.mockResolvedValue(summaryPage());
+
+      const res = await request(app)
+        .get('/api/orders/mine')
+        .set('Cookie', buyer.cookie)
+        .set('X-CSRF-Token', buyer.csrfToken);
+
+      expect(res.body.orders[0]).not.toHaveProperty('items');
+    });
+
+    it('trusts the use case for newest-first ordering (idOrder DESC)', async () => {
+      mockListMyOrdersExecute.mockResolvedValue(
+        summaryPage({
+          orders: [
+            { ...summaryPage().orders[0], idOrder: 55 },
+            { ...summaryPage().orders[0], idOrder: 41 },
+          ],
+        })
+      );
+
+      const res = await request(app)
+        .get('/api/orders/mine')
+        .set('Cookie', buyer.cookie)
+        .set('X-CSRF-Token', buyer.csrfToken);
+
+      expect(res.body.orders[0].idOrder).toBe(55);
+      expect(res.body.orders[1].idOrder).toBe(41);
     });
   });
 
