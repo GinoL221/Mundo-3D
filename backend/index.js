@@ -149,7 +149,10 @@ if (env === "test") {
       if (bootAborted) {
         return;
       }
-      httpServer = server.listen(PORT, function onListening() {
+      // Bind every interface explicitly: the platform routes to this
+      // container by its published port and expects 0.0.0.0, not Node's
+      // default host-resolution behavior.
+      httpServer = server.listen(PORT, "0.0.0.0", function onListening() {
         markReady();
         logger.info({ port: this.address().port }, "El servidor esta corriendo");
       });

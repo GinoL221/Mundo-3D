@@ -91,3 +91,64 @@ Schema migrations must stay compatible with **both** the previous and the new ap
 ### Note: physical-schema check now tolerates modern MySQL's integer display-width deprecation
 
 `checkPendingMigrations.js`'s boot-time physical-schema verification used to compare column types as literal strings (e.g. expecting exactly `INT(11)`). MySQL 8.0.19+ stopped reporting that display-width suffix in `DESCRIBE`/`SHOW COLUMNS` output for integer columns not given an explicit width — a real MySQL 8.0.19+ server always reports bare `INT`, never `INT(11)`, which made the boot-time check fail closed against any current MySQL release, discovered while building this deploy pipeline's own real-database integration test. Fixed to tolerate an optional display-width suffix on integer types only (never on `DECIMAL`, where the parenthesized numbers are real precision/scale). If you see a schema-incompatibility error mentioning an integer column on a *very old* MySQL server (pre-8.0.19), that's the one case this fix doesn't paper over — the display width would genuinely differ there.
+
+## Platform bring-up (Render + Aiven + Vercel)
+
+The first concrete hosting target: the backend runs on Render (free-tier web service, described by the committed `render.yaml` blueprint at the repo root), the database on Aiven (managed MySQL), and the frontend on Vercel (static Astro build). Everything shares one registrable domain so the auth cookie stays same-site. An operator with fresh Render, Aiven, and Vercel accounts and a purchased custom domain `<domain>` can reproduce the whole environment from this section alone.
+
+### Topology
+
+| Host | Serves | DNS |
+|---|---|---|
+| Vercel | frontend — apex `<domain>` and `www.<domain>` | apex/`www` → Vercel |
+| Render | API — `api.<domain>` | `api.<domain>` CNAME → the Render service's `onrender.com` host |
+| Aiven | MySQL — private endpoint, non-standard port, private CA | not public |
+
+The frontend origin and the API differ only by the `api.` label, so they are the **same site**: the auth cookie is issued with `Domain=.<domain>`, `SameSite=Lax`, `Secure`, and round-trips on credentialed XHR from the frontend to the API without `SameSite=None`. Do **not** switch `sameSite` to `none` to "fix" auth — if the cookie is not coming back, the domain wiring below is wrong, not the `sameSite` value.
+
+### 1. Aiven — MySQL service
+
+1. Create a MySQL service. Note the **host**, **port** (Aiven uses a non-standard port — this is `DB_PORT`), database name, user, and password from the service overview.
+2. Download / copy the service's **CA certificate** (Aiven console → service → "CA Certificate"). This is a full multi-line PEM (`-----BEGIN CERTIFICATE----- … -----END CERTIFICATE-----`).
+3. This value becomes `DB_CA_CERT`. Paste it **raw and multi-line**, exactly as issued. Do not collapse it to one line, do not `\n`-escape it, do not wrap it in quotes. The backend passes it straight to the MySQL driver as `ssl.ca` with `rejectUnauthorized: true`; an escaped or re-wrapped PEM fails the TLS handshake with an opaque error at boot.
+4. The scoped Aiven user cannot `CREATE DATABASE`; the backend already skips that step when `NODE_ENV=production`, using the pre-provisioned database directly.
+
+### 2. Render — backend web service
+
+1. New → Blueprint, point it at this repo. Render reads `render.yaml`: one web service, build `pnpm install --frozen-lockfile && pnpm --filter backend build`, start `pnpm --filter backend deploy:start`, health check `/health/ready`, Node 22, with `NODE_ENV=production` / `RUN_COMPILED=true` already set.
+2. In the service's **Environment**, fill every `sync: false` key — they are declared in `render.yaml` but intentionally have no value in git:
+   - `JWT_SECRET`, `COOKIE_SECRET` — fresh random secrets (see "Rotating a leaked secret" for blast radius).
+   - `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_HOST`, `DB_PORT` — from Aiven step 1.
+   - `DB_CA_CERT` — the raw PEM from Aiven step 2/3.
+   - `CORS_ORIGIN` — the **exact** frontend origin, a single string, e.g. `https://<domain>` (scheme + host, no trailing slash, no second value). Pick one canonical host (apex or `www`) and 301-redirect the other at the DNS/Vercel layer; the API allows exactly one origin.
+   - `COOKIE_DOMAIN` — `.<domain>` (leading dot), so the cookie is valid for both the frontend origin and `api.<domain>`.
+3. Deploy. `deploy:start` runs `env-preflight` first: a missing required var (now including `DB_PORT` and `DB_CA_CERT`) fails the deploy before the server starts, listing every missing key at once. Then `db:migrate` runs, then the server binds `0.0.0.0:$PORT`.
+4. Add the custom domain `api.<domain>` to the Render service and create the CNAME it shows you. Wait for Render to issue the TLS cert.
+5. Confirm `https://api.<domain>/health/ready` returns `200`.
+
+### 3. Vercel — frontend
+
+1. Import the repo as a Vercel project, root `frontend/`, framework preset Astro (static output).
+2. Set `PUBLIC_API_URL=https://api.<domain>` as a build-time environment variable. Astro **bakes** this into the static bundle at build time (`frontend/astro.config.mjs` fails the build if it is unset). Changing it later requires a **rebuild/redeploy** — there is no runtime override.
+3. Add the apex domain `<domain>` and `www.<domain>` to the Vercel project; set whichever host is not `CORS_ORIGIN` to redirect to the canonical one.
+
+### 4. DNS summary
+
+- `<domain>` (apex) and `www.<domain>` → Vercel (per Vercel's instructions for the project).
+- `api.<domain>` → CNAME to the Render service host.
+
+### 5. First-deploy order
+
+TLS certs and DNS propagation make ordering matter:
+
+1. Aiven service up, CA cert in hand.
+2. Render service created, all env keys set, `api.<domain>` DNS + cert issued, `/health/ready` green.
+3. Vercel build with the final `PUBLIC_API_URL` (it points at the now-live API).
+4. apex/`www` DNS cut over to Vercel.
+5. Log in from `https://<domain>` and confirm the `m3d_auth` cookie is set and is sent back on the next API call (`deploy:smoke-test` covers health, not auth — verify the login round-trip manually).
+
+If `PUBLIC_API_URL` was baked before `api.<domain>` was reachable, the frontend still works once the API comes up (the value is a URL, not a build-time fetch) — but if the value itself is wrong, rebuild.
+
+### Cold starts and `SMOKE_TEST_TIMEOUT_MS`
+
+Render's free tier spins the service down after ~15 minutes idle. The next request triggers a full cold boot: `deploy:start` is not re-run, but the server process restarts and runs its own boot chain — DB `authenticate()` over TLS to Aiven, `checkNoPendingMigrations()`, `seedInitialData()` — before `/health/ready` flips to `200`. Those Aiven round-trips plus container spin-up regularly exceed the `deploy:smoke-test` default of `SMOKE_TEST_TIMEOUT_MS=60000`. When smoke-testing a service that may have been idle, raise `SMOKE_TEST_TIMEOUT_MS` (e.g. `120000`–`180000`); a slow first response after idle is expected, not a failed deploy.

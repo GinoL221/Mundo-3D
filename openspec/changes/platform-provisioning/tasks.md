@@ -45,12 +45,12 @@ Chain strategy: stacked-to-main
 
 ## Phase 3: PR3 — Platform manifest, proxy-awareness, runbook
 
-- [ ] 3.1 RED: integration test (Jest + supertest) — login limiter buckets by the forwarded client IP: two requests with distinct `X-Forwarded-For` do not share a bucket; a spoofed second hop is ignored; client B (different IP) MUST NOT get `429` while client A does. Must exercise the limiter for real — `loginLimiter.ts:24` short-circuits when `NODE_ENV==='test'`, so set a non-test env or assert `req.ip` directly; not a vacuous pass. [api-jwt-auth: Proxy-Aware Login Rate Limiting]
-- [ ] 3.2 GREEN: `backend/src/app.js` — `server.set('trust proxy', 1)` immediately after `const server = express();`, before `requestIdMiddleware` and the `/api` limiter mounts. [platform-hosting-topology: Proxy-Aware Runtime]
-- [ ] 3.3 GREEN: `backend/index.js` — `server.listen(PORT, '0.0.0.0', cb)` (explicit bind host).
-- [ ] 3.4 Create root `render.yaml` — one free-tier web service: `buildCommand` `pnpm --filter backend build`; `startCommand` the chained preflight + migrate-and-start; env `RUN_COMPILED=true`, `NODE_ENV=production`, `NODE_VERSION=22`; `healthCheckPath: /health/ready`; every secret declared as a key with `sync: false` (dashboard-set, no values in git). [platform-hosting-topology: Committed Platform Manifest]
-- [ ] 3.5 `docs/RUNBOOKS.md` — new "Platform bring-up" section after "Deploy Pipeline": Aiven DB + CA retrieval + raw multi-line PEM paste; Render service + custom domain + env keys; Vercel + `PUBLIC_API_URL` at build time; DNS apex/www → Vercel and `api.` → Render; `COOKIE_DOMAIN=.<domain>` + `CORS_ORIGIN` exact origin (sameSite stays `lax`); first-deploy order; `SMOKE_TEST_TIMEOUT_MS` cold-start note. [platform-hosting-topology: Custom-Domain Cookie Topology; Reproducible Bring-Up Runbook]
-- [ ] 3.6 Run `pnpm test` limiter suite; record manual bring-up verification as deferred to first deploy.
+- [x] 3.1 RED: integration test (Jest + supertest) — login limiter buckets by the forwarded client IP: two requests with distinct `X-Forwarded-For` do not share a bucket; a spoofed second hop is ignored; client B (different IP) MUST NOT get `429` while client A does. Must exercise the limiter for real — `loginLimiter.ts:24` short-circuits when `NODE_ENV==='test'`, so set a non-test env or assert `req.ip` directly; not a vacuous pass. [api-jwt-auth: Proxy-Aware Login Rate Limiting]
+- [x] 3.2 GREEN: `backend/src/app.js` — `server.set('trust proxy', 1)` immediately after `const server = express();`, before `requestIdMiddleware` and the `/api` limiter mounts. [platform-hosting-topology: Proxy-Aware Runtime]
+- [x] 3.3 GREEN: `backend/index.js` — `server.listen(PORT, '0.0.0.0', cb)` (explicit bind host).
+- [x] 3.4 Create root `render.yaml` — one free-tier web service: `buildCommand` `pnpm --filter backend build`; `startCommand` the chained preflight + migrate-and-start; env `RUN_COMPILED=true`, `NODE_ENV=production`, `NODE_VERSION=22`; `healthCheckPath: /health/ready`; every secret declared as a key with `sync: false` (dashboard-set, no values in git). [platform-hosting-topology: Committed Platform Manifest]
+- [x] 3.5 `docs/RUNBOOKS.md` — new "Platform bring-up" section after "Deploy Pipeline": Aiven DB + CA retrieval + raw multi-line PEM paste; Render service + custom domain + env keys; Vercel + `PUBLIC_API_URL` at build time; DNS apex/www → Vercel and `api.` → Render; `COOKIE_DOMAIN=.<domain>` + `CORS_ORIGIN` exact origin (sameSite stays `lax`); first-deploy order; `SMOKE_TEST_TIMEOUT_MS` cold-start note. [platform-hosting-topology: Custom-Domain Cookie Topology; Reproducible Bring-Up Runbook]
+- [x] 3.6 Run `pnpm test` limiter suite; record manual bring-up verification as deferred to first deploy.
 
 ## Notes
 

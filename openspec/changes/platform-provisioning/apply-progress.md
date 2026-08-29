@@ -86,4 +86,55 @@ Task 2.5 text names the chain as `pnpm --filter backend deploy:env-preflight && 
 ### Pre-existing issues noted
 `scripts/deploy/*.js` are outside the repo's Prettier gate (root `format` targets only `backend/src` + `frontend/src`); `env-preflight.js` was already Prettier-non-conformant before this change (trailing-comma-in-call-args). Matched the existing `scripts/deploy/` style rather than Prettier defaults. No root ESLint config covers `scripts/`.
 
-## PR3 — Platform manifest, proxy-awareness, runbook — NOT STARTED
+## PR3 — Platform manifest, proxy-awareness, runbook — COMPLETE
+
+Branch: `feat/platform-provisioning-render-manifest` (stacked off `feat/platform-provisioning-preflight-vars`).
+Focused runners: `pnpm test` (Jest — `trustProxy.test.js`, `indexBindHost.test.js`) + `pnpm test:deploy-scripts` (`node --test` — `platform-manifest.test.js`).
+
+| Task | Status | Notes |
+|------|--------|-------|
+| 3.1 RED — proxy-aware login rate limiting | [x] | New `backend/src/__tests__/trustProxy.test.js` (4 cases). Loads the REAL `loginLimiter` with `NODE_ENV` overridden to `production` (via `jest.isolateModules`, env restored in `afterEach`) so `express-rate-limit` runs for real — not the vacuous `NODE_ENV==='test'` short-circuit. Asserts: exported `app.get('trust proxy') === 1`; `req.ip` = leftmost `X-Forwarded-For` under 1 hop; a client-forged leading hop is ignored (proxy-appended IP wins); client A at the cap gets `429` while client B (different forwarded IP) still gets `200`. |
+| 3.2 GREEN — `backend/src/app.js` | [x] | `server.set('trust proxy', 1)` immediately after `const server = express();`, before `requestIdMiddleware` and the `/api` limiter mounts. Numeric `1` (single Render hop) — `true` would trip express-rate-limit's `ERR_ERL_PERMISSIVE_TRUST_PROXY`. Comment explains the single-hop rationale. |
+| 3.3 GREEN — `backend/index.js` + fake helper | [x] | Production branch `server.listen(PORT, '0.0.0.0', onListening)` (`:152` area). Test-env branch (`:136`) intentionally left on the 2-arg `listen(PORT, cb)` form. `backend/src/__tests__/helpers/fakeHttpServer.js` updated to model Node's `listen(port[, host][, cb])` overload (callback may be 2nd or 3rd arg; records `listeningHost`). New `backend/src/__tests__/indexBindHost.test.js` (2 cases): production `listen` called with `('3031', '0.0.0.0', fn)` and `onListening` still fires; test-env path stays host-less. |
+| 3.4 GREEN — root `render.yaml` | [x] | One free-tier `type: web` service `mundo-3d-backend`, `runtime: node`, `plan: free`. `buildCommand: pnpm install --frozen-lockfile && pnpm --filter backend build` (keeps devDeps — `tsc` is a devDependency). `startCommand: pnpm --filter backend deploy:start` (PR2 chain: env-preflight `&&` migrate-and-start). Inline env `NODE_ENV=production`, `RUN_COMPILED="true"`, `NODE_VERSION="22"`. `healthCheckPath: /health/ready`. Ten secrets (`JWT_SECRET`, `COOKIE_SECRET`, `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_HOST`, `DB_PORT`, `DB_CA_CERT`, `CORS_ORIGIN`, `COOKIE_DOMAIN`) each `sync: false` with no inline value. |
+| 3.5 GREEN — `docs/RUNBOOKS.md` | [x] | New `## Platform bring-up (Render + Aiven + Vercel)` section appended after "Deploy Pipeline" (existing content untouched). Covers: topology table + same-site cookie rationale (no `SameSite=None`); Aiven service + raw multi-line PEM paste into `DB_CA_CERT` (no `\n` escaping, no quotes) + non-standard `DB_PORT` + no `CREATE DATABASE`; Render Blueprint deploy + filling every `sync:false` key + `CORS_ORIGIN` as one exact origin (redirect the other host) + `COOKIE_DOMAIN=.<domain>`; Vercel static build with baked `PUBLIC_API_URL` (rebuild to change); DNS (apex/www → Vercel, `api.<domain>` → Render); first-deploy order; free-tier cold-start note recommending a raised `SMOKE_TEST_TIMEOUT_MS`. |
+| 3.6 Run suites | [x] | `pnpm test` → backend 114 suites / 936 tests, frontend 14 files / 181 tests, exit 0. `pnpm test:deploy-scripts` → 39/39, exit 0. Manual first-deploy bring-up (real Aiven private-CA TLS handshake + login cookie round-trip) recorded as deferred to first deploy — not CI-reproducible, same accepted gap class as PR1. |
+
+### TDD Cycle Evidence
+
+| Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|------|-----------|-------|------------|-----|-------|-------------|----------|
+| 3.1/3.2 | `backend/src/__tests__/trustProxy.test.js` | Integration (supertest + real express-rate-limit) | N/A (new file); `middlewareOrder`/`cors` suites green after the `app.js` edit | ✅ `app.get('trust proxy')` returned `false` (expected `1`) | ✅ 4/4 after `server.set('trust proxy', 1)` | ✅ single XFF vs forged-leading-hop vs client-A-capped-vs-client-B | ➖ one redundant "same IP shares a bucket" case removed (already covered) |
+| 3.3 | `backend/src/__tests__/indexBindHost.test.js` | Unit (boot harness, mocked module boundary) | ✅ `index.test.js` 15/15 green after the `fakeHttpServer.js` overload change | ✅ `listen` called `('3031', [fn])` — 2 args, missing `'0.0.0.0'` | ✅ 2/2 after `index.js` 3-arg `listen` | ✅ production 3-arg + `onListening` fires vs test-env stays 2-arg | ➖ merged the callback-fires assertion into the bind-host case |
+| 3.4/3.5 | `scripts/deploy/platform-manifest.test.js` | Structural (`node --test`, text assertions — mirrors PR2 `deploy-start-chain.test.js`) | N/A (new file) | ✅ 8/9 failing (no `render.yaml`; no platform section) | ✅ 9/9 after `render.yaml` + RUNBOOKS section | ✅ existence · tab-free/single-service · build/start/health · inline env · per-secret `sync:false` xor `value:` · no PEM/`sync:true` · providers · domain/cookie/TLS/cold-start tokens · Deploy-Pipeline-section-preserved | ➖ none needed |
+
+### Test Summary
+- Tests added: 4 (`trustProxy.test.js`) + 2 (`indexBindHost.test.js`) Jest + 9 (`platform-manifest.test.js`) node:test = 15.
+- `pnpm test`: backend 114 suites / 936 tests (was 930, +6), frontend 181, exit 0.
+- `pnpm test:deploy-scripts`: 39 tests (was 30, +9), exit 0.
+- Layers: integration (supertest + real limiter), unit (boot harness), structural (manifest/runbook text).
+- No YAML-parser dependency added — the manifest test uses text/regex assertions plus a tab-free + single-service well-formedness guard, matching PR2's dependency-free structural style.
+
+### Work Unit Evidence
+| Evidence | Value |
+|---|---|
+| Focused test command + result | `npx jest src/__tests__/trustProxy.test.js src/__tests__/indexBindHost.test.js` → 2 suites / 6 tests pass; `pnpm test:deploy-scripts` → 39/39 pass |
+| Runtime harness command/scenario + result | `trustProxy.test.js` drives real `express-rate-limit` over supertest behind `trust proxy: 1`: client A (`203.0.113.10`) exhausts `max=2` and its 3rd POST `/login` → `429`; client B (`203.0.113.20`) first POST → `200`. Real first-deploy bring-up (Aiven private-CA TLS + login cookie round-trip) deferred to first deploy — not CI-reproducible (accepted gap). `boot.integration.test.js` (spawns a real child, waits for a listening port) runs under `pnpm test:integration`, not `pnpm test`; `0.0.0.0` bind is compatible. |
+| Rollback boundary | `git revert` of the PR3 commit restores `app.js` (no `trust proxy`), `index.js` (host-less `listen`), and `fakeHttpServer.js` (2-arg mock); deletes `render.yaml`, the RUNBOOKS platform section, and the three new test files. Pre-proxy behavior returns with zero effect on DB connectivity (PR1) or the preflight/start chain (PR2). dev/test/CI unaffected — the only runtime change is `trust proxy`, inert without an upstream proxy. |
+
+### Deviations from design / spec
+1. **`startCommand`** — the `platform-hosting-topology` spec scenario text literally says `deploy:migrate-and-start`; implemented as `pnpm --filter backend deploy:start`, the PR2 chain that runs `env-preflight && migrate-and-start`. This is a superset that still satisfies "migrations run before serving traffic" and adds the required-var gate the design's "env-preflight is the runtime gate, chained in startCommand" decision mandates. The spec text predates PR2's `deploy:start` script.
+2. **`buildCommand`** — spec/task 3.4 say `pnpm --filter backend build`; implemented as `pnpm install --frozen-lockfile && pnpm --filter backend build` per the work-unit prompt, making the dependency install explicit and reproducible in the manifest. Same build output.
+3. **`app.set` vs `server.set`** — task text says `app.set('trust proxy', 1)`; the Express instance in `app.js` is named `server`, so `server.set('trust proxy', 1)`. Same call.
+4. **`render.yaml` extras** — `name`, `region: oregon`, `rootDir: .`, `autoDeploy: true` added (not in the design's field list) because Render Blueprint requires/expects them for a deployable service. No secret values.
+5. **RUNBOOKS intro** — not touched; the now-slightly-stale "no specific hosting platform … none is defined in this repo yet" opening clause and the "Compiled production start (no deploy target defined yet)" heading were left as-is to keep the diff additive per the work-unit instruction. Worth a follow-up cleanup pass.
+
+### Review-budget note
+Authored additions+deletions this slice ≈ 427 (`git diff --numstat` tracked 84 + new files: render.yaml 50, trustProxy.test.js 90, indexBindHost.test.js 103, platform-manifest.test.js 96). Non-test code slice is 77 lines (`index.js` 5, `fakeHttpServer.js` 13, `app.js` 9, `render.yaml` 50); `docs/RUNBOOKS.md` +61; strict-TDD RED test scaffolding is 289. Marginally above the 400 guide — driven by strict-TDD's mandated RED coverage and the spec-required reproducible runbook, not by production-logic complexity. Delivery strategy is `stacked-to-main` (resolved), and this is the final slice; one redundant limiter case and one duplicated boot assertion were already trimmed.
+
+### Pre-existing issues noted
+- `backend/index.js` is outside the repo Prettier/ESLint globs (root `format` targets `backend/src/**` + `frontend/src/**`; ESLint config is `src/` only) and `prettier --check` flags the whole file — pre-existing, same class as PR1's `ensureDatabase.test.js` and PR2's `scripts/deploy/*.js` notes. The 3 changed lines match the file's existing 2-space / double-quote / semicolon style.
+- All touched files under `backend/src/**` pass `eslint` and `prettier --check` clean.
+
+### Native runtime attempt
+Acquired `state: proceed` with parent token `sha256:13ac7f74…` (full token per launch prompt), request-id `platform-provisioning-apply-pr3-20260829`, work-unit "PR3: render.yaml + trust proxy + 0.0.0.0 bind + RUNBOOKS platform section". Did NOT settle — orchestrator settles.
