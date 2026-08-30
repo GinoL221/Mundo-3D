@@ -39,6 +39,11 @@ test('the hard-required list matches the deploy-pipeline spec contract, in order
     'DB_HOST',
     'DB_PORT',
     'DB_CA_CERT',
+    'R2_ENDPOINT',
+    'R2_ACCESS_KEY_ID',
+    'R2_SECRET_ACCESS_KEY',
+    'R2_BUCKET_NAME',
+    'R2_PUBLIC_URL_BASE',
   ]);
 });
 
@@ -104,6 +109,30 @@ test('script exits non-zero and names DB_CA_CERT when it is unset', () => {
   assert.notEqual(result.status, 0);
   assert.match(result.stdout, /DB_CA_CERT/);
 });
+
+for (const r2Var of [
+  'R2_ENDPOINT',
+  'R2_ACCESS_KEY_ID',
+  'R2_SECRET_ACCESS_KEY',
+  'R2_BUCKET_NAME',
+  'R2_PUBLIC_URL_BASE',
+]) {
+  test(`${r2Var} missing -> reported in missing, not warnings`, () => {
+    const env = buildFullEnv();
+    delete env[r2Var];
+    const result = checkEnv(env);
+    assert.deepEqual(result.missing, [r2Var]);
+    assert.ok(!result.warnings.includes(r2Var));
+  });
+
+  test(`script exits non-zero and names ${r2Var} when it is unset`, () => {
+    const env = buildFullEnv();
+    delete env[r2Var];
+    const result = runPreflight(env);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stdout, new RegExp(r2Var));
+  });
+}
 
 test('script exits 0 with only a warning when PUBLIC_API_URL is the sole unset var', () => {
   const env = buildFullEnv();

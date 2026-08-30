@@ -50,15 +50,44 @@ None — implementation matches design.md's "Decision: `resolveImageUrl` lives a
 ### Issues Found
 None introduced by this batch. Noted (out of scope, pre-existing): `frontend/src/pages/product.astro:12` has an empty `src=""` placeholder `<img>` in the static template (filled by the `<script>` block at runtime) — flagged by the local design-quality hook as `broken-image:12`; this predates PR1 and is unrelated to the `resolveImageUrl` wiring, so it was left untouched per the assigned task scope.
 
-### Remaining Tasks
-- [ ] Phase 2 (PR2): env-preflight + render.yaml + RUNBOOKS §4
+### Remaining Tasks (after PR1)
+- [x] Phase 2 (PR2): env-preflight + render.yaml + RUNBOOKS §4 — see below
 - [ ] Phase 3 (PR3): backend R2 storage cut-over (atomic, `size:exception`)
 
-### Workload / PR Boundary
-- Mode: chained PR slice (stacked-to-main)
-- Current work unit: Unit 1 — Frontend `resolveImageUrl` + 5 call sites (PR1)
-- Boundary: starts at `main` @ `3ebf84f`+CSS-removal; ends with the 5-call-site wiring, no backend/env/deploy changes
-- Estimated review budget impact: ~15 changed lines in call sites + ~55 lines new (`imageUrl.ts` + `imageUrl.test.ts`) — well under the 400-line budget, no exception needed
+---
+
+## Batch: PR2 — Preflight, render.yaml, RUNBOOKS (Phase 2)
+
+Branch: `feat/object-storage-preflight-runbook` (off `main` @ `a0db735`, PR1 merged).
+**Implemented inline by the orchestrator** — the delegated `sdd-apply` subagent hit a model-provider session rate limit (HTTP 429) before making any change; its dangling ledger attempt was settled `interrupted` and a fresh attempt acquired.
+
+### Completed Tasks
+- [x] 2.1 RED: `scripts/deploy/env-preflight.test.js` — the exact-`REQUIRED`-list assertion extended to expect the 5 R2 vars, plus a parametrised loop adding, per R2 var: a `checkEnv` "in missing not warnings" case and a real-subprocess "exits non-zero and names it" case (10 new cases). Ran `pnpm test:deploy-scripts` → RED, R2 cases failed (vars not in `REQUIRED`).
+- [x] 2.2 GREEN: appended `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL_BASE` to `REQUIRED` in `scripts/deploy/env-preflight.js` after `DB_CA_CERT`, with a comment explaining `R2_ENDPOINT` is the explicit S3 API endpoint (provider-portable).
+- [x] 2.3 REFACTOR: no formatting change needed — the existing `missing.join(', ')` FAIL message and `checkEnv` filter cover the new vars unchanged.
+- [x] 2.4 `render.yaml` — 5 R2 keys added as `sync: false`, grouped with a comment pointing at RUNBOOKS §4. Total `sync: false` keys now 16.
+- [x] 2.5 `docs/RUNBOOKS.md` — new "### 4. Cloudflare R2 — object storage for admin-uploaded images" (account enablement + payment-method caveat, bucket creation, public access r2.dev-vs-custom-domain, bucket-scoped S3 API token → which value maps to which var, API-endpoint-vs-public-host distinction, free-tier ceiling as scaling trigger, end-to-end verification loop). Renumbered "DNS summary" → 5, "First-deploy order" → 6; added R2 as first-deploy step 2 and an image-render check to the final step; added the optional `img.<domain>` row to the DNS summary.
+- [x] 2.6 Updated both required-var list mentions in `docs/RUNBOOKS.md`: the "Deploy Pipeline" §2 prose list (`:79`) and the Render §2 env-key list — both now include the 5 R2 vars.
+- [x] 2.7 Verified: `pnpm test:deploy-scripts` → 49/49 pass (was 39). `pnpm test` (full backend+frontend) unaffected — see Work Unit Evidence.
+
+### Files Changed
+| File | Action | What Was Done |
+|------|--------|---------------|
+| `scripts/deploy/env-preflight.js` | Modified | +5 R2 vars in `REQUIRED` (hard-required, no warn-only) |
+| `scripts/deploy/env-preflight.test.js` | Modified | Exact-list assertion + 10 parametrised R2 cases |
+| `render.yaml` | Modified | +5 `sync: false` R2 keys |
+| `docs/RUNBOOKS.md` | Modified | New §4 Cloudflare R2, renumber §5/§6, +R2 to two required-var lists |
+
+### Deviations from Design
+None material. Design guessed the current RUNBOOKS numbering as "DNS 4 / first-deploy 5"; the actual file had DNS as §4 and first-deploy as §5, so R2 slots in as the new §4 and both shift by one — exactly the design's intent.
+
+### Work Unit Evidence
+| Evidence | Value |
+|---|---|
+| Focused test command and result | `pnpm test:deploy-scripts` → 49 tests, 49 pass, 0 fail, exit 0 (10 new R2 cases) |
+| Full-suite regression | `pnpm test` → backend + frontend unchanged (no code path in either reads these vars yet; env-preflight is a `node:test` script outside `pnpm test`) |
+| Runtime harness | N/A — no real R2 call in PR2; nothing but a var list and docs. Real bucket verification is a PR3/bring-up concern. |
+| Rollback boundary | Revert the 4 files; independent of PR1 and PR3, no schema/backend runtime change |
 
 ### Status
-9/9 PR1 tasks complete (Phase 1 of 3). Ready for next batch (PR2) or sdd-verify on this slice.
+7/7 PR2 tasks complete (Phase 2 of 3). Ready for PR3 (backend cut-over) or sdd-verify.

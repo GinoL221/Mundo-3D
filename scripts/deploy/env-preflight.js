@@ -8,6 +8,15 @@ const REQUIRED = [
   'DB_HOST',
   'DB_PORT',
   'DB_CA_CERT',
+  // Cloudflare R2 (S3-compatible object storage) for admin-uploaded product/user
+  // images. R2_ENDPOINT is the explicit S3 API endpoint shown on R2's token
+  // screen, not derived from an account id, so switching to another
+  // S3-compatible provider is a value change, not a code change.
+  'R2_ENDPOINT',
+  'R2_ACCESS_KEY_ID',
+  'R2_SECRET_ACCESS_KEY',
+  'R2_BUCKET_NAME',
+  'R2_PUBLIC_URL_BASE',
 ];
 
 // Checked but warn-only — a missing value produces a warning, never a non-zero

@@ -48,3 +48,15 @@ services:
         sync: false
       - key: COOKIE_DOMAIN
         sync: false
+      # Cloudflare R2 — object storage for admin-uploaded product/user images.
+      # See docs/RUNBOOKS.md "Platform bring-up" section 4.
+      - key: R2_ENDPOINT
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET_NAME
+        sync: false
+      - key: R2_PUBLIC_URL_BASE
+        sync: false

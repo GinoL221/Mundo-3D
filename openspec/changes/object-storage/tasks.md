@@ -38,13 +38,13 @@ Chain strategy: stacked-to-main
 
 ## Phase 2: PR2 — Preflight, render.yaml, RUNBOOKS
 
-- [ ] 2.1 RED: add cases to `scripts/deploy/env-preflight.test.js` — missing each of `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL_BASE` fails; all-set passes
-- [ ] 2.2 GREEN: append the 5 R2 vars to `REQUIRED` in `scripts/deploy/env-preflight.js` after `DB_CA_CERT` (`:10`)
-- [ ] 2.3 REFACTOR: confirm error-message formatting matches existing entries
-- [ ] 2.4 Add the 5 R2 keys as `sync: false` to `render.yaml`
-- [ ] 2.5 Add new "4. Cloudflare R2" subsection to `docs/RUNBOOKS.md` (account enablement, bucket creation, public access, bucket-scoped S3 token, var mapping, free-tier ceiling as scaling trigger, verification loop); renumber DNS→5, first-deploy→6
-- [ ] 2.6 Update the two required-var lists in `docs/RUNBOOKS.md` (`:79` and `:119-125`) to include the 5 R2 vars
-- [ ] 2.7 Verify: `pnpm test:deploy-scripts` green (node:test runner, not `pnpm test`)
+- [x] 2.1 RED: add cases to `scripts/deploy/env-preflight.test.js` — missing each of `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL_BASE` fails; all-set passes
+- [x] 2.2 GREEN: append the 5 R2 vars to `REQUIRED` in `scripts/deploy/env-preflight.js` after `DB_CA_CERT` (`:10`)
+- [x] 2.3 REFACTOR: confirm error-message formatting matches existing entries
+- [x] 2.4 Add the 5 R2 keys as `sync: false` to `render.yaml`
+- [x] 2.5 Add new "4. Cloudflare R2" subsection to `docs/RUNBOOKS.md` (account enablement, bucket creation, public access, bucket-scoped S3 token, var mapping, free-tier ceiling as scaling trigger, verification loop); renumber DNS→5, first-deploy→6
+- [x] 2.6 Update the two required-var lists in `docs/RUNBOOKS.md` (`:79` and `:119-125`) to include the 5 R2 vars
+- [x] 2.7 Verify: `pnpm test:deploy-scripts` green (node:test runner, not `pnpm test`)
 
 ## Phase 3: PR3 — Backend R2 Cut-Over (atomic, `size:exception`)
 
