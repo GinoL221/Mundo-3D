@@ -26,15 +26,15 @@ Chain strategy: stacked-to-main
 
 ## Phase 1: PR1 — Frontend Resolution Helper
 
-- [ ] 1.1 RED: write `frontend/src/lib/imageUrl.test.ts` — http/https pass-through (case-insensitive), bare filename → `/img/products/...` and `/img/users/...`, null/undefined/whitespace-only → `''`, `//evil/x` and `javascript:` fall back to legacy prefix
-- [ ] 1.2 GREEN: implement `resolveImageUrl(image, kind)` in `frontend/src/lib/imageUrl.ts` per spec
-- [ ] 1.3 REFACTOR: tidy implementation/tests, confirm colocated pattern matches `config.ts`/`config.test.ts`
-- [ ] 1.4 Wire `ProductSearch.astro:154` to call `resolveImageUrl(image, 'products')`
-- [ ] 1.5 Wire `pages/product.astro:115`
-- [ ] 1.6 Wire `pages/index.astro:188`
-- [ ] 1.7 Wire `CartList.astro:118`
-- [ ] 1.8 Wire `scripts/sessionUI.ts:66` with `'users'` kind
-- [ ] 1.9 Verify: `pnpm --filter frontend test` green; confirm architecture checker (`.astro` files unscanned per design) raises no new domain-locality violation
+- [x] 1.1 RED: write `frontend/src/lib/imageUrl.test.ts` — http/https pass-through (case-insensitive), bare filename → `/img/products/...` and `/img/users/...`, null/undefined/whitespace-only → `''`, `//evil/x` and `javascript:` fall back to legacy prefix
+- [x] 1.2 GREEN: implement `resolveImageUrl(image, kind)` in `frontend/src/lib/imageUrl.ts` per spec
+- [x] 1.3 REFACTOR: tidy implementation/tests, confirm colocated pattern matches `config.ts`/`config.test.ts`
+- [x] 1.4 Wire `ProductSearch.astro:154` to call `resolveImageUrl(image, 'products')`
+- [x] 1.5 Wire `pages/product.astro:115`
+- [x] 1.6 Wire `pages/index.astro:188`
+- [x] 1.7 Wire `CartList.astro:118`
+- [x] 1.8 Wire `scripts/sessionUI.ts:66` with `'users'` kind
+- [x] 1.9 Verify: `pnpm --filter frontend test` green; confirm architecture checker (`.astro` files unscanned per design) raises no new domain-locality violation
 
 ## Phase 2: PR2 — Preflight, render.yaml, RUNBOOKS
 

@@ -61,6 +61,7 @@ import ProductCard from './ProductCard.astro';
 
 <script>
   import { getCategoryImg, isPlaceholderImage } from '../adapters/product.adapter';
+  import { resolveImageUrl } from '../../../lib/imageUrl';
   import type { APIProduct } from '../adapters/product.adapter';
   import { fetchProductSearch, fetchFilterOptions } from '../services/product.search.service';
   import type { ProductSearchCriteria } from '../services/product.search.service';
@@ -151,7 +152,7 @@ import ProductCard from './ProductCard.astro';
           img.alt = product.category || 'Otras';
           img.classList.add('product-card__category-img--pixelart');
         } else {
-          img.src = `/img/products/${product.image}`;
+          img.src = resolveImageUrl(product.image, 'products');
           img.alt = product.nameProduct;
           img.classList.remove('product-card__category-img--pixelart');
         }
