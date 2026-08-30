@@ -58,6 +58,11 @@ describe('database config — production TLS', () => {
     const serialised = JSON.stringify(config);
     expect(serialised).not.toMatch(/"rejectUnauthorized"\s*:\s*false/);
   });
+
+  it('omits dialectOptions entirely when DB_CA_CERT is unset (never a bare TLS attempt with no CA)', () => {
+    const config = loadConfig({ DB_PORT: '24063', DB_CA_CERT: undefined });
+    expect(Object.prototype.hasOwnProperty.call(config.production, 'dialectOptions')).toBe(false);
+  });
 });
 
 describe('database config — dev/test blocks unchanged', () => {
