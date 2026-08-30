@@ -1,5 +1,6 @@
 import { hasAdminAccess, clearSession } from '../domains/auth/services/session.service';
 import { CartService } from '../domains/cart/services/CartService';
+import { resolveImageUrl } from '../lib/imageUrl';
 
 type Cleanup = () => void;
 
@@ -63,7 +64,7 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
       );
       if (greeting) greeting.textContent = `Hola ${user.firstName || user.FirstName || 'Usuario'}`;
       if (avatar && (user.image || user.Image))
-        avatar.src = `/img/users/${user.image || user.Image}`;
+        avatar.src = resolveImageUrl(user.image || user.Image, 'users');
     } catch {
       resetToGuest();
     }

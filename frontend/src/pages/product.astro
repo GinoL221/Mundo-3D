@@ -52,6 +52,7 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
   import { getCategoryImg, isPlaceholderImage } from '../domains/products';
+  import { resolveImageUrl } from '../lib/imageUrl';
   import { fetchProductById } from '../domains/products/services/product.service';
   import { CartService } from '../domains/cart';
 
@@ -112,7 +113,7 @@ import Layout from '../layouts/Layout.astro';
           imgEl.src = `/images/illustrations/${catImg}.svg`;
           imgEl.classList.add('product-detail__image--pixelart');
         } else {
-          imgEl.src = `/img/products/${product.image}`;
+          imgEl.src = resolveImageUrl(product.image, 'products');
           imgEl.classList.remove('product-detail__image--pixelart');
         }
         imgEl.alt = product.name;

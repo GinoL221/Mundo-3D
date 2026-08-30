@@ -49,6 +49,7 @@
 <script>
   import { cartItems, cartTotal, CartService } from '../services/CartService';
   import type { PriceDrift, CheckoutResult } from '../services/CartService';
+  import { resolveImageUrl } from '../../../lib/imageUrl';
 
   function renderPriceDrift(drifts: PriceDrift[]): void {
     const driftEl = document.getElementById('cart-price-drift');
@@ -115,7 +116,7 @@
 
       if (nameEl) nameEl.textContent = item.name;
       if (imgEl) {
-        imgEl.src = `/img/products/${item.image}`;
+        imgEl.src = resolveImageUrl(item.image, 'products');
         imgEl.alt = item.name;
       }
       if (priceEl) priceEl.textContent = `$ ${item.unitPrice}`;

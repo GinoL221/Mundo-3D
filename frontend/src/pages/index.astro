@@ -82,6 +82,7 @@ import { ProductCard } from '../domains/products';
 
 <script>
   import { getCategoryImg, isPlaceholderImage } from '../domains/products';
+  import { resolveImageUrl } from '../lib/imageUrl';
   import { fetchProducts } from '../domains/products/services/product.service';
 
   // Carousel logic
@@ -185,7 +186,7 @@ import { ProductCard } from '../domains/products';
             img.alt = catName;
             img.classList.add('product-card__category-img--pixelart');
           } else {
-            img.src = `/img/products/${product.image}`;
+            img.src = resolveImageUrl(product.image, 'products');
             img.alt = product.name;
             img.classList.remove('product-card__category-img--pixelart');
           }
