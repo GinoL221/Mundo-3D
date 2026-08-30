@@ -1,5 +1,5 @@
 /**
- * REAL-DATABASE integration test — NOT mocked (except the S3 transport).
+ * REAL-DATABASE integration test — NOT mocked (except the disk `unlink`).
  *
  * Scope: proves that `SequelizeUserRepository.create()`'s `UniqueConstraintError`
  * translation (added to fix the registration race) actually holds up end to
@@ -8,34 +8,33 @@
  * real MySQL/MariaDB. Two concurrent registrations with the same,
  * previously-unused email must resolve into exactly one 201 and one 400 with
  * the sequential duplicate-email body, no 500, exactly one persisted row, and
- * the loser's uploaded avatar object deleted from the bucket (not orphaned).
+ * the loser's uploaded avatar removed (not orphaned).
  *
- * The R2 object store is the one mocked seam: `S3Client.prototype.send` is
- * stubbed so no real bucket call is made, mirroring the unit-level strategy.
+ * `cleanupUploadedFile` runs under `NODE_ENV=test` here (forced by testDb.ts),
+ * so it removes the loser's file from local disk — `fs.promises.unlink` is the
+ * one stubbed seam so the test does not depend on a real file existing.
+ * Production would issue a `DeleteObjectCommand` against R2 instead; that
+ * branch is covered by the unit suite.
  *
  * This file is excluded from the default `npm test` run (see
  * `jest.config.js`'s `testPathIgnorePatterns`) and only runs via
  * `npm run test:integration`, which requires a reachable MySQL/MariaDB
  * (`DB_HOST`/`DB_USER`/`DB_PASS` env vars, see `database/config/config.js`).
  */
+import path from 'path';
+import fs from 'fs';
 import { Request, Response, NextFunction } from 'express';
-import {
-  S3Client,
-  DeleteObjectCommand,
-} from '@aws-sdk/client-s3';
 import { SequelizeUserRepository } from '../SequelizeUserRepository';
 import { RegisterUserUseCase } from '../../../application/use-cases/RegisterUserUseCase';
 import { BcryptPasswordHasher } from '../../security/BcryptPasswordHasher';
 import { UserApiController } from '../../controllers/UserApiController';
-import { resetR2Client } from '../../storage/r2Client';
 import { bootstrapTestDatabase, closeTestDatabase, getTestDb } from '../../../__tests__/helpers/testDb';
 
-jest.mock('@aws-sdk/client-s3', () => {
-  const actual = jest.requireActual('@aws-sdk/client-s3');
-  return { __esModule: true, ...actual, S3Client: jest.fn() };
-});
+const unlinkMock = jest
+  .spyOn(fs.promises, 'unlink')
+  .mockResolvedValue(undefined as never);
 
-const sendMock = jest.fn();
+const uploadDir = (key: string): string => path.join(process.cwd(), 'public', 'img', key);
 
 // Env prerequisite (design.md): the 201 path calls setSessionCookies ->
 // getJwtSecret() / issueCsrfToken() -> getCookieSecret(). Both already fall
@@ -47,7 +46,7 @@ process.env.COOKIE_SECRET = process.env.COOKIE_SECRET || 'test-only-cookie-secre
 
 jest.setTimeout(30000);
 
-type ReqWithFile = Request & { file?: { key: string; location: string } };
+type ReqWithFile = Request & { file?: { key: string; location: string; path: string } };
 
 function buildResDouble(): Response {
   return {
@@ -59,18 +58,16 @@ function buildResDouble(): Response {
   } as unknown as Response;
 }
 
-/** Bounded poll for `cleanupUploadedFile`'s fire-and-forget DeleteObject to land. */
-async function waitUntilDeleted(key: string, timeoutMs = 2000, intervalMs = 50): Promise<boolean> {
+/** Bounded poll for `cleanupUploadedFile`'s fire-and-forget unlink to land. */
+async function waitUntilUnlinked(key: string, timeoutMs = 2000, intervalMs = 50): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
-  const wasDeleted = (): boolean =>
-    sendMock.mock.calls.some(
-      ([command]) => command instanceof DeleteObjectCommand && command.input.Key === key
-    );
+  const wasUnlinked = (): boolean =>
+    unlinkMock.mock.calls.some(([target]) => target === uploadDir(key));
   while (Date.now() < deadline) {
-    if (wasDeleted()) return true;
+    if (wasUnlinked()) return true;
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
-  return wasDeleted();
+  return wasUnlinked();
 }
 
 describe('SequelizeUserRepository.create — real DB registration race', () => {
@@ -80,15 +77,7 @@ describe('SequelizeUserRepository.create — real DB registration race', () => {
 
   beforeAll(async () => {
     await bootstrapTestDatabase();
-
-    process.env.R2_ENDPOINT = 'https://acct.r2.cloudflarestorage.com';
-    process.env.R2_ACCESS_KEY_ID = 'test-access-key';
-    process.env.R2_SECRET_ACCESS_KEY = 'test-secret-key';
-    process.env.R2_BUCKET_NAME = 'test-bucket';
-    process.env.R2_PUBLIC_URL_BASE = 'https://pub-test.r2.dev';
-    (S3Client as unknown as jest.Mock).mockImplementation(() => ({ send: sendMock }));
-    sendMock.mockResolvedValue({});
-    resetR2Client();
+    unlinkMock.mockClear();
 
     const authStub = { execute: jest.fn() } as any;
     const listStub = { execute: jest.fn() } as any;
@@ -103,6 +92,7 @@ describe('SequelizeUserRepository.create — real DB registration race', () => {
   afterAll(async () => {
     await db.User.destroy({ where: { email } });
     await closeTestDatabase();
+    unlinkMock.mockRestore();
   });
 
   it('resolves a concurrent duplicate-email registration into exactly one 201 and one 400, no 500, one DB row, and no orphaned upload', async () => {
@@ -111,11 +101,11 @@ describe('SequelizeUserRepository.create — real DB registration race', () => {
 
     const reqA: ReqWithFile = {
       body: { firstName: 'Race', lastName: 'A', email, password: 'password123' },
-      file: { key: keyA, location: `https://pub-test.r2.dev/${keyA}` },
+      file: { key: keyA, location: `/img/${keyA}`, path: uploadDir(keyA) },
     } as any;
     const reqB: ReqWithFile = {
       body: { firstName: 'Race', lastName: 'B', email, password: 'password123' },
-      file: { key: keyB, location: `https://pub-test.r2.dev/${keyB}` },
+      file: { key: keyB, location: `/img/${keyB}`, path: uploadDir(keyB) },
     } as any;
 
     const resA = buildResDouble();
@@ -156,16 +146,16 @@ describe('SequelizeUserRepository.create — real DB registration race', () => {
     );
     expect(winnerJsonCall[0].user.idUser).toBe(persisted.idUser);
 
-    // Loser's object is deleted from the bucket; winner's object is retained.
+    // Loser's uploaded avatar is removed; winner's is retained.
     const loserKey = losers[0].req.file!.key;
     const winnerKey = winners[0].req.file!.key;
 
-    const deleted = await waitUntilDeleted(loserKey);
-    expect(deleted).toBe(true);
+    const unlinked = await waitUntilUnlinked(loserKey);
+    expect(unlinked).toBe(true);
 
-    const winnerDeleted = sendMock.mock.calls.some(
-      ([command]) => command instanceof DeleteObjectCommand && command.input.Key === winnerKey
+    const winnerUnlinked = unlinkMock.mock.calls.some(
+      ([target]) => target === uploadDir(winnerKey)
     );
-    expect(winnerDeleted).toBe(false);
+    expect(winnerUnlinked).toBe(false);
   });
 });
