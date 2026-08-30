@@ -6,7 +6,7 @@ Retro terminal / PICO-8-inspired pixel-art aesthetic, CRT/JRPG effects, BEM comp
 
 ## Design tokens
 
-Defined in `frontend/src/styles/tokens/` (colors, typography, spacing), consumed by every component stylesheet. `backend/public/css/tokens/` mirrors these files exactly today — see "Known drift" below for what does *not* stay in sync.
+Defined in `frontend/src/styles/tokens/` (colors, typography, spacing), consumed by every component stylesheet.
 
 ### Colors (`tokens/colors.css`)
 
@@ -96,6 +96,6 @@ Two independent, user-toggleable layers on top of the base theme:
 - A small decorative control (carousel indicator) keeps its tiny visible size via a `::before`/inner element while the actual interactive box is grown to at least 24×24px (WCAG 2.2 SC 2.5.8) — see `.carousel__indicator`.
 - Async state changes users need to notice (form errors, add-to-cart confirmation) use `role="alert"` or `aria-live="polite"`, not a silent DOM update.
 
-## Known drift (tracked, not fixed by this document)
+## Removed: backend/public/css/ (2026-08-30)
 
-`backend/public/css/` and `frontend/src/styles/` are **not** identical. Tokens (`colors`, `typography`, `spacing`), `about.css`, and `utilities.css` are byte-identical; `forms.css` is identical except one frontend-only mobile-width rule for `.form-card` (login's fixed-width card, a class backend's EJS views don't use). `navbar.css` and `product-card.css` have diverged further: the backend copy lacks the CRT toggle button and all JRPG hover-cursor rules (the `retro-crt-jrpg-effects` change was never backported), and still uses plain `<img>` icons instead of the frontend's pixel-art panel treatment. This is the pre-existing "unify duplicated CSS" item on the improvement roadmap — resolving it (single source + build/copy step) is a separate, deliberate change, not something to patch incidentally while touching styles for other reasons.
+The backend used to carry a second, hand-duplicated copy of `frontend/src/styles/` under `backend/public/css/`, left over from the pre-Astro EJS-served frontend. It had diverged (the backend copy lacked the CRT toggle and JRPG hover-cursor rules) and nothing referenced it — the backend has served no HTML document since `5a8d319` removed the last `.ejs` view, and `express.static` exposing the directory had no consumer. Deleted rather than unified: `frontend/src/styles/` is the single source of visual identity, consumed only by the Astro frontend. If the backend ever needs to render HTML again, its stylesheet should be regenerated from `frontend/src/styles/` at that point, not kept in permanent lockstep with no consumer.
