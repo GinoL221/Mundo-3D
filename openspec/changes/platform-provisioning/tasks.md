@@ -36,12 +36,12 @@ Chain strategy: stacked-to-main
 
 ## Phase 2: PR2 — Required-var preflight delta
 
-- [ ] 2.1 RED: `scripts/deploy/env-preflight.test.js` (node:test, run by root `test:deploy-scripts`) — `checkEnv` lists `DB_PORT` and `DB_CA_CERT` in `missing` when unset and the script exits non-zero identifying them. [deploy-pipeline-foundations: Required Production Environment Variable Preflight]
-- [ ] 2.2 RED: same suite — with all hard-required vars set but `PUBLIC_API_URL` unset, it appears in `warnings` (not `missing`) and the script exits 0; likewise `COOKIE_DOMAIN`.
-- [ ] 2.3 GREEN: `scripts/deploy/env-preflight.js` — add `DB_PORT`, `DB_CA_CERT` to the REQUIRED list; move `PUBLIC_API_URL` to the warn-only list using the same mechanism as `COOKIE_DOMAIN`.
-- [ ] 2.4 RED: test that the deploy start path runs preflight before `deploy:migrate-and-start` and a missing required var blocks before the app process starts.
-- [ ] 2.5 GREEN: chain `pnpm --filter backend deploy:env-preflight && pnpm --filter backend deploy:migrate-and-start` in the start path (package script consumed by `render.yaml` in PR3).
-- [ ] 2.6 Run `pnpm test:deploy-scripts`; confirm green. Spec delta `deploy-pipeline-foundations` is already authored — reference, do not rewrite.
+- [x] 2.1 RED: `scripts/deploy/env-preflight.test.js` (node:test, run by root `test:deploy-scripts`) — `checkEnv` lists `DB_PORT` and `DB_CA_CERT` in `missing` when unset and the script exits non-zero identifying them. [deploy-pipeline-foundations: Required Production Environment Variable Preflight]
+- [x] 2.2 RED: same suite — with all hard-required vars set but `PUBLIC_API_URL` unset, it appears in `warnings` (not `missing`) and the script exits 0; likewise `COOKIE_DOMAIN`.
+- [x] 2.3 GREEN: `scripts/deploy/env-preflight.js` — add `DB_PORT`, `DB_CA_CERT` to the REQUIRED list; move `PUBLIC_API_URL` to the warn-only list using the same mechanism as `COOKIE_DOMAIN`.
+- [x] 2.4 RED: test that the deploy start path runs preflight before `deploy:migrate-and-start` and a missing required var blocks before the app process starts.
+- [x] 2.5 GREEN: chain preflight before migrate-and-start in the start path — new `backend` `deploy:start` script `node ../scripts/deploy/env-preflight.js && node ../scripts/deploy/migrate-and-start.js` (package script consumed by `render.yaml` in PR3).
+- [x] 2.6 Run `pnpm test:deploy-scripts`; confirm green. Spec delta `deploy-pipeline-foundations` is already authored — reference, do not rewrite.
 
 ## Phase 3: PR3 — Platform manifest, proxy-awareness, runbook
 
