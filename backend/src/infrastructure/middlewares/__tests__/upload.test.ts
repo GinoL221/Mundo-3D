@@ -2,51 +2,77 @@ import multer from 'multer';
 import createUpload from '../upload';
 import { createR2StorageEngine } from '../../storage/r2StorageEngine';
 
-// Mock multer: capture the options object it is constructed with.
+// Mock multer: capture the options object it is constructed with, and give it a
+// `diskStorage` that returns a recognisable marker.
 jest.mock('multer', () => {
   const mockMulter = jest.fn((config) => ({
     storage: config.storage,
     limits: config.limits,
     fileFilter: config.fileFilter,
   })) as any;
+  mockMulter.diskStorage = jest.fn(() => ({
+    __diskStorage: true,
+    _handleFile: jest.fn(),
+    _removeFile: jest.fn(),
+  }));
   return mockMulter;
 });
 
 jest.mock('../../storage/r2StorageEngine', () => ({
   createR2StorageEngine: jest.fn((dest: string) => ({
-    __engine: true,
+    __r2Engine: true,
     dest,
     _handleFile: jest.fn(),
     _removeFile: jest.fn(),
   })),
 }));
 
-describe('createUpload factory (R2 storage engine)', () => {
+const ORIGINAL_NODE_ENV = process.env.NODE_ENV;
+
+describe('createUpload factory', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.NODE_ENV = ORIGINAL_NODE_ENV;
   });
 
-  it('builds the multer instance with the R2 storage engine namespaced by dest', () => {
+  afterAll(() => {
+    process.env.NODE_ENV = ORIGINAL_NODE_ENV;
+  });
+
+  it('uses a local-disk-backed engine outside production', () => {
+    process.env.NODE_ENV = 'test';
     createUpload('products');
 
-    expect(createR2StorageEngine).toHaveBeenCalledWith('products');
+    expect(createR2StorageEngine).not.toHaveBeenCalled();
+    expect((multer as unknown as { diskStorage: jest.Mock }).diskStorage).toHaveBeenCalledTimes(1);
     const multerOptions = (multer as unknown as jest.Mock).mock.calls[0][0];
-    expect(multerOptions.storage).toMatchObject({ __engine: true, dest: 'products' });
     expect(typeof multerOptions.storage._handleFile).toBe('function');
     expect(typeof multerOptions.storage._removeFile).toBe('function');
   });
 
-  it('preserves the 5MB file-size limit after the engine swap', () => {
+  it('uses the R2 storage engine namespaced by dest in production', () => {
+    process.env.NODE_ENV = 'production';
     createUpload('products');
 
+    expect(createR2StorageEngine).toHaveBeenCalledWith('products');
+    expect((multer as unknown as { diskStorage: jest.Mock }).diskStorage).not.toHaveBeenCalled();
     const multerOptions = (multer as unknown as jest.Mock).mock.calls[0][0];
-    expect(multerOptions.limits).toEqual({ fileSize: 5 * 1024 * 1024 });
+    expect(multerOptions.storage).toMatchObject({ __r2Engine: true, dest: 'products' });
   });
 
-  it('does not use multer.diskStorage anymore', () => {
+  it('preserves the 5MB file-size limit in both environments', () => {
+    process.env.NODE_ENV = 'test';
     createUpload('products');
+    expect((multer as unknown as jest.Mock).mock.calls[0][0].limits).toEqual({
+      fileSize: 5 * 1024 * 1024,
+    });
 
-    expect((multer as unknown as { diskStorage?: unknown }).diskStorage).toBeUndefined();
+    jest.clearAllMocks();
+    process.env.NODE_ENV = 'production';
+    createUpload('products');
+    expect((multer as unknown as jest.Mock).mock.calls[0][0].limits).toEqual({
+      fileSize: 5 * 1024 * 1024,
+    });
   });
 
   it('keeps fileFilter rejecting a disallowed extension/MIME type', () => {

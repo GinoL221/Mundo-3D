@@ -173,3 +173,24 @@ None blocking. Pre-existing / out-of-scope, unchanged: replacing a product image
 
 ### Status
 17/17 PR3 tasks complete (Phase 3 of 3 — all phases done). Ready for `sdd-verify`.
+
+---
+
+## PR3 follow-up: production-gate the storage engine (CI E2E fix)
+
+PR3's first push (#105) failed CI on the **E2E (Playwright)** job: user registration returned 500 because `multer.single('image')` now hit the R2 engine, and the E2E app boots with `NODE_ENV=test` (no R2 credentials) — cascading into every auth-dependent E2E test. The design's "real R2 not testable in CI" gap under-accounted for this: the swap broke a previously-green suite in every environment without R2 configured (CI, local dev).
+
+**User decision**: gate the R2 engine on `NODE_ENV === 'production'` (same pattern as `config.js`'s production-only port/TLS). Not MinIO (design rejected it; adds CI + local-dev infra), not a revert.
+
+### Changes
+| File | What |
+|------|------|
+| `backend/src/infrastructure/middlewares/upload.ts` | `createUpload` picks `createR2StorageEngine(dest)` when `NODE_ENV==='production'`, else a new `createLocalStorageEngine(dest)` that wraps `multer.diskStorage` and adds `key` (`<dest>/<uuid><ext>`) + `location` (`/img/<dest>/<uuid><ext>`) so controllers stay environment-agnostic |
+| `backend/src/infrastructure/utils/cleanupUploadedFile.ts` | Branches on `NODE_ENV`: production → `DeleteObjectCommand`; else → `fs.promises.unlink` on `public/img/<key>`. Same `upload_cleanup_failed` warn on failure, still never throws |
+| `backend/src/infrastructure/middlewares/__tests__/upload.test.ts` | Rewritten: local engine outside production, R2 engine in production, `fileFilter`/`limits` preserved in both |
+| `backend/src/infrastructure/utils/__tests__/cleanupUploadedFile.test.ts` | Split into production (R2 DeleteObject) and non-production (disk unlink) describe blocks |
+
+Controllers unchanged — both engines expose `.location`/`.key`. `image` holds a full R2 URL in production, a `/img/...` relative path in dev; PR1's `resolveImageUrl` already handles both.
+
+### Verification
+`pnpm test` → exit 0: backend 947, frontend 200. `tsc --noEmit`, `eslint` clean. E2E re-run on the next push.
