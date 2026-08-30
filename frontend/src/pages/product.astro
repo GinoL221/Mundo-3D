@@ -51,9 +51,8 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <script>
-  import { API_URL } from '../config';
-  import { adaptAPIProduct, getCategoryImg, isPlaceholderImage } from '../domains/products';
-  import type { APIProduct } from '../domains/products';
+  import { getCategoryImg, isPlaceholderImage } from '../domains/products';
+  import { fetchProductById } from '../domains/products/services/product.service';
   import { CartService } from '../domains/cart';
 
   /**
@@ -83,11 +82,13 @@ import Layout from '../layouts/Layout.astro';
     }
 
     try {
-      const res = await fetch(`${API_URL}/api/product/${productId}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const rawProduct = await res.json() as APIProduct;
-      const product = adaptAPIProduct(rawProduct);
+      const result = await fetchProductById(productId);
+      if (!result.ok) {
+        console.error('Error loading product:', result.reason);
+        showError(result.reason === 'not-found' ? 'not-found' : 'load-error');
+        return;
+      }
+      const product = result.product;
 
       const titleEl = document.getElementById('product-title');
       const imgEl = document.getElementById('product-img') as HTMLImageElement | null;
@@ -147,8 +148,7 @@ import Layout from '../layouts/Layout.astro';
       });
     } catch (err) {
       console.error('Error loading product:', err);
-      const message = err instanceof Error ? err.message : '';
-      showError(message.includes('404') ? 'not-found' : 'load-error');
+      showError('load-error');
     }
   }
 

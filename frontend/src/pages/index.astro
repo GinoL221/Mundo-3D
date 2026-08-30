@@ -81,9 +81,8 @@ import { ProductCard } from '../domains/products';
 </Layout>
 
 <script>
-  import { API_URL } from '../config';
-  import { adaptAPIProducts, getCategoryImg, isPlaceholderImage } from '../domains/products';
-  import type { APIProduct } from '../domains/products';
+  import { getCategoryImg, isPlaceholderImage } from '../domains/products';
+  import { fetchProducts } from '../domains/products/services/product.service';
 
   // Carousel logic
   (function initCarousel() {
@@ -134,11 +133,18 @@ import { ProductCard } from '../domains/products';
     if (!container) return;
 
     try {
-      const res = await fetch(`${API_URL}/api/products`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const resData = (await res.json()) as { products: APIProduct[] };
-      const rawProducts = resData?.products || [];
-      const products = adaptAPIProducts(rawProducts);
+      const result = await fetchProducts();
+      if (!result.ok) {
+        if (loadingMsg) loadingMsg.remove();
+        if (contentEl) contentEl.remove();
+        const errorTemp = document.getElementById('error-state-template') as HTMLTemplateElement | null;
+        if (errorTemp) {
+          const clone = errorTemp.content.cloneNode(true);
+          container.appendChild(clone);
+        }
+        return;
+      }
+      const products = result.products;
 
       if (loadingMsg) loadingMsg.remove();
 
