@@ -76,7 +76,7 @@ Production is meant to run the compiled build, not `ts-node`: `pnpm --filter bac
 Three small, dependency-free Node scripts under `scripts/deploy/` (repo root) implement the platform-agnostic parts of a deploy — they don't provision or target any specific platform, they just sequence and verify what already exists. A future CD job (or a manual deploy) runs them in this order:
 
 1. **Build** — `pnpm --filter backend build` (emits `dist/`; not one of the deploy scripts, it's the existing build step).
-2. **Env preflight** — `pnpm --filter backend deploy:env-preflight`. Fails fast (exit 1) *before* the app process even starts if any required production env var is missing: `JWT_SECRET`, `CORS_ORIGIN`, `COOKIE_SECRET`, `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_HOST`, `DB_PORT`, `DB_CA_CERT`. Lists every missing var in one message, not one at a time. `COOKIE_DOMAIN` and `PUBLIC_API_URL` are warn-only (exit 0 with a warning): `COOKIE_DOMAIN` is genuinely optional per `cookieOptions.ts` but required for a cross-subdomain deploy topology, and `PUBLIC_API_URL` is a frontend build-time var baked by Vercel at `astro build` — irrelevant to the backend process, so its absence here only warns.
+2. **Env preflight** — `pnpm --filter backend deploy:env-preflight`. Fails fast (exit 1) *before* the app process even starts if any required production env var is missing: `JWT_SECRET`, `CORS_ORIGIN`, `COOKIE_SECRET`, `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_HOST`, `DB_PORT`, `DB_CA_CERT`, `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL_BASE`. Lists every missing var in one message, not one at a time. `COOKIE_DOMAIN` and `PUBLIC_API_URL` are warn-only (exit 0 with a warning): `COOKIE_DOMAIN` is genuinely optional per `cookieOptions.ts` but required for a cross-subdomain deploy topology, and `PUBLIC_API_URL` is a frontend build-time var baked by Vercel at `astro build` — irrelevant to the backend process, so its absence here only warns.
 3. **Migrate, then start** — `pnpm --filter backend deploy:migrate-and-start` runs `db:migrate` first; if it fails, the app is never started (exit code propagates, non-zero) — this is what actually enforces "migrations run before the new version serves traffic," since `index.js`'s own boot refuses to auto-migrate (see "Incident: backend process won't start" above). Forwards `SIGTERM`/`SIGINT` to the spawned server process so graceful shutdown still works normally when this wrapper is what the platform sends the signal to (see "Graceful shutdown" above). In production, `render.yaml`'s `startCommand` runs `pnpm --filter backend deploy:start`, which chains steps 2 and 3 (`env-preflight && migrate-and-start`) so a missing required var aborts before any DB or app work happens — steps 2/3 are also runnable standalone, as shown here.
 4. **Smoke test** — `pnpm --filter backend deploy:smoke-test` (needs `SMOKE_TEST_BASE_URL` pointed at the just-deployed instance). Polls `GET /health/live` then `GET /health/ready` until both return 200 or `SMOKE_TEST_TIMEOUT_MS` elapses (default 60000ms) — readiness is never checked before liveness succeeds at least once. Non-zero exit means the deploy did not actually come up healthy, regardless of what the platform's own "deploy succeeded" signal says.
 
@@ -94,7 +94,7 @@ Schema migrations must stay compatible with **both** the previous and the new ap
 
 ## Platform bring-up (Render + Aiven + Vercel)
 
-The first concrete hosting target: the backend runs on Render (free-tier web service, described by the committed `render.yaml` blueprint at the repo root), the database on Aiven (managed MySQL), and the frontend on Vercel (static Astro build). Everything shares one registrable domain so the auth cookie stays same-site. An operator with fresh Render, Aiven, and Vercel accounts and a purchased custom domain `<domain>` can reproduce the whole environment from this section alone.
+The first concrete hosting target: the backend runs on Render (free-tier web service, described by the committed `render.yaml` blueprint at the repo root), the database on Aiven (managed MySQL), admin-uploaded images on Cloudflare R2 (S3-compatible object storage), and the frontend on Vercel (static Astro build). Everything shares one registrable domain so the auth cookie stays same-site. An operator with fresh Render, Aiven, Cloudflare, and Vercel accounts and a purchased custom domain `<domain>` can reproduce the whole environment from this section alone.
 
 ### Topology
 
@@ -122,7 +122,8 @@ The frontend origin and the API differ only by the `api.` label, so they are the
    - `DB_CA_CERT` — the raw PEM from Aiven step 2/3.
    - `CORS_ORIGIN` — the **exact** frontend origin, a single string, e.g. `https://<domain>` (scheme + host, no trailing slash, no second value). Pick one canonical host (apex or `www`) and 301-redirect the other at the DNS/Vercel layer; the API allows exactly one origin.
    - `COOKIE_DOMAIN` — `.<domain>` (leading dot), so the cookie is valid for both the frontend origin and `api.<domain>`.
-3. Deploy. `deploy:start` runs `env-preflight` first: a missing required var (now including `DB_PORT` and `DB_CA_CERT`) fails the deploy before the server starts, listing every missing key at once. Then `db:migrate` runs, then the server binds `0.0.0.0:$PORT`.
+   - `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL_BASE` — from Cloudflare R2 step 4 below.
+3. Deploy. `deploy:start` runs `env-preflight` first: a missing required var (now including `DB_PORT`, `DB_CA_CERT`, and the five `R2_*` keys) fails the deploy before the server starts, listing every missing key at once. Then `db:migrate` runs, then the server binds `0.0.0.0:$PORT`.
 4. Add the custom domain `api.<domain>` to the Render service and create the CNAME it shows you. Wait for Render to issue the TLS cert.
 5. Confirm `https://api.<domain>/health/ready` returns `200`.
 
@@ -132,20 +133,40 @@ The frontend origin and the API differ only by the `api.` label, so they are the
 2. Set `PUBLIC_API_URL=https://api.<domain>` as a build-time environment variable. Astro **bakes** this into the static bundle at build time (`frontend/astro.config.mjs` fails the build if it is unset). Changing it later requires a **rebuild/redeploy** — there is no runtime override.
 3. Add the apex domain `<domain>` and `www.<domain>` to the Vercel project; set whichever host is not `CORS_ORIGIN` to redirect to the canonical one.
 
-### 4. DNS summary
+### 4. Cloudflare R2 — object storage for admin-uploaded images
+
+Seeded catalog images are committed to the repo and served by Vercel; only images an admin uploads at runtime (new/edited product images, user avatars) go to R2. Without this, uploaded images are lost on every Render redeploy/spin-down **and** 404 on the Vercel frontend (different origin from the backend).
+
+1. Enable R2 on the Cloudflare account (Cloudflare dashboard → R2). Verify at bring-up whether activation still requires a payment method on file even within the free tier.
+2. Create a bucket (e.g. `mundo-3d-uploads`). Its name is `R2_BUCKET_NAME`.
+3. Enable public read access for the bucket:
+   - Quickest: turn on the **r2.dev managed subdomain** (Bucket → Settings → Public access). It has no SLA and is rate-limited by Cloudflare — acceptable pre-launch.
+   - Production: attach a **custom domain** (e.g. `img.<domain>`). This requires `<domain>`'s DNS zone to be on Cloudflare.
+   - Either way, the resulting public base URL (no trailing slash) is `R2_PUBLIC_URL_BASE`, e.g. `https://pub-<hash>.r2.dev` or `https://img.<domain>`.
+4. Create a **bucket-scoped S3 API token**: R2 → Manage API tokens → Create API token, permission **Object Read & Write**, scoped to this bucket. The screen shows:
+   - **Access Key ID** → `R2_ACCESS_KEY_ID`
+   - **Secret Access Key** (shown once) → `R2_SECRET_ACCESS_KEY`
+   - **S3 API endpoint** (`https://<account>.r2.cloudflarestorage.com`) → `R2_ENDPOINT`. This is the *API* host, not the public read host — the two are always different.
+5. Set all five `R2_*` values in the Render service Environment (step 2 above).
+6. Free-tier ceiling: 10 GB stored, 1M Class A + 10M Class B operations per month, **zero egress**. Comfortable for a small catalog — revisit only if uploads approach 10 GB or write volume grows sharply.
+7. Verify end to end: create a product with an image via the admin UI → the object appears in the R2 dashboard → the persisted URL opens directly in a browser → redeploy the Render service → the image still renders on the frontend.
+
+### 5. DNS summary
 
 - `<domain>` (apex) and `www.<domain>` → Vercel (per Vercel's instructions for the project).
 - `api.<domain>` → CNAME to the Render service host.
+- `img.<domain>` (only if a custom R2 domain is used instead of the r2.dev subdomain) → per Cloudflare's instructions for the bucket's custom domain.
 
-### 5. First-deploy order
+### 6. First-deploy order
 
 TLS certs and DNS propagation make ordering matter:
 
 1. Aiven service up, CA cert in hand.
-2. Render service created, all env keys set, `api.<domain>` DNS + cert issued, `/health/ready` green.
-3. Vercel build with the final `PUBLIC_API_URL` (it points at the now-live API).
-4. apex/`www` DNS cut over to Vercel.
-5. Log in from `https://<domain>` and confirm the `m3d_auth` cookie is set and is sent back on the next API call (`deploy:smoke-test` covers health, not auth — verify the login round-trip manually).
+2. Cloudflare R2 bucket created, public access enabled, S3 API token issued — the five `R2_*` values in hand.
+3. Render service created, all env keys set (including the `R2_*` keys), `api.<domain>` DNS + cert issued, `/health/ready` green.
+4. Vercel build with the final `PUBLIC_API_URL` (it points at the now-live API).
+5. apex/`www` DNS cut over to Vercel.
+6. Log in from `https://<domain>` and confirm the `m3d_auth` cookie is set and is sent back on the next API call (`deploy:smoke-test` covers health, not auth — verify the login round-trip manually), then upload a product image and confirm it renders from `R2_PUBLIC_URL_BASE`.
 
 If `PUBLIC_API_URL` was baked before `api.<domain>` was reachable, the frontend still works once the API comes up (the value is a URL, not a build-time fetch) — but if the value itself is wrong, rebuild.
 
