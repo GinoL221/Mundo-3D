@@ -1,0 +1,50 @@
+# Render Blueprint — Mundo-3D backend (free-tier web service).
+# One service only: apex/www + the frontend live on Vercel, the database on
+# Aiven. See docs/RUNBOOKS.md "Platform bring-up" for the full procedure.
+#
+# Secrets are declared here as keys with `sync: false` so the manifest is a
+# complete, reviewable inventory of what production needs while no secret
+# value ever enters git — set each one in the Render dashboard.
+services:
+  - type: web
+    name: mundo-3d-backend
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: .
+    # Keep devDependencies: `tsc`/`typescript` are devDependencies and
+    # `RUN_COMPILED=true` needs the emitted dist/. Do not pass --prod here.
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter backend build
+    # deploy:start (PR2) chains env-preflight && migrate-and-start: a missing
+    # required env var fails fast before the app process is ever started, and
+    # db:migrate runs before the new version serves traffic.
+    startCommand: pnpm --filter backend deploy:start
+    healthCheckPath: /health/ready
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RUN_COMPILED
+        value: "true"
+      - key: NODE_VERSION
+        value: "22"
+      - key: JWT_SECRET
+        sync: false
+      - key: COOKIE_SECRET
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_CA_CERT
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: COOKIE_DOMAIN
+        sync: false

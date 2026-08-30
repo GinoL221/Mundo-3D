@@ -35,6 +35,15 @@ const healthRouter = require('./infrastructure/routes/health').default;
 
 const server = express();
 
+// Render terminates TLS at exactly one edge proxy hop in front of this
+// service. Trust precisely that one hop (not `true`, which is permissive
+// and trips express-rate-limit's ERR_ERL_PERMISSIVE_TRUST_PROXY guard): the
+// real client address is then taken from the first X-Forwarded-For entry, so
+// req.ip — and the login/register rate-limit keys derived from it, plus the
+// request logger — reflect the actual client and a client-supplied
+// X-Forwarded-For cannot spoof it. Must be set before the limiter mounts.
+server.set('trust proxy', 1);
+
 const errorHandler = require('./infrastructure/middlewares/errorHandler').default;
 
 // 0. Request correlation ID
