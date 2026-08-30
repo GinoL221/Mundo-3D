@@ -12,7 +12,7 @@ jest.mock('../../utils/cleanupUploadedFile', () => ({
 }));
 
 describe('handleValidationErrors', () => {
-  let req: Omit<Partial<Request>, 'file'> & { file?: { path?: string } };
+  let req: Omit<Partial<Request>, 'file'> & { file?: { key?: string } };
   let res: Partial<Response>;
   let next: NextFunction;
 
@@ -54,8 +54,8 @@ describe('handleValidationErrors', () => {
     expect(cleanupUploadedFile).not.toHaveBeenCalled();
   });
 
-  it('cleans up an orphaned uploaded file when validation fails after multer already wrote it to disk', () => {
-    req.file = { path: '/tmp/uploads/orphan.png' };
+  it('deletes the orphaned uploaded object by its key when validation fails after the upload engine already streamed it', () => {
+    req.file = { key: 'products/orphan-uuid.png' };
     (validationResult as unknown as jest.Mock).mockReturnValue({
       isEmpty: () => false,
       array: () => [{ msg: 'invalid' }],
@@ -63,7 +63,7 @@ describe('handleValidationErrors', () => {
 
     handleValidationErrors(req as Request, res as Response, next);
 
-    expect(cleanupUploadedFile).toHaveBeenCalledWith('/tmp/uploads/orphan.png');
+    expect(cleanupUploadedFile).toHaveBeenCalledWith('products/orphan-uuid.png');
     expect(res.status).toHaveBeenCalledWith(400);
   });
 });

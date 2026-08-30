@@ -25,7 +25,7 @@ describe('ProductApiController', () => {
   let mockAdjustProductStockUseCase: jest.Mocked<AdjustProductStockUseCase>;
   let mockSearchProductsUseCase: jest.Mocked<SearchProductsUseCase>;
 
-  let req: Partial<Request> & { file?: { filename: string } };
+  let req: Partial<Request> & { file?: { key: string; location: string } };
   let res: Partial<Response>;
   let next: NextFunction;
 
@@ -184,7 +184,7 @@ describe('ProductApiController', () => {
   });
 
   describe('create', () => {
-    it('returns 201 and the created product, mapping req.file.filename to image', async () => {
+    it('returns 201 and the created product, mapping req.file.location (full public URL) to image', async () => {
       req.body = {
         nameProduct: 'Product A',
         price: '100',
@@ -192,14 +192,26 @@ describe('ProductApiController', () => {
         idCategory: '1',
         idFranchise: '2',
       };
-      req.file = { filename: 'uploaded.png' };
-      const mockProduct = { idProduct: 1, nameProduct: 'Product A', price: 100, image: 'uploaded.png', stock: 0 };
+      req.file = {
+        key: 'products/uuid-1.png',
+        location: 'https://pub-test.r2.dev/products/uuid-1.png',
+      };
+      const mockProduct = {
+        idProduct: 1,
+        nameProduct: 'Product A',
+        price: 100,
+        image: 'https://pub-test.r2.dev/products/uuid-1.png',
+        stock: 0,
+      };
       mockCreateProductUseCase.execute.mockResolvedValue(mockProduct as any);
 
       await controller.create(req as Request, res as Response, next);
 
       expect(mockCreateProductUseCase.execute).toHaveBeenCalledWith(
-        expect.objectContaining({ image: 'uploaded.png', nameProduct: 'Product A' })
+        expect.objectContaining({
+          image: 'https://pub-test.r2.dev/products/uuid-1.png',
+          nameProduct: 'Product A',
+        })
       );
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(mockProduct);
@@ -208,7 +220,10 @@ describe('ProductApiController', () => {
 
     it('forwards unexpected errors to next', async () => {
       req.body = { nameProduct: 'Product A', price: '100', descriptionProduct: 'Desc', idCategory: '1', idFranchise: '2' };
-      req.file = { filename: 'uploaded.png' };
+      req.file = {
+        key: 'products/uuid-1.png',
+        location: 'https://pub-test.r2.dev/products/uuid-1.png',
+      };
       const error = new Error('DB is down');
       mockCreateProductUseCase.execute.mockRejectedValue(error);
 
@@ -256,26 +271,41 @@ describe('ProductApiController', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('cleans up an already-uploaded replacement image when the product is not found (404)', async () => {
+    it('deletes the already-uploaded replacement object by its key when the product is not found (404)', async () => {
       req.params = { id: '999' };
       req.body = { nameProduct: 'Updated Name' };
-      req.file = { filename: 'new.png', path: '/tmp/uploads/new.png' } as any;
+      req.file = {
+        key: 'products/new-uuid.png',
+        location: 'https://pub-test.r2.dev/products/new-uuid.png',
+      };
       mockUpdateProductUseCase.execute.mockResolvedValue(null);
 
       await controller.update(req as Request, res as Response, next);
 
-      expect(cleanupUploadedFile).toHaveBeenCalledWith('/tmp/uploads/new.png');
+      expect(cleanupUploadedFile).toHaveBeenCalledWith('products/new-uuid.png');
     });
 
-    it('does not touch the filesystem (retains the uploaded image) when the update succeeds', async () => {
+    it('maps req.file.location to image and keeps the object when the update succeeds', async () => {
       req.params = { id: '10' };
       req.body = { nameProduct: 'Updated Name' };
-      req.file = { filename: 'new.png', path: '/tmp/uploads/new.png' } as any;
-      const mockProduct = { idProduct: 10, nameProduct: 'Updated Name', image: 'new.png', stock: 5 };
+      req.file = {
+        key: 'products/new-uuid.png',
+        location: 'https://pub-test.r2.dev/products/new-uuid.png',
+      };
+      const mockProduct = {
+        idProduct: 10,
+        nameProduct: 'Updated Name',
+        image: 'https://pub-test.r2.dev/products/new-uuid.png',
+        stock: 5,
+      };
       mockUpdateProductUseCase.execute.mockResolvedValue(mockProduct as any);
 
       await controller.update(req as Request, res as Response, next);
 
+      expect(mockUpdateProductUseCase.execute).toHaveBeenCalledWith(
+        10,
+        expect.objectContaining({ image: 'https://pub-test.r2.dev/products/new-uuid.png' })
+      );
       expect(cleanupUploadedFile).not.toHaveBeenCalled();
     });
 

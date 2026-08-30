@@ -25,6 +25,25 @@ jest.mock('../../../../application/use-cases/AdjustProductStockUseCase', () => (
   AdjustProductStockUseCase: jest.fn().mockImplementation(() => ({ execute: mockAdjustStockExecute })),
 }));
 
+// The R2 upload path runs for real in this pipeline test; only the S3
+// transport is stubbed so `_handleFile` produces a `req.file` without a
+// network call (mirrors the unit-level strategy).
+const s3SendMock = jest.fn().mockResolvedValue({});
+jest.mock('@aws-sdk/client-s3', () => {
+  const actual = jest.requireActual('@aws-sdk/client-s3');
+  return {
+    __esModule: true,
+    ...actual,
+    S3Client: jest.fn().mockImplementation(() => ({ send: s3SendMock })),
+  };
+});
+
+process.env.R2_ENDPOINT = 'https://acct.r2.cloudflarestorage.com';
+process.env.R2_ACCESS_KEY_ID = 'test-access-key';
+process.env.R2_SECRET_ACCESS_KEY = 'test-secret-key';
+process.env.R2_BUCKET_NAME = 'test-bucket';
+process.env.R2_PUBLIC_URL_BASE = 'https://pub-test.r2.dev';
+
 import errorHandler from '../../../middlewares/errorHandler';
 
 // This is the integration-level guard-matrix test for the product mutation

@@ -48,23 +48,23 @@ Chain strategy: stacked-to-main
 
 ## Phase 3: PR3 — Backend R2 Cut-Over (atomic, `size:exception`)
 
-- [ ] 3.1 Add `@aws-sdk/client-s3` to `backend/package.json`
-- [ ] 3.2 RED: write `backend/src/infrastructure/storage/__tests__/r2StorageEngine.test.ts` — key matches `^<dest>/<uuid>\.<ext>$`, `ContentType` from mimetype (incl. `.png.exe`-original-still-`image/png` adversarial case), `location` from `R2_PUBLIC_URL_BASE`, no `ACL` sent, `PutObject` rejection → `cb(error)`, stream size-limit hit → no `PutObject`
-- [ ] 3.3 GREEN: create `backend/src/infrastructure/storage/r2Client.ts` — lazy `S3Client` singleton (`region: 'auto'`), `getR2Client()`, `getBucket()`, `publicUrlFor()`, `resetR2Client()`
-- [ ] 3.4 GREEN: create `backend/src/infrastructure/storage/r2StorageEngine.ts` — `_handleFile` (buffer stream bounded by 5MB `limits.fileSize`, one `PutObjectCommand`), `_removeFile` (`DeleteObjectCommand`)
-- [ ] 3.5 REFACTOR: tidy `r2Client.ts`/`r2StorageEngine.ts`
-- [ ] 3.6 RED: rewrite `backend/src/infrastructure/utils/__tests__/cleanupUploadedFile.test.ts` for new `cleanupUploadedFile(key)` signature — falsy key early-returns, success issues one `DeleteObjectCommand`, rejection logs `upload_cleanup_failed` warn and never throws
-- [ ] 3.7 GREEN: modify `backend/src/infrastructure/utils/cleanupUploadedFile.ts` — accept `key`, send `DeleteObjectCommand`, `.catch` logs `{event:'upload_cleanup_failed', key, bucket, error}`
-- [ ] 3.8 RED: extend `backend/src/infrastructure/middlewares/__tests__/upload.test.ts` — `fileFilter` and `limits.fileSize === 5MB` unchanged after the engine swap
-- [ ] 3.9 GREEN: modify `backend/src/infrastructure/middlewares/upload.ts` — `diskStorage` → `createR2StorageEngine(dest)`, drop `fs`/`path.join` destination code, keep `fileFilter`/`limits` verbatim
-- [ ] 3.10 RED: extend `ProductApiController.test.ts` — persisted `image` = `req.file.location`; every failure path cleans by `req.file.key`
-- [ ] 3.11 GREEN: modify `backend/src/infrastructure/controllers/ProductApiController.ts` (`:12` type, `:94` + `:142` → `.location`, `:157-158` → `.key`)
-- [ ] 3.12 RED: extend `UserApiController.test.ts` (registration handler) — same `.location`/`.key` contract
-- [ ] 3.13 GREEN: modify `backend/src/infrastructure/controllers/UserApiController.ts` (`:120` type, `:135` → `.location`, `:172-173` → `.key`)
-- [ ] 3.14 RED: add/extend a `handleValidationErrors` test asserting cleanup uses `req.file.key`
-- [ ] 3.15 GREEN: modify `backend/src/infrastructure/middlewares/handleValidationErrors.ts` (`:18-19` → `.key`)
-- [ ] 3.16 REFACTOR: sweep the three call-site files for any remaining `.path` reference on `req.file`; confirm none remain
-- [ ] 3.17 Verify: `pnpm test` (backend Jest suite) green; note explicitly that real-bucket integration is not feasible in CI (mock `S3Client.prototype.send`) — accepted gap mirroring `platform-provisioning`'s Aiven TLS gap, closed only by the manual RUNBOOKS §4 loop at bring-up
+- [x] 3.1 Add `@aws-sdk/client-s3` to `backend/package.json`
+- [x] 3.2 RED: write `backend/src/infrastructure/storage/__tests__/r2StorageEngine.test.ts` — key matches `^<dest>/<uuid>\.<ext>$`, `ContentType` from mimetype (incl. `.png.exe`-original-still-`image/png` adversarial case), `location` from `R2_PUBLIC_URL_BASE`, no `ACL` sent, `PutObject` rejection → `cb(error)`, stream size-limit hit → no `PutObject`
+- [x] 3.3 GREEN: create `backend/src/infrastructure/storage/r2Client.ts` — lazy `S3Client` singleton (`region: 'auto'`), `getR2Client()`, `getBucket()`, `publicUrlFor()`, `resetR2Client()`
+- [x] 3.4 GREEN: create `backend/src/infrastructure/storage/r2StorageEngine.ts` — `_handleFile` (buffer stream bounded by 5MB `limits.fileSize`, one `PutObjectCommand`), `_removeFile` (`DeleteObjectCommand`)
+- [x] 3.5 REFACTOR: tidy `r2Client.ts`/`r2StorageEngine.ts`
+- [x] 3.6 RED: rewrite `backend/src/infrastructure/utils/__tests__/cleanupUploadedFile.test.ts` for new `cleanupUploadedFile(key)` signature — falsy key early-returns, success issues one `DeleteObjectCommand`, rejection logs `upload_cleanup_failed` warn and never throws
+- [x] 3.7 GREEN: modify `backend/src/infrastructure/utils/cleanupUploadedFile.ts` — accept `key`, send `DeleteObjectCommand`, `.catch` logs `{event:'upload_cleanup_failed', key, bucket, error}`
+- [x] 3.8 RED: extend `backend/src/infrastructure/middlewares/__tests__/upload.test.ts` — `fileFilter` and `limits.fileSize === 5MB` unchanged after the engine swap
+- [x] 3.9 GREEN: modify `backend/src/infrastructure/middlewares/upload.ts` — `diskStorage` → `createR2StorageEngine(dest)`, drop `fs`/`path.join` destination code, keep `fileFilter`/`limits` verbatim
+- [x] 3.10 RED: extend `ProductApiController.test.ts` — persisted `image` = `req.file.location`; every failure path cleans by `req.file.key`
+- [x] 3.11 GREEN: modify `backend/src/infrastructure/controllers/ProductApiController.ts` (`:12` type, `:94` + `:142` → `.location`, `:157-158` → `.key`)
+- [x] 3.12 RED: extend `UserApiController.test.ts` (registration handler) — same `.location`/`.key` contract
+- [x] 3.13 GREEN: modify `backend/src/infrastructure/controllers/UserApiController.ts` (`:120` type, `:135` → `.location`, `:172-173` → `.key`)
+- [x] 3.14 RED: add/extend a `handleValidationErrors` test asserting cleanup uses `req.file.key`
+- [x] 3.15 GREEN: modify `backend/src/infrastructure/middlewares/handleValidationErrors.ts` (`:18-19` → `.key`)
+- [x] 3.16 REFACTOR: sweep the three call-site files for any remaining `.path` reference on `req.file`; confirm none remain
+- [x] 3.17 Verify: `pnpm test` (backend Jest suite) green; note explicitly that real-bucket integration is not feasible in CI (mock `S3Client.prototype.send`) — accepted gap mirroring `platform-provisioning`'s Aiven TLS gap, closed only by the manual RUNBOOKS §4 loop at bring-up
 
 ## Non-goals (no tasks)
 

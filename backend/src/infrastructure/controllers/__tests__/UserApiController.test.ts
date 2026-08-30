@@ -77,14 +77,17 @@ describe('UserApiController', () => {
         email: 'john@example.com',
         password: 'password123',
       };
-      req.file = { filename: 'avatar.png' } as any;
+      req.file = {
+        key: 'users/uuid-1.png',
+        location: 'https://pub-test.r2.dev/users/uuid-1.png',
+      } as any;
 
       const mockUserDto = {
         idUser: 123,
         firstName: 'John',
         lastName: 'Doe',
         email: 'john@example.com',
-        image: 'avatar.png',
+        image: 'https://pub-test.r2.dev/users/uuid-1.png',
         idRole: 2,
         category: 'User',
       };
@@ -98,7 +101,7 @@ describe('UserApiController', () => {
         lastName: 'Doe',
         email: 'john@example.com',
         password: 'password123',
-        image: 'avatar.png',
+        image: 'https://pub-test.r2.dev/users/uuid-1.png',
       });
       expect(res.status).toHaveBeenCalledWith(201);
 
@@ -125,7 +128,10 @@ describe('UserApiController', () => {
         email: 'john@example.com',
         password: 'password123',
       };
-      req.file = { filename: 'avatar.png', path: '/uploads/users/avatar.png' } as any;
+      req.file = {
+        key: 'users/uuid-1.png',
+        location: 'https://pub-test.r2.dev/users/uuid-1.png',
+      } as any;
 
       mockRegisterUserUseCase.execute.mockRejectedValue(
         new UserAlreadyExistsException('Este email ya está registrado')
@@ -137,7 +143,7 @@ describe('UserApiController', () => {
       expect(res.json).toHaveBeenCalledWith({
         error: 'Este email ya está registrado',
       });
-      expect(cleanupUploadedFile).toHaveBeenCalledWith('/uploads/users/avatar.png');
+      expect(cleanupUploadedFile).toHaveBeenCalledWith('users/uuid-1.png');
       expect(next).not.toHaveBeenCalled();
     });
 

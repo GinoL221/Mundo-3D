@@ -1,8 +1,7 @@
 import { Request, RequestHandler } from 'express';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
-import { v4 as uuidv4 } from 'uuid';
+import { createR2StorageEngine } from '../storage/r2StorageEngine';
 
 interface MulterFile {
   originalname: string;
@@ -18,26 +17,9 @@ interface MulterInstance {
 }
 
 export default function createUpload(dest: string): MulterInstance {
-  const storage = multer.diskStorage({
-    destination: (
-      _req: Request,
-      _file: MulterFile,
-      callback: (error: Error | null, destination: string) => void
-    ) => {
-      const uploadPath = path.join(process.cwd(), 'public', 'img', dest);
-      if (!fs.existsSync(uploadPath)) {
-        fs.mkdirSync(uploadPath, { recursive: true });
-      }
-      callback(null, uploadPath);
-    },
-    filename: (
-      _req: Request,
-      file: MulterFile,
-      callback: (error: Error | null, filename: string) => void
-    ) => {
-      callback(null, `${uuidv4()}${path.extname(file.originalname)}`);
-    },
-  });
+  // Destination is an S3-compatible remote bucket, not local disk. The engine
+  // streams the file straight to R2 under a `${dest}/<uuid><ext>` key.
+  const storage = createR2StorageEngine(dest);
 
   const fileFilter = (
     _req: Request,
