@@ -21,9 +21,11 @@ interface MulterInstance {
 // Development and test keep local-disk storage (no bucket to reach, and the
 // existing E2E/dev flows depend on it). It wraps `multer.diskStorage` and adds
 // `key` + `location` so controllers and `cleanupUploadedFile` read the same
-// fields as the R2 engine — `key` is `<dest>/<uuid><ext>` under public/img and
-// `location` is the legacy same-origin `/img/<dest>/<uuid><ext>` that the
-// frontend's `resolveImageUrl` already falls back to for non-absolute values.
+// fields as the R2 engine. `key` is `<dest>/<uuid><ext>` under public/img (used
+// by cleanup); `location` is the bare `<uuid><ext>` filename — the same value
+// the pre-R2 disk path stored in the `image` column, which the frontend's
+// `resolveImageUrl` maps to `/img/<kind>/<filename>`. Storing a `/img/...` path
+// here instead would double-prefix through that same fallback.
 function createLocalStorageEngine(dest: string): unknown {
   const uploadPath = path.join(process.cwd(), 'public', 'img', dest);
   const disk = multer.diskStorage({
@@ -55,7 +57,7 @@ function createLocalStorageEngine(dest: string): unknown {
           const key = `${dest}/${info.filename}`;
           file.key = key;
           file.path = info.path;
-          cb(null, { ...info, key, location: `/img/${key}` });
+          cb(null, { ...info, key, location: info.filename });
         }
       );
     },

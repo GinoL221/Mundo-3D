@@ -101,11 +101,11 @@ describe('SequelizeUserRepository.create — real DB registration race', () => {
 
     const reqA: ReqWithFile = {
       body: { firstName: 'Race', lastName: 'A', email, password: 'password123' },
-      file: { key: keyA, location: `/img/${keyA}`, path: uploadDir(keyA) },
+      file: { key: keyA, location: 'race-a.png', path: uploadDir(keyA) },
     } as any;
     const reqB: ReqWithFile = {
       body: { firstName: 'Race', lastName: 'B', email, password: 'password123' },
-      file: { key: keyB, location: `/img/${keyB}`, path: uploadDir(keyB) },
+      file: { key: keyB, location: 'race-b.png', path: uploadDir(keyB) },
     } as any;
 
     const resA = buildResDouble();
