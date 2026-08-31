@@ -12,8 +12,17 @@ jest.mock('multer', () => {
   })) as any;
   mockMulter.diskStorage = jest.fn(() => ({
     __diskStorage: true,
-    _handleFile: jest.fn(),
-    _removeFile: jest.fn(),
+    // Stand in for multer's own disk write: hand back the info object it
+    // would produce so the wrapper's augmentation can be asserted.
+    _handleFile: jest.fn((_req, _file, cb) =>
+      cb(null, {
+        filename: 'gen-uuid.png',
+        path: '/abs/public/img/products/gen-uuid.png',
+        destination: '/abs/public/img/products',
+        size: 1234,
+      })
+    ),
+    _removeFile: jest.fn((_req, _file, cb) => cb(null)),
   }));
   return mockMulter;
 });
@@ -48,6 +57,42 @@ describe('createUpload factory', () => {
     const multerOptions = (multer as unknown as jest.Mock).mock.calls[0][0];
     expect(typeof multerOptions.storage._handleFile).toBe('function');
     expect(typeof multerOptions.storage._removeFile).toBe('function');
+  });
+
+  it('local engine augments the disk info with key and a BARE-filename location', () => {
+    process.env.NODE_ENV = 'test';
+    createUpload('products');
+    const engine = (multer as unknown as jest.Mock).mock.calls[0][0].storage;
+
+    const file: { key?: string; path?: string } = {};
+    const cb = jest.fn();
+    engine._handleFile({}, file, cb);
+
+    // `key` carries the dest prefix (cleanup joins it under public/img);
+    // `location` is the bare filename so resolveImageUrl maps it to exactly
+    // `/img/products/gen-uuid.png` — not a doubled `/img/products//img/...`.
+    expect(cb).toHaveBeenCalledWith(
+      null,
+      expect.objectContaining({ key: 'products/gen-uuid.png', location: 'gen-uuid.png' })
+    );
+    expect(file.key).toBe('products/gen-uuid.png');
+    expect(file.path).toBe('/abs/public/img/products/gen-uuid.png');
+  });
+
+  it('local engine surfaces a disk write error to the callback', () => {
+    process.env.NODE_ENV = 'test';
+    (multer as unknown as { diskStorage: jest.Mock }).diskStorage.mockReturnValueOnce({
+      _handleFile: (_req: unknown, _file: unknown, cb: (e: unknown) => void) =>
+        cb(new Error('disk full')),
+      _removeFile: jest.fn(),
+    });
+    createUpload('products');
+    const engine = (multer as unknown as jest.Mock).mock.calls[0][0].storage;
+
+    const cb = jest.fn();
+    engine._handleFile({}, {}, cb);
+
+    expect(cb).toHaveBeenCalledWith(expect.any(Error));
   });
 
   it('uses the R2 storage engine namespaced by dest in production', () => {
