@@ -117,7 +117,7 @@ export class UserApiController {
   };
 
   register = async (
-    req: Request & { file?: { filename: string; path?: string } },
+    req: Request & { file?: { key: string; location: string } },
     res: Response,
     next: NextFunction
   ): Promise<void> => {
@@ -132,7 +132,7 @@ export class UserApiController {
       }
 
       const { firstName, lastName, email, password } = req.body;
-      const image = req.file.filename;
+      const image = req.file.location;
 
       const userDto = await this.registerUserUseCase.execute({
         firstName,
@@ -169,8 +169,8 @@ export class UserApiController {
       });
     } catch (error) {
       if (error instanceof UserAlreadyExistsException) {
-        if (req.file?.path) {
-          cleanupUploadedFile(req.file.path);
+        if (req.file?.key) {
+          cleanupUploadedFile(req.file.key);
         }
         res.status(400).json({ error: error.message });
         return;

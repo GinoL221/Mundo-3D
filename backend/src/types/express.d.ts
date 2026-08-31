@@ -27,9 +27,13 @@ declare global {
         encoding?: string;
         mimetype?: string;
         size?: number;
-        destination?: string;
-        filename: string;
-        path?: string;
+        // R2 storage-engine fields (see infrastructure/storage/r2StorageEngine.ts).
+        // Present on every `req.file` the engine produces: `key` is the bucket
+        // object key, `location` the full public URL persisted as `image`,
+        // `bucket` the target bucket name.
+        key: string;
+        location: string;
+        bucket?: string;
         buffer?: Buffer;
       };
     }

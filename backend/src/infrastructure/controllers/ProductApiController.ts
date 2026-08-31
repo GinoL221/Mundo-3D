@@ -9,7 +9,7 @@ import { AdjustProductStockUseCase } from '../../application/use-cases/AdjustPro
 import { SearchProductsUseCase, DEFAULT_PAGE_SIZE } from '../../application/use-cases/SearchProductsUseCase';
 import { cleanupUploadedFile } from '../utils/cleanupUploadedFile';
 
-type RequestWithFile = Request & { file?: { filename: string; path?: string } };
+type RequestWithFile = Request & { file?: { key: string; location: string } };
 
 const toOptionalNumber = (value: unknown): number | null => {
   if (value === undefined || value === null || value === '') {
@@ -91,7 +91,7 @@ export class ProductApiController {
         nameProduct,
         price: Number(price),
         descriptionProduct: descriptionProduct ?? null,
-        image: req.file?.filename ?? null,
+        image: req.file?.location ?? null,
         idCategory: Number(idCategory),
         idFranchise: Number(idFranchise),
         material: material ?? null,
@@ -139,7 +139,7 @@ export class ProductApiController {
       if (nameProduct !== undefined) input.nameProduct = nameProduct;
       if (price !== undefined) input.price = Number(price);
       if (descriptionProduct !== undefined) input.descriptionProduct = descriptionProduct;
-      if (req.file?.filename) input.image = req.file.filename;
+      if (req.file?.location) input.image = req.file.location;
       if (idCategory !== undefined) input.idCategory = Number(idCategory);
       if (idFranchise !== undefined) input.idFranchise = Number(idFranchise);
       if (material !== undefined) input.material = material;
@@ -151,11 +151,11 @@ export class ProductApiController {
 
       const product = await this.updateProductUseCase.execute(id, input);
       if (!product) {
-        // A replacement image may have already been written to disk by
-        // multer before the use case discovered the product doesn't exist —
-        // don't leave it orphaned.
-        if (req.file?.path) {
-          cleanupUploadedFile(req.file.path);
+        // A replacement image may have already been streamed to the bucket by
+        // the upload engine before the use case discovered the product
+        // doesn't exist — don't leave the object orphaned.
+        if (req.file?.key) {
+          cleanupUploadedFile(req.file.key);
         }
         res.status(404).json({ error: 'Producto no encontrado' });
         return;

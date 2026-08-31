@@ -1,5 +1,5 @@
 /**
- * REAL-DATABASE integration test — NOT mocked.
+ * REAL-DATABASE integration test — NOT mocked (except the disk `unlink`).
  *
  * Scope: proves that `SequelizeUserRepository.create()`'s `UniqueConstraintError`
  * translation (added to fix the registration race) actually holds up end to
@@ -8,22 +8,33 @@
  * real MySQL/MariaDB. Two concurrent registrations with the same,
  * previously-unused email must resolve into exactly one 201 and one 400 with
  * the sequential duplicate-email body, no 500, exactly one persisted row, and
- * the loser's uploaded avatar file cleaned up (not orphaned).
+ * the loser's uploaded avatar removed (not orphaned).
+ *
+ * `cleanupUploadedFile` runs under `NODE_ENV=test` here (forced by testDb.ts),
+ * so it removes the loser's file from local disk — `fs.promises.unlink` is the
+ * one stubbed seam so the test does not depend on a real file existing.
+ * Production would issue a `DeleteObjectCommand` against R2 instead; that
+ * branch is covered by the unit suite.
  *
  * This file is excluded from the default `npm test` run (see
  * `jest.config.js`'s `testPathIgnorePatterns`) and only runs via
  * `npm run test:integration`, which requires a reachable MySQL/MariaDB
  * (`DB_HOST`/`DB_USER`/`DB_PASS` env vars, see `database/config/config.js`).
  */
-import fs from 'fs';
-import os from 'os';
 import path from 'path';
+import fs from 'fs';
 import { Request, Response, NextFunction } from 'express';
 import { SequelizeUserRepository } from '../SequelizeUserRepository';
 import { RegisterUserUseCase } from '../../../application/use-cases/RegisterUserUseCase';
 import { BcryptPasswordHasher } from '../../security/BcryptPasswordHasher';
 import { UserApiController } from '../../controllers/UserApiController';
 import { bootstrapTestDatabase, closeTestDatabase, getTestDb } from '../../../__tests__/helpers/testDb';
+
+const unlinkMock = jest
+  .spyOn(fs.promises, 'unlink')
+  .mockResolvedValue(undefined as never);
+
+const uploadDir = (key: string): string => path.join(process.cwd(), 'public', 'img', key);
 
 // Env prerequisite (design.md): the 201 path calls setSessionCookies ->
 // getJwtSecret() / issueCsrfToken() -> getCookieSecret(). Both already fall
@@ -35,7 +46,7 @@ process.env.COOKIE_SECRET = process.env.COOKIE_SECRET || 'test-only-cookie-secre
 
 jest.setTimeout(30000);
 
-type ReqWithFile = Request & { file?: { filename: string; path?: string } };
+type ReqWithFile = Request & { file?: { key: string; location: string; path: string } };
 
 function buildResDouble(): Response {
   return {
@@ -47,24 +58,26 @@ function buildResDouble(): Response {
   } as unknown as Response;
 }
 
-/** Bounded poll for `cleanupUploadedFile`'s fire-and-forget fs.unlink to land. */
-async function waitUntilRemoved(filePath: string, timeoutMs = 2000, intervalMs = 50): Promise<boolean> {
+/** Bounded poll for `cleanupUploadedFile`'s fire-and-forget unlink to land. */
+async function waitUntilUnlinked(key: string, timeoutMs = 2000, intervalMs = 50): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
+  const wasUnlinked = (): boolean =>
+    unlinkMock.mock.calls.some(([target]) => target === uploadDir(key));
   while (Date.now() < deadline) {
-    if (!fs.existsSync(filePath)) return true;
+    if (wasUnlinked()) return true;
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
-  return !fs.existsSync(filePath);
+  return wasUnlinked();
 }
 
 describe('SequelizeUserRepository.create — real DB registration race', () => {
   const db = getTestDb();
   let controller: UserApiController;
-  let tmpDir: string;
   const email = `race-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
 
   beforeAll(async () => {
     await bootstrapTestDatabase();
+    unlinkMock.mockClear();
 
     const authStub = { execute: jest.fn() } as any;
     const listStub = { execute: jest.fn() } as any;
@@ -74,29 +87,25 @@ describe('SequelizeUserRepository.create — real DB registration race', () => {
       new BcryptPasswordHasher()
     );
     controller = new UserApiController(authStub, listStub, getStub, registerUserUseCase);
-
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'm3d-race-'));
   });
 
   afterAll(async () => {
     await db.User.destroy({ where: { email } });
-    fs.rmSync(tmpDir, { recursive: true, force: true });
     await closeTestDatabase();
+    unlinkMock.mockRestore();
   });
 
   it('resolves a concurrent duplicate-email registration into exactly one 201 and one 400, no 500, one DB row, and no orphaned upload', async () => {
-    const fileA = path.join(tmpDir, 'avatar-a.png');
-    const fileB = path.join(tmpDir, 'avatar-b.png');
-    fs.writeFileSync(fileA, 'avatar-a');
-    fs.writeFileSync(fileB, 'avatar-b');
+    const keyA = 'users/race-a.png';
+    const keyB = 'users/race-b.png';
 
     const reqA: ReqWithFile = {
       body: { firstName: 'Race', lastName: 'A', email, password: 'password123' },
-      file: { filename: 'avatar-a.png', path: fileA },
+      file: { key: keyA, location: `/img/${keyA}`, path: uploadDir(keyA) },
     } as any;
     const reqB: ReqWithFile = {
       body: { firstName: 'Race', lastName: 'B', email, password: 'password123' },
-      file: { filename: 'avatar-b.png', path: fileB },
+      file: { key: keyB, location: `/img/${keyB}`, path: uploadDir(keyB) },
     } as any;
 
     const resA = buildResDouble();
@@ -137,12 +146,16 @@ describe('SequelizeUserRepository.create — real DB registration race', () => {
     );
     expect(winnerJsonCall[0].user.idUser).toBe(persisted.idUser);
 
-    // Loser's temp file is gone; winner's temp file still exists.
-    const loserFilePath = losers[0].req.file!.path as string;
-    const winnerFilePath = winners[0].req.file!.path as string;
+    // Loser's uploaded avatar is removed; winner's is retained.
+    const loserKey = losers[0].req.file!.key;
+    const winnerKey = winners[0].req.file!.key;
 
-    const removed = await waitUntilRemoved(loserFilePath);
-    expect(removed).toBe(true);
-    expect(fs.existsSync(winnerFilePath)).toBe(true);
+    const unlinked = await waitUntilUnlinked(loserKey);
+    expect(unlinked).toBe(true);
+
+    const winnerUnlinked = unlinkMock.mock.calls.some(
+      ([target]) => target === uploadDir(winnerKey)
+    );
+    expect(winnerUnlinked).toBe(false);
   });
 });

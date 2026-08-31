@@ -91,3 +91,106 @@ None material. Design guessed the current RUNBOOKS numbering as "DNS 4 / first-d
 
 ### Status
 7/7 PR2 tasks complete (Phase 2 of 3). Ready for PR3 (backend cut-over) or sdd-verify.
+
+---
+
+## Batch: PR3 — Backend R2 Cut-Over (Phase 3, atomic, `size:exception`)
+
+Branch: `feat/object-storage-r2-cutover` (off `main` @ `d3133e4`, PR1 + PR2 merged).
+`size:exception` accepted by the user before this apply run (design.md Review Workload note; tasks.md forecast "Decision needed before apply: No").
+
+**Actual authored changed lines: ~723** (excl. `pnpm-lock.yaml`, which is generated: +305). Split ~241 production / ~482 test+types. This exceeds the design's ~470 estimate (~220 prod / ~250 test); production landed on target, the test surface came in ~230 lines heavier. Overage drivers: the `r2StorageEngine` unit suite is 166 lines (7 cases incl. the adversarial `.png.exe` row and the stream-`limit` row); two regression-repair test edits the design did not budget — `SequelizeUserRepository.integration.test.ts` (+49/−26, adapted disk→R2 assertions) and `routes/api/__tests__/products.test.ts` (+19, S3 transport stub). Still a single atomic PR3 per the design (splitting was rejected: it would land a dead module for one PR against AGENTS.md and break the cut-over into non-atomically-revertible halves).
+
+### Completed Tasks
+- [x] 3.1 `@aws-sdk/client-s3` added to `backend/package.json` (`^3.1116.0`); `pnpm install` refreshed `pnpm-lock.yaml`. Only that one dep — `multer-s3` and `@aws-sdk/lib-storage` stay rejected per design.
+- [x] 3.2 RED: `storage/__tests__/r2StorageEngine.test.ts` written first — failed with `Cannot find module '../r2StorageEngine'`. 7 cases: dest-namespaced `^products/<uuid>\.<ext>$` key, `ContentType` from mimetype, adversarial `evil.png.exe`+`image/png` still `ContentType: image/png`, `location` = `R2_PUBLIC_URL_BASE`+`/`+key, no `ACL` in the `PutObjectCommand` input, `PutObject` rejection → `cb(error)`, stream `'limit'` → no `PutObjectCommand` + `cb(Error)`, `_removeFile` sends `DeleteObjectCommand` with the recorded key.
+- [x] 3.3 GREEN: `storage/r2Client.ts` — lazy `S3Client` singleton (`region:'auto'`, explicit `endpoint`, `credentials` from env), `getR2Client()` / `getBucket()` / `publicUrlFor(key)` (trailing-slash-stripped base + `/` + key) / `resetR2Client()` test seam.
+- [x] 3.4 GREEN: `storage/r2StorageEngine.ts` — `R2StorageEngine` class + `createR2StorageEngine(dest)` factory. `_handleFile` buffers `file.stream` (already bounded by multer's 5MB `limits.fileSize`), one `PutObjectCommand` with `Bucket/Key/Body/ContentType/ContentLength`, callback `{ key, bucket, location, size }`; a `settled` guard prevents double-callback. `'limit'` → fail before any `PutObject`. `'error'` → fail. `_removeFile` issues `DeleteObjectCommand({ Bucket, Key: file.key })`. No `ACL` field anywhere.
+- [x] 3.5 REFACTOR: both files already minimal + commented; extracted the `fail()` guard helper in `_handleFile`. `npx eslint` clean; `r2Client.ts` 38 lines, `r2StorageEngine.ts` 100 lines (both well under the 250 cap).
+- [x] 3.6 RED: `utils/__tests__/cleanupUploadedFile.test.ts` rewritten — failed against the `fs.unlink`/`filePath` implementation. 4 cases: falsy key (`undefined`/`null`/`''`) → no `send`; present key → exactly one `DeleteObjectCommand` with `{ Bucket, Key }`; rejection → `logger.warn({ event:'upload_cleanup_failed', key, bucket })` and never throws (no unhandled rejection); returns `undefined` synchronously.
+- [x] 3.7 GREEN: `utils/cleanupUploadedFile.ts` — signature `cleanupUploadedFile(key: string | undefined | null): void`. Falsy → early return; present key ALWAYS issues `DeleteObjectCommand` (kills the silent-no-op regression). `.catch` → `logger.warn` with the load-bearing `upload_cleanup_failed` event, raw `error`, plus the existing message string. Never throws, never returns an awaitable.
+- [x] 3.8 RED: `middlewares/__tests__/upload.test.ts` rewritten — failed on `multer.diskStorage is not a function`. Asserts `createR2StorageEngine('products')` is called, `storage` exposes `_handleFile`/`_removeFile`, `limits` stays `{ fileSize: 5*1024*1024 }`, `multer.diskStorage` is gone, `fileFilter` still rejects `notes.txt`/`text/plain` with the exact message and accepts `avatar.png`/`image/png`.
+- [x] 3.9 GREEN: `middlewares/upload.ts` — `multer.diskStorage({...})` → `createR2StorageEngine(dest)`; dropped `fs` + `path.join`/`mkdirSync` destination code; `fileFilter` and `limits` verbatim; hand-declared `MulterFile`/`MulterInstance` kept (no `@types/multer`).
+- [x] 3.10 RED: `ProductApiController.test.ts` — `req.file` shape → `{ key, location }`; create/update now assert `image` = `req.file.location` (full `https://pub-test.r2.dev/...` URL) forwarded to the use case, and the 404 path calls `cleanupUploadedFile(req.file.key)`. Failed against `.filename`/`.path`.
+- [x] 3.11 GREEN: `ProductApiController.ts` — local type → `{ file?: { key: string; location: string } }`; `create` `image: req.file?.location ?? null`; `update` `if (req.file?.location) input.image = req.file.location`; 404 cleanup `if (req.file?.key) cleanupUploadedFile(req.file.key)`; comment updated disk→bucket.
+- [x] 3.12 RED: `UserApiController.test.ts` (register handler) — `req.file` → `{ key, location }`; asserts `RegisterUserUseCase.execute` gets `image: <location URL>` and the `UserAlreadyExistsException` path calls `cleanupUploadedFile(req.file.key)`. Failed against `.filename`/`.path`.
+- [x] 3.13 GREEN: `UserApiController.ts` — register `req` type → `{ file?: { key: string; location: string } }`; `const image = req.file.location`; catch-branch cleanup → `req.file.key`.
+- [x] 3.14 RED: `handleValidationErrors.test.ts` — orphan-cleanup case now sets `req.file = { key: 'products/orphan-uuid.png' }` and expects `cleanupUploadedFile('products/orphan-uuid.png')`. Failed against `.path`.
+- [x] 3.15 GREEN: `handleValidationErrors.ts` — `RequestWithFile` → `{ file?: { key?: string } }`; `if (req.file?.key) cleanupUploadedFile(req.file.key)`; comment updated disk→bucket.
+- [x] 3.16 REFACTOR: `rg` sweep of the three call-site files → zero remaining `req.file.path` / `req.file.filename`. Only other repo hits were `src/types/express.d.ts` (updated, see Deviations) and `SequelizeUserRepository.integration.test.ts` (adapted, see below).
+- [x] 3.17 Verify: `pnpm test` → **backend 945/945 (115 suites), frontend 200/200 (16 files), exit 0**. `npx tsc --noEmit` clean, `npx eslint` clean on all changed files, `node backend/tools/architecture/check.js` exit 0. Real-bucket integration is **NOT** exercised in CI — every S3 call is mocked (`S3Client` replaced, `send` stubbed). Accepted gap, mirroring `platform-provisioning`'s Aiven TLS handshake gap; closed only by the manual RUNBOOKS §4 verification loop at bring-up. No MinIO/localstack (design rejected it).
+
+### Files Changed
+| File | Action | What Was Done |
+|------|--------|---------------|
+| `backend/package.json` | Modified | `+@aws-sdk/client-s3@^3.1116.0` |
+| `pnpm-lock.yaml` | Modified (generated) | Lockfile refresh for the new dep (+305) |
+| `backend/src/infrastructure/storage/r2Client.ts` | Created | Lazy `S3Client` singleton + `getBucket`/`publicUrlFor`/`resetR2Client` (38 lines) |
+| `backend/src/infrastructure/storage/r2StorageEngine.ts` | Created | `R2StorageEngine` (`_handleFile`/`_removeFile`) + `createR2StorageEngine` factory (100 lines) |
+| `backend/src/infrastructure/storage/__tests__/r2StorageEngine.test.ts` | Created | 7 Jest cases, S3 transport mocked (166 lines) |
+| `backend/src/infrastructure/middlewares/upload.ts` | Modified | `diskStorage` → `createR2StorageEngine(dest)`; dropped `fs`/`path.join` dest code; `fileFilter`/`limits` verbatim |
+| `backend/src/infrastructure/middlewares/__tests__/upload.test.ts` | Modified | Rewritten for the engine swap (engine wiring, 5MB limit, `fileFilter` preserved, no `diskStorage`) |
+| `backend/src/infrastructure/utils/cleanupUploadedFile.ts` | Modified | `fs.unlink(path)` → `DeleteObjectCommand(key)`; never-throw / non-await contract + `upload_cleanup_failed` event preserved |
+| `backend/src/infrastructure/utils/__tests__/cleanupUploadedFile.test.ts` | Modified | Rewritten for the `(key)` signature — falsy/success/rejection-warn/no-throw |
+| `backend/src/infrastructure/controllers/ProductApiController.ts` | Modified | Local file type; `create`/`update` `image` = `req.file.location`; 404 cleanup by `req.file.key` |
+| `backend/src/infrastructure/controllers/__tests__/ProductApiController.test.ts` | Modified | `req.file` → `{ key, location }`; `.location`→`image` and 404 `.key` cleanup assertions |
+| `backend/src/infrastructure/controllers/UserApiController.ts` | Modified | register file type; `image` = `req.file.location`; `UserAlreadyExistsException` cleanup by `req.file.key` |
+| `backend/src/infrastructure/controllers/__tests__/UserApiController.test.ts` | Modified | `req.file` → `{ key, location }`; `.location`/`.key` contract assertions |
+| `backend/src/infrastructure/middlewares/handleValidationErrors.ts` | Modified | Third cleanup call site → `req.file.key` |
+| `backend/src/infrastructure/middlewares/__tests__/handleValidationErrors.test.ts` | Modified | Orphan-cleanup case → `req.file.key` |
+| `backend/src/types/express.d.ts` | Modified | `Express.Request.file`: added `key`/`location` (required) + `bucket?`; removed the disk-only `filename`/`path`/`destination` (see Deviations) |
+| `backend/src/infrastructure/repositories/__tests__/SequelizeUserRepository.integration.test.ts` | Modified | Adapted the real-DB register-race test disk→R2: `req.file` shape, `S3Client` mock, `waitUntilRemoved`(fs) → `waitUntilDeleted`(DeleteObjectCommand). NOT executed here — needs a live DB (`pnpm test:integration`) |
+| `backend/src/infrastructure/routes/api/__tests__/products.test.ts` | Modified | Added an `@aws-sdk/client-s3` `S3Client`/`send` stub + R2 env vars so the real upload pipeline no longer makes a network call on the 3 POST-multipart cases |
+
+### TDD Cycle Evidence
+
+| Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|------|-----------|-------|------------|-----|-------|-------------|----------|
+| 3.2–3.5 engine | `storage/__tests__/r2StorageEngine.test.ts` | Unit (Jest) | N/A (new) | ✅ `Cannot find module '../r2StorageEngine'` | ✅ 7/7 | ✅ 7 cases (key-shape, ContentType, adversarial `.png.exe`, location, no-ACL, PutObject-reject, stream-`limit`, `_removeFile`) | ✅ extracted `fail()` guard; eslint clean |
+| 3.6–3.7 cleanup | `utils/__tests__/cleanupUploadedFile.test.ts` | Unit (Jest) | ✅ old 3/3 green first, then rewritten RED (`fs.unlink`/`filePath`) | ✅ Written | ✅ 4/4 | ✅ 4 cases (falsy×3, success, rejection-warn, sync-undefined) | ➖ impl already minimal |
+| 3.8–3.9 upload | `middlewares/__tests__/upload.test.ts` | Unit (Jest) | ✅ old 6/6 green first | ✅ `multer.diskStorage is not a function` | ✅ 5/5 | ✅ 5 cases (engine wiring, 5MB limit, no diskStorage, fileFilter reject + accept) | ➖ mechanical swap |
+| 3.10–3.11 Product ctrl | `controllers/__tests__/ProductApiController.test.ts` | Unit (Jest) | ✅ 29/29 baseline; 3 RED after edits | ✅ Written | ✅ 32/32 | ✅ create `.location`, update `.location`, 404 `.key` cleanup, success no-cleanup | ➖ none |
+| 3.12–3.13 User ctrl | `controllers/__tests__/UserApiController.test.ts` | Unit (Jest) | ✅ 6/8 baseline; 2 RED after edits | ✅ Written | ✅ 8/8 | ✅ register `.location`→image, `UserAlreadyExistsException` `.key` cleanup | ➖ none |
+| 3.14–3.15 validation mw | `middlewares/__tests__/handleValidationErrors.test.ts` | Unit (Jest) | ✅ 2/3 baseline; 1 RED after edit | ✅ Written | ✅ 3/3 | ➖ single call site, one behavior | ➖ none |
+
+### Work Unit Evidence
+
+| Evidence | Value |
+|---|---|
+| Focused test command and exact result | `npx jest src/infrastructure/storage src/infrastructure/utils/__tests__/cleanupUploadedFile.test.ts src/infrastructure/middlewares/__tests__/upload.test.ts` and per-file runs above — all green. Full: `pnpm test` → backend **945/945** (115 suites), frontend **200/200** (16 files), exit 0 |
+| Runtime harness command/scenario and exact result | No live-R2 boundary reachable in CI (design "Integration (real bucket): Not feasible in CI"). `routes/api/__tests__/products.test.ts` exercises the real Express upload pipeline (multer → `fileFilter` → `R2StorageEngine._handleFile` → callback → controller) with only the S3 `send` stubbed: 28/28 green. `SequelizeUserRepository.integration.test.ts` adapted but requires `pnpm test:integration` + a live DB — **not run in this session**. Real SigV4 / bucket public-access / public-host serving verified only by the manual RUNBOOKS §4 loop at bring-up. |
+| Rollback boundary | `git revert` the PR3 commit only, keeping PR1 + PR2 (design Rollback: the frontend `resolveImageUrl` passes absolute URLs through, so rows written during a live window still render after a revert to disk storage). No schema change. Bucket objects written during the window are orphaned-but-harmless. |
+
+### Deviations from Design
+1. **`backend/src/types/express.d.ts` updated** — not in the design's File Changes table. The global `Express.Request.file` type still declared the disk-era `filename: string` (required) / `path?` / `destination?`. Left as-is, the local controller intersection types (`Request & { file?: { key; location } }`) would not compile once `filename` was the only required member. Replaced `filename`/`path`/`destination` with `key: string` + `location: string` (required — the engine always sets them) and `bucket?: string`. Pure `.d.ts`, no runtime effect. Matches design intent ("`:12` file type", "`:120` type").
+2. **Two regression-repair test edits the design did not budget** — `SequelizeUserRepository.integration.test.ts` and `routes/api/__tests__/products.test.ts` both drive the real upload/cleanup code and broke the moment `diskStorage`/`fs.unlink` were removed. Adapted to the R2 model (S3 `send` stub, `DeleteObjectCommand` assertion) rather than left red. The integration file is outside the default `pnpm test` suite and was not executed here (no live DB).
+3. **Changed-line count ~723 authored vs. the design's ~470 estimate** — production ~241 (≈ the ~220 estimate); test+types ~482 (≈ the ~250 estimate + ~230). `size:exception` already accepted; flagged for the reviewer. PR3 kept atomic per design (split was explicitly rejected).
+
+Otherwise matches design exactly: custom `StorageEngine` (no `multer-s3`), `image` = `req.file.location` from `publicUrlFor`, `cleanupUploadedFile` re-keyed not branched, `ContentType` always from the validated mimetype, lazy R2 client singleton, no `ACL` ever sent.
+
+### Issues Found
+None blocking. Pre-existing / out-of-scope, unchanged: replacing a product image still orphans the previous bucket object forever (design Open Question — disk leaked identically); `backend/src/app.js:64` `imgSrc: ["'self'"]` would need the R2 host if a backend-rendered page ever displays an upload (design Open Question).
+
+### Status
+17/17 PR3 tasks complete (Phase 3 of 3 — all phases done). Ready for `sdd-verify`.
+
+---
+
+## PR3 follow-up: production-gate the storage engine (CI E2E fix)
+
+PR3's first push (#105) failed CI on the **E2E (Playwright)** job: user registration returned 500 because `multer.single('image')` now hit the R2 engine, and the E2E app boots with `NODE_ENV=test` (no R2 credentials) — cascading into every auth-dependent E2E test. The design's "real R2 not testable in CI" gap under-accounted for this: the swap broke a previously-green suite in every environment without R2 configured (CI, local dev).
+
+**User decision**: gate the R2 engine on `NODE_ENV === 'production'` (same pattern as `config.js`'s production-only port/TLS). Not MinIO (design rejected it; adds CI + local-dev infra), not a revert.
+
+### Changes
+| File | What |
+|------|------|
+| `backend/src/infrastructure/middlewares/upload.ts` | `createUpload` picks `createR2StorageEngine(dest)` when `NODE_ENV==='production'`, else a new `createLocalStorageEngine(dest)` that wraps `multer.diskStorage` and adds `key` (`<dest>/<uuid><ext>`) + `location` (`/img/<dest>/<uuid><ext>`) so controllers stay environment-agnostic |
+| `backend/src/infrastructure/utils/cleanupUploadedFile.ts` | Branches on `NODE_ENV`: production → `DeleteObjectCommand`; else → `fs.promises.unlink` on `public/img/<key>`. Same `upload_cleanup_failed` warn on failure, still never throws |
+| `backend/src/infrastructure/middlewares/__tests__/upload.test.ts` | Rewritten: local engine outside production, R2 engine in production, `fileFilter`/`limits` preserved in both |
+| `backend/src/infrastructure/utils/__tests__/cleanupUploadedFile.test.ts` | Split into production (R2 DeleteObject) and non-production (disk unlink) describe blocks |
+
+Controllers unchanged — both engines expose `.location`/`.key`. `image` holds a full R2 URL in production, a `/img/...` relative path in dev; PR1's `resolveImageUrl` already handles both.
+
+### Verification
+`pnpm test` → exit 0: backend 947, frontend 200. `tsc --noEmit`, `eslint` clean. E2E re-run on the next push.
