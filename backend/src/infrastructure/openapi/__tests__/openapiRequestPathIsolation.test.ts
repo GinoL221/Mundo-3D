@@ -6,6 +6,13 @@ import path from 'path';
 // file requires ONLY the running app — never `openapiSpec.ts` or the
 // generation script — so a fresh module registry (Jest isolates modules
 // per test file) proves the request path alone never pulls it in.
+// Deliberately carries NO explicit timeout, unlike the other tests that
+// require the real app. The body below is synchronous, and `require` blocks
+// the event loop, so Jest cannot interrupt it — a timeout here would look
+// like protection while doing nothing (measured: 75s under CPU contention,
+// still reported as passed). Making the test async would not help either;
+// the require stays synchronous. The cost is the same app compile the other
+// files pay, it simply cannot be bounded from inside Jest.
 describe('Request-path isolation from the OpenAPI generator', () => {
   it('never loads swagger-jsdoc when only the running app is required', () => {
     require('../../../app');

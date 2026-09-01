@@ -18,6 +18,15 @@ const buildHealthApp = (): Express => {
   return app;
 };
 
+// `require('../../../app')` compiles the whole app dependency tree on a cold
+// Jest worker, and that cost is charged to the timeout of the test that
+// triggers it. Measured at ~0.8s on an idle machine, but it scales with CPU
+// contention and blew past Jest's 5s default on a loaded one. 20s is ~25x the
+// idle cost: enough headroom for a busy CI runner, still short enough that a
+// genuine hang fails the build. Applied only to the tests that pay this cost —
+// every other test in this file keeps the 5s default.
+const APP_BOOT_TIMEOUT_MS = 20_000;
+
 describe('health routes', () => {
   afterEach(() => {
     markUnready();
@@ -66,7 +75,7 @@ describe('health routes', () => {
       const res = await request(fullApp).get('/api/products');
 
       expect(res.status).not.toBe(503);
-    });
+    }, APP_BOOT_TIMEOUT_MS);
   });
 
   describe('mounted at /health in the real app', () => {
@@ -83,6 +92,6 @@ describe('health routes', () => {
       markReady();
       const readyAfterRes = await request(fullApp).get('/health/ready');
       expect(readyAfterRes.status).toBe(200);
-    });
+    }, APP_BOOT_TIMEOUT_MS);
   });
 });

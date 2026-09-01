@@ -129,6 +129,15 @@ describe('buildOpenApiSpec', () => {
   });
 });
 
+// `require('../../../app')` compiles the whole app dependency tree on a cold
+// Jest worker, and that cost is charged to the timeout of the test that
+// triggers it. Measured at ~0.8s on an idle machine, but it scales with CPU
+// contention and blew past Jest's 5s default on a loaded one. 20s is ~25x the
+// idle cost: enough headroom for a busy CI runner, still short enough that a
+// genuine hang fails the build. Applied only to the tests that pay this cost —
+// every other test in this file keeps the 5s default.
+const APP_BOOT_TIMEOUT_MS = 20_000;
+
 describe('GET /api/openapi.json (real app wiring)', () => {
   it('serves the committed backend/openapi.json artifact unchanged, unauthenticated, through the actual app.js mount point', async () => {
     const fullApp = require('../../../app');
@@ -141,5 +150,5 @@ describe('GET /api/openapi.json (real app wiring)', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual(committedArtifact);
-  });
+  }, APP_BOOT_TIMEOUT_MS);
 });
