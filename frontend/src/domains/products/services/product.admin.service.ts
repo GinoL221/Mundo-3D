@@ -52,6 +52,42 @@ async function throwApiError(res: Response): Promise<never> {
 
 export class ProductAdminService {
   /**
+   * GET /api/products — public route (no apiAuthMiddleware, no csrfGuard on
+   * the backend), so this read sends no credentials and no CSRF header. The
+   * endpoint wraps its payload as `{ products: [...] }`; an absent key
+   * yields an empty list rather than throwing.
+   *
+   * Returns the raw AdminProductDTO shape on purpose: the admin table needs
+   * `stock`, `idCategory` and `idFranchise`, which the public-facing
+   * `product.service.ts` drops when it adapts to the `Product` view model.
+   */
+  static async list(): Promise<AdminProductDTO[]> {
+    const res = await fetch(`${API_URL}/api/products`);
+
+    if (!res.ok) {
+      return throwApiError(res);
+    }
+
+    const data = (await res.json()) as { products?: AdminProductDTO[] };
+    return data?.products ?? [];
+  }
+
+  /**
+   * GET /api/product/:id — public route, same no-credentials rationale as
+   * `list`. A 404 surfaces as a ProductAdminApiError with that status so the
+   * edit form can tell "no such product" from a transport failure.
+   */
+  static async getById(id: number): Promise<AdminProductDTO> {
+    const res = await fetch(`${API_URL}/api/product/${id}`);
+
+    if (!res.ok) {
+      return throwApiError(res);
+    }
+
+    return (await res.json()) as AdminProductDTO;
+  }
+
+  /**
    * POST /api/products — ADMIN or STAFF. Multipart (image upload).
    * `stock` may be included in `formData` as the optional initial stock
    * (defaults to 0 server-side when omitted).

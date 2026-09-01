@@ -73,7 +73,6 @@ import Layout from '../../../layouts/Layout.astro';
 </Layout>
 
 <script>
-  import { API_URL } from '../../../config';
   import { clearSession, getSessionUser, hasAdminAccess, isAdminOnly } from '../../../domains/auth';
   import { ProductAdminApiError, ProductAdminService } from '../../../domains/products';
   import type { AdminProductDTO } from '../../../domains/products';
@@ -121,11 +120,7 @@ import Layout from '../../../layouts/Layout.astro';
     if (!listEl) return;
 
     try {
-      const res = await fetch(`${API_URL}/api/products`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const data = (await res.json()) as { products: AdminProductDTO[] };
-      const products = data?.products || [];
+      const products = await ProductAdminService.list();
 
       if (loadingMsg) loadingMsg.remove();
 
