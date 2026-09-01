@@ -28,9 +28,28 @@ allowBuilds:
 # install/update. 10.2.0 carries a HIGH advisory (leading-zero octets
 # decoded as decimal); fixed in 10.3.1. This is the version keying the
 # login/register rate limiters by client IP.
+#
+# 2026-09-01 audit-drift cleanup — same "declared range already allows the
+# fix, pnpm just won't move there on its own" pattern as ip-address above:
+# - sharp: astro's own optionalDependencies already say `^0.34.0 || ^0.35.0`;
+#   0.34.5 carries 4 HIGH libvips CVEs, fixed at 0.35.0.
+# - svgo: astro's own dependencies already say `^4.0.1`; 4.0.1 has a HIGH
+#   (removeScripts leaves some executable scripts intact), fixed at 4.0.2.
+# - uuid: sequelize pins `^8.3.2` (a major behind); the HIGH-severity buffer
+#   check only affects v3/v5/v6 with a caller-supplied `buf`, and sequelize's
+#   own source (lib/utils.js) only ever calls `.v1`/`.v4` — both stable CJS
+#   named exports across uuid 8 through 11. Pinned to backend's own existing
+#   direct uuid@11.1.1 so only one uuid version is installed.
+# - body-parser: express@4.22.2 pins `~1.20.5` (patch-only range); 1.20.5 has
+#   a LOW DoS (invalid `limit` silently disables size enforcement), fixed at
+#   1.20.6, which already satisfies express's own tilde range.
 overrides:
   chokidar: 3.6.0
   ip-address: ^10.3.1
+  sharp: ^0.35.0
+  svgo: ^4.0.2
+  uuid: ^11.1.1
+  body-parser: ^1.20.6
 
 # `astro check` dynamically `import()`s "typescript" from astro's own
 # module scope, not the caller's cwd; astro declares no peerDependency on
