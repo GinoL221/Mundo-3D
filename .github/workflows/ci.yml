@@ -28,6 +28,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Scoped to --prod deliberately. The dev tree carries DoS advisories in
+      # build tooling (jest -> brace-expansion/js-yaml, swagger-jsdoc -> js-yaml)
+      # that never reach a deployed artifact; gating on the full tree would fail
+      # every unrelated PR for zero production risk. This is the automated half
+      # of the "Security Hardening" policy in pnpm-workspace.yaml, which until
+      # now was enforced only by hand.
+      - name: Audit production dependencies
+        run: pnpm audit --prod
+
       - name: Check architecture boundaries
         run: pnpm --filter backend architecture:check
 
