@@ -39,25 +39,25 @@ Chain strategy: stacked-to-main
 
 ## PR 1 — Migration + revived RememberToken slice (no endpoint)
 
-- [ ] 1.1 RED (integration): migration test asserting `RememberToken` gains `family_id`/`superseded_at`/`successor_hash`/`revoked_at`, drops `token_hash_2..5`, and `down` restores baseline byte-for-byte, via `testDb.ts`.
-- [ ] 1.2 GREEN: create `backend/src/database/migrations/20260901000000-refresh-token-rotation.js` (corrected 14-digit name), raw SQL + `queryInterface.sequelize.transaction`, attributed try/catch per `20260828000000-orders.js`.
-- [ ] 1.3 RED: extend `checkPendingMigrations` tests — boot gate fails when any of the 4 new columns is missing.
-- [ ] 1.4 GREEN: add the 4 columns to `REQUIRED_SCHEMA.RememberToken` (line 17) and `REQUIRED_COLUMN_DEFINITIONS.RememberToken` (line 42) in `backend/src/database/checkPendingMigrations.js`.
-- [ ] 1.5 GREEN: add the 4 fields to `backend/src/database/models/RememberToken.js`.
-- [ ] 1.6 GREEN: add `familyId`/`supersededAt`/`successorHash`/`revokedAt` to `backend/src/domain/entities/RememberToken.ts`.
-- [ ] 1.7 GREEN: add `claimRotation`, `insertSuccessor`, `revokeFamily`, `reapFamily` signatures to `backend/src/domain/ports/RememberTokenRepositoryPort.ts` (Interfaces section of design.md).
-- [ ] 1.8 RED: `SequelizeRememberTokenRepository` unit tests (mocked db) for the 4 new methods, tx-aware, raw-SQL conditional UPDATE.
-- [ ] 1.9 GREEN: implement the 4 methods in `SequelizeRememberTokenRepository.ts` following the `adjustStock` raw-`sequelize.query` precedent.
-- [ ] 1.10 RED: `RotateRefreshTokenUseCase` branch-table unit tests — D2's six lookup-order rows, ports mocked.
-- [ ] 1.11 GREEN: create `backend/src/application/use-cases/RotateRefreshTokenUseCase.ts` — claim → insert successor → reap inside `SequelizeUnitOfWork.runInTransaction`; `affectedRows===0` throws for the caller to re-read outside the aborted tx.
-- [ ] 1.12 RED: `RevokeRefreshTokenUseCase` unit test — revokes every row in a family.
-- [ ] 1.13 GREEN: create `backend/src/application/use-cases/RevokeRefreshTokenUseCase.ts`.
-- [ ] 1.14 RED: update `CreateRememberTokenUseCase` test — new rows carry a non-null `familyId`.
-- [ ] 1.15 GREEN: modify `CreateRememberTokenUseCase.ts` to generate and persist `familyId`.
-- [ ] 1.16 RED: update `VerifyRememberTokenUseCase` test — a revoked row returns `null` without being deleted (checked before the expiry branch).
-- [ ] 1.17 GREEN: modify `VerifyRememberTokenUseCase.ts` accordingly. `DeleteRememberTokenUseCase.ts` needs no change — verified against the spec, still correct as-is.
-- [ ] 1.18 Integration test (real MySQL, `*.integration.test.ts`, `pnpm test:integration`): two concurrent `claimRotation` calls against the same row → exactly one `affectedRows=1`. This is the design's highest-risk assumption (InnoDB semi-consistent read re-evaluating `superseded_at IS NULL` after the winner commits) — must not be mocked.
-- [ ] 1.19 Integration test: `reapFamily` caps a family at ~2 rows; `family_id` populated on every row created by login or rotation.
+- [x] 1.1 RED (integration): migration test asserting `RememberToken` gains `family_id`/`superseded_at`/`successor_hash`/`revoked_at`, drops `token_hash_2..5`, and `down` restores baseline byte-for-byte, via `testDb.ts`. **Written into `migrate.integration.test.js` (not a new file — see apply-progress). NOT EXECUTED: no local MySQL reachable this session.**
+- [x] 1.2 GREEN: create `backend/src/database/migrations/20260901000000-refresh-token-rotation.js` (corrected 14-digit name), raw SQL + `queryInterface.sequelize.transaction`, attributed try/catch per `20260828000000-orders.js`. **NOT EXECUTED against a real DB — see apply-progress.**
+- [x] 1.3 RED: extend `checkPendingMigrations` tests — boot gate fails when any of the 4 new columns is missing. Executed: RED confirmed failing (4/4), then GREEN passing.
+- [x] 1.4 GREEN: add the 4 columns to `REQUIRED_SCHEMA.RememberToken` (line 17) and `REQUIRED_COLUMN_DEFINITIONS.RememberToken` (line 42) in `backend/src/database/checkPendingMigrations.js`.
+- [x] 1.5 GREEN: add the 4 fields to `backend/src/database/models/RememberToken.js`. RED/GREEN executed.
+- [x] 1.6 GREEN: add `familyId`/`supersededAt`/`successorHash`/`revokedAt` to `backend/src/domain/entities/RememberToken.ts`. Also updated `database/models/db.d.ts` (`RememberTokenAttributes`) — required for compilation, missed by design.md's file list.
+- [x] 1.7 GREEN: add `claimRotation`, `insertSuccessor`, `revokeFamily`, `reapFamily` signatures to `backend/src/domain/ports/RememberTokenRepositoryPort.ts` (Interfaces section of design.md).
+- [x] 1.8 RED: `SequelizeRememberTokenRepository` unit tests (mocked db) for the 4 new methods, tx-aware, raw-SQL conditional UPDATE. Executed: RED (7 failing) then GREEN (14/14 passing).
+- [x] 1.9 GREEN: implement the 4 methods in `SequelizeRememberTokenRepository.ts` following the `adjustStock` raw-`sequelize.query` precedent. `reapFamily` uses ORM `destroy()` with a computed cutoff instead of a literal raw DELETE — see apply-progress deviation note (Sequelize's `QueryTypes.DELETE` has an ambiguous return shape, unlike `UPDATE`).
+- [x] 1.10 RED: `RotateRefreshTokenUseCase` unit tests, ports mocked. **Scope correction (see apply-progress): the "six lookup-order rows" this task cites are `RefreshSessionUseCase`'s (task 2.10, PR2), not this use case's. `RotateRefreshTokenUseCase` per design.md D1 has exactly two outcomes (won/lost the race) — tested accordingly.**
+- [x] 1.11 GREEN: create `backend/src/application/use-cases/RotateRefreshTokenUseCase.ts` — claim → insert successor → reap inside `SequelizeUnitOfWork.runInTransaction`; a failed claim throws (`RefreshTokenRotationLostRaceError`) for the caller to re-read outside the aborted tx. Executed: RED (module not found) then GREEN (2/2 passing).
+- [x] 1.12 RED: `RevokeRefreshTokenUseCase` unit test — revokes every row in a family. Executed: RED then GREEN (2/2 passing).
+- [x] 1.13 GREEN: create `backend/src/application/use-cases/RevokeRefreshTokenUseCase.ts`.
+- [x] 1.14 RED: update `CreateRememberTokenUseCase` test — new rows carry a non-null `familyId`. Executed: RED (2 failing) then GREEN.
+- [x] 1.15 GREEN: modify `CreateRememberTokenUseCase.ts` to generate and persist `familyId`. **Deviation: `familyId` generation goes through a new `IdGeneratorPort`/`CryptoRandomIdGenerator` adapter, not a direct `crypto.randomUUID()` call in the use case — the architecture guard (`backend.application.contracts`) forbids the application layer importing Node built-ins directly. Not anticipated by design.md/tasks.md; found and fixed during apply. See apply-progress.**
+- [x] 1.16 RED: update `VerifyRememberTokenUseCase` test — a revoked row returns `null` without being deleted (checked before the expiry branch). Executed: RED then GREEN.
+- [x] 1.17 GREEN: modify `VerifyRememberTokenUseCase.ts` accordingly. `DeleteRememberTokenUseCase.ts` needs no change — verified against the spec, still correct as-is.
+- [x] 1.18 Integration test (real MySQL, `*.integration.test.ts`, `pnpm test:integration`): two concurrent `claimRotation` calls against the same row → exactly one `affectedRows=1`. Written in `SequelizeRememberTokenRepository.integration.test.ts`. **NOT EXECUTED: no local MySQL reachable this session — will run for the first time in CI.**
+- [x] 1.19 Integration test: `reapFamily` caps a family at ~2 rows; `family_id` populated on every row created by login or rotation. Written in the same file as 1.18. **NOT EXECUTED — same reason.**
 
 ## PR 2 — Refresh endpoint, `typ` claim, cookie split, logout revocation
 

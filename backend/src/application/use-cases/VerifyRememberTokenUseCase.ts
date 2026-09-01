@@ -18,6 +18,14 @@ export class VerifyRememberTokenUseCase {
       return null;
     }
 
+    // Logout beats grace (design.md D2): a revoked row is terminal and must
+    // NOT be deleted here — checked before the expiry branch, matching
+    // remember-token-store spec's "Verifying a revoked token fails without
+    // deleting it".
+    if (tokenRecord.revokedAt) {
+      return null;
+    }
+
     if (new Date() > tokenRecord.expiryDate) {
       await this.rememberTokenRepo.deleteByHash(hashedToken);
       return null;

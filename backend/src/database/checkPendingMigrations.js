@@ -14,7 +14,10 @@ const REQUIRED_SCHEMA = {
     'image', 'material', 'height', 'width', 'depth', 'finish', 'production_time', 'stock',
   ],
   ShoppingCart: ['id_cart', 'id_user', 'id_product', 'quantity', 'unit_price', 'cart_status'],
-  RememberToken: ['id_remember_token', 'id_user', 'token_hash', 'expiry_date', 'created_at'],
+  RememberToken: [
+    'id_remember_token', 'id_user', 'token_hash', 'expiry_date', 'created_at',
+    'family_id', 'superseded_at', 'successor_hash', 'revoked_at',
+  ],
 };
 
 // `!` marks NOT NULL. These are the compatibility properties exposed by
@@ -42,6 +45,10 @@ const REQUIRED_COLUMN_DEFINITIONS = {
   RememberToken: {
     id_remember_token: 'INT(11)!', id_user: 'INT(11)!', token_hash: 'VARCHAR(64)!',
     expiry_date: 'DATETIME!', created_at: 'DATETIME!',
+    // Added by 20260901000000-refresh-token-rotation.js (HIGH-1 PR1). Zero
+    // production callers today, so this table is safe to alter without a
+    // backfill — see that migration's header comment.
+    family_id: 'CHAR(36)!', superseded_at: 'DATETIME', successor_hash: 'VARCHAR(64)', revoked_at: 'DATETIME',
   },
 };
 

@@ -19,6 +19,7 @@ jest.mock('sequelize', () => {
   mSequelize.DataTypes = {
     INTEGER: 'INTEGER',
     STRING: jest.fn().mockReturnValue('STRING'),
+    CHAR: jest.fn().mockReturnValue('CHAR'),
     DATE: 'DATE',
     DECIMAL: jest.fn().mockReturnValue('DECIMAL'),
     TEXT: 'TEXT',

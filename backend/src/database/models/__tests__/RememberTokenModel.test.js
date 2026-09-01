@@ -42,6 +42,28 @@ describe('RememberToken Model Definition', () => {
           allowNull: false,
           field: 'created_at',
         }),
+        // Rotation columns added by 20260901000000-refresh-token-rotation.js
+        // (HIGH-1 PR1) — see design.md D1/D2 and remember-token-store spec.
+        familyId: expect.objectContaining({
+          type: DataTypes.CHAR(36),
+          allowNull: false,
+          field: 'family_id',
+        }),
+        supersededAt: expect.objectContaining({
+          type: DataTypes.DATE,
+          allowNull: true,
+          field: 'superseded_at',
+        }),
+        successorHash: expect.objectContaining({
+          type: DataTypes.STRING(64),
+          allowNull: true,
+          field: 'successor_hash',
+        }),
+        revokedAt: expect.objectContaining({
+          type: DataTypes.DATE,
+          allowNull: true,
+          field: 'revoked_at',
+        }),
       }),
       expect.objectContaining({
         tableName: 'RememberToken',
