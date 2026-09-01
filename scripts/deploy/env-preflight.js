@@ -28,15 +28,35 @@ const REQUIRED = [
 //     hard-required preflight here would be stricter than the app's own contract.
 const WARN_ONLY = ['COOKIE_DOMAIN', 'PUBLIC_API_URL'];
 
+// NODE_ENV is checked by VALUE, not by presence, so it is not part of REQUIRED.
+// `test` makes JwtSecret.ts/CookieSecret.ts fall back to constants committed in
+// this repository and disables both rate limiters, so a production process
+// running with it would sign forgeable tokens, unthrottled. Anything other than
+// `production` is refused rather than only warned about: there is no legitimate
+// reason for a deploy to run under another value.
+function checkNodeEnv(env) {
+  if (env.NODE_ENV === 'production') return null;
+  const actual = env.NODE_ENV ? `"${env.NODE_ENV}"` : 'unset';
+  return `NODE_ENV must be "production" for a deploy, but it is ${actual}.`;
+}
+
 function checkEnv(env = process.env) {
   return {
     missing: REQUIRED.filter((key) => !env[key]),
     warnings: WARN_ONLY.filter((key) => !env[key]),
+    nodeEnv: checkNodeEnv(env),
   };
 }
 
 if (require.main === module) {
-  const { missing, warnings } = checkEnv();
+  const { missing, warnings, nodeEnv } = checkEnv();
+
+  if (nodeEnv) {
+    console.log(
+      `[env-preflight] FAIL: ${nodeEnv} Running a deploy with NODE_ENV=test falls back to secrets committed in this repository and disables the login/register rate limiters.`
+    );
+    process.exitCode = 1;
+  }
 
   if (missing.length > 0) {
     console.log(

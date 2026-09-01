@@ -20,8 +20,13 @@ const limiter = rateLimit({
   statusCode: 429,
 });
 
+// Only a real Jest process skips throttling. NODE_ENV alone is not enough:
+// the e2e suite runs a real server with NODE_ENV=test, and a deploy
+// misconfigured the same way would otherwise accept unlimited credential
+// attempts. JEST_WORKER_ID is set by Jest and cannot come from a deploy
+// config; e2e raises its limits through the *_LIMIT_MAX env vars instead.
 const loginLimiter = (req: Request, res: Response, next: NextFunction) => {
-  if (process.env.NODE_ENV === 'test') {
+  if (process.env.NODE_ENV === 'test' && process.env.JEST_WORKER_ID) {
     return next();
   }
   return limiter(req, res, next);

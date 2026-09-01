@@ -71,12 +71,29 @@ A second `SIGTERM`/`SIGINT` while shutdown is already in progress is a no-op —
 
 Production is meant to run the compiled build, not `ts-node`: `pnpm --filter backend build` (emits `dist/`), then start with both `RUN_COMPILED=true` and `NODE_ENV=production` set. `RUN_COMPILED` is deliberately a separate flag from `NODE_ENV` — see `backend/index.js`'s comments — so setting `NODE_ENV=production` alone is not enough to get the compiled path; both are required together. `render.yaml`'s `buildCommand`/`startCommand` set exactly this (see "Platform bring-up" below) — there is no `Dockerfile`, Render builds and runs the Node process directly.
 
+## Why NODE_ENV is checked by value
+
+`NODE_ENV=test` is not a harmless label in this codebase. It used to unlock
+three things at once: the `test-only-*` JWT and cookie secrets, which are
+committed to this repository and therefore public, and a full bypass of the
+login and register rate limiters. A production process started that way would
+have signed forgeable tokens with no throttling.
+
+Two layers now prevent that:
+
+- Those fallbacks require `JEST_WORKER_ID`, which only Jest sets and no deploy
+  configuration can supply. The Playwright suite runs a real server, so it
+  passes its own throwaway secrets and raised limits in
+  `e2e/playwright.config.ts` rather than relying on the fallback.
+- `env-preflight` refuses any `NODE_ENV` other than `production`, so the deploy
+  `&&` chain short-circuits before the app or the migrations run.
+
 ## Deploy Pipeline
 
 Three small, dependency-free Node scripts under `scripts/deploy/` (repo root) implement the platform-agnostic parts of a deploy — they don't provision or target any specific platform, they just sequence and verify what already exists. A future CD job (or a manual deploy) runs them in this order:
 
 1. **Build** — `pnpm --filter backend build` (emits `dist/`; not one of the deploy scripts, it's the existing build step).
-2. **Env preflight** — `pnpm --filter backend deploy:env-preflight`. Fails fast (exit 1) *before* the app process even starts if any required production env var is missing: `JWT_SECRET`, `CORS_ORIGIN`, `COOKIE_SECRET`, `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_HOST`, `DB_PORT`, `DB_CA_CERT`, `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL_BASE`. Lists every missing var in one message, not one at a time. `COOKIE_DOMAIN` and `PUBLIC_API_URL` are warn-only (exit 0 with a warning): `COOKIE_DOMAIN` is genuinely optional per `cookieOptions.ts` but required for a cross-subdomain deploy topology, and `PUBLIC_API_URL` is a frontend build-time var baked by Vercel at `astro build` — irrelevant to the backend process, so its absence here only warns.
+2. **Env preflight** — `pnpm --filter backend deploy:env-preflight`. Fails fast (exit 1) *before* the app process even starts if `NODE_ENV` is anything other than `production` (with `test`, `JwtSecret.ts`/`CookieSecret.ts` fall back to constants committed in this repository and both rate limiters are skipped — see "Why NODE_ENV is checked by value" below), or if any required production env var is missing: `JWT_SECRET`, `CORS_ORIGIN`, `COOKIE_SECRET`, `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_HOST`, `DB_PORT`, `DB_CA_CERT`, `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL_BASE`. Lists every missing var in one message, not one at a time. `COOKIE_DOMAIN` and `PUBLIC_API_URL` are warn-only (exit 0 with a warning): `COOKIE_DOMAIN` is genuinely optional per `cookieOptions.ts` but required for a cross-subdomain deploy topology, and `PUBLIC_API_URL` is a frontend build-time var baked by Vercel at `astro build` — irrelevant to the backend process, so its absence here only warns.
 3. **Migrate, then start** — `pnpm --filter backend deploy:migrate-and-start` runs `db:migrate` first; if it fails, the app is never started (exit code propagates, non-zero) — this is what actually enforces "migrations run before the new version serves traffic," since `index.js`'s own boot refuses to auto-migrate (see "Incident: backend process won't start" above). Forwards `SIGTERM`/`SIGINT` to the spawned server process so graceful shutdown still works normally when this wrapper is what the platform sends the signal to (see "Graceful shutdown" above). In production, `render.yaml`'s `startCommand` runs `pnpm --filter backend deploy:start`, which chains steps 2 and 3 (`env-preflight && migrate-and-start`) so a missing required var aborts before any DB or app work happens — steps 2/3 are also runnable standalone, as shown here.
 4. **Smoke test** — `pnpm --filter backend deploy:smoke-test` (needs `SMOKE_TEST_BASE_URL` pointed at the just-deployed instance). Polls `GET /health/live` then `GET /health/ready` until both return 200 or `SMOKE_TEST_TIMEOUT_MS` elapses (default 60000ms) — readiness is never checked before liveness succeeds at least once. Non-zero exit means the deploy did not actually come up healthy, regardless of what the platform's own "deploy succeeded" signal says.
 
