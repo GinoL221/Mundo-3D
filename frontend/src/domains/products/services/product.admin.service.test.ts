@@ -133,6 +133,60 @@ describe('ProductAdminService', () => {
     });
   });
 
+  describe('list', () => {
+    it('GETs the public product list and unwraps the products array', async () => {
+      const products = [
+        { idProduct: 1, nameProduct: 'Figura Mario', stock: 4 },
+        { idProduct: 2, nameProduct: 'Busto Luigi', stock: 0 },
+      ];
+      fetchMock.mockResolvedValue({ ok: true, json: async () => ({ products }) });
+
+      const result = await ProductAdminService.list();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [url, options] = fetchMock.mock.calls[0];
+      expect(url).toContain('/api/products');
+      expect(result).toEqual(products);
+      // GET /products is public (no apiAuthMiddleware, no csrfGuard on the
+      // backend route), so the read path must not send credentials or a
+      // CSRF header the way the mutation methods do.
+      expect(options).toBeUndefined();
+    });
+
+    it('returns an empty array when the response carries no products key', async () => {
+      fetchMock.mockResolvedValue({ ok: true, json: async () => ({}) });
+
+      expect(await ProductAdminService.list()).toEqual([]);
+    });
+
+    it('throws a ProductAdminApiError carrying the status when the response is not ok', async () => {
+      fetchMock.mockResolvedValue({ ok: false, status: 500, json: async () => ({ error: 'Error del servidor' }) });
+
+      await expectApiError(() => ProductAdminService.list(), 500, 'Error del servidor');
+    });
+  });
+
+  describe('getById', () => {
+    it('GETs the single-product endpoint and returns the parsed ProductDTO', async () => {
+      const dto = { idProduct: 7, nameProduct: 'Llavero Yoshi', idCategory: 2, stock: 1 };
+      fetchMock.mockResolvedValue({ ok: true, json: async () => dto });
+
+      const result = await ProductAdminService.getById(7);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [url, options] = fetchMock.mock.calls[0];
+      expect(url).toContain('/api/product/7');
+      expect(result).toEqual(dto);
+      expect(options).toBeUndefined();
+    });
+
+    it('throws a ProductAdminApiError carrying status 404 for an unknown id', async () => {
+      fetchMock.mockResolvedValue({ ok: false, status: 404, json: async () => ({ error: 'Producto no encontrado' }) });
+
+      await expectApiError(() => ProductAdminService.getById(999), 404, 'Producto no encontrado');
+    });
+  });
+
   describe('when there is no CSRF cookie (no active session)', () => {
     it('still sends credentials:"include" without an X-CSRF-Token header', async () => {
       stubCookie('');

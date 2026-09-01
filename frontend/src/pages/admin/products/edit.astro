@@ -83,7 +83,6 @@ import Layout from '../../../layouts/Layout.astro';
 </Layout>
 
 <script>
-  import { API_URL } from '../../../config';
   import { clearSession, getSessionUser, hasAdminAccess } from '../../../domains/auth';
   import { ProductAdminApiError, ProductAdminService } from '../../../domains/products';
   import type { AdminProductDTO } from '../../../domains/products';
@@ -114,10 +113,7 @@ import Layout from '../../../layouts/Layout.astro';
 
   async function loadProduct(id: string): Promise<void> {
     try {
-      const res = await fetch(`${API_URL}/api/product/${id}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const product = (await res.json()) as AdminProductDTO;
+      const product = await ProductAdminService.getById(Number(id));
       fillForm(product);
 
       if (loadingEl) loadingEl.style.display = 'none';
