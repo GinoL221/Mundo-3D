@@ -52,7 +52,7 @@ server.use(requestIdMiddleware);
 // defaults (which allow 'unsafe-inline' styles and any https: font source):
 // this API serves no HTML document today (no view engine, no .ejs, no
 // res.render — see design.md), only JSON, health checks, and static assets
-// (public/js, public/images) — default-src 'none' denies everything not
+// (public/images, public/img) — default-src 'none' denies everything not
 // explicitly allowed below, so a future HTML route starts locked down
 // instead of inheriting a permissive default.
 server.use(

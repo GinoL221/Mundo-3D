@@ -10,17 +10,6 @@ declare global {
         category?: string;
         idRole?: number;
       };
-      session?: {
-        userLogged?: {
-          idUser: number;
-          email: string;
-          firstName: string;
-          lastName: string;
-          image: string | null;
-          idRole: number;
-          category: string;
-        };
-      };
       file?: {
         fieldname?: string;
         originalname?: string;

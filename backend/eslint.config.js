@@ -58,18 +58,7 @@ module.exports = tseslint.config(
     },
   },
   {
-    files: ["public/js/**/*.js"],
-    languageOptions: {
-      ecmaVersion: 2021,
-      sourceType: "script",
-      globals: {
-        ...globals.browser,
-      },
-    },
-  },
-  {
     files: [
-      "src/database/reset-db.js",
       "src/database/seed.js",
       "src/database/migrate.js",
       "src/database/test-prepare.js",
