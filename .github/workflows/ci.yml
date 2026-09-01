@@ -28,14 +28,22 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Scoped to --prod deliberately. The dev tree carries DoS advisories in
-      # build tooling (jest -> brace-expansion/js-yaml, swagger-jsdoc -> js-yaml)
-      # that never reach a deployed artifact; gating on the full tree would fail
-      # every unrelated PR for zero production risk. This is the automated half
-      # of the "Security Hardening" policy in pnpm-workspace.yaml, which until
-      # now was enforced only by hand.
-      - name: Audit production dependencies
-        run: pnpm audit --prod
+      # Gates on the FULL tree, dev dependencies included. That scope only
+      # became achievable once the dev tree was cleared (it carried 1
+      # moderate and 14 high before "chore(deps): clear the 15 dev-tree
+      # advisories"); this step was introduced as --prod for exactly that
+      # reason. Deliberately the stricter scope now: a DoS advisory in build
+      # tooling cannot reach a deployed artifact, but letting those pile up
+      # is precisely how a real one gets lost in the noise.
+      #
+      # The cost is real and accepted. brace-expansion alone shipped three
+      # advisories in July 2026, and any new one anywhere in the tree blocks
+      # every PR until someone adds an override to pnpm-workspace.yaml —
+      # which is how every entry in that file's overrides block got there.
+      # This is the automated half of the "Security Hardening" policy that
+      # lives beside those overrides, enforced only by hand until now.
+      - name: Audit all dependencies
+        run: pnpm audit
 
       - name: Check architecture boundaries
         run: pnpm --filter backend architecture:check
