@@ -1,14 +1,6 @@
 import jwt from 'jsonwebtoken';
-import path from 'path';
 import { Request, Response, NextFunction } from 'express';
-import {
-  isUser,
-  guestMiddleware,
-  authMiddleware,
-  apiAuthMiddleware,
-  adminGuard,
-  requireRoles
-} from '../auth';
+import { apiAuthMiddleware, adminGuard, requireRoles } from '../auth';
 import { getJwtSecret } from '../../security/JwtSecret';
 import { AUTH_COOKIE } from '../../security/cookieOptions';
 import { Role } from '../../../domain/Role';
@@ -18,93 +10,6 @@ jest.mock('../../security/JwtSecret', () => ({
 }));
 
 const JWT_SECRET = getJwtSecret();
-
-describe('isUser middleware', () => {
-  let req: Partial<Request>;
-  let res: Partial<Response>;
-  let next: NextFunction;
-
-  beforeEach(() => {
-    req = {};
-    res = {
-      locals: {},
-      redirect: jest.fn() as any
-    };
-    next = jest.fn();
-  });
-
-  it('calls next() if user is logged (res.locals.isLogged is true)', () => {
-    res.locals!.isLogged = true;
-    isUser(req as Request, res as Response, next);
-    expect(next).toHaveBeenCalledTimes(1);
-    expect(res.redirect).not.toHaveBeenCalled();
-  });
-
-  it('redirects to /login if user is not logged', () => {
-    res.locals!.isLogged = false;
-    isUser(req as Request, res as Response, next);
-    expect(res.redirect).toHaveBeenCalledWith('/login');
-    expect(next).not.toHaveBeenCalled();
-  });
-});
-
-describe('guestMiddleware', () => {
-  let req: Partial<Request>;
-  let res: Partial<Response>;
-  let next: NextFunction;
-
-  beforeEach(() => {
-    req = {
-      session: {}
-    };
-    res = {
-      redirect: jest.fn() as any
-    };
-    next = jest.fn();
-  });
-
-  it('redirects to /profile if userLogged is in session', () => {
-    req.session!.userLogged = { idUser: 1, email: 'user@test.com', firstName: 'John', lastName: 'Doe', image: null, idRole: 2, category: 'User' };
-    guestMiddleware(req as Request, res as Response, next);
-    expect(res.redirect).toHaveBeenCalledWith('/profile');
-    expect(next).not.toHaveBeenCalled();
-  });
-
-  it('calls next() if no userLogged in session', () => {
-    guestMiddleware(req as Request, res as Response, next);
-    expect(next).toHaveBeenCalledTimes(1);
-    expect(res.redirect).not.toHaveBeenCalled();
-  });
-});
-
-describe('authMiddleware', () => {
-  let req: Partial<Request>;
-  let res: Partial<Response>;
-  let next: NextFunction;
-
-  beforeEach(() => {
-    req = {
-      session: {}
-    };
-    res = {
-      redirect: jest.fn() as any
-    };
-    next = jest.fn();
-  });
-
-  it('redirects to /login if userLogged is NOT in session', () => {
-    authMiddleware(req as Request, res as Response, next);
-    expect(res.redirect).toHaveBeenCalledWith('/login');
-    expect(next).not.toHaveBeenCalled();
-  });
-
-  it('calls next() if userLogged is in session', () => {
-    req.session!.userLogged = { idUser: 1, email: 'user@test.com', firstName: 'John', lastName: 'Doe', image: null, idRole: 2, category: 'User' };
-    authMiddleware(req as Request, res as Response, next);
-    expect(next).toHaveBeenCalledTimes(1);
-    expect(res.redirect).not.toHaveBeenCalled();
-  });
-});
 
 describe('apiAuthMiddleware', () => {
   let req: Partial<Request>;
@@ -169,7 +74,7 @@ describe('requireRoles', () => {
   let next: NextFunction;
 
   beforeEach(() => {
-    req = { path: '/api/products', session: {} };
+    req = { path: '/api/products' };
     res = {
       status: jest.fn().mockReturnThis() as any,
       json: jest.fn().mockReturnThis() as any
@@ -177,7 +82,7 @@ describe('requireRoles', () => {
     next = jest.fn();
   });
 
-  it('returns 401 JSON error when there is no principal (no session, no req.user)', () => {
+  it('returns 401 JSON error when there is no principal (no req.user)', () => {
     const guard = requireRoles(Role.ADMIN, Role.STAFF);
     guard(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(401);
@@ -202,13 +107,6 @@ describe('requireRoles', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
-  it('accepts the principal from req.session.userLogged when present', () => {
-    req.session!.userLogged = { idUser: 1, firstName: 'Admin', lastName: 'User', email: 'admin@test.com', image: null, idRole: Role.ADMIN, category: 'Admin' };
-    const guard = requireRoles(Role.ADMIN);
-    guard(req as Request, res as Response, next);
-    expect(next).toHaveBeenCalledTimes(1);
-  });
-
   it('rejects a single-role allow-list when the role does not match', () => {
     req.user = { userId: 3, email: 'staff@test.com', category: 'Staff', idRole: Role.STAFF };
     const guard = requireRoles(Role.ADMIN);
@@ -224,7 +122,7 @@ describe('adminGuard (alias for requireRoles(Role.ADMIN))', () => {
   let next: NextFunction;
 
   beforeEach(() => {
-    req = { path: '/api/users', session: {} };
+    req = { path: '/api/users' };
     res = {
       status: jest.fn().mockReturnThis() as any,
       json: jest.fn().mockReturnThis() as any

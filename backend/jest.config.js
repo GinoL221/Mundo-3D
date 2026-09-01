@@ -20,7 +20,6 @@ module.exports = {
     '!src/**/*.d.ts',
     '!src/**/__tests__/**',
     '!src/database/migrations/**',
-    '!src/database/reset-db.js',
     '!src/database/test-prepare.js',
   ],
   coverageDirectory: 'coverage',

@@ -4,28 +4,6 @@ import { getJwtSecret } from '../security/JwtSecret';
 import { AUTH_COOKIE } from '../security/cookieOptions';
 import { Role } from '../../domain/Role';
 
-export const isUser = (req: Request, res: Response, next: NextFunction): void => {
-  if (res.locals.isLogged) {
-    next();
-  } else {
-    res.redirect('/login');
-  }
-};
-
-export const guestMiddleware = (req: Request, res: Response, next: NextFunction): void => {
-  if (req.session?.userLogged) {
-    return res.redirect('/profile');
-  }
-  next();
-};
-
-export const authMiddleware = (req: Request, res: Response, next: NextFunction): void => {
-  if (!req.session?.userLogged) {
-    return res.redirect('/login');
-  }
-  next();
-};
-
 interface DecodedToken {
   userId: number;
   email?: string;
@@ -49,12 +27,15 @@ export const apiAuthMiddleware = (req: Request, res: Response, next: NextFunctio
   }
 };
 
+// The principal always comes from `req.user`, set by apiAuthMiddleware from
+// the JWT cookie. This API has exactly one authentication path — there is no
+// server-side session store to fall back to.
 export const requireRoles = (...roles: Role[]) => (
   req: Request,
   res: Response,
   next: NextFunction
 ): void | Response => {
-  const principal = req.session?.userLogged || req.user;
+  const principal = req.user;
 
   if (!principal) {
     return res.status(401).json({ error: 'Autenticación requerida' });
