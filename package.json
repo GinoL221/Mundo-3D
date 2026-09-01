@@ -14,6 +14,7 @@
     "lint": "pnpm -r lint",
     "format": "prettier --write \"backend/src/**/*.{js,ts}\" \"frontend/src/**/*.{js,ts,astro}\"",
     "type-check": "pnpm --filter backend type-check",
+    "check:openapi": "pnpm --filter backend check:openapi",
     "frontend:dev": "pnpm --filter frontend dev",
     "frontend:check": "pnpm --filter frontend check",
     "frontend:quality-check": "pnpm --filter frontend quality:check",
@@ -21,7 +22,7 @@
     "frontend:build": "pnpm --filter frontend build",
     "test:e2e": "pnpm --filter e2e test --project=chromium",
     "test:e2e:all": "pnpm --filter e2e test",
-    "test:deploy-scripts": "node --test \"scripts/deploy/**/*.test.js\""
+    "test:deploy-scripts": "node --test \"scripts/deploy/**/*.test.js\" \"backend/scripts/**/*.test.js\""
   },
   "devDependencies": {
     "prettier": "3.8.3"

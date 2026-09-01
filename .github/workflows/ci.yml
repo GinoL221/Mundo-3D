@@ -31,6 +31,9 @@ jobs:
       - name: Check architecture boundaries
         run: pnpm --filter backend architecture:check
 
+      - name: Check OpenAPI spec is up to date
+        run: pnpm run check:openapi
+
       - name: Run linter
         run: pnpm run lint
 
@@ -40,7 +43,7 @@ jobs:
       - name: Run fast tests (DB-independent)
         run: pnpm run test:fast
 
-      - name: Run deploy scripts unit tests (DB-independent)
+      - name: Run standalone Node script unit tests (DB-independent)
         run: pnpm run test:deploy-scripts
 
       - name: Run backend coverage and generate risk map

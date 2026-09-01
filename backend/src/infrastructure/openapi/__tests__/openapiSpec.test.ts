@@ -130,13 +130,16 @@ describe('buildOpenApiSpec', () => {
 });
 
 describe('GET /api/openapi.json (real app wiring)', () => {
-  it('serves the same spec with no auth required, through the actual app.js mount point', async () => {
+  it('serves the committed backend/openapi.json artifact unchanged, unauthenticated, through the actual app.js mount point', async () => {
     const fullApp = require('../../../app');
+    const committedArtifact = JSON.parse(
+      fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', 'openapi.json'), 'utf-8')
+    ) as OpenApiDocument;
 
+    // Unauthenticated: no cookie/header sent at all.
     const res = await request(fullApp).get('/api/openapi.json');
 
     expect(res.status).toBe(200);
-    expect(res.body.openapi).toBe('3.0.0');
-    expect(res.body.paths).toHaveProperty('/orders');
+    expect(res.body).toEqual(committedArtifact);
   });
 });
