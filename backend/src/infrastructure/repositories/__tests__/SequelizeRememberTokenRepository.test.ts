@@ -1,7 +1,8 @@
-import { Sequelize } from 'sequelize';
+import { Sequelize, QueryTypes } from 'sequelize';
 import db from '../../../database/models/db';
 import { SequelizeRememberTokenRepository } from '../SequelizeRememberTokenRepository';
 import { RememberToken } from '../../../domain/entities/RememberToken';
+import { TransactionContext } from '../../../domain/ports/UnitOfWorkPort';
 
 let isSqliteAvailable = false;
 let sequelize: Sequelize | null = null;
@@ -248,6 +249,137 @@ describe('SequelizeRememberTokenRepository Integration Tests', () => {
         const deleted = await repository.deleteByHash('nonexistent');
         expect(deleted).toBe(false);
       }
+    });
+  });
+
+  // Rotation operations (HIGH-1 PR1, design.md D1/D2/D7). Always fully
+  // mocked (not the sqlite-fallback dual-mode above) — these methods are
+  // about proving the exact SQL/args shape of the tx-aware conditional
+  // UPDATE, matching `SequelizeProductRepository.test.ts`'s `adjustStock`
+  // precedent. `db.sequelize.query` is overloaded per QueryTypes in the real
+  // Sequelize typings, awkward for `jest.mocked` — cast to a plain jest.Mock.
+  describe('rotation operations — mocked', () => {
+    const fakeTx = {} as TransactionContext;
+
+    beforeEach(() => {
+      (db as any).RememberToken = {
+        create: jest.fn(),
+        findOne: jest.fn(),
+        destroy: jest.fn(),
+        update: jest.fn(),
+      };
+      jest.spyOn(db.sequelize, 'query').mockReset();
+    });
+
+    describe('claimRotation', () => {
+      it('claims the row with a conditional UPDATE and returns true when exactly one row is affected', async () => {
+        const mockQuery = db.sequelize.query as unknown as jest.Mock;
+        mockQuery.mockResolvedValueOnce([undefined, 1]);
+
+        const claimed = await repository.claimRotation({
+          presentedHash: 'current-hash',
+          successorHash: 'new-hash',
+          tx: fakeTx,
+        });
+
+        expect(claimed).toBe(true);
+        expect(mockQuery).toHaveBeenCalledWith(
+          expect.stringMatching(
+            /UPDATE.*RememberToken.*SET.*superseded_at.*successor_hash.*WHERE.*token_hash.*superseded_at.*IS NULL.*revoked_at.*IS NULL.*expiry_date/is
+          ),
+          expect.objectContaining({
+            replacements: { presentedHash: 'current-hash', successorHash: 'new-hash' },
+            type: QueryTypes.UPDATE,
+            transaction: fakeTx,
+          })
+        );
+      });
+
+      it('returns false (lost the race) when the conditional UPDATE affects zero rows', async () => {
+        const mockQuery = db.sequelize.query as unknown as jest.Mock;
+        mockQuery.mockResolvedValueOnce([undefined, 0]);
+
+        const claimed = await repository.claimRotation({
+          presentedHash: 'stale-hash',
+          successorHash: 'new-hash',
+          tx: fakeTx,
+        });
+
+        expect(claimed).toBe(false);
+      });
+    });
+
+    describe('insertSuccessor', () => {
+      it('creates the successor row within the transaction, inheriting family and expiry', async () => {
+        const expiry = new Date('2026-10-01T00:00:00Z');
+        const createdInstance = {
+          idRememberToken: 42,
+          tokenHash: 'new-hash',
+          idUser: 7,
+          expiryDate: expiry,
+          familyId: 'family-1',
+          createdAt: new Date(),
+        };
+        jest.mocked(db.RememberToken.create).mockResolvedValueOnce(createdInstance as any);
+
+        const predecessor = new RememberToken(1, 'old-hash', 7, expiry, null, 'family-1');
+        const successorSeed = new RememberToken(0, 'new-hash', predecessor.idUser, predecessor.expiryDate, undefined, predecessor.familyId);
+
+        const successor = await repository.insertSuccessor(successorSeed, fakeTx);
+
+        expect(successor.idRememberToken).toBe(42);
+        expect(successor.familyId).toBe('family-1');
+        expect(db.RememberToken.create).toHaveBeenCalledWith(
+          expect.objectContaining({ idUser: 7, tokenHash: 'new-hash', expiryDate: expiry, familyId: 'family-1' }),
+          expect.objectContaining({ transaction: fakeTx })
+        );
+      });
+    });
+
+    describe('revokeFamily', () => {
+      it('revokes every non-revoked row in the family and returns the affected count', async () => {
+        jest.mocked(db.RememberToken.update).mockResolvedValueOnce([2] as any);
+
+        const revoked = await repository.revokeFamily('family-1');
+
+        expect(revoked).toBe(2);
+        expect(db.RememberToken.update).toHaveBeenCalledWith(
+          expect.objectContaining({ revokedAt: expect.any(Date) }),
+          expect.objectContaining({ where: { familyId: 'family-1', revokedAt: null } })
+        );
+      });
+
+      it('returns 0 when the family has no rows left to revoke', async () => {
+        jest.mocked(db.RememberToken.update).mockResolvedValueOnce([0] as any);
+
+        const revoked = await repository.revokeFamily('empty-family');
+
+        expect(revoked).toBe(0);
+      });
+    });
+
+    describe('reapFamily', () => {
+      it('deletes only rows past the grace window for that family and returns the affected count', async () => {
+        jest.mocked(db.RememberToken.destroy).mockResolvedValueOnce(2);
+
+        const reaped = await repository.reapFamily('family-1', 30, fakeTx);
+
+        expect(reaped).toBe(2);
+        expect(db.RememberToken.destroy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({ familyId: 'family-1' }),
+            transaction: fakeTx,
+          })
+        );
+      });
+
+      it('returns 0 when nothing in the family has passed its grace window', async () => {
+        jest.mocked(db.RememberToken.destroy).mockResolvedValueOnce(0);
+
+        const reaped = await repository.reapFamily('family-1', 30, fakeTx);
+
+        expect(reaped).toBe(0);
+      });
     });
   });
 });

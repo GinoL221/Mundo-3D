@@ -4,6 +4,7 @@ import { DeleteRememberTokenUseCase } from '../use-cases/DeleteRememberTokenUseC
 import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
 import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
 import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
+import { IdGeneratorPort } from '../../domain/ports/IdGeneratorPort';
 import { RememberToken } from '../../domain/entities/RememberToken';
 import { User } from '../../domain/entities/User';
 
@@ -11,6 +12,7 @@ describe('RememberToken Use Cases', () => {
   let mockRememberTokenRepo: jest.Mocked<RememberTokenRepositoryPort>;
   let mockUserRepo: jest.Mocked<UserRepositoryPort>;
   let mockTokenHasher: jest.Mocked<TokenHasherPort>;
+  let mockIdGenerator: jest.Mocked<IdGeneratorPort>;
 
   beforeEach(() => {
     mockRememberTokenRepo = {
@@ -28,13 +30,18 @@ describe('RememberToken Use Cases', () => {
     mockTokenHasher = {
       hash: jest.fn(),
     } as unknown as jest.Mocked<TokenHasherPort>;
+
+    mockIdGenerator = {
+      generate: jest.fn(),
+    } as unknown as jest.Mocked<IdGeneratorPort>;
   });
 
   describe('CreateRememberTokenUseCase', () => {
     it('should create a remember token and return the DTO', async () => {
-      const useCase = new CreateRememberTokenUseCase(mockRememberTokenRepo, mockTokenHasher);
+      const useCase = new CreateRememberTokenUseCase(mockRememberTokenRepo, mockTokenHasher, mockIdGenerator);
 
       mockTokenHasher.hash.mockReturnValue('hashedPlainToken123');
+      mockIdGenerator.generate.mockReturnValue('family-99');
 
       const expectedDate = new Date();
       const mockCreated = new RememberToken(
@@ -42,7 +49,8 @@ describe('RememberToken Use Cases', () => {
         'hashedPlainToken123',
         10,
         expectedDate,
-        expectedDate
+        expectedDate,
+        'family-99'
       );
 
       mockRememberTokenRepo.create.mockResolvedValue(mockCreated);
@@ -59,6 +67,7 @@ describe('RememberToken Use Cases', () => {
         idUser: 10,
         expiryDate: expectedDate,
         createdAt: expectedDate,
+        familyId: 'family-99',
       });
 
       expect(mockTokenHasher.hash).toHaveBeenCalledWith('myPlainToken');
@@ -67,8 +76,31 @@ describe('RememberToken Use Cases', () => {
           tokenHash: 'hashedPlainToken123',
           idUser: 10,
           expiryDate: expect.any(Date),
+          familyId: 'family-99',
         })
       );
+    });
+
+    // HIGH-1 PR1 (design.md D1): family provisioning ships now even though
+    // reuse-revocation logic is deferred — a later migration would leave a
+    // 30-day window with no family data to detect reuse against. Random
+    // generation itself is proven by `CryptoRandomIdGenerator.test.ts`; this
+    // use case only needs to prove it delegates to the injected port and
+    // persists whatever it returns, never a hardcoded value of its own.
+    it('persists whatever the injected IdGeneratorPort returns as familyId, per call', async () => {
+      const useCase = new CreateRememberTokenUseCase(mockRememberTokenRepo, mockTokenHasher, mockIdGenerator);
+      mockTokenHasher.hash.mockReturnValue('hashedPlainToken123');
+      mockIdGenerator.generate.mockReturnValueOnce('family-a').mockReturnValueOnce('family-b');
+      mockRememberTokenRepo.create.mockResolvedValue(
+        new RememberToken(99, 'hashedPlainToken123', 10, new Date(), new Date(), 'family-a')
+      );
+
+      await useCase.execute({ idUser: 10, plainToken: 'myPlainToken', durationSeconds: 3600 });
+      await useCase.execute({ idUser: 11, plainToken: 'anotherPlainToken', durationSeconds: 3600 });
+
+      expect(mockRememberTokenRepo.create.mock.calls[0][0].familyId).toBe('family-a');
+      expect(mockRememberTokenRepo.create.mock.calls[1][0].familyId).toBe('family-b');
+      expect(mockIdGenerator.generate).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -140,7 +172,7 @@ describe('RememberToken Use Cases', () => {
 
     it('should return null if user is not found in database', async () => {
       mockTokenHasher.hash.mockReturnValue('hashedPlainToken');
-      
+
       const futureDate = new Date(Date.now() + 10000);
       const validToken = new RememberToken(1, 'hashedPlainToken', 5, futureDate);
 
@@ -151,6 +183,24 @@ describe('RememberToken Use Cases', () => {
 
       expect(result).toBeNull();
       expect(mockUserRepo.findById).toHaveBeenCalledWith(5);
+    });
+
+    // remember-token-store spec, "Verifying a revoked token fails without
+    // deleting it" — logout must beat an otherwise-unexpired token, and the
+    // row must survive (design.md D2: revocation is terminal, not deletion).
+    it('should return null for a revoked token WITHOUT deleting the row, checked before the expiry branch', async () => {
+      mockTokenHasher.hash.mockReturnValue('hashedPlainToken');
+
+      const futureDate = new Date(Date.now() + 10000); // unexpired
+      const revokedToken = new RememberToken(1, 'hashedPlainToken', 5, futureDate, null, 'family-1', null, null, new Date());
+
+      mockRememberTokenRepo.findByHash.mockResolvedValue(revokedToken);
+
+      const result = await useCase.execute('myPlainToken');
+
+      expect(result).toBeNull();
+      expect(mockRememberTokenRepo.deleteByHash).not.toHaveBeenCalled();
+      expect(mockUserRepo.findById).not.toHaveBeenCalled();
     });
   });
 

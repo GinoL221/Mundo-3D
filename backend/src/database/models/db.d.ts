@@ -44,6 +44,11 @@ export interface RememberTokenAttributes {
   tokenHash: string;
   expiryDate: Date;
   createdAt: Date;
+  // Rotation metadata (HIGH-1 PR1) — see RememberToken.js and design.md D1/D2.
+  familyId: string;
+  supersededAt: Date | null;
+  successorHash: string | null;
+  revokedAt: Date | null;
 }
 
 export interface ShoppingCartAttributes {

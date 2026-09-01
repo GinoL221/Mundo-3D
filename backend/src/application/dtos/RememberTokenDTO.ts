@@ -4,4 +4,5 @@ export interface RememberTokenDTO {
   idUser: number;
   expiryDate: Date;
   createdAt?: Date | null;
+  familyId?: string | null;
 }

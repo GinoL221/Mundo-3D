@@ -103,6 +103,25 @@ describe('checkNoPendingMigrations', () => {
     );
   });
 
+  // Refresh-token rotation (HIGH-1, PR1): `checkPendingMigrations.js` is a
+  // second, independent boot gate on top of Umzug's own bookkeeping — a DB
+  // that never ran `20260901000000-refresh-token-rotation.js` must fail fast
+  // even if Umzug's `pending()` were ever wrong, not silently boot against a
+  // schema missing the rotation columns.
+  it.each(['family_id', 'superseded_at', 'successor_hash', 'revoked_at'])(
+    'rejects when the rotation column "%s" is missing on RememberToken even though no migrations are pending',
+    async (column) => {
+      const queryInterface = makeCompatibleQueryInterface();
+      const rememberTokenColumns = await queryInterface.describeTable('RememberToken');
+      delete rememberTokenColumns[column];
+      buildMigrator.mockReturnValue(makeMigrator([], queryInterface));
+
+      await expect(checkNoPendingMigrations()).rejects.toThrow(
+        new RegExp(`missing required column "${column}" on table "RememberToken"`)
+      );
+    }
+  );
+
   // MySQL 8.0.19+ dropped the display-width attribute from DESCRIBE/SHOW
   // COLUMNS output for integer types that weren't given an explicit width
   // at CREATE TABLE time (a purely cosmetic MySQL notation, not a real type

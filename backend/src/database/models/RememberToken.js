@@ -32,6 +32,28 @@ module.exports = (sequelize) => {
         field: 'created_at',
         defaultValue: DataTypes.NOW,
       },
+      // Rotation columns added by 20260901000000-refresh-token-rotation.js
+      // (HIGH-1 PR1) — see design.md D1/D2 and the remember-token-store spec.
+      familyId: {
+        type: DataTypes.CHAR(36),
+        allowNull: false,
+        field: 'family_id',
+      },
+      supersededAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        field: 'superseded_at',
+      },
+      successorHash: {
+        type: DataTypes.STRING(64),
+        allowNull: true,
+        field: 'successor_hash',
+      },
+      revokedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        field: 'revoked_at',
+      },
     },
     {
       tableName: 'RememberToken',
