@@ -5,6 +5,14 @@ module.exports = {
   // `pnpm --filter backend test:integration` (see jest.integration.config.js) so plain
   // `pnpm --filter backend test` stays fast, mock-only, and DB-independent for local devs.
   testPathIgnorePatterns: ['/node_modules/', '\\.integration\\.test\\.(ts|js)$'],
+
+  // No global testTimeout on purpose. Only the handful of tests that
+  // `require` the real app pay the ts-node compilation cost that blows past
+  // Jest's 5s default under load; each of those sets its own timeout inline.
+  // Raising it globally would hide a genuine hang in the other ~940 tests.
+  // (jest.integration.config.js does set one — that whole tier talks to a
+  // real database, so there the longer budget is the norm, not an exception.)
+
   transform: {
     '^.+\\.jsx?$': 'babel-jest',
     '^.+\\.tsx?$': 'ts-jest',
