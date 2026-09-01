@@ -177,7 +177,6 @@ jobs:
           DB_HOST: 127.0.0.1
           DB_USER: root
           DB_PASS: ""
-          SESSION_SECRET: ci_test_secret_key_9876543210
 
       - name: Upload Playwright report
         if: always()

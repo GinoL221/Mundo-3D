@@ -12,7 +12,6 @@ if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
 }
 
 const express = require('express');
-const methodOverride = require('method-override');
 const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -118,9 +117,6 @@ server.use(express.json());
 // 5.5 Cookie parsing (unsigned — nothing uses signed cookies; needed before
 // /api so apiAuthMiddleware/csrfGuard can read req.cookies)
 server.use(cookieParser());
-
-// 6. Method override
-server.use(methodOverride('_method'));
 
 // API routes (mounted at /api)
 server.use('/api', apiRouter);

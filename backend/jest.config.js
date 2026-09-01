@@ -7,7 +7,7 @@ module.exports = {
   testPathIgnorePatterns: ['/node_modules/', '\\.integration\\.test\\.(ts|js)$'],
   transform: {
     '^.+\\.jsx?$': 'babel-jest',
-    '^.+\\.tsx?$': ['ts-jest', { isolatedModules: true }],
+    '^.+\\.tsx?$': 'ts-jest',
   },
   // JS+TS production scope (spec: Jest Coverage Collection Configuration).
   // Excludes tests/types plus operational CLI-only DB tooling that runs

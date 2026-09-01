@@ -22,8 +22,15 @@ allowBuilds:
 # 3.6.0 already used elsewhere in this lockfile, instead of weakening
 # trustPolicy — chokidar@4.0.3 lost provenance attestation (possible
 # takeover) and is blocked by the no-downgrade policy above.
+#
+# express-rate-limit@8.6.2 still declares `ip-address: ^10.2.0`, and pnpm
+# does not auto-bump a transitive-only dependency to the range's latest on
+# install/update. 10.2.0 carries a HIGH advisory (leading-zero octets
+# decoded as decimal); fixed in 10.3.1. This is the version keying the
+# login/register rate limiters by client IP.
 overrides:
   chokidar: 3.6.0
+  ip-address: ^10.3.1
 
 # `astro check` dynamically `import()`s "typescript" from astro's own
 # module scope, not the caller's cwd; astro declares no peerDependency on
