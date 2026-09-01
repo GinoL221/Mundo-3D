@@ -52,6 +52,46 @@ export function withCredentials(init: RequestInit = {}): RequestInit {
 }
 
 /**
+ * The error envelope the API returns on any non-2xx response. `errors`
+ * carries express-validator's two shapes: a field-keyed map, or an array of
+ * field errors. Lives here rather than in a domain because both `auth` and
+ * `products` read it, and the architecture boundary check
+ * (`frontend.domain.locality`) only lets a domain import from its own
+ * folder or from this file.
+ */
+export interface APIFieldError {
+  msg?: string;
+}
+
+export interface APIErrorBody {
+  error?: string;
+  message?: string;
+  errors?: Record<string, APIFieldError> | APIFieldError[];
+}
+
+/**
+ * Extracts a human-readable message from an API error body, preferring the
+ * most specific source available: the first express-validator field error,
+ * then a root `error`/`message`, then the caller's fallback. Never throws —
+ * a malformed or absent body yields the fallback.
+ */
+export function readApiErrorMessage(body: unknown, fallback: string): string {
+  if (typeof body !== 'object' || body === null) return fallback;
+
+  const { errors, error, message } = body as APIErrorBody;
+
+  if (Array.isArray(errors)) {
+    const msg = errors[0]?.msg;
+    if (msg) return msg;
+  } else if (typeof errors === 'object' && errors !== null) {
+    const msg = Object.values(errors)[0]?.msg;
+    if (msg) return msg;
+  }
+
+  return error || message || fallback;
+}
+
+/**
  * Minimal shape read from the non-httpOnly `m3d_user` display cookie.
  * Centralized here so admin pages/components share one source of truth
  * for session reads and role checks instead of each redefining it.

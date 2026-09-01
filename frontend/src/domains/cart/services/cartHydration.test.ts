@@ -359,7 +359,7 @@ describe('hydrateFromServer', () => {
       const getPromise = new Promise((resolve) => {
         resolveGet = resolve;
       });
-      stubFetch({ get: () => getPromise as Promise<unknown> });
+      stubFetch({ get: () => getPromise });
 
       const resultPromise = hydrateFromServer();
       await vi.advanceTimersByTimeAsync(0); // flushCartSync() no-op resolves; GET now in flight
@@ -510,7 +510,7 @@ describe('hydrateFromServer', () => {
       // baseline was actually used.
       fetchMock.mockImplementation((_url: string, init: RequestInit = {}) => {
         if (init.method === 'PUT') return Promise.resolve({ ok: false, status: 500 });
-        return getPromise as Promise<unknown>;
+        return getPromise;
       });
 
       const resultPromise = hydrateFromServer({ mergeLocal: true });

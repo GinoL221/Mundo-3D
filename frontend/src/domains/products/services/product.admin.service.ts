@@ -1,4 +1,4 @@
-import { API_URL, withCredentials } from '../../../config';
+import { API_URL, readApiErrorMessage, withCredentials } from '../../../config';
 
 // Mirrors backend/src/application/dtos/ProductDTO.ts. This is the admin
 // mutation surface — server-side validation (express-validator) is the
@@ -39,8 +39,8 @@ export class ProductAdminApiError extends Error {
 
 async function parseErrorMessage(res: Response): Promise<string> {
   try {
-    const data = await res.json();
-    return data?.error || data?.message || `Error ${res.status}`;
+    const data: unknown = await res.json();
+    return readApiErrorMessage(data, `Error ${res.status}`);
   } catch {
     return `Error ${res.status}`;
   }
@@ -69,7 +69,7 @@ export class ProductAdminService {
       return throwApiError(res);
     }
 
-    return res.json();
+    return (await res.json()) as AdminProductDTO;
   }
 
   /**
@@ -90,7 +90,7 @@ export class ProductAdminService {
       return throwApiError(res);
     }
 
-    return res.json();
+    return (await res.json()) as AdminProductDTO;
   }
 
   /**
@@ -132,6 +132,6 @@ export class ProductAdminService {
       return throwApiError(res);
     }
 
-    return res.json();
+    return (await res.json()) as AdminProductDTO;
   }
 }

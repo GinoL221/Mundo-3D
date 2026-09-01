@@ -109,11 +109,11 @@ export function scheduleSync(items: CartItem[], previousItems: CartItem[]): void
     // First mutation of this burst: capture the rollback baseline once and
     // arm the ceiling timer once — never re-armed for the rest of the burst.
     burstPreviousItems = previousItems;
-    maxWaitTimer = setTimeout(flushCartSync, SYNC_MAX_WAIT_MS);
+    maxWaitTimer = setTimeout(() => void flushCartSync(), SYNC_MAX_WAIT_MS);
   }
 
   if (debounceTimer !== null) clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(flushCartSync, SYNC_DEBOUNCE_MS); // Quiet window, re-armed every call.
+  debounceTimer = setTimeout(() => void flushCartSync(), SYNC_DEBOUNCE_MS); // Quiet window, re-armed every call.
 }
 
 // Clears both timers and resets all scheduler state without issuing a
@@ -167,9 +167,9 @@ export function registerCartFlushListeners(
 ): () => void {
   if (teardownFlushListeners) return teardownFlushListeners;
 
-  const onPagehide = () => flushCartSync();
+  const onPagehide = () => void flushCartSync();
   const onVisibilityChange = () => {
-    if (doc.visibilityState === 'hidden') flushCartSync();
+    if (doc.visibilityState === 'hidden') void flushCartSync();
   };
 
   win.addEventListener('pagehide', onPagehide);
