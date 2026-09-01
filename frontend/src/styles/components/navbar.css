@@ -1,5 +1,5 @@
 /* ============================================================
-   components/navbar.css — Header, Navigation, Search, Theme Toggle
+   components/navbar.css — Header, Navigation, Search
    ============================================================ */
 
 /* ── Navbar Block ──────────────────────────────────────────── */
@@ -179,120 +179,6 @@
 .nav-item__trigger:hover .nav-item__dropdown,
 .nav-item__trigger:focus-within .nav-item__dropdown {
   display: block;
-}
-
-/* ── Cart Link (standalone BEM block) ──────────────────────── */
-.cart-link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  color: var(--fg);
-  font-family: var(--font-body);
-  font-size: 18px;
-  padding: var(--space-xs) var(--space-sm);
-}
-
-.cart-link:hover {
-  color: var(--accent);
-}
-
-.cart-link svg {
-  image-rendering: pixelated;
-}
-
-.cart-link__badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--danger);
-  color: var(--pico-white);
-  font-family: var(--font-heading);
-  font-size: 10px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 var(--space-xs);
-  margin-left: var(--space-xs);
-}
-
-/* ── Theme Toggle Button (standalone BEM block) ────────────── */
-.theme-toggle-btn {
-  background-color: var(--surface);
-  color: var(--fg);
-  border: 2px solid var(--fg);
-  padding: var(--space-xs) var(--space-sm);
-  cursor: pointer;
-  font-family: var(--font-body);
-  font-size: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.theme-toggle-btn:hover {
-  background-color: var(--accent);
-  color: var(--pico-white);
-}
-
-.theme-toggle-btn__icon {
-  display: inline-block;
-  font-size: 18px;
-}
-
-/* ── CRT Toggle Button (standalone BEM block) ──────────────── */
-.crt-toggle-btn {
-  background-color: var(--surface);
-  color: var(--fg);
-  border: 2px solid var(--fg);
-  padding: var(--space-xs) var(--space-sm);
-  cursor: pointer;
-  font-family: var(--font-body);
-  font-size: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.15s, color 0.15s;
-}
-
-.crt-toggle-btn:hover {
-  background-color: var(--accent);
-  color: var(--pico-white);
-  border-color: var(--accent);
-}
-
-.crt-toggle-btn__icon {
-  display: inline-block;
-  font-size: 18px;
-}
-
-/* ── JRPG Hover Cursors on Navbar Links ────────────────────── */
-/* Space for the arrow is reserved unconditionally (once, when CRT turns on),
-   not animated on every hover — animating padding-left forced a reflow of
-   every sibling nav item per hover (Impeccable audit finding). Only opacity
-   (already compositor-only) changes on :hover now. */
-html.crt-theme-active .navbar__link {
-  position: relative;
-  padding-left: calc(var(--space-sm) + 14px);
-}
-
-html.crt-theme-active .navbar__link::before {
-  content: "▶";
-  position: absolute;
-  left: var(--space-sm);
-  opacity: 0;
-  color: var(--accent);
-  transition: opacity 0.2s ease-out;
-  pointer-events: none;
-}
-
-html.crt-theme-active .navbar__link:hover::before {
-  opacity: 1;
-  animation: jrpg-blink 0.8s steps(2, start) infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html.crt-theme-active .navbar__link:hover::before {
-    animation: none;
-  }
 }
 
 /* ── Responsive: Tablet+ (>= 640px) ────────────────────────── */
