@@ -58,6 +58,15 @@ allowBuilds:
 # - js-yaml: quadratic CPU on merge-key chains and on !!omap resolution.
 #   4.3.1 was already in the tree; the override also dedupes 4.2.0 onto it.
 # - fast-uri: host confusion via backslash authority, via swagger-jsdoc.
+#
+# 2026-09-01, second occurrence — the full-tree audit gate added in the same
+# session caught these within hours of going live, which is the gate working
+# as intended rather than a problem with it:
+# - browserslist: 2 HIGH (unbounded memory growth with no cache eviction, and
+#   an uncaught crash / prototype write via untrusted browserslist-stats.json),
+#   reached through jest. 4.28.2 -> 4.28.7. jest's own declared range is
+#   `>= 4.21.0`, so the fix was already permitted; pnpm just would not move a
+#   transitive-only dependency there on its own.
 overrides:
   chokidar: 3.6.0
   ip-address: ^10.3.1
@@ -71,6 +80,7 @@ overrides:
   js-yaml@3: ^3.15.1
   js-yaml@4: ^4.3.1
   fast-uri: ^3.1.5
+  browserslist: ^4.28.7
 
 # `astro check` dynamically `import()`s "typescript" from astro's own
 # module scope, not the caller's cwd; astro declares no peerDependency on
