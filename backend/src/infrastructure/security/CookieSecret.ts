@@ -6,8 +6,14 @@ const TEST_SECRET = 'test-only-cookie-secret-not-for-production';
  * is actually issued/verified) so app boot never depends on it — see
  * `appConfig.test.js` ("does NOT throw error if COOKIE_SECRET is missing").
  */
+// Same reasoning as JwtSecret.ts: this constant is public in the repository
+// and it signs CSRF tokens, so only a real Jest process may use it.
+function isRunningUnderJest(): boolean {
+  return process.env.NODE_ENV === 'test' && Boolean(process.env.JEST_WORKER_ID);
+}
+
 export function getCookieSecret(): string {
-  if (process.env.NODE_ENV === 'test') {
+  if (isRunningUnderJest()) {
     return TEST_SECRET;
   }
 

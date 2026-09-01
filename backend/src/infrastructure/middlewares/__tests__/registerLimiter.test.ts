@@ -67,6 +67,33 @@ describe('registerLimiter middleware', () => {
     );
   });
 
+  // NODE_ENV alone must not disable throttling. The e2e suite runs a real
+  // server with NODE_ENV=test and raises the limits through REGISTER_LIMIT_MAX
+  // instead, so the only context that skips the limiter entirely is Jest.
+  it('does NOT bypass when NODE_ENV is test but the process is not under Jest', () => {
+    process.env.NODE_ENV = 'test';
+    delete process.env.JEST_WORKER_ID;
+
+    let registerLimiter: any;
+    jest.isolateModules(() => {
+      registerLimiter = require('../registerLimiter').default;
+    });
+
+    const req = { ip: '203.0.113.9', headers: {} } as unknown as Request;
+    const res = {} as Response;
+    const next = jest.fn();
+
+    registerLimiter(req, res, next);
+
+    // express-rate-limit is mocked at the top of this file, so both the bypass
+    // and the real path end up calling next(). The discriminator is whether
+    // the configured limiter itself was reached: the bypass returns before it,
+    // so its mock stays uncalled.
+    const configuredLimiter = (rateLimit as unknown as jest.Mock).mock.results.at(-1)
+      ?.value as jest.Mock;
+    expect(configuredLimiter).toHaveBeenCalledTimes(1);
+  });
+
   it('bypasses limit checks when NODE_ENV is test', () => {
     process.env.NODE_ENV = 'test';
 

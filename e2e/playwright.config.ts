@@ -14,7 +14,21 @@ export default defineConfig({
     {
       command: 'pnpm --filter backend start',
       port: 3032,
-      env: { NODE_ENV: 'test', PORT: '3032', CORS_ORIGIN: 'http://localhost:4322' },
+      // This is a real server process, not a Jest worker, so it no longer
+      // inherits the committed test secrets or the rate-limiter bypass — both
+      // are now gated on JEST_WORKER_ID so a misconfigured deploy can never
+      // reach them. The values below are throwaway fixtures for this suite
+      // only; the limits are raised rather than disabled because the suite
+      // logs in far more than the production default of 5 attempts allows.
+      env: {
+        NODE_ENV: 'test',
+        PORT: '3032',
+        CORS_ORIGIN: 'http://localhost:4322',
+        JWT_SECRET: 'e2e-only-jwt-secret-not-for-production',
+        COOKIE_SECRET: 'e2e-only-cookie-secret-not-for-production',
+        LOGIN_LIMIT_MAX: '1000',
+        REGISTER_LIMIT_MAX: '1000',
+      },
       reuseExistingServer: !process.env.CI,
     },
     {
