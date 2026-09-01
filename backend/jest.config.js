@@ -25,12 +25,15 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'json-summary'],
+  // Ratcheted below the actual 94.57/93.69/85.94/84.2 (2026-08-31 audit) —
+  // enough margin for normal fluctuation, still high enough to catch a real
+  // regression instead of the old 50% floor, which protected nothing.
   coverageThreshold: {
     global: {
-      branches: 50,
-      functions: 50,
-      lines: 50,
-      statements: 50,
+      branches: 80,
+      functions: 85,
+      lines: 90,
+      statements: 90,
     },
   },
 };
