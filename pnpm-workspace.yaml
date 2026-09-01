@@ -43,6 +43,21 @@ allowBuilds:
 # - body-parser: express@4.22.2 pins `~1.20.5` (patch-only range); 1.20.5 has
 #   a LOW DoS (invalid `limit` silently disables size enforcement), fixed at
 #   1.20.6, which already satisfies express's own tilde range.
+# 2026-09-01 audit finding 6 — dev-tree advisories. Same "the declared range
+# already allows the fix, pnpm just won't move there on its own" pattern as
+# everything above, but these live in build tooling rather than shipped code,
+# so none of them reached production and `pnpm audit --prod` was already
+# clean. Clearing them anyway keeps a plain `pnpm audit` readable, so a real
+# advisory is not lost in a wall of known-noise entries.
+#
+# All three brace-expansion majors are present at once (minimatch 3.x, 5.x
+# and 10.x each request a different one), so they need one selector each
+# rather than a single range that would force incompatible majors together:
+# - brace-expansion: 3 DoS advisories (exponential expansion, unbounded
+#   length, unbounded intermediate arrays), via jest and @eslint/js.
+# - js-yaml: quadratic CPU on merge-key chains and on !!omap resolution.
+#   4.3.1 was already in the tree; the override also dedupes 4.2.0 onto it.
+# - fast-uri: host confusion via backslash authority, via swagger-jsdoc.
 overrides:
   chokidar: 3.6.0
   ip-address: ^10.3.1
@@ -50,6 +65,12 @@ overrides:
   svgo: ^4.0.2
   uuid: ^11.1.1
   body-parser: ^1.20.6
+  brace-expansion@1: ^1.1.18
+  brace-expansion@2: ^2.1.4
+  brace-expansion@5: ^5.0.9
+  js-yaml@3: ^3.15.1
+  js-yaml@4: ^4.3.1
+  fast-uri: ^3.1.5
 
 # `astro check` dynamically `import()`s "typescript" from astro's own
 # module scope, not the caller's cwd; astro declares no peerDependency on
