@@ -7,42 +7,48 @@ import type { CookieOptions } from 'express';
 export const AUTH_COOKIE = 'm3d_auth';
 export const CSRF_COOKIE = 'm3d_csrf';
 export const USER_COOKIE = 'm3d_user';
+// Refresh Token Rotation (HIGH-1, design.md D4). Path-scoped so the browser
+// never sends it to any route but the refresh endpoint itself.
+export const REFRESH_COOKIE = 'm3d_refresh';
+export const REFRESH_COOKIE_PATH = '/api/users/refresh'; // app.js mounts apiRouter at '/api'
 
-export const SESSION_MAX_AGE = 2 * 60 * 60 * 1000; // 2h, default session
+export const SESSION_MAX_AGE = 2 * 60 * 60 * 1000; // 2h, default refresh-token session
 export const REMEMBER_MAX_AGE = 30 * 24 * 60 * 60 * 1000; // 30d, "Recuérdame"
 
+// Access-token TTL, fixed regardless of "remember me" (api-jwt-auth spec:
+// "Access token TTL is fixed regardless of remember"). Env-tunable — this is
+// the no-deploy rollback lever (design.md D4).
+export const ACCESS_TOKEN_TTL_SECONDS = Number(process.env.ACCESS_TOKEN_TTL_SECONDS) || 30 * 60;
+
 /**
- * Cookie `maxAge` (milliseconds) for the requested session kind.
+ * Cookie `maxAge` (milliseconds) for the requested session kind. Now governs
+ * the refresh token and the CSRF/display cookies — NOT the access token,
+ * whose TTL is fixed (`ACCESS_TOKEN_TTL_SECONDS`, see `accessCookieOptions`).
  */
 export function authMaxAge(remember?: boolean): number {
   return remember ? REMEMBER_MAX_AGE : SESSION_MAX_AGE;
 }
 
-/**
- * JWT `expiresIn` (seconds) for the requested session kind, derived from
- * the same constants as `authMaxAge` so the cookie lifetime and the token
- * lifetime never drift apart (design.md decision #6).
- */
-export function authExpiresInSeconds(remember?: boolean): number {
-  return authMaxAge(remember) / 1000;
-}
-
 interface CookieOptionsInput {
   httpOnly: boolean;
   maxAge?: number;
+  // Defaults to '/' — every pre-existing call is unchanged. Only the refresh
+  // cookie overrides it (design.md D4).
+  path?: string;
 }
 
 /**
- * Builds the shared `res.cookie` / `res.clearCookie` options. `httpOnly`
- * and `maxAge` vary per cookie/call; every other flag is identical across
- * `m3d_auth`, `m3d_csrf`, and `m3d_user` so clears never mismatch sets.
+ * Builds the shared `res.cookie` / `res.clearCookie` options. `httpOnly`,
+ * `maxAge`, and `path` vary per cookie/call; every other flag is identical
+ * across `m3d_auth`, `m3d_csrf`, `m3d_user`, and `m3d_refresh` so clears
+ * never mismatch sets.
  */
-export function cookieOptions({ httpOnly, maxAge }: CookieOptionsInput): CookieOptions {
+export function cookieOptions({ httpOnly, maxAge, path = '/' }: CookieOptionsInput): CookieOptions {
   const options: CookieOptions = {
     httpOnly,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    path: '/',
+    path,
   };
 
   if (process.env.COOKIE_DOMAIN) {
@@ -55,3 +61,20 @@ export function cookieOptions({ httpOnly, maxAge }: CookieOptionsInput): CookieO
 
   return options;
 }
+
+/**
+ * `m3d_auth` (access token) options: httpOnly, default path, fixed TTL.
+ * One named builder used for both the set and the (implicit, via
+ * `cookieOptions`) clear, so the flags can never drift apart (design.md D4).
+ */
+export const accessCookieOptions = (): CookieOptions =>
+  cookieOptions({ httpOnly: true, maxAge: ACCESS_TOKEN_TTL_SECONDS * 1000 });
+
+/**
+ * `m3d_refresh` options: httpOnly, path-scoped to the refresh route. Called
+ * with no `maxAge` for a clear — `logout`/`clearSessionCookies` do exactly
+ * that, so a clear can never miss because it used a different path/flag set
+ * than the original set (design.md D4).
+ */
+export const refreshCookieOptions = (maxAge?: number): CookieOptions =>
+  cookieOptions({ httpOnly: true, maxAge, path: REFRESH_COOKIE_PATH });

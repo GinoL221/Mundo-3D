@@ -9,6 +9,7 @@ interface DecodedToken {
   email?: string;
   category?: string;
   idRole?: number;
+  typ?: string;
 }
 
 export const apiAuthMiddleware = (req: Request, res: Response, next: NextFunction): void | Response => {
@@ -20,6 +21,16 @@ export const apiAuthMiddleware = (req: Request, res: Response, next: NextFunctio
 
   try {
     const decoded = jwt.verify(token, getJwtSecret()) as DecodedToken;
+
+    // api-jwt-auth spec: "Pre-deploy JWT without typ claim is rejected" —
+    // required in exactly this one place (design.md D3). A validly-signed,
+    // unexpired token that lacks `typ: 'access'` (pre-deploy JWTs, or a
+    // refresh-typed value) is rejected, making the deploy cutover
+    // deterministic and testable rather than hoped-for.
+    if (decoded.typ !== 'access') {
+      return res.status(401).json({ error: 'Token de autenticación inválido o expirado' });
+    }
+
     req.user = decoded;
     next();
   } catch {

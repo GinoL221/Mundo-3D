@@ -1,30 +1,25 @@
 import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
 import { UnitOfWorkPort } from '../../domain/ports/UnitOfWorkPort';
 import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
+import { RefreshTokenRotatorPort } from '../../domain/ports/RefreshTokenRotatorPort';
 import { RememberToken } from '../../domain/entities/RememberToken';
+import { REFRESH_TOKEN_GRACE_SECONDS } from '../../domain/entities/RefreshTokenGrace';
+import { RefreshTokenRotationLostRaceError } from '../../domain/exceptions/RefreshTokenRotationLostRaceError';
 
-// Matches D7's grace window (30s) — the same constant `RefreshSessionUseCase`
-// (PR2) will use to recognize an in-grace hit.
-const GRACE_SECONDS = 30;
-
-// Thrown when the conditional-UPDATE claim (design.md D1) affects zero
-// rows: the presented token is no longer current (already rotated,
-// revoked, or expired between the caller's read and this call). The
-// transaction rolls back; the caller must re-read the row OUTSIDE this
-// aborted transaction to decide whether it's now a grace hit or a genuine
-// 401 (see `RefreshSessionUseCase`, PR2).
-export class RefreshTokenRotationLostRaceError extends Error {
-  constructor() {
-    super('Refresh token rotation lost the race — the presented token is no longer current');
-    this.name = 'RefreshTokenRotationLostRaceError';
-  }
-}
+// Re-exported for backward compatibility (PR1's own test file imports both
+// from this module). Canonical source is now domain/ — see
+// RefreshTokenRotatorPort.ts's comment for why (backend.application.contracts
+// forbids RefreshSessionUseCase, PR2, from importing this file directly).
+export { RefreshTokenRotationLostRaceError };
+export const GRACE_SECONDS = REFRESH_TOKEN_GRACE_SECONDS;
 
 // design.md D1: one transaction, three steps — claim (the authoritative
 // gate), insert successor (same family, same user, expiry inherited
 // verbatim, never extended), reap (delete this family's past-grace rows).
-// Only the rotation winner ever reaches step 2/3.
-export class RotateRefreshTokenUseCase {
+// Only the rotation winner ever reaches step 2/3. Implements
+// RefreshTokenRotatorPort so RefreshSessionUseCase (PR2) can depend on the
+// port instead of this concrete class.
+export class RotateRefreshTokenUseCase implements RefreshTokenRotatorPort {
   constructor(
     private readonly uow: UnitOfWorkPort,
     private readonly rememberTokenRepo: RememberTokenRepositoryPort,

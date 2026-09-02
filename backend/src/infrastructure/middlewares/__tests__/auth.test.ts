@@ -46,14 +46,38 @@ describe('apiAuthMiddleware', () => {
     expect(res.json).toHaveBeenCalledWith({ error: 'Token de autenticación inválido o expirado' });
   });
 
-  it('attaches payload to req.user and calls next() on a valid auth cookie', () => {
-    const payload = { userId: 1, email: 'user@test.com', category: 'User', idRole: 2 };
+  it('attaches payload to req.user and calls next() on a valid auth cookie carrying typ: "access"', () => {
+    const payload = { userId: 1, email: 'user@test.com', category: 'User', idRole: 2, typ: 'access' };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '2h' });
     req.cookies = { [AUTH_COOKIE]: token };
 
     apiAuthMiddleware(req as Request, res as Response, next);
     expect(next).toHaveBeenCalledTimes(1);
     expect(req.user).toMatchObject(payload);
+  });
+
+  // api-jwt-auth spec: "Pre-deploy JWT without typ claim is rejected" — a
+  // validly-signed, unexpired JWT minted before this change carries no `typ`
+  // at all. Forced logout at deploy must be deterministic, not hoped-for
+  // (design.md D3).
+  it('returns 401 when a validly-signed, unexpired token has no typ claim (pre-deploy JWT)', () => {
+    const payload = { userId: 1, email: 'user@test.com', category: 'User', idRole: 2 };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '2h' });
+    req.cookies = { [AUTH_COOKIE]: token };
+
+    apiAuthMiddleware(req as Request, res as Response, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when typ carries a value other than "access" (e.g. a refresh-typed token confused for access)', () => {
+    const payload = { userId: 1, email: 'user@test.com', category: 'User', idRole: 2, typ: 'refresh' };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '2h' });
+    req.cookies = { [AUTH_COOKIE]: token };
+
+    apiAuthMiddleware(req as Request, res as Response, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('returns 401 when a valid JWT is sent only as an Authorization: Bearer header (no cookie)', () => {

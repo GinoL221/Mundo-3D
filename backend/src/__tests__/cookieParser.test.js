@@ -19,7 +19,7 @@ describe('cookie-parser wiring', () => {
 
   it('parses the auth cookie so a valid but non-admin token reaches adminGuard (403, not 401)', async () => {
     const token = jwt.sign(
-      { userId: 1, idRole: 2 },
+      { userId: 1, idRole: 2, typ: 'access' },
       'test-only-jwt-secret-not-for-production',
       { expiresIn: '2h' }
     );

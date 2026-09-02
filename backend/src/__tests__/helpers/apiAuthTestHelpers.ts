@@ -15,12 +15,17 @@ export interface AuthTokenPayload {
  * Tests build the `m3d_auth` cookie from this instead of an
  * `Authorization: Bearer` header, since `apiAuthMiddleware` (PR1) reads
  * cookies only — a bare Bearer header is now unauthenticated by design.
+ *
+ * `typ: 'access'` is required (PR2, api-jwt-auth spec: "Pre-deploy JWT
+ * without typ claim is rejected") — omitted here, every caller of this
+ * helper would get 401 from `apiAuthMiddleware` regardless of the scenario
+ * it's actually testing.
  */
 export function signAuthToken(
   payload: AuthTokenPayload,
   expiresIn: SignOptions['expiresIn'] = '1h'
 ): string {
-  return jwt.sign(payload, getJwtSecret(), { expiresIn });
+  return jwt.sign({ ...payload, typ: 'access' }, getJwtSecret(), { expiresIn });
 }
 
 /** `Cookie` header value carrying only the auth cookie (reads / negative auth cases). */
