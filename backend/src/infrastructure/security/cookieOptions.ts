@@ -63,12 +63,20 @@ export function cookieOptions({ httpOnly, maxAge, path = '/' }: CookieOptionsInp
 }
 
 /**
- * `m3d_auth` (access token) options: httpOnly, default path, fixed TTL.
+ * `m3d_auth` (access token) options: httpOnly, default path.
+ *
+ * The COOKIE outlives the TOKEN it carries, deliberately. The JWT inside
+ * still expires after `ACCESS_TOKEN_TTL_SECONDS`, and `apiAuthMiddleware`
+ * rejects it on `exp` — so a stale cookie authenticates nothing. Its only
+ * remaining job is to carry `familyId` to `logout`, which must be able to
+ * revoke the refresh family even for a user who stepped away for an hour.
+ * Giving the cookie the access TTL instead made the browser delete it, and
+ * logout then had nothing to revoke from.
  * One named builder used for both the set and the (implicit, via
  * `cookieOptions`) clear, so the flags can never drift apart (design.md D4).
  */
-export const accessCookieOptions = (): CookieOptions =>
-  cookieOptions({ httpOnly: true, maxAge: ACCESS_TOKEN_TTL_SECONDS * 1000 });
+export const accessCookieOptions = (remember?: boolean): CookieOptions =>
+  cookieOptions({ httpOnly: true, maxAge: authMaxAge(remember) });
 
 /**
  * `m3d_refresh` options: httpOnly, path-scoped to the refresh route. Called

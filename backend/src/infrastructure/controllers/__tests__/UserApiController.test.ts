@@ -140,7 +140,7 @@ describe('UserApiController', () => {
       const authCookieCall = (res.cookie as jest.Mock).mock.calls.find(
         (call) => call[0] === AUTH_COOKIE
       );
-      expect(authCookieCall[2]).toMatchObject({ httpOnly: true, maxAge: ACCESS_TOKEN_TTL_SECONDS * 1000 });
+      expect(authCookieCall[2]).toMatchObject({ httpOnly: true, maxAge: SESSION_MAX_AGE });
 
       expect(mockCreateRememberTokenUseCase.execute).toHaveBeenCalledWith(
         expect.objectContaining({ idUser: 123, durationSeconds: SESSION_MAX_AGE / 1000 })
@@ -272,7 +272,9 @@ describe('UserApiController', () => {
         const authCookieCall = (res.cookie as jest.Mock).mock.calls.find(
           (call) => call[0] === AUTH_COOKIE
         );
-        expect(authCookieCall[2]).toMatchObject({ maxAge: ACCESS_TOKEN_TTL_SECONDS * 1000 });
+        // The COOKIE follows the session so logout can still read `familyId`
+        // from it later; the TOKEN below is what stays fixed at 30 minutes.
+        expect(authCookieCall[2].maxAge).toBe(remember ? REMEMBER_MAX_AGE : SESSION_MAX_AGE);
 
         const token = authCookieCall[1] as string;
         const decoded = jwt.verify(token, getJwtSecret()) as jwt.JwtPayload;
@@ -314,7 +316,7 @@ describe('UserApiController', () => {
     // maxAge. Since D4's fixed access-token TTL, CSRF/USER still share one
     // maxAge (the remember-derived session length) but AUTH_COOKIE diverges
     // on purpose — this re-asserts the CURRENT (post-2.4) shape.
-    it('characterization: CSRF and USER share one maxAge; AUTH_COOKIE has its own fixed maxAge', async () => {
+    it('characterization: all four cookies now share one maxAge; only the TOKEN inside AUTH is short-lived', async () => {
       req.body = { email: 'john@example.com', password: 'password123' };
       mockAuthenticateUserUseCase.execute.mockResolvedValue(mockUserDto);
 
@@ -322,12 +324,13 @@ describe('UserApiController', () => {
 
       const calls = (res.cookie as jest.Mock).mock.calls;
       expect(calls).toHaveLength(4); // AUTH, CSRF, USER, REFRESH (task 2.16)
-      const nonAuthMaxAges = calls
-        .filter((call) => call[0] !== AUTH_COOKIE)
-        .map((call) => call[2].maxAge);
-      expect(new Set(nonAuthMaxAges).size).toBe(1);
+      // AUTH used to diverge here. It no longer does: the cookie must outlive
+      // its own token so `logout` can read `familyId` from an expired one and
+      // revoke the refresh family. `apiAuthMiddleware` still rejects the
+      // stale token on `exp`, so the longer cookie authenticates nothing.
+      expect(new Set(calls.map((call) => call[2].maxAge)).size).toBe(1);
       const authCookieCall = calls.find((call) => call[0] === AUTH_COOKIE);
-      expect(authCookieCall[2].maxAge).toBe(ACCESS_TOKEN_TTL_SECONDS * 1000);
+      expect(authCookieCall[2].maxAge).toBe(SESSION_MAX_AGE);
     });
 
     it('characterization: CSRF and USER cookies are httpOnly:false, AUTH is httpOnly:true', async () => {
@@ -388,7 +391,25 @@ describe('UserApiController', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('still succeeds (204, no revoke) when the auth cookie is expired/invalid — never trusts unverified data', async () => {
+    // An EXPIRED but validly signed token still proves which family this
+    // session belongs to — the signature is what matters here, not `exp`.
+    // This is the common case: the access cookie outlives its 30-minute
+    // token, so a user who steps away and logs out later must still revoke.
+    it('revokes the family from a validly signed but EXPIRED access token', async () => {
+      const expired = jwt.sign(
+        { userId: 1, email: 'a@b.c', familyId: 'fam-expired' },
+        getJwtSecret(),
+        { expiresIn: -60 }
+      );
+      req.cookies = { [AUTH_COOKIE]: expired };
+
+      await (controller as any).logout(req as Request, res as Response, next);
+
+      expect(mockRevokeRefreshTokenUseCase.execute).toHaveBeenCalledWith('fam-expired');
+      expect(res.sendStatus).toHaveBeenCalledWith(204);
+    });
+
+    it('still succeeds (204, no revoke) when the auth cookie is unsigned garbage — never trusts unverified data', async () => {
       req.cookies = { [AUTH_COOKIE]: 'not-a-valid-jwt' };
 
       await (controller as any).logout(req as Request, res as Response, next);

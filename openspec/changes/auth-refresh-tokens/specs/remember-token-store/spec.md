@@ -5,7 +5,7 @@
 ### Requirement: Model Schema and Associations
 
 The system MUST define a `RememberToken` entity, persisted via `RememberTokenRepositoryPort`, associated with `User` through `idUser` (FK `id_user` → `User.id`, `ON DELETE CASCADE`).
-Fields: `idRememberToken` (PK), `idUser`, `tokenHash` (SHA-256 hex, UNIQUE — the lookup key), `expiryDate`, `createdAt`, `familyId` (non-null, indexed — groups one login's rotation chain), `supersededAt` (nullable — non-null once rotated), `successorHash` (nullable — set on rotation, returned on a grace-window hit), `revokedAt` (nullable — non-null once the family is revoked, e.g. by logout). The four duplicate legacy `UNIQUE KEY token_hash_2..5` indexes MUST be dropped in the same migration; the `token_hash` UNIQUE index remains.
+Fields: `idRememberToken` (PK), `idUser`, `tokenHash` (SHA-256 hex, UNIQUE — the lookup key), `expiryDate`, `createdAt`, `familyId` (non-null, indexed — groups one login's rotation chain), `supersededAt` (nullable — non-null once rotated), `successorHash` (nullable — set on rotation; it is a SHA-256 digest, so it identifies the successor row but can never yield the successor token itself, and a grace-window hit therefore issues an access cookie only — see `refresh-token-rotation`), `revokedAt` (nullable — non-null once the family is revoked, e.g. by logout). The four duplicate legacy `UNIQUE KEY token_hash_2..5` indexes MUST be dropped in the same migration; the `token_hash` UNIQUE index remains.
 (Previously: specified non-existent PascalCase fields `UserId`/`TokenHash`/`ExpiresAt` with no rotation columns.)
 
 #### Scenario: User association is configured

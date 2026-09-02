@@ -232,4 +232,43 @@ describe('REST API Security & Role Gating', () => {
       expect(res4.body.error).toBe('Demasiados intentos de registro. Intente nuevamente en 15 minutos.');
     });
   });
+
+  // `POST /api/users/refresh` is unauthenticated and exempt from csrfGuard by
+  // design — a refresh happens exactly when the access token, and therefore
+  // `req.user.userId`, may already be expired. The rate limiter is one of the
+  // four defences that replace those, so it needs to be observed actually
+  // returning 429 rather than merely configured: the middleware's own unit
+  // test mocks `express-rate-limit`, which proves the configuration and
+  // nothing about throttling.
+  describe('POST /api/users/refresh rate limiting', () => {
+    let originalEnv;
+
+    beforeAll(() => {
+      originalEnv = process.env.NODE_ENV;
+    });
+
+    afterAll(() => {
+      process.env.NODE_ENV = originalEnv;
+    });
+
+    it('returns 429 once the limit is exceeded, with no session and no CSRF token', async () => {
+      // Reuse the app this suite already built. Re-requiring it under
+      // NODE_ENV=production would trip app.js's own CORS_ORIGIN guard, which
+      // is a separate protection and not what this test is about.
+      process.env.NODE_ENV = 'production';
+      const agent = request(app);
+
+      // The limiter's default max is 10 per window; exhaust it, then prove
+      // the next call is refused rather than merely counted.
+      for (let i = 0; i < 10; i += 1) {
+        await agent.post('/api/users/refresh');
+      }
+
+      const blocked = await agent.post('/api/users/refresh');
+      expect(blocked.status).toBe(429);
+      expect(blocked.body.error).toBe(
+        'Demasiados intentos de refresco de sesión. Intente nuevamente en 15 minutos.'
+      );
+    });
+  });
 });

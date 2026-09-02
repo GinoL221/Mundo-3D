@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
 import { AuthenticateUserUseCase } from '../../application/use-cases/AuthenticateUserUseCase';
 import { ListUsersUseCase } from '../../application/use-cases/ListUsersUseCase';
 import { GetUserByIdUseCase } from '../../application/use-cases/GetUserByIdUseCase';
@@ -10,7 +9,6 @@ import { RevokeRefreshTokenUseCase } from '../../application/use-cases/RevokeRef
 import { InvalidCredentialsException } from '../../domain/exceptions/InvalidCredentialsException';
 import { UserAlreadyExistsException } from '../../domain/exceptions/UserAlreadyExistsException';
 import { cleanupUploadedFile } from '../utils/cleanupUploadedFile';
-import { getJwtSecret } from '../security/JwtSecret';
 import { AUTH_COOKIE, REFRESH_COOKIE, authMaxAge } from '../security/cookieOptions';
 import {
   setSessionCookies,
@@ -18,6 +16,7 @@ import {
   issueAccessCookie,
   issueRefreshCookie,
   generateRefreshToken,
+  readFamilyIdFromAccessToken,
 } from './sessionCookies';
 
 interface UserAuthDto {
@@ -112,18 +111,10 @@ export class UserApiController {
   // session"). A genuine revocation failure (e.g. a DB error) must NOT be
   // swallowed by that same tolerance, or logout would report success while
   // the family was never actually revoked (found during PR2 apply).
-  private tryReadFamilyId(token: string): string | undefined {
-    try {
-      return (jwt.verify(token, getJwtSecret()) as { familyId?: string }).familyId;
-    } catch {
-      return undefined;
-    }
-  }
-
   logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const token = req.cookies?.[AUTH_COOKIE];
-      const familyId = token ? this.tryReadFamilyId(token) : undefined;
+      const familyId = token ? readFamilyIdFromAccessToken(token) : undefined;
       if (familyId && this.revokeRefreshTokenUseCase) {
         await this.revokeRefreshTokenUseCase.execute(familyId);
       }
