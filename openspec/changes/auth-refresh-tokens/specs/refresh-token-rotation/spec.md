@@ -82,12 +82,19 @@ Two tabs refreshing at nearly the same moment using the token valid at that inst
 - WHEN both requests are processed
 - THEN both tabs MUST end up with a valid access token and neither MUST be logged out
 
-### Requirement: Retention on Successful Refresh
+### Requirement: Retention on Rotation
 
-Each successful refresh MUST delete rows from that token's family that are already superseded past the grace window, bounding storage growth without a scheduled job.
+Each refresh that **rotates** MUST delete rows from that token's family that are already superseded past the grace window, bounding storage growth without a scheduled job.
 
-#### Scenario: Old superseded rows are reaped on refresh
+A grace hit deliberately reaps nothing. It writes no row and takes no lock, and keeping that path free of side effects is what lets concurrent tabs resolve against one another without contending — see "Rotation on Every Use With a Grace Window". Since only rotation creates rows, tying reaping to rotation still bounds the family: every row added is matched by a pass that can remove its predecessors.
+
+#### Scenario: Old superseded rows are reaped on rotation
 - GIVEN a family has rows superseded more than 30s ago
-- WHEN a refresh in that family succeeds
+- WHEN a refresh in that family rotates
 - THEN those past-grace superseded rows MUST be deleted
+
+#### Scenario: A grace hit leaves the family untouched
+- GIVEN a refresh token superseded less than 30s ago
+- WHEN it is presented and served from the grace window
+- THEN no row in that family MUST be deleted, created or modified
 - AND the current row and any in-grace superseded row MUST remain
