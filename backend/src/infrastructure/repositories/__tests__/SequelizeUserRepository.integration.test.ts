@@ -28,6 +28,10 @@ import { SequelizeUserRepository } from '../SequelizeUserRepository';
 import { RegisterUserUseCase } from '../../../application/use-cases/RegisterUserUseCase';
 import { BcryptPasswordHasher } from '../../security/BcryptPasswordHasher';
 import { UserApiController } from '../../controllers/UserApiController';
+import { CreateRememberTokenUseCase } from '../../../application/use-cases/CreateRememberTokenUseCase';
+import { SequelizeRememberTokenRepository } from '../SequelizeRememberTokenRepository';
+import { Sha256TokenHasher } from '../../security/Sha256TokenHasher';
+import { CryptoRandomIdGenerator } from '../../security/CryptoRandomIdGenerator';
 import { bootstrapTestDatabase, closeTestDatabase, getTestDb } from '../../../__tests__/helpers/testDb';
 
 const unlinkMock = jest
@@ -86,7 +90,24 @@ describe('SequelizeUserRepository.create — real DB registration race', () => {
       new SequelizeUserRepository(),
       new BcryptPasswordHasher()
     );
-    controller = new UserApiController(authStub, listStub, getStub, registerUserUseCase);
+    // `register` now establishes a session, which writes a real RememberToken
+    // row — so this must be the genuine use case, not a stub, or the
+    // controller throws before it can return 201 and the race this file
+    // exists to test never resolves. Mirrors the composition in
+    // `routes/api/users.ts`; the refresh/revoke use cases stay absent because
+    // registration never reaches them.
+    const createRememberTokenUseCase = new CreateRememberTokenUseCase(
+      new SequelizeRememberTokenRepository(),
+      new Sha256TokenHasher(),
+      new CryptoRandomIdGenerator()
+    );
+    controller = new UserApiController(
+      authStub,
+      listStub,
+      getStub,
+      registerUserUseCase,
+      createRememberTokenUseCase
+    );
   });
 
   afterAll(async () => {
