@@ -94,7 +94,9 @@ The application MUST expose `POST /api/users/logout` that clears the session coo
 
 ### Requirement: Remember-Me Extended Session
 
-When the client's login request indicates "remember me", the system MUST extend the refresh token's lifetime (see `refresh-token-rotation`), NOT the access token's. The access-token cookie's expiration MUST always equal the fixed access-token TTL regardless of "remember me".
+When the client's login request indicates "remember me", the system MUST extend the refresh **token's** lifetime (see `refresh-token-rotation`), NOT the access token's. The access token's own `exp` MUST always equal the fixed access-token TTL regardless of "remember me".
+
+The `m3d_auth` **cookie** does follow the remember-me lifetime, unlike the token it carries — see `session-cookie-security` for why logout depends on the cookie outliving its token.
 (Previously: "remember me" extended the single auth-cookie/JWT lifetime up to 30 days.)
 
 #### Scenario: Remember-me requested extends the refresh token, not the access token
