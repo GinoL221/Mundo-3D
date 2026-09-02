@@ -46,7 +46,7 @@ const buildApp = (): Express => {
 };
 
 const signToken = (idRole: number) =>
-  jwt.sign({ userId: 1, email: 'principal@test.com', category: 'test', idRole }, JWT_SECRET, {
+  jwt.sign({ userId: 1, email: 'principal@test.com', category: 'test', idRole, typ: 'access' }, JWT_SECRET, {
     expiresIn: '1h',
   });
 

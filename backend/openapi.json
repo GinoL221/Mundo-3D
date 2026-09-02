@@ -666,8 +666,8 @@
     },
     "/users/logout": {
       "post": {
-        "summary": "Clear session cookies",
-        "description": "No apiAuthMiddleware — logout only ever removes authority, so it must succeed even with no/expired auth cookie (api-jwt-auth spec, \"Logout without an active session\").",
+        "summary": "Clear session cookies and revoke the refresh token family",
+        "description": "No apiAuthMiddleware — logout only ever removes authority, so it must succeed even with no/expired auth cookie (api-jwt-auth spec, \"Logout without an active session\"). Revokes the refresh family carried in the (verified) access JWT's familyId claim, when present.",
         "tags": [
           "Users"
         ],
@@ -675,6 +675,36 @@
           "204": {
             "description": "Logged out (always",
             "regardless of prior session state).": null
+          }
+        }
+      }
+    },
+    "/users/refresh": {
+      "post": {
+        "summary": "Exchange a valid refresh cookie for a fresh access token",
+        "description": "Authenticates solely via the httpOnly, path-scoped m3d_refresh cookie — does NOT require a valid/unexpired m3d_auth. Not behind apiAuthMiddleware, exempt from csrfGuard, rate-limited (refreshLimiter). Rotates the presented token on every current use; a token superseded less than 30s ago (grace window) returns a fresh access cookie only and sets no refresh cookie (refresh-token-rotation spec).",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Refreshed. Sets a new m3d_auth cookie, and a new m3d_refresh cookie only on rotation (never on a grace hit).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Refresh cookie absent",
+            "expired": null,
+            "revoked": null,
+            "or replayed past its grace window.": null
+          },
+          "429": {
+            "description": "Rate-limited (refreshLimiter)."
           }
         }
       }

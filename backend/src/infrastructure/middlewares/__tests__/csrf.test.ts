@@ -101,4 +101,16 @@ describe('csrfGuard', () => {
       }
     );
   });
+
+  // csrf-protection spec: "Refresh Endpoint CSRF Exemption" — defensive only
+  // (csrfGuard is never mounted on /users/refresh in the real route), but
+  // EXEMPT_PATHS must list it for consistency with the other 3 (design.md D5).
+  describe('refresh route exemption', () => {
+    it('calls next() for POST /users/refresh without requiring a token', () => {
+      const exemptReq = { method: 'POST', path: '/users/refresh', headers: {}, cookies: {}, user: undefined };
+      csrfGuard(exemptReq as Request, res as Response, next);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+  });
 });

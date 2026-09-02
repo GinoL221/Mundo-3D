@@ -6,11 +6,34 @@ const jwt = require('jsonwebtoken');
 const mockAuthenticateUserExecute = jest.fn();
 const mockListUsersExecute = jest.fn();
 const mockGetUserByIdExecute = jest.fn();
+// Default resolved value set at declaration (not in a beforeEach) so it
+// survives jest.clearAllMocks() (which clears calls/results, not
+// implementations) across every describe block in this file, including the
+// `normalizeLoginBody` block below which re-requires a fresh router via
+// jest.resetModules() but reuses this same mock function reference.
+const mockCreateRememberTokenExecute = jest.fn().mockResolvedValue({
+  idRememberToken: 1,
+  tokenHash: 'irrelevant-hash',
+  idUser: 1,
+  expiryDate: new Date(Date.now() + 2 * 60 * 60 * 1000),
+  familyId: 'fam-apiUsersLogin-test',
+});
 
 jest.mock('../application/use-cases/AuthenticateUserUseCase', () => {
   return {
     AuthenticateUserUseCase: jest.fn().mockImplementation(() => ({
       execute: mockAuthenticateUserExecute,
+    })),
+  };
+});
+
+// PR2: login now also creates a RememberToken (refresh-token-rotation).
+// Mocked here for the same module-boundary reason as the other use cases —
+// this suite mounts the real users.ts router but stays DB-free.
+jest.mock('../application/use-cases/CreateRememberTokenUseCase', () => {
+  return {
+    CreateRememberTokenUseCase: jest.fn().mockImplementation(() => ({
+      execute: mockCreateRememberTokenExecute,
     })),
   };
 });
@@ -239,7 +262,7 @@ describe('apiAuthMiddleware mounted on /api/users routes', () => {
   it('allows GET /api/users with a valid auth cookie', async () => {
     mockListUsersExecute.mockResolvedValue([]);
     const token = jwt.sign(
-      { userId: 1, email: 'admin@test.com', category: 'Admin', idRole: 1 },
+      { userId: 1, email: 'admin@test.com', category: 'Admin', idRole: 1, typ: 'access' },
       JWT_SECRET,
       { expiresIn: '1h' },
     );

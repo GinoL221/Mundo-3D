@@ -17,6 +17,10 @@ const EXEMPT_PATHS = new Set([
   '/users/login',
   '/users/register',
   '/users/logout',
+  // Defensive only — csrfGuard is never mounted on /users/refresh in the
+  // real route (design.md D5/csrf-protection spec). Listed here for
+  // consistency with the other 3 pre-auth/fail-safe exemptions.
+  '/users/refresh',
 ]);
 
 /**

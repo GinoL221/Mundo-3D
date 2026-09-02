@@ -4,54 +4,76 @@ import { AuthenticateUserUseCase } from '../../application/use-cases/Authenticat
 import { ListUsersUseCase } from '../../application/use-cases/ListUsersUseCase';
 import { GetUserByIdUseCase } from '../../application/use-cases/GetUserByIdUseCase';
 import { RegisterUserUseCase } from '../../application/use-cases/RegisterUserUseCase';
+import { CreateRememberTokenUseCase } from '../../application/use-cases/CreateRememberTokenUseCase';
+import { RefreshSessionUseCase } from '../../application/use-cases/RefreshSessionUseCase';
+import { RevokeRefreshTokenUseCase } from '../../application/use-cases/RevokeRefreshTokenUseCase';
 import { InvalidCredentialsException } from '../../domain/exceptions/InvalidCredentialsException';
 import { UserAlreadyExistsException } from '../../domain/exceptions/UserAlreadyExistsException';
-import { getJwtSecret } from '../security/JwtSecret';
 import { cleanupUploadedFile } from '../utils/cleanupUploadedFile';
+import { getJwtSecret } from '../security/JwtSecret';
+import { AUTH_COOKIE, REFRESH_COOKIE, authMaxAge } from '../security/cookieOptions';
 import {
-  AUTH_COOKIE,
-  CSRF_COOKIE,
-  USER_COOKIE,
-  cookieOptions,
-  authMaxAge,
-  authExpiresInSeconds,
-} from '../security/cookieOptions';
-import { issueCsrfToken } from '../security/csrfToken';
+  setSessionCookies,
+  clearSessionCookies,
+  issueAccessCookie,
+  issueRefreshCookie,
+  generateRefreshToken,
+} from './sessionCookies';
 
-interface UserDisplayData {
+interface UserAuthDto {
+  idUser: number;
   firstName: string;
+  lastName: string;
+  email: string;
   image: string | null;
   idRole?: number | null;
   category?: string | null;
 }
-
-const setSessionCookies = (
-  res: Response,
-  userId: number,
-  jwtPayload: { userId: number; email: string; category?: string | null; idRole?: number | null },
-  display: UserDisplayData,
-  remember?: boolean
-): void => {
-  const maxAge = authMaxAge(remember);
-  const token = jwt.sign(jwtPayload, getJwtSecret(), { expiresIn: authExpiresInSeconds(remember) });
-  const csrfToken = issueCsrfToken(userId);
-
-  res.cookie(AUTH_COOKIE, token, cookieOptions({ httpOnly: true, maxAge }));
-  res.cookie(CSRF_COOKIE, csrfToken, cookieOptions({ httpOnly: false, maxAge }));
-  res.cookie(
-    USER_COOKIE,
-    JSON.stringify(display),
-    cookieOptions({ httpOnly: false, maxAge })
-  );
-};
 
 export class UserApiController {
   constructor(
     private readonly authenticateUserUseCase: AuthenticateUserUseCase,
     private readonly listUsersUseCase: ListUsersUseCase,
     private readonly getUserByIdUseCase: GetUserByIdUseCase,
-    private readonly registerUserUseCase?: RegisterUserUseCase
+    private readonly registerUserUseCase?: RegisterUserUseCase,
+    private readonly createRememberTokenUseCase?: CreateRememberTokenUseCase,
+    private readonly refreshSessionUseCase?: RefreshSessionUseCase,
+    private readonly revokeRefreshTokenUseCase?: RevokeRefreshTokenUseCase
   ) {}
+
+  // Shared by login/register (task 2.16): creates the RememberToken row and
+  // issues all 4 session cookies, embedding familyId in the access JWT so
+  // logout can revoke it later without needing the path-scoped refresh
+  // cookie (see sessionCookies.ts's JwtPayload comment).
+  private async establishSession(res: Response, userDto: UserAuthDto, remember?: boolean): Promise<void> {
+    if (!this.createRememberTokenUseCase) {
+      throw new Error('CreateRememberTokenUseCase not injected');
+    }
+
+    const refreshPlainToken = generateRefreshToken();
+    const rememberToken = await this.createRememberTokenUseCase.execute({
+      idUser: userDto.idUser,
+      plainToken: refreshPlainToken,
+      durationSeconds: authMaxAge(remember) / 1000,
+    });
+
+    const payload = {
+      userId: userDto.idUser,
+      email: userDto.email,
+      category: userDto.category,
+      idRole: userDto.idRole,
+      familyId: rememberToken.familyId ?? undefined,
+    };
+
+    setSessionCookies(
+      res,
+      userDto.idUser,
+      payload,
+      { firstName: userDto.firstName, image: userDto.image, idRole: userDto.idRole, category: userDto.category },
+      refreshPlainToken,
+      remember
+    );
+  }
 
   login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -59,30 +81,8 @@ export class UserApiController {
       const password = req.body.Password || req.body.password;
       const remember = req.body.remember === true || req.body.remember === 'true';
 
-      const userDto = await this.authenticateUserUseCase.execute({
-        email: email,
-        password: password,
-      });
-
-      const payload = {
-        userId: userDto.idUser,
-        email: userDto.email,
-        category: userDto.category,
-        idRole: userDto.idRole,
-      };
-
-      setSessionCookies(
-        res,
-        userDto.idUser,
-        payload,
-        {
-          firstName: userDto.firstName,
-          image: userDto.image,
-          idRole: userDto.idRole,
-          category: userDto.category,
-        },
-        remember
-      );
+      const userDto = await this.authenticateUserUseCase.execute({ email, password });
+      await this.establishSession(res, userDto, remember);
 
       res.json({
         user: {
@@ -104,13 +104,78 @@ export class UserApiController {
     }
   };
 
+  // No apiAuthMiddleware ahead of this route (design.md D5) — logout must
+  // succeed even with an absent/expired/invalid auth cookie. The familyId
+  // claim is only trusted after jwt.verify succeeds, so it cannot be forged.
+  // Only the jwt.verify step is allowed to fail silently (expired/invalid/
+  // missing access token — api-jwt-auth: "Logout without an active
+  // session"). A genuine revocation failure (e.g. a DB error) must NOT be
+  // swallowed by that same tolerance, or logout would report success while
+  // the family was never actually revoked (found during PR2 apply).
+  private tryReadFamilyId(token: string): string | undefined {
+    try {
+      return (jwt.verify(token, getJwtSecret()) as { familyId?: string }).familyId;
+    } catch {
+      return undefined;
+    }
+  }
+
   logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const clearOptions = cookieOptions({ httpOnly: true });
-      res.clearCookie(AUTH_COOKIE, clearOptions);
-      res.clearCookie(CSRF_COOKIE, { ...clearOptions, httpOnly: false });
-      res.clearCookie(USER_COOKIE, { ...clearOptions, httpOnly: false });
+      const token = req.cookies?.[AUTH_COOKIE];
+      const familyId = token ? this.tryReadFamilyId(token) : undefined;
+      if (familyId && this.revokeRefreshTokenUseCase) {
+        await this.revokeRefreshTokenUseCase.execute(familyId);
+      }
+      clearSessionCookies(res);
       res.sendStatus(204);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  refresh = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!this.refreshSessionUseCase) {
+        throw new Error('RefreshSessionUseCase not injected');
+      }
+
+      const presentedPlainToken = req.cookies?.[REFRESH_COOKIE];
+      if (!presentedPlainToken) {
+        res.status(401).json({ error: 'Sesión expirada' });
+        return;
+      }
+
+      const newPlainToken = generateRefreshToken();
+      const result = await this.refreshSessionUseCase.execute({ presentedPlainToken, newPlainToken });
+
+      if (result.outcome === 'rejected') {
+        res.status(401).json({ error: 'Sesión expirada' });
+        return;
+      }
+
+      const { user, familyId } = result;
+      issueAccessCookie(res, { userId: user.idUser, email: user.email, category: user.category, idRole: user.idRole, familyId });
+
+      // Only the rotation winner ever writes the refresh cookie (design.md
+      // D2) — a grace hit must not, or it would overwrite the winner's
+      // Set-Cookie with the superseded value in the shared cookie jar.
+      if (result.outcome === 'rotated') {
+        const maxAge = result.refreshToken.expiryDate.getTime() - Date.now();
+        issueRefreshCookie(res, newPlainToken, maxAge);
+      }
+
+      res.json({
+        user: {
+          idUser: user.idUser,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          image: user.image,
+          idRole: user.idRole,
+          category: user.category,
+        }
+      });
     } catch (error) {
       next(error);
     }
@@ -134,27 +199,8 @@ export class UserApiController {
       const { firstName, lastName, email, password } = req.body;
       const image = req.file.location;
 
-      const userDto = await this.registerUserUseCase.execute({
-        firstName,
-        lastName,
-        email,
-        password,
-        image,
-      });
-
-      const payload = {
-        userId: userDto.idUser,
-        email: userDto.email,
-        category: userDto.category,
-        idRole: userDto.idRole,
-      };
-
-      setSessionCookies(res, userDto.idUser, payload, {
-        firstName: userDto.firstName,
-        image: userDto.image,
-        idRole: userDto.idRole,
-        category: userDto.category,
-      });
+      const userDto = await this.registerUserUseCase.execute({ firstName, lastName, email, password, image });
+      await this.establishSession(res, userDto);
 
       res.status(201).json({
         user: {

@@ -16,8 +16,10 @@ import {
   AUTH_COOKIE,
   CSRF_COOKIE,
   USER_COOKIE,
+  REFRESH_COOKIE,
   SESSION_MAX_AGE,
   REMEMBER_MAX_AGE,
+  ACCESS_TOKEN_TTL_SECONDS,
 } from '../infrastructure/security/cookieOptions';
 
 const mockAuthenticateUserExecute = jest.fn();
@@ -25,10 +27,28 @@ const mockListUsersExecute = jest.fn();
 const mockGetUserByIdExecute = jest.fn();
 const mockGetCartByUserIdExecute = jest.fn();
 const mockSyncCartExecute = jest.fn();
+const mockCreateRememberTokenExecute = jest.fn();
+const mockRevokeRefreshTokenExecute = jest.fn();
 
 jest.mock('../application/use-cases/AuthenticateUserUseCase', () => ({
   AuthenticateUserUseCase: jest.fn().mockImplementation(() => ({
     execute: mockAuthenticateUserExecute,
+  })),
+}));
+
+// PR2: login/register now create a RememberToken and issue a refresh
+// cookie; logout revokes its family. Mocked here for the same reason the
+// other use cases are — this test is an HTTP-contract test, not a
+// persistence test (see the file header comment).
+jest.mock('../application/use-cases/CreateRememberTokenUseCase', () => ({
+  CreateRememberTokenUseCase: jest.fn().mockImplementation(() => ({
+    execute: mockCreateRememberTokenExecute,
+  })),
+}));
+
+jest.mock('../application/use-cases/RevokeRefreshTokenUseCase', () => ({
+  RevokeRefreshTokenUseCase: jest.fn().mockImplementation(() => ({
+    execute: mockRevokeRefreshTokenExecute,
   })),
 }));
 
@@ -100,10 +120,18 @@ describe('Auth cookie lifecycle (login -> protected read -> CSRF write -> logout
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockCreateRememberTokenExecute.mockResolvedValue({
+      idRememberToken: 1,
+      tokenHash: 'irrelevant-hash',
+      idUser: AUTHENTICATED_USER.idUser,
+      expiryDate: new Date(Date.now() + REMEMBER_MAX_AGE),
+      familyId: 'fam-lifecycle-test',
+    });
+    mockRevokeRefreshTokenExecute.mockResolvedValue(1);
     app = buildApp();
   });
 
-  it('login sets exactly 3 Set-Cookie headers and omits the token from the body', async () => {
+  it('login sets exactly 4 Set-Cookie headers and omits the token from the body', async () => {
     mockAuthenticateUserExecute.mockResolvedValue(AUTHENTICATED_USER);
 
     const res = await request(app)
@@ -115,10 +143,11 @@ describe('Auth cookie lifecycle (login -> protected read -> CSRF write -> logout
     expect(res.body.user).toMatchObject({ idUser: AUTHENTICATED_USER.idUser });
 
     const setCookie = res.headers['set-cookie'] as unknown as string[];
-    expect(setCookie).toHaveLength(3);
+    expect(setCookie).toHaveLength(4);
     expect(cookieValue(setCookie, AUTH_COOKIE)).toBeTruthy();
     expect(cookieValue(setCookie, CSRF_COOKIE)).toBeTruthy();
     expect(cookieValue(setCookie, USER_COOKIE)).toBeTruthy();
+    expect(cookieValue(setCookie, REFRESH_COOKIE)).toBeTruthy();
   });
 
   it('walks the full lifecycle: cookie jar authenticates a protected read, a CSRF-guarded write requires the token, and logout revokes the jar', async () => {
@@ -161,13 +190,15 @@ describe('Auth cookie lifecycle (login -> protected read -> CSRF write -> logout
       { productId: 1, quantity: 2 },
     ]);
 
-    // Logout clears all 3 cookies (byte-identical flags per design.md) and
-    // requires no CSRF header (fail-safe exemption).
+    // Logout clears all 4 cookies (byte-identical flags per design.md),
+    // revokes the refresh family carried in the access JWT, and requires no
+    // CSRF header (fail-safe exemption).
     const logoutRes = await agent.post('/api/users/logout');
     expect(logoutRes.status).toBe(204);
+    expect(mockRevokeRefreshTokenExecute).toHaveBeenCalledWith('fam-lifecycle-test');
     const clearingCookies = logoutRes.headers['set-cookie'] as unknown as string[];
-    expect(clearingCookies).toHaveLength(3);
-    [AUTH_COOKIE, CSRF_COOKIE, USER_COOKIE].forEach((name) => {
+    expect(clearingCookies).toHaveLength(4);
+    [AUTH_COOKIE, CSRF_COOKIE, USER_COOKIE, REFRESH_COOKIE].forEach((name) => {
       const header = clearingCookies.find((c) => c.startsWith(`${name}=`));
       expect(header).toBeTruthy();
       // A cleared cookie carries an empty value and an expiry in the past —
@@ -182,7 +213,10 @@ describe('Auth cookie lifecycle (login -> protected read -> CSRF write -> logout
   });
 
   describe('remember-me lifetime', () => {
-    it('remember:true issues a 30-day Max-Age on all 3 cookies and a JWT whose exp matches', async () => {
+    // api-jwt-auth spec: "Access token TTL is fixed regardless of remember"
+    // — AUTH_COOKIE/its JWT no longer vary with remember; CSRF/USER/REFRESH
+    // still do (refresh-token-rotation spec).
+    it('remember:true issues a 30-day Max-Age on CSRF/USER/REFRESH, and a fixed-TTL access JWT', async () => {
       mockAuthenticateUserExecute.mockResolvedValue(AUTHENTICATED_USER);
 
       const res = await request(app)
@@ -193,16 +227,18 @@ describe('Auth cookie lifecycle (login -> protected read -> CSRF write -> logout
       const setCookie = res.headers['set-cookie'] as unknown as string[];
       const expectedMaxAgeSeconds = REMEMBER_MAX_AGE / 1000;
 
-      [AUTH_COOKIE, CSRF_COOKIE, USER_COOKIE].forEach((name) => {
+      [CSRF_COOKIE, USER_COOKIE, REFRESH_COOKIE].forEach((name) => {
         expect(cookieMaxAge(setCookie, name)).toBe(expectedMaxAgeSeconds);
       });
+      expect(cookieMaxAge(setCookie, AUTH_COOKIE)).toBe(ACCESS_TOKEN_TTL_SECONDS);
 
       const authToken = cookieValue(setCookie, AUTH_COOKIE) as string;
       const decoded = jwt.verify(authToken, JWT_SECRET) as jwt.JwtPayload;
-      expect((decoded.exp as number) - (decoded.iat as number)).toBe(expectedMaxAgeSeconds);
+      expect((decoded.exp as number) - (decoded.iat as number)).toBe(ACCESS_TOKEN_TTL_SECONDS);
+      expect(decoded.typ).toBe('access');
     });
 
-    it('leaving remember unchecked keeps the default 2h Max-Age on all 3 cookies and a matching JWT exp', async () => {
+    it('leaving remember unchecked keeps the default 2h Max-Age on CSRF/USER/REFRESH, and the same fixed-TTL access JWT', async () => {
       mockAuthenticateUserExecute.mockResolvedValue(AUTHENTICATED_USER);
 
       const res = await request(app)
@@ -213,13 +249,14 @@ describe('Auth cookie lifecycle (login -> protected read -> CSRF write -> logout
       const setCookie = res.headers['set-cookie'] as unknown as string[];
       const expectedMaxAgeSeconds = SESSION_MAX_AGE / 1000;
 
-      [AUTH_COOKIE, CSRF_COOKIE, USER_COOKIE].forEach((name) => {
+      [CSRF_COOKIE, USER_COOKIE, REFRESH_COOKIE].forEach((name) => {
         expect(cookieMaxAge(setCookie, name)).toBe(expectedMaxAgeSeconds);
       });
+      expect(cookieMaxAge(setCookie, AUTH_COOKIE)).toBe(ACCESS_TOKEN_TTL_SECONDS);
 
       const authToken = cookieValue(setCookie, AUTH_COOKIE) as string;
       const decoded = jwt.verify(authToken, JWT_SECRET) as jwt.JwtPayload;
-      expect((decoded.exp as number) - (decoded.iat as number)).toBe(expectedMaxAgeSeconds);
+      expect((decoded.exp as number) - (decoded.iat as number)).toBe(ACCESS_TOKEN_TTL_SECONDS);
     });
   });
 });

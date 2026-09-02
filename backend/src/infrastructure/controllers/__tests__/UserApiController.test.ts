@@ -5,6 +5,9 @@ import { AuthenticateUserUseCase } from '../../../application/use-cases/Authenti
 import { ListUsersUseCase } from '../../../application/use-cases/ListUsersUseCase';
 import { GetUserByIdUseCase } from '../../../application/use-cases/GetUserByIdUseCase';
 import { RegisterUserUseCase } from '../../../application/use-cases/RegisterUserUseCase';
+import { CreateRememberTokenUseCase } from '../../../application/use-cases/CreateRememberTokenUseCase';
+import { RefreshSessionUseCase } from '../../../application/use-cases/RefreshSessionUseCase';
+import { RevokeRefreshTokenUseCase } from '../../../application/use-cases/RevokeRefreshTokenUseCase';
 import { InvalidCredentialsException } from '../../../domain/exceptions/InvalidCredentialsException';
 import { UserAlreadyExistsException } from '../../../domain/exceptions/UserAlreadyExistsException';
 import { cleanupUploadedFile } from '../../utils/cleanupUploadedFile';
@@ -13,8 +16,10 @@ import {
   AUTH_COOKIE,
   CSRF_COOKIE,
   USER_COOKIE,
+  REFRESH_COOKIE,
   SESSION_MAX_AGE,
   REMEMBER_MAX_AGE,
+  ACCESS_TOKEN_TTL_SECONDS,
 } from '../../security/cookieOptions';
 
 jest.mock('../../utils/cleanupUploadedFile', () => ({
@@ -27,6 +32,9 @@ describe('UserApiController', () => {
   let mockListUsersUseCase: jest.Mocked<ListUsersUseCase>;
   let mockGetUserByIdUseCase: jest.Mocked<GetUserByIdUseCase>;
   let mockRegisterUserUseCase: jest.Mocked<RegisterUserUseCase>;
+  let mockCreateRememberTokenUseCase: jest.Mocked<CreateRememberTokenUseCase>;
+  let mockRefreshSessionUseCase: jest.Mocked<RefreshSessionUseCase>;
+  let mockRevokeRefreshTokenUseCase: jest.Mocked<RevokeRefreshTokenUseCase>;
 
   let req: Partial<Request>;
   let res: Partial<Response>;
@@ -45,17 +53,36 @@ describe('UserApiController', () => {
     mockRegisterUserUseCase = {
       execute: jest.fn(),
     } as any;
+    mockCreateRememberTokenUseCase = {
+      execute: jest.fn().mockResolvedValue({
+        idRememberToken: 1,
+        tokenHash: 'hashed',
+        idUser: 1,
+        expiryDate: new Date(Date.now() + SESSION_MAX_AGE),
+        familyId: 'fam-test',
+      }),
+    } as any;
+    mockRefreshSessionUseCase = {
+      execute: jest.fn(),
+    } as any;
+    mockRevokeRefreshTokenUseCase = {
+      execute: jest.fn().mockResolvedValue(1),
+    } as any;
 
     controller = new UserApiController(
       mockAuthenticateUserUseCase,
       mockListUsersUseCase,
       mockGetUserByIdUseCase,
-      mockRegisterUserUseCase
+      mockRegisterUserUseCase,
+      mockCreateRememberTokenUseCase,
+      mockRefreshSessionUseCase,
+      mockRevokeRefreshTokenUseCase
     );
 
     req = {
       body: {},
       params: {},
+      cookies: {},
     };
     res = {
       status: jest.fn().mockReturnThis() as any,
@@ -70,7 +97,7 @@ describe('UserApiController', () => {
   });
 
   describe('register', () => {
-    it('sets the 3 session cookies and does NOT include a token in the JSON body', async () => {
+    it('sets the 4 session cookies and does NOT include a token in the JSON body', async () => {
       req.body = {
         firstName: 'John',
         lastName: 'Doe',
@@ -107,13 +134,17 @@ describe('UserApiController', () => {
 
       const cookieNames = (res.cookie as jest.Mock).mock.calls.map((call) => call[0]);
       expect(cookieNames).toEqual(
-        expect.arrayContaining([AUTH_COOKIE, CSRF_COOKIE, USER_COOKIE])
+        expect.arrayContaining([AUTH_COOKIE, CSRF_COOKIE, USER_COOKIE, REFRESH_COOKIE])
       );
 
       const authCookieCall = (res.cookie as jest.Mock).mock.calls.find(
         (call) => call[0] === AUTH_COOKIE
       );
-      expect(authCookieCall[2]).toMatchObject({ httpOnly: true, maxAge: SESSION_MAX_AGE });
+      expect(authCookieCall[2]).toMatchObject({ httpOnly: true, maxAge: ACCESS_TOKEN_TTL_SECONDS * 1000 });
+
+      expect(mockCreateRememberTokenUseCase.execute).toHaveBeenCalledWith(
+        expect.objectContaining({ idUser: 123, durationSeconds: SESSION_MAX_AGE / 1000 })
+      );
 
       expect(res.json).toHaveBeenCalledWith(
         expect.not.objectContaining({ token: expect.anything() })
@@ -176,7 +207,7 @@ describe('UserApiController', () => {
       category: 'User',
     };
 
-    it('sets 3 Set-Cookie-equivalent res.cookie calls and does NOT include a token in the body', async () => {
+    it('sets 4 Set-Cookie-equivalent res.cookie calls and does NOT include a token in the body', async () => {
       req.body = { email: 'john@example.com', password: 'password123' };
       mockAuthenticateUserUseCase.execute.mockResolvedValue(mockUserDto);
 
@@ -184,7 +215,7 @@ describe('UserApiController', () => {
 
       const cookieNames = (res.cookie as jest.Mock).mock.calls.map((call) => call[0]);
       expect(cookieNames).toEqual(
-        expect.arrayContaining([AUTH_COOKIE, CSRF_COOKIE, USER_COOKIE])
+        expect.arrayContaining([AUTH_COOKIE, CSRF_COOKIE, USER_COOKIE, REFRESH_COOKIE])
       );
       expect(res.json).toHaveBeenCalledWith(
         expect.not.objectContaining({ token: expect.anything() })
@@ -192,38 +223,78 @@ describe('UserApiController', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('issues a 30-day cookie and a matching-exp JWT when remember is true', async () => {
+    // Task 2.16 (no dedicated RED pair in tasks.md — written here per strict
+    // TDD before the GREEN implementation; see apply-progress deviation #1).
+    it('creates a RememberToken via CreateRememberTokenUseCase and issues the refresh cookie, embedding familyId in the access JWT', async () => {
       req.body = { email: 'john@example.com', password: 'password123', remember: true };
       mockAuthenticateUserUseCase.execute.mockResolvedValue(mockUserDto);
+      mockCreateRememberTokenUseCase.execute.mockResolvedValue({
+        idRememberToken: 9,
+        tokenHash: 'irrelevant-hash',
+        idUser: 1,
+        expiryDate: new Date(Date.now() + REMEMBER_MAX_AGE),
+        familyId: 'fam-login-1',
+      });
 
       await (controller as any).login(req as Request, res as Response, next);
+
+      expect(mockCreateRememberTokenUseCase.execute).toHaveBeenCalledWith(
+        expect.objectContaining({ idUser: 1, durationSeconds: REMEMBER_MAX_AGE / 1000 })
+      );
+
+      const refreshCookieCall = (res.cookie as jest.Mock).mock.calls.find(
+        (call) => call[0] === REFRESH_COOKIE
+      );
+      expect(refreshCookieCall).toBeDefined();
+      expect(refreshCookieCall[2]).toMatchObject({ httpOnly: true, maxAge: REMEMBER_MAX_AGE });
+      // The plaintext refresh token must NOT equal the hash CreateRememberTokenUseCase stored.
+      expect(refreshCookieCall[1]).not.toBe('irrelevant-hash');
 
       const authCookieCall = (res.cookie as jest.Mock).mock.calls.find(
         (call) => call[0] === AUTH_COOKIE
       );
-      expect(authCookieCall[2]).toMatchObject({ maxAge: REMEMBER_MAX_AGE });
-
-      const token = authCookieCall[1] as string;
-      const decoded = jwt.verify(token, getJwtSecret()) as jwt.JwtPayload;
-      const secondsRemaining = (decoded.exp as number) - (decoded.iat as number);
-      expect(secondsRemaining).toBe(REMEMBER_MAX_AGE / 1000);
+      const decoded = jwt.verify(authCookieCall[1] as string, getJwtSecret()) as jwt.JwtPayload;
+      expect(decoded.familyId).toBe('fam-login-1');
     });
 
-    it('issues a 2h cookie and a matching-exp JWT when remember is omitted', async () => {
-      req.body = { email: 'john@example.com', password: 'password123' };
+    // api-jwt-auth spec: "Access token TTL is fixed regardless of remember" —
+    // remember now extends the CSRF/display cookies (and, per PR2's own
+    // refresh-token-rotation spec, the refresh cookie), NOT the access token.
+    it('issues an access cookie fixed at ACCESS_TOKEN_TTL_SECONDS and a matching-exp JWT, remember true or false', async () => {
       mockAuthenticateUserUseCase.execute.mockResolvedValue(mockUserDto);
 
+      for (const remember of [true, false, undefined]) {
+        (res.cookie as jest.Mock).mockClear();
+        req.body = { email: 'john@example.com', password: 'password123', remember };
+
+        await (controller as any).login(req as Request, res as Response, next);
+
+        const authCookieCall = (res.cookie as jest.Mock).mock.calls.find(
+          (call) => call[0] === AUTH_COOKIE
+        );
+        expect(authCookieCall[2]).toMatchObject({ maxAge: ACCESS_TOKEN_TTL_SECONDS * 1000 });
+
+        const token = authCookieCall[1] as string;
+        const decoded = jwt.verify(token, getJwtSecret()) as jwt.JwtPayload;
+        const secondsRemaining = (decoded.exp as number) - (decoded.iat as number);
+        expect(secondsRemaining).toBe(ACCESS_TOKEN_TTL_SECONDS);
+        expect(decoded.typ).toBe('access');
+      }
+    });
+
+    it('issues a 30-day CSRF/display cookie maxAge when remember is true, 2h when omitted', async () => {
+      mockAuthenticateUserUseCase.execute.mockResolvedValue(mockUserDto);
+
+      req.body = { email: 'john@example.com', password: 'password123', remember: true };
       await (controller as any).login(req as Request, res as Response, next);
+      let csrfCookieCall = (res.cookie as jest.Mock).mock.calls.find((call) => call[0] === CSRF_COOKIE);
+      expect(csrfCookieCall[2]).toMatchObject({ maxAge: REMEMBER_MAX_AGE });
 
-      const authCookieCall = (res.cookie as jest.Mock).mock.calls.find(
-        (call) => call[0] === AUTH_COOKIE
-      );
-      expect(authCookieCall[2]).toMatchObject({ maxAge: SESSION_MAX_AGE });
-
-      const token = authCookieCall[1] as string;
-      const decoded = jwt.verify(token, getJwtSecret()) as jwt.JwtPayload;
-      const secondsRemaining = (decoded.exp as number) - (decoded.iat as number);
-      expect(secondsRemaining).toBe(SESSION_MAX_AGE / 1000);
+      (res.cookie as jest.Mock).mockClear();
+      req.body = { email: 'john@example.com', password: 'password123' };
+      await (controller as any).login(req as Request, res as Response, next);
+      csrfCookieCall = (res.cookie as jest.Mock).mock.calls.find((call) => call[0] === CSRF_COOKIE);
+      expect(csrfCookieCall[2]).toMatchObject({ maxAge: SESSION_MAX_AGE });
     });
 
     it('returns 401 and sets no cookies on invalid credentials', async () => {
@@ -237,18 +308,54 @@ describe('UserApiController', () => {
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.cookie).not.toHaveBeenCalled();
     });
+
+    // Characterization test (task 2.1), superseded by task 2.4 exactly as
+    // flagged when it was written: on `main`, all 3 cookies shared one
+    // maxAge. Since D4's fixed access-token TTL, CSRF/USER still share one
+    // maxAge (the remember-derived session length) but AUTH_COOKIE diverges
+    // on purpose — this re-asserts the CURRENT (post-2.4) shape.
+    it('characterization: CSRF and USER share one maxAge; AUTH_COOKIE has its own fixed maxAge', async () => {
+      req.body = { email: 'john@example.com', password: 'password123' };
+      mockAuthenticateUserUseCase.execute.mockResolvedValue(mockUserDto);
+
+      await (controller as any).login(req as Request, res as Response, next);
+
+      const calls = (res.cookie as jest.Mock).mock.calls;
+      expect(calls).toHaveLength(4); // AUTH, CSRF, USER, REFRESH (task 2.16)
+      const nonAuthMaxAges = calls
+        .filter((call) => call[0] !== AUTH_COOKIE)
+        .map((call) => call[2].maxAge);
+      expect(new Set(nonAuthMaxAges).size).toBe(1);
+      const authCookieCall = calls.find((call) => call[0] === AUTH_COOKIE);
+      expect(authCookieCall[2].maxAge).toBe(ACCESS_TOKEN_TTL_SECONDS * 1000);
+    });
+
+    it('characterization: CSRF and USER cookies are httpOnly:false, AUTH is httpOnly:true', async () => {
+      req.body = { email: 'john@example.com', password: 'password123' };
+      mockAuthenticateUserUseCase.execute.mockResolvedValue(mockUserDto);
+
+      await (controller as any).login(req as Request, res as Response, next);
+
+      const byName = (name: string) =>
+        (res.cookie as jest.Mock).mock.calls.find((call) => call[0] === name)[2];
+      expect(byName(AUTH_COOKIE).httpOnly).toBe(true);
+      expect(byName(CSRF_COOKIE).httpOnly).toBe(false);
+      expect(byName(USER_COOKIE).httpOnly).toBe(false);
+    });
   });
 
   describe('logout', () => {
-    it('clears the 3 session cookies with byte-identical flags to login and responds 204', async () => {
-      req.user = { userId: 1, email: 'john@example.com', category: 'User', idRole: 2 };
+    it('clears all 4 session cookies with byte-identical flags to login and responds 204', async () => {
+      const payload = { userId: 1, email: 'john@example.com', category: 'User', idRole: 2, familyId: 'fam-1', typ: 'access' };
+      req.cookies = { [AUTH_COOKIE]: jwt.sign(payload, getJwtSecret(), { expiresIn: '30m' }) };
 
       await (controller as any).logout(req as Request, res as Response, next);
 
       const clearedNames = (res.clearCookie as jest.Mock).mock.calls.map((call) => call[0]);
       expect(clearedNames).toEqual(
-        expect.arrayContaining([AUTH_COOKIE, CSRF_COOKIE, USER_COOKIE])
+        expect.arrayContaining([AUTH_COOKIE, CSRF_COOKIE, USER_COOKIE, REFRESH_COOKIE])
       );
+      expect((res.clearCookie as jest.Mock).mock.calls).toHaveLength(4);
 
       const authClearOptions = (res.clearCookie as jest.Mock).mock.calls.find(
         (call) => call[0] === AUTH_COOKIE
@@ -257,6 +364,110 @@ describe('UserApiController', () => {
 
       expect(res.sendStatus).toHaveBeenCalledWith(204);
       expect(next).not.toHaveBeenCalled();
+    });
+
+    // api-jwt-auth spec: "Logout revokes the refresh family".
+    it('revokes the refresh token family carried in the access JWT (familyId claim)', async () => {
+      const payload = { userId: 1, email: 'john@example.com', category: 'User', idRole: 2, familyId: 'fam-42', typ: 'access' };
+      req.cookies = { [AUTH_COOKIE]: jwt.sign(payload, getJwtSecret(), { expiresIn: '30m' }) };
+
+      await (controller as any).logout(req as Request, res as Response, next);
+
+      expect(mockRevokeRefreshTokenUseCase.execute).toHaveBeenCalledWith('fam-42');
+      expect(res.sendStatus).toHaveBeenCalledWith(204);
+    });
+
+    // api-jwt-auth spec: "Logout without an active session" — MUST NOT error.
+    it('still clears cookies and responds 204 with no auth cookie, without revoking anything', async () => {
+      req.cookies = {};
+
+      await (controller as any).logout(req as Request, res as Response, next);
+
+      expect(mockRevokeRefreshTokenUseCase.execute).not.toHaveBeenCalled();
+      expect(res.sendStatus).toHaveBeenCalledWith(204);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('still succeeds (204, no revoke) when the auth cookie is expired/invalid — never trusts unverified data', async () => {
+      req.cookies = { [AUTH_COOKIE]: 'not-a-valid-jwt' };
+
+      await (controller as any).logout(req as Request, res as Response, next);
+
+      expect(mockRevokeRefreshTokenUseCase.execute).not.toHaveBeenCalled();
+      expect(res.sendStatus).toHaveBeenCalledWith(204);
+    });
+
+    // Found during apply: a genuine infrastructure failure while revoking
+    // (e.g. a DB error) must surface via next(error), not be silently
+    // swallowed by the same catch that tolerates an expired/invalid JWT —
+    // otherwise logout would report success (204) while the family was
+    // never actually revoked.
+    it('propagates a real revocation failure via next(), unlike a jwt.verify failure', async () => {
+      const payload = { userId: 1, email: 'john@example.com', category: 'User', idRole: 2, familyId: 'fam-1', typ: 'access' };
+      req.cookies = { [AUTH_COOKIE]: jwt.sign(payload, getJwtSecret(), { expiresIn: '30m' }) };
+      mockRevokeRefreshTokenUseCase.execute.mockRejectedValue(new Error('DB unavailable'));
+
+      await (controller as any).logout(req as Request, res as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(res.sendStatus).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('refresh', () => {
+    it('200s with a fresh access cookie when the refresh use case reports a rotation', async () => {
+      req.cookies = { [REFRESH_COOKIE]: 'presented-plain-token' };
+      mockRefreshSessionUseCase.execute.mockResolvedValue({
+        outcome: 'rotated',
+        user: { idUser: 1, firstName: 'John', lastName: 'Doe', email: 'john@example.com', image: null, idRole: 2, category: 'User' },
+        familyId: 'fam-1',
+        refreshToken: { expiryDate: new Date(Date.now() + SESSION_MAX_AGE) } as any,
+      });
+
+      await (controller as any).refresh(req as Request, res as Response, next);
+
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ user: expect.objectContaining({ idUser: 1 }) }));
+      const authCookieCall = (res.cookie as jest.Mock).mock.calls.find((call) => call[0] === AUTH_COOKIE);
+      expect(authCookieCall).toBeDefined();
+      const refreshCookieCall = (res.cookie as jest.Mock).mock.calls.find((call) => call[0] === REFRESH_COOKIE);
+      expect(refreshCookieCall).toBeDefined(); // refresh cookie IS set on rotation
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('200s with a fresh access cookie but NO refresh cookie on a grace hit', async () => {
+      req.cookies = { [REFRESH_COOKIE]: 'presented-plain-token' };
+      mockRefreshSessionUseCase.execute.mockResolvedValue({
+        outcome: 'grace',
+        user: { idUser: 1, firstName: 'John', lastName: 'Doe', email: 'john@example.com', image: null, idRole: 2, category: 'User' },
+        familyId: 'fam-1',
+      });
+
+      await (controller as any).refresh(req as Request, res as Response, next);
+
+      const authCookieCall = (res.cookie as jest.Mock).mock.calls.find((call) => call[0] === AUTH_COOKIE);
+      expect(authCookieCall).toBeDefined();
+      const refreshCookieCall = (res.cookie as jest.Mock).mock.calls.find((call) => call[0] === REFRESH_COOKIE);
+      expect(refreshCookieCall).toBeUndefined(); // correctness requirement (design.md D2), not an optimization
+    });
+
+    it('401s when the refresh cookie is absent', async () => {
+      req.cookies = {};
+
+      await (controller as any).refresh(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(mockRefreshSessionUseCase.execute).not.toHaveBeenCalled();
+      expect(res.cookie).not.toHaveBeenCalled();
+    });
+
+    it('401s when the use case rejects (expired/revoked/replayed)', async () => {
+      req.cookies = { [REFRESH_COOKIE]: 'stale-token' };
+      mockRefreshSessionUseCase.execute.mockResolvedValue({ outcome: 'rejected' });
+
+      await (controller as any).refresh(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.cookie).not.toHaveBeenCalled();
     });
   });
 });
