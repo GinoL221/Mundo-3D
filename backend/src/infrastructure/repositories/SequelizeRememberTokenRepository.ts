@@ -1,4 +1,4 @@
-import { QueryTypes, Transaction, Op } from 'sequelize';
+import { QueryTypes, Transaction, Op, literal } from 'sequelize';
 import { RememberToken } from '../../domain/entities/RememberToken';
 import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
 import { TransactionContext } from '../../domain/ports/UnitOfWorkPort';
@@ -99,22 +99,31 @@ export class SequelizeRememberTokenRepository implements RememberTokenRepository
     return affectedRows;
   }
 
-  // ORM-level delete with a computed cutoff, rather than design.md's literal
-  // `NOW() - INTERVAL :graceSeconds SECOND` raw SQL: `Op.lt` against a JS
-  // Date is equivalent (NULL `superseded_at` never satisfies `<`, so the
-  // current row and any in-grace row are never touched) and avoids
-  // Sequelize's ambiguous return shape for a raw `QueryTypes.DELETE`
-  // (unlike UPDATE, plain DELETE isn't special-cased to `[result,
-  // affectedRows]` in the mysql dialect — see SequelizeRememberTokenRepository
-  // apply-progress notes).
+  // The cutoff is computed by the DATABASE, not by Node. `claimRotation`
+  // writes `superseded_at` with MySQL's own NOW(), so comparing it against a
+  // Node-side `new Date(...)` puts two different clocks on either side of the
+  // predicate — and with no `timezone` configured in Sequelize, any offset
+  // makes the comparison false forever and nothing is ever deleted. CI proved
+  // exactly that: the reaper deleted zero rows. Keeping both sides on the
+  // server clock is what makes this correct; it is not a stylistic preference
+  // for raw SQL.
+  //
+  // A NULL `superseded_at` never satisfies `<`, so the current row and any
+  // row still inside its grace window are never touched. `destroy()` is kept
+  // over a raw DELETE because Sequelize's mysql dialect special-cases
+  // `QueryTypes.UPDATE` to return `[result, affectedRows]` but gives plain
+  // DELETE no such treatment, so the ORM's row count is the unambiguous one.
+  //
+  // `graceSeconds` is interpolated into the interval, so it is coerced to a
+  // non-negative integer first: a truncated finite number cannot carry SQL.
   async reapFamily(familyId: string, graceSeconds: number, tx: TransactionContext): Promise<number> {
     const transaction = tx as unknown as Transaction;
-    const cutoff = new Date(Date.now() - graceSeconds * 1000);
+    const grace = Number.isFinite(graceSeconds) ? Math.max(0, Math.trunc(graceSeconds)) : 0;
 
     return db.RememberToken.destroy({
       where: {
         familyId,
-        supersededAt: { [Op.lt]: cutoff },
+        supersededAt: { [Op.lt]: literal(`NOW() - INTERVAL ${grace} SECOND`) },
       },
       transaction,
     });

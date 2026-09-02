@@ -211,6 +211,33 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
       expect(finalCount).toBeGreaterThan(0);
     });
 
+    // Regression: reapFamily compared a Node-side `new Date(...)` cutoff
+    // against `superseded_at`, which claimRotation writes with the DATABASE's
+    // NOW(). Two clocks, no `timezone` configured in Sequelize, so the
+    // comparison was false forever and nothing was ever deleted. The
+    // family-size test only bounded the count from above, so a reaper that
+    // deleted NOTHING and one that worked perfectly both looked the same
+    // until the count crossed the bound. This asserts the deletion directly.
+    it('actually deletes a past-grace superseded row and reports how many it removed', async () => {
+      const familyId = crypto.randomUUID();
+      const expiry = new Date(Date.now() + 3600 * 1000);
+      const presentedHash = `reap-${crypto.randomUUID()}`;
+      const successorHash = `reap-successor-${crypto.randomUUID()}`;
+
+      await seedCurrentToken(userId, familyId, presentedHash, expiry);
+
+      const reaped = await db.sequelize.transaction(async (transaction: Transaction) => {
+        const tx = asTx(transaction);
+        // Supersede via the production path, so `superseded_at` carries the
+        // database's own NOW() exactly as it does in a real rotation.
+        await repository.claimRotation({ presentedHash, successorHash, tx });
+        return repository.reapFamily(familyId, 0, tx);
+      });
+
+      expect(reaped).toBe(1);
+      expect(await countFamilyRows(familyId)).toBe(0);
+    });
+
     it('does not delete a row still inside its grace window', async () => {
       const familyId = crypto.randomUUID();
       const currentHash = `current-${crypto.randomUUID()}`;
