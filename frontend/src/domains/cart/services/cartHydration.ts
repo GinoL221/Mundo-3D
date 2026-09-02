@@ -1,4 +1,4 @@
-import { API_URL, getSessionUser, withCredentials } from '../../../config';
+import { API_URL, authFetch, getSessionUser } from '../../../config';
 import { cartItems, persistCart, type CartItem } from './cartState';
 import { flushCartSync, hasPendingSync, scheduleSync } from './cartSync';
 
@@ -130,7 +130,7 @@ export async function hydrateFromServer(options?: { mergeLocal?: boolean }): Pro
 
     let res: Response;
     try {
-      res = await fetch(`${API_URL}/api/cart`, withCredentials({ method: 'GET' }));
+      res = await authFetch(`${API_URL}/api/cart`, { method: 'GET' });
     } catch {
       return { ok: false, items: cartItems.get(), priceDrifts: [], syncScheduled: false, reason: 'network' };
     }

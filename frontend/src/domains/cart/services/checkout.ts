@@ -1,4 +1,4 @@
-import { API_URL, getSessionUser, withCredentials } from '../../../config';
+import { API_URL, authFetch, getSessionUser } from '../../../config';
 import { cartItems, persistCart } from './cartState';
 import { discardPendingSync, flushCartSync } from './cartSync';
 
@@ -76,17 +76,14 @@ export async function checkout(): Promise<CheckoutResult> {
 
   let res: Response;
   try {
-    res = await fetch(
-      `${API_URL}/api/orders`,
-      withCredentials({
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Idempotency-Key': idempotencyKey,
-        },
-        body: '{}',
-      })
-    );
+    res = await authFetch(`${API_URL}/api/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      },
+      body: '{}',
+    });
   } catch {
     // fetch() itself threw: an ambiguous/genuine network failure. Keep the
     // cached key so a retry of THIS SAME attempt reuses it; the local cart

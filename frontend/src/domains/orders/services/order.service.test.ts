@@ -75,6 +75,19 @@ describe('fetchOrder', () => {
 
     expect(result).toEqual({ ok: false, code: 'UNKNOWN', message: 'Error 500' });
   });
+
+  it('retries transparently after a 401 triggers a successful refresh (authFetch, task 3.9)', async () => {
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(401, {})) // initial request, expired access token
+      .mockResolvedValueOnce(jsonResponse(200, {})) // POST /api/users/refresh succeeds
+      .mockResolvedValueOnce(jsonResponse(200, SAMPLE_ORDER_DTO)); // retried request
+
+    const result = await fetchOrder(41);
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[1][0]).toContain('/api/users/refresh');
+    expect(result).toEqual({ ok: true, order: SAMPLE_ORDER_DTO });
+  });
 });
 
 const SAMPLE_MY_ORDERS_PAGE = {
@@ -133,12 +146,27 @@ describe('fetchMyOrders', () => {
     expect(url).not.toContain('pageSize=');
   });
 
-  it('maps a 401 to UNAUTHENTICATED', async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse(401, {}));
+  it('maps a 401 to UNAUTHENTICATED when the transparent refresh also fails', async () => {
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(401, {})) // initial request
+      .mockResolvedValueOnce(jsonResponse(401, {})); // POST /api/users/refresh also fails
 
     const result = await fetchMyOrders();
 
     expect(result).toEqual({ ok: false, code: 'UNAUTHENTICATED', message: expect.any(String) });
+  });
+
+  it('retries transparently after a 401 triggers a successful refresh (authFetch, task 3.9)', async () => {
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(401, {})) // initial request, expired access token
+      .mockResolvedValueOnce(jsonResponse(200, {})) // POST /api/users/refresh succeeds
+      .mockResolvedValueOnce(jsonResponse(200, SAMPLE_MY_ORDERS_PAGE)); // retried request
+
+    const result = await fetchMyOrders();
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[1][0]).toContain('/api/users/refresh');
+    expect(result).toEqual({ ok: true, page: SAMPLE_MY_ORDERS_PAGE });
   });
 
   it('maps a 400 to INVALID_PAGINATION', async () => {

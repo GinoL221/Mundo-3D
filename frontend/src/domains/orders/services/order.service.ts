@@ -1,4 +1,4 @@
-import { API_URL, withCredentials } from '../../../config';
+import { API_URL, authFetch } from '../../../config';
 
 // Mirrors backend/src/application/dtos/OrderDTO.ts exactly (order-checkout
 // spec, "Buyer order-detail response DTO") — GET /api/orders/:id returns the
@@ -39,7 +39,7 @@ export type FetchOrderResult =
 export async function fetchOrder(idOrder: number): Promise<FetchOrderResult> {
   let res: Response;
   try {
-    res = await fetch(`${API_URL}/api/orders/${idOrder}`, withCredentials({ method: 'GET' }));
+    res = await authFetch(`${API_URL}/api/orders/${idOrder}`, { method: 'GET' });
   } catch {
     return { ok: false, code: 'NETWORK', message: 'No se pudo conectar con el servidor.' };
   }
@@ -86,7 +86,9 @@ export type FetchMyOrdersResult =
  * `GET /api/orders/mine` — buyer-scoped, paginated order history
  * (order-history spec). Same discriminated-union shape as `fetchOrder`
  * above: try/catch -> NETWORK, 401 -> UNAUTHENTICATED,
- * 400 -> INVALID_PAGINATION, other non-ok -> UNKNOWN.
+ * 400 -> INVALID_PAGINATION, other non-ok -> UNKNOWN. `authFetch` already
+ * attempts a transparent refresh on a 401 (refresh-token-rotation spec) —
+ * UNAUTHENTICATED here means that refresh itself failed too.
  */
 export async function fetchMyOrders(page?: number, pageSize?: number): Promise<FetchMyOrdersResult> {
   const params = new URLSearchParams();
@@ -96,10 +98,7 @@ export async function fetchMyOrders(page?: number, pageSize?: number): Promise<F
 
   let res: Response;
   try {
-    res = await fetch(
-      `${API_URL}/api/orders/mine${query ? `?${query}` : ''}`,
-      withCredentials({ method: 'GET' }),
-    );
+    res = await authFetch(`${API_URL}/api/orders/mine${query ? `?${query}` : ''}`, { method: 'GET' });
   } catch {
     return { ok: false, code: 'NETWORK', message: 'No se pudo conectar con el servidor.' };
   }

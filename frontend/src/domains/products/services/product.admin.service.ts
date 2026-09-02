@@ -1,4 +1,4 @@
-import { API_URL, readApiErrorMessage, withCredentials } from '../../../config';
+import { API_URL, authFetch, readApiErrorMessage } from '../../../config';
 
 // Mirrors backend/src/application/dtos/ProductDTO.ts. This is the admin
 // mutation surface — server-side validation (express-validator) is the
@@ -60,6 +60,10 @@ export class ProductAdminService {
    * Returns the raw AdminProductDTO shape on purpose: the admin table needs
    * `stock`, `idCategory` and `idFranchise`, which the public-facing
    * `product.service.ts` drops when it adapts to the `Product` view model.
+   *
+   * Deliberately plain `fetch`, not `authFetch` (design.md D6, task 3.10):
+   * a public read with no credentials can never 401, so there is nothing
+   * for the retry wrapper to do here.
    */
   static async list(): Promise<AdminProductDTO[]> {
     const res = await fetch(`${API_URL}/api/products`);
@@ -76,6 +80,9 @@ export class ProductAdminService {
    * GET /api/product/:id — public route, same no-credentials rationale as
    * `list`. A 404 surfaces as a ProductAdminApiError with that status so the
    * edit form can tell "no such product" from a transport failure.
+   *
+   * Deliberately plain `fetch`, not `authFetch` (design.md D6, task 3.10) —
+   * same reason as `list`: a public, no-credentials read cannot 401.
    */
   static async getById(id: number): Promise<AdminProductDTO> {
     const res = await fetch(`${API_URL}/api/product/${id}`);
@@ -93,13 +100,10 @@ export class ProductAdminService {
    * (defaults to 0 server-side when omitted).
    */
   static async create(formData: FormData): Promise<AdminProductDTO> {
-    const res = await fetch(
-      `${API_URL}/api/products`,
-      withCredentials({
-        method: 'POST',
-        body: formData,
-      })
-    );
+    const res = await authFetch(`${API_URL}/api/products`, {
+      method: 'POST',
+      body: formData,
+    });
 
     if (!res.ok) {
       return throwApiError(res);
@@ -114,13 +118,10 @@ export class ProductAdminService {
    * on this endpoint entirely; use `adjustStock` instead.
    */
   static async update(id: number, formData: FormData): Promise<AdminProductDTO> {
-    const res = await fetch(
-      `${API_URL}/api/products/${id}`,
-      withCredentials({
-        method: 'PUT',
-        body: formData,
-      })
-    );
+    const res = await authFetch(`${API_URL}/api/products/${id}`, {
+      method: 'PUT',
+      body: formData,
+    });
 
     if (!res.ok) {
       return throwApiError(res);
@@ -135,12 +136,9 @@ export class ProductAdminService {
    * that hiding is UX-only — this call still goes through the real guard.
    */
   static async remove(id: number): Promise<void> {
-    const res = await fetch(
-      `${API_URL}/api/products/${id}`,
-      withCredentials({
-        method: 'DELETE',
-      })
-    );
+    const res = await authFetch(`${API_URL}/api/products/${id}`, {
+      method: 'DELETE',
+    });
 
     if (!res.ok) {
       return throwApiError(res);
@@ -153,16 +151,13 @@ export class ProductAdminService {
    * delta that would take stock negative with 409.
    */
   static async adjustStock(id: number, delta: number): Promise<AdminProductDTO> {
-    const res = await fetch(
-      `${API_URL}/api/products/${id}/stock`,
-      withCredentials({
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ delta }),
-      })
-    );
+    const res = await authFetch(`${API_URL}/api/products/${id}/stock`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ delta }),
+    });
 
     if (!res.ok) {
       return throwApiError(res);

@@ -407,6 +407,25 @@ describe('hydrateFromServer', () => {
       expect(fetchMock.mock.calls[0][1].method).toBe('GET');
     });
 
+    it('retries transparently after a 401 triggers a successful refresh (authFetch, task 3.9)', async () => {
+      stubCookie(LOGGED_IN_COOKIE);
+      cartItems.set([]);
+      const serverDto = buildDto({ idProduct: 1, quantity: 2 });
+      // Sequenced by call order, not by method, since the middle call
+      // (POST /api/users/refresh) is not the GET/PUT `stubFetch` discriminates.
+      fetchMock
+        .mockResolvedValueOnce({ ok: false, status: 401 }) // initial GET /api/cart
+        .mockResolvedValueOnce({ ok: true, status: 200 }) // POST /api/users/refresh
+        .mockResolvedValueOnce(await okGetResponse([serverDto])); // retried GET
+
+      const result = await drain(hydrateFromServer());
+
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(fetchMock.mock.calls[1][0]).toContain('/api/users/refresh');
+      expect(result.ok).toBe(true);
+      expect(result.items).toEqual([mapServerCart([serverDto])[0]]);
+    });
+
     it('writes the store and localStorage with the server cart and issues zero PUTs', async () => {
       stubCookie(LOGGED_IN_COOKIE);
       const local = [{ productId: 1, name: 'Local Mario', image: 'local.jpg', unitPrice: 1500, quantity: 1 }];
