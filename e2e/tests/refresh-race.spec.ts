@@ -115,8 +115,19 @@ test.describe('Refresh token rotation — cross-tab race and legacy-JWT cutover'
       userId: 1,
       exp: Math.floor(Date.now() / 1000) + 3600, // unexpired — typ is what fails it, not exp
     });
+    // A real pre-deploy session carried all three cookies — the old
+    // `setSessionCookies` always issued `m3d_auth`, `m3d_csrf` and `m3d_user`
+    // together. Seeding only `m3d_auth` would describe a session that never
+    // existed, and would read as a guest to `authFetch`, which deliberately
+    // does not evict visitors who were never logged in.
     await context.addCookies([
       { name: 'm3d_auth', value: legacyToken, url: FRONTEND_URL, httpOnly: true },
+      { name: 'm3d_csrf', value: 'legacy.csrf', url: FRONTEND_URL },
+      {
+        name: 'm3d_user',
+        value: encodeURIComponent(JSON.stringify({ firstName: 'Legacy', image: null, idRole: 2 })),
+        url: FRONTEND_URL,
+      },
     ]);
 
     await page.goto('/orders');

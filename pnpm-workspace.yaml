@@ -100,6 +100,12 @@ overrides:
   # 2 MODERATE advisories reaching production via express > body-parser; see
   # the minimumReleaseAgeExclude note above for why this needed an exception.
   qs: ^6.16.0
+  # 2026-09-02 — MODERATE, production: unbounded zlib inflate in the
+  # compressed-protocol handler. This is the database driver, so it sits on
+  # every query path. 3.23.1 was published 2026-07-19, comfortably past the
+  # 7-day floor, so no exception is needed here — backend pins `^3.9.7` and
+  # pnpm simply had not moved within that range on its own.
+  mysql2: ^3.23.1
 
 # `astro check` dynamically `import()`s "typescript" from astro's own
 # module scope, not the caller's cwd; astro declares no peerDependency on
