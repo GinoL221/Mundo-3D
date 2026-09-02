@@ -88,8 +88,13 @@ export const REFRESH_COOKIE = 'm3d_refresh';
 export const REFRESH_COOKIE_PATH = '/api/users/refresh'; // app.js mounts apiRouter at '/api'
 export const ACCESS_TOKEN_TTL_SECONDS =
   Number(process.env.ACCESS_TOKEN_TTL_SECONDS) || 30 * 60; // the no-deploy rollback lever
-export const accessCookieOptions = () =>
-  cookieOptions({ httpOnly: true, maxAge: ACCESS_TOKEN_TTL_SECONDS * 1000 });
+// AMENDED during verify: the cookie carries the SESSION lifetime, not the
+// token TTL. The JWT inside still expires at ACCESS_TOKEN_TTL_SECONDS and
+// apiAuthMiddleware still rejects it on exp — but logout must be able to read
+// familyId from an expired token, and with the token's own TTL the browser
+// deleted the cookie first, silently skipping revocation for up to 30 days.
+export const accessCookieOptions = (remember?: boolean) =>
+  cookieOptions({ httpOnly: true, maxAge: authMaxAge(remember) });
 export const refreshCookieOptions = (maxAge?: number) =>
   cookieOptions({ httpOnly: true, maxAge, path: REFRESH_COOKIE_PATH });
 ```

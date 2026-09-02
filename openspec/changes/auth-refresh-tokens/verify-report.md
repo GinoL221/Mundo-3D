@@ -1,14 +1,14 @@
 ```yaml
 schema: gentle-ai.verify-result/v1
-evidence_revision: sha256:d6017916d4e3f71b83edb2002123a50f3a4139eae1f240abfd45ae8eecd4e6b2
+evidence_revision: sha256:a88717f596336ec3f5d312fc022c85ac4e4353e807be51b1215f9599c754b81e
 verdict: fail
 blockers: 1
 critical_findings: 1
-requirements: 12/14
-scenarios: 40/42
+requirements: 8/14
+scenarios: 36/42
 test_command: pnpm test
 test_exit_code: 0
-test_output_hash: sha256:281dcc358ae6f26e0e109abb8d2d010a42f5b2088004d4b032a4f3ea337f1d7c
+test_output_hash: sha256:8007994cf1dd50f8d85c03ea2235622fbfdf1c51d41b9e7bcdd64bcd101c2a3f
 build_command: pnpm type-check
 build_exit_code: 0
 build_output_hash: sha256:142ca3df7a3750a463c37089b26580332e55f5eb2457dcf45594c700bb207c80
@@ -17,15 +17,21 @@ build_output_hash: sha256:142ca3df7a3750a463c37089b26580332e55f5eb2457dcf45594c7
 ## Verification Report
 
 **Change**: auth-refresh-tokens
-**Version**: N/A (OpenSpec change, pre-archive)
+**Version**: N/A (OpenSpec change deltas)
 **Mode**: Strict TDD
-**Verified against**: working tree on `feat/auth-refresh-tokens-03-frontend` (PR1 + PR2 merged to `main`, PR3 branch-only)
+**Verified against**: working tree at `feat/auth-refresh-tokens-03-frontend`, HEAD `34eeac4` (PR1+PR2 merged in `main`, PR3 branch-only)
+**Date**: 2026-09-02
 
-**Read the verdict precisely.** No test fails, no task is incomplete, and every one
-of the 14 requirements is implemented in live code. The single blocker is one spec
-scenario whose only "coverage" asserts configuration instead of the behaviour the
-scenario requires, on the new unauthenticated endpoint. Nothing else about this
-change is broken.
+> **This report supersedes the previous FAIL verdict** recorded in this file on 2026-09-02 14:24.
+>
+> **What changed since that verdict.** All three findings it raised were re-checked independently against live code, and all three are genuinely fixed:
+> 1. The refresh limiter now has real end-to-end coverage — a supertest that exhausts the window and observes an actual 429 (confirmed below, including *how* it defeats the middleware's own Jest bypass).
+> 2. Logout now revokes the refresh family even when the access token has expired.
+> 3. The `remember-token-store` spec no longer claims `successorHash` is "returned on a grace-window hit".
+>
+> **Why the verdict is still FAIL.** The fix for finding 2 changed observable behaviour that two spec files and `design.md` still forbid in `MUST` language, and those documents were never updated. This is a *different* blocker from the previous one — not a regression and not an unaddressed carry-over. The remedy is almost certainly a documentation amendment, not a code revert. See CRITICAL-1.
+
+---
 
 ### Completeness
 
@@ -35,382 +41,266 @@ change is broken.
 | Tasks complete | 52 |
 | Tasks incomplete | 0 |
 
-All 52 boxes were re-checked against live code rather than trusted. Every task's
-claimed artifact exists and matches its description, with the exceptions recorded
-under WARNING (task 2.21 partially delivered; task 1.9 and apply-progress
-deviation #4 describe an implementation that has since been superseded).
+All 52 checkboxes in `tasks.md` are marked. Per instruction, the marks were treated as a claim, not evidence: each work unit was checked against live code via source inspection. No task was found marked complete without corresponding implementation. Task completion is **not** the reason for this verdict.
+
+---
 
 ### Build & Tests Execution
 
-**Build**: PASSED
+**Build**: PASS
 
 ```text
-pnpm type-check  ->  pnpm --filter backend type-check  ->  tsc --noEmit
+$ pnpm type-check      # -> pnpm --filter backend type-check -> tsc --noEmit
 EXIT=0
 ```
 
-**Tests**: PASSED — 1245 passed, 0 failed, 0 skipped
+**Tests**: PASS — 1248 passed, 0 failed, 0 skipped
 
 ```text
-pnpm test  (pnpm --filter "!e2e" test)
-  backend  jest    Test Suites: 122 passed, 122 total
-                   Tests:      1003 passed, 1003 total
-  frontend vitest  Test Files:   20 passed (20)
-                   Tests:       242 passed (242)
+$ pnpm test            # -> pnpm --filter "!e2e" test
+frontend  Test Files  20 passed (20)
+frontend  Tests       242 passed (242)
+backend   Test Suites 122 passed, 122 total
+backend   Tests       1006 passed, 1006 total
 EXIT=0
 ```
 
-Additional gates re-run in this phase, all clean:
+Minor correction to the evidence handed to this phase: the frontend tier reports **242** passing, not 241. Backend's 1006 matches. Jest emits a non-fatal "worker process has failed to exit gracefully" notice on the backend tier; it does not affect the exit code and is pre-existing.
 
-```text
-pnpm lint                                EXIT=0
-pnpm --filter backend architecture:check EXIT=0
-```
+**Tiers not executed locally**: `pnpm test:integration` and `pnpm test:e2e` could not be run — port 3306 is held by the maintainer's MariaDB instance, and the integration config requires a reachable MySQL/MariaDB. This report relies on CI at commit `047dec6` (reported all four checks green, including real-MySQL integration and Playwright e2e) for those tiers. Every conclusion below that depends on integration or e2e evidence is marked as such. **This is a real limit on the strength of this verification, not a formality.**
 
-**Integration tier (real MySQL) and E2E tier (Playwright) were NOT run locally.**
-Host port 3306 is held by the maintainer's MariaDB, so `pnpm test:integration` and
-`pnpm test:e2e` cannot execute in this environment. Both tiers are relied upon from
-PR #116 CI, reported green (e2e: 52 passing). Every compliance verdict below that
-rests solely on those tiers is marked `(CI)` so the provenance is never ambiguous.
+**Coverage**: Not available — no coverage tooling is configured in either workspace. Not a failure.
 
-**Coverage**: not measured in this phase — no coverage run was executed against the
-changed file set. Informational only; not a failure.
+---
 
 ### Spec Compliance Matrix
 
-42 scenarios across 14 requirements in 5 spec files.
-
-#### refresh-token-rotation (5 requirements, 12 scenarios)
-
-| Requirement | Scenario | Test | Result |
-|-------------|----------|------|--------|
-| Refresh Endpoint | Refresh succeeds with an expired access token | `UserApiController.test.ts > refresh > 200s with a fresh access cookie when the refresh use case reports a rotation`; route carries no `apiAuthMiddleware` (`routes/api/users.ts:200`); `e2e/refresh-race.spec.ts > two tabs...` exercises exactly the expired-access + live-refresh state (CI) | COMPLIANT |
-| Refresh Endpoint | Refresh rejected without a valid refresh cookie | `UserApiController.test.ts > refresh > 401s when the refresh cookie is absent` + `401s when the use case rejects (expired/revoked/replayed)`; `RefreshSessionUseCase.test.ts` rows 1/2/3/6 | COMPLIANT |
-| Refresh Endpoint | Cross-site refresh request is rejected | The scenario's GIVEN stipulates the browser withholds the cookie, so the server obligation is exactly "no refresh cookie -> 401", which is tested; the `sameSite: 'lax'` attribute that produces the GIVEN is asserted in `cookieOptions.test.ts:136` | COMPLIANT |
-| Refresh Endpoint | Refresh rate limit -> 429 | `refreshLimiter.test.ts` mocks `express-rate-limit` entirely and asserts the *config object* (`statusCode: 429`, `max`, `windowMs`) plus that `next()` runs. No test anywhere sends enough requests to `POST /api/users/refresh` to observe a 429 | **UNTESTED** |
-| Remember Distinction | Remembered session issues a 30-day refresh token | `UserApiController.test.ts:228` (refresh cookie `maxAge === REMEMBER_MAX_AGE`); `cookieOptions.test.ts > authMaxAge returns REMEMBER_MAX_AGE`; `establishSession` passes `durationSeconds: authMaxAge(remember)/1000` | COMPLIANT |
-| Remember Distinction | Default session issues a 2-hour refresh token | `UserApiController.test.ts:285`; `cookieOptions.test.ts > SESSION_MAX_AGE is exactly 2 hours` + the omitted/false `authMaxAge` cases | COMPLIANT |
-| Rotation + Grace | Successful refresh rotates the token | `RotateRefreshTokenUseCase.test.ts` (claim -> insert -> reap); `RefreshSessionUseCase.test.ts` row 4; `SequelizeRememberTokenRepository.integration.test.ts > lets exactly one of two concurrent claims against the same current row succeed` (CI) | COMPLIANT |
-| Rotation + Grace | Grace hit issues an access cookie only, without re-rotating | `RefreshSessionUseCase.test.ts` row 5; `UserApiController.test.ts > refresh > 200s with a fresh access cookie but NO refresh cookie on a grace hit` — asserts the `m3d_refresh` `res.cookie` call is `undefined` | COMPLIANT |
-| Rotation + Grace | Replay past the grace window fails | `RefreshSessionUseCase.test.ts` row 6 (superseded 45s ago -> rejected, `revokeFamily` not called) | COMPLIANT |
-| Rotation + Grace | Family id is populated on every row | `SequelizeRememberTokenRepository.integration.test.ts > populates family_id on every row created by login (create) and by rotation (insertSuccessor)` (CI); `RememberTokenUseCases.test.ts:90` | COMPLIANT |
-| Concurrent Refresh | Two tabs refresh concurrently and both stay logged in | `e2e/refresh-race.spec.ts > two tabs refreshing concurrently ... both stay logged in` — real browser, one shared context, real backend and DB (CI) | COMPLIANT |
-| Retention | Old superseded rows are reaped on refresh | `SequelizeRememberTokenRepository.integration.test.ts > actually deletes a past-grace superseded row and reports how many it removed` + `does not delete a row still inside its grace window` (CI) | COMPLIANT |
+Counting rule used throughout: a scenario is COMPLIANT only when a covering test asserting that specific behaviour passed at runtime. A requirement is counted complete only when *all* of its scenarios are COMPLIANT.
 
 #### api-jwt-auth (4 requirements, 16 scenarios)
 
 | Requirement | Scenario | Test | Result |
-|-------------|----------|------|--------|
-| Login Endpoint | Successful login sets an auth cookie | `UserApiController.test.ts:210` — 4 `res.cookie` calls, no raw token in the body | COMPLIANT |
-| Login Endpoint | API login with invalid credentials | `UserApiController.test.ts:300` (401, no cookies set) | COMPLIANT |
-| Login Endpoint | API login exceeds rate limit | `loginLimiter.test.ts` uses the same fully-mocked `express-rate-limit` pattern; no real 429 is observed for the login route. Pre-existing convention, unchanged by this change | PARTIAL |
-| Login Endpoint | Access token TTL is fixed regardless of remember | `UserApiController.test.ts:263` (`issues an access cookie fixed at ACCESS_TOKEN_TTL_SECONDS and a matching-exp JWT, remember true or false`) | COMPLIANT |
-| Cookie Authorization | Request to protected API without cookie | `auth.test.ts:28` | COMPLIANT |
-| Cookie Authorization | Request with invalid or expired cookie | `auth.test.ts:42` | COMPLIANT |
-| Cookie Authorization | Request with valid cookie | `auth.test.ts:49` — asserts `typ: "access"` accepted and `req.user` attached | COMPLIANT |
-| Cookie Authorization | Bearer header alone is rejected | `auth.test.ts:83` | COMPLIANT |
-| Cookie Authorization | Admin-only API view with non-admin cookie | `auth.test.ts:117 / :164 / :172` (`requireRoles`, `adminGuard`, STAFF case) | COMPLIANT |
-| Cookie Authorization | Pre-deploy JWT without typ claim is rejected | `auth.test.ts:63`; `e2e/refresh-race.spec.ts > a legacy typ-less JWT is rejected ... lands cleanly on /login` (CI) | COMPLIANT |
-| Logout Endpoint | Logout clears the session cookies | `UserApiController.test.ts:348` — all 4 cleared, exactly 4 calls, flag parity with login asserted | COMPLIANT |
-| Logout Endpoint | Logout revokes the refresh family | `UserApiController.test.ts:370` (`revokeFamily` called with `fam-42`); `SequelizeRememberTokenRepository.integration.test.ts > revokeFamily marks every unrevoked row in the family, and only that family` (CI). The "subsequent refresh is 401" half is proven by `RefreshSessionUseCase.test.ts` row 2 composed with the controller's 401 path, and at DB level by `claimRotation refuses a revoked row` — see WARNING 3 on the tier task 2.21 claimed | COMPLIANT |
-| Logout Endpoint | Prior access token cannot be renewed after logout | `RefreshSessionUseCase.test.ts` row 2 (revoked checked before grace) + `UserApiController.test.ts > 401s when the use case rejects` | COMPLIANT |
-| Logout Endpoint | Logout without an active session | `UserApiController.test.ts:381` (204, no revoke, no error) and `:391` (invalid/expired cookie) | COMPLIANT |
-| Remember-Me Session | Remember-me extends the refresh token, not the access token | `UserApiController.test.ts:228 / :263 / :285` | COMPLIANT |
-| Remember-Me Session | Remember-me not requested keeps default refresh lifetime | `UserApiController.test.ts:285`; `cookieOptions.test.ts > authMaxAge` omitted case | COMPLIANT |
+|---|---|---|---|
+| API JWT Login Endpoint | Successful login sets an auth cookie | `apiAuthCookieLifecycle.test.ts` > full lifecycle | COMPLIANT |
+| API JWT Login Endpoint | API login with invalid credentials | `apiSecurity.test.js`, `UserApiController.test.ts` | COMPLIANT |
+| API JWT Login Endpoint | API login exceeds rate limit | `loginLimiter.test.ts` (mocks `express-rate-limit`) | **PARTIAL** |
+| API JWT Login Endpoint | Access token TTL is fixed regardless of remember | `apiAuthCookieLifecycle.test.ts:239,263` — `exp - iat === ACCESS_TOKEN_TTL_SECONDS` | COMPLIANT |
+| Cookie-Based Authorization | Request without cookie | `auth.test.ts` | COMPLIANT |
+| Cookie-Based Authorization | Invalid or expired cookie | `auth.test.ts` | COMPLIANT |
+| Cookie-Based Authorization | Valid cookie with `typ: access` | `auth.test.ts:49` | COMPLIANT |
+| Cookie-Based Authorization | Bearer header alone is rejected | `auth.test.ts:83` | COMPLIANT |
+| Cookie-Based Authorization | Admin-only view with non-admin cookie | `apiSecurity.test.js` | COMPLIANT |
+| Cookie-Based Authorization | Pre-deploy JWT without `typ` rejected | `auth.test.ts:63`, e2e `refresh-race.spec.ts:105` | COMPLIANT |
+| Logout Endpoint | Logout clears the session cookies | `UserApiController.test.ts` | COMPLIANT |
+| Logout Endpoint | Logout revokes the refresh family | `UserApiController.test.ts`, `RevokeRefreshTokenUseCase.test.ts`, repo integration (CI) | COMPLIANT |
+| Logout Endpoint | Prior access token cannot be renewed after logout | `RefreshSessionUseCase.test.ts` (revoked -> rejected) | COMPLIANT |
+| Logout Endpoint | Logout without an active session | `UserApiController.test.ts` (unsigned garbage -> 204, no revoke) | COMPLIANT |
+| Remember-Me Extended Session | Remember-me extends refresh, not access | `cookieOptions.test.ts:73`, `apiAuthCookieLifecycle.test.ts` | **FAILING** |
+| Remember-Me Extended Session | No remember-me keeps default refresh lifetime | `cookieOptions.test.ts:75`, e2e `auth.spec.ts:117` | COMPLIANT |
+
+#### refresh-token-rotation (5 requirements, 12 scenarios)
+
+| Requirement | Scenario | Test | Result |
+|---|---|---|---|
+| Refresh Endpoint | Refresh succeeds with an expired access token | `UserApiController.test.ts`, route has no `apiAuthMiddleware` (verified `users.ts:200`) | COMPLIANT |
+| Refresh Endpoint | Refresh rejected without a valid refresh cookie | `UserApiController.test.ts`, `RefreshSessionUseCase.test.ts` | COMPLIANT |
+| Refresh Endpoint | Cross-site refresh request is rejected | No direct test; `sameSite: 'lax'` asserted, absent-cookie -> 401 asserted | **PARTIAL** |
+| Refresh Endpoint | Refresh rate limit | `apiSecurity.test.js:254` — real 429 via supertest | COMPLIANT |
+| Refresh Carries Remember Distinction | Remembered session issues a 30-day refresh token | `cookieOptions.test.ts`, e2e `auth.spec.ts:56` | COMPLIANT |
+| Refresh Carries Remember Distinction | Default session issues a 2-hour refresh token | `cookieOptions.test.ts`, e2e `auth.spec.ts:117` | COMPLIANT |
+| Rotation With Grace Window | Successful refresh rotates the token | `RotateRefreshTokenUseCase.test.ts`, repo integration (CI) | COMPLIANT |
+| Rotation With Grace Window | Grace hit issues access cookie only, no refresh cookie | `UserApiController.test.ts` (asserts no refresh `res.cookie` on `grace`), `RefreshSessionUseCase.test.ts` | COMPLIANT |
+| Rotation With Grace Window | Replay past the grace window fails | `RefreshSessionUseCase.test.ts` | COMPLIANT |
+| Rotation With Grace Window | Family id populated on every row | Repo integration `:156` (CI, real DB) | COMPLIANT |
+| Concurrent Refresh From Multiple Tabs | Two tabs refresh concurrently, both stay logged in | Repo integration `:88` (real concurrency), e2e `refresh-race.spec.ts:50` | COMPLIANT |
+| Retention on Successful Refresh | Old superseded rows reaped on refresh | Repo integration `:221`, `:298` (CI, real DB) | **PARTIAL** |
 
 #### remember-token-store (2 requirements, 8 scenarios)
 
 | Requirement | Scenario | Test | Result |
-|-------------|----------|------|--------|
-| Model Schema | User association is configured | `RememberTokenModel.test.js`; `models/__tests__/index.test.js` | COMPLIANT |
-| Model Schema | New rows carry rotation metadata | `SequelizeRememberTokenRepository.integration.test.ts:156` (CI) — `insertSuccessor` writes only `familyId`, leaving the other three NULL | COMPLIANT |
-| Model Schema | Legacy duplicate indexes removed | `migrate.integration.test.js:82` (CI) — the 4 columns exist and `token_hash_2..5` are gone | COMPLIANT |
-| Model Schema | Migration down restores the baseline schema exactly | `migrate.integration.test.js:132` (CI) — three `down`s revert all migrations and restore the pre-migration shape | COMPLIANT |
-| Service Token Mgmt | Creating a token hashes and stores it | `RememberTokenUseCases.test.ts:40` + `:90` (familyId from the injected `IdGeneratorPort`) | COMPLIANT |
-| Service Token Mgmt | Verifying returns the user or cleans up expired | `RememberTokenUseCases.test.ts:118 / :130 / :146 / :173` | COMPLIANT |
-| Service Token Mgmt | Verifying a revoked token fails without deleting it | `RememberTokenUseCases.test.ts:191` — asserts the revoked branch precedes the expiry branch and no delete occurs | COMPLIANT |
-| Service Token Mgmt | Deleting removes the record | `RememberTokenUseCases.test.ts:208` | COMPLIANT |
+|---|---|---|---|
+| Model Schema and Associations | User association is configured | `db` model tests | COMPLIANT |
+| Model Schema and Associations | New rows carry rotation metadata | Repo integration `:156` (CI) | COMPLIANT |
+| Model Schema and Associations | Legacy duplicate indexes removed | `migrate.integration.test.js:82` (CI) | COMPLIANT |
+| Model Schema and Associations | Migration down restores baseline exactly | `migrate.integration.test.js:132` (CI) | COMPLIANT |
+| Service Hashed Token Management | Creating a token hashes and stores it | `CreateRememberTokenUseCase.test.ts` | COMPLIANT |
+| Service Hashed Token Management | Verifying returns user or cleans up expired | `VerifyRememberTokenUseCase.test.ts` | COMPLIANT |
+| Service Hashed Token Management | Verifying a revoked token fails without deleting | `VerifyRememberTokenUseCase.test.ts` | COMPLIANT |
+| Service Hashed Token Management | Deleting removes the record | `DeleteRememberTokenUseCase.test.ts` | COMPLIANT |
 
 #### csrf-protection (1 requirement, 2 scenarios)
 
 | Requirement | Scenario | Test | Result |
-|-------------|----------|------|--------|
-| Refresh CSRF Exemption | Refresh request without a CSRF token succeeds | `csrf.test.ts:109` (`calls next() for POST /users/refresh without requiring a token`) | COMPLIANT |
-| Refresh CSRF Exemption | Refresh route bypasses the guard entirely | Verified in live wiring: `router.post('/users/refresh', refreshLimiter, controller.refresh)` — `csrfGuard` is absent from the chain; the `EXEMPT_PATHS` entry is documented defence in depth | COMPLIANT |
+|---|---|---|---|
+| Refresh Endpoint CSRF Exemption | Refresh without a CSRF token succeeds | `apiSecurity.test.js:254` (no session, no CSRF header, reaches limiter) | COMPLIANT |
+| Refresh Endpoint CSRF Exemption | Refresh route bypasses the guard entirely | `csrf.test.ts:109`; `users.ts:200` mounts only `refreshLimiter` | COMPLIANT |
 
 #### session-cookie-security (2 requirements, 4 scenarios)
 
 | Requirement | Scenario | Test | Result |
-|-------------|----------|------|--------|
-| Per-Cookie Lifetime Split | Auth cookie expires with the access token | `cookieOptions.test.ts:60` (`maxAge === ACCESS_TOKEN_TTL_SECONDS * 1000`); `UserApiController.test.ts:317` | COMPLIANT |
-| Per-Cookie Lifetime Split | CSRF and display cookies expire with the refresh token | `UserApiController.test.ts:285` (30d when remember, 2h when omitted) + `:317` (CSRF/USER share one maxAge, AUTH has its own) | COMPLIANT |
-| Refresh Cookie Path Scoping | Refresh cookie is scoped to the refresh route | `cookieOptions.test.ts:24` + `:69` (`path === '/api/users/refresh'`) | COMPLIANT |
-| Refresh Cookie Path Scoping | Refresh cookie is not sent to other endpoints | The THEN is a browser guarantee driven by the `Path` attribute; our obligation is to set it, which is asserted. See WARNING 7 — the e2e tier could carry the negative assertion cheaply | COMPLIANT |
+|---|---|---|---|
+| Per-Cookie Lifetime Split | Auth cookie expires with the access token | `cookieOptions.test.ts:65` asserts the **negation** | **FAILING** |
+| Per-Cookie Lifetime Split | CSRF and display cookies expire with the refresh token | `apiAuthCookieLifecycle.test.ts`, e2e `auth.spec.ts` | COMPLIANT |
+| Refresh Cookie Path Scoping | Refresh cookie scoped to the refresh route | `cookieOptions.test.ts:80`, e2e `auth.spec.ts:104` | COMPLIANT |
+| Refresh Cookie Path Scoping | Refresh cookie not sent to other endpoints | Path asserted; browser non-attachment not directly asserted | **PARTIAL** |
 
-**Compliance summary**: 40/42 scenarios complete — 39 COMPLIANT, 1 PARTIAL, 1 UNTESTED,
-0 FAILING. Fully-covered requirements: 12/14 (Refresh Endpoint and Login Endpoint each
-carry one uncovered rate-limit scenario).
+**Compliance summary**: 36/42 scenarios COMPLIANT, 2 FAILING, 4 PARTIAL. 8/14 requirements fully complete.
+
+---
 
 ### Correctness (Static Evidence)
 
-| Requirement | Status | Notes |
-|------------|--------|-------|
-| Refresh Endpoint | Implemented | `users.ts:200` — `refreshLimiter` only, no `apiAuthMiddleware`, no `csrfGuard`. `UserApiController.refresh` reads `m3d_refresh` and 401s when absent |
-| Remember Distinction | Implemented | `establishSession` -> `durationSeconds: authMaxAge(remember)/1000`; access cookie fixed via `accessCookieOptions()` |
-| Rotation + Grace | Implemented | `RefreshSessionUseCase` implements all six D2 rows in the documented order (revoked before expiry before superseded). Grace returns `outcome: 'grace'` carrying no token; the controller writes the refresh cookie only when `outcome === 'rotated'` |
-| Concurrent Refresh | Implemented | `claimRotation` conditional UPDATE; the loser throws `RefreshTokenRotationLostRaceError` and re-reads outside the aborted transaction |
-| Retention | Implemented | `reapFamily` deletes `supersededAt <= NOW() - INTERVAL n SECOND`, family-scoped, inside the rotation transaction |
-| Login / Access TTL | Implemented | `ACCESS_TOKEN_TTL_SECONDS = Number(env) \|\| 1800` — 30 minutes, per the maintainer's amendment from the proposed 15 |
-| typ claim | Implemented | Set in exactly one place (`issueAccessCookie`), required in exactly one place (`apiAuthMiddleware`, `decoded.typ !== 'access'` -> 401) |
-| Logout revocation | Implemented, with a gap | Revokes via the verified JWT's `familyId` claim. See WARNING 1 — revocation silently does not happen once the access token has expired |
-| Model schema / migration | Implemented | `20260901000000-refresh-token-rotation.js`: 4 columns + `family_id` index up; exact reverse order down, restoring `token_hash_2..5` |
-| CSRF exemption | Implemented | Not mounted on the route (the real mechanism); the `EXEMPT_PATHS` entry is defensive |
-| Cookie split / path scoping | Implemented | One named builder per cookie kind, so set and clear can never drift apart |
-| Frontend wrapper + adoption | Implemented | Exactly 9 `authFetch` sites across 5 files; exactly the 10 documented exclusions remain on bare `fetch` (7 public reads + 3 auth endpoints) |
+| Requirement area | Status | Notes |
+|---|---|---|
+| Refresh endpoint wiring | Implemented | `users.ts:200` — `router.post('/users/refresh', refreshLimiter, controller.refresh)`. No `apiAuthMiddleware`, no `csrfGuard`. Exactly as specified. |
+| Rotation transaction | Implemented | `RotateRefreshTokenUseCase` — claim / insert successor / reap in one UoW transaction. Conditional `UPDATE ... WHERE superseded_at IS NULL AND revoked_at IS NULL AND expiry_date > NOW()` is the authoritative gate. |
+| Grace window | Implemented | `RefreshSessionUseCase.resolveGraceOrReject` — 30s deadline from `supersededAt`; `grace` outcome sets access cookie only (`UserApiController.refresh:154` gates `issueRefreshCookie` on `outcome === 'rotated'`). Matches the accepted deviation exactly. |
+| Logout revocation | Implemented | `readFamilyIdFromAccessToken` + `RevokeRefreshTokenUseCase`. Verified below. |
+| `reapFamily` mechanics | Implemented | `destroy()` with `Op.lte` against DB-side `NOW() - INTERVAL {grace} SECOND`; `graceSeconds` coerced to a non-negative integer before interpolation. Matches the accepted deviation. |
+| Access cookie lifetime | **Contradicts spec** | See CRITICAL-1. |
+| Frontend transparent refresh | Implemented | `authFetch` retries once on 401 behind single-flight `ensureRefreshed`; never recurses into itself for the refresh call. |
+
+---
 
 ### Coherence (Design)
 
 | Decision | Followed? | Notes |
-|----------|-----------|-------|
-| D1 conditional-UPDATE claim in one transaction | Yes | Steps 1-3 in `RotateRefreshTokenUseCase.execute` inside `uow.runInTransaction` |
-| D1 successor inherits `expiry_date`, never slid | Yes | `new RememberToken(0, successorHash, current.idUser, current.expiryDate, ...)` |
-| D2 grace = 30s, non-rotating, no refresh cookie | Yes | `REFRESH_TOKEN_GRACE_SECONDS = 30`; the controller writes the cookie only on `'rotated'` |
-| D2 logout beats grace | Yes | `revokedAt` checked before expiry and before the superseded branch |
-| D3 `typ` set once / required once | Yes | Verified by inspection; no other `jwt.sign` exists in the auth path |
-| D4 one named builder per cookie kind | Yes | `accessCookieOptions()` / `refreshCookieOptions(maxAge?)`, both reused for clears |
-| D5 middleware chain | Yes | `refreshLimiter` only |
-| D6 cycle-free `lib/http` facade | Yes | `config.ts` is 18 lines of pure re-export; `authFetch` deliberately avoids `session.service.ts` to prevent the cycle D6 exists to remove |
-| D7 reap inside the rotation transaction | Yes | Step 3, family-scoped, `tx`-aware |
-| D8 PR slicing | Yes | 3 slices stacked to main; `size:exception` recorded for PR1 and PR2 |
-| D1 reap via literal raw `DELETE ... INTERVAL` | **Deviated (accepted, and now doubly so)** | Uses Sequelize `destroy()` with a DB-side `NOW() - INTERVAL` literal and `Op.lte`. Both departures are load-bearing fixes for real bugs CI caught (two-clock comparison; second-precision `datetime`). Breaks no spec |
-| `IdGeneratorPort` / `CryptoRandomIdGenerator` | **Addition (accepted)** | Absent from the design's file table; required by `backend.application.contracts`. Confirmed clean by `architecture:check` |
-| `familyId` claim carried in the access JWT | **Addition (undocumented in design.md)** | The mechanism logout uses to locate the family, since the refresh cookie is path-scoped away from `/users/logout`. Sound — the claim is read only after `jwt.verify` — but it is the direct cause of WARNING 1, and design.md never records it |
+|---|---|---|
+| D1 — one transaction: claim, insert successor, reap | Yes | `RotateRefreshTokenUseCase:32-55`. |
+| D2 — only the rotation winner writes the refresh cookie | Yes | `UserApiController:154`. |
+| D3 — opaque refresh token; `typ: 'access'` set in one place | Yes | `generateRefreshToken` is `randomBytes(32)`; `typ` added only in `issueAccessCookie`, required only in `apiAuthMiddleware`. |
+| D4 — `accessCookieOptions` uses `maxAge: ACCESS_TOKEN_TTL_SECONDS * 1000` | **No** | `design.md:91-92` still specifies this. `cookieOptions.ts:78-79` uses `authMaxAge(remember)`. Design never updated. Part of CRITICAL-1. |
+| D5 — refresh defended by httpOnly + sameSite + path scoping + rotation + rate limiting | Yes | All five verified present; rate limiting now has real runtime evidence. |
+| D6 — `lib/http` avoids the `config.ts` import cycle | Yes | `authFetch` deliberately does not import `session.service.ts`; trade-off documented in-code and in `apply-progress`. |
+
+---
+
+### Targeted re-checks of the previous verdict's findings
+
+**1. Refresh limiter coverage — GENUINELY FIXED.**
+`apiSecurity.test.js:243-273` drives 10 real requests through `POST /api/users/refresh` via supertest and asserts the 11th returns 429 with the exact error body. Critically, I checked *how* it gets past the middleware's own escape hatch: `refreshLimiter.ts:29` bypasses throttling when `NODE_ENV === 'test' && JEST_WORKER_ID`, and the test sets `process.env.NODE_ENV = 'production'` (line 258) before issuing requests. Because that bypass is evaluated per-request rather than at module load, the real `express-rate-limit` instance is exercised. This is authentic end-to-end evidence, not configuration assertion. The test also reuses the already-built `app` rather than re-requiring it under `NODE_ENV=production`, correctly avoiding `app.js`'s unrelated `CORS_ORIGIN` guard.
+
+**2. Logout revocation after access-token expiry — GENUINELY FIXED, and the security question answered.**
+`readFamilyIdFromAccessToken` (`sessionCookies.ts:107`) uses `jwt.verify(token, getJwtSecret(), { ignoreExpiration: true })`. I traced every consumer of the relaxed path and every reader of the auth cookie:
+
+- `readFamilyIdFromAccessToken` has exactly **one** caller in the entire repository: `UserApiController.logout:117`. It is not reachable from any authenticating path.
+- `ignoreExpiration` appears in exactly one place in production source.
+- The only other production reader of `AUTH_COOKIE` is `apiAuthMiddleware` (`auth.ts:16`), which uses a plain `jwt.verify` with **no** `ignoreExpiration` and additionally requires `decoded.typ === 'access'`. An expired token throws and returns 401.
+- `csrfGuard` derives `userId` from `req.user`, which only `apiAuthMiddleware` sets, so a stale cookie cannot satisfy the CSRF check either.
+
+**Conclusion: a stale access cookie authenticates nothing.** The only capability it retains is revoking its own refresh family via logout — an authority-*removing* operation. The relaxation is correctly scoped. The accepted deviation (residual window up to `ACCESS_TOKEN_TTL_SECONDS`) still holds, because `apiAuthMiddleware` continues to enforce `exp`. New coverage confirms both halves: an expired-but-signed token *does* revoke (`fam-expired` test), and unsigned garbage does *not*.
+
+**3. Spec contradiction on the grace mechanic — GENUINELY FIXED.**
+`git show 047dec6` confirms `remember-token-store/spec.md:8` was rewritten from "set on rotation, returned on a grace-window hit" to language stating `successorHash` is a SHA-256 digest that can never yield the successor token, cross-referencing `refresh-token-rotation`. I swept all five spec files for residual "returned"/successor claims; none remain. The two spec files now agree.
+
+**4. `apply-progress.md` — REWRITTEN AND ACCURATE.**
+It now covers all three PRs, contains a `TDD Cycle Evidence` table, and describes `reapFamily` correctly. It states plainly that PR2's and PR3's 33 tasks have no recorded RED/GREEN evidence because both apply agents were killed by provider rate limits. That disclosure is honest and is treated below as a WARNING, not a fabrication.
+
+---
 
 ### TDD Compliance
 
 | Check | Result | Details |
-|-------|--------|---------|
-| TDD Evidence reported | PARTIAL | `apply-progress.md` covers PR1 only — 9 evidence rows for tasks 1.1-1.19. PR2 (21 tasks) and PR3 (12 tasks) have no evidence table at all |
-| All tasks have tests | YES | 52/52. Every PR2 and PR3 task's test artifact was located and confirmed by direct inspection |
-| RED confirmed (tests exist) | PARTIAL | 19/52 have a recorded RED transition. For the other 33 the RED step is unverifiable after the fact — the apply agents were killed by provider rate limits before writing evidence |
-| GREEN confirmed (tests pass) | YES | 52/52 — independently re-executed in this phase: 1003 backend + 242 frontend, exit 0 |
-| Triangulation adequate | YES | `RefreshSessionUseCase` covers all six D2 rows plus the lost-race path; `cookieOptions` covers set/clear symmetry both ways; `reapFamily` has both the deletes and the does-not-delete cases |
-| Safety Net for modified files | PARTIAL | Recorded for PR1's modified files only; same PR2/PR3 evidence gap |
+|---|---|---|
+| TDD Evidence reported | Yes | `TDD Cycle Evidence` table present at `apply-progress.md:23` |
+| All tasks have tests | Partial | Every implementation task maps to at least one test file; 19/52 have per-task RED/GREEN rows |
+| RED confirmed (tests exist) | Yes | Every test file referenced in the table exists on disk |
+| GREEN confirmed (tests pass) | Yes | 1006 backend + 242 frontend passing, exit 0 |
+| Triangulation adequate | Yes | Multi-case coverage on rotation branch table (6 rows), grace boundaries, remember/no-remember, and `authFetch` 401 paths |
+| Safety Net for modified files | Partial | Not recorded for the 33 PR2/PR3 tasks |
 
-**TDD Compliance**: 3/6 checks fully passed, 3 partial — every partial traces to the
-same single cause (no PR2/PR3 apply-progress), not to missing or failing tests.
-Outcome-level TDD (tests exist, tests pass, behaviours triangulated) is independently
-verified for all 52 tasks.
+**TDD Compliance**: 4/6 checks fully passed; 2 partial, both caused by the missing PR2/PR3 record rather than by missing tests.
+
+---
 
 ### Test Layer Distribution
 
 | Layer | Tests | Files | Tools |
-|-------|-------|-------|-------|
-| Unit | 1245 executed (whole suite; ~110 attributable to this change) | 142 suites (122 backend, 20 frontend) | jest, vitest |
-| Integration (real MySQL) | 16 cases in the 2 files this change touches (8 rotation + 8 migrate) | 2 | jest + `testDb.ts` — CI only, not runnable locally |
-| E2E | 2 tests in `refresh-race.spec.ts` (52 passing across the whole e2e suite) | 1 | Playwright — CI only, not runnable locally |
-| **Total** | **1245 unit executed here + 16 integration + 2 E2E (CI)** | **145** | |
+|---|---|---|---|
+| Unit | ~1150 | ~135 | Jest (backend), Vitest (frontend) |
+| Integration (real MySQL) | 10 named cases across the refresh work | 2 relevant of 10 | Jest, `jest.integration.config.js`, `maxWorkers: 1` |
+| E2E (real browser) | 4 named cases across the refresh work | 2 relevant of 10 | Playwright (chromium) |
+| **Total (locally executed)** | **1248** | **142** | |
 
-Every requirement whose correctness depends on real database semantics — rotation
-atomicity, reaping, family revocation, migration up and down — has real-MySQL
-coverage, and the cross-tab requirement has real-browser coverage. That is the right
-shape, and it is what caught all three defects this cycle. The one blocker below is
-precisely where that shape was not applied.
+The layering is appropriate. The behaviours that unit tests structurally cannot prove — MySQL clock semantics in `reapFamily`, real row-level rotation concurrency, migration index shape, and cross-tab browser behaviour — are all pushed to integration or e2e, which is exactly the correction this cycle's four escaped defects called for.
 
-### Changed File Coverage
-
-Coverage analysis not performed in this phase — no coverage run was executed against
-the changed file set. Informational only; not a failure.
+---
 
 ### Assertion Quality
 
-Audited every test file created or modified by this change: the backend rotation,
-session, cookie and middleware suites, both integration files, the four
-`frontend/src/lib/http` suites, and the e2e spec.
+Audited all 15 test files created or modified by this change.
 
-- Tautologies (`expect(true).toBe(true)` and equivalents): none found.
-- Assertions that never call production code: none found.
-- Ghost loops over possibly-empty collections: none found.
-- Smoke-test-only cases: none. The e2e tests assert URL, a hidden error element, and
-  a 200-status response wait — behaviour, not mere rendering.
-- `toBeDefined()` appears 4 times in `UserApiController.test.ts`, each paired with a
-  value assertion in the same test (e.g. `toMatchObject({ httpOnly: true, maxAge: REMEMBER_MAX_AGE })`),
-  so none stands alone as a type-only assertion.
-- Negative assertions are used correctly and meaningfully. The grace-hit test's
-  `expect(refreshCookieCall).toBeUndefined()` asserts the exact correctness property
-  the spec singles out, and has a companion positive case in the rotation test
-  directly above it.
+| File | Line | Assertion | Issue | Severity |
+|---|---|---|---|---|
+| `e2e/tests/auth.spec.ts` | 56 | test title "…while the access cookie stays short" | Title asserts the opposite of the body (line 114 asserts >29 days) | WARNING |
+| `backend/src/__tests__/apiAuthCookieLifecycle.test.ts` | 219, 243 | titles "…on CSRF/USER/REFRESH" | Bodies now also cover `AUTH_COOKIE`; titles are stale | WARNING |
 
-**Assertion quality**: all assertions verify real behaviour. 0 CRITICAL, 0 WARNING.
+No tautologies (`expect(true).toBe(true)`), no ghost loops, no assertions that never call production code, no smoke-test-only cases, and no mock-heavy files were found. Every `toBeDefined()` occurrence is a guard immediately followed by a value assertion in the same test (verified individually), which the audit explicitly permits. Mock-to-assertion ratios are healthy: `authFetch.test.ts` 8/19, `refreshSingleFlight.test.ts` 4/9, `credentials.test.ts` 0/21.
 
-The one assertion-strength failure in this change is not a trivial-assertion pattern
-but a wrong-layer one, recorded as the CRITICAL below: `refreshLimiter.test.ts`
-asserts the configuration handed to a mocked library rather than the response the
-scenario requires.
+**Assertion quality**: 0 CRITICAL, 2 WARNING (both are misleading titles, not weak assertions).
+
+---
 
 ### Quality Metrics
 
-**Linter**: clean — `pnpm lint` exit 0
-**Type Checker**: clean — `pnpm type-check` (`tsc --noEmit`) exit 0
-**Architecture guard**: clean — `pnpm --filter backend architecture:check` exit 0
-**250-line file cap**: respected. The largest changed file, `UserApiController.ts`,
-sits at exactly 250 — at the cap with zero headroom (SUGGESTION 3).
+**Linter**: Reported green by the orchestrator across both workspaces.
+**Type Checker**: Verified in this phase — `pnpm type-check` exit 0.
+**Architecture check / OpenAPI check / deploy-script tests / frontend quality-check / frontend build**: Reported green by the orchestrator.
+
+---
 
 ### Issues Found
 
-**CRITICAL**:
+**CRITICAL**
 
-1. **The refresh rate limit has no covering test — the scenario's normative claim is
-   unproven on the one endpoint that most needs it.**
-   `specs/refresh-token-rotation/spec.md` requires: "GIVEN a client exceeds the
-   configured refresh rate limit, WHEN it sends further `POST /api/users/refresh`
-   requests, THEN the response MUST be 429 Too Many Requests."
-   `refreshLimiter.test.ts` mocks `express-rate-limit` in its entirety
-   (`jest.mock('express-rate-limit', ...)` returning a pass-through), then asserts the
-   *options object* the module handed to that mock — `windowMs`, `max`,
-   `standardHeaders`, `legacyHeaders`, `statusCode: 429` — and that `next()` was
-   called. It never sends a request that exceeds the limit, and never observes a
-   429. The assertion is strictly weaker than the requirement: it proves the limiter
-   was configured, not that the endpoint throttles.
-   This matters more than the usual mock-coverage complaint. `POST /api/users/refresh`
-   is deliberately unauthenticated (no `apiAuthMiddleware`) and deliberately CSRF-exempt,
-   and design.md D5 names `refreshLimiter` as the *only* control standing between a
-   leaked or replayed refresh token and brute-force probing. The proposal lists
-   rate-limiting as CSRF defence #4. The whole exemption argument rests on a control
-   whose behaviour no test observes.
-   The fix is cheap and the pattern already exists in this repository:
-   `backend/src/__tests__/apiSecurity.test.js:220` (`returns 429 when request limit is
-   exceeded`) drives the real limiter through supertest with `NODE_ENV=production` and
-   asserts `res4.status === 429` plus the message body. That pattern was applied to
-   `/api/users/register` and not to the new refresh route.
+**CRITICAL-1 — The shipped access-cookie lifetime contradicts two spec files and `design.md`, in `MUST` language, and the contradiction is recorded nowhere in the contract.**
 
-**WARNING**:
+The fix for the logout defect changed `accessCookieOptions` so the `m3d_auth` cookie carries the *session* lifetime (2h, or 30d with remember-me) instead of the access-token TTL:
 
-1. **Logout does not revoke the family once the access token has expired — an
-   undocumented residual far larger than the one the proposal does document.**
-   `UserApiController.logout` obtains `familyId` from `jwt.verify(accessToken)`.
-   `jwt.verify` throws on an expired token, `tryReadFamilyId` returns `undefined`, and
-   revocation is skipped — cookies are cleared and 204 returned. The behaviour is
-   deliberate and tested (`UserApiController.test.ts:391`), and the refresh cookie
-   cannot substitute because it is path-scoped away from `/users/logout`.
-   Consequence: a user who logs out at any point after their 30-minute access token
-   expires clears their own browser but leaves the refresh-token family **live in the
-   database for up to 30 days**. For an already-stolen refresh token that is exactly
-   the failure HIGH-1 exists to close, and logout silently does not close it.
-   `proposal.md`'s "Residual exposure after logout" documents only the <=30-minute
-   stateless-access-token residue and never mentions this one, which is three orders
-   of magnitude longer.
-   Every spec scenario still passes on its literal wording ("GIVEN an *authenticated*
-   client"), which is why this is not the blocker — but the requirement prose promises
-   logout ends the session "server-side, not only client-side", and in this state it
-   does not.
-   Likely minimal fix, deliberately NOT applied (this phase is verification only):
-   `jwt.verify(token, getJwtSecret(), { ignoreExpiration: true })` in `tryReadFamilyId`.
-   The signature is still verified so the claim still cannot be forged; only the `exp`
-   check is relaxed, and revocation is precisely the operation that should outlive
-   expiry. This needs a maintainer decision, not an autonomous fix.
+```ts
+// backend/src/infrastructure/security/cookieOptions.ts:78-79
+export const accessCookieOptions = (remember?: boolean): CookieOptions =>
+  cookieOptions({ httpOnly: true, maxAge: authMaxAge(remember) });
+```
 
-2. **A spec file still carries the impossible grace wording — the five specs now
-   contradict one another.** `specs/remember-token-store/spec.md:8` describes
-   `successorHash` as "(nullable — set on rotation, **returned on a grace-window
-   hit**)". `specs/refresh-token-rotation/spec.md:51` states the opposite and explains
-   why: "`successor_hash` is a SHA-256 digest and the plaintext token is never stored,
-   so a grace hit **cannot** return the successor token — it must not try." The
-   rotation spec was corrected during the cycle; this delta was not. The implementation
-   follows the correct one.
-   Because `sdd-archive` publishes these deltas into the live capability specs,
-   archiving as-is would enshrine an unimplementable requirement in
-   `openspec/specs/remember-token-store/spec.md`. One-line fix in a spec file —
-   deliberately not made here, since this phase may not edit specs.
+Three governing documents still require the opposite, and none of them were updated:
 
-3. **Task 2.21 is marked complete but only half-delivered.** It claims an integration
-   test proving "logout revokes the family and a subsequent refresh with any of its
-   tokens is 401; a grace hit issues no `m3d_refresh` header". The DB half exists
-   (`revokeFamily marks every unrevoked row...`, `claimRotation refuses a revoked row`).
-   The HTTP half does not exist anywhere — there is no HTTP-level refresh integration
-   test in the repository (`users/refresh` appears in no `backend/src/**/*integration*`
-   file). Both behaviours are covered by unit tests instead, so nothing is untested;
-   the task text overstates the tier at which it was proven.
+1. `specs/session-cookie-security/spec.md:7` — "`m3d_auth` MUST use the access-token TTL (fixed, env-tunable, default 30 minutes)", with the scenario "Auth cookie expires with the access token → its `maxAge` MUST equal the access-token TTL".
+2. `specs/api-jwt-auth/spec.md:97` — "The access-token cookie's expiration MUST always equal the fixed access-token TTL regardless of 'remember me'", with the scenario "…AND the access-token cookie's expiration MUST remain the fixed access-token TTL".
+3. `design.md:91-92` — still specifies `accessCookieOptions = () => cookieOptions({ httpOnly: true, maxAge: ACCESS_TOKEN_TTL_SECONDS * 1000 })`.
 
-4. **`apply-progress.md` and `tasks.md` describe a superseded `reapFamily`.**
-   apply-progress deviation #4 and task 1.9 both say `reapFamily` uses "a computed
-   cutoff `Date`" / "ORM `destroy()` with a computed cutoff". The live code
-   (`SequelizeRememberTokenRepository.ts:126-137`) uses a **database-side**
-   `literal('NOW() - INTERVAL n SECOND')` with `Op.lte`. The record was never updated
-   after CI caught the two-clock bug (Node clock versus MySQL clock with no `timezone`
-   configured — the reaper deleted zero rows) and the second-precision bug (`<` compares
-   a `datetime` against itself within the same second). The code is right and its inline
-   comment documents both fixes well; the change artifacts are stale. This matters
-   because a reader trusting apply-progress would conclude a fixed bug is still live.
+This is not a documentation lag that testing would catch — the test suite was updated to assert the *negation* of the spec, so the contradiction is invisible to a green run:
 
-5. **PR2 and PR3 have no TDD evidence at all.** `apply-progress.md` is explicitly
-   "Batch 1 of N", covering only tasks 1.1-1.19, because the PR2 and PR3 apply agents
-   were killed by provider rate limits. 33 of 52 tasks therefore have no recorded RED
-   transition and no Safety Net. Under Strict TDD this is a real process-evidence gap.
-   Mitigating: outcomes were verified independently in this phase — every claimed test
-   file exists, the full suite passes, and the tests are high quality. What can no
-   longer be established is that RED genuinely preceded GREEN for those 33 tasks.
+```ts
+// backend/src/infrastructure/security/__tests__/cookieOptions.test.ts:65-76
+expect(options.maxAge).toBe(SESSION_MAX_AGE);
+expect(options.maxAge).not.toBe(ACCESS_TOKEN_TTL_SECONDS * 1000);
+...
+expect(accessCookieOptions(true).maxAge).toBe(REMEMBER_MAX_AGE);
+```
 
-6. **The login rate limit shares the CRITICAL's defect.** `loginLimiter.test.ts` uses
-   the identical fully-mocked pattern, so `api-jwt-auth`'s "API login exceeds rate
-   limit -> 429" scenario is also proven only by configuration. It is scored WARNING
-   rather than CRITICAL because it is a pre-existing convention that this change did
-   not author or modify, and because the login route sits behind no CSRF exemption.
-   Worth fixing with the same supertest pattern while it is fresh.
+**Correction to this phase's inputs.** The brief stated that "all five spec files were swept" during the fix. `git show 047dec6 --name-only` shows the commit touched exactly one spec file — `specs/remember-token-store/spec.md` — plus `tasks.md` and `verify-report.md`. `session-cookie-security/spec.md`, `api-jwt-auth/spec.md`, and `design.md` are all still at commit `b8d4528` and still describe the pre-fix behaviour. The sweep covered the grace mechanic only; the lifetime change was never propagated. The change *is* recorded in `apply-progress.md:139`, so the information exists — it simply never reached the contract.
 
-7. **Cookie-scoping rejection is asserted as an attribute, not observed as behaviour.**
-   "Refresh cookie is not sent to other endpoints" and the browser half of the
-   cross-site argument both reduce to `sameSite: 'lax'` and `path: '/api/users/refresh'`
-   being present on the issued cookie. Those are the right attributes, correctly
-   asserted, and the scenarios' GIVENs stipulate the browser behaviour — which is why
-   both are scored COMPLIANT. But the e2e suite already drives a real browser holding a
-   real refresh cookie and could carry the negative assertion (request another endpoint,
-   assert `m3d_refresh` absent) for a few lines.
+**Assessment.** The implemented behaviour is defensible and I verified it introduces no authentication weakness (see re-check 2 above). The likely correct remedy is to **amend the two spec files and `design.md`**, and record the lifetime change as an explicit accepted deviation alongside the other four — not to revert the code. But that is a maintainer's decision, not a verifier's. It blocks archive because archiving would promote spec deltas into the baseline capability specs while the shipped code contradicts them in `MUST` language, leaving a contract that is wrong from day one, actively defended by passing tests.
 
-**SUGGESTION**:
+**WARNING**
 
-1. `tasks.md`'s "Verification findings" #4 is now itself stale: it says the rotation
-   spec's grace scenario is stale and that task 2.10 implements something the spec does
-   not say. The spec has since been corrected, so the note describes a conflict that no
-   longer exists and points at the wrong file — the stale wording moved to
-   `remember-token-store` (WARNING 2).
-2. `proposal.md:28` and `:78` still describe the successor as "returned on a grace hit".
-   Superseded by the proposal's own "Corrected grace mechanic" section, so harmless
-   under the document's stated precedence, but the migration table and the risk table
-   both read as current fact and would benefit from an inline pointer.
-3. `UserApiController.ts` sits at exactly 250 lines — precisely the project cap. The
-   next line added to it breaks the gate. The `sessionCookies.ts` extraction bought
-   exactly the room PR2 needed and no more; the deferred reuse-revocation follow-up
-   will need another extraction first.
-4. The `familyId` access-JWT claim is a genuine architectural decision made during
-   apply — it is what makes logout revocation possible at all given path scoping — but
-   it survives only in a code comment. It belongs in `design.md`, especially since it
-   is the mechanism WARNING 1 turns on.
+1. **The login rate-limit requirement is still in the mock-only position the previous verify flagged for refresh.** `api-jwt-auth` scenario "API login exceeds rate limit" requires a 429. Its only coverage is `loginLimiter.test.ts`, which mocks `express-rate-limit` wholesale and therefore proves configuration, not throttling. Real supertest 429 coverage exists for `/api/users/register` and (now) `/api/users/refresh`, but **not** for `/api/users/login` — the actual credential brute-force surface. Mitigating: the mount is statically verified (`users.ts:176`) and the identical pattern is proven end-to-end twice in the same file, so this is weaker than the original refresh gap. Closing it is roughly a ten-line addition mirroring the block at `apiSecurity.test.js:243`. **This is the requirement whose only coverage still mocks the thing being asserted.**
+2. **Retention is not applied on a grace-hit refresh.** `refresh-token-rotation` states "Each successful refresh MUST delete rows from that token's family that are already superseded past the grace window". `reapFamily` is called only from `RotateRefreshTokenUseCase:52`, so a `grace` outcome — which is a successful refresh — performs no reap. Impact is low (the next rotation reaps), but the implementation is narrower than the requirement text.
+3. **Stale titles and comments now contradict the code they describe.** All are artefacts of the lifetime change: `sessionCookies.ts:49-50` ("The cookie itself is fixed at `ACCESS_TOKEN_TTL_SECONDS` regardless of 'remember me'") is contradicted by lines 56-58 of the same docblock; `cookieOptions.test.ts:127-129` says the access TTL "is fixed at ACCESS_TOKEN_TTL_SECONDS — see the describe block above", where that block asserts the opposite; `e2e/tests/auth.spec.ts:56` and `:88`; `apiAuthCookieLifecycle.test.ts:219,243`. Each is individually trivial; together they are the same misinformation the specs carry, and they will mislead the next reader.
+4. **TDD evidence is missing for 33 of 52 tasks.** `apply-progress.md` discloses this honestly (PR2/PR3 apply agents killed by provider rate limits). Tests demonstrably exist and pass for that work, so this is a gap in the record rather than evidence of a gap in practice — but the strict-TDD claim cannot be independently confirmed for those tasks.
+5. **Integration and e2e tiers were not executed in this phase.** Port 3306 is held by the maintainer's MariaDB. Eight scenarios in the matrix above rest on CI evidence at `047dec6` rather than on execution observed here. Notably, three of this cycle's four escaped defects were caught only at those tiers.
+
+**SUGGESTION**
+
+1. The access cookie now persists a signed JWT containing `userId`, `email`, `idRole`, and `category` for up to 30 days instead of 30 minutes. It is `httpOnly`, `sameSite: lax`, and `secure` in production, and the token is expired and unusable for authentication — but the information-at-rest window widened by three orders of magnitude. If only `familyId` is needed after expiry, a dedicated minimal cookie would carry less.
+2. `readFamilyIdFromAccessToken` does not check `typ`. Harmless today because refresh tokens are opaque random bytes and no other JWT type exists, but if a second signed token type is ever introduced it could be replayed into logout. Adding a `typ === 'access'` check costs one line and keeps the invariant local.
+3. Consider a server-side assertion for "Cross-site refresh request is rejected" and "Refresh cookie is not sent to other endpoints". Both currently rest on browser behaviour that no test observes directly.
+
+---
 
 ### Verdict
 
-**FAIL** — one spec scenario has no covering test, so the evidence is incomplete.
+**FAIL**
 
-This is a narrow, precise failure and should not be read as a broad one. All 14
-requirements are implemented in live code, 40 of 42 scenarios are fully covered, all
-52 tasks are genuinely complete, and every executed gate is green: 1245 unit tests,
-lint, type-check and the architecture guard, plus real-MySQL integration and Playwright
-e2e green in CI. The three accepted deviations were verified as actually shipped — the
-grace hit issues an access cookie and no refresh cookie, logout revokes the family
-rather than the access token, and the access TTL is 30 minutes. Both real-MySQL
-`reapFamily` bugs and the guest-401 browser regression are fixed in the live code, and
-the test suite that caught them is well built.
-
-What blocks the pass is that the rate limiter guarding the new unauthenticated,
-CSRF-exempt refresh endpoint is proven only by inspecting its own configuration. Given
-that this change's other three defects were all invisible to mocks and surfaced only
-against real MySQL and a real browser, accepting a mock-configured security control as
-proof would repeat precisely the mistake this cycle already paid for three times. The
-remedy is one supertest test copied from a pattern that already exists in this
-repository.
-
-Two further items should be settled before archive regardless of the blocker: the spec
-contradiction in `remember-token-store` (WARNING 2), which archive would publish as a
-live capability spec, and a maintainer decision on the expired-access-token logout gap
-(WARNING 1), which is a real and undocumented security residual rather than a
-documentation defect.
+The change is functionally sound, well-tested, and all three findings from the previous verify are genuinely resolved — but the shipped `m3d_auth` cookie lifetime contradicts two spec files and `design.md` in `MUST` language, with passing tests asserting the negation, and the deviation was never recorded in the contract.
