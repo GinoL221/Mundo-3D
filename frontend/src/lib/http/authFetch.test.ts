@@ -76,8 +76,10 @@ describe('authFetch', () => {
     expect(ensureRefreshedMock).toHaveBeenCalledTimes(1);
   });
 
-  it('on a failed refresh, redirects to /login immediately without waiting on the logout call', async () => {
-    stubCookie('');
+  it('on a failed refresh for a real session, redirects to /login immediately without waiting on the logout call', async () => {
+    // A session existed (m3d_user present) and could not be renewed — that is
+    // a genuine expiry, so bouncing to /login is right.
+    stubCookie('m3d_user=%7B%22idRole%22%3A2%7D');
     const win = { location: { href: '' } };
     vi.stubGlobal('window', win);
     const unauthorized = new Response(null, { status: 401 });
@@ -102,6 +104,29 @@ describe('authFetch', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock.mock.calls[1][0]).toContain('/api/users/logout');
     resolveLogout(new Response(null, { status: 204 }));
+  });
+
+  // Regression found by the cart e2e, not by any unit test: CartList.astro
+  // hydrates the cart on load for EVERY visitor, so a guest browsing /cart
+  // issues a credentialed GET, gets 401, fails a refresh it never had a token
+  // for — and was then forcibly navigated to /login. A visitor who never
+  // logged in must not be bounced anywhere; the caller handles the 401.
+  it('does NOT redirect when there was no session to begin with', async () => {
+    stubCookie('');
+    const win = { location: { href: '' } };
+    vi.stubGlobal('window', win);
+    const unauthorized = new Response(null, { status: 401 });
+    const fetchMock = vi.fn().mockResolvedValue(unauthorized);
+    vi.stubGlobal('fetch', fetchMock);
+    ensureRefreshedMock.mockResolvedValue(false);
+
+    const { authFetch } = await import('./authFetch');
+    const result = await authFetch('/api/cart', { method: 'GET' });
+
+    expect(win.location.href).toBe('');
+    expect(result).toBe(unauthorized);
+    // No logout call either — there is no session to end.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('never calls fetch against the refresh endpoint itself', async () => {
