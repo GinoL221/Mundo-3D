@@ -39,7 +39,28 @@ describe('apiAuthMiddleware', () => {
     expect(res.json).toHaveBeenCalledWith({ error: 'Token de autenticación no proporcionado' });
   });
 
-  it('returns 401 JSON error when the auth cookie holds an invalid or expired token', () => {
+  // This is the property that makes a session-length `m3d_auth` cookie safe.
+  // The cookie deliberately outlives its token so `logout` can read
+  // `familyId` from an expired one — acceptable only while that expired token
+  // authenticates nothing. Nothing asserted it before: the test below is
+  // named "invalid or expired" but passes a malformed string, which never
+  // reaches `jwt.verify`'s expiry branch at all.
+  it('returns 401 for a correctly signed token whose exp has passed', () => {
+    const expired = jwt.sign(
+      { userId: 1, email: 'user@test.com', category: 'User', idRole: 2, typ: 'access' },
+      JWT_SECRET,
+      { expiresIn: -60 }
+    );
+    req.cookies = { [AUTH_COOKIE]: expired };
+
+    apiAuthMiddleware(req as Request, res as Response, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Token de autenticación inválido o expirado' });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 JSON error when the auth cookie holds a malformed token', () => {
     req.cookies = { [AUTH_COOKIE]: 'invalid-token-value' };
     apiAuthMiddleware(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(401);

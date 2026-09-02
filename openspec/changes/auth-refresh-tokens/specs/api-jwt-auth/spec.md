@@ -103,7 +103,7 @@ The `m3d_auth` **cookie** does follow the remember-me lifetime, unlike the token
 - GIVEN a login request that indicates "remember me"
 - WHEN the login succeeds
 - THEN the refresh token's expiration MUST exceed the default 2h
-- AND the access-token cookie's expiration MUST remain the fixed access-token TTL
+- AND the access **token**'s own `exp` MUST remain the fixed access-token TTL, while its cookie's `maxAge` follows the extended session (see `session-cookie-security`)
 
 #### Scenario: Remember-me not requested keeps default refresh lifetime
 - GIVEN a login request that does not indicate "remember me"

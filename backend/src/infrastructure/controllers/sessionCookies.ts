@@ -46,8 +46,10 @@ export const generateRefreshToken = (): string => crypto.randomBytes(32).toStrin
 /**
  * `typ: 'access'` is added in exactly this one place (design.md D3) — the
  * one `jwt.sign` call used by login, register, and refresh. `apiAuthMiddleware`
- * requires it. The cookie itself is fixed at `ACCESS_TOKEN_TTL_SECONDS`
- * regardless of "remember me" (api-jwt-auth spec).
+ * requires it. The TOKEN's `exp` is fixed at `ACCESS_TOKEN_TTL_SECONDS`
+ * regardless of "remember me"; the COOKIE carrying it follows the session
+ * lifetime instead, so `logout` can still read `familyId` from an expired
+ * token (api-jwt-auth and session-cookie-security specs).
  */
 export const issueAccessCookie = (res: Response, jwtPayload: JwtPayload, remember?: boolean): void => {
   const token = jwt.sign({ ...jwtPayload, typ: 'access' }, getJwtSecret(), {
@@ -66,7 +68,7 @@ export const issueRefreshCookie = (res: Response, plainToken: string, maxAge?: n
 /**
  * Issues all 4 session cookies at login/register. `remember` governs the
  * refresh token and the CSRF/display cookies — the access cookie's TTL is
- * fixed, see `issueAccessCookie`.
+ * fixed while its cookie follows the session — see `issueAccessCookie`.
  */
 export const setSessionCookies = (
   res: Response,
