@@ -238,6 +238,63 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
       expect(await countFamilyRows(familyId)).toBe(0);
     });
 
+    // PR2 task 2.21. Logout revokes the whole family, and every token in it
+    // must stop working — not just the one the browser happened to hold. The
+    // unit tests mock the repository, so only a real database proves the
+    // UPDATE actually matches every row sharing the family_id.
+    it('revokeFamily marks every unrevoked row in the family, and only that family', async () => {
+      const familyId = crypto.randomUUID();
+      const otherFamilyId = crypto.randomUUID();
+      const expiry = new Date(Date.now() + 3600 * 1000);
+
+      const firstHash = `revoke-a-${crypto.randomUUID()}`;
+      const secondHash = `revoke-b-${crypto.randomUUID()}`;
+      const bystanderHash = `revoke-other-${crypto.randomUUID()}`;
+      await seedCurrentToken(userId, familyId, firstHash, expiry);
+      await seedCurrentToken(userId, familyId, secondHash, expiry);
+      await seedCurrentToken(userId, otherFamilyId, bystanderHash, expiry);
+
+      const revoked = await repository.revokeFamily(familyId);
+
+      expect(revoked).toBe(2);
+      expect((await repository.findByHash(firstHash))?.revokedAt).not.toBeNull();
+      expect((await repository.findByHash(secondHash))?.revokedAt).not.toBeNull();
+      // A different login's family must be untouched — a logout on one device
+      // cannot be allowed to end every other session.
+      expect((await repository.findByHash(bystanderHash))?.revokedAt).toBeNull();
+    });
+
+    it('revokeFamily is idempotent — a second call revokes nothing further', async () => {
+      const familyId = crypto.randomUUID();
+      const expiry = new Date(Date.now() + 3600 * 1000);
+      await seedCurrentToken(userId, familyId, `idem-${crypto.randomUUID()}`, expiry);
+
+      expect(await repository.revokeFamily(familyId)).toBe(1);
+      // The `revokedAt: null` guard in the UPDATE is what makes this 0 rather
+      // than re-stamping a new timestamp over the original revocation.
+      expect(await repository.revokeFamily(familyId)).toBe(0);
+    });
+
+    // A revoked token must not be claimable, or a logged-out session could be
+    // rotated back into a live one.
+    it('claimRotation refuses a revoked row', async () => {
+      const familyId = crypto.randomUUID();
+      const expiry = new Date(Date.now() + 3600 * 1000);
+      const presentedHash = `revoked-claim-${crypto.randomUUID()}`;
+      await seedCurrentToken(userId, familyId, presentedHash, expiry);
+      await repository.revokeFamily(familyId);
+
+      const claimed = await db.sequelize.transaction(async (transaction: Transaction) =>
+        repository.claimRotation({
+          presentedHash,
+          successorHash: `never-${crypto.randomUUID()}`,
+          tx: asTx(transaction),
+        })
+      );
+
+      expect(claimed).toBe(false);
+    });
+
     it('does not delete a row still inside its grace window', async () => {
       const familyId = crypto.randomUUID();
       const currentHash = `current-${crypto.randomUUID()}`;
