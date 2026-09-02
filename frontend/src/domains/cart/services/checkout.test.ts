@@ -191,6 +191,21 @@ describe('checkout', () => {
     expect(options.headers['Idempotency-Key'].length).toBeGreaterThan(0);
   });
 
+  it('retries transparently after a 401 triggers a successful refresh (authFetch, task 3.9)', async () => {
+    stubCookie(LOGGED_IN_COOKIE);
+    seedCart([{ productId: 1, name: 'X', image: 'a.jpg', unitPrice: 100, quantity: 1 }]);
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(401, {})) // initial POST /api/orders, expired access token
+      .mockResolvedValueOnce(jsonResponse(200, {})) // POST /api/users/refresh succeeds
+      .mockResolvedValueOnce(jsonResponse(201, SAMPLE_ORDER_DTO)); // retried POST
+
+    const result = await checkout();
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[1][0]).toContain('/api/users/refresh');
+    expect(result).toEqual({ ok: true, idOrder: 41, totalAmount: 3000 });
+  });
+
   it('reuses the SAME idempotency key on a NETWORK-failure retry of the same attempt', async () => {
     stubCookie(LOGGED_IN_COOKIE);
     seedCart([{ productId: 1, name: 'X', image: 'a.jpg', unitPrice: 100, quantity: 1 }]);

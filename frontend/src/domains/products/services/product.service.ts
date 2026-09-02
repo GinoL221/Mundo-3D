@@ -11,6 +11,9 @@ export type FetchProductByIdResult =
  * as its own `not-found` reason (distinct from other server errors) so
  * callers can render "product not found" separately from a generic load
  * failure, mirroring `product.astro`'s original inline behavior.
+ *
+ * Deliberately plain `fetch`, not `authFetch` (design.md D6, task 3.10): a
+ * public, no-credentials read can never 401.
  */
 export async function fetchProductById(id: string): Promise<FetchProductByIdResult> {
   let res: Response;
@@ -40,6 +43,10 @@ export type FetchProductsResult =
  * `GET /api/products` — full unpaginated product list, used by the
  * homepage's "Nuestros Seleccionados" grid (contrast with
  * `product.search.service.ts`'s paginated `/api/products/search`).
+ *
+ * Deliberately plain `fetch`, not `authFetch` (design.md D6, task 3.10) —
+ * same reason as `fetchProductById`: a public, no-credentials read cannot
+ * 401.
  */
 export async function fetchProducts(): Promise<FetchProductsResult> {
   let res: Response;

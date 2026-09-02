@@ -59,6 +59,11 @@ export function broadcastSessionChanged(): void {
  */
 export async function clearSession(): Promise<void> {
   try {
+    // Deliberately plain `fetch`, not `authFetch` (design.md D6, task
+    // 3.10): this IS one of the 3 excluded auth endpoints — logout always
+    // returns 204 "with no active session" (see the doc comment above), so
+    // a 401 here would mean something is already broken, and retrying it
+    // via a refresh attempt would loop.
     await fetch(`${API_URL}/api/users/logout`, {
       method: 'POST',
       credentials: 'include',

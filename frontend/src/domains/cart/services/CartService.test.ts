@@ -378,6 +378,22 @@ describe('CartService', () => {
       );
     });
 
+    it('retries transparently after a 401 triggers a successful refresh (authFetch, task 3.9)', async () => {
+      stubCookie(LOGGED_IN_COOKIE);
+      fetchMock
+        .mockResolvedValueOnce({ ok: false, status: 401 }) // initial PUT, expired access token
+        .mockResolvedValueOnce({ ok: true, status: 200 }) // POST /api/users/refresh succeeds
+        .mockResolvedValueOnce({ ok: true }); // retried PUT
+
+      CartService.addToCart(buildProduct({ id: 7 }));
+      await flushSync();
+
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(fetchMock.mock.calls[1][0]).toContain('/api/users/refresh');
+      // No rollback: the retried request eventually succeeded.
+      expect(cartItems.get()).toEqual([expect.objectContaining({ productId: 7 })]);
+    });
+
     it('does not roll back state when the backend sync succeeds', async () => {
       stubCookie(LOGGED_IN_COOKIE);
       fetchMock.mockResolvedValue({ ok: true });

@@ -60,6 +60,20 @@ describe('ProductAdminService', () => {
 
       await expectApiError(() => ProductAdminService.create(new FormData()), 400, 'Debe ingresar un nombre');
     });
+
+    it('retries transparently after a 401 triggers a successful refresh (authFetch, task 3.9)', async () => {
+      const dto = { idProduct: 1, nameProduct: 'Figura Mario', stock: 0 };
+      fetchMock
+        .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
+        .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) })
+        .mockResolvedValueOnce({ ok: true, json: async () => dto });
+
+      const result = await ProductAdminService.create(new FormData());
+
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(fetchMock.mock.calls[1][0]).toContain('/api/users/refresh');
+      expect(result).toEqual(dto);
+    });
   });
 
   describe('update', () => {
@@ -85,6 +99,20 @@ describe('ProductAdminService', () => {
 
       await expectApiError(() => ProductAdminService.update(999, new FormData()), 404, 'Producto no encontrado');
     });
+
+    it('retries transparently after a 401 triggers a successful refresh (authFetch, task 3.9)', async () => {
+      const dto = { idProduct: 7, nameProduct: 'Figura Sonic', stock: 5 };
+      fetchMock
+        .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
+        .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) })
+        .mockResolvedValueOnce({ ok: true, json: async () => dto });
+
+      const result = await ProductAdminService.update(7, new FormData());
+
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(fetchMock.mock.calls[1][0]).toContain('/api/users/refresh');
+      expect(result).toEqual(dto);
+    });
   });
 
   describe('remove', () => {
@@ -105,6 +133,18 @@ describe('ProductAdminService', () => {
       fetchMock.mockResolvedValue({ ok: false, status: 403, json: async () => ({ error: 'Forbidden' }) });
 
       await expectApiError(() => ProductAdminService.remove(3), 403, 'Forbidden');
+    });
+
+    it('retries transparently after a 401 triggers a successful refresh (authFetch, task 3.9)', async () => {
+      fetchMock
+        .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
+        .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) })
+        .mockResolvedValueOnce({ ok: true, status: 204 });
+
+      await ProductAdminService.remove(3);
+
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(fetchMock.mock.calls[1][0]).toContain('/api/users/refresh');
     });
   });
 
@@ -130,6 +170,20 @@ describe('ProductAdminService', () => {
       fetchMock.mockResolvedValue({ ok: false, status: 409, json: async () => ({ error: 'Stock insuficiente' }) });
 
       await expectApiError(() => ProductAdminService.adjustStock(3, -50), 409, 'Stock insuficiente');
+    });
+
+    it('retries transparently after a 401 triggers a successful refresh (authFetch, task 3.9)', async () => {
+      const dto = { idProduct: 3, stock: 8 };
+      fetchMock
+        .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
+        .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) })
+        .mockResolvedValueOnce({ ok: true, json: async () => dto });
+
+      const result = await ProductAdminService.adjustStock(3, 3);
+
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(fetchMock.mock.calls[1][0]).toContain('/api/users/refresh');
+      expect(result).toEqual(dto);
     });
   });
 

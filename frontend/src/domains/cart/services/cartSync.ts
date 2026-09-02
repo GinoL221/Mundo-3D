@@ -1,4 +1,4 @@
-import { API_URL, getSessionUser, withCredentials } from '../../../config';
+import { API_URL, authFetch, getSessionUser } from '../../../config';
 import { cartItems, persistCart, type CartItem } from './cartState';
 
 // Monotonic sequence guard: syncToBackend calls are fire-and-forget with no
@@ -21,25 +21,22 @@ export async function syncToBackend(items: CartItem[], previousItems: CartItem[]
 
   try {
     const payload = items.map((i) => ({ productId: i.productId, quantity: i.quantity }));
-    const res = await fetch(
-      `${API_URL}/api/cart`,
-      withCredentials({
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ items: payload }),
-        // `keepalive` gives this request its best chance of actually reaching
-        // the server if the page navigates away right after this call (e.g.
-        // addToCart immediately followed by the user opening /cart, or
-        // checkout()'s redirect to '/'). It does not cover the CORS preflight
-        // that a cross-origin PUT with a JSON body + credentials triggers, so
-        // a fast-enough navigation can still cancel the request before we
-        // ever get a response — see the catch block below for how that case
-        // is handled.
-        keepalive: true,
-      })
-    );
+    const res = await authFetch(`${API_URL}/api/cart`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ items: payload }),
+      // `keepalive` gives this request its best chance of actually reaching
+      // the server if the page navigates away right after this call (e.g.
+      // addToCart immediately followed by the user opening /cart, or
+      // checkout()'s redirect to '/'). It does not cover the CORS preflight
+      // that a cross-origin PUT with a JSON body + credentials triggers, so
+      // a fast-enough navigation can still cancel the request before we
+      // ever get a response — see the catch block below for how that case
+      // is handled.
+      keepalive: true,
+    });
 
     if (!res.ok) {
       // The backend saw the request and explicitly rejected this cart

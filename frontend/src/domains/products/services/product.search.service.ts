@@ -19,6 +19,10 @@ export type FetchProductSearchResult =
  * defined/non-empty criteria members, mirroring order.service.ts's
  * `fetchMyOrders`. Blank/whitespace-only `search` is trimmed away entirely
  * so a plain filter-only request never sends `search=`.
+ *
+ * Deliberately plain `fetch`, not `authFetch` (design.md D6, task 3.10):
+ * this is the public, unauthenticated search endpoint noted above — it
+ * sends no credentials and can never 401.
  */
 export async function fetchProductSearch(criteria: ProductSearchCriteria): Promise<FetchProductSearchResult> {
   const params = new URLSearchParams();
@@ -65,6 +69,9 @@ interface FranchiseDTO {
  * "Dependencies"). Falls back to empty arrays on any failure so the grid
  * still renders with the dropdowns left empty rather than blocking the
  * whole page on a filter-options failure.
+ *
+ * Both calls are deliberately plain `fetch`, not `authFetch` (design.md D6,
+ * task 3.10): both are public, no-credentials reads that cannot 401.
  */
 export async function fetchFilterOptions(): Promise<{ categories: FilterOption[]; franchises: FilterOption[] }> {
   try {
