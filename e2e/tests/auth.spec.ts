@@ -53,7 +53,7 @@ test.describe('Authentication E2E Tests', () => {
     await expect(errorBox).not.toBeEmpty();
   });
 
-  test('Recuérdame checkbox issues a 30-day auth cookie instead of the 2h default', async ({ page }) => {
+  test('Recuérdame puts 30 days on the refresh cookie while the access cookie stays short', async ({ page }) => {
     const rememberEmail = `remember_${Date.now()}@example.com`;
 
     // Register a dedicated user so this test doesn't depend on run order
@@ -84,22 +84,35 @@ test.describe('Authentication E2E Tests', () => {
     await page.click('#login-btn');
     await expect(page).toHaveURL('/');
 
+    // The access/refresh split moved the remember-me distinction OFF the
+    // access cookie. `m3d_auth` is now always short-lived; the session's real
+    // length lives on `m3d_refresh`, which is what logout revokes.
     const cookies = await page.context().cookies();
-    const authCookie = cookies.find((c) => c.name === 'm3d_auth');
-    expect(authCookie).toBeDefined();
-
     const nowSeconds = Date.now() / 1000;
-    const remainingSeconds = (authCookie!.expires as number) - nowSeconds;
+
+    const refreshCookie = cookies.find((c) => c.name === 'm3d_refresh');
+    expect(refreshCookie).toBeDefined();
+    const refreshRemaining = (refreshCookie!.expires as number) - nowSeconds;
     const thirtyDaysSeconds = 30 * 24 * 60 * 60;
 
-    // Generous tolerance for test/CI clock skew and request latency — the
-    // point is distinguishing "~30 days" from the 2h default, not asserting
-    // an exact second.
-    expect(remainingSeconds).toBeGreaterThan(thirtyDaysSeconds - 3600);
-    expect(remainingSeconds).toBeLessThan(thirtyDaysSeconds + 3600);
+    // Generous tolerance for CI clock skew and request latency — the point is
+    // distinguishing "~30 days" from the 2h default, not an exact second.
+    expect(refreshRemaining).toBeGreaterThan(thirtyDaysSeconds - 3600);
+    expect(refreshRemaining).toBeLessThan(thirtyDaysSeconds + 3600);
+
+    // Scoped to the refresh route, so it is never sent on any other request.
+    expect(refreshCookie!.path).toBe('/api/users/refresh');
+
+    // The access cookie is unaffected by the checkbox — well under an hour
+    // either way, which is the property that actually bounds how long a
+    // captured token outlives a logout.
+    const authCookie = cookies.find((c) => c.name === 'm3d_auth');
+    expect(authCookie).toBeDefined();
+    const authRemaining = (authCookie!.expires as number) - nowSeconds;
+    expect(authRemaining).toBeLessThan(60 * 60);
   });
 
-  test('Leaving Recuérdame unchecked keeps the 2h default auth cookie lifetime', async ({ page }) => {
+  test('Leaving Recuérdame unchecked keeps the 2h default on the refresh cookie', async ({ page }) => {
     await page.goto('/login');
     await page.fill('#email', testEmail);
     await page.fill('#password', testPassword);
@@ -107,15 +120,21 @@ test.describe('Authentication E2E Tests', () => {
     await expect(page).toHaveURL('/');
 
     const cookies = await page.context().cookies();
-    const authCookie = cookies.find((c) => c.name === 'm3d_auth');
-    expect(authCookie).toBeDefined();
-
     const nowSeconds = Date.now() / 1000;
-    const remainingSeconds = (authCookie!.expires as number) - nowSeconds;
+
+    const refreshCookie = cookies.find((c) => c.name === 'm3d_refresh');
+    expect(refreshCookie).toBeDefined();
+    const refreshRemaining = (refreshCookie!.expires as number) - nowSeconds;
     const twoHoursSeconds = 2 * 60 * 60;
 
-    expect(remainingSeconds).toBeGreaterThan(twoHoursSeconds - 300);
-    expect(remainingSeconds).toBeLessThan(twoHoursSeconds + 300);
+    expect(refreshRemaining).toBeGreaterThan(twoHoursSeconds - 300);
+    expect(refreshRemaining).toBeLessThan(twoHoursSeconds + 300);
+
+    // Same short access cookie as the remembered case — the checkbox governs
+    // the refresh token only.
+    const authCookie = cookies.find((c) => c.name === 'm3d_auth');
+    expect(authCookie).toBeDefined();
+    expect((authCookie!.expires as number) - nowSeconds).toBeLessThan(60 * 60);
   });
 
   test('m3d_auth is httpOnly (invisible to document.cookie) while m3d_user/m3d_csrf are readable', async ({ page }) => {
