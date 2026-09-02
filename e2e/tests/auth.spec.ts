@@ -103,13 +103,15 @@ test.describe('Authentication E2E Tests', () => {
     // Scoped to the refresh route, so it is never sent on any other request.
     expect(refreshCookie!.path).toBe('/api/users/refresh');
 
-    // The access cookie is unaffected by the checkbox — well under an hour
-    // either way, which is the property that actually bounds how long a
-    // captured token outlives a logout.
+    // The access COOKIE now follows the session too, so logout can read
+    // `familyId` from it even after the token inside has expired. What stays
+    // short is the TOKEN's own `exp`, which `apiAuthMiddleware` enforces —
+    // not observable from the cookie jar, so it is asserted in the backend
+    // unit suite instead of here.
     const authCookie = cookies.find((c) => c.name === 'm3d_auth');
     expect(authCookie).toBeDefined();
     const authRemaining = (authCookie!.expires as number) - nowSeconds;
-    expect(authRemaining).toBeLessThan(60 * 60);
+    expect(authRemaining).toBeGreaterThan(thirtyDaysSeconds - 3600);
   });
 
   test('Leaving Recuérdame unchecked keeps the 2h default on the refresh cookie', async ({ page }) => {
@@ -130,11 +132,13 @@ test.describe('Authentication E2E Tests', () => {
     expect(refreshRemaining).toBeGreaterThan(twoHoursSeconds - 300);
     expect(refreshRemaining).toBeLessThan(twoHoursSeconds + 300);
 
-    // Same short access cookie as the remembered case — the checkbox governs
-    // the refresh token only.
+    // The access cookie tracks the same session length (see the remembered
+    // case above for why the cookie outlives its token).
     const authCookie = cookies.find((c) => c.name === 'm3d_auth');
     expect(authCookie).toBeDefined();
-    expect((authCookie!.expires as number) - nowSeconds).toBeLessThan(60 * 60);
+    const authRemaining = (authCookie!.expires as number) - nowSeconds;
+    expect(authRemaining).toBeGreaterThan(twoHoursSeconds - 300);
+    expect(authRemaining).toBeLessThan(twoHoursSeconds + 300);
   });
 
   test('m3d_auth is httpOnly (invisible to document.cookie) while m3d_user/m3d_csrf are readable', async ({ page }) => {

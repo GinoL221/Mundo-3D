@@ -61,42 +61,42 @@ Chain strategy: stacked-to-main
 
 ## PR 2 — Refresh endpoint, `typ` claim, cookie split, logout revocation
 
-- [ ] 2.1 RED: characterization tests for cookie-issuing behavior (names/flags/maxAge) as it exists today in `UserApiController.ts`, to catch regressions during extraction.
-- [ ] 2.2 GREEN: extract `setSessionCookies`, `issueAccessCookie`, `issueRefreshCookie`, `clearSessionCookies` into `backend/src/infrastructure/controllers/sessionCookies.ts`; `UserApiController.ts` imports from it (must drop below 250 lines before 2.13 adds the refresh handler).
-- [ ] 2.3 RED: `cookieOptions.ts` unit tests — optional `path` (default `/`), `REFRESH_COOKIE`, `REFRESH_COOKIE_PATH`, `ACCESS_TOKEN_TTL_SECONDS` (env-tunable, default 1800), `accessCookieOptions()`/`refreshCookieOptions(maxAge?)` set/clear flag symmetry including `path`.
-- [ ] 2.4 GREEN: modify `backend/src/infrastructure/security/cookieOptions.ts` per D4; retire `authExpiresInSeconds`.
-- [ ] 2.5 RED: `apiAuthMiddleware` unit test — rejects a validly-signed, unexpired token missing `typ` or with `typ !== 'access'`.
-- [ ] 2.6 GREEN: modify `backend/src/infrastructure/middlewares/auth.ts` — add `typ` to `DecodedToken`, enforce it.
-- [ ] 2.7 GREEN: `issueAccessCookie` (`sessionCookies.ts`) sets `typ: 'access'` in the one `jwt.sign` call used by login/register/refresh.
-- [ ] 2.8 RED: `refreshLimiter` unit test — `REFRESH_LIMIT_WINDOW`/`REFRESH_LIMIT_MAX` env vars, same `JEST_WORKER_ID` escape hatch as `loginLimiter`.
-- [ ] 2.9 GREEN: create `backend/src/infrastructure/middlewares/refreshLimiter.ts`, mirroring `loginLimiter.ts`.
-- [ ] 2.10 RED: `RefreshSessionUseCase` branch-table unit tests — absent/revoked(before grace check)/expired/current(rotate)/in-grace(access-only, **no** refresh `Set-Cookie`)/replay-past-grace(401, no revocation). Implements proposal's corrected mechanic, not the stale `spec.md` wording (finding #4 above).
-- [ ] 2.11 GREEN: create `backend/src/application/use-cases/RefreshSessionUseCase.ts`.
-- [ ] 2.12 RED: `UserApiController.refresh` test — 200 with expired access + valid refresh; 401 on absent/expired/revoked; refresh cookie set only on rotation, never on a grace hit.
-- [ ] 2.13 GREEN: add `refresh` handler to `UserApiController.ts`.
-- [ ] 2.14 RED: `UserApiController.logout` test — revokes the refresh family, clears all 4 cookies, still 204 with no active session.
-- [ ] 2.15 GREEN: modify `logout` to call `RevokeRefreshTokenUseCase` and clear the refresh cookie via `sessionCookies.ts`.
-- [ ] 2.16 GREEN: modify `login`/`register` to call `CreateRememberTokenUseCase` and issue the refresh cookie (2h default / 30d on `remember`), access cookie fixed at 30 min regardless.
-- [ ] 2.17 RED: `csrf.ts` unit test — `/users/refresh` present in `EXEMPT_PATHS`.
-- [ ] 2.18 GREEN: add `/users/refresh` to `EXEMPT_PATHS` in `backend/src/infrastructure/middlewares/csrf.ts` (defensive; the route never mounts `csrfGuard`).
-- [ ] 2.19 GREEN: wire `router.post('/users/refresh', refreshLimiter, controller.refresh)` in `backend/src/infrastructure/routes/api/users.ts`, no `apiAuthMiddleware`; add OpenAPI JSDoc; compose the new use cases/repository here.
-- [ ] 2.20 GREEN: add `ACCESS_TOKEN_TTL_SECONDS`, `REFRESH_LIMIT_WINDOW`, `REFRESH_LIMIT_MAX` to `.env.example`.
-- [ ] 2.21 Integration test (real MySQL): logout revokes the family and a subsequent refresh with any of its tokens is 401; a grace hit issues no `m3d_refresh` header.
+- [x] 2.1 RED: characterization tests for cookie-issuing behavior (names/flags/maxAge) as it exists today in `UserApiController.ts`, to catch regressions during extraction.
+- [x] 2.2 GREEN: extract `setSessionCookies`, `issueAccessCookie`, `issueRefreshCookie`, `clearSessionCookies` into `backend/src/infrastructure/controllers/sessionCookies.ts`; `UserApiController.ts` imports from it (must drop below 250 lines before 2.13 adds the refresh handler).
+- [x] 2.3 RED: `cookieOptions.ts` unit tests — optional `path` (default `/`), `REFRESH_COOKIE`, `REFRESH_COOKIE_PATH`, `ACCESS_TOKEN_TTL_SECONDS` (env-tunable, default 1800), `accessCookieOptions()`/`refreshCookieOptions(maxAge?)` set/clear flag symmetry including `path`.
+- [x] 2.4 GREEN: modify `backend/src/infrastructure/security/cookieOptions.ts` per D4; retire `authExpiresInSeconds`.
+- [x] 2.5 RED: `apiAuthMiddleware` unit test — rejects a validly-signed, unexpired token missing `typ` or with `typ !== 'access'`.
+- [x] 2.6 GREEN: modify `backend/src/infrastructure/middlewares/auth.ts` — add `typ` to `DecodedToken`, enforce it.
+- [x] 2.7 GREEN: `issueAccessCookie` (`sessionCookies.ts`) sets `typ: 'access'` in the one `jwt.sign` call used by login/register/refresh.
+- [x] 2.8 RED: `refreshLimiter` unit test — `REFRESH_LIMIT_WINDOW`/`REFRESH_LIMIT_MAX` env vars, same `JEST_WORKER_ID` escape hatch as `loginLimiter`.
+- [x] 2.9 GREEN: create `backend/src/infrastructure/middlewares/refreshLimiter.ts`, mirroring `loginLimiter.ts`.
+- [x] 2.10 RED: `RefreshSessionUseCase` branch-table unit tests — absent/revoked(before grace check)/expired/current(rotate)/in-grace(access-only, **no** refresh `Set-Cookie`)/replay-past-grace(401, no revocation). Implements proposal's corrected mechanic, not the stale `spec.md` wording (finding #4 above).
+- [x] 2.11 GREEN: create `backend/src/application/use-cases/RefreshSessionUseCase.ts`.
+- [x] 2.12 RED: `UserApiController.refresh` test — 200 with expired access + valid refresh; 401 on absent/expired/revoked; refresh cookie set only on rotation, never on a grace hit.
+- [x] 2.13 GREEN: add `refresh` handler to `UserApiController.ts`.
+- [x] 2.14 RED: `UserApiController.logout` test — revokes the refresh family, clears all 4 cookies, still 204 with no active session.
+- [x] 2.15 GREEN: modify `logout` to call `RevokeRefreshTokenUseCase` and clear the refresh cookie via `sessionCookies.ts`.
+- [x] 2.16 GREEN: modify `login`/`register` to call `CreateRememberTokenUseCase` and issue the refresh cookie (2h default / 30d on `remember`), access cookie fixed at 30 min regardless.
+- [x] 2.17 RED: `csrf.ts` unit test — `/users/refresh` present in `EXEMPT_PATHS`.
+- [x] 2.18 GREEN: add `/users/refresh` to `EXEMPT_PATHS` in `backend/src/infrastructure/middlewares/csrf.ts` (defensive; the route never mounts `csrfGuard`).
+- [x] 2.19 GREEN: wire `router.post('/users/refresh', refreshLimiter, controller.refresh)` in `backend/src/infrastructure/routes/api/users.ts`, no `apiAuthMiddleware`; add OpenAPI JSDoc; compose the new use cases/repository here.
+- [x] 2.20 GREEN: add `ACCESS_TOKEN_TTL_SECONDS`, `REFRESH_LIMIT_WINDOW`, `REFRESH_LIMIT_MAX` to `.env.example`.
+- [x] 2.21 Integration test (real MySQL): logout revokes the family and a subsequent refresh with any of its tokens is 401; a grace hit issues no `m3d_refresh` header.
 
 ## PR 3 — Frontend retry wrapper, call-site adoption, cross-tab E2E
 
-- [ ] 3.1 Re-run the config.ts importer grep immediately before starting (finding #3) to catch any deep import introduced by PR1/PR2.
-- [ ] 3.2 RED+GREEN: `frontend/src/lib/http/apiBase.ts` — move `API_URL` verbatim; characterization test.
-- [ ] 3.3 RED+GREEN: `frontend/src/lib/http/credentials.ts` — move `readCookie`, `readCsrfToken`, `withCredentials`, `getSessionUser`, `SessionUser`, **plus** `readApiErrorMessage`, `APIFieldError`, `APIErrorBody` (finding #2) verbatim; characterization tests for all.
-- [ ] 3.4 RED: `refreshSingleFlight` test — N concurrent callers collapse into 1 POST to `/api/users/refresh`; `inFlight` cleared in `finally`.
-- [ ] 3.5 GREEN: create `frontend/src/lib/http/refreshSingleFlight.ts`.
-- [ ] 3.6 RED: `authFetch` test — retries exactly once on 401 after a successful refresh (re-running `withCredentials`); on failed refresh clears session + redirects `/login`; never retries twice; never wraps the refresh call itself.
-- [ ] 3.7 GREEN: create `frontend/src/lib/http/authFetch.ts`.
-- [ ] 3.8 GREEN: rewrite `frontend/src/config.ts` as a pure re-export facade (~30 lines); confirm `config.test.ts` still passes unchanged.
-- [ ] 3.9 GREEN: adopt `authFetch` at the 9 credentialed call sites — `order.service.ts` (2), `product.admin.service.ts` `create`/`update`/`remove`/`adjustStock` (4), `cartSync.ts` (1), `checkout.ts` (1), `cartHydration.ts` (1). Existing tests must keep passing; add a 401-retry assertion per site.
-- [ ] 3.10 Leave untouched, and note why inline where practical — the 10 excluded sites: `product.service.ts` ×2 and `product.search.service.ts` ×3 and `product.admin.service.ts` `list`/`getById` (7 public, no-credential reads — cannot 401); `auth.service.ts` login/register and `session.service.ts` logout (3 auth endpoints — retrying on 401 would loop).
-- [ ] 3.11 RED: `e2e/tests/refresh-race.spec.ts` — two tabs/one context, simultaneous expiry, both stay logged in; a legacy `typ`-less JWT → 401 → refresh attempt → clean redirect to `/login`.
-- [ ] 3.12 GREEN: confirm the scenario passes via `pnpm test:e2e` (app code already lands in 3.2-3.9; no further production change expected here).
+- [x] 3.1 Re-run the config.ts importer grep immediately before starting (finding #3) to catch any deep import introduced by PR1/PR2.
+- [x] 3.2 RED+GREEN: `frontend/src/lib/http/apiBase.ts` — move `API_URL` verbatim; characterization test.
+- [x] 3.3 RED+GREEN: `frontend/src/lib/http/credentials.ts` — move `readCookie`, `readCsrfToken`, `withCredentials`, `getSessionUser`, `SessionUser`, **plus** `readApiErrorMessage`, `APIFieldError`, `APIErrorBody` (finding #2) verbatim; characterization tests for all.
+- [x] 3.4 RED: `refreshSingleFlight` test — N concurrent callers collapse into 1 POST to `/api/users/refresh`; `inFlight` cleared in `finally`.
+- [x] 3.5 GREEN: create `frontend/src/lib/http/refreshSingleFlight.ts`.
+- [x] 3.6 RED: `authFetch` test — retries exactly once on 401 after a successful refresh (re-running `withCredentials`); on failed refresh clears session + redirects `/login`; never retries twice; never wraps the refresh call itself.
+- [x] 3.7 GREEN: create `frontend/src/lib/http/authFetch.ts`.
+- [x] 3.8 GREEN: rewrite `frontend/src/config.ts` as a pure re-export facade (~30 lines); confirm `config.test.ts` still passes unchanged.
+- [x] 3.9 GREEN: adopt `authFetch` at the 9 credentialed call sites — `order.service.ts` (2), `product.admin.service.ts` `create`/`update`/`remove`/`adjustStock` (4), `cartSync.ts` (1), `checkout.ts` (1), `cartHydration.ts` (1). Existing tests must keep passing; add a 401-retry assertion per site.
+- [x] 3.10 Leave untouched, and note why inline where practical — the 10 excluded sites: `product.service.ts` ×2 and `product.search.service.ts` ×3 and `product.admin.service.ts` `list`/`getById` (7 public, no-credential reads — cannot 401); `auth.service.ts` login/register and `session.service.ts` logout (3 auth endpoints — retrying on 401 would loop).
+- [x] 3.11 RED: `e2e/tests/refresh-race.spec.ts` — two tabs/one context, simultaneous expiry, both stay logged in; a legacy `typ`-less JWT → 401 → refresh attempt → clean redirect to `/login`.
+- [x] 3.12 GREEN: confirm the scenario passes via `pnpm test:e2e` (app code already lands in 3.2-3.9; no further production change expected here).
 
 ## Review-budget exception — recorded, not implicit
 

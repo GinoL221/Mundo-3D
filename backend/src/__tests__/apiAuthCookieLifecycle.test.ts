@@ -227,10 +227,12 @@ describe('Auth cookie lifecycle (login -> protected read -> CSRF write -> logout
       const setCookie = res.headers['set-cookie'] as unknown as string[];
       const expectedMaxAgeSeconds = REMEMBER_MAX_AGE / 1000;
 
-      [CSRF_COOKIE, USER_COOKIE, REFRESH_COOKIE].forEach((name) => {
+      // All four now share the session lifetime. AUTH used to diverge, but the
+      // cookie must outlive its own token so `logout` can read `familyId` from
+      // an expired one. The token's own exp, asserted below, stays short.
+      [CSRF_COOKIE, USER_COOKIE, REFRESH_COOKIE, AUTH_COOKIE].forEach((name) => {
         expect(cookieMaxAge(setCookie, name)).toBe(expectedMaxAgeSeconds);
       });
-      expect(cookieMaxAge(setCookie, AUTH_COOKIE)).toBe(ACCESS_TOKEN_TTL_SECONDS);
 
       const authToken = cookieValue(setCookie, AUTH_COOKIE) as string;
       const decoded = jwt.verify(authToken, JWT_SECRET) as jwt.JwtPayload;
@@ -249,10 +251,12 @@ describe('Auth cookie lifecycle (login -> protected read -> CSRF write -> logout
       const setCookie = res.headers['set-cookie'] as unknown as string[];
       const expectedMaxAgeSeconds = SESSION_MAX_AGE / 1000;
 
-      [CSRF_COOKIE, USER_COOKIE, REFRESH_COOKIE].forEach((name) => {
+      // All four now share the session lifetime. AUTH used to diverge, but the
+      // cookie must outlive its own token so `logout` can read `familyId` from
+      // an expired one. The token's own exp, asserted below, stays short.
+      [CSRF_COOKIE, USER_COOKIE, REFRESH_COOKIE, AUTH_COOKIE].forEach((name) => {
         expect(cookieMaxAge(setCookie, name)).toBe(expectedMaxAgeSeconds);
       });
-      expect(cookieMaxAge(setCookie, AUTH_COOKIE)).toBe(ACCESS_TOKEN_TTL_SECONDS);
 
       const authToken = cookieValue(setCookie, AUTH_COOKIE) as string;
       const decoded = jwt.verify(authToken, JWT_SECRET) as jwt.JwtPayload;

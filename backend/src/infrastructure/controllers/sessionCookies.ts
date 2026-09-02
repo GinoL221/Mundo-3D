@@ -49,11 +49,14 @@ export const generateRefreshToken = (): string => crypto.randomBytes(32).toStrin
  * requires it. The cookie itself is fixed at `ACCESS_TOKEN_TTL_SECONDS`
  * regardless of "remember me" (api-jwt-auth spec).
  */
-export const issueAccessCookie = (res: Response, jwtPayload: JwtPayload): void => {
+export const issueAccessCookie = (res: Response, jwtPayload: JwtPayload, remember?: boolean): void => {
   const token = jwt.sign({ ...jwtPayload, typ: 'access' }, getJwtSecret(), {
     expiresIn: ACCESS_TOKEN_TTL_SECONDS,
   });
-  res.cookie(AUTH_COOKIE, token, accessCookieOptions());
+  // The token's own `expiresIn` stays fixed; only the cookie's `maxAge`
+  // follows the session, so the expired token survives in the jar as the
+  // carrier logout reads `familyId` from.
+  res.cookie(AUTH_COOKIE, token, accessCookieOptions(remember));
 };
 
 export const issueRefreshCookie = (res: Response, plainToken: string, maxAge?: number): void => {
@@ -73,7 +76,7 @@ export const setSessionCookies = (
   refreshPlainToken: string,
   remember?: boolean
 ): void => {
-  issueAccessCookie(res, jwtPayload);
+  issueAccessCookie(res, jwtPayload, remember);
 
   const maxAge = authMaxAge(remember);
   const csrfToken = issueCsrfToken(userId);
@@ -89,4 +92,23 @@ export const clearSessionCookies = (res: Response): void => {
   res.clearCookie(CSRF_COOKIE, { ...clearOptions, httpOnly: false });
   res.clearCookie(USER_COOKIE, { ...clearOptions, httpOnly: false });
   res.clearCookie(REFRESH_COOKIE, refreshCookieOptions());
+};
+
+/**
+ * Reads `familyId` out of an access token for `logout`, which runs precisely
+ * when that token is most likely already expired — a user who stepped away
+ * and came back. `ignoreExpiration` relaxes only `exp`; the SIGNATURE is
+ * still verified, so an unsigned or tampered token yields nothing.
+ *
+ * Without this, `jwt.verify` throws on an expired token, `familyId` comes
+ * back undefined, and the refresh family silently survives logout for up to
+ * 30 days — which would defeat the whole point of revocation.
+ */
+export const readFamilyIdFromAccessToken = (token: string): string | undefined => {
+  try {
+    const decoded = jwt.verify(token, getJwtSecret(), { ignoreExpiration: true });
+    return (decoded as { familyId?: string }).familyId;
+  } catch {
+    return undefined;
+  }
 };

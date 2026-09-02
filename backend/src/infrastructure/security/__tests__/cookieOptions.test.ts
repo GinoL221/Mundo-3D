@@ -57,11 +57,22 @@ describe('ACCESS_TOKEN_TTL_SECONDS', () => {
 });
 
 describe('accessCookieOptions', () => {
-  it('is httpOnly, path "/", and maxAge = ACCESS_TOKEN_TTL_SECONDS * 1000', () => {
+  // The cookie deliberately outlives the token it carries. The JWT's own
+  // `expiresIn` stays at ACCESS_TOKEN_TTL_SECONDS and `apiAuthMiddleware`
+  // rejects it on `exp`, so a stale cookie authenticates nothing — it exists
+  // so `logout` can still read `familyId` from it and revoke the refresh
+  // family for a user who stepped away past the token's lifetime.
+  it('is httpOnly, path "/", and carries the SESSION maxAge, not the token TTL', () => {
     const options = accessCookieOptions();
     expect(options.httpOnly).toBe(true);
     expect(options.path).toBe('/');
-    expect(options.maxAge).toBe(ACCESS_TOKEN_TTL_SECONDS * 1000);
+    expect(options.maxAge).toBe(SESSION_MAX_AGE);
+    expect(options.maxAge).not.toBe(ACCESS_TOKEN_TTL_SECONDS * 1000);
+  });
+
+  it('follows the remember-me lifetime, like the refresh and display cookies', () => {
+    expect(accessCookieOptions(true).maxAge).toBe(REMEMBER_MAX_AGE);
+    expect(accessCookieOptions(false).maxAge).toBe(SESSION_MAX_AGE);
   });
 });
 
