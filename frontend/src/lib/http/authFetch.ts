@@ -1,5 +1,5 @@
 import { API_URL } from './apiBase';
-import { withCredentials } from './credentials';
+import { getSessionUser, withCredentials } from './credentials';
 import { ensureRefreshed } from './refreshSingleFlight';
 
 /**
@@ -57,6 +57,15 @@ export async function authFetch(url: string, init?: RequestInit): Promise<Respon
   if (first.status !== 401) return first;
 
   const refreshed = await ensureRefreshed();
+
+  // Only end a session that actually existed. `CartList.astro` hydrates the
+  // cart on load for EVERY visitor, so a guest issues a credentialed GET,
+  // gets 401, and fails a refresh it never had a token for — bouncing them to
+  // /login would evict a visitor who was never logged in. With no session the
+  // 401 is simply returned and the caller decides what it means.
+  if (!refreshed && !getSessionUser()) {
+    return first;
+  }
 
   if (!refreshed) {
     try {
