@@ -55,10 +55,13 @@ test.describe('Cross-tab session synchronization', () => {
     await expect(page).toHaveURL('/login');
 
     // Tab 2: never navigated or reloaded. Its BroadcastChannel listener
-    // (sessionUI.ts) must flip it to guest UI on its own. `expect.poll`
-    // tolerates the fire-and-forget clearSession()/navigation race in tab 1
-    // (clearSession() has no `keepalive`, unlike CartService's sync call) —
-    // the visibilitychange/focus fallback layer covers the same outcome if
+    // (sessionUI.ts) must flip it to guest UI on its own. clearSession()
+    // expires the readable cookies and broadcasts SYNCHRONOUSLY, before its
+    // keepalive logout request, so tab 1's navigation cannot swallow either
+    // — this used to race, and lost once logout started revoking the refresh
+    // family in the database before replying. The retry window below is
+    // tolerance for scheduling, not for the network; the
+    // visibilitychange/focus fallback layer covers the same outcome if
     // BroadcastChannel alone were ever slower than the poll interval.
     await expect(async () => {
       await page2.bringToFront();

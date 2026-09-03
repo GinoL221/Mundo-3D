@@ -28,6 +28,56 @@ export function readCsrfToken(): string | null {
 }
 
 /**
+ * The `domain=` suffixes a cookie clear has to cover. The backend adds a
+ * Domain attribute only when COOKIE_DOMAIN is set — empty in dev/CI, the
+ * root domain in production — and a clear whose domain does not match the
+ * set simply creates a second cookie instead of expiring the first. The
+ * frontend is not told which topology it is in, so it sweeps the host-only
+ * scope plus every parent domain. The last label is never swept on its own:
+ * browsers reject `domain=com` outright, and attempting it would be noise.
+ */
+function expiryScopes(): string[] {
+  // The host-only scope is unconditional: it is the one that matters in the
+  // dev/CI topology, and losing it because a hostname could not be read
+  // would silently turn the whole clear into a no-op.
+  const scopes = [''];
+  const hostname = typeof location === 'undefined' ? '' : location?.hostname ?? '';
+  const labels = hostname.split('.').filter(Boolean);
+  for (let i = 0; i < labels.length - 1; i += 1) {
+    scopes.push(`; domain=${labels.slice(i).join('.')}`);
+  }
+  return scopes;
+}
+
+/**
+ * Expires the two session cookies the browser can actually read. The backend
+ * clears all four on logout, but that only reaches the browser if the logout
+ * RESPONSE is processed — and the tab that triggered logout navigates away
+ * immediately, so it usually is not. Clearing the readable pair here makes
+ * the UI-gating state correct the moment logout is clicked, independently of
+ * the network; the httpOnly `m3d_auth`/`m3d_refresh` pair stays server-owned
+ * and is cleared by the keepalive request's response.
+ *
+ * `path=/` must match what `cookieOptions()` set them with, or the write
+ * creates a second cookie instead of expiring the existing one.
+ */
+export function expireClientReadableSessionCookies(): void {
+  try {
+    for (const name of [USER_COOKIE_NAME, CSRF_COOKIE_NAME]) {
+      for (const scope of expiryScopes()) {
+        document.cookie = `${name}=; Max-Age=0; path=/${scope}`;
+      }
+    }
+  } catch {
+    // Cookie access can be unavailable (a sandboxed frame, a non-DOM
+    // caller). Swallowed for the same reason broadcastSessionChanged()
+    // swallows an unsupported BroadcastChannel: this is UI cleanup, and it
+    // must never stop clearSession() from reaching the server — that
+    // request is what actually revokes the refresh family.
+  }
+}
+
+/**
  * Merges credentialed-request settings into a fetch `RequestInit`: always
  * sends the browser's cookies (`credentials: 'include'`) and, when a CSRF
  * cookie is present, attaches it as `X-CSRF-Token` so the backend's

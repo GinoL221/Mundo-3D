@@ -5,6 +5,18 @@ function stubCookie(cookie: string) {
   vi.stubGlobal('document', { cookie });
 }
 
+// Records every `document.cookie = ...` assignment. A plain object stub
+// cannot be used for the expiry assertions: each write would overwrite the
+// last, and cookie expiry is expressed as a SEQUENCE of writes.
+function stubCookieJar(initial: string): string[] {
+  const writes: string[] = [];
+  vi.stubGlobal('document', {
+    get cookie() { return initial; },
+    set cookie(value: string) { writes.push(value); },
+  });
+  return writes;
+}
+
 class FakeBroadcastChannel {
   static instances: FakeBroadcastChannel[] = [];
   name: string;
@@ -97,6 +109,9 @@ describe('session.service', () => {
       fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 204 });
       vi.stubGlobal('fetch', fetchMock);
       vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
+      // Pinned so cookie-scope assertions never depend on whatever hostname
+      // the test environment happens to expose.
+      vi.stubGlobal('location', { hostname: 'localhost' });
       stubCookie('');
     });
 
@@ -128,6 +143,121 @@ describe('session.service', () => {
       expect(FakeBroadcastChannel.instances[0].postMessage).toHaveBeenCalledWith({
         type: 'session-changed',
       });
+    });
+
+    // sessionUI.ts's logout handler fires clearSession() without awaiting it
+    // and then immediately assigns window.location.href. A plain fetch is
+    // cancelled by that navigation, so the 204's Set-Cookie headers never
+    // reach the browser and every cookie survives a logout that DID revoke
+    // the family server-side — other tabs keep rendering a session that no
+    // longer exists. `keepalive` is what lets the request and its response
+    // outlive the page.
+    it('sends the logout request with keepalive so it survives the navigation that follows', async () => {
+      await clearSession();
+
+      const [, options] = fetchMock.mock.calls[0];
+      expect(options.keepalive).toBe(true);
+    });
+
+    // The three assertions below all run while the logout request is still
+    // in flight: the UI-gating state must not depend on the response, because
+    // the tab that triggered logout is usually gone before it arrives.
+    it('expires the client-readable session cookies before the logout response settles', async () => {
+      let settle: () => void = () => {};
+      fetchMock.mockImplementation(
+        () => new Promise((resolve) => { settle = () => resolve({ ok: true, status: 204 }); }),
+      );
+      const writes = stubCookieJar('m3d_user=%7B%7D; m3d_csrf=abc.hmac');
+
+      const pending = clearSession();
+
+      expect(writes.some((w) => w.startsWith('m3d_user=') && /max-age=0/i.test(w))).toBe(true);
+      expect(writes.some((w) => w.startsWith('m3d_csrf=') && /max-age=0/i.test(w))).toBe(true);
+
+      settle();
+      await pending;
+    });
+
+    it('expires them on the same path the backend set them on, or the clear silently misses', async () => {
+      const writes = stubCookieJar('m3d_user=%7B%7D');
+
+      await clearSession();
+
+      // `every` alone would pass vacuously on zero writes — assert the
+      // clear actually happened before asserting how it happened.
+      expect(writes.length).toBeGreaterThan(0);
+      expect(writes.every((w) => /;\s*path=\//i.test(w))).toBe(true);
+    });
+
+    // COOKIE_DOMAIN is empty in dev/CI but set to the root domain in
+    // production (render.yaml, README "Variables de entorno"), so the cookies
+    // this clears carry a Domain attribute there and none here. A write
+    // without a matching `domain` does not expire the existing cookie — it
+    // creates a second one — which would make this clear a no-op in
+    // production while passing every tier we can run. Sweeping the host and
+    // its parent domains covers both topologies without the frontend having
+    // to be told which one it is deployed in.
+    it('expires the cookies on the host and on each parent domain, covering a Domain-scoped set', async () => {
+      vi.stubGlobal('location', { hostname: 'www.mundo3d.com' });
+      const writes = stubCookieJar('m3d_user=%7B%7D');
+
+      await clearSession();
+
+      const userWrites = writes.filter((w) => w.startsWith('m3d_user='));
+      expect(userWrites.some((w) => /domain=www\.mundo3d\.com/i.test(w))).toBe(true);
+      expect(userWrites.some((w) => /domain=mundo3d\.com/i.test(w))).toBe(true);
+      expect(userWrites.some((w) => !/domain=/i.test(w))).toBe(true);
+    });
+
+    // A single-label host has no parent to sweep, and `domain=com` style
+    // writes must never be attempted.
+    it('writes only the host-only clear on a single-label host such as localhost', async () => {
+      vi.stubGlobal('location', { hostname: 'localhost' });
+      const writes = stubCookieJar('m3d_user=%7B%7D');
+
+      await clearSession();
+
+      expect(writes.filter((w) => w.startsWith('m3d_user='))).toHaveLength(1);
+      expect(writes.every((w) => !/domain=/i.test(w))).toBe(true);
+    });
+
+    it('still performs the host-only clear when no hostname is readable', async () => {
+      vi.stubGlobal('location', undefined);
+      const writes = stubCookieJar('m3d_user=%7B%7D');
+
+      await clearSession();
+
+      expect(writes.filter((w) => w.startsWith('m3d_user='))).toHaveLength(1);
+      expect(writes.every((w) => !/domain=/i.test(w))).toBe(true);
+    });
+
+    // The cookie/broadcast half is UI cleanup; the request is the half that
+    // actually ends the session. Cleanup failing must never cost us the
+    // request — a logout that silently stops reaching the server would leave
+    // the refresh family alive for its full 30 days.
+    it('still sends the logout request when cookie access is unavailable', async () => {
+      vi.stubGlobal('document', undefined);
+
+      await expect(clearSession()).resolves.toBeUndefined();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock.mock.calls[0][0]).toContain('/api/users/logout');
+    });
+
+    it('broadcasts before the logout response settles, so other tabs never wait on the network', async () => {
+      let settle: () => void = () => {};
+      fetchMock.mockImplementation(
+        () => new Promise((resolve) => { settle = () => resolve({ ok: true, status: 204 }); }),
+      );
+
+      const pending = clearSession();
+
+      expect(FakeBroadcastChannel.instances[0].postMessage).toHaveBeenCalledWith({
+        type: 'session-changed',
+      });
+
+      settle();
+      await pending;
     });
   });
 });
