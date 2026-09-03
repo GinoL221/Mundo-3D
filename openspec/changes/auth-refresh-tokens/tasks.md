@@ -81,7 +81,7 @@ Chain strategy: stacked-to-main
 - [x] 2.18 GREEN: add `/users/refresh` to `EXEMPT_PATHS` in `backend/src/infrastructure/middlewares/csrf.ts` (defensive; the route never mounts `csrfGuard`).
 - [x] 2.19 GREEN: wire `router.post('/users/refresh', refreshLimiter, controller.refresh)` in `backend/src/infrastructure/routes/api/users.ts`, no `apiAuthMiddleware`; add OpenAPI JSDoc; compose the new use cases/repository here.
 - [x] 2.20 GREEN: add `ACCESS_TOKEN_TTL_SECONDS`, `REFRESH_LIMIT_WINDOW`, `REFRESH_LIMIT_MAX` to `.env.example`.
-- [x] 2.21 Integration test (real MySQL): logout revokes the family and a subsequent refresh with any of its tokens is 401; a grace hit issues no `m3d_refresh` header.
+- [x] 2.21 Integration test (real MySQL): logout revokes the family and a subsequent refresh with any of its tokens is 401; a grace hit issues no `m3d_refresh` header. **Delivered at the repository layer, not over HTTP** — `SequelizeRememberTokenRepository.integration.test.ts` proves revocation against a real database, including reading `revokedAt` back through the production finder with a bystander-family negative control, and that `claimRotation` refuses a revoked row. No test POSTs to `/api/users/refresh` with a real cookie against a real DB; the property is covered by a complete layer chain rather than end to end. Recorded here rather than left implied by the checkbox.
 
 ## PR 3 — Frontend retry wrapper, call-site adoption, cross-tab E2E
 

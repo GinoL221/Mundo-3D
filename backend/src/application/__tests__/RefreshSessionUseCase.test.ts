@@ -120,6 +120,14 @@ describe('RefreshSessionUseCase', () => {
       expect(result.familyId).toBe('fam-1');
     }
     expect(mockRotate.execute).not.toHaveBeenCalled();
+    // The grace path must leave the family untouched — that is what lets
+    // concurrent tabs resolve against one another without contending. It was
+    // only inferable from the absence of calls in the implementation, so a
+    // regression would have broken it silently.
+    expect(mockRepo.claimRotation).not.toHaveBeenCalled();
+    expect(mockRepo.insertSuccessor).not.toHaveBeenCalled();
+    expect(mockRepo.reapFamily).not.toHaveBeenCalled();
+    expect(mockRepo.revokeFamily).not.toHaveBeenCalled();
   });
 
   it('row 6: replay past grace (superseded 30+s ago) -> rejected, no revocation', async () => {
