@@ -75,8 +75,8 @@ export function cookieOptions({ httpOnly, maxAge, path = '/' }: CookieOptionsInp
  * One named builder used for both the set and the (implicit, via
  * `cookieOptions`) clear, so the flags can never drift apart (design.md D4).
  */
-export const accessCookieOptions = (remember?: boolean): CookieOptions =>
-  cookieOptions({ httpOnly: true, maxAge: authMaxAge(remember) });
+export const accessCookieOptions = (maxAgeMs: number): CookieOptions =>
+  cookieOptions({ httpOnly: true, maxAge: maxAgeMs });
 
 /**
  * `m3d_refresh` options: httpOnly, path-scoped to the refresh route. Called

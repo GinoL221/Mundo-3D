@@ -62,17 +62,20 @@ describe('accessCookieOptions', () => {
   // rejects it on `exp`, so a stale cookie authenticates nothing — it exists
   // so `logout` can still read `familyId` from it and revoke the refresh
   // family for a user who stepped away past the token's lifetime.
-  it('is httpOnly, path "/", and carries the SESSION maxAge, not the token TTL', () => {
-    const options = accessCookieOptions();
+  it('is httpOnly, path "/", and carries whatever lifetime the caller passes', () => {
+    const options = accessCookieOptions(SESSION_MAX_AGE);
     expect(options.httpOnly).toBe(true);
     expect(options.path).toBe('/');
     expect(options.maxAge).toBe(SESSION_MAX_AGE);
     expect(options.maxAge).not.toBe(ACCESS_TOKEN_TTL_SECONDS * 1000);
   });
 
-  it('follows the remember-me lifetime, like the refresh and display cookies', () => {
-    expect(accessCookieOptions(true).maxAge).toBe(REMEMBER_MAX_AGE);
-    expect(accessCookieOptions(false).maxAge).toBe(SESSION_MAX_AGE);
+  // The lifetime is a REQUIRED argument, not an optional one with a default.
+  // It used to be optional, and the refresh path dropped it — silently
+  // downgrading every remembered session to the 2h default on its first
+  // refresh. The caller now has to say which lifetime it means.
+  it('carries a remembered lifetime when given one', () => {
+    expect(accessCookieOptions(REMEMBER_MAX_AGE).maxAge).toBe(REMEMBER_MAX_AGE);
   });
 });
 

@@ -30,7 +30,7 @@ New hand-written raw-SQL Umzug migration with a working `down`, per `openspec/sp
 
 **Drop `token_hash_2..5`: yes, same migration.** They are pure write amplification on a table that goes from zero traffic to one INSERT + one UPDATE per refresh. `token_hash` UNIQUE stays — it is the lookup key. `down` recreates all four. Risk is nil: the slice has zero production callers today.
 
-**Retention (missed by the exploration):** a 30d session refreshing every 30 min is ~1,440 rows. On each successful refresh, delete that family's rows already past the grace window. Caps a family at ~2 rows and needs no cron.
+**Retention (missed by the exploration):** a 30d session refreshing every 30 min is ~1,440 rows. On each refresh that ROTATES, delete that family's rows already past the grace window — the grace path is deliberately side-effect-free, and only rotation creates rows, so the bound still holds. Caps a family at ~2 rows and needs no cron.
 
 ## CSRF exemption for `POST /api/users/refresh`
 

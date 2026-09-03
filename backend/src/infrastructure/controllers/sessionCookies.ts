@@ -51,14 +51,19 @@ export const generateRefreshToken = (): string => crypto.randomBytes(32).toStrin
  * lifetime instead, so `logout` can still read `familyId` from an expired
  * token (api-jwt-auth and session-cookie-security specs).
  */
-export const issueAccessCookie = (res: Response, jwtPayload: JwtPayload, remember?: boolean): void => {
+// `maxAgeMs` is REQUIRED, not optional. It was optional, and the refresh path
+// dropped it — silently selecting the 2h default and downgrading every
+// remembered session on its first refresh. A security-relevant lifetime that
+// can be omitted will eventually be omitted; making the compiler ask for it
+// is what stops that recurring.
+export const issueAccessCookie = (res: Response, jwtPayload: JwtPayload, maxAgeMs: number): void => {
   const token = jwt.sign({ ...jwtPayload, typ: 'access' }, getJwtSecret(), {
     expiresIn: ACCESS_TOKEN_TTL_SECONDS,
   });
   // The token's own `expiresIn` stays fixed; only the cookie's `maxAge`
   // follows the session, so the expired token survives in the jar as the
   // carrier logout reads `familyId` from.
-  res.cookie(AUTH_COOKIE, token, accessCookieOptions(remember));
+  res.cookie(AUTH_COOKIE, token, accessCookieOptions(maxAgeMs));
 };
 
 export const issueRefreshCookie = (res: Response, plainToken: string, maxAge?: number): void => {
@@ -78,7 +83,7 @@ export const setSessionCookies = (
   refreshPlainToken: string,
   remember?: boolean
 ): void => {
-  issueAccessCookie(res, jwtPayload, remember);
+  issueAccessCookie(res, jwtPayload, authMaxAge(remember));
 
   const maxAge = authMaxAge(remember);
   const csrfToken = issueCsrfToken(userId);
