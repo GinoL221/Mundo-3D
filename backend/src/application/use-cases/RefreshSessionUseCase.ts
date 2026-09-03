@@ -17,8 +17,19 @@ export interface RefreshSessionInput {
 
 export type RefreshSessionResult =
   | { outcome: 'rejected' }
-  | { outcome: 'grace'; user: UserDTO; familyId: string }
-  | { outcome: 'rotated'; user: UserDTO; familyId: string; refreshToken: RememberToken };
+  // `familyExpiresAt` is the family's absolute deadline, inherited across
+  // rotations rather than slid (design.md). The caller needs it because the
+  // access COOKIE must live as long as the session does — without it, every
+  // refresh rewrote `m3d_auth` with the 2h default and silently downgraded a
+  // remembered session, leaving logout with nothing to revoke from.
+  | { outcome: 'grace'; user: UserDTO; familyId: string; familyExpiresAt: Date }
+  | {
+      outcome: 'rotated';
+      user: UserDTO;
+      familyId: string;
+      familyExpiresAt: Date;
+      refreshToken: RememberToken;
+    };
 
 const toUserDTO = (user: {
   idUser: number;
@@ -77,7 +88,13 @@ export class RefreshSessionUseCase {
         if (!user || !current.familyId) {
           return { outcome: 'rejected' };
         }
-        return { outcome: 'rotated', user: toUserDTO(user), familyId: current.familyId, refreshToken: successor };
+        return {
+          outcome: 'rotated',
+          user: toUserDTO(user),
+          familyId: current.familyId,
+          familyExpiresAt: current.expiryDate,
+          refreshToken: successor,
+        };
       } catch (error) {
         if (error instanceof RefreshTokenRotationLostRaceError) {
           return this.resolveGraceOrReject(presentedHash);
@@ -119,6 +136,11 @@ export class RefreshSessionUseCase {
       return { outcome: 'rejected' };
     }
 
-    return { outcome: 'grace', user: toUserDTO(user), familyId: row.familyId }; // row 5
+    return {
+      outcome: 'grace',
+      user: toUserDTO(user),
+      familyId: row.familyId,
+      familyExpiresAt: row.expiryDate,
+    }; // row 5
   }
 }

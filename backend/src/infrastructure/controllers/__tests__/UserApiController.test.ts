@@ -260,7 +260,7 @@ describe('UserApiController', () => {
     // api-jwt-auth spec: "Access token TTL is fixed regardless of remember" —
     // remember now extends the CSRF/display cookies (and, per PR2's own
     // refresh-token-rotation spec, the refresh cookie), NOT the access token.
-    it('issues an access cookie fixed at ACCESS_TOKEN_TTL_SECONDS and a matching-exp JWT, remember true or false', async () => {
+    it('issues an access cookie on the session lifetime carrying a fixed-TTL JWT, remember true or false', async () => {
       mockAuthenticateUserUseCase.execute.mockResolvedValue(mockUserDto);
 
       for (const remember of [true, false, undefined]) {
@@ -313,9 +313,9 @@ describe('UserApiController', () => {
 
     // Characterization test (task 2.1), superseded by task 2.4 exactly as
     // flagged when it was written: on `main`, all 3 cookies shared one
-    // maxAge. Since D4's fixed access-token TTL, CSRF/USER still share one
-    // maxAge (the remember-derived session length) but AUTH_COOKIE diverges
-    // on purpose — this re-asserts the CURRENT (post-2.4) shape.
+    // maxAge. CSRF/USER share one
+    // maxAge (the remember-derived session length), and AUTH_COOKIE now
+    // shares it too: logout must read `familyId` from an expired token.
     it('characterization: all four cookies now share one maxAge; only the TOKEN inside AUTH is short-lived', async () => {
       req.body = { email: 'john@example.com', password: 'password123' };
       mockAuthenticateUserUseCase.execute.mockResolvedValue(mockUserDto);
@@ -344,6 +344,33 @@ describe('UserApiController', () => {
       expect(byName(AUTH_COOKIE).httpOnly).toBe(true);
       expect(byName(CSRF_COOKIE).httpOnly).toBe(false);
       expect(byName(USER_COOKIE).httpOnly).toBe(false);
+    });
+  });
+
+  // Regression: `issueAccessCookie` was called here without the third
+  // argument, so every refresh rewrote `m3d_auth` with the 2h default —
+  // silently downgrading a 30-day remembered session on its FIRST refresh.
+  // Two idle hours later the cookie was gone, `logout` could read no
+  // `familyId`, and revocation was skipped: HIGH-1 back on a 2h trigger.
+  // The cookie now tracks the family's own remaining lifetime.
+  describe('refresh — access cookie lifetime', () => {
+    it('gives the access cookie the refresh family\'s remaining lifetime, not the 2h default', async () => {
+      const thirtyDaysOut = new Date(Date.now() + REMEMBER_MAX_AGE);
+      mockRefreshSessionUseCase.execute.mockResolvedValue({
+        outcome: 'grace',
+        user: { idUser: 1, firstName: 'John', lastName: 'Doe', email: 'john@example.com', image: null, idRole: 2, category: 'User' },
+        familyId: 'fam-remembered',
+        familyExpiresAt: thirtyDaysOut,
+      });
+      req.cookies = { m3d_refresh: 'presented-token' };
+
+      await (controller as any).refresh(req as Request, res as Response, next);
+
+      const authCall = (res.cookie as jest.Mock).mock.calls.find((c) => c[0] === AUTH_COOKIE);
+      expect(authCall).toBeDefined();
+      // Within a minute of 30 days — not the 2h SESSION_MAX_AGE default.
+      expect(authCall[2].maxAge).toBeGreaterThan(REMEMBER_MAX_AGE - 60_000);
+      expect(authCall[2].maxAge).not.toBe(SESSION_MAX_AGE);
     });
   });
 
@@ -442,6 +469,7 @@ describe('UserApiController', () => {
         outcome: 'rotated',
         user: { idUser: 1, firstName: 'John', lastName: 'Doe', email: 'john@example.com', image: null, idRole: 2, category: 'User' },
         familyId: 'fam-1',
+        familyExpiresAt: new Date(Date.now() + SESSION_MAX_AGE),
         refreshToken: { expiryDate: new Date(Date.now() + SESSION_MAX_AGE) } as any,
       });
 
@@ -461,6 +489,7 @@ describe('UserApiController', () => {
         outcome: 'grace',
         user: { idUser: 1, firstName: 'John', lastName: 'Doe', email: 'john@example.com', image: null, idRole: 2, category: 'User' },
         familyId: 'fam-1',
+        familyExpiresAt: new Date(Date.now() + SESSION_MAX_AGE),
       });
 
       await (controller as any).refresh(req as Request, res as Response, next);

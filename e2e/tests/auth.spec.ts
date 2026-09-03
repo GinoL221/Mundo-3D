@@ -53,7 +53,7 @@ test.describe('Authentication E2E Tests', () => {
     await expect(errorBox).not.toBeEmpty();
   });
 
-  test('Recuérdame puts 30 days on the refresh cookie while the access cookie stays short', async ({ page }) => {
+  test('Recuérdame puts 30 days on both the refresh and access cookies, while the access TOKEN stays short', async ({ page }) => {
     const rememberEmail = `remember_${Date.now()}@example.com`;
 
     // Register a dedicated user so this test doesn't depend on run order

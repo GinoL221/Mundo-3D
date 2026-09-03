@@ -145,8 +145,14 @@ export class UserApiController {
         return;
       }
 
-      const { user, familyId } = result;
-      issueAccessCookie(res, { userId: user.idUser, email: user.email, category: user.category, idRole: user.idRole, familyId });
+      const { user, familyId, familyExpiresAt } = result;
+      // The cookie tracks what remains of the FAMILY, not a fresh default.
+      // Passing nothing here re-issued every remembered session at 2h.
+      issueAccessCookie(
+        res,
+        { userId: user.idUser, email: user.email, category: user.category, idRole: user.idRole, familyId },
+        Math.max(0, familyExpiresAt.getTime() - Date.now())
+      );
 
       // Only the rotation winner ever writes the refresh cookie (design.md
       // D2) — a grace hit must not, or it would overwrite the winner's
