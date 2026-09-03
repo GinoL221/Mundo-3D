@@ -140,6 +140,16 @@ Tasks 3.1–3.12, all complete. Branch `feat/auth-refresh-tokens-03-frontend`.
 2. **The refresh limiter had no real coverage** — its unit test mocked `express-rate-limit`, proving configuration and nothing about throttling, on an endpoint that is unauthenticated and CSRF-exempt by design. Now covered by a supertest that exhausts the window and observes a real 429, confirmed to fail when the limiter is unmounted.
 3. **Two spec files contradicted each other** on the grace mechanic. All five were swept this time.
 
+4. **Round 4 — CRITICAL, in a path no earlier sweep had looked at.** `UserApiController.refresh` called `issueAccessCookie` without the lifetime argument added in round 3, so it took the 2h default: a remembered 30-day session was downgraded on its FIRST refresh, while `m3d_csrf` and `m3d_user` kept 30 days. Two idle hours later the browser had dropped `m3d_auth`, logout could read no `familyId`, and revocation was skipped — HIGH-1 restored on a two-hour trigger by the fix meant to close it.
+
+   `RefreshSessionResult` now carries `familyExpiresAt` on both the `rotated` and `grace` branches, and the cookie is issued for whatever remains of that family. That is the real invariant, and stronger than threading a boolean: expiry is inherited across rotations rather than slid, so the access cookie lands on the same absolute instant the other three already carry.
+
+   `issueAccessCookie` and `accessCookieOptions` now take the lifetime as a **required** argument. It was optional, and an omitted argument silently selected the weaker default. Making it required turned that class of mistake into six type errors, each pointing at a caller relying on the default.
+
+5. **Round 5 — PASS WITH WARNINGS**, no blockers. The remaining warnings were closed before archive: the grace path's non-mutation is now asserted rather than inferred, `design.md`'s D4 snippet showed the superseded optional signature, and this record stopped at round 3.
+
+**The pattern across all five rounds, worth carrying to the next change**: every fix landed correctly in code and tests, and every one left a stale claim somewhere the sweep had not looked — a sibling file, then the contradiction the fix itself created, then a scenario inside a file the commit did edit, then an entire code path, then the records. Sweeping by *claim* across specs, design, proposal, tasks, source comments, test names and every call site of a changed signature is what finally converged it. `git show --name-only` proves which files a commit touched and nothing about whether it edited the right place inside them.
+
 ## Testing evidence
 
 Strict TDD was followed throughout: every implementation task had its test written and observed failing first. PR1's per-task RED/GREEN evidence is recorded above; **PR2's and PR3's is not, because both phase agents were killed by provider rate limits before writing it.** The work was done test-first, but this document cannot prove it for those 33 tasks — treat that as a gap in the record, not evidence of a gap in the practice.

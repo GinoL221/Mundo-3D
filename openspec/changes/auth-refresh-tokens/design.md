@@ -93,8 +93,12 @@ export const ACCESS_TOKEN_TTL_SECONDS =
 // apiAuthMiddleware still rejects it on exp — but logout must be able to read
 // familyId from an expired token, and with the token's own TTL the browser
 // deleted the cookie first, silently skipping revocation for up to 30 days.
-export const accessCookieOptions = (remember?: boolean) =>
-  cookieOptions({ httpOnly: true, maxAge: authMaxAge(remember) });
+// AMENDED AGAIN during the fourth verify: the lifetime is a REQUIRED
+// argument. It was optional, and `refresh` dropped it — silently taking the
+// 2h default and downgrading a remembered session on its first refresh. An
+// omittable security-relevant lifetime will eventually be omitted.
+export const accessCookieOptions = (maxAgeMs: number) =>
+  cookieOptions({ httpOnly: true, maxAge: maxAgeMs });
 export const refreshCookieOptions = (maxAge?: number) =>
   cookieOptions({ httpOnly: true, maxAge, path: REFRESH_COOKIE_PATH });
 ```
