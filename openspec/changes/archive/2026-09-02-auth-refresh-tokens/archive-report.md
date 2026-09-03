@@ -151,10 +151,10 @@ This SDD cycle is complete. The change has been fully planned, implemented, veri
 
 ## Engram Observation IDs
 
-**Note**: Engram persistent memory tools were unavailable during this archive phase. The archive report is persisted to the filesystem. If Engram becomes available in future sessions, this report should be saved with topic_key: `sdd/auth-refresh-tokens/archive-report`.
+Mirrored to Engram as observation `7158` under topic_key `sdd/auth-refresh-tokens/archive-report` (project `mundo-3d`). The phase agents themselves had no working `mem_*` tools for this entire change, so the orchestrator wrote the mirror after the archive commit.
 
 ---
 
 **Archived by**: sdd-archive phase  
 **Date**: 2026-09-02  
-**Mode**: hybrid (openspec filesystem + intended Engram mirror)
+**Mode**: hybrid (openspec filesystem + Engram mirror)
