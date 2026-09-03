@@ -1,4 +1,4 @@
-import { API_URL, getSessionUser } from '../../../config';
+import { API_URL, expireClientReadableSessionCookies, getSessionUser } from '../../../config';
 import type { SessionUser } from '../../../config';
 import { Role } from '../adapters/auth.adapter';
 
@@ -47,31 +47,55 @@ export function broadcastSessionChanged(): void {
 }
 
 /**
- * Ends the server-side session: calls `POST /users/logout` (clears the
- * httpOnly auth cookie plus the CSRF/display cookies — CSRF-exempt, see
- * design.md), then broadcasts the change so other open tabs update their
- * gating without a reload. Best-effort: broadcasts even if the network call
- * fails, so the UI never gets stuck showing a stale logged-in state (same
- * "never block on cleanup" spirit as
+ * Ends the session, in two halves that deliberately do not depend on each
+ * other. First, synchronously: expire the readable cookies and broadcast, so
+ * this tab and every other open one show guest UI immediately. Then
+ * `POST /users/logout` (CSRF-exempt, see design.md), which revokes the
+ * refresh family and clears the httpOnly cookies — the half only the server
+ * can do, sent with `keepalive` so it completes even though the caller
+ * navigates away without awaiting it.
+ *
+ * The ordering is the point: broadcasting after the response, as this once
+ * did, means a tab that navigates away never broadcasts at all. Best-effort
+ * throughout (same "never block on cleanup" spirit as
  * backend/src/infrastructure/utils/cleanupUploadedFile.ts). Used both by
  * explicit logout (Header.astro) and by admin pages reacting to a 401 from
  * the API (stale/invalid session) before redirecting to /login.
  */
 export async function clearSession(): Promise<void> {
+  // Both of these run BEFORE the request, not after it. sessionUI.ts's
+  // handler calls clearSession() without awaiting and then assigns
+  // window.location.href, so this tab is typically destroyed long before the
+  // response lands — anything sequenced after the await may never run at
+  // all. Ending the session in the UI must therefore not depend on the
+  // network: expire the readable cookies, then tell the other tabs to
+  // re-read them.
+  expireClientReadableSessionCookies();
+  broadcastSessionChanged();
+
   try {
     // Deliberately plain `fetch`, not `authFetch` (design.md D6, task
     // 3.10): this IS one of the 3 excluded auth endpoints — logout always
     // returns 204 "with no active session" (see the doc comment above), so
     // a 401 here would mean something is already broken, and retrying it
     // via a refresh attempt would loop.
+    //
+    // `keepalive` is load-bearing: the handler revokes the refresh family in
+    // the database before it clears cookies and replies, so the response is
+    // a database round trip away. Without keepalive the pending navigation
+    // cancels it, the httpOnly cookies are never cleared, and the browser
+    // keeps presenting credentials for a session the server already killed.
+    //
+    // Unlike cartSync.ts's PUT, this carries no custom headers and no body,
+    // so it stays a CORS "simple request" and keepalive is not defeated by
+    // an unsent preflight.
     await fetch(`${API_URL}/api/users/logout`, {
       method: 'POST',
       credentials: 'include',
+      keepalive: true,
     });
   } catch {
-    // Best-effort — still broadcast below so open tabs don't stay stuck
-    // showing a logged-in UI.
-  } finally {
-    broadcastSessionChanged();
+    // Best-effort: the session is already gone from this browser's point of
+    // view, and every open tab has been told. Nothing left to undo.
   }
 }

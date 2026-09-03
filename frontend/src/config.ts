@@ -8,6 +8,7 @@
 // change.
 export { API_URL } from './lib/http/apiBase';
 export {
+  expireClientReadableSessionCookies,
   getSessionUser,
   readApiErrorMessage,
   readCsrfToken,
