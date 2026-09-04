@@ -59,3 +59,23 @@ When executing database operations via Sequelize
 Then it MUST translate query results into pure Domain Entities or return null/boolean as defined by the domain port
 And Sequelize models MUST define snake_case database columns mapped to camelCase properties via field mappings (e.g. mapping `first_name` database column to `firstName` property)
 And it MUST NOT expose Sequelize-specific classes or methods to the application layer
+
+## 3. Accepted Risks
+
+### Registration confirms whether an email is already registered
+
+`POST /api/users/register` answers a duplicate email with HTTP 400 and the message `Este email ya está registrado`. Scenario 4b above requires that exact response shape for the concurrent path, so this is specified behaviour rather than an oversight — but it is also an account-enumeration channel: anyone can submit an address and learn from the response alone whether it holds an account. No rate limit hides this, because the answer is in the body, not in the timing.
+
+This was identified as MEDIUM-3 of the 2026-09-01 authentication security review, alongside a login timing oracle. **The timing half is closed** (`AuthenticateUserUseCase` now spends a decoy bcrypt comparison when the email is unknown, so a miss costs what a hit costs). The registration half is deliberately left open.
+
+**Why it stays open.** The standard mitigation is to stop answering in the response at all: accept every registration with the same success shape, then send an email that either completes signup or tells the existing account holder that someone tried to register their address. That requires a transactional email path this system does not have. Substituting a vaguer error without that path does not close the channel — it only makes the product worse at telling a returning customer why their signup failed, on a storefront where friction at signup is paid for in sales.
+
+**What an attacker gains.** Confirmation that an address has an account here. Not a password, not a session, not a way in. It is a privacy and phishing-targeting exposure, not an authentication bypass, and it is bounded by `registerLimiter`'s per-IP rate limit.
+
+**What closing it would require**, whenever it is taken up:
+1. A transactional email sender, which is the actual blocker and is useful well beyond this.
+2. Registration returning an identical response for a fresh and an already-registered address, which means Scenario 4b's "same HTTP 400 response shape and message" requirement must be rewritten, not merely worked around.
+3. Signup completing out-of-band via that email, so a real new user is not left stuck at a success screen with no account.
+4. A matching decoy delay on the duplicate path, or the timing oracle simply moves here from the login route.
+
+Reviewed and accepted by the maintainer on 2026-09-04. Revisit when transactional email lands for any other reason.
