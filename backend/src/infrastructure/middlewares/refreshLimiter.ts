@@ -17,6 +17,10 @@ const limiter = rateLimit({
   max,
   standardHeaders: true,
   legacyHeaders: false,
+  // Same reasoning as loginLimiter.ts: the threat is failed probing of a
+  // leaked/replayed token, so a successful rotation — the normal case, once
+  // per access-token lifetime per tab — must not spend the budget.
+  skipSuccessfulRequests: true,
   message: {
     error: 'Demasiados intentos de refresco de sesión. Intente nuevamente en 15 minutos.',
   },

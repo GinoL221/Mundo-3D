@@ -19,7 +19,15 @@ export default defineConfig({
       // are now gated on JEST_WORKER_ID so a misconfigured deploy can never
       // reach them. The values below are throwaway fixtures for this suite
       // only; the limits are raised rather than disabled because the suite
-      // logs in far more than the production default of 5 attempts allows.
+      // logs in far more than the production defaults allow.
+      //
+      // EVERY limiter needs raising here, including any added later. The
+      // per-account one is the subtle case: it caps failed attempts per
+      // EMAIL, and `reuseExistingServer` keeps one backend alive across local
+      // runs, so a handful of runs inside its 15-minute window would exhaust
+      // the failed-login test's account. That test only asserts an error box
+      // appears — a 429 renders one just as a wrong password does, so it
+      // would keep passing while testing nothing at all.
       env: {
         NODE_ENV: 'test',
         PORT: '3032',
@@ -28,6 +36,7 @@ export default defineConfig({
         COOKIE_SECRET: 'e2e-only-cookie-secret-not-for-production',
         LOGIN_LIMIT_MAX: '1000',
         REGISTER_LIMIT_MAX: '1000',
+        ACCOUNT_LOGIN_LIMIT_MAX: '1000',
       },
       reuseExistingServer: !process.env.CI,
     },

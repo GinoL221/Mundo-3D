@@ -17,6 +17,7 @@ import { RevokeRefreshTokenUseCase } from '../../../application/use-cases/Revoke
 import { PinoLogger } from '../../logging/PinoLogger';
 import { UserApiController } from '../../controllers/UserApiController';
 import loginLimiter from '../../middlewares/loginLimiter';
+import accountLoginLimiter from '../../middlewares/accountLoginLimiter';
 import registerLimiter from '../../middlewares/registerLimiter';
 import refreshLimiter from '../../middlewares/refreshLimiter';
 import { apiAuthMiddleware, adminGuard } from '../../middlewares/auth';
@@ -183,10 +184,17 @@ const normalizeLoginBody = (req: Request, res: Response, next: NextFunction) => 
  *       '403': { description: Authenticated but not ADMIN. }
  *       '404': { description: User not found. }
  */
+// Both limiters run, and both run before validation so a malformed body
+// still costs an attempt. loginLimiter caps password spraying per source
+// address; accountLoginLimiter caps credential stuffing per account, which
+// no per-IP counter can see once the attempts are spread across hosts.
+// accountLoginLimiter must stay after normalizeLoginBody: that is what puts
+// a client-sent `Email` where the limiter's key generator looks for it.
 router.post(
   '/users/login',
   normalizeLoginBody,
   loginLimiter,
+  accountLoginLimiter,
   loginValidation,
   handleValidationErrors,
   controller.login

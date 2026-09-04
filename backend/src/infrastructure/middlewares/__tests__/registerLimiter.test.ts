@@ -109,4 +109,22 @@ describe('registerLimiter middleware', () => {
     registerLimiter(req, res, next);
     expect(next).toHaveBeenCalled();
   });
+
+  // Characterization test, deliberately the opposite of loginLimiter's and
+  // refreshLimiter's. On login the abuse is the failed request; on register
+  // the abuse IS the successful one — each 201 is another spam account — so
+  // this limiter must keep counting every request. A later pass at making
+  // the three limiters "consistent" must fail here rather than quietly
+  // uncap account creation.
+  it('counts successful registrations too', () => {
+    process.env.NODE_ENV = 'production';
+
+    let rateLimitMock: any;
+    jest.isolateModules(() => {
+      require('../registerLimiter');
+      rateLimitMock = require('express-rate-limit');
+    });
+
+    expect(rateLimitMock.mock.calls.at(-1)?.[0].skipSuccessfulRequests).toBeUndefined();
+  });
 });

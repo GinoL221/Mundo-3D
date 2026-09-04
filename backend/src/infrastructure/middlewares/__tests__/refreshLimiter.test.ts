@@ -119,4 +119,18 @@ describe('refreshLimiter middleware', () => {
     refreshLimiter(req, res, next);
     expect(next).toHaveBeenCalled();
   });
+
+  // Same reasoning as loginLimiter: a successful refresh is the normal case
+  // and must not spend a budget that exists to throttle failed probing.
+  it('counts failed attempts only', () => {
+    process.env.NODE_ENV = 'production';
+
+    let rateLimitMock: any;
+    jest.isolateModules(() => {
+      require('../refreshLimiter');
+      rateLimitMock = require('express-rate-limit');
+    });
+
+    expect(rateLimitMock.mock.calls.at(-1)?.[0].skipSuccessfulRequests).toBe(true);
+  });
 });

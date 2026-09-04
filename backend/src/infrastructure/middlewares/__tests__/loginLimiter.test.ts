@@ -21,7 +21,7 @@ describe('loginLimiter middleware', () => {
     process.env = originalEnv;
   });
 
-  it('uses default values (max=5, windowMs=15min) if env vars are not set', () => {
+  it('uses default values (max=10, windowMs=15min) if env vars are not set', () => {
     delete process.env.LOGIN_LIMIT_MAX;
     delete process.env.LOGIN_LIMIT_WINDOW;
     process.env.NODE_ENV = 'production'; // so it's not bypassed
@@ -40,7 +40,7 @@ describe('loginLimiter middleware', () => {
     expect(rateLimitMock).toHaveBeenCalledWith(
       expect.objectContaining({
         windowMs: 15 * 60 * 1000,
-        max: 5,
+        max: 10,
         standardHeaders: true,
         legacyHeaders: false,
         statusCode: 429,
@@ -129,5 +129,20 @@ describe('loginLimiter middleware', () => {
 
     loginLimiter(req, res, next);
     expect(next).toHaveBeenCalled();
+  });
+
+  // Shared NAT/CGNAT: an office behind one address used to burn the per-IP
+  // budget by logging in successfully. The threat being throttled is failed
+  // attempts, so only those may spend it.
+  it('counts failed attempts only', () => {
+    process.env.NODE_ENV = 'production';
+
+    let rateLimitMock: any;
+    jest.isolateModules(() => {
+      require('../loginLimiter');
+      rateLimitMock = require('express-rate-limit');
+    });
+
+    expect(rateLimitMock.mock.calls.at(-1)?.[0].skipSuccessfulRequests).toBe(true);
   });
 });
