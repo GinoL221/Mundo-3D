@@ -12,6 +12,7 @@ import { InvalidCredentialsException } from '../../../domain/exceptions/InvalidC
 import { UserAlreadyExistsException } from '../../../domain/exceptions/UserAlreadyExistsException';
 import { cleanupUploadedFile } from '../../utils/cleanupUploadedFile';
 import { getJwtSecret } from '../../security/JwtSecret';
+import { accessTokenSignOptions } from '../../security/jwtOptions';
 import {
   AUTH_COOKIE,
   CSRF_COOKIE,
@@ -377,7 +378,7 @@ describe('UserApiController', () => {
   describe('logout', () => {
     it('clears all 4 session cookies with byte-identical flags to login and responds 204', async () => {
       const payload = { userId: 1, email: 'john@example.com', category: 'User', idRole: 2, familyId: 'fam-1', typ: 'access' };
-      req.cookies = { [AUTH_COOKIE]: jwt.sign(payload, getJwtSecret(), { expiresIn: '30m' }) };
+      req.cookies = { [AUTH_COOKIE]: jwt.sign(payload, getJwtSecret(), accessTokenSignOptions('30m')) };
 
       await (controller as any).logout(req as Request, res as Response, next);
 
@@ -399,7 +400,7 @@ describe('UserApiController', () => {
     // api-jwt-auth spec: "Logout revokes the refresh family".
     it('revokes the refresh token family carried in the access JWT (familyId claim)', async () => {
       const payload = { userId: 1, email: 'john@example.com', category: 'User', idRole: 2, familyId: 'fam-42', typ: 'access' };
-      req.cookies = { [AUTH_COOKIE]: jwt.sign(payload, getJwtSecret(), { expiresIn: '30m' }) };
+      req.cookies = { [AUTH_COOKIE]: jwt.sign(payload, getJwtSecret(), accessTokenSignOptions('30m')) };
 
       await (controller as any).logout(req as Request, res as Response, next);
 
@@ -426,7 +427,7 @@ describe('UserApiController', () => {
       const expired = jwt.sign(
         { userId: 1, email: 'a@b.c', familyId: 'fam-expired' },
         getJwtSecret(),
-        { expiresIn: -60 }
+        accessTokenSignOptions(-60)
       );
       req.cookies = { [AUTH_COOKIE]: expired };
 
@@ -452,7 +453,7 @@ describe('UserApiController', () => {
     // never actually revoked.
     it('propagates a real revocation failure via next(), unlike a jwt.verify failure', async () => {
       const payload = { userId: 1, email: 'john@example.com', category: 'User', idRole: 2, familyId: 'fam-1', typ: 'access' };
-      req.cookies = { [AUTH_COOKIE]: jwt.sign(payload, getJwtSecret(), { expiresIn: '30m' }) };
+      req.cookies = { [AUTH_COOKIE]: jwt.sign(payload, getJwtSecret(), accessTokenSignOptions('30m')) };
       mockRevokeRefreshTokenUseCase.execute.mockRejectedValue(new Error('DB unavailable'));
 
       await (controller as any).logout(req as Request, res as Response, next);

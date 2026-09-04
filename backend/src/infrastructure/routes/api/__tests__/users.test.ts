@@ -16,6 +16,7 @@ jest.mock('../../../../application/use-cases/GetUserByIdUseCase', () => ({
 
 import errorHandler from '../../../middlewares/errorHandler';
 import { getJwtSecret } from '../../../security/JwtSecret';
+import { accessTokenSignOptions } from '../../../security/jwtOptions';
 import { Role } from '../../../../domain/Role';
 import { authCookie } from '../../../../__tests__/helpers/apiAuthTestHelpers';
 
@@ -46,9 +47,11 @@ const buildApp = (): Express => {
 };
 
 const signToken = (idRole: number) =>
-  jwt.sign({ userId: 1, email: 'principal@test.com', category: 'test', idRole, typ: 'access' }, JWT_SECRET, {
-    expiresIn: '1h',
-  });
+  jwt.sign(
+    { userId: 1, email: 'principal@test.com', category: 'test', idRole, typ: 'access' },
+    JWT_SECRET,
+    accessTokenSignOptions('1h')
+  );
 
 const adminToken = signToken(Role.ADMIN);
 const staffToken = signToken(Role.STAFF);

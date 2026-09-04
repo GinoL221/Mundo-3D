@@ -26,12 +26,35 @@ describe('getCookieSecret', () => {
     expect(() => getCookieSecret()).toThrow('COOKIE_SECRET');
   });
 
+  // Lengthened from 'my-super-cookie-secret' (22 chars) when the
+  // 32-character minimum landed — same reason as JwtSecret.test.ts.
   it('returns the env value when COOKIE_SECRET is set', () => {
-    process.env.COOKIE_SECRET = 'my-super-cookie-secret';
+    const secret = 'my-super-cookie-secret-that-is-long-enough';
+    process.env.COOKIE_SECRET = secret;
     process.env.NODE_ENV = 'production';
 
     const { getCookieSecret } = require('../CookieSecret');
-    expect(getCookieSecret()).toBe('my-super-cookie-secret');
+    expect(getCookieSecret()).toBe(secret);
+  });
+
+  // Finding 8, mirroring JwtSecret.test.ts. This secret signs CSRF tokens,
+  // so a short one is forgeable for exactly the same reason.
+  it('throws when COOKIE_SECRET is shorter than the 32-character minimum', () => {
+    process.env.COOKIE_SECRET = 'x'.repeat(31);
+    process.env.NODE_ENV = 'production';
+
+    const { getCookieSecret } = require('../CookieSecret');
+    expect(() => getCookieSecret()).toThrow('COOKIE_SECRET');
+    expect(() => getCookieSecret()).toThrow('32');
+  });
+
+  it('returns a COOKIE_SECRET of exactly 32 characters', () => {
+    const exactlyMinimum = 'x'.repeat(32);
+    process.env.COOKIE_SECRET = exactlyMinimum;
+    process.env.NODE_ENV = 'production';
+
+    const { getCookieSecret } = require('../CookieSecret');
+    expect(getCookieSecret()).toBe(exactlyMinimum);
   });
 
   it('returns a deterministic test secret under Jest when NODE_ENV is test', () => {

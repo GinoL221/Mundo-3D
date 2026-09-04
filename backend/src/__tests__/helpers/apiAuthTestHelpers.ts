@@ -1,5 +1,6 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { getJwtSecret } from '../../infrastructure/security/JwtSecret';
+import { accessTokenSignOptions } from '../../infrastructure/security/jwtOptions';
 import { AUTH_COOKIE, CSRF_COOKIE } from '../../infrastructure/security/cookieOptions';
 import { issueCsrfToken } from '../../infrastructure/security/csrfToken';
 
@@ -20,12 +21,17 @@ export interface AuthTokenPayload {
  * without typ claim is rejected") — omitted here, every caller of this
  * helper would get 401 from `apiAuthMiddleware` regardless of the scenario
  * it's actually testing.
+ *
+ * The same now goes for the issuer, audience and algorithm, which is why
+ * this reads `accessTokenSignOptions` — the very module the production sign
+ * site uses — instead of restating the claims. A helper carrying its own
+ * copies would keep passing while production drifted away from it.
  */
 export function signAuthToken(
   payload: AuthTokenPayload,
   expiresIn: SignOptions['expiresIn'] = '1h'
 ): string {
-  return jwt.sign({ ...payload, typ: 'access' }, getJwtSecret(), { expiresIn });
+  return jwt.sign({ ...payload, typ: 'access' }, getJwtSecret(), accessTokenSignOptions(expiresIn));
 }
 
 /** `Cookie` header value carrying only the auth cookie (reads / negative auth cases). */

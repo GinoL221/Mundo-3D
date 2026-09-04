@@ -57,6 +57,7 @@ jest.mock('../application/use-cases/GetUserByIdUseCase', () => {
 const apiUsersRouter = require('../infrastructure/routes/api/users').default;
 const { getJwtSecret } = require('../infrastructure/security/JwtSecret');
 const { AUTH_COOKIE } = require('../infrastructure/security/cookieOptions');
+const { accessTokenSignOptions } = require('../infrastructure/security/jwtOptions');
 
 const JWT_SECRET = getJwtSecret();
 
@@ -264,7 +265,7 @@ describe('apiAuthMiddleware mounted on /api/users routes', () => {
     const token = jwt.sign(
       { userId: 1, email: 'admin@test.com', category: 'Admin', idRole: 1, typ: 'access' },
       JWT_SECRET,
-      { expiresIn: '1h' },
+      accessTokenSignOptions('1h'),
     );
 
     const res = await request(app)

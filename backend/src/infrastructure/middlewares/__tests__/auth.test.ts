@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { apiAuthMiddleware, adminGuard, requireRoles } from '../auth';
 import { getJwtSecret } from '../../security/JwtSecret';
 import { AUTH_COOKIE } from '../../security/cookieOptions';
+import { accessTokenSignOptions } from '../../security/jwtOptions';
 import { Role } from '../../../domain/Role';
 
 jest.mock('../../security/JwtSecret', () => ({
@@ -49,7 +50,7 @@ describe('apiAuthMiddleware', () => {
     const expired = jwt.sign(
       { userId: 1, email: 'user@test.com', category: 'User', idRole: 2, typ: 'access' },
       JWT_SECRET,
-      { expiresIn: -60 }
+      accessTokenSignOptions(-60)
     );
     req.cookies = { [AUTH_COOKIE]: expired };
 
@@ -69,7 +70,7 @@ describe('apiAuthMiddleware', () => {
 
   it('attaches payload to req.user and calls next() on a valid auth cookie carrying typ: "access"', () => {
     const payload = { userId: 1, email: 'user@test.com', category: 'User', idRole: 2, typ: 'access' };
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '2h' });
+    const token = jwt.sign(payload, JWT_SECRET, accessTokenSignOptions('2h'));
     req.cookies = { [AUTH_COOKIE]: token };
 
     apiAuthMiddleware(req as Request, res as Response, next);
@@ -83,7 +84,7 @@ describe('apiAuthMiddleware', () => {
   // (design.md D3).
   it('returns 401 when a validly-signed, unexpired token has no typ claim (pre-deploy JWT)', () => {
     const payload = { userId: 1, email: 'user@test.com', category: 'User', idRole: 2 };
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '2h' });
+    const token = jwt.sign(payload, JWT_SECRET, accessTokenSignOptions('2h'));
     req.cookies = { [AUTH_COOKIE]: token };
 
     apiAuthMiddleware(req as Request, res as Response, next);
@@ -93,12 +94,75 @@ describe('apiAuthMiddleware', () => {
 
   it('returns 401 when typ carries a value other than "access" (e.g. a refresh-typed token confused for access)', () => {
     const payload = { userId: 1, email: 'user@test.com', category: 'User', idRole: 2, typ: 'refresh' };
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '2h' });
+    const token = jwt.sign(payload, JWT_SECRET, accessTokenSignOptions('2h'));
     req.cookies = { [AUTH_COOKIE]: token };
 
     apiAuthMiddleware(req as Request, res as Response, next);
     expect(res.status).toHaveBeenCalledWith(401);
     expect(next).not.toHaveBeenCalled();
+  });
+
+  // Findings 5+6. A claim that nothing verifies is worth nothing, so these
+  // assert the VERIFIER, not the signer: each token below is signed with this
+  // API's own secret — the only thing wrong with it is a claim, and the claim
+  // alone must be enough to reject it.
+  describe('registered-claim and algorithm pinning', () => {
+    const payload = { userId: 1, email: 'user@test.com', category: 'User', idRole: 2, typ: 'access' };
+
+    // The pre-deploy-token case: every access token minted before this change
+    // carries no `iss`/`aud` at all. Without this assertion, verification
+    // could silently accept them and the pinning would be decorative.
+    it('returns 401 for a validly signed token carrying no issuer and no audience', () => {
+      const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '2h' });
+      req.cookies = { [AUTH_COOKIE]: token };
+
+      apiAuthMiddleware(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Token de autenticación inválido o expirado' });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('returns 401 for a token minted for a different audience', () => {
+      const token = jwt.sign(payload, JWT_SECRET, {
+        ...accessTokenSignOptions('2h'),
+        audience: 'some-other-api',
+      });
+      req.cookies = { [AUTH_COOKIE]: token };
+
+      apiAuthMiddleware(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('returns 401 for a token minted by a different issuer', () => {
+      const token = jwt.sign(payload, JWT_SECRET, {
+        ...accessTokenSignOptions('2h'),
+        issuer: 'some-other-issuer',
+      });
+      req.cookies = { [AUTH_COOKIE]: token };
+
+      apiAuthMiddleware(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    // Verification must name the algorithms it accepts. Left open, the token
+    // itself gets to choose, and `alg` becomes attacker-controlled input.
+    it('returns 401 for a token advertising an algorithm other than HS256', () => {
+      const token = jwt.sign(payload, JWT_SECRET, {
+        ...accessTokenSignOptions('2h'),
+        algorithm: 'HS512',
+      });
+      req.cookies = { [AUTH_COOKIE]: token };
+
+      apiAuthMiddleware(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(next).not.toHaveBeenCalled();
+    });
   });
 
   it('returns 401 when a valid JWT is sent only as an Authorization: Bearer header (no cookie)', () => {

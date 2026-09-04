@@ -28,6 +28,7 @@ jest.mock('../../../../application/use-cases/DeleteFranchiseUseCase', () => ({
 import { Role } from '../../../../domain/Role';
 import errorHandler from '../../../middlewares/errorHandler';
 import { getJwtSecret } from '../../../security/JwtSecret';
+import { accessTokenSignOptions } from '../../../security/jwtOptions';
 import { authCookie, authAndCsrf } from '../../../../__tests__/helpers/apiAuthTestHelpers';
 
 const buildApp = (): Express => {
@@ -41,9 +42,11 @@ const buildApp = (): Express => {
 };
 
 const signToken = (idRole: Role) =>
-  jwt.sign({ userId: 1, email: 'principal@test.com', category: 'test', idRole, typ: 'access' }, getJwtSecret(), {
-    expiresIn: '1h',
-  });
+  jwt.sign(
+    { userId: 1, email: 'principal@test.com', category: 'test', idRole, typ: 'access' },
+    getJwtSecret(),
+    accessTokenSignOptions('1h')
+  );
 
 const adminToken = signToken(Role.ADMIN);
 const userToken = signToken(Role.USER);

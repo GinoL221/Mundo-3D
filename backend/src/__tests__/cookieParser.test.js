@@ -2,6 +2,7 @@ const request = require('supertest');
 const jwt = require('jsonwebtoken');
 const app = require('../app');
 const { AUTH_COOKIE } = require('../infrastructure/security/cookieOptions');
+const { accessTokenSignOptions } = require('../infrastructure/security/jwtOptions');
 
 // Proves cookie-parser is wired into the app: without it, req.cookies is
 // undefined and apiAuthMiddleware always answers 401, regardless of the
@@ -21,7 +22,7 @@ describe('cookie-parser wiring', () => {
     const token = jwt.sign(
       { userId: 1, idRole: 2, typ: 'access' },
       'test-only-jwt-secret-not-for-production',
-      { expiresIn: '2h' }
+      accessTokenSignOptions('2h')
     );
 
     const res = await request(app).get('/api/users').set('Cookie', `${AUTH_COOKIE}=${token}`);

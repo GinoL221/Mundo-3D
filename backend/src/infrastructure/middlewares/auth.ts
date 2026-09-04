@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import { getJwtSecret } from '../security/JwtSecret';
 import { AUTH_COOKIE } from '../security/cookieOptions';
+import { accessTokenVerifyOptions } from '../security/jwtOptions';
 import { Role } from '../../domain/Role';
 
 interface DecodedToken {
@@ -20,7 +21,10 @@ export const apiAuthMiddleware = (req: Request, res: Response, next: NextFunctio
   }
 
   try {
-    const decoded = jwt.verify(token, getJwtSecret()) as DecodedToken;
+    // Algorithm, issuer and audience come from `jwtOptions` — the same module
+    // the one sign site reads — so a claim can never be signed here and left
+    // unchecked there, or required here and never signed.
+    const decoded = jwt.verify(token, getJwtSecret(), accessTokenVerifyOptions()) as DecodedToken;
 
     // api-jwt-auth spec: "Pre-deploy JWT without typ claim is rejected" —
     // required in exactly this one place (design.md D3). A validly-signed,
