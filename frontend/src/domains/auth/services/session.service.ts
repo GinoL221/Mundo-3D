@@ -28,18 +28,41 @@ export function isAdminOnly(user: SessionUser | null): boolean {
   return user?.idRole === Role.ADMIN;
 }
 
+/** Which direction a session change went, as seen by the tab that caused it. */
+export type SessionState = 'logged-in' | 'logged-out';
+
+/** Payload posted on `BroadcastChannel('m3d-session')`. */
+export interface SessionChangedMessage {
+  type: 'session-changed';
+  state: SessionState;
+}
+
 /**
  * Broadcasts a session change on `BroadcastChannel('m3d-session')` so other
- * open tabs re-read their cookies and update their gating without a reload
- * (design.md "Decision: Cross-tab sync"). Used symmetrically by both
- * directions of a session change — login/register (LoginForm.astro,
- * RegisterForm.astro) and logout (clearSession() below) — so cross-tab sync
- * doesn't depend on the focus/visibilitychange fallback layer in
- * sessionUI.ts, which real browsers only fire on an actual tab switch.
+ * open tabs update their gating without a reload (design.md "Decision:
+ * Cross-tab sync"). Used symmetrically by both directions of a session
+ * change — login/register (LoginForm.astro, RegisterForm.astro) and logout
+ * (clearSession() below) — so cross-tab sync doesn't depend on the
+ * focus/visibilitychange fallback layer in sessionUI.ts, which real browsers
+ * only fire on an actual tab switch.
+ *
+ * The message carries its `state` because the receiver cannot always
+ * re-derive it: this tab's cookie deletion travels through the browser
+ * process, so a tab in another renderer can get this message while its
+ * `document.cookie` still shows the dead session, and nothing retries after
+ * that. Only the sending tab knows for certain which way the session went.
+ *
+ * `state` is REQUIRED, not optional — same reasoning as `issueAccessCookie`'s
+ * `maxAgeMs` in the backend: an intent that can be omitted eventually is, and
+ * a message posted without one is indistinguishable from the pre-`state`
+ * payload the receiver has to keep tolerating. Making the compiler ask for it
+ * is what stops a future call site from silently posting an intentless
+ * message.
  */
-export function broadcastSessionChanged(): void {
+export function broadcastSessionChanged(state: SessionState): void {
   try {
-    new BroadcastChannel(SESSION_BROADCAST_CHANNEL).postMessage({ type: 'session-changed' });
+    const message: SessionChangedMessage = { type: 'session-changed', state };
+    new BroadcastChannel(SESSION_BROADCAST_CHANNEL).postMessage(message);
   } catch {
     // BroadcastChannel unsupported — visibilitychange/focus fallback in
     // sessionUI.ts covers this case.
@@ -68,10 +91,10 @@ export async function clearSession(): Promise<void> {
   // window.location.href, so this tab is typically destroyed long before the
   // response lands — anything sequenced after the await may never run at
   // all. Ending the session in the UI must therefore not depend on the
-  // network: expire the readable cookies, then tell the other tabs to
-  // re-read them.
+  // network: expire the readable cookies, then tell the other tabs the
+  // session ended.
   expireClientReadableSessionCookies();
-  broadcastSessionChanged();
+  broadcastSessionChanged('logged-out');
 
   try {
     // Deliberately plain `fetch`, not `authFetch` (design.md D6, task

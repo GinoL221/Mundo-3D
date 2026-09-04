@@ -109,7 +109,7 @@
       // Notify header and other components in this tab, and any other open
       // tab (symmetric with clearSession()'s broadcast on logout).
       window.dispatchEvent(new CustomEvent('session-changed'));
-      broadcastSessionChanged();
+      broadcastSessionChanged('logged-in');
 
       // Merge the guest cart into the account's server cart before
       // redirecting, bounded so a slow/failed GET never blocks navigation

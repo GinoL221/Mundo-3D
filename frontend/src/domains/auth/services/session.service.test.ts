@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearSession, getSessionUser, hasAdminAccess, isAdminOnly } from './session.service';
+import {
+  broadcastSessionChanged,
+  clearSession,
+  getSessionUser,
+  hasAdminAccess,
+  isAdminOnly,
+} from './session.service';
 
 function stubCookie(cookie: string) {
   vi.stubGlobal('document', { cookie });
@@ -101,6 +107,45 @@ describe('session.service', () => {
     });
   });
 
+  // The message carries the direction because the receiving tab cannot
+  // reliably re-derive it: under site isolation the sender's cookie deletion
+  // reaches the other renderer after the message can, so a receiver reading
+  // its own `document.cookie` may still see the dead session (sessionUI.ts).
+  describe('broadcastSessionChanged', () => {
+    beforeEach(() => {
+      FakeBroadcastChannel.instances = [];
+      vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
+    });
+
+    it('posts the login direction used by LoginForm/RegisterForm', () => {
+      broadcastSessionChanged('logged-in');
+
+      expect(FakeBroadcastChannel.instances[0].name).toBe('m3d-session');
+      expect(FakeBroadcastChannel.instances[0].postMessage).toHaveBeenCalledWith({
+        type: 'session-changed',
+        state: 'logged-in',
+      });
+    });
+
+    it('posts the logout direction', () => {
+      broadcastSessionChanged('logged-out');
+
+      expect(FakeBroadcastChannel.instances[0].postMessage).toHaveBeenCalledWith({
+        type: 'session-changed',
+        state: 'logged-out',
+      });
+    });
+
+    // Older browsers without BroadcastChannel fall back to the
+    // focus/visibilitychange layer in sessionUI.ts — never to a throw that
+    // would abort the caller mid-logout.
+    it('does not throw when BroadcastChannel is unavailable', () => {
+      vi.stubGlobal('BroadcastChannel', undefined);
+
+      expect(() => broadcastSessionChanged('logged-out')).not.toThrow();
+    });
+  });
+
   describe('clearSession', () => {
     let fetchMock: ReturnType<typeof vi.fn>;
 
@@ -132,6 +177,7 @@ describe('session.service', () => {
       expect(FakeBroadcastChannel.instances[0].name).toBe('m3d-session');
       expect(FakeBroadcastChannel.instances[0].postMessage).toHaveBeenCalledWith({
         type: 'session-changed',
+        state: 'logged-out',
       });
     });
 
@@ -142,6 +188,7 @@ describe('session.service', () => {
 
       expect(FakeBroadcastChannel.instances[0].postMessage).toHaveBeenCalledWith({
         type: 'session-changed',
+        state: 'logged-out',
       });
     });
 
@@ -254,6 +301,7 @@ describe('session.service', () => {
 
       expect(FakeBroadcastChannel.instances[0].postMessage).toHaveBeenCalledWith({
         type: 'session-changed',
+        state: 'logged-out',
       });
 
       settle();

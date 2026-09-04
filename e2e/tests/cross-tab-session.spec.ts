@@ -59,12 +59,30 @@ test.describe('Cross-tab session synchronization', () => {
     // expires the readable cookies and broadcasts SYNCHRONOUSLY, before its
     // keepalive logout request, so tab 1's navigation cannot swallow either
     // — this used to race, and lost once logout started revoking the refresh
-    // family in the database before replying. The retry window below is
-    // tolerance for scheduling, not for the network; the
-    // visibilitychange/focus fallback layer covers the same outcome if
-    // BroadcastChannel alone were ever slower than the poll interval.
+    // family in the database before replying. The message carries
+    // `state: 'logged-out'` so tab 2 acts on it directly instead of
+    // re-reading a cookie whose deletion may not have crossed the renderer
+    // boundary yet. The retry window below is tolerance for scheduling, not
+    // for the network; the visibilitychange/focus fallback layer covers the
+    // same outcome if BroadcastChannel alone were ever slower than the poll
+    // interval.
+    //
+    // Every iteration has to genuinely re-fire a listener, or the retry is
+    // theatre. A bare `bringToFront()` retry proves nothing: once page 2 is
+    // already frontmost, further calls fire no `visibilitychange`, so
+    // `update()` never runs a second time and the loop just re-reads a DOM
+    // nothing has touched since the first attempt — it would report the
+    // first read's result ten seconds later, dressed as a retry. So switch
+    // away and back for a real tab switch, and dispatch the two events
+    // sessionUI.ts actually binds, because headless Chromium does not
+    // reliably translate a programmatic tab switch into them.
     await expect(async () => {
+      await page.bringToFront();
       await page2.bringToFront();
+      await page2.evaluate(() => {
+        document.dispatchEvent(new Event('visibilitychange'));
+        window.dispatchEvent(new Event('focus'));
+      });
       const greetingVisible = await page2.locator('#navbar-greeting').isVisible();
       expect(greetingVisible).toBe(false);
     }).toPass({ timeout: 10_000 });

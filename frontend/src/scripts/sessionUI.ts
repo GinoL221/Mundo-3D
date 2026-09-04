@@ -1,4 +1,5 @@
 import { hasAdminAccess, clearSession } from '../domains/auth/services/session.service';
+import type { SessionChangedMessage } from '../domains/auth/services/session.service';
 import { CartService } from '../domains/cart/services/CartService';
 import { resolveImageUrl } from '../lib/imageUrl';
 
@@ -88,7 +89,24 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
   let channel: BroadcastChannel | null = null;
   try {
     channel = new BroadcastChannel(SESSION_BROADCAST_CHANNEL);
-    channel.onmessage = () => update();
+    channel.onmessage = (event: MessageEvent) => {
+      const state = (event?.data as Partial<SessionChangedMessage> | undefined)?.state;
+      // A logout is acted on, not re-derived. The sending tab expired the
+      // cookies in ITS document; under site isolation that deletion still has
+      // to reach this renderer, so `update()` here can read a session that is
+      // already dead and — since nothing retries — leave this navbar showing
+      // a logged-in user forever. The sender is authoritative about the
+      // session having ended, so believe the message and skip the cookie.
+      if (state === 'logged-out') {
+        resetToGuest();
+        return;
+      }
+      // Everything else, INCLUDING a message with no `state`, re-reads the
+      // cookie. That fallback is deliberate: a tab loaded before `state`
+      // shipped still posts the old intentless `{ type: 'session-changed' }`,
+      // and its logout must keep reaching tabs loaded after.
+      update();
+    };
   } catch {
     channel = null;
   }

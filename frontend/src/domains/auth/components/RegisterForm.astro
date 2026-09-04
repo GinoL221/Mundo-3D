@@ -188,7 +188,7 @@
       // Auth Token Storage").
 
       window.dispatchEvent(new CustomEvent('session-changed'));
-      broadcastSessionChanged();
+      broadcastSessionChanged('logged-in');
       window.location.href = '/';
     } catch (err) {
       if (err instanceof Error) {

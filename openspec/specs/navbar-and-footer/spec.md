@@ -48,6 +48,8 @@ The `.nav-item` MUST contain `.nav-item__dropdown` (replacing `.dropdown-menu`) 
 
 The Header MUST preserve session visibility, identity, links, dropdowns, and visual-only search through selectors, cookies, and events.
 
+A cross-tab `BroadcastChannel('m3d-session')` message carries the state it announces, and the receiving tab MAY apply it directly instead of re-reading the cookie. This is not a loophole in the scenario below: the sending tab has already expired the cookie and is authoritative about the session ending, so the state applied is the state the cookie represents. It exists because cookie writes are not instantly visible across renderer processes — a receiver that re-derived the state from its own `document.cookie` could read a value the sender has already deleted, show a logged-out user as signed in, and never correct itself, since a one-shot message does not retry.
+
 #### Scenario: Session state updates Header visibility
 
 - GIVEN the non-httpOnly `m3d_user` cookie represents a guest, user, or administrator

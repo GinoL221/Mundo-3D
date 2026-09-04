@@ -168,11 +168,15 @@ describe('Header browser modules', () => {
     expect(document.elements.get('guest')!.style.display).toBe('block');
     expect(document.elements.get('user')!.style.display).toBe('none');
 
-    // A BroadcastChannel message from another tab (e.g. that tab logging
-    // out and back in as staff) re-reads the cookie the same way.
+    // A BroadcastChannel login message from another tab (e.g. that tab
+    // logging out and back in as staff) re-reads the cookie the same way.
+    // The logout direction deliberately does NOT — see sessionUI.test.ts,
+    // which owns the message-payload contract.
     setUserCookie(document, { firstName: 'User', idRole: 3 });
     const channel = FakeBroadcastChannel.instances.at(-1)!;
-    channel.onmessage?.({} as MessageEvent);
+    channel.onmessage?.({
+      data: { type: 'session-changed', state: 'logged-in' },
+    } as MessageEvent);
     expect(document.elements.get('user')!.style.display).toBe('block');
     expect(document.elements.get('admin')!.style.display).toBe('block');
   });
