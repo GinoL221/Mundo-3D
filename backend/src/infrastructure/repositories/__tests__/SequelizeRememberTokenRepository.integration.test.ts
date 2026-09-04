@@ -20,12 +20,16 @@
  * which requires a reachable MySQL/MariaDB (`DB_HOST`/`DB_USER`/`DB_PASS`
  * env vars, see `database/config/config.js`).
  *
- * HONESTY NOTE (see apply-progress.md): this file was NOT executed during
- * this apply batch — no local MySQL was reachable (host port 3306 held by
- * an unrelated local MySQL this session had no credentials for). It is
- * written to the same conventions as the sibling
- * `SequelizeProductRepository.integration.test.ts` real-concurrency test
- * (`adjustStock`) and will run for the first time in CI.
+ * Retention/reuse-detection cases (below the original HIGH-1 PR1 coverage)
+ * additionally prove: a row superseded well within the new 24h cutoff
+ * survives (retention decoupled from the 30s grace window, design.md D1);
+ * a row past the cutoff is still reaped on a real rotation; `revokeFamily`'s
+ * effect round-trips through `findByHash`, the exact read path
+ * `RefreshSessionUseCase` uses to detect a revoked row (design.md D2 row 2);
+ * `revokeFamily` racing a same-family rotation resolves without partial
+ * state (design.md D5); and the family accumulates N+1 rows across N
+ * in-cutoff rotations rather than staying pinned near 2 (design.md D7's
+ * storage-bound claim).
  */
 import crypto from 'crypto';
 import { Transaction } from 'sequelize';
@@ -68,6 +72,20 @@ async function familyRows(familyId: string): Promise<Array<{ tokenHash: string; 
 
 function asTx(transaction: Transaction): TransactionContext {
   return transaction as unknown as TransactionContext;
+}
+
+/**
+ * Rewinds a row's `superseded_at` by `secondsAgo`, computed by the DATABASE
+ * (`NOW() - INTERVAL ... SECOND`), never by a Node `Date`. Simulates "this
+ * row was superseded a while ago" without a real sleep — the same server-
+ * clock discipline `claimRotation`/`reapFamily` themselves rely on (see
+ * `SequelizeRememberTokenRepository.reapFamily`'s header comment).
+ */
+async function rewindSupersededAt(tokenHash: string, secondsAgo: number): Promise<void> {
+  await db.sequelize.query(
+    'UPDATE `RememberToken` SET `superseded_at` = NOW() - INTERVAL :secondsAgo SECOND WHERE `token_hash` = :tokenHash',
+    { replacements: { secondsAgo, tokenHash } }
+  );
 }
 
 describe('SequelizeRememberTokenRepository — real DB rotation', () => {
@@ -316,6 +334,179 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
 
       const finalCount = await countFamilyRows(familyId);
       expect(finalCount).toBe(2);
+    });
+  });
+
+  // refresh-token-reuse-detection: retention cutoff decoupled from grace
+  // (design.md D1/D7) and the reuse-detection round trip (design.md D2/D3/D5).
+  describe('retention cutoff and reuse detection', () => {
+    const REAP_SECONDS = 24 * 60 * 60; // the production default (design.md D1)
+
+    it('a row superseded at T survives at T+1h under the wider cutoff — proves the cutoff is no longer 30s', async () => {
+      const familyId = crypto.randomUUID();
+      const currentHash = `cutoff-survive-${crypto.randomUUID()}`;
+      const expiry = new Date(Date.now() + 3600 * 1000);
+      await seedCurrentToken(userId, familyId, currentHash, expiry);
+
+      await db.sequelize.transaction(async (transaction: Transaction) => {
+        const tx = asTx(transaction);
+        const successorHash = `cutoff-survive-succ-${crypto.randomUUID()}`;
+        await repository.claimRotation({ presentedHash: currentHash, successorHash, tx });
+        await repository.insertSuccessor(
+          { idUser: userId, tokenHash: successorHash, expiryDate: expiry, familyId } as any,
+          tx
+        );
+      });
+
+      // Rewind superseded_at to "1 hour ago", computed by the DB clock —
+      // simulates T+1h without a real sleep. Under the OLD 30s cutoff this
+      // row would already be gone; under the 24h cutoff it must not be.
+      await rewindSupersededAt(currentHash, 3600);
+
+      await db.sequelize.transaction(async (transaction: Transaction) =>
+        repository.reapFamily(familyId, REAP_SECONDS, asTx(transaction))
+      );
+
+      const rows = await familyRows(familyId);
+      expect(rows.some((row) => row.tokenHash === currentHash)).toBe(true);
+      expect(await countFamilyRows(familyId)).toBe(2);
+    });
+
+    it('a row superseded past the injected cutoff IS reaped on a real rotation in that family', async () => {
+      const familyId = crypto.randomUUID();
+      const staleHash = `cutoff-reap-stale-${crypto.randomUUID()}`;
+      const currentHash = `cutoff-reap-current-${crypto.randomUUID()}`;
+      const expiry = new Date(Date.now() + 3600 * 1000);
+
+      // A row already superseded well past the injected cutoff...
+      await seedCurrentToken(userId, familyId, staleHash, expiry);
+      await rewindSupersededAt(staleHash, REAP_SECONDS + 60);
+
+      // ...and a separate current row that actually rotates in the same
+      // family (reapFamily only ever runs during a rotation, design.md D7).
+      await seedCurrentToken(userId, familyId, currentHash, expiry);
+
+      await db.sequelize.transaction(async (transaction: Transaction) => {
+        const tx = asTx(transaction);
+        const successorHash = `cutoff-reap-succ-${crypto.randomUUID()}`;
+        await repository.claimRotation({ presentedHash: currentHash, successorHash, tx });
+        await repository.insertSuccessor(
+          { idUser: userId, tokenHash: successorHash, expiryDate: expiry, familyId } as any,
+          tx
+        );
+        await repository.reapFamily(familyId, REAP_SECONDS, tx);
+      });
+
+      const rows = await familyRows(familyId);
+      expect(rows.some((row) => row.tokenHash === staleHash)).toBe(false);
+    });
+
+    it('detection round trip: revokeFamily on a family makes findByHash report every member revoked', async () => {
+      const familyId = crypto.randomUUID();
+      const supersededHash = `detect-superseded-${crypto.randomUUID()}`;
+      const currentHash = `detect-current-${crypto.randomUUID()}`;
+      const expiry = new Date(Date.now() + 3600 * 1000);
+
+      await seedCurrentToken(userId, familyId, supersededHash, expiry);
+      await seedCurrentToken(userId, familyId, currentHash, expiry);
+      await db.sequelize.query(
+        'UPDATE `RememberToken` SET `superseded_at` = NOW() - INTERVAL 60 SECOND, `successor_hash` = :h WHERE `token_hash` = :s',
+        { replacements: { h: currentHash, s: supersededHash } }
+      );
+
+      const revoked = await repository.revokeFamily(familyId);
+      expect(revoked).toBe(2);
+
+      // findByHash is the exact read path RefreshSessionUseCase relies on to
+      // reject row 2 ("revoked token") on any later presentation from this
+      // family, including the attacker's copy.
+      const supersededRow = await repository.findByHash(supersededHash);
+      const currentRow = await repository.findByHash(currentHash);
+      expect(supersededRow?.revokedAt).not.toBeNull();
+      expect(currentRow?.revokedAt).not.toBeNull();
+    });
+
+    it('revokeFamily concurrent with a same-family rotation resolves without partial state', async () => {
+      const familyId = crypto.randomUUID();
+      const currentHash = `contend-current-${crypto.randomUUID()}`;
+      const successorHash = `contend-succ-${crypto.randomUUID()}`;
+      const expiry = new Date(Date.now() + 3600 * 1000);
+      await seedCurrentToken(userId, familyId, currentHash, expiry);
+
+      const rotate = () =>
+        db.sequelize.transaction(async (transaction: Transaction) => {
+          const tx = asTx(transaction);
+          const claimed = await repository.claimRotation({ presentedHash: currentHash, successorHash, tx });
+          if (claimed) {
+            await repository.insertSuccessor(
+              { idUser: userId, tokenHash: successorHash, expiryDate: expiry, familyId } as any,
+              tx
+            );
+            await repository.reapFamily(familyId, REAP_SECONDS, tx);
+          }
+          return claimed;
+        });
+
+      const revoke = () => repository.revokeFamily(familyId);
+
+      // Real concurrency, not sequential mocked calls. MySQL's deadlock
+      // detector may roll one side back — that surfaces as a rejection here
+      // rather than silent partial state (design.md D5: "each side is
+      // individually atomic so no partial state is possible").
+      const outcomes = await Promise.allSettled([rotate(), revoke()]);
+      for (const outcome of outcomes) {
+        if (outcome.status === 'rejected') {
+          expect(outcome.reason).toBeInstanceOf(Error);
+        }
+      }
+
+      // Whichever interleaving occurred, the family must never end up with
+      // zero rows (nothing here is eligible for reaping — everything is
+      // brand new) and never more than 2 (no duplicate-insert bug) — a
+      // rotation either fully committed (2 rows) or fully rolled back (1).
+      const finalCount = await countFamilyRows(familyId);
+      expect(finalCount).toBeGreaterThanOrEqual(1);
+      expect(finalCount).toBeLessThanOrEqual(2);
+
+      // No row is left half-written: every surviving row still round-trips
+      // through findByHash with a well-formed familyId.
+      const rows = await familyRows(familyId);
+      for (const row of rows) {
+        expect(row.familyId).toBe(familyId);
+      }
+    });
+
+    // Deviation from tasks.md (flagged by sdd-tasks, required by design.md's
+    // Testing Strategy table): pins the accepted storage growth so a future
+    // cutoff change is visible, contrasting with the graceSeconds=0 test
+    // above whose finalCount stays <=2.
+    it('storage bound: N rotations inside the cutoff leave the family with N+1 rows, not ~2', async () => {
+      const familyId = crypto.randomUUID();
+      const expiry = new Date(Date.now() + 3600 * 1000);
+      const firstHash = `storage-${crypto.randomUUID()}`;
+      await seedCurrentToken(userId, familyId, firstHash, expiry);
+
+      const rotations = 3;
+      let currentHash = firstHash;
+      for (let i = 0; i < rotations; i += 1) {
+        const successorHash = `storage-${i}-${crypto.randomUUID()}`;
+        await db.sequelize.transaction(async (transaction: Transaction) => {
+          const tx = asTx(transaction);
+          const claimed = await repository.claimRotation({ presentedHash: currentHash, successorHash, tx });
+          expect(claimed).toBe(true);
+          await repository.insertSuccessor(
+            { idUser: userId, tokenHash: successorHash, expiryDate: expiry, familyId } as any,
+            tx
+          );
+          // The 24h production cutoff — every superseded row from this loop
+          // is seconds old, so none of them is reapable yet.
+          await repository.reapFamily(familyId, REAP_SECONDS, tx);
+        });
+        currentHash = successorHash;
+      }
+
+      const finalCount = await countFamilyRows(familyId);
+      expect(finalCount).toBe(rotations + 1);
     });
   });
 });
