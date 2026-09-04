@@ -51,7 +51,7 @@ per-file breakdown.
 - [x] 2.2 GREEN: create `backend/src/infrastructure/security/refreshTokenRetention.ts` — `REFRESH_TOKEN_REAP_SECONDS`, env-tunable, default `86400`; `RotateRefreshTokenUseCase.ts` takes it as a required 4th ctor arg (line 52).
 - [x] 2.3 Delete dead code in `RotateRefreshTokenUseCase.ts`: `GRACE_SECONDS` (`:14`) + its import (`:6`); keep the `RefreshTokenRotationLostRaceError` re-export; fix the stale "imports both" comment.
 - [x] 2.4 Wire `routes/api/users.ts`: pass `REFRESH_TOKEN_REAP_SECONDS` as `RotateRefreshTokenUseCase`'s 4th arg.
-- [ ] 2.5 **BLOCKED** — `.env.example` is denied by this environment's permission configuration (confirmed again this batch: both Read and a `rg` probe were denied). `REFRESH_TOKEN_REAP_SECONDS=86400` still needs to be added to `.env.example` manually by the maintainer. This is a documentation gap only — `refreshTokenRetention.ts` reads `process.env.REFRESH_TOKEN_REAP_SECONDS` with a working default (`86400`), so the feature is fully functional without this entry.
+- [x] 2.5 `backend/.env.example` (read-only) gains `REFRESH_TOKEN_REAP_SECONDS=86400`. Added by the maintainer by hand: this environment denies every read and write of `.env*` paths, so no agent in this cycle could touch the file. Verified only as far as that permission allows — `git status` reports it modified; its contents were never readable here. Documentation only, since `refreshTokenRetention.ts:4` falls back to `86400` when the variable is absent.
 
 ## Phase 3: Reuse detection (D2/D3/D6) — land together, new outcome fails the build until the controller handles it
 
