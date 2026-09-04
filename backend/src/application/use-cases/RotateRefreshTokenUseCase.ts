@@ -3,27 +3,29 @@ import { UnitOfWorkPort } from '../../domain/ports/UnitOfWorkPort';
 import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
 import { RefreshTokenRotatorPort } from '../../domain/ports/RefreshTokenRotatorPort';
 import { RememberToken } from '../../domain/entities/RememberToken';
-import { REFRESH_TOKEN_GRACE_SECONDS } from '../../domain/entities/RefreshTokenGrace';
 import { RefreshTokenRotationLostRaceError } from '../../domain/exceptions/RefreshTokenRotationLostRaceError';
 
-// Re-exported for backward compatibility (PR1's own test file imports both
+// Re-exported for backward compatibility (PR1's own test file imports it
 // from this module). Canonical source is now domain/ — see
 // RefreshTokenRotatorPort.ts's comment for why (backend.application.contracts
 // forbids RefreshSessionUseCase, PR2, from importing this file directly).
 export { RefreshTokenRotationLostRaceError };
-export const GRACE_SECONDS = REFRESH_TOKEN_GRACE_SECONDS;
 
 // design.md D1: one transaction, three steps — claim (the authoritative
 // gate), insert successor (same family, same user, expiry inherited
-// verbatim, never extended), reap (delete this family's past-grace rows).
-// Only the rotation winner ever reaches step 2/3. Implements
+// verbatim, never extended), reap (delete this family's past-`reapSeconds`
+// rows). Only the rotation winner ever reaches step 2/3. Implements
 // RefreshTokenRotatorPort so RefreshSessionUseCase (PR2) can depend on the
 // port instead of this concrete class.
 export class RotateRefreshTokenUseCase implements RefreshTokenRotatorPort {
   constructor(
     private readonly uow: UnitOfWorkPort,
     private readonly rememberTokenRepo: RememberTokenRepositoryPort,
-    private readonly tokenHasher: TokenHasherPort
+    private readonly tokenHasher: TokenHasherPort,
+    // Retention cutoff, decoupled from the 30s grace window (design.md D1).
+    // Required, no default — supplied by the composition root from
+    // infrastructure/security/refreshTokenRetention.ts.
+    private readonly reapSeconds: number
   ) {}
 
   async execute(current: RememberToken, newPlainToken: string): Promise<RememberToken> {
@@ -49,7 +51,7 @@ export class RotateRefreshTokenUseCase implements RefreshTokenRotatorPort {
         tx
       );
 
-      await this.rememberTokenRepo.reapFamily(current.familyId, GRACE_SECONDS, tx);
+      await this.rememberTokenRepo.reapFamily(current.familyId, this.reapSeconds, tx);
 
       return successor;
     });

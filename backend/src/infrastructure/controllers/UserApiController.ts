@@ -9,25 +9,15 @@ import { RevokeRefreshTokenUseCase } from '../../application/use-cases/RevokeRef
 import { InvalidCredentialsException } from '../../domain/exceptions/InvalidCredentialsException';
 import { UserAlreadyExistsException } from '../../domain/exceptions/UserAlreadyExistsException';
 import { cleanupUploadedFile } from '../utils/cleanupUploadedFile';
-import { AUTH_COOKIE, REFRESH_COOKIE, authMaxAge } from '../security/cookieOptions';
+import { AUTH_COOKIE, REFRESH_COOKIE } from '../security/cookieOptions';
 import {
-  setSessionCookies,
   clearSessionCookies,
   issueAccessCookie,
   issueRefreshCookie,
   generateRefreshToken,
   readFamilyIdFromAccessToken,
+  establishSession,
 } from './sessionCookies';
-
-interface UserAuthDto {
-  idUser: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  image: string | null;
-  idRole?: number | null;
-  category?: string | null;
-}
 
 export class UserApiController {
   constructor(
@@ -40,40 +30,6 @@ export class UserApiController {
     private readonly revokeRefreshTokenUseCase?: RevokeRefreshTokenUseCase
   ) {}
 
-  // Shared by login/register (task 2.16): creates the RememberToken row and
-  // issues all 4 session cookies, embedding familyId in the access JWT so
-  // logout can revoke it later without needing the path-scoped refresh
-  // cookie (see sessionCookies.ts's JwtPayload comment).
-  private async establishSession(res: Response, userDto: UserAuthDto, remember?: boolean): Promise<void> {
-    if (!this.createRememberTokenUseCase) {
-      throw new Error('CreateRememberTokenUseCase not injected');
-    }
-
-    const refreshPlainToken = generateRefreshToken();
-    const rememberToken = await this.createRememberTokenUseCase.execute({
-      idUser: userDto.idUser,
-      plainToken: refreshPlainToken,
-      durationSeconds: authMaxAge(remember) / 1000,
-    });
-
-    const payload = {
-      userId: userDto.idUser,
-      email: userDto.email,
-      category: userDto.category,
-      idRole: userDto.idRole,
-      familyId: rememberToken.familyId ?? undefined,
-    };
-
-    setSessionCookies(
-      res,
-      userDto.idUser,
-      payload,
-      { firstName: userDto.firstName, image: userDto.image, idRole: userDto.idRole, category: userDto.category },
-      refreshPlainToken,
-      remember
-    );
-  }
-
   login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const email = req.body.Email || req.body.email;
@@ -81,7 +37,7 @@ export class UserApiController {
       const remember = req.body.remember === true || req.body.remember === 'true';
 
       const userDto = await this.authenticateUserUseCase.execute({ email, password });
-      await this.establishSession(res, userDto, remember);
+      await establishSession(res, this.createRememberTokenUseCase, userDto, remember);
 
       res.json({
         user: {
@@ -140,7 +96,10 @@ export class UserApiController {
       const newPlainToken = generateRefreshToken();
       const result = await this.refreshSessionUseCase.execute({ presentedPlainToken, newPlainToken });
 
-      if (result.outcome === 'rejected') {
+      // 'reuse-detected' MUST fold into the same 401 as an ordinary
+      // rejection (design.md D2/D3) — the response must never reveal that
+      // a family-wide revocation just fired.
+      if (result.outcome === 'rejected' || result.outcome === 'reuse-detected') {
         res.status(401).json({ error: 'Sesión expirada' });
         return;
       }
@@ -197,7 +156,7 @@ export class UserApiController {
       const image = req.file.location;
 
       const userDto = await this.registerUserUseCase.execute({ firstName, lastName, email, password, image });
-      await this.establishSession(res, userDto);
+      await establishSession(res, this.createRememberTokenUseCase, userDto);
 
       res.status(201).json({
         user: {

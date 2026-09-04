@@ -519,5 +519,19 @@ describe('UserApiController', () => {
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.cookie).not.toHaveBeenCalled();
     });
+
+    // refresh-token-reuse-detection design.md D2/D3: the reuse response must
+    // be indistinguishable from an ordinary rejection at the HTTP boundary.
+    it('401s with the same body and no Set-Cookie when the use case reports reuse-detected, identical to a rejection', async () => {
+      req.cookies = { [REFRESH_COOKIE]: 'replayed-token' };
+      mockRefreshSessionUseCase.execute.mockResolvedValue({ outcome: 'reuse-detected' });
+
+      await (controller as any).refresh(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Sesión expirada' });
+      expect(res.cookie).not.toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    });
   });
 });

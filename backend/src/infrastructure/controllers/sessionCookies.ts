@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { Response } from 'express';
 import { getJwtSecret } from '../security/JwtSecret';
 import { issueCsrfToken } from '../security/csrfToken';
+import { CreateRememberTokenUseCase } from '../../application/use-cases/CreateRememberTokenUseCase';
 import {
   AUTH_COOKIE,
   CSRF_COOKIE,
@@ -14,6 +15,20 @@ import {
   refreshCookieOptions,
   authMaxAge,
 } from '../security/cookieOptions';
+
+// Moved verbatim from UserApiController.ts (refresh-token-reuse-detection
+// design.md D4) — the controller was at 247/250 lines and the reuse-detection
+// branch adds 4 more. UserAuthDto shape is whatever
+// AuthenticateUserUseCase/RegisterUserUseCase return.
+export interface UserAuthDto {
+  idUser: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  image: string | null;
+  idRole?: number | null;
+  category?: string | null;
+}
 
 // Extracted from UserApiController.ts (task 2.2) — the controller was at
 // 204/250 lines and PR2 adds a refresh handler on top (design.md D4).
@@ -91,6 +106,48 @@ export const setSessionCookies = (
   res.cookie(CSRF_COOKIE, csrfToken, cookieOptions({ httpOnly: false, maxAge }));
   res.cookie(USER_COOKIE, JSON.stringify(display), cookieOptions({ httpOnly: false, maxAge }));
   issueRefreshCookie(res, refreshPlainToken, maxAge);
+};
+
+/**
+ * Shared by login/register: creates the RememberToken row and issues all 4
+ * session cookies, embedding familyId in the access JWT so logout can revoke
+ * it later without needing the path-scoped refresh cookie (see JwtPayload's
+ * comment above). Takes the use case as an explicit argument rather than
+ * closing over `this` — this is a free function, not a controller method.
+ */
+export const establishSession = async (
+  res: Response,
+  createRememberTokenUseCase: CreateRememberTokenUseCase | undefined,
+  userDto: UserAuthDto,
+  remember?: boolean
+): Promise<void> => {
+  if (!createRememberTokenUseCase) {
+    throw new Error('CreateRememberTokenUseCase not injected');
+  }
+
+  const refreshPlainToken = generateRefreshToken();
+  const rememberToken = await createRememberTokenUseCase.execute({
+    idUser: userDto.idUser,
+    plainToken: refreshPlainToken,
+    durationSeconds: authMaxAge(remember) / 1000,
+  });
+
+  const payload = {
+    userId: userDto.idUser,
+    email: userDto.email,
+    category: userDto.category,
+    idRole: userDto.idRole,
+    familyId: rememberToken.familyId ?? undefined,
+  };
+
+  setSessionCookies(
+    res,
+    userDto.idUser,
+    payload,
+    { firstName: userDto.firstName, image: userDto.image, idRole: userDto.idRole, category: userDto.category },
+    refreshPlainToken,
+    remember
+  );
 };
 
 export const clearSessionCookies = (res: Response): void => {

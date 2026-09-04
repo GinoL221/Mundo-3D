@@ -37,7 +37,7 @@ describe('RotateRefreshTokenUseCase', () => {
     mockHasher = { hash: jest.fn() } as unknown as jest.Mocked<TokenHasherPort>;
   });
 
-  it('claims, inserts the successor with the inherited family/expiry, reaps, and returns the successor (won the race)', async () => {
+  it('claims, inserts the successor with the inherited family/expiry, reaps with the injected cutoff, and returns the successor (won the race)', async () => {
     const expiry = new Date('2026-11-01T00:00:00Z');
     const current = new RememberToken(1, 'current-hash', 7, expiry, null, 'family-1');
     mockHasher.hash.mockReturnValue('new-hash');
@@ -46,7 +46,9 @@ describe('RotateRefreshTokenUseCase', () => {
     mockRepo.insertSuccessor.mockResolvedValue(successor);
     mockRepo.reapFamily.mockResolvedValue(1);
 
-    const useCase = new RotateRefreshTokenUseCase(uow, mockRepo, mockHasher);
+    // design.md D1: the reap cutoff is an injected 4th ctor argument, no
+    // longer the module-level GRACE_SECONDS constant (was 30).
+    const useCase = new RotateRefreshTokenUseCase(uow, mockRepo, mockHasher, 86400);
     const result = await useCase.execute(current, 'new-plain-token');
 
     expect(result).toBe(successor);
@@ -59,6 +61,21 @@ describe('RotateRefreshTokenUseCase', () => {
       expect.objectContaining({ idUser: 7, tokenHash: 'new-hash', expiryDate: expiry, familyId: 'family-1' }),
       fakeTx
     );
+    expect(mockRepo.reapFamily).toHaveBeenCalledWith('family-1', 86400, fakeTx);
+  });
+
+  it('reaps with whatever cutoff was injected at construction, not a hardcoded value', async () => {
+    const expiry = new Date('2026-11-01T00:00:00Z');
+    const current = new RememberToken(1, 'current-hash', 7, expiry, null, 'family-1');
+    mockHasher.hash.mockReturnValue('new-hash');
+    mockRepo.claimRotation.mockResolvedValue(true);
+    const successor = new RememberToken(2, 'new-hash', 7, expiry, null, 'family-1');
+    mockRepo.insertSuccessor.mockResolvedValue(successor);
+    mockRepo.reapFamily.mockResolvedValue(0);
+
+    const useCase = new RotateRefreshTokenUseCase(uow, mockRepo, mockHasher, 30);
+    await useCase.execute(current, 'new-plain-token');
+
     expect(mockRepo.reapFamily).toHaveBeenCalledWith('family-1', 30, fakeTx);
   });
 
@@ -68,7 +85,7 @@ describe('RotateRefreshTokenUseCase', () => {
     mockHasher.hash.mockReturnValue('new-hash');
     mockRepo.claimRotation.mockResolvedValue(false);
 
-    const useCase = new RotateRefreshTokenUseCase(uow, mockRepo, mockHasher);
+    const useCase = new RotateRefreshTokenUseCase(uow, mockRepo, mockHasher, 86400);
 
     await expect(useCase.execute(current, 'new-plain-token')).rejects.toBeInstanceOf(
       RefreshTokenRotationLostRaceError

@@ -2,6 +2,7 @@ import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRep
 import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
 import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
 import { RefreshTokenRotatorPort } from '../../domain/ports/RefreshTokenRotatorPort';
+import { LoggerPort } from '../../domain/ports/LoggerPort';
 import { RememberToken } from '../../domain/entities/RememberToken';
 import { REFRESH_TOKEN_GRACE_SECONDS } from '../../domain/entities/RefreshTokenGrace';
 import { RefreshTokenRotationLostRaceError } from '../../domain/exceptions/RefreshTokenRotationLostRaceError';
@@ -17,6 +18,10 @@ export interface RefreshSessionInput {
 
 export type RefreshSessionResult =
   | { outcome: 'rejected' }
+  // Row 6. Payload-free on purpose: the HTTP response is byte-identical to
+  // 'rejected' (proposal decision 4), and withholding familyId makes leaking
+  // it into the 401 body structurally impossible (design.md D2).
+  | { outcome: 'reuse-detected' }
   // `familyExpiresAt` is the family's absolute deadline, inherited across
   // rotations rather than slid (design.md). The caller needs it because the
   // access COOKIE must live as long as the session does — without it, every
@@ -57,7 +62,8 @@ export class RefreshSessionUseCase {
     private readonly rememberTokenRepo: RememberTokenRepositoryPort,
     private readonly userRepo: UserRepositoryPort,
     private readonly tokenHasher: TokenHasherPort,
-    private readonly rotateRefreshTokenUseCase: RefreshTokenRotatorPort
+    private readonly rotateRefreshTokenUseCase: RefreshTokenRotatorPort,
+    private readonly logger: LoggerPort
   ) {}
 
   async execute(input: RefreshSessionInput): Promise<RefreshSessionResult> {
@@ -119,7 +125,30 @@ export class RefreshSessionUseCase {
 
     const graceDeadline = new Date(row.supersededAt.getTime() + REFRESH_TOKEN_GRACE_SECONDS * 1000);
     if (new Date() > graceDeadline) {
-      return { outcome: 'rejected' }; // row 6: replay past grace
+      // Row 6: replay past grace -> reuse detection (design.md D2/D3/D6).
+      // No try/catch: a revocation failure must propagate as a 500, never
+      // be swallowed into this 401-shaped outcome (design.md D3) — a
+      // silent 401 while a known-compromised family survives is worse than
+      // an inference an attacker can only draw while the DB is already
+      // failing every other request too.
+      const revokedRows = await this.rememberTokenRepo.revokeFamily(row.familyId);
+
+      // Revoke first, then log, so `revokedRows` reflects what actually
+      // happened rather than an assumption (design.md D6).
+      this.logger.warn(
+        {
+          event: 'refresh_token_reuse_detected',
+          familyId: row.familyId,
+          userId: row.idUser,
+          supersededAt: row.supersededAt.toISOString(),
+          ageSeconds: (Date.now() - row.supersededAt.getTime()) / 1000,
+          revokedRows,
+          timestamp: new Date().toISOString(),
+        },
+        `Refresh token reuse detected for family ${row.familyId}`
+      );
+
+      return { outcome: 'reuse-detected' };
     }
 
     if (!row.successorHash) {

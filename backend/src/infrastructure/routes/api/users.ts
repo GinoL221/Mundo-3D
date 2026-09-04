@@ -11,8 +11,10 @@ import { GetUserByIdUseCase } from '../../../application/use-cases/GetUserByIdUs
 import { RegisterUserUseCase } from '../../../application/use-cases/RegisterUserUseCase';
 import { CreateRememberTokenUseCase } from '../../../application/use-cases/CreateRememberTokenUseCase';
 import { RotateRefreshTokenUseCase } from '../../../application/use-cases/RotateRefreshTokenUseCase';
+import { REFRESH_TOKEN_REAP_SECONDS } from '../../security/refreshTokenRetention';
 import { RefreshSessionUseCase } from '../../../application/use-cases/RefreshSessionUseCase';
 import { RevokeRefreshTokenUseCase } from '../../../application/use-cases/RevokeRefreshTokenUseCase';
+import { PinoLogger } from '../../logging/PinoLogger';
 import { UserApiController } from '../../controllers/UserApiController';
 import loginLimiter from '../../middlewares/loginLimiter';
 import registerLimiter from '../../middlewares/registerLimiter';
@@ -36,8 +38,19 @@ const listUsersUseCase = new ListUsersUseCase(userRepo);
 const getUserByIdUseCase = new GetUserByIdUseCase(userRepo);
 const registerUserUseCase = new RegisterUserUseCase(userRepo, passwordHasher);
 const createRememberTokenUseCase = new CreateRememberTokenUseCase(rememberTokenRepo, tokenHasher, idGenerator);
-const rotateRefreshTokenUseCase = new RotateRefreshTokenUseCase(uow, rememberTokenRepo, tokenHasher);
-const refreshSessionUseCase = new RefreshSessionUseCase(rememberTokenRepo, userRepo, tokenHasher, rotateRefreshTokenUseCase);
+const rotateRefreshTokenUseCase = new RotateRefreshTokenUseCase(
+  uow,
+  rememberTokenRepo,
+  tokenHasher,
+  REFRESH_TOKEN_REAP_SECONDS
+);
+const refreshSessionUseCase = new RefreshSessionUseCase(
+  rememberTokenRepo,
+  userRepo,
+  tokenHasher,
+  rotateRefreshTokenUseCase,
+  new PinoLogger()
+);
 const revokeRefreshTokenUseCase = new RevokeRefreshTokenUseCase(rememberTokenRepo);
 
 const controller = new UserApiController(
@@ -196,7 +209,10 @@ router.post('/users/logout', controller.logout);
 // No apiAuthMiddleware (the access token is expired by definition here) and
 // no csrfGuard (never mounted globally — design.md D5's defenses are the
 // httpOnly+sameSite=lax+path-scoped refresh cookie, rotation, and rate
-// limiting instead).
+// limiting instead). A refresh token replayed past its grace window revokes
+// the whole family and is logged server-side, but the 401 response stays
+// byte-identical to an ordinary rejection (refresh-token-reuse-detection
+// design.md D2/D3).
 router.post('/users/refresh', refreshLimiter, controller.refresh);
 
 router.get('/users', apiAuthMiddleware, adminGuard, controller.index);

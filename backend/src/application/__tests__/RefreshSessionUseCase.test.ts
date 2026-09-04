@@ -4,6 +4,7 @@ import { RefreshTokenRotationLostRaceError } from '../../domain/exceptions/Refre
 import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
 import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
 import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
+import { LoggerPort } from '../../domain/ports/LoggerPort';
 import { RememberToken } from '../../domain/entities/RememberToken';
 import { User } from '../../domain/entities/User';
 
@@ -15,6 +16,7 @@ describe('RefreshSessionUseCase', () => {
   let mockUserRepo: jest.Mocked<UserRepositoryPort>;
   let mockHasher: jest.Mocked<TokenHasherPort>;
   let mockRotate: jest.Mocked<RefreshTokenRotatorPort>;
+  let mockLogger: jest.Mocked<LoggerPort>;
   let useCase: RefreshSessionUseCase;
 
   const now = new Date('2026-09-01T12:00:00Z');
@@ -47,10 +49,12 @@ describe('RefreshSessionUseCase', () => {
     mockUserRepo = { findById: jest.fn() } as unknown as jest.Mocked<UserRepositoryPort>;
     mockHasher = { hash: jest.fn((t: string) => `hash(${t})`) } as unknown as jest.Mocked<TokenHasherPort>;
     mockRotate = { execute: jest.fn() } as unknown as jest.Mocked<RefreshTokenRotatorPort>;
+    mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() } as unknown as jest.Mocked<LoggerPort>;
 
     mockUserRepo.findById.mockResolvedValue(fakeUser);
+    mockRepo.revokeFamily.mockResolvedValue(1);
 
-    useCase = new RefreshSessionUseCase(mockRepo, mockUserRepo, mockHasher, mockRotate);
+    useCase = new RefreshSessionUseCase(mockRepo, mockUserRepo, mockHasher, mockRotate, mockLogger);
   });
 
   afterEach(() => {
@@ -64,6 +68,9 @@ describe('RefreshSessionUseCase', () => {
 
     expect(result.outcome).toBe('rejected');
     expect(mockRotate.execute).not.toHaveBeenCalled();
+    // A hash we never issued, or one already past retention, names no
+    // family to revoke — not a reuse signal (design.md D2 row 1).
+    expect(mockRepo.revokeFamily).not.toHaveBeenCalled();
   });
 
   it('row 2: revoked token -> rejected (logout beats grace, even if still within grace)', async () => {
@@ -74,6 +81,9 @@ describe('RefreshSessionUseCase', () => {
 
     expect(result.outcome).toBe('rejected');
     expect(mockRotate.execute).not.toHaveBeenCalled();
+    // The family is already terminal — logout beat grace, not reuse
+    // (design.md D2 row 2).
+    expect(mockRepo.revokeFamily).not.toHaveBeenCalled();
   });
 
   it('row 3: expired token -> rejected', async () => {
@@ -83,6 +93,19 @@ describe('RefreshSessionUseCase', () => {
     const result = await useCase.execute({ presentedPlainToken: 'expired', newPlainToken: 'new' });
 
     expect(result.outcome).toBe('rejected');
+    // Time, not theft (design.md D2 row 3).
+    expect(mockRepo.revokeFamily).not.toHaveBeenCalled();
+  });
+
+  it('guard: a superseded row with no familyId -> rejected, no revocation (cannot name a family to revoke)', async () => {
+    const noFamily = new RememberToken(1, 'hash(nofamily)', 7, future, null, null, now, 'succ-hash');
+    mockRepo.findByHash.mockResolvedValue(noFamily);
+
+    const result = await useCase.execute({ presentedPlainToken: 'nofamily', newPlainToken: 'new' });
+
+    expect(result.outcome).toBe('rejected');
+    expect(mockRepo.revokeFamily).not.toHaveBeenCalled();
+    expect(mockLogger.warn).not.toHaveBeenCalled();
   });
 
   it('row 4: current (non-superseded) token -> rotates and returns the successor + user + familyId', async () => {
@@ -130,15 +153,52 @@ describe('RefreshSessionUseCase', () => {
     expect(mockRepo.revokeFamily).not.toHaveBeenCalled();
   });
 
-  it('row 6: replay past grace (superseded 30+s ago) -> rejected, no revocation', async () => {
+  it('row 6: replay past grace (superseded 30+s ago) -> revokes the whole family, logs once, and reports reuse-detected', async () => {
     const supersededAt = new Date(now.getTime() - 45 * 1000); // 45s ago, past 30s grace
     const current = new RememberToken(1, 'hash(current)', 7, future, null, 'fam-1', supersededAt, 'hash(succ)');
     mockRepo.findByHash.mockResolvedValue(current);
 
     const result = await useCase.execute({ presentedPlainToken: 'current', newPlainToken: 'new' });
 
-    expect(result.outcome).toBe('rejected');
-    expect(mockRepo.revokeFamily).not.toHaveBeenCalled();
+    expect(result.outcome).toBe('reuse-detected');
+    expect(mockRepo.revokeFamily).toHaveBeenCalledTimes(1);
+    expect(mockRepo.revokeFamily).toHaveBeenCalledWith('fam-1');
+    expect(mockLogger.warn).toHaveBeenCalledTimes(1);
+  });
+
+  it('row 6: the log entry carries familyId, userId, ageSeconds and the REAL revokedRows (revoke runs before log), and excludes tokenHash/successorHash', async () => {
+    const supersededAt = new Date(now.getTime() - 45 * 1000); // 45s ago
+    const current = new RememberToken(1, 'hash(current)', 7, future, null, 'fam-1', supersededAt, 'hash(succ)');
+    mockRepo.findByHash.mockResolvedValue(current);
+    mockRepo.revokeFamily.mockResolvedValue(2);
+
+    await useCase.execute({ presentedPlainToken: 'current', newPlainToken: 'new' });
+
+    expect(mockLogger.warn).toHaveBeenCalledTimes(1);
+    const [loggedObject] = mockLogger.warn.mock.calls[0];
+
+    expect(loggedObject).toMatchObject({
+      familyId: 'fam-1',
+      userId: 7,
+      revokedRows: 2,
+    });
+    expect((loggedObject as { ageSeconds: number }).ageSeconds).toBeCloseTo(45, 0);
+    // Negative assertion: a future field addition on the logged object must
+    // not quietly leak session-identifying material (design.md D6).
+    expect(loggedObject).not.toHaveProperty('tokenHash');
+    expect(loggedObject).not.toHaveProperty('successorHash');
+  });
+
+  it('row 6: a revokeFamily rejection propagates — not swallowed into a 401-shaped rejected outcome', async () => {
+    const supersededAt = new Date(now.getTime() - 45 * 1000);
+    const current = new RememberToken(1, 'hash(current)', 7, future, null, 'fam-1', supersededAt, 'hash(succ)');
+    mockRepo.findByHash.mockResolvedValue(current);
+    mockRepo.revokeFamily.mockRejectedValue(new Error('DB unavailable'));
+
+    await expect(useCase.execute({ presentedPlainToken: 'current', newPlainToken: 'new' })).rejects.toThrow(
+      'DB unavailable'
+    );
+    expect(mockLogger.warn).not.toHaveBeenCalled();
   });
 
   it('a lost rotation race re-reads outside the aborted transaction and resolves grace/reject from fresh data', async () => {
