@@ -109,7 +109,7 @@ export class SequelizeRememberTokenRepository implements RememberTokenRepository
   // for raw SQL.
   //
   // A NULL `superseded_at` never satisfies `<`, so the current row and any
-  // row still inside its grace window are never touched. `destroy()` is kept
+  // row still inside the retention cutoff are never touched. `destroy()` is kept
   // over a raw DELETE because Sequelize's mysql dialect special-cases
   // `QueryTypes.UPDATE` to return `[result, affectedRows]` but gives plain
   // DELETE no such treatment, so the ORM's row count is the unambiguous one.
@@ -118,19 +118,22 @@ export class SequelizeRememberTokenRepository implements RememberTokenRepository
   // A rotation and the reap that follows it commonly land in the SAME second,
   // so a strict `<` compares a timestamp against itself and matches nothing —
   // which is exactly how CI caught this the second time. `<=` also states the
-  // intended rule correctly: a row whose grace window has fully elapsed is
+  // intended rule correctly: a row whose retention cutoff has fully elapsed is
   // reapable, and at the boundary it has elapsed.
   //
-  // `graceSeconds` is interpolated into the interval, so it is coerced to a
-  // non-negative integer first: a truncated finite number cannot carry SQL.
-  async reapFamily(familyId: string, graceSeconds: number, tx: TransactionContext): Promise<number> {
+  // `retentionSeconds` is the caller's retention cutoff, NOT the grace window;
+  // the two were once the same value, and that is precisely what deleted the
+  // rows reuse detection reads. It is interpolated into the interval, so it is
+  // coerced to a non-negative integer first: a truncated finite number cannot
+  // carry SQL.
+  async reapFamily(familyId: string, retentionSeconds: number, tx: TransactionContext): Promise<number> {
     const transaction = tx as unknown as Transaction;
-    const grace = Number.isFinite(graceSeconds) ? Math.max(0, Math.trunc(graceSeconds)) : 0;
+    const cutoff = Number.isFinite(retentionSeconds) ? Math.max(0, Math.trunc(retentionSeconds)) : 0;
 
     return db.RememberToken.destroy({
       where: {
         familyId,
-        supersededAt: { [Op.lte]: literal(`NOW() - INTERVAL ${grace} SECOND`) },
+        supersededAt: { [Op.lte]: literal(`NOW() - INTERVAL ${cutoff} SECOND`) },
       },
       transaction,
     });

@@ -26,6 +26,9 @@ export interface RememberTokenRepositoryPort {
   // rotation transaction.
   revokeFamily(familyId: string): Promise<number>;
 
-  // Deletes rows in the family whose grace window has already elapsed.
-  reapFamily(familyId: string, graceSeconds: number, tx: TransactionContext): Promise<number>;
+  // Deletes rows in the family superseded longer ago than the retention
+  // cutoff. That cutoff is independent of the grace window: grace decides
+  // whether a superseded token still authenticates, retention decides how
+  // long its row survives as reuse-detection evidence.
+  reapFamily(familyId: string, retentionSeconds: number, tx: TransactionContext): Promise<number>;
 }

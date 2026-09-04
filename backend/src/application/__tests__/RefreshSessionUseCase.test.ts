@@ -151,6 +151,10 @@ describe('RefreshSessionUseCase', () => {
     expect(mockRepo.insertSuccessor).not.toHaveBeenCalled();
     expect(mockRepo.reapFamily).not.toHaveBeenCalled();
     expect(mockRepo.revokeFamily).not.toHaveBeenCalled();
+    // Nor may it raise a reuse alarm: two of a user's own tabs racing is the
+    // case grace exists for, and an operator paging on that would learn to
+    // ignore the signal that actually matters.
+    expect(mockLogger.warn).not.toHaveBeenCalled();
   });
 
   it('row 6: replay past grace (superseded 30+s ago) -> revokes the whole family, logs once, and reports reuse-detected', async () => {
@@ -217,5 +221,9 @@ describe('RefreshSessionUseCase', () => {
     const result = await useCase.execute({ presentedPlainToken: 'current', newPlainToken: 'new' });
 
     expect(result.outcome).toBe('grace');
+    // A lost race is the other way an honest tab reaches the grace path, so it
+    // must stay as silent as row 5 — no revocation, no reuse alarm.
+    expect(mockRepo.revokeFamily).not.toHaveBeenCalled();
+    expect(mockLogger.warn).not.toHaveBeenCalled();
   });
 });

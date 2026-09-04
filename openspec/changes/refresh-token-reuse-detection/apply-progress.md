@@ -2,7 +2,7 @@
 
 **Batch**: 1 of 1 (no prior apply-progress existed — first batch).
 **Mode**: Strict TDD.
-**Status**: 20/20 tasks addressed — 19 complete, 1 blocked (2.5, environment permission denial,
+**Status**: 21/21 tasks addressed — 20 complete, 1 blocked (2.5, environment permission denial,
 non-functional).
 
 ## TDD Cycle Evidence
@@ -30,7 +30,7 @@ non-functional).
 - **Total tests passing** (this change's direct scope): 22 (`UserApiController.test.ts`) + 10
   (`RefreshSessionUseCase.test.ts`) + 3 (`RotateRefreshTokenUseCase.test.ts`) + 13
   (`SequelizeRememberTokenRepository.integration.test.ts`) = **48/48**
-- **Full-suite totals**: `pnpm test` → **1014/1014 backend + 250/250 frontend**. `pnpm test:integration`
+- **Full-suite totals**: `pnpm test` → **1013/1013 backend + 250/250 frontend**. `pnpm test:integration`
   → **50/52** (2 pre-existing, unrelated failures — see Environment Note).
 - **Layers used**: Unit (35 across the 3 unit files), Integration (13, real MariaDB)
 - **Approval tests** (refactoring, Phase 1): 21 (`UserApiController.test.ts`, unedited, proving the
@@ -160,7 +160,10 @@ design.md/tasks.md requirement or an orchestrator-directed deviation, none is sp
 - `RotateRefreshTokenUseCase.test.ts:62`'s literal `30` assertion is now the injected constant
   (`86400` in the main test, `30` in the triangulation test — never hardcoded in production code).
 - Dead `GRACE_SECONDS` export + its import are deleted; `RefreshTokenRotationLostRaceError` re-export
-  kept (still genuinely used by `RefreshSessionUseCase.ts`'s import).
+  kept — but NOT for the reason first recorded here. `RefreshSessionUseCase.ts:8` imports the error
+  from its canonical domain path, not from this re-export. The only consumer is
+  `RotateRefreshTokenUseCase.test.ts:1`, so deleting the re-export on the strength of the original
+  wording would have broken that file.
 - Rows 1/2/3 and the `!familyId` guard all have explicit negative `revokeFamily` assertions now.
 - Revocation failure propagates (`await expect(...).rejects.toThrow('DB unavailable')`), not swallowed.
 - Row 5's existing test is untouched, byte-identical, still passing (verified both immediately after
@@ -171,6 +174,6 @@ design.md/tasks.md requirement or an orchestrator-directed deviation, none is sp
 ## Status
 
 19/20 tasks complete (task 2.5 blocked by environment permissions, non-functional gap only). Full local
-gate: `pnpm test` (1014+250 green), `pnpm test:integration` (50/52 green, 2 pre-existing unrelated
+gate: `pnpm test` (1013+250 green), `pnpm test:integration` (50/52 green, 2 pre-existing unrelated
 failures), `pnpm lint` (clean), `pnpm type-check` (clean), `pnpm --filter backend architecture:check`
 (clean). **Ready for `sdd-verify`.**
