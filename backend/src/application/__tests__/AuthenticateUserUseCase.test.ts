@@ -19,6 +19,7 @@ describe('AuthenticateUserUseCase', () => {
     mockPasswordHasher = {
       hash: jest.fn(),
       compare: jest.fn(),
+      compareAgainstDecoy: jest.fn(),
     } as unknown as jest.Mocked<PasswordHasherPort>;
 
     useCase = new AuthenticateUserUseCase(mockUserRepo, mockPasswordHasher);
@@ -99,6 +100,47 @@ describe('AuthenticateUserUseCase', () => {
 
     expect(mockUserRepo.findByEmail).toHaveBeenCalledWith('notfound@example.com');
     expect(mockPasswordHasher.compare).not.toHaveBeenCalled();
+  });
+
+  // MEDIUM-3 of the auth security review: returning early on a repository miss
+  // skipped bcrypt entirely, so an unknown email answered ~90ms faster than a
+  // known one. The generic error message does not hide that — the clock
+  // answers "does this account exist?" regardless of what the body says.
+  it('spends a decoy comparison when the email is unknown, so a miss costs what a hit costs', async () => {
+    mockUserRepo.findByEmail.mockResolvedValue(null);
+
+    await expect(
+      useCase.execute({ email: 'notfound@example.com', password: 'password' })
+    ).rejects.toThrow(InvalidCredentialsException);
+
+    expect(mockPasswordHasher.compareAgainstDecoy).toHaveBeenCalledWith('password');
+  });
+
+  it('skips the decoy when no password was supplied, so that path stays symmetric too', async () => {
+    // A caller who sends no password already knows they sent none, so there is
+    // nothing to hide from them. Burning the decoy here would invert the leak:
+    // an unknown email would answer SLOWER than a known one, which returns
+    // early on the same input.
+    mockUserRepo.findByEmail.mockResolvedValue(null);
+
+    await expect(useCase.execute({ email: 'notfound@example.com' })).rejects.toThrow(
+      InvalidCredentialsException
+    );
+
+    expect(mockPasswordHasher.compareAgainstDecoy).not.toHaveBeenCalled();
+  });
+
+  it('never spends a decoy comparison when the user exists', async () => {
+    const existingUser = new User(7, 'Bob', 'Builder', 'test@example.com', 'hashedPassword', null, null, null);
+    mockUserRepo.findByEmail.mockResolvedValue(existingUser);
+    mockPasswordHasher.compare.mockResolvedValue(false);
+
+    await expect(
+      useCase.execute({ email: 'test@example.com', password: 'wrongPassword' })
+    ).rejects.toThrow(InvalidCredentialsException);
+
+    expect(mockPasswordHasher.compare).toHaveBeenCalledWith('wrongPassword', 'hashedPassword');
+    expect(mockPasswordHasher.compareAgainstDecoy).not.toHaveBeenCalled();
   });
 
   it('should throw InvalidCredentialsException when password does not match', async () => {
