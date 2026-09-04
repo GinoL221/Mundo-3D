@@ -177,6 +177,27 @@ export const clearSessionCookies = (res: Response): void => {
  * `ignoreExpiration` is an override ON TOP of the shared verify options, not
  * a replacement for them: algorithm, issuer and audience are all still
  * enforced here exactly as in `apiAuthMiddleware`.
+ *
+ * ACCEPTED, TIME-BOXED GAP — one release only, from the deploy that first
+ * signed `iss`/`aud`. A token minted before it carries neither claim, so this
+ * returns undefined and logout revokes nothing; that refresh family then
+ * lives to its natural expiry, up to 30 days. Pinned by the "pre-deploy token
+ * carrying no issuer or audience" test, which asserts the gap rather than
+ * hiding it.
+ *
+ * It closes on its own: any API call refreshes the access cookie into a
+ * correctly-claimed token, so only a user who logs out before making one is
+ * affected, and the real exposure is a refresh token already stolen before
+ * that deploy. Logout still clears all four cookies, so the plaintext leaves
+ * the browser regardless.
+ *
+ * Deliberately NOT patched with a fallback verify that skips the claims. That
+ * would give one of this module's three call sites a second, temporary
+ * contract — the exact drift `jwtOptions.ts` exists to prevent — and leave
+ * behind a branch someone must remember to delete. If the window ever matters,
+ * the complete answer is a one-time `UPDATE remember_tokens SET revoked_at =
+ * NOW()` at deploy: it kills every pre-deploy family, stolen or not, costs one
+ * forced re-login, and needs no code.
  */
 export const readFamilyIdFromAccessToken = (token: string): string | undefined => {
   try {
