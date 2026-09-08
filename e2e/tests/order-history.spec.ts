@@ -15,16 +15,17 @@ test.describe('Order History E2E', () => {
     await page.evaluate(() => localStorage.removeItem('cart'));
   });
 
-  test('the nav exposes a "Mis pedidos" link to /orders for an authenticated user', async ({ page }) => {
+  test('the nav exposes a "Mis pedidos" link to /orders for an authenticated user', async ({
+    page,
+  }) => {
     // toHaveCount(1) alone would only prove the <li> exists in the SSR
     // markup — it ships to anonymous visitors too, inside `.user-only`,
     // hidden by sessionUI.ts until a session cookie reveals it, and inside
-    // the dropdown which only opens on hover (same pattern header.spec.ts
-    // already proves for the sibling /profile link). Hover first, then
+    // the HomeHeader account menu which opens on click. Open it first, then
     // assert visibility, not just presence, so this genuinely discriminates
     // on auth rather than passing for an anonymous visitor too.
     const userMenu = page.locator('.user-only');
-    await userMenu.locator('.nav-item__trigger').hover();
+    await userMenu.locator('#navbar-user-menu-trigger').click();
     const link = userMenu.locator('a[href="/orders"]', { hasText: 'Mis pedidos' });
     await expect(link).toBeVisible();
   });
@@ -37,7 +38,7 @@ test.describe('Order History E2E', () => {
     await page.goto('/product?id=1');
     await expect(page.locator('#product-name')).not.toBeEmpty();
     const addToCartPut = page.waitForResponse(
-      (res) => res.url().includes('/api/cart') && res.request().method() === 'PUT'
+      (res) => res.url().includes('/api/cart') && res.request().method() === 'PUT',
     );
     await page.click('#add-to-cart-btn');
     await expect(async () => {

@@ -13,7 +13,10 @@ import { test, expect } from '@playwright/test';
 // cart coverage — it is the only spec exercising two tabs sharing one
 // session.
 test.describe('Cross-tab session synchronization', () => {
-  test('logout in one tab updates a second open tab without a reload', async ({ page, context }) => {
+  test('logout in one tab updates a second open tab without a reload', async ({
+    page,
+    context,
+  }) => {
     page.on('console', (msg) => console.log(`[tab1] ${msg.type()}: ${msg.text()}`));
 
     // Tab 1: log in as the seeded ADMIN fixture (backend/src/database/data/users.json).
@@ -48,9 +51,9 @@ test.describe('Cross-tab session synchronization', () => {
     await expect(page2.locator('#navbar-greeting')).toContainText('Hola');
     await expect(page2.locator('.admin-only').first()).toBeVisible();
 
-    // Tab 1: log out via the navbar dropdown (same interaction as
+    // Tab 1: log out via the HomeHeader account menu (same interaction as
     // auth.spec.ts's single-tab "User Logout" test).
-    await page.locator('.nav-item__trigger').hover();
+    await page.locator('#navbar-user-menu-trigger').click();
     await page.locator('#navbar-logout').click();
     await expect(page).toHaveURL('/login');
 
@@ -87,7 +90,7 @@ test.describe('Cross-tab session synchronization', () => {
       expect(greetingVisible).toBe(false);
     }).toPass({ timeout: 10_000 });
 
-    await expect(page2.locator('a.navbar__link[href="/login"]')).toBeVisible();
+    await expect(page2.locator('a.home-header__link[href="/login"]')).toBeVisible();
     await expect(page2.locator('.admin-only').first()).toBeHidden();
   });
 
@@ -96,7 +99,7 @@ test.describe('Cross-tab session synchronization', () => {
     // (shares cookies once tab 1 logs in below).
     const page2 = await context.newPage();
     await page2.goto('/');
-    await expect(page2.locator('a.navbar__link[href="/login"]')).toBeVisible();
+    await expect(page2.locator('a.home-header__link[href="/login"]')).toBeVisible();
 
     // Tab 1: log in as the seeded ADMIN fixture.
     await page.goto('/login');

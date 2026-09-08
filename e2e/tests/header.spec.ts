@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('applies persisted visual preferences before Header hydration', async ({ page }) => {
+test('applies persisted visual preferences before HomeHeader hydration', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('theme', 'light');
     localStorage.setItem('retro-theme-preference', 'disabled');
@@ -29,7 +29,7 @@ test('preserves real Header navigation, keyboard dropdown access, and disabled s
     },
   ]);
 
-  await page.goto('/');
+  await page.goto('/aboutUs');
 
   // Search has no backend yet (roadmap item) — disabled rather than a
   // silently-do-nothing control (Impeccable audit finding).
@@ -39,7 +39,7 @@ test('preserves real Header navigation, keyboard dropdown access, and disabled s
   await page.locator('.navbar__link[href="/products"]').click();
   await expect(page).toHaveURL(/\/products$/);
 
-  await page.goto('/');
+  await page.goto('/aboutUs');
   const userMenu = page.locator('.user-only');
   await userMenu.locator('.nav-item__trigger').hover();
   const profileLink = userMenu.locator('a[href="/profile"]');

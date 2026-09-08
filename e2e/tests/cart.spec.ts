@@ -288,7 +288,7 @@ test.describe('Cart E2E Tests - Login Redirect Bounded Race', () => {
     // Register (auto-logs in), then log out so the next login goes through
     // LoginForm.astro's real submit handler.
     const { email, password } = await registerFreshUser(page, 'Stall');
-    await page.locator('.nav-item__trigger').hover();
+    await page.locator('#navbar-user-menu-trigger').click();
     await page.locator('#navbar-logout').click();
     await expect(page).toHaveURL('/login');
 
@@ -320,7 +320,7 @@ test.describe('Cart E2E Tests - Login Redirect Bounded Race', () => {
 
   test('redirect proceeds quickly when GET /api/cart fails fast, without waiting out the timeout', async ({ page }) => {
     const { email, password } = await registerFreshUser(page, 'FastFail');
-    await page.locator('.nav-item__trigger').hover();
+    await page.locator('#navbar-user-menu-trigger').click();
     await page.locator('#navbar-logout').click();
     await expect(page).toHaveURL('/login');
 
