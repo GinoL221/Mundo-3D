@@ -62,6 +62,10 @@
   text-decoration: none;
 }
 
+.product-detail__action:focus-visible {
+  color: var(--input-fg);
+}
+
 .product-detail__action:hover {
   background-color: var(--accent);
   border-color: var(--accent);
@@ -82,7 +86,7 @@
 
 .product-detail__info a {
   text-decoration: none;
-  color: var(--accent);
+  color: var(--link-text);
 }
 
 /* ── Product Detail Card (2-column at ≥640px) ─────────────── */
@@ -98,7 +102,7 @@
   width: 100%;
   font-family: var(--font-body);
   text-decoration: none;
-  color: var(--accent);
+  color: var(--link-text);
 }
 
 .product-detail__back-link:hover {
@@ -190,4 +194,3 @@
   padding: var(--space-sm) 0;
   text-align: right;
 }
-

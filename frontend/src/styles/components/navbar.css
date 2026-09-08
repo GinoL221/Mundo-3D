@@ -2,7 +2,6 @@
    components/navbar.css — Header, Navigation, Search
    ============================================================ */
 
-/* ── Navbar Block ──────────────────────────────────────────── */
 .navbar {
   width: 100%;
   background-color: var(--surface);
@@ -18,22 +17,19 @@
 
 /* Site logo */
 .navbar__logo {
-  font-family: var(--font-heading);
-  font-size: 14px;
-  color: var(--title-highlight);
-  text-align: center;
+  display: flex;
+  align-items: center;
   padding: var(--space-xs) 0;
-  letter-spacing: 2px;
+  text-decoration: none;
 }
 
-.navbar__logo:hover {
-  color: var(--fg);
-}
-
-/* Logo image variant */
-.navbar__logo img {
-  max-width: 120px;
+.navbar__logo-image {
+  display: block;
+  width: clamp(150px, 45vw, 220px);
+  max-width: 100%;
   height: auto;
+  object-fit: contain;
+  image-rendering: auto;
 }
 
 /* Search bar */
@@ -95,6 +91,16 @@
   border-color: var(--border);
 }
 
+/* Outline controls use the same 24px vector rhythm. */
+.navbar__icon {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  vertical-align: middle;
+  stroke-width: 2;
+}
+
 /* Nav list (replaces nav.barra-navegacion) */
 .navbar__list {
   display: flex;
@@ -129,8 +135,9 @@
   padding: var(--space-xs) var(--space-sm);
 }
 
-.navbar__link:hover {
-  color: var(--accent);
+.navbar__link:hover,
+.navbar__link:focus-visible {
+  color: var(--link-text);
 }
 
 /* User greeting */

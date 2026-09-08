@@ -7,6 +7,7 @@ import { cartItems } from '../domains/cart/services/CartService';
 
 class FakeElement {
   style: Record<string, string> = {};
+  attributes = new Map<string, string>();
   textContent = '';
   src = '';
   href = '';
@@ -19,6 +20,14 @@ class FakeElement {
 
   removeEventListener(type: string, listener: (event: Event) => void) {
     if (this.listeners.get(type) === listener) this.listeners.delete(type);
+  }
+
+  setAttribute(name: string, value: string) {
+    this.attributes.set(name, value);
+  }
+
+  getAttribute(name: string) {
+    return this.attributes.get(name) ?? null;
   }
 
   click() {
@@ -271,7 +280,10 @@ describe('Header browser modules', () => {
       fixture.storage as unknown as Storage,
     );
     expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
-    expect(fixture.document.elements.get('theme-icon')!.textContent).toBe('🌙');
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Cambiar a tema claro',
+    );
+    expect(fixture.document.elements.get('theme-icon')!.textContent).toBe('');
 
     const cleanup = initializeThemeToggle(
       fixture.document as unknown as Document,
@@ -280,18 +292,24 @@ describe('Header browser modules', () => {
     expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
     fixture.document.elements.get('theme-toggle')!.click();
     expect(fixture.storage.setItem).toHaveBeenCalledWith('theme', 'light');
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Cambiar a tema oscuro',
+    );
     cleanup();
     cleanup();
   });
 
-  it('hydrates an absent light theme and persists the toggle back to dark', () => {
+  it('hydrates an absent theme as light and persists the toggle to dark', () => {
     const absentFixture = createFixture();
     initializeThemeToggle(
       absentFixture.document as unknown as Document,
       absentFixture.storage as unknown as Storage,
     );
-    expect(absentFixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
-    expect(absentFixture.document.elements.get('theme-icon')!.textContent).toBe('🌙');
+    expect(absentFixture.document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(absentFixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Cambiar a tema oscuro',
+    );
+    expect(absentFixture.document.elements.get('theme-icon')!.textContent).toBe('');
 
     const lightFixture = createFixture();
     lightFixture.storage.setItem('theme', 'light');
@@ -300,12 +318,18 @@ describe('Header browser modules', () => {
       lightFixture.storage as unknown as Storage,
     );
     expect(lightFixture.document.documentElement.getAttribute('data-theme')).toBe('light');
-    expect(lightFixture.document.elements.get('theme-icon')!.textContent).toBe('☀️');
+    expect(lightFixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Cambiar a tema oscuro',
+    );
+    expect(lightFixture.document.elements.get('theme-icon')!.textContent).toBe('');
 
     lightFixture.document.elements.get('theme-toggle')!.click();
     expect(lightFixture.storage.getItem('theme')).toBe('dark');
     expect(lightFixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
-    expect(lightFixture.document.elements.get('theme-icon')!.textContent).toBe('🌙');
+    expect(lightFixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Cambiar a tema claro',
+    );
+    expect(lightFixture.document.elements.get('theme-icon')!.textContent).toBe('');
   });
 
   it('persists CRT toggles and cleans up duplicate initialization', () => {

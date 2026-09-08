@@ -6,7 +6,7 @@
 /* ── Page Heading (homepage) ──────────────────────────────── */
 
 .page-heading {
-  text-align: center;
+  text-align: left;
   margin-bottom: var(--space-xl);
   color: var(--title-highlight);
 }
@@ -79,7 +79,9 @@
 
 .product-card {
   background-color: var(--surface);
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
   cursor: default;
   display: flex;
   flex-direction: column;
@@ -100,8 +102,15 @@
 /* ── Card Body ─────────────────────────────────────────────── */
 
 .product-card__body {
-  padding: var(--space-sm);
-  text-align: center;
+  padding: var(--space-md);
+  text-align: left;
+}
+
+.product-card-category {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--fg);
+  opacity: 0.72;
 }
 
 .product-card__body h3 {

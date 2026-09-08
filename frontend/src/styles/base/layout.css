@@ -47,14 +47,14 @@ p {
 
 /* ── Links ─────────────────────────────────────────────────── */
 a {
-  color: var(--accent);
+  color: var(--link-text);
   text-decoration: none;
   transition: color 0.15s;
 }
 
 a:hover,
 a:focus {
-  color: var(--accent);
+  color: var(--link-text);
 }
 
 /* ── Container ─────────────────────────────────────────────── */
@@ -134,6 +134,10 @@ html.crt-theme-active .crt-overlay {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   html.crt-theme-active .crt-overlay {
     animation: none;
   }

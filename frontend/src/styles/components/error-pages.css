@@ -41,6 +41,10 @@
   border: 2px solid var(--accent);
 }
 
+.error-page a:focus-visible {
+  color: var(--pico-white);
+}
+
 .error-page a:hover {
   background-color: var(--pico-black);
   color: var(--accent);

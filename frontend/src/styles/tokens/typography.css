@@ -1,24 +1,16 @@
-/* ============================================================
-   tokens/typography.css — Font Families + Heading/Body Scale
-   ============================================================ */
-
 :root {
-  /* ── Font Families ─────────────────────────────────────── */
-  --font-heading: 'Press Start 2P', monospace;
-  --font-body:    'VT323', monospace;
+  --font-heading: "IBM Plex Sans", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
 
-  /* ── Heading Scale ─────────────────────────────────────── */
-  --text-h1:      18px;
-  --text-h2:      16px;
-  --text-h3:      14px;
-  --text-heading: 14px;
+  --text-h1: 32px;
+  --text-h2: 24px;
+  --text-h3: 18px;
+  --text-heading: 18px;
 
-  /* ── Body Scale ────────────────────────────────────────── */
-  --text-body:    18px;
-  --text-small:   16px;
-  --text-xs:      10px;
+  --text-body: 16px;
+  --text-small: 14px;
+  --text-xs: 12px;
 
-  /* ── Line Height ───────────────────────────────────────── */
   --line-height-base: 1.5;
-  --line-height-heading: 1.6;
+  --line-height-heading: 1.2;
 }

@@ -93,6 +93,11 @@
 .form-card--wide button:hover {
   background-color: var(--accent);
   border-color: var(--accent);
+  color: var(--input-fg);
+}
+
+.form-card__btn:focus-visible {
+  color: var(--input-fg);
 }
 
 /* Disabled during an async submit shouldn't read as still-clickable

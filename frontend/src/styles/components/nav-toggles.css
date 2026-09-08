@@ -17,12 +17,13 @@
   padding: var(--space-xs) var(--space-sm);
 }
 
-.cart-link:hover {
-  color: var(--accent);
+.cart-link:hover,
+.cart-link:focus-visible {
+  color: var(--link-text);
 }
 
-.cart-link svg {
-  image-rendering: pixelated;
+.cart-link .navbar__icon {
+  margin-right: var(--space-xs);
 }
 
 .cart-link__badge {
@@ -45,12 +46,16 @@
   color: var(--fg);
   border: 2px solid var(--fg);
   padding: var(--space-xs) var(--space-sm);
+  min-width: 44px;
+  min-height: 44px;
   cursor: pointer;
+  touch-action: manipulation;
   font-family: var(--font-body);
   font-size: 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .theme-toggle-btn:hover {
@@ -59,8 +64,40 @@
 }
 
 .theme-toggle-btn__icon {
-  display: inline-block;
-  font-size: 18px;
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle-btn__icon svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+  stroke-width: 2;
+}
+
+.theme-toggle-btn__icon--moon {
+  display: none;
+}
+
+html[data-theme="light"] .theme-toggle-btn__icon--moon,
+html:not([data-theme]) .theme-toggle-btn__icon--moon {
+  display: none;
+}
+
+html[data-theme="dark"] .theme-toggle-btn__icon--sun {
+  display: none;
+}
+
+html[data-theme="dark"] .theme-toggle-btn__icon--moon {
+  display: block;
+}
+
+.theme-toggle-btn:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ── CRT Toggle Button (standalone BEM block) ──────────────── */
