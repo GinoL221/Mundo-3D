@@ -1,7 +1,36 @@
-import { test, expect } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
+import { test, expect, type Page } from '@playwright/test';
+
+async function registerFreshAccount(page: Page) {
+  const accountId = randomUUID();
+  const credentials = {
+    email: `user_${accountId}@example.com`,
+    password: `Password123!${accountId.replace(/-/g, '').slice(0, 20)}`,
+  };
+
+  await page.goto('/register');
+  await page.fill('#firstName', 'Test');
+  await page.fill('#lastName', 'User');
+  await page.fill('#email', credentials.email);
+  await page.fill('#password', credentials.password);
+  await page.fill('#confirmPassword', credentials.password);
+  await page.setInputFiles('#image', {
+    name: 'avatar.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('fake image content'),
+  });
+  await page.click('#register-btn');
+  await expect(page).toHaveURL('/');
+
+  await page.locator('#navbar-user-menu-trigger').click();
+  await page.locator('#navbar-logout').click();
+  await expect(page).toHaveURL('/login');
+  await page.goto('/login');
+
+  return credentials;
+}
 
 test.describe('Authentication E2E Tests', () => {
-  const testEmail = `user_${Date.now()}@example.com`;
   const testPassword = 'Password123!';
 
   test.beforeEach(({ page }) => {
@@ -9,10 +38,12 @@ test.describe('Authentication E2E Tests', () => {
   });
 
   test('Successful User Registration', async ({ page }) => {
+    const registrationEmail = `user_${Date.now()}@example.com`;
+
     await page.goto('/register');
     await page.fill('#firstName', 'Test');
     await page.fill('#lastName', 'User');
-    await page.fill('#email', testEmail);
+    await page.fill('#email', registrationEmail);
     await page.fill('#password', testPassword);
     await page.fill('#confirmPassword', testPassword);
     
@@ -30,9 +61,10 @@ test.describe('Authentication E2E Tests', () => {
   });
 
   test('Successful User Login', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('#email', testEmail);
-    await page.fill('#password', testPassword);
+    const { email, password } = await registerFreshAccount(page);
+
+    await page.fill('#email', email);
+    await page.fill('#password', password);
     await page.click('#login-btn');
 
     await expect(page).toHaveURL('/');
@@ -74,7 +106,7 @@ test.describe('Authentication E2E Tests', () => {
 
     // Log back out so the next login actually exercises the checkbox instead
     // of reusing the session register() already created.
-    await page.locator('.nav-item__trigger').hover();
+    await page.locator('#navbar-user-menu-trigger').click();
     await page.locator('#navbar-logout').click();
     await expect(page).toHaveURL('/login');
 
@@ -115,9 +147,10 @@ test.describe('Authentication E2E Tests', () => {
   });
 
   test('Leaving Recuérdame unchecked keeps the 2h default on the refresh cookie', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('#email', testEmail);
-    await page.fill('#password', testPassword);
+    const { email, password } = await registerFreshAccount(page);
+
+    await page.fill('#email', email);
+    await page.fill('#password', password);
     await page.click('#login-btn');
     await expect(page).toHaveURL('/');
 
@@ -142,9 +175,10 @@ test.describe('Authentication E2E Tests', () => {
   });
 
   test('m3d_auth is httpOnly (invisible to document.cookie) while m3d_user/m3d_csrf are readable', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('#email', testEmail);
-    await page.fill('#password', testPassword);
+    const { email, password } = await registerFreshAccount(page);
+
+    await page.fill('#email', email);
+    await page.fill('#password', password);
     await page.click('#login-btn');
     await expect(page).toHaveURL('/');
 
@@ -165,15 +199,15 @@ test.describe('Authentication E2E Tests', () => {
   });
 
   test('User Logout', async ({ page }) => {
-    // First, login
-    await page.goto('/login');
-    await page.fill('#email', testEmail);
-    await page.fill('#password', testPassword);
+    const { email, password } = await registerFreshAccount(page);
+
+    await page.fill('#email', email);
+    await page.fill('#password', password);
     await page.click('#login-btn');
     await expect(page).toHaveURL('/');
 
-    // Hover user dropdown to reveal logout button and click
-    await page.locator('.nav-item__trigger').hover();
+    // Click the HomeHeader user menu to reveal the logout button.
+    await page.locator('#navbar-user-menu-trigger').click();
     await page.locator('#navbar-logout').click();
 
     await expect(page).toHaveURL('/login');
@@ -182,8 +216,8 @@ test.describe('Authentication E2E Tests', () => {
   });
 
   test('Duplicate Email Registration Rejected', async ({ page }) => {
-    // Reuses the seeded gino@email.com instead of testEmail, so this test
-    // has no ordering dependency on the earlier registration test in this file.
+    // Uses the seeded gino@email.com, so this test has no ordering dependency
+    // on the earlier registration test in this file.
     await page.goto('/register');
     await page.fill('#firstName', 'Dup');
     await page.fill('#lastName', 'Licate');
