@@ -162,12 +162,25 @@ e2e/test-results/
 # Local AI tool state
 .pi/
 
+# Local agent integrations installed by development tools
+/.agents/skills/impeccable/
+/.claude/skills/impeccable/
+/.codex/hooks.json
+/.github/agents/impeccable-*.agent.md
+/.github/hooks/impeccable.json
+/.github/skills/impeccable/
+/.impeccable/config.json
+/.opencode/skills/impeccable/
+
 # Local development tool configuration and state
 .codegraph/
 .mcp.json
 mcp.json
 opencode.json
 .zed/
+
+# Playwright output directories may be nested under snapshot baselines
+e2e/**/.test-results/
 **/.claude/scheduled_tasks.lock
 **/.claude/scheduled_tasks.json
 **/.claude/routines/.state/
