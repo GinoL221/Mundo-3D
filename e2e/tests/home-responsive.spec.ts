@@ -79,6 +79,8 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
         const logo = document.querySelector<HTMLImageElement>('.home-header__logo img');
         const menuToggle = document.querySelector<HTMLElement>('#home-menu-toggle');
         const menuIcon = document.querySelector<HTMLElement>('.home-header__menu-icon');
+        const cart = document.querySelector<HTMLElement>('.home-header__cart');
+        const cartIcon = document.querySelector<SVGElement>('.home-header__icon');
         if (
           !grid ||
           !card ||
@@ -95,7 +97,9 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
           !heading ||
           !logo ||
           !menuToggle ||
-          !menuIcon
+          !menuIcon ||
+          !cart ||
+          !cartIcon
         ) {
           throw new Error('Home responsive contract elements are missing.');
         }
@@ -139,6 +143,8 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
           ),
           menuButton: menuToggle.getBoundingClientRect(),
           menuIcon: menuIcon.getBoundingClientRect(),
+          cart: cart.getBoundingClientRect(),
+          cartIcon: cartIcon.getBoundingClientRect(),
           menuAlignItems: getComputedStyle(menuToggle).alignItems,
           menuJustifyContent: getComputedStyle(menuToggle).justifyContent,
           overflow: document.documentElement.scrollWidth > window.innerWidth,
@@ -203,6 +209,13 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
         expect(metrics.menuButton.height).toBeGreaterThanOrEqual(44);
         expect(metrics.menuAlignItems).toBe('center');
         expect(metrics.menuJustifyContent).toBe('center');
+        expect(
+          Math.abs(
+            metrics.cart.left +
+              metrics.cart.width / 2 -
+              (metrics.cartIcon.left + metrics.cartIcon.width / 2),
+          ),
+        ).toBeLessThanOrEqual(0.5);
         expect(
           Math.abs(
             metrics.menuButton.left +
