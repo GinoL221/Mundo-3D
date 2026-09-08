@@ -39,6 +39,10 @@ export type FetchProductsResult =
   | { ok: true; products: Product[] }
   | { ok: false; reason: 'network' | 'server' };
 
+export type FetchLatestProductResult =
+  | { ok: true; product: Product }
+  | { ok: false; reason: 'not-found' | 'network' | 'server' };
+
 /**
  * `GET /api/products` — full unpaginated product list, used by the
  * homepage's "Nuestros Seleccionados" grid (contrast with
@@ -63,4 +67,29 @@ export async function fetchProducts(): Promise<FetchProductsResult> {
   const resData = (await res.json()) as { products?: APIProduct[] };
   const rawProducts = resData?.products || [];
   return { ok: true, products: adaptAPIProducts(rawProducts) };
+}
+
+/**
+ * `GET /api/products/latest` — the public product used by Home's featured
+ * piece. A missing catalog is distinct from a transport/server failure so the
+ * page can keep an honest empty state.
+ */
+export async function fetchLatestProduct(): Promise<FetchLatestProductResult> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/api/products/latest`);
+  } catch {
+    return { ok: false, reason: 'network' };
+  }
+
+  if (res.status === 404) {
+    return { ok: false, reason: 'not-found' };
+  }
+
+  if (!res.ok) {
+    return { ok: false, reason: 'server' };
+  }
+
+  const rawProduct = (await res.json()) as APIProduct;
+  return { ok: true, product: adaptAPIProduct(rawProduct) };
 }

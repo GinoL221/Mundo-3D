@@ -1,0 +1,18 @@
+---
+import SocialIcon from './SocialIcon.astro';
+
+const whatsappMessage = encodeURIComponent(
+  'Hola, vi el catálogo de Mundo 3D y quisiera consultar por un producto o encargo personalizado.',
+);
+const whatsappUrl = `https://wa.me/1144472065?text=${whatsappMessage}`;
+---
+
+<a
+  class="whatsapp-floating"
+  href={whatsappUrl}
+  target="_blank"
+  rel="noopener noreferrer"
+  aria-label="Contactar por WhatsApp"
+>
+  <SocialIcon name="whatsapp" size={24} />
+</a>

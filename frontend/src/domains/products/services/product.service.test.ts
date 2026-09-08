@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchProductById, fetchProducts } from './product.service';
+import { fetchLatestProduct, fetchProductById, fetchProducts } from './product.service';
 
 function jsonResponse(status: number, body: unknown) {
   return {
@@ -118,5 +118,49 @@ describe('fetchProducts', () => {
     const result = await fetchProducts();
 
     expect(result).toEqual({ ok: false, reason: 'network' });
+  });
+});
+
+describe('fetchLatestProduct', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('requests the latest product and returns the adapted product on 200', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, SAMPLE_API_PRODUCT));
+
+    const result = await fetchLatestProduct();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toContain('/api/products/latest');
+    expect(result).toEqual({
+      ok: true,
+      product: expect.objectContaining({ id: 1, name: 'Goku', price: 1500 }),
+    });
+  });
+
+  it('maps an empty catalog to a not-found reason', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(404, {}));
+
+    const result = await fetchLatestProduct();
+
+    expect(result).toEqual({ ok: false, reason: 'not-found' });
+  });
+
+  it('maps server and network failures to explicit reasons', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(500, {}));
+    expect(await fetchLatestProduct()).toEqual({ ok: false, reason: 'server' });
+
+    fetchMock.mockRejectedValueOnce(new Error('network down'));
+    expect(await fetchLatestProduct()).toEqual({ ok: false, reason: 'network' });
   });
 });

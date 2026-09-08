@@ -33,7 +33,37 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
   const existing = cleanups.get(document);
   if (existing) return existing;
 
+  const userMenuTrigger = document.getElementById('navbar-user-menu-trigger') as HTMLButtonElement | null;
+  const userMenu = document.getElementById('navbar-user-menu');
+  let userMenuOpen = false;
+
+  const setUserMenuOpen = (open: boolean, restoreFocus = false) => {
+    if (!userMenuTrigger || !userMenu) return;
+    userMenuOpen = open;
+    userMenuTrigger.setAttribute('aria-expanded', String(open));
+    userMenu.hidden = !open;
+    if (open) {
+      userMenu.querySelector('a')?.focus();
+    } else if (restoreFocus) {
+      userMenuTrigger.focus();
+    }
+  };
+
+  const toggleUserMenu = () => setUserMenuOpen(!userMenuOpen);
+  const handleUserMenuKeydown = (event: KeyboardEvent) => {
+    if (event.key !== 'Escape' || !userMenuOpen) return;
+    event.preventDefault();
+    setUserMenuOpen(false, true);
+  };
+  const handleDocumentClick = (event: MouseEvent) => {
+    const target = event.target as Node | null;
+    if (userMenuOpen && userMenu && target && !userMenu.parentElement?.contains(target)) {
+      setUserMenuOpen(false);
+    }
+  };
+
   const resetToGuest = () => {
+    setUserMenuOpen(false);
     setVisibility(document.querySelectorAll('.guest-only'), 'block');
     setVisibility(document.querySelectorAll('.user-only'), 'none');
     setVisibility(document.querySelectorAll('.admin-only'), 'none');
@@ -83,6 +113,11 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
   const logoutButton = document.getElementById('navbar-logout');
   const logoutListener = logoutButton ? logout : null;
   logoutButton?.addEventListener('click', logout);
+  userMenuTrigger?.addEventListener('click', toggleUserMenu);
+  if (userMenuTrigger && userMenu) {
+    document.addEventListener('keydown', handleUserMenuKeydown);
+    document.addEventListener('click', handleDocumentClick);
+  }
 
   // Cookies fire no `storage` event, so cross-tab sync is composed instead
   // of the three layers below (design.md "Decision: Cross-tab sync").
@@ -121,6 +156,11 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
     if (!active) return;
     active = false;
     if (logoutListener) logoutButton?.removeEventListener('click', logoutListener);
+    userMenuTrigger?.removeEventListener('click', toggleUserMenu);
+    if (userMenuTrigger && userMenu) {
+      document.removeEventListener('keydown', handleUserMenuKeydown);
+      document.removeEventListener('click', handleDocumentClick);
+    }
     window.removeEventListener('session-changed', update);
     window.removeEventListener('focus', update);
     document.removeEventListener('visibilitychange', update);

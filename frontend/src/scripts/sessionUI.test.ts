@@ -13,7 +13,13 @@ class FakeElement {
   style: Record<string, string> = {};
   textContent = '';
   src = '';
+  hidden = false;
+  focusCount = 0;
+  attributes = new Map<string, string>();
   listeners = new Map<string, (event: Event) => void>();
+  querySelectorResult: FakeElement | null = null;
+  parentElement: FakeElement | null = null;
+  containedElements = new Set<FakeElement>();
 
   addEventListener(type: string, listener: (event: Event) => void) {
     this.listeners.set(type, listener);
@@ -21,6 +27,30 @@ class FakeElement {
 
   removeEventListener(type: string, listener: (event: Event) => void) {
     if (this.listeners.get(type) === listener) this.listeners.delete(type);
+  }
+
+  setAttribute(name: string, value: string) {
+    this.attributes.set(name, value);
+  }
+
+  getAttribute(name: string) {
+    return this.attributes.get(name) ?? null;
+  }
+
+  querySelector(selector: string) {
+    return selector === 'a' ? this.querySelectorResult : null;
+  }
+
+  focus() {
+    this.focusCount += 1;
+  }
+
+  contains(element: FakeElement) {
+    return this.containedElements.has(element);
+  }
+
+  click() {
+    this.listeners.get('click')?.({ target: this } as unknown as Event);
   }
 }
 
@@ -73,6 +103,18 @@ function createFixture() {
   for (const id of ['guest', 'user', 'admin', 'navbar-greeting', 'navbar-avatar', 'navbar-logout']) {
     document.elements.set(id, new FakeElement());
   }
+  const userMenuTrigger = new FakeElement();
+  const userMenu = new FakeElement();
+  const userMenuLink = new FakeElement();
+  const userMenuParent = new FakeElement();
+  userMenu.querySelectorResult = userMenuLink;
+  userMenuTrigger.setAttribute('aria-expanded', 'false');
+  userMenu.hidden = true;
+  userMenuTrigger.parentElement = userMenuParent;
+  userMenu.parentElement = userMenuParent;
+  userMenuParent.containedElements = new Set([userMenuTrigger, userMenu, userMenuLink]);
+  document.elements.set('navbar-user-menu-trigger', userMenuTrigger);
+  document.elements.set('navbar-user-menu', userMenu);
 
   const window = {
     listeners: new Map<string, (event: Event) => void>(),
@@ -273,6 +315,32 @@ describe('initializeSessionUI', () => {
       expect(() => fixture.start()).not.toThrow();
       expect(fixture.visibility()).toEqual(GUEST);
     });
+  });
+
+  it('toggles the Home user menu, focuses its first item, and restores focus on Escape', () => {
+    const fixture = createFixture();
+    setUserCookie(fixture.document, ADMIN_USER);
+    fixture.start();
+
+    const trigger = fixture.document.elements.get('navbar-user-menu-trigger')!;
+    const menu = fixture.document.elements.get('navbar-user-menu')!;
+    const menuLink = menu.querySelectorResult!;
+
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(menu.hidden).toBe(true);
+
+    trigger.click();
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(menu.hidden).toBe(false);
+    expect(menuLink.focusCount).toBe(1);
+
+    fixture.document.listeners.get('keydown')?.({
+      key: 'Escape',
+      preventDefault: vi.fn(),
+    } as unknown as Event);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(menu.hidden).toBe(true);
+    expect(trigger.focusCount).toBe(1);
   });
 
   // The admin-only navbar entries are a presentation gate over the same

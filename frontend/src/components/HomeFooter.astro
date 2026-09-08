@@ -1,0 +1,38 @@
+---
+import SocialIcon from './SocialIcon.astro';
+---
+
+<footer class="home-footer" id="ayuda">
+  <div class="home-footer__inner">
+    <div class="home-footer__brand">
+      <picture class="home-footer__brand-full">
+        <img src="/img/brand/Mundo3D_Isologotipo.png" alt="Mundo 3D" width="140" height="55" />
+      </picture>
+      <picture class="home-footer__brand-dark">
+        <img src="/img/brand/Mundo3D_Isologotipo_Inverso.png" alt="Mundo 3D" width="140" height="55" />
+      </picture>
+      <p>Impresión 3D con criterio</p>
+    </div>
+
+    <nav class="home-footer__links" aria-label="Navegación del pie">
+      <a href="/#catalogo">Productos</a>
+      <a href="/#encargos">Encargos</a>
+      <a href="/help">Ayuda</a>
+    </nav>
+
+    <div class="home-footer__end">
+      <nav class="home-footer__social" aria-label="Redes sociales">
+        <a class="home-footer__social-link" href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+          <SocialIcon name="instagram" />
+        </a>
+        <a class="home-footer__social-link" href="https://x.com/" target="_blank" rel="noopener noreferrer" aria-label="X">
+          <SocialIcon name="x" />
+        </a>
+        <a class="home-footer__social-link" href="https://www.tiktok.com/" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+          <SocialIcon name="tiktok" />
+        </a>
+      </nav>
+      <p class="home-footer__copyright">© 2026 Mundo 3D</p>
+    </div>
+  </div>
+</footer>

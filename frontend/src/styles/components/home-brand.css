@@ -1,0 +1,35 @@
+html[data-theme='dark'] .home-shell {
+  --home-paper: var(--bg);
+  --home-surface: var(--surface);
+  --home-ink: var(--fg);
+  --home-muted: #c9c4bc;
+  --home-line: #7e756c;
+  --home-night: #142b66;
+  --home-brand-surface: var(--surface);
+  --home-brand-ink: var(--fg);
+  --home-brand-muted: var(--home-muted);
+  --home-commission-button-bg: var(--accent-soft);
+  --home-commission-button-fg: #1e1b18;
+}
+
+.home-header__logo-full img,
+.home-header__logo-dark img {
+  display: block;
+  width: 140px;
+  height: 55px;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+.home-header__logo-dark {
+  display: none;
+  height: 55px;
+}
+
+html[data-theme='dark'] .home-header__logo-full {
+  display: none;
+}
+
+html[data-theme='dark'] .home-header__logo-dark {
+  display: block;
+}

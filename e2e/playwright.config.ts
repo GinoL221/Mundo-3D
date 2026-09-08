@@ -41,9 +41,12 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
-      command: 'pnpm --filter frontend dev --port 4322',
+      command: 'pnpm --filter frontend dev --port 4322 --ignore-lock',
       port: 4322,
-      env: { PUBLIC_API_URL: 'http://localhost:3032' },
+      env: {
+        PUBLIC_API_URL: 'http://localhost:3032',
+        ASTRO_DEV_BACKGROUND: '0',
+      },
       reuseExistingServer: !process.env.CI,
     }
   ],

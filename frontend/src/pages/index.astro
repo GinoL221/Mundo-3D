@@ -1,81 +1,108 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { ProductCard } from '../domains/products';
+import HomeProductCard from '../domains/products/components/HomeProductCard.astro';
 ---
 
-<Layout title="Mundo 3D - Inicio">
-  <h1 class="sr-only">Mundo 3D — modelado y fabricación 3D</h1>
+<Layout title="Mundo 3D - Inicio" variant="home">
+  <main class="home-page">
+    <section class="home-hero" aria-labelledby="home-hero-title">
+      <div class="home-hero__inner">
+        <div class="home-hero__copy">
+          <p class="home-eyebrow">TALLER / CATÁLOGO</p>
+          <h1 class="home-hero__title" id="home-hero-title">Piezas impresas para tener cerca.</h1>
+          <p class="home-hero__description">Figuras, bustos y accesorios nacidos en el taller de Mundo 3D. Elegí una pieza lista o imaginá la próxima con nosotros.</p>
+          <div class="home-hero__actions">
+            <a class="home-button" href="#catalogo">Ver catálogo →</a>
+            <a class="home-text-action" href="#encargos">Pedir un encargo</a>
+          </div>
+        </div>
 
-  <!-- Carousel -->
-  <section class="carousel carousel--lcd" id="homepage-carousel">
-    <div class="carousel__container">
-      <div class="carousel__slide">
-        <a href="/products">
-          <div class="carousel__text glow">Modelado y fabricación 3D</div>
-        </a>
+        <article class="home-featured-card" aria-label="Pieza destacada">
+          <div class="home-featured-card__content" id="home-featured-content">
+            <p class="home-featured-card__state" id="home-featured-loading" role="status">
+              Cargando la pieza destacada...
+            </p>
+          </div>
+        </article>
       </div>
-      <div class="carousel__slide">
-        <a href="/aboutUs">
-          <div class="carousel__text glow">Calidad premium garantizada</div>
-        </a>
-      </div>
-      <div class="carousel__slide">
-        <a href="/help">
-          <div class="carousel__text glow">Pedí tu cotización</div>
-        </a>
-      </div>
-    </div>
-    <button class="carousel__prev" aria-label="Slide anterior">&#10094;</button>
-    <button class="carousel__next" aria-label="Slide siguiente">&#10095;</button>
-    <div class="carousel__indicators">
-      <button class="carousel__indicator active" data-slide="0" aria-label="Ir al slide 1"></button>
-      <button class="carousel__indicator" data-slide="1" aria-label="Ir al slide 2"></button>
-      <button class="carousel__indicator" data-slide="2" aria-label="Ir al slide 3"></button>
-    </div>
-  </section>
+    </section>
 
-  <!-- Feature Strip -->
-  <section class="feature-strip">
-    <div class="feature-strip__tile">
-      <h2 class="feature-strip__title">Calidad Premium</h2>
-      <p class="feature-strip__description">Materiales de alta resistencia para cada proyecto.</p>
-    </div>
-    <div class="feature-strip__tile">
-      <h2 class="feature-strip__title">Envío Rápido</h2>
-      <p class="feature-strip__description">Recibí tu pedido en tiempo récord, preparado con cuidado.</p>
-    </div>
-    <div class="feature-strip__tile">
-      <h2 class="feature-strip__title">Soporte 24/7</h2>
-      <p class="feature-strip__description">Estamos para vos en cada paso del proceso.</p>
-    </div>
-  </section>
-
-  <!-- Dynamic product section -->
-  <main class="index">
-    <div id="products-container">
-      <p id="index-loading-msg" style="text-align:center; padding:2rem;">Cargando productos...</p>
-      <div id="products-content" style="display: none;">
-        <h2 class="page-heading">Nuestros Seleccionados</h2>
-        <div class="product-grid" id="product-grid-container"></div>
+    <section class="home-catalogue-intro" id="catalogo" aria-labelledby="catalogue-title">
+      <div class="home-catalogue-intro__inner">
+        <div class="home-catalogue-intro__copy">
+          <p class="home-eyebrow">CATÁLOGO</p>
+          <h2 class="home-section-title" id="catalogue-title">Piezas listas para salir del taller</h2>
+          <p class="home-section-description">Una selección de figuras, bustos y accesorios impresos para sumar algo único a tu espacio.</p>
+        </div>
       </div>
-    </div>
+    </section>
+
+    <section class="home-products" id="productos" aria-labelledby="home-products-title">
+      <div class="home-products__inner">
+        <div class="home-products__meta">
+          <h2 class="home-products__title" id="home-products-title">Piezas del catálogo</h2>
+          <a class="home-products__link" href="/products">Ver catálogo completo →</a>
+        </div>
+        <div class="home-products__body" id="home-products-container">
+          <p class="home-products__loading" id="home-loading-msg" role="status">Cargando productos...</p>
+          <div id="home-products-content" hidden>
+            <div class="home-products__grid" id="home-product-grid"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-commission" id="encargos" aria-labelledby="home-commission-title">
+      <div class="home-commission__inner">
+        <div class="home-commission__copy">
+          <p class="home-eyebrow">ENCARGOS A MEDIDA</p>
+          <h2 class="home-commission__title" id="home-commission-title">¿Tenés una idea en mente?</h2>
+          <p class="home-commission__description">La convertimos en una pieza real, impresa y terminada en el taller.</p>
+        </div>
+        <a class="home-button home-button--commission" href="/help">Contanos tu idea →</a>
+      </div>
+    </section>
   </main>
 
-  <ProductCard />
+  <HomeProductCard />
 
-  <template id="empty-state-template">
-    <div class="empty-state">
-      <img src="/images/illustrations/empty-state.svg" alt="Próximamente" class="empty-state-img" style="image-rendering: pixelated;" />
-      <h2>Próximamente</h2>
-      <p>Estamos preparando productos increíbles para vos.</p>
+  <template id="home-empty-state-template">
+    <div class="home-state" role="status">
+      <h2>Todavía no hay piezas en el catálogo</h2>
     </div>
   </template>
 
-  <template id="error-state-template">
-    <div class="empty-state">
-      <img src="/images/illustrations/empty-state.svg" alt="Error" class="empty-state-img" style="image-rendering: pixelated;" />
+  <template id="home-error-state-template">
+    <div class="home-state" role="alert">
       <h2>No se pudo cargar</h2>
       <p>Verificá tu conexión e intentá de nuevo.</p>
+    </div>
+  </template>
+
+  <template id="home-featured-product-template">
+    <a class="home-featured-card__link" href="">
+      <img class="home-featured-card__image" src="" alt="" width="420" height="420" loading="eager" decoding="async" />
+      <div class="home-featured-card__caption">
+        <div>
+          <p class="home-featured-card__label">PIEZA DESTACADA</p>
+          <h2 class="home-featured-card__name"></h2>
+        </div>
+        <p class="home-featured-card__price"></p>
+      </div>
+    </a>
+  </template>
+
+  <template id="home-featured-empty-state-template">
+    <div class="home-featured-card__state" role="status">
+      <p>No hay una pieza destacada disponible.</p>
+      <a class="home-text-action" href="/products">Ver catálogo</a>
+    </div>
+  </template>
+
+  <template id="home-featured-error-state-template">
+    <div class="home-featured-card__state" role="alert">
+      <p>No se pudo cargar la pieza destacada. Verificá tu conexión e intentá de nuevo.</p>
+      <a class="home-text-action" href="/products">Ver catálogo</a>
     </div>
   </template>
 </Layout>
@@ -83,141 +110,137 @@ import { ProductCard } from '../domains/products';
 <script>
   import { getCategoryImg, isPlaceholderImage } from '../domains/products';
   import { resolveImageUrl } from '../lib/imageUrl';
-  import { fetchProducts } from '../domains/products/services/product.service';
+  import { fetchLatestProduct, fetchProducts } from '../domains/products/services/product.service';
 
-  // Carousel logic
-  (function initCarousel() {
-    const container = document.querySelector('.carousel__container') as HTMLElement | null;
-    const slides = document.querySelectorAll('.carousel__slide');
-    const indicators = document.querySelectorAll('.carousel__indicator');
-    let current = 0;
-    let interval: ReturnType<typeof setInterval>;
+  const formatPrice = (price: number): string => `$ ${new Intl.NumberFormat('es-AR').format(price)}`;
 
-    function goTo(idx: number): void {
-      current = (idx + slides.length) % slides.length;
-      if (container) container.style.transform = `translateX(-${current * 100}%)`;
-      indicators.forEach((ind, i) => {
-        ind.classList.toggle('active', i === current);
-      });
-    }
+  async function loadFeaturedProduct(): Promise<void> {
+    const content = document.getElementById('home-featured-content');
+    const template = document.getElementById('home-featured-product-template') as HTMLTemplateElement | null;
+    if (!content || !template) return;
 
-    document.querySelector('.carousel__prev')?.addEventListener('click', () => {
-      goTo(current - 1);
-      resetInterval();
-    });
-    document.querySelector('.carousel__next')?.addEventListener('click', () => {
-      goTo(current + 1);
-      resetInterval();
-    });
-    indicators.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const slide = Number((btn as HTMLElement).dataset.slide);
-        goTo(slide);
-        resetInterval();
-      });
-    });
+    const showState = (id: string): void => {
+      const stateTemplate = document.getElementById(id) as HTMLTemplateElement | null;
+      if (stateTemplate) content.replaceChildren(stateTemplate.content.cloneNode(true));
+    };
 
-    function resetInterval(): void {
-      clearInterval(interval);
-      interval = setInterval(() => goTo(current + 1), 5000);
-    }
-
-    resetInterval();
-  })();
-
-  // Dynamic product grid
-  async function loadProducts(): Promise<void> {
-    const container = document.getElementById('products-container');
-    const loadingMsg = document.getElementById('index-loading-msg');
-    const contentEl = document.getElementById('products-content');
-    const gridContainer = document.getElementById('product-grid-container');
-    if (!container) return;
-
+    let result: Awaited<ReturnType<typeof fetchLatestProduct>>;
     try {
-      const result = await fetchProducts();
-      if (!result.ok) {
-        if (loadingMsg) loadingMsg.remove();
-        if (contentEl) contentEl.remove();
-        const errorTemp = document.getElementById('error-state-template') as HTMLTemplateElement | null;
-        if (errorTemp) {
-          const clone = errorTemp.content.cloneNode(true);
-          container.appendChild(clone);
-        }
-        return;
-      }
-      const products = result.products;
-
-      if (loadingMsg) loadingMsg.remove();
-
-      if (products.length === 0) {
-        const emptyTemp = document.getElementById('empty-state-template') as HTMLTemplateElement | null;
-        if (emptyTemp) {
-          const clone = emptyTemp.content.cloneNode(true);
-          container.appendChild(clone);
-        }
-        return;
-      }
-
-      const cardTemp = document.getElementById('product-card-template') as HTMLTemplateElement | null;
-      if (!cardTemp || !gridContainer || !contentEl) return;
-
-      const fragment = document.createDocumentFragment();
-      for (const product of products) {
-        const clone = cardTemp.content.cloneNode(true) as DocumentFragment;
-
-        const link = clone.querySelector('.product-card-link') as HTMLAnchorElement | null;
-        const img = clone.querySelector('.product-card__category-img') as HTMLImageElement | null;
-        const name = clone.querySelector('.product-card-name') as HTMLElement | null;
-        const price = clone.querySelector('.product-card-price') as HTMLElement | null;
-
-        const catImg = getCategoryImg(product.category);
-        const article = clone.querySelector('article') as HTMLElement | null;
-        if (article) article.dataset.category = catImg;
-
-        if (link) {
-          link.href = `/product?id=${product.id}`;
-        }
-        if (img) {
-          const catName = product.category;
-          const catImg = getCategoryImg(catName);
-          const isPlaceholder = isPlaceholderImage(product.image);
-          if (isPlaceholder) {
-            img.src = `/images/illustrations/${catImg}.svg`;
-            img.alt = catName;
-            img.classList.add('product-card__category-img--pixelart');
-          } else {
-            img.src = resolveImageUrl(product.image, 'products');
-            img.alt = product.name;
-            img.classList.remove('product-card__category-img--pixelart');
-          }
-          img.addEventListener('error', () => {
-            img.src = '/images/illustrations/Otras.svg';
-            img.classList.add('product-card__category-img--pixelart');
-          });
-        }
-        if (name) {
-          name.textContent = product.name;
-        }
-        if (price) {
-          price.textContent = `$${product.price}`;
-        }
-
-        fragment.appendChild(clone);
-      }
-
-      gridContainer.appendChild(fragment);
-      contentEl.style.display = 'block';
+      result = await fetchLatestProduct();
     } catch {
-      if (loadingMsg) loadingMsg.remove();
-      if (contentEl) contentEl.remove();
-      const errorTemp = document.getElementById('error-state-template') as HTMLTemplateElement | null;
-      if (errorTemp) {
-        const clone = errorTemp.content.cloneNode(true);
-        container.appendChild(clone);
-      }
+      showState('home-featured-error-state-template');
+      return;
     }
+
+    if (!result.ok) {
+      showState(result.reason === 'not-found' ? 'home-featured-empty-state-template' : 'home-featured-error-state-template');
+      return;
+    }
+
+    const clone = template.content.cloneNode(true) as DocumentFragment;
+    const link = clone.querySelector('.home-featured-card__link') as HTMLAnchorElement | null;
+    const image = clone.querySelector('.home-featured-card__image') as HTMLImageElement | null;
+    const name = clone.querySelector('.home-featured-card__name') as HTMLElement | null;
+    const price = clone.querySelector('.home-featured-card__price') as HTMLElement | null;
+    const product = result.product;
+
+    if (link) link.href = `/product?id=${product.id}`;
+    if (image) {
+      if (isPlaceholderImage(product.image)) {
+        image.src = `/images/illustrations/${getCategoryImg(product.category)}.svg`;
+        image.alt = `${product.category} — imagen no disponible`;
+        image.classList.add('home-featured-card__image--placeholder');
+      } else {
+        image.src = resolveImageUrl(product.image, 'products');
+        image.alt = product.name;
+      }
+      image.addEventListener('error', () => {
+        if (image.dataset.fallback) return;
+        image.dataset.fallback = 'true';
+        image.src = `/images/illustrations/${getCategoryImg(product.category)}.svg`;
+        image.alt = `${product.category} — imagen no disponible`;
+        image.classList.add('home-featured-card__image--placeholder');
+      });
+    }
+    if (name) name.textContent = product.name;
+    if (price) price.textContent = formatPrice(product.price);
+    content.replaceChildren(clone);
   }
 
-  loadProducts();
-</script>
+  async function loadProducts(): Promise<void> {
+    const container = document.getElementById('home-products-container');
+    const loadingMsg = document.getElementById('home-loading-msg');
+    const contentEl = document.getElementById('home-products-content');
+    const gridContainer = document.getElementById('home-product-grid');
+    if (!container) return;
 
+    const showState = (id: string): void => {
+      loadingMsg?.remove();
+      contentEl?.remove();
+      const template = document.getElementById(id) as HTMLTemplateElement | null;
+      if (template) container.appendChild(template.content.cloneNode(true));
+    };
+
+    let result: Awaited<ReturnType<typeof fetchProducts>>;
+    try {
+      result = await fetchProducts();
+    } catch {
+      showState('home-error-state-template');
+      return;
+    }
+
+    if (!result.ok) {
+      showState('home-error-state-template');
+      return;
+    }
+
+    if (result.products.length === 0) {
+      showState('home-empty-state-template');
+      return;
+    }
+
+    const cardTemp = document.getElementById('home-product-card-template') as HTMLTemplateElement | null;
+    if (!cardTemp || !gridContainer || !contentEl) return;
+
+    const products = result.products.slice(0, 6);
+
+    const fragment = document.createDocumentFragment();
+    for (const product of products) {
+      const clone = cardTemp.content.cloneNode(true) as DocumentFragment;
+      const catImg = getCategoryImg(product.category);
+      const link = clone.querySelector('.home-product-card__link') as HTMLAnchorElement | null;
+      const img = clone.querySelector('.home-product-card__image') as HTMLImageElement | null;
+      const name = clone.querySelector('.home-product-card__name') as HTMLElement | null;
+      const price = clone.querySelector('.home-product-card__price') as HTMLElement | null;
+
+      if (link) link.href = `/product?id=${product.id}`;
+      if (img) {
+        if (isPlaceholderImage(product.image)) {
+          img.src = `/images/illustrations/${catImg}.svg`;
+          img.alt = `${product.category} — imagen no disponible`;
+          img.classList.add('home-product-card__image--placeholder');
+        } else {
+          img.src = resolveImageUrl(product.image, 'products');
+          img.alt = product.name;
+        }
+        img.addEventListener('error', () => {
+          if (img.dataset.fallback) return;
+          img.dataset.fallback = 'true';
+          img.src = '/images/illustrations/Otras.svg';
+          img.alt = 'Imagen de producto no disponible';
+          img.classList.add('home-product-card__image--placeholder');
+        });
+      }
+      if (name) name.textContent = product.name;
+      if (price) price.textContent = formatPrice(product.price);
+      fragment.appendChild(clone);
+    }
+
+    loadingMsg?.remove();
+    gridContainer.appendChild(fragment);
+    contentEl.hidden = false;
+  }
+
+  void loadFeaturedProduct();
+  void loadProducts();
+</script>
