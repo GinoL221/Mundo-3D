@@ -1,0 +1,3 @@
+{
+  "ignore": ["openspec/changes/**/preproposal.md"]
+}

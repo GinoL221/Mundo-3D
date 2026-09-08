@@ -1,0 +1,2 @@
+# OpenSpec preproposal artifacts are YAML documents stored with an .md suffix.
+openspec/changes/**/preproposal.md
