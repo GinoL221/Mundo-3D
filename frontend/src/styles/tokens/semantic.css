@@ -1,0 +1,28 @@
+/* Intent roles only; primitive tokens remain the theme authority. */
+:root {
+  --sys-page-bg: var(--bg);
+  --sys-surface: var(--surface);
+  --sys-text: var(--fg);
+  --sys-text-muted: var(--pico-muted);
+  --sys-border: var(--border);
+  --sys-action-bg: var(--accent);
+  --sys-action-text: var(--pico-white);
+  --sys-action-text-link: var(--link-text);
+  --sys-danger-text: var(--danger-text);
+  --sys-focus: var(--accent);
+  --sys-font-body: var(--font-body);
+  --sys-font-heading: var(--font-heading);
+  --sys-text-display: 40px;
+  --sys-text-body: var(--text-body);
+  --sys-line-height-body: var(--line-height-base);
+  --sys-space-section: var(--space-2xl);
+  --sys-space-control: var(--space-sm);
+  --sys-frame-max: 1104px;
+  --sys-frame-gutter: var(--space-md);
+  --sys-prose-max: 75ch;
+  --sys-target-min: 44px;
+}
+
+[data-theme='dark'] {
+  --sys-text-muted: var(--pico-light);
+}
