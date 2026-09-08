@@ -5,9 +5,11 @@ This specification defines the architectural rules, file organization, routing, 
 ## Requirements
 
 ### Requirement: Astro Project Structure and Decoupled Architecture
+
 The Astro frontend MUST be organized in a decoupled directory structure under `/frontend` in the project root. It MUST contain distinct directories for layouts, pages, and components.
 
 #### Scenario: Astro workspace initialization
+
 - GIVEN the project directory structure
 - WHEN the Astro frontend is compiled or built
 - THEN the codebase MUST be located inside the `frontend/` directory
@@ -18,36 +20,51 @@ The Astro frontend MUST be organized in a decoupled directory structure under `/
   - `frontend/public/` for static assets
 
 ### Requirement: Astro Global Layout and Styling Integration
+
 The frontend MUST utilize a reusable layout component that loads global styles from the shared Vanilla CSS stylesheet, ensuring visual consistency across all pages.
 
 #### Scenario: Global layout imports Vanilla CSS
+
 - GIVEN a layout file at `frontend/src/layouts/Layout.astro`
 - WHEN a page uses this layout
 - THEN the rendered HTML page MUST link the global stylesheet `public/css/styles.css` (or equivalent Vanilla CSS file)
 - AND render pages within a unified layout header, nav, and footer structure
 
 ### Requirement: Static Page Pre-rendering (SSG)
+
 Static pages (`/aboutUs`, `/terms`, `/privacy`, `/faq`, `/step-by-step`, `/help`) MUST be configured to pre-render at build time (SSG) to ensure rapid loading.
 
 #### Scenario: SSG pages build static HTML files
+
 - GIVEN the Astro build command is run
 - WHEN pre-rendering static routes
 - THEN Astro MUST compile `/aboutUs`, `/terms`, `/privacy`, `/faq`, `/step-by-step`, and `/help` into static HTML files
 - AND these files MUST NOT require active backend database connections or use dynamic runtime queries on load
 
 ### Requirement: Dynamic Content Fetching
-For dynamic views (such as the homepage `/` product list or product detail pages), Astro components MUST fetch JSON data from the Express REST API.
+
+For dynamic views such as Home `/` and product details, Astro MUST continue fetching JSON data from the Express REST API. The Home responsive change MUST preserve its existing HTML structure, shell selection, client hydration boundary, loading sequence, success rendering, empty state, and error state; it MUST NOT redesign product loading.
 
 #### Scenario: Homepage renders products from API fetch
+
 - GIVEN a client requests the homepage `/`
 - WHEN the homepage component renders
 - THEN the component MUST make a fetch request to `/api/products` on the Express backend
 - AND parse the JSON response to render the dynamic list of product components
 
+#### Scenario: Existing loading outcomes remain intact
+
+- GIVEN the Home product request is pending, empty, or unsuccessful
+- WHEN the corresponding existing UI state renders
+- THEN that state MUST remain observable with the same loading contract as before the responsive change
+- AND responsive behavior MUST NOT initiate an alternative product-loading flow
+
 ### Requirement: Corrected Fetch Handling and camelCase Property Mapping
+
 The Astro pages fetching products from `/api/products` MUST correctly extract the products array from the response envelope (`resData.products`) and consume camelCase product properties.
 
 #### Scenario: Products Catalog and Home fetching
+
 - GIVEN the Astro client-side script running on `/` or `/products`
 - WHEN it performs a fetch to `http://localhost:3000/api/products`
 - THEN it MUST parse the JSON response as an object envelope (e.g., `resData`)

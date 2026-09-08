@@ -31,6 +31,7 @@ Replaces the hardcoded index page with a dynamic one powered by ProductService, 
 The homepage MUST include a compact retro LCD text panel carousel (`carousel.js`) with a fixed height of 150px, custom retro styling (scanline overlays and double borders), auto-cycling 3 specific text slides, each with correct navigation links.
 
 The 3 slides MUST cycle through the following precise text:
+
 1. "Modelado y fabricación 3D" (links to catalog/products)
 2. "Calidad premium garantizada" (links to about/guarantee info)
 3. "Pedí tu cotización" (links to contact/quote request)
@@ -78,26 +79,40 @@ The header cart counter MUST show the distinct product count and hide when the c
 
 ### Requirement: Responsive Layout
 
-All pages MUST be responsive across three breakpoints: Mobile (<640px), Tablet (640–1024px), Desktop (>1024px), with a container max-width of 1440px. Breakpoint media queries MUST use `min-width` (mobile-first) and reference `--bp-mobile` (640px) and `--bp-tablet` (1024px) custom properties for widths only.
+The Home page MUST use content-fit responsive behavior: one product column below 640px, two columns from 640px through 1023px, and three columns from 1024px only while every card remains at or above the product-card minimum width. Its body text MUST be at least 16px, prose measure SHOULD remain approximately 75ch or less, and headings MUST scale fluidly within explicit lower and upper bounds. Other pages MUST retain their existing responsive behavior.
 
 (Previously: Referenced `--breakpoint-*` tokens and inconsistent max-width values.)
 
-#### Scenario: Desktop layout
+#### Scenario: Phone Home layout
 
-- GIVEN a viewport wider than 1024px
-- WHEN any page renders
-- THEN the main content container MUST have `max-width: 1440px` and `margin: 0 auto`
-- AND product grids MUST display in multi-column layout
+- GIVEN the Home viewport is narrower than 640px
+- WHEN Home renders with products
+- THEN product cards MUST form one column without horizontal overflow
+- AND body text MUST remain at least 16px
 
-#### Scenario: Mobile layout
+#### Scenario: Tablet Home grid boundaries
 
-- GIVEN a viewport narrower than 640px
-- WHEN the homepage renders
-- THEN product cards MUST stack vertically in a single column
-- AND the carousel MUST occupy full width
+- GIVEN the Home viewport is from 640px through 1023px
+- WHEN products render in portrait or landscape orientation
+- THEN product cards MUST form exactly two columns
+- AND each card MUST remain at or above its declared minimum width
 
-#### Scenario: Tablet layout
+#### Scenario: Viable desktop Home grid
 
-- GIVEN a viewport between 640px and 1024px inclusive
-- WHEN the homepage renders
-- THEN product cards MUST display in a 2-column grid
+- GIVEN the Home viewport is at least 1024px and three cards fit within the Home frame at their minimum width
+- WHEN products render
+- THEN product cards MUST form exactly three columns
+- AND the grid MUST NOT overflow horizontally
+
+#### Scenario: Unviable three-column fit
+
+- GIVEN the Home viewport is at least 1024px but three minimum-width cards do not fit in the available Home frame
+- WHEN products render
+- THEN the grid MUST use fewer columns rather than shrink a card below its minimum width
+
+#### Scenario: Readable Home typography
+
+- GIVEN Home contains body copy and headings at any supported viewport
+- WHEN their computed layout is measured
+- THEN body copy MUST be at least 16px and SHOULD not exceed approximately 75ch per line
+- AND headings MUST remain within their defined minimum and maximum sizes
