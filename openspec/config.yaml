@@ -14,7 +14,7 @@ stack:
   language: JavaScript + TypeScript (mixed, migrating to TS)
   runtime: node (>=22.12.0)
   backend_framework: Express.js 4.x
-  frontend_framework: Astro 6.x
+  frontend_framework: Astro 7.x
   orm: Sequelize 6.x
   database: MySQL (mysql2 driver)
   auth: JWT (jsonwebtoken) + bcryptjs + express-session
@@ -47,7 +47,7 @@ architecture:
       config: backend/src/database/config/
       seeds: backend/src/database/seed.js
     frontend:
-      framework: Astro 6.x
+      framework: Astro 7.x
       components: frontend/src/components/
       pages: frontend/src/pages/
       layouts: frontend/src/layouts/
@@ -73,9 +73,27 @@ conventions:
 
 testing:
   strict_tdd: true
+  projects:
+    - path: .
+      stack: Node.js workspace / pnpm 11
+      test_command: pnpm test:all
+      layers: backend fast suite, frontend Vitest, and all e2e tests
+    - path: backend
+      stack: JavaScript + TypeScript / Jest 30
+      test_command: pnpm --filter backend test
+      integration_command: pnpm --filter backend test:integration
+      coverage_command: pnpm --filter backend test:coverage
+    - path: frontend
+      stack: Astro 7 / TypeScript / Vitest 4
+      test_command: pnpm --filter frontend test
+      check_command: pnpm --filter frontend check
+    - path: e2e
+      stack: Playwright 1.x / TypeScript
+      test_command: pnpm --filter e2e test
+      focused_command: pnpm test:e2e
   runner: Jest 30.x (backend), Vitest 4.x (frontend)
-  coverage_tool: Jest built-in (backend; JS+TS under backend/src/)
-  test_command: 'pnpm test'
+  coverage_tool: Jest built-in (backend; JS+TS under backend/src/); no frontend coverage script detected
+  test_command: 'pnpm test:all'
   fast_command: 'pnpm test:fast'
   integration_command: 'pnpm test:integration'
   coverage_command: 'pnpm test:coverage'
@@ -88,10 +106,10 @@ testing:
   test_count: 50+ test files
   coverage_scope: 'backend/src/**/*.{js,ts}, excluding tests, .d.ts, __tests__/, database/migrations/, and live-DB-only CLI scripts (reset-db.js, test-prepare.js)'
   coverage_threshold:
-    branches: 50
-    functions: 50
-    lines: 50
-    statements: 50
+    branches: 80
+    functions: 85
+    lines: 90
+    statements: 90
   coverage_risk_map: backend/scripts/generate-coverage-risk-map.js -> backend/coverage/risk-map.json (Tier 0 = security, migrations, cart, stock; honest gap reporting, never silently marked fixed)
   transform:
     js: babel-jest
@@ -103,7 +121,7 @@ testing:
 quality:
   linter: ESLint 10.x (flat config)
   formatter: 'Prettier 3.x (singleQuote, trailingComma: all, printWidth: 100)'
-  type_checker: TypeScript 6.x (strict mode, target ES2022)
+  type_checker: TypeScript 6.x (backend strict mode, target ES2022; frontend via astro check)
   ci: >
     GitHub Actions, fail-closed. Jobs: quality (lint, type-check, test:fast,
     test:coverage, frontend:check, frontend:build), integration (real-DB
@@ -131,9 +149,9 @@ rules:
     - Follow hexagonal architecture layer boundaries
     - Domain entities MUST NOT import from infrastructure
     - Use cases depend on ports (interfaces), not concrete implementations
-    - TDD enabled, test_command = pnpm test
+    - Strict TDD enabled; use testing.test_command for the complete workspace suite
   verify:
-    - test_command = pnpm test
-    - coverage_threshold = 50
+    - Run testing.test_command to cover backend, frontend, and all e2e projects
+    - coverage_threshold = branches 80, functions 85, lines 90, statements 90
   archive:
     - Warn before merging destructive deltas

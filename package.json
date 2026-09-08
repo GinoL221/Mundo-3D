@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "pnpm --filter backend dev",
     "test": "pnpm --filter \"!e2e\" test",
+    "test:all": "pnpm test && pnpm test:e2e:all",
     "test:fast": "pnpm --filter backend test:fast && pnpm --filter frontend test",
     "test:integration": "pnpm --filter backend test:integration",
     "test:coverage": "pnpm --filter backend test:coverage",
