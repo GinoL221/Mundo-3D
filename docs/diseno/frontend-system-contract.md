@@ -26,7 +26,7 @@ Home and `docs/diseno/manual-identidad.md` are visual authority; `PRODUCT.md` an
 
 ## Semantic contract
 
-`semantic.css` aliases primitive ownership: `--sys-page-bg`, `--sys-surface`, `--sys-text`, `--sys-text-muted`, `--sys-border`, `--sys-action-bg`, `--sys-action-text`, `--sys-action-text-link`, `--sys-danger-text`, `--sys-focus`, font/text/space roles, `--sys-frame-max`, `--sys-frame-gutter`, `--sys-prose-max`, and `--sys-target-min`. Light and dark resolve through existing color tokens. No Home-only or legacy value becomes a system token.
+`semantic.css` aliases primitive ownership: `--sys-page-bg`, `--sys-surface`, `--sys-text`, `--sys-text-muted`, `--sys-border`, `--sys-action-bg`, `--sys-action-text`, `--sys-action-text-link`, `--sys-danger-text`, `--sys-focus`, font/text/space roles, `--sys-frame-max`, `--sys-frame-gutter`, `--sys-prose-max`, and `--sys-target-min`. The opt-in action role uses contrast-adjusted blue `#2d66f0`, while focus resolves to the theme foreground; Home keeps its existing `--accent` and focus colors. No Home-only or legacy value becomes a system token.
 
 `system-primitives.css` supplies only `.system-frame`, `.system-section`, `.system-prose`, `.system-action` (`--primary`, `--text`), `.system-state` (`--loading`, `--empty`, `--error`, `--status`), visible `:focus-visible`, disabled presentation, and `[data-image-rendering="pixel-art"]`. These are opt-in presentation hooks, never route selectors or CSS-created semantics; no global radius, shadow, gradient, or glow exists.
 
@@ -45,7 +45,7 @@ Home and `docs/diseno/manual-identidad.md` are visual authority; `PRODUCT.md` an
 | Evidence                                    | 0A result                                                                             |
 | ------------------------------------------- | ------------------------------------------------------------------------------------- |
 | keyboard, name/role/value, status semantics | focused injected-DOM contract coverage                                                |
-| visible focus and applicable contrast       | light/dark computed roles; adjacent-background contrast remains consumer verification |
+| visible focus and applicable contrast       | light/dark computed ratios for text, controls, focus, and meaningful state boundaries |
 
 ### Local 44×44 CSS-pixel ledger
 

@@ -1,30 +1,30 @@
 .home-shell {
-  --home-frame-max: 1104px;
-  --home-gutter: 16px;
+  --home-frame-max: var(--sys-frame-max, 1104px);
+  --home-gutter: var(--sys-frame-gutter, 16px);
   --home-card-min: 280px;
-  --home-prose-measure: 75ch;
+  --home-prose-measure: var(--sys-prose-max, 75ch);
   --home-hero-heading-min: 2rem;
   --home-hero-heading-max: 2.5rem;
   --home-section-heading-min: 1.75rem;
   --home-section-heading-max: 2rem;
-  --home-paper: var(--bg);
-  --home-surface: var(--surface);
-  --home-ink: var(--fg);
-  --home-muted: #6a635b;
-  --home-blue: var(--accent);
+  --home-paper: var(--sys-page-bg, #f6f2ea);
+  --home-surface: var(--sys-surface, #fffdf9);
+  --home-ink: var(--sys-text, #1e1b18);
+  --home-muted: var(--sys-text-muted, #6a635b);
+  --home-blue: var(--accent, #2f6bff);
   --home-blue-hover: #2459d8;
-  --home-line: var(--border);
-  --home-night: var(--fg);
+  --home-line: var(--sys-border, #ded7cd);
+  --home-night: var(--sys-text, #1e1b18);
   --home-on-dark: #ffffff;
   --home-commission-button-bg: var(--home-blue);
   --home-commission-button-fg: var(--home-on-dark);
   --home-commission-muted: #c9c4bc;
   --home-commission-eyebrow: #ffffff;
-  --home-brand-surface: var(--surface);
-  --home-brand-paper: var(--bg);
-  --home-brand-ink: var(--fg);
-  --home-brand-muted: #6a635b;
-  --home-brand-line: var(--border);
+  --home-brand-surface: var(--sys-surface, #fffdf9);
+  --home-brand-paper: var(--sys-page-bg, #f6f2ea);
+  --home-brand-ink: var(--sys-text, #1e1b18);
+  --home-brand-muted: var(--sys-text-muted, #6a635b);
+  --home-brand-line: var(--sys-border, #ded7cd);
   background: var(--home-paper);
   color: var(--home-ink);
 }
@@ -140,7 +140,9 @@
   border-radius: 4px;
   background: transparent;
   color: var(--home-brand-ink);
-  transition: background-color 200ms ease, color 200ms ease;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
 }
 
 .home-header__theme:hover {

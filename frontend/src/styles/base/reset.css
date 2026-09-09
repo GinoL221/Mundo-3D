@@ -10,9 +10,7 @@
   border-radius: 0;
 }
 
-/* ── Pixel Art Image Rendering ─────────────────────────────── */
-img {
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
+/* ── Default Image Rendering ───────────────────────────────── */
+img:where(:not([data-image-rendering='pixel-art'])) {
+  image-rendering: auto;
 }

@@ -9,6 +9,10 @@ type MatrixCase = {
   compactNavigation: boolean;
 };
 
+const themes = ['light', 'dark'] as const;
+
+type Theme = (typeof themes)[number];
+
 const matrix: MatrixCase[] = [
   { name: '320', width: 320, height: 800, columns: 1, compactNavigation: true },
   { name: '360', width: 360, height: 800, columns: 1, compactNavigation: true },
@@ -34,10 +38,11 @@ test.use({
   timezoneId: 'UTC',
 });
 
-async function openHome(page: Page, viewport: MatrixCase): Promise<void> {
+async function openHome(page: Page, viewport: MatrixCase, theme: Theme): Promise<void> {
   await installHomeProductFixtures(page);
   await page.setViewportSize({ width: viewport.width, height: viewport.height });
-  await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' });
+  await page.addInitScript((selectedTheme) => localStorage.setItem('theme', selectedTheme), theme);
+  await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await page.evaluate(async () => {
     const settleWithin = async (promise: Promise<unknown>): Promise<void> => {
@@ -57,10 +62,14 @@ async function openHome(page: Page, viewport: MatrixCase): Promise<void> {
 }
 
 test.describe('Home responsive contract (fixed Chromium rendering)', () => {
-  for (const viewport of matrix) {
-    test(`Home responsive contract at ${viewport.name}`, async ({ page }, testInfo) => {
+  for (const viewport of matrix.flatMap((item) => themes.map((theme) => ({ ...item, theme })))) {
+    const testName =
+      viewport.theme === 'light'
+        ? `Home responsive contract at ${viewport.name}`
+        : `Home responsive contract in dark theme at ${viewport.name}`;
+    test(testName, async ({ page }, testInfo) => {
       expect(testInfo.project.name).toBe('chromium');
-      await openHome(page, viewport);
+      await openHome(page, viewport, viewport.theme);
 
       const metrics = await page.evaluate(() => {
         const grid = document.querySelector<HTMLElement>('.home-products__grid');
@@ -76,7 +85,9 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
         const featured = document.querySelector<HTMLElement>('.home-featured-card');
         const body = document.querySelector<HTMLElement>('.home-hero__description');
         const heading = document.querySelector<HTMLElement>('.home-hero__title');
-        const logo = document.querySelector<HTMLImageElement>('.home-header__logo img');
+        const logo = [
+          ...document.querySelectorAll<HTMLImageElement>('.home-header__logo img'),
+        ].find((image) => image.getBoundingClientRect().width > 0);
         const menuToggle = document.querySelector<HTMLElement>('#home-menu-toggle');
         const menuIcon = document.querySelector<HTMLElement>('.home-header__menu-icon');
         const cart = document.querySelector<HTMLElement>('.home-header__cart');
@@ -266,9 +277,11 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
         await expect(navigation).toBeVisible();
       }
 
-      await expect(page).toHaveScreenshot(`home-responsive-${viewport.name}.png`, {
-        fullPage: true,
-      });
+      const screenshot =
+        viewport.theme === 'light'
+          ? `home-responsive-${viewport.name}.png`
+          : `home-responsive-${viewport.name}-dark.png`;
+      await expect(page).toHaveScreenshot(screenshot, { fullPage: true });
     });
   }
 });
