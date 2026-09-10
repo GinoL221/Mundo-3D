@@ -105,6 +105,7 @@
   image-rendering: auto;
 }
 
+/* Legacy alias for placeholders not yet marked in route-owned Home markup. */
 .home-product-card__image--placeholder {
   padding: 48px;
   background: var(--home-paper);

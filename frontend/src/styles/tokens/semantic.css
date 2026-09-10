@@ -5,11 +5,12 @@
   --sys-text: var(--fg);
   --sys-text-muted: var(--pico-muted);
   --sys-border: var(--border);
-  --sys-action-bg: var(--accent);
+  /* Opt-in action blue preserves AA contrast without changing Home's accent. */
+  --sys-action-bg: #2d66f0;
   --sys-action-text: var(--pico-white);
   --sys-action-text-link: var(--link-text);
   --sys-danger-text: var(--danger-text);
-  --sys-focus: var(--accent);
+  --sys-focus: var(--fg);
   --sys-font-body: var(--font-body);
   --sys-font-heading: var(--font-heading);
   --sys-text-display: 40px;

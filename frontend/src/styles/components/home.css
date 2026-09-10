@@ -73,7 +73,9 @@
   font-weight: 600;
   line-height: 20px;
   white-space: nowrap;
-  transition: background-color 200ms ease, color 200ms ease;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
 }
 .home-button:hover {
   background: var(--home-blue-hover);
@@ -137,6 +139,7 @@
   image-rendering: auto;
 }
 
+/* Legacy alias for placeholders not yet marked in route-owned Home markup. */
 .home-featured-card__image--placeholder {
   padding: 48px;
   background: var(--home-paper);
