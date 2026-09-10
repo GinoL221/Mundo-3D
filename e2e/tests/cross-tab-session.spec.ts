@@ -51,8 +51,12 @@ test.describe('Cross-tab session synchronization', () => {
     await expect(page2.locator('#navbar-greeting')).toContainText('Hola');
     await expect(page2.locator('.admin-only').first()).toBeVisible();
 
-    // Tab 1: log out via the HomeHeader account menu (same interaction as
-    // auth.spec.ts's single-tab "User Logout" test).
+    // Tab 1: return from the admin-owned layout to Home, which renders the
+    // HomeHeader account menu used by auth.spec.ts's single-tab "User Logout"
+    // test. The authenticated greeting proves the shared session remains active.
+    await page.goto('/');
+    await expect(page).toHaveURL('/');
+    await expect(page.locator('#navbar-greeting')).toContainText('Hola');
     await page.locator('#navbar-user-menu-trigger').click();
     await page.locator('#navbar-logout').click();
     await expect(page).toHaveURL('/login');
