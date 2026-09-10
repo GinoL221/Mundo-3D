@@ -11,25 +11,33 @@ import ProductCard from './ProductCard.astro';
 ---
 
 <div class="product-search">
-  <form method="get" action="/products" class="product-search__form" id="product-search-form">
-    <input type="search" name="search" id="product-search-input" placeholder="Buscar productos..." />
-    <select name="idCategory" id="product-search-category">
-      <option value="">Todas las categorías</option>
-    </select>
-    <select name="idFranchise" id="product-search-franchise">
-      <option value="">Todas las franquicias</option>
-    </select>
-    <button type="submit">Buscar</button>
-  </form>
+  <div class="product-search__toolbar">
+    <form method="get" action="/products" class="product-search__form" id="product-search-form">
+      <label class="sr-only" for="product-search-input">Buscar productos</label>
+      <input type="search" name="search" id="product-search-input" placeholder="Buscar productos..." />
+      <label class="sr-only" for="product-search-category">Categoría</label>
+      <select name="idCategory" id="product-search-category">
+        <option value="">Todas las categorías</option>
+      </select>
+      <label class="sr-only" for="product-search-franchise">Franquicia</label>
+      <select name="idFranchise" id="product-search-franchise">
+        <option value="">Todas las franquicias</option>
+      </select>
+      <button type="submit">Buscar</button>
+    </form>
+  </div>
 
-  <section class="product-grid" id="product-grid-container">
-    <p id="loading-msg" style="text-align:center; padding: 2rem;">Cargando productos...</p>
+  <section class="product-search__catalog" aria-labelledby="product-grid-heading">
+    <h2 id="product-grid-heading">Piezas disponibles</h2>
+    <div class="product-grid" id="product-grid-container" aria-live="polite">
+      <p id="loading-msg" class="product-search__loading">Cargando productos...</p>
+    </div>
   </section>
 
-  <nav class="product-search__pagination">
-    <a id="product-search-prev" href="#" style="display:none;">&laquo; Anterior</a>
+  <nav class="product-search__pagination" aria-label="Paginación del catálogo">
+    <a id="product-search-prev" href="#" hidden>&laquo; Anterior</a>
     <span id="product-search-page-label"></span>
-    <a id="product-search-next" href="#" style="display:none;">Siguiente &raquo;</a>
+    <a id="product-search-next" href="#" hidden>Siguiente &raquo;</a>
   </nav>
 </div>
 
@@ -37,7 +45,7 @@ import ProductCard from './ProductCard.astro';
 
 <template id="empty-state-template">
   <div class="empty-state">
-    <img src="/images/illustrations/empty-state.svg" alt="Próximamente" class="empty-state-img" style="image-rendering: pixelated;" />
+    <img src="/images/illustrations/empty-state.svg" alt="Próximamente" class="empty-state-img" />
     <h2>Próximamente</h2>
     <p>Estamos preparando productos increíbles para vos.</p>
   </div>
@@ -45,7 +53,7 @@ import ProductCard from './ProductCard.astro';
 
 <template id="no-results-state-template">
   <div class="empty-state">
-    <img src="/images/illustrations/empty-state.svg" alt="Sin resultados" class="empty-state-img" style="image-rendering: pixelated;" />
+    <img src="/images/illustrations/empty-state.svg" alt="Sin resultados" class="empty-state-img" />
     <h2>Sin resultados</h2>
     <p>No encontramos productos para esa búsqueda.</p>
   </div>
@@ -53,7 +61,7 @@ import ProductCard from './ProductCard.astro';
 
 <template id="error-state-template">
   <div class="empty-state">
-    <img src="/images/illustrations/empty-state.svg" alt="Error" class="empty-state-img" style="image-rendering: pixelated;" />
+    <img src="/images/illustrations/empty-state.svg" alt="Error" class="empty-state-img" />
     <h2>No se pudo cargar</h2>
     <p>Verificá tu conexión e intentá de nuevo.</p>
   </div>
@@ -142,6 +150,7 @@ import ProductCard from './ProductCard.astro';
       const link = clone.querySelector('.product-card-link') as HTMLAnchorElement | null;
       const img = clone.querySelector('.product-card__category-img') as HTMLImageElement | null;
       const name = clone.querySelector('.product-card-name') as HTMLElement | null;
+      const category = clone.querySelector('.product-card-category') as HTMLElement | null;
       const price = clone.querySelector('.product-card-price') as HTMLElement | null;
 
       if (link) link.href = `/product?id=${product.idProduct}`;
@@ -162,6 +171,7 @@ import ProductCard from './ProductCard.astro';
         });
       }
       if (name) name.textContent = product.nameProduct;
+      if (category) category.textContent = product.category || 'Otras';
       if (price) price.textContent = `$${product.price}`;
 
       fragment.appendChild(clone);
@@ -178,11 +188,11 @@ import ProductCard from './ProductCard.astro';
 
     if (pageLabelEl) pageLabelEl.textContent = pageLabel;
     if (prevEl) {
-      prevEl.style.display = prevHref ? 'inline' : 'none';
+      prevEl.hidden = !prevHref;
       if (prevHref) prevEl.href = prevHref;
     }
     if (nextEl) {
-      nextEl.style.display = nextHref ? 'inline' : 'none';
+      nextEl.hidden = !nextHref;
       if (nextHref) nextEl.href = nextHref;
     }
   }
