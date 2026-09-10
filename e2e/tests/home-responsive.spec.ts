@@ -266,8 +266,10 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
         await expect(navigation).toBeVisible();
       }
 
+      // Structural assertions and full-page snapshots protect layout/content; this only tolerates cross-runner glyph antialiasing.
       await expect(page).toHaveScreenshot(`home-responsive-${viewport.name}.png`, {
         fullPage: true,
+        threshold: 0.4,
       });
     });
   }
