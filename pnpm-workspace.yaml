@@ -3,7 +3,6 @@ packages:
   - 'frontend'
   - 'e2e'
 
-
 # Security Hardening (npm/pnpm Security Hardening — Protocolo 2026)
 minimumReleaseAge: 10080
 trustPolicy: no-downgrade
@@ -11,21 +10,6 @@ trustPolicyExclude:
   - semver@6.3.1
   - undici-types@6.20.0
 
-# 2026-09-02 — deliberate exception to the minimumReleaseAge above, granted by
-# the maintainer. `qs` 6.15.2 carries two MODERATE advisories that reach
-# PRODUCTION through express > body-parser: an array-limit bypass via
-# bracket-key comma parsing, and a DoS via attacker-controlled `isBuffer`.
-# Clearing both needs 6.16.0, and 6.15.4 clears only the first.
-#
-# 6.16.0 was published 2026-08-29 — under the 7-day floor at the time this was
-# added. The floor exists to blunt supply-chain attacks on freshly published
-# versions, so overriding it is a real cost, taken here because these two are
-# live in production rather than dev-tree noise.
-#
-# This entry can be REMOVED once 6.16.0 is comfortably past 7 days (from
-# 2026-09-05 onward): the override below then satisfies the policy on its own.
-minimumReleaseAgeExclude:
-  - qs@6.16.0
 strictDepBuilds: true
 blockExoticSubdeps: true
 
@@ -47,8 +31,8 @@ allowBuilds:
 #
 # 2026-09-01 audit-drift cleanup — same "declared range already allows the
 # fix, pnpm just won't move there on its own" pattern as ip-address above:
-# - sharp: astro's own optionalDependencies already say `^0.34.0 || ^0.35.0`;
-#   0.34.5 carries 4 HIGH libvips CVEs, fixed at 0.35.0.
+# - sharp: astro's own optionalDependencies already allow 0.35.x;
+#   earlier releases carry libvips CVEs, fixed at 0.35.4.
 # - svgo: astro's own dependencies already say `^4.0.1`; 4.0.1 has a HIGH
 #   (removeScripts leaves some executable scripts intact), fixed at 4.0.2.
 # - uuid: sequelize pins `^8.3.2` (a major behind); the HIGH-severity buffer
@@ -71,8 +55,9 @@ allowBuilds:
 # rather than a single range that would force incompatible majors together:
 # - brace-expansion: 3 DoS advisories (exponential expansion, unbounded
 #   length, unbounded intermediate arrays), via jest and @eslint/js.
-# - js-yaml: quadratic CPU on merge-key chains and on !!omap resolution.
-#   4.3.1 was already in the tree; the override also dedupes 4.2.0 onto it.
+# - js-yaml: quadratic CPU on merge-key chains and on !!omap resolution,
+#   fixed in 3.15.2 and 4.3.2 respectively.
+# - smol-toml: malformed TOML denial of service via Astro, fixed in 1.7.1.
 # - fast-uri: host confusion via backslash authority, via swagger-jsdoc.
 #
 # 2026-09-01, second occurrence — the full-tree audit gate added in the same
@@ -86,19 +71,20 @@ allowBuilds:
 overrides:
   chokidar: 3.6.0
   ip-address: ^10.3.1
-  sharp: ^0.35.0
+  sharp: ^0.35.4
   svgo: ^4.0.2
   uuid: ^11.1.1
   body-parser: ^1.20.6
   brace-expansion@1: ^1.1.18
   brace-expansion@2: ^2.1.4
   brace-expansion@5: ^5.0.9
-  js-yaml@3: ^3.15.1
-  js-yaml@4: ^4.3.1
+  js-yaml@3: ^3.15.2
+  js-yaml@4: ^4.3.2
+  smol-toml: ^1.7.1
   fast-uri: ^3.1.5
   browserslist: ^4.28.7
-  # 2 MODERATE advisories reaching production via express > body-parser; see
-  # the minimumReleaseAgeExclude note above for why this needed an exception.
+  # 2 MODERATE advisories reaching production via express > body-parser;
+  # 6.16.0 fixes both and is now old enough for the release-age policy.
   qs: ^6.16.0
   # 2026-09-02 — MODERATE, production: unbounded zlib inflate in the
   # compressed-protocol handler. This is the database driver, so it sits on
