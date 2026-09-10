@@ -5,15 +5,15 @@ export function initializeThemeToggle(document: Document, storage: Storage): Cle
   const existing = cleanups.get(document);
   if (existing) return existing;
   const button = document.getElementById('theme-toggle');
-  const apply = (value: string) => {
-    const theme = value === 'light' ? 'light' : 'dark';
+  const apply = (value: string | null) => {
+    const theme = value === 'dark' ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', theme);
     button?.setAttribute(
       'aria-label',
       theme === 'light' ? 'Cambiar a tema oscuro' : 'Cambiar a tema claro',
     );
   };
-  apply(storage.getItem('theme') || 'light');
+  apply(storage.getItem('theme'));
   const toggle = () => {
     const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
     storage.setItem('theme', next);
