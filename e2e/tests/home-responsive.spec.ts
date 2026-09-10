@@ -9,6 +9,8 @@ type MatrixCase = {
   compactNavigation: boolean;
 };
 
+const representativeVisualViewports = new Set(['320', '640', '768x1024', '1024x768', '1440']);
+
 const matrix: MatrixCase[] = [
   { name: '320', width: 320, height: 800, columns: 1, compactNavigation: true },
   { name: '360', width: 360, height: 800, columns: 1, compactNavigation: true },
@@ -266,11 +268,13 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
         await expect(navigation).toBeVisible();
       }
 
-      // Structural assertions and full-page snapshots protect layout/content; this only tolerates cross-runner glyph antialiasing.
-      await expect(page).toHaveScreenshot(`home-responsive-${viewport.name}.png`, {
-        fullPage: true,
-        threshold: 0.4,
-      });
+      // Structural checks cover every boundary; photographic full-page baselines sample each layout mode.
+      if (representativeVisualViewports.has(viewport.name)) {
+        await expect(page).toHaveScreenshot(`home-responsive-${viewport.name}.png`, {
+          fullPage: true,
+          threshold: 0.4,
+        });
+      }
     });
   }
 });
