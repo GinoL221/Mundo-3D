@@ -208,10 +208,11 @@ test.describe('Authentication E2E Tests', () => {
 
     // Click the HomeHeader user menu to reveal the logout button.
     await page.locator('#navbar-user-menu-trigger').click();
+    await expect(page.locator('#navbar-user-menu')).toBeVisible();
     await page.locator('#navbar-logout').click();
 
     await expect(page).toHaveURL('/login');
-    await expect(page.locator('a.navbar__link[href="/login"]')).toBeVisible();
+    await expect(page.locator('.home-header__link[href="/login"]')).toBeVisible();
     await expect(page.locator('#navbar-greeting')).not.toBeVisible();
   });
 

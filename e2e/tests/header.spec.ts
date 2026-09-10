@@ -13,7 +13,7 @@ test('applies persisted visual preferences before HomeHeader hydration', async (
   await expect(page.locator('#theme-toggle')).toBeVisible();
 });
 
-test('preserves real Header navigation, keyboard dropdown access, and disabled search', async ({
+test('preserves HomeHeader navigation and keyboard dropdown access', async ({
   page,
   context,
 }) => {
@@ -31,21 +31,16 @@ test('preserves real Header navigation, keyboard dropdown access, and disabled s
 
   await page.goto('/aboutUs');
 
-  // Search has no backend yet (roadmap item) — disabled rather than a
-  // silently-do-nothing control (Impeccable audit finding).
-  await expect(page.locator('.navbar__search-input')).toBeDisabled();
-  await expect(page.locator('.navbar__search-btn')).toBeDisabled();
-
-  await page.locator('.navbar__link[href="/products"]').click();
+  await page.locator('.home-header__link[href="/products"]').click();
   await expect(page).toHaveURL(/\/products$/);
 
   await page.goto('/aboutUs');
-  const userMenu = page.locator('.user-only');
-  await userMenu.locator('.nav-item__trigger').hover();
+  await page.locator('#navbar-user-menu-trigger').click();
+  const userMenu = page.locator('#navbar-user-menu');
+  await expect(userMenu).toBeVisible();
   const profileLink = userMenu.locator('a[href="/profile"]');
   await profileLink.focus();
-  await expect(profileLink).toBeVisible();
-  await expect(page.locator('.nav-item__trigger:focus-within')).toHaveCount(1);
+  await expect(profileLink).toBeFocused();
   await profileLink.click();
   await expect(page).toHaveURL(/\/profile$/);
 });
