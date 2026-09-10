@@ -3,10 +3,13 @@ import Layout from '../layouts/Layout.astro';
 import { CartList } from '../domains/cart';
 ---
 
-<Layout title="Carrito de Compras - Mundo 3D">
-  <h1 class="sr-only">Mundo 3D — Carrito de compras</h1>
-  <main class="cart">
-    <h2>PRODUCTOS EN SU CARRITO</h2>
+<Layout title="Tu carrito - Mundo 3D">
+  <main class="cart system-frame system-section" aria-labelledby="cart-title">
+    <header class="cart__header system-prose">
+      <p class="cart__eyebrow">TU SELECCIÓN</p>
+      <h1 id="cart-title">Tu carrito</h1>
+      <p>Revisá las piezas que elegiste antes de continuar con tu compra.</p>
+    </header>
     <CartList />
   </main>
 </Layout>
