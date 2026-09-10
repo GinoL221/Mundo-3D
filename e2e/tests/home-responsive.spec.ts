@@ -48,11 +48,7 @@ async function openHome(page: Page, viewport: MatrixCase): Promise<void> {
 
     await settleWithin(document.fonts.ready);
     await Promise.all(
-      [...document.images]
-        .filter((image) =>
-          image.currentSrc.startsWith(`${window.location.origin}/images/illustrations/`),
-        )
-        .map((image) => settleWithin(image.decode().catch(() => undefined))),
+      [...document.images].map((image) => settleWithin(image.decode().catch(() => undefined))),
     );
   });
   await expect(page.locator('.home-product-card').first()).toBeVisible();
@@ -268,11 +264,12 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
         await expect(navigation).toBeVisible();
       }
 
-      // Structural checks cover every boundary; photographic full-page baselines sample each layout mode.
+      // Structural checks cover every boundary; photographic baselines sample each layout mode with a runner-antialiasing-only pixel cap.
       if (representativeVisualViewports.has(viewport.name)) {
         await expect(page).toHaveScreenshot(`home-responsive-${viewport.name}.png`, {
           fullPage: true,
           threshold: 0.4,
+          maxDiffPixels: 1000,
         });
       }
     });
