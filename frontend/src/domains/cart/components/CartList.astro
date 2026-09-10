@@ -2,47 +2,53 @@
 // CartList Component
 ---
 
-<div class="alert" id="cart-price-drift" style="display:none;"></div>
-<div class="alert" id="checkout-error" role="alert" aria-live="polite" style="display:none;"></div>
+<div class="cart__notices" aria-live="polite" aria-atomic="false">
+  <div class="alert system-state system-state--status" id="cart-price-drift" hidden></div>
+  <div class="alert system-state system-state--error" id="checkout-error" role="alert" hidden></div>
+</div>
 
 <div class="cart__container">
-  <section class="cart__items" id="cart-items-container">
-    <p id="cart-loading" style="text-align:center; padding:2rem;">Cargando carrito...</p>
+  <section class="cart__items system-section" id="cart-items-container" aria-label="Productos en el carrito" aria-busy="true">
+    <p class="cart__state system-state system-state--loading" id="cart-loading" role="status">Cargando tu carrito…</p>
   </section>
 
-  <section class="cart__summary" id="cart-summary" style="display:none;">
-    <div class="cart__item-details">
-      <h3>Resumen de su compra</h3>
+  <section class="cart__summary system-section" id="cart-summary" aria-labelledby="cart-summary-title" hidden>
+    <div class="cart__summary-details">
+      <p class="cart__summary-label">RESUMEN</p>
+      <h2 id="cart-summary-title">Resumen de tu compra</h2>
       <p class="cart__summary-count" id="cart-count">Cantidad de productos: 0</p>
-      <p class="cart__summary-shipping">Envio: $ 000</p>
-      <h3>Total del carrito: $<span id="cart-total">0</span></h3>
+      <p class="cart__summary-total">Total <strong id="cart-total">$ 0</strong></p>
     </div>
-    <a href="/products" class="cart__btn-continue">Seguir comprando</a>
-    <button class="cart__btn-checkout" type="button">Finalizar compra</button>
+    <div class="cart__summary-actions">
+      <a href="/products" class="cart__btn-continue system-action">Seguir comprando</a>
+      <button class="cart__btn-checkout system-action system-action--primary" type="button">Finalizar compra</button>
+    </div>
   </section>
 </div>
 
-<!-- Templates for dynamic rendering -->
 <template id="cart-item-template">
   <article class="cart__item">
-    <h3 class="cart__item-name"></h3>
-    <div class="cart__item-details">
-      <img class="cart__item-image" src="" alt="" loading="lazy" />
-      <p class="cart__item-price"></p>
-      <p class="cart__item-qty"></p>
-      <p class="cart__item-subtotal"></p>
-      <button class="form-card__btn cart__item-remove" type="button">
-        Eliminar
-      </button>
+    <div class="cart__item-media">
+      <img class="cart__item-image" src="" alt="" width="240" height="240" loading="lazy" decoding="async" />
+    </div>
+    <div class="cart__item-content">
+      <h2 class="cart__item-name"></h2>
+      <dl class="cart__item-details">
+        <div><dt>Precio unitario</dt><dd class="cart__item-price"></dd></div>
+        <div><dt>Cantidad</dt><dd class="cart__item-qty"></dd></div>
+        <div><dt>Subtotal</dt><dd class="cart__item-subtotal"></dd></div>
+      </dl>
+      <button class="cart__item-remove system-action" type="button">Eliminar</button>
     </div>
   </article>
 </template>
 
 <template id="cart-empty-template">
-  <div class="empty-state" style="text-align:center; padding:2rem;">
-    <img src="/images/illustrations/empty-cart.svg" alt="Carrito vacío" class="empty-state-img" style="max-width:200px; image-rendering: pixelated;" />
+  <div class="empty-state cart__state system-state" role="status">
+    <img src="/images/illustrations/empty-cart.svg" alt="" class="empty-state-img" width="200" height="160" data-image-rendering="pixel-art" />
     <h2>Tu carrito está vacío</h2>
-    <p><a href="/products">Ver productos</a></p>
+    <p>Cuando elijas una pieza del taller, va a aparecer acá.</p>
+    <a href="/products" class="system-action system-action--primary">Ver productos</a>
   </div>
 </template>
 
@@ -51,172 +57,120 @@
   import type { PriceDrift, CheckoutResult } from '../services/CartService';
   import { resolveImageUrl } from '../../../lib/imageUrl';
 
+  const formatPrice = (price: number): string => `$ ${new Intl.NumberFormat('es-AR').format(price)}`;
+  const setHidden = (element: HTMLElement | null, hidden: boolean): void => {
+    if (element) element.hidden = hidden;
+  };
+
   function renderPriceDrift(drifts: PriceDrift[]): void {
     const driftEl = document.getElementById('cart-price-drift');
     if (!driftEl) return;
-
     driftEl.replaceChildren();
-
-    if (drifts.length === 0) {
-      driftEl.style.display = 'none';
-      return;
-    }
-
-    drifts.forEach((drift) => {
+    for (const drift of drifts) {
       const line = document.createElement('p');
       line.className = 'alert__text';
-      line.textContent = `El precio de "${drift.name}" cambió de $ ${drift.oldPrice} a $ ${drift.newPrice}.`;
+      line.textContent = `El precio de "${drift.name}" cambió de ${formatPrice(drift.oldPrice)} a ${formatPrice(drift.newPrice)}.`;
       driftEl.appendChild(line);
-    });
-
-    driftEl.style.display = 'block';
+    }
+    setHidden(driftEl, drifts.length === 0);
   }
 
   function renderCart(): void {
     const container = document.getElementById('cart-items-container');
     const summaryEl = document.getElementById('cart-summary');
-    const loadingEl = document.getElementById('cart-loading');
-    const countEl = document.getElementById('cart-count');
-    const totalEl = document.getElementById('cart-total');
-
-    const items = cartItems.get();
-    const total = cartTotal.get();
-
-    if (loadingEl) {
-      loadingEl.remove();
-    }
-
     if (!container) return;
 
-    // Clear container safely
-    container.innerHTML = '';
+    document.getElementById('cart-loading')?.remove();
+    container.replaceChildren();
+    container.setAttribute('aria-busy', 'false');
+    const items = cartItems.get();
 
     if (items.length === 0) {
-      if (summaryEl) summaryEl.style.display = 'none';
-      const emptyTemplate = document.getElementById('cart-empty-template') as HTMLTemplateElement | null;
-      if (emptyTemplate) {
-        const clone = emptyTemplate.content.cloneNode(true);
-        container.appendChild(clone);
-      }
+      setHidden(summaryEl, true);
+      const template = document.getElementById('cart-empty-template') as HTMLTemplateElement | null;
+      if (template) container.appendChild(template.content.cloneNode(true));
       return;
     }
 
-    const itemTemplate = document.getElementById('cart-item-template') as HTMLTemplateElement | null;
-    if (!itemTemplate) return;
+    const template = document.getElementById('cart-item-template') as HTMLTemplateElement | null;
+    if (!template) return;
+    for (const item of items) {
+      const clone = template.content.cloneNode(true) as DocumentFragment;
+      const image = clone.querySelector('.cart__item-image') as HTMLImageElement | null;
+      const remove = clone.querySelector('.cart__item-remove') as HTMLButtonElement | null;
+      const name = clone.querySelector('.cart__item-name');
+      const price = clone.querySelector('.cart__item-price');
+      const quantity = clone.querySelector('.cart__item-qty');
+      const subtotal = clone.querySelector('.cart__item-subtotal');
 
-    items.forEach((item) => {
-      const clone = itemTemplate.content.cloneNode(true) as DocumentFragment;
-
-      const nameEl = clone.querySelector('.cart__item-name');
-      const imgEl = clone.querySelector('.cart__item-image') as HTMLImageElement | null;
-      const priceEl = clone.querySelector('.cart__item-price');
-      const qtyEl = clone.querySelector('.cart__item-qty');
-      const subtotalEl = clone.querySelector('.cart__item-subtotal');
-      const removeBtn = clone.querySelector('.cart__item-remove') as HTMLButtonElement | null;
-
-      if (nameEl) nameEl.textContent = item.name;
-      if (imgEl) {
-        imgEl.src = resolveImageUrl(item.image, 'products');
-        imgEl.alt = item.name;
-      }
-      if (priceEl) priceEl.textContent = `$ ${item.unitPrice}`;
-      if (qtyEl) qtyEl.textContent = `Cantidad: ${item.quantity}`;
-      if (subtotalEl) {
-        subtotalEl.textContent = `$ ${(item.unitPrice * item.quantity).toFixed(2)}`;
-      }
-
-      if (removeBtn) {
-        removeBtn.addEventListener('click', () => {
-          CartService.removeFromCart(item.productId);
+      if (name) name.textContent = item.name;
+      if (price) price.textContent = formatPrice(item.unitPrice);
+      if (quantity) quantity.textContent = String(item.quantity);
+      if (subtotal) subtotal.textContent = formatPrice(item.unitPrice * item.quantity);
+      if (image) {
+        image.src = resolveImageUrl(item.image, 'products');
+        image.alt = item.name;
+        image.addEventListener('error', () => {
+          const fallbackSrc = '/images/illustrations/Otras.svg';
+          if (image.dataset.fallback && image.getAttribute('src') === fallbackSrc) return;
+          image.dataset.fallback = 'true';
+          image.src = fallbackSrc;
+          image.alt = `${item.name} — imagen no disponible`;
+          image.classList.add('cart__item-image--placeholder');
         });
       }
-
+      if (remove) {
+        remove.setAttribute('aria-label', `Eliminar ${item.name} del carrito`);
+        remove.addEventListener('click', () => CartService.removeFromCart(item.productId));
+      }
       container.appendChild(clone);
-    });
+    }
 
-    if (summaryEl) summaryEl.style.display = 'block';
-    if (countEl) countEl.textContent = `Cantidad de productos: ${items.length}`;
-    if (totalEl) totalEl.textContent = total.toFixed(2);
+    setHidden(summaryEl, false);
+    const count = document.getElementById('cart-count');
+    const total = document.getElementById('cart-total');
+    if (count) count.textContent = `Cantidad de productos: ${items.length}`;
+    if (total) total.textContent = formatPrice(cartTotal.get());
   }
 
-  // Load initial cart and listen for changes
   CartService.loadCartFromStorage();
-
-  // Render on initial load
   renderCart();
+  cartItems.subscribe(renderCart);
+  void CartService.hydrateFromServer().then((result) => renderPriceDrift(result.priceDrifts));
 
-  // Listen to store updates
-  cartItems.subscribe(() => {
-    renderCart();
-  });
-
-  // Reconcile against the server after the local snapshot has already
-  // painted (cart-hydration spec: "Cart-page load triggers hydration").
-  // Replace mode always: cart-page hydration never merges.
-  void CartService.hydrateFromServer().then((result) => {
-    renderPriceDrift(result.priceDrifts);
-  });
-
-  // Checkout state — real pending/error UI, replacing the old synchronous
-  // alert()-based flow (design.md "CartList.astro loading/error UI").
   function setCheckoutBusy(busy: boolean): void {
-    const btn = document.querySelector('.cart__btn-checkout') as HTMLButtonElement | null;
-    if (!btn) return;
-    btn.disabled = busy;
-    btn.textContent = busy ? 'Procesando…' : 'Finalizar compra';
-  }
-
-  function clearCheckoutError(): void {
-    const el = document.getElementById('checkout-error');
-    if (!el) return;
-    el.replaceChildren();
-    el.style.display = 'none';
+    const button = document.querySelector('.cart__btn-checkout') as HTMLButtonElement | null;
+    if (!button) return;
+    button.disabled = busy;
+    button.setAttribute('aria-busy', String(busy));
+    button.textContent = busy ? 'Procesando…' : 'Finalizar compra';
   }
 
   function renderCheckoutError(result: Extract<CheckoutResult, { ok: false }>): void {
-    const el = document.getElementById('checkout-error');
-    if (!el) return;
-
-    el.replaceChildren();
-
-    const lines: string[] =
-      result.code === 'INSUFFICIENT_STOCK' && result.shortages && result.shortages.length > 0
-        ? result.shortages.map(
-            (s) => `Sin stock suficiente de "${s.productName}": pediste ${s.requested}, quedan ${s.available}.`
-          )
-        : [result.message];
-
-    lines.forEach((text) => {
-      const line = document.createElement('p');
-      line.className = 'alert__text';
-      line.textContent = text;
-      el.appendChild(line);
-    });
-
-    el.style.display = 'block';
+    const error = document.getElementById('checkout-error');
+    if (!error) return;
+    const lines = result.code === 'INSUFFICIENT_STOCK' && result.shortages?.length
+      ? result.shortages.map((item) => `Sin stock suficiente de "${item.productName}": pediste ${item.requested}, quedan ${item.available}.`)
+      : [result.message];
+    error.replaceChildren(...lines.map((text) => Object.assign(document.createElement('p'), { className: 'alert__text', textContent: text })));
+    setHidden(error, false);
   }
 
-  // Checkout click handler
-  const checkoutBtn = document.querySelector('.cart__btn-checkout');
-  if (checkoutBtn) {
-    checkoutBtn.addEventListener('click', async () => {
-      if (!CartService.hasToken()) {
-        window.location.href = '/login';
-        return;
-      }
-
-      setCheckoutBusy(true);
-      clearCheckoutError();
-      try {
-        const result = await CartService.checkout();
-        if (result.ok) {
-          window.location.href = `/order?id=${result.idOrder}`;
-          return;
-        }
-        renderCheckoutError(result);
-      } finally {
-        setCheckoutBusy(false);
-      }
-    });
-  }
+  document.querySelector('.cart__btn-checkout')?.addEventListener('click', async () => {
+    if (!CartService.hasToken()) {
+      window.location.href = '/login';
+      return;
+    }
+    setCheckoutBusy(true);
+    const error = document.getElementById('checkout-error');
+    error?.replaceChildren();
+    setHidden(error, true);
+    try {
+      const result = await CartService.checkout();
+      if (result.ok) window.location.href = `/order?id=${result.idOrder}`;
+      else renderCheckoutError(result);
+    } finally {
+      setCheckoutBusy(false);
+    }
+  });
 </script>

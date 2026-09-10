@@ -19,13 +19,15 @@ async function openNonHome(page: Page, width: number, height = 900): Promise<voi
   await page.goto('/aboutUs', { waitUntil: 'domcontentloaded' });
 }
 
-function expectDefaultShell(page: Page): Promise<void[]> {
+function expectSharedShell(page: Page): Promise<void[]> {
   return Promise.all([
-    expect(page.locator('body')).not.toHaveClass(/home-shell/),
-    expect(page.locator('.navbar')).toBeVisible(),
-    expect(page.locator('.footer')).toBeVisible(),
-    expect(page.locator('.home-header')).toHaveCount(0),
-    expect(page.locator('.home-footer')).toHaveCount(0),
+    expect(page.locator('body')).toHaveClass(/home-shell/),
+    expect(page.locator('.home-header')).toBeVisible(),
+    expect(page.locator('.home-footer')).toBeVisible(),
+    expect(page.locator('.home-header__search')).toHaveCount(0),
+    expect(page.getByPlaceholder('Búsqueda próximamente')).toHaveCount(0),
+    expect(page.locator('.navbar')).toHaveCount(0),
+    expect(page.locator('.footer')).toHaveCount(0),
   ]);
 }
 
@@ -48,12 +50,12 @@ test.describe('Home responsive remediation evidence', () => {
     expect(metrics.cardWidth).toBeGreaterThanOrEqual(280);
   });
 
-  test('preserves the default non-Home desktop shell at 1920px', async ({ page }) => {
+  test('uses the shared visual shell on a non-Home route at 1920px', async ({ page }) => {
     await openNonHome(page, 1920);
-    await expectDefaultShell(page);
+    await expectSharedShell(page);
 
     const widths = await page
-      .locator('.navbar .container, .about-content, .footer .container')
+      .locator('.home-header__inner, .about-content, .home-footer__inner')
       .evaluateAll((containers) =>
         containers.map((container) => container.getBoundingClientRect().width),
       );
@@ -61,9 +63,9 @@ test.describe('Home responsive remediation evidence', () => {
     expect(widths.every((width) => width <= 1440)).toBe(true);
   });
 
-  test('preserves the default non-Home shell below 1024px', async ({ page }) => {
+  test('uses the responsive shared shell on a non-Home route below 1024px', async ({ page }) => {
     await openNonHome(page, 800);
-    await expectDefaultShell(page);
+    await expectSharedShell(page);
     const hasNoOverflow = await page
       .locator('html')
       .evaluate((element) => element.scrollWidth <= window.innerWidth);

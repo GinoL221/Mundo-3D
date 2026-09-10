@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { initializeCartBadge } from './cartBadge';
 import { initializeCrtToggle } from './crtToggle';
@@ -153,6 +155,126 @@ function createFixture() {
   return { document, window, storage };
 }
 
+describe('Shared route shell', () => {
+  it('uses the Home visual shell and complete navigation contract on non-Home routes', () => {
+    const source = (relativePath: string) =>
+      readFileSync(fileURLToPath(new URL(relativePath, import.meta.url)), 'utf8');
+    const layout = source('../layouts/Layout.astro');
+    const header = source('../components/HomeHeader.astro');
+    const footer = source('../components/HomeFooter.astro');
+    const headerStyles = source('../styles/components/home-shell.css');
+    const footerStyles = source('../styles/components/home-footer.css');
+    const routeSources = [
+      '../pages/index.astro',
+      '../pages/products.astro',
+      '../pages/product.astro',
+      '../pages/cart.astro',
+    ].map(source);
+    const responsiveStyles = source('../styles/components/home-responsive.css');
+    const desktopStyles = source('../styles/components/home-responsive-desktop.css');
+    const tabletStyles = source('../styles/components/home-responsive-tablet.css');
+    const motionStyles = source('../styles/components/home-responsive-motion.css');
+
+    expect(layout).not.toContain("import Header from '../components/Header.astro'");
+    expect(layout).not.toContain("import Footer from '../components/Footer.astro'");
+    expect(layout).toContain('<body class="home-shell">');
+    expect(layout).toContain('<HomeHeader pathname={Astro.url.pathname} />');
+    expect(layout).not.toContain('showUnavailableSearch');
+    expect(layout).toContain('<HomeFooter />');
+    expect(layout).not.toContain('retro-theme-preference');
+    expect(layout).not.toContain('crt-theme-active');
+    expect(layout).not.toContain('class="crt-overlay"');
+    for (const route of routeSources) {
+      expect(route).toContain("import Layout from '../layouts/Layout.astro'");
+      expect(route).toMatch(/<Layout(?:\s|>)/);
+      expect(route).toContain('</Layout>');
+    }
+
+    expect(header).toContain('id="navbar-user-menu-trigger"');
+    expect(header).toContain('aria-expanded="false"');
+    expect(header).toContain('aria-controls="navbar-user-menu"');
+    expect(header).not.toContain('aria-haspopup="menu"');
+    expect(header).not.toContain('role="menu"');
+    expect(header).not.toContain('role="menuitem"');
+    expect(headerStyles).toMatch(
+      /\.home-header \.nav-item__dropdown a \{[\s\S]*?min-height: 44px;/,
+    );
+
+    for (const href of [
+      '/#catalogo',
+      '/#encargos',
+      '/products',
+      '/help',
+      '/login',
+      '/register',
+      '/profile',
+      '/orders',
+      '/admin/products',
+      '/cart',
+    ]) {
+      expect(header).toContain(`href="${href}"`);
+    }
+    expect(header).toContain('pathname: string;');
+    expect(header).toContain('const { pathname } = Astro.props;');
+    expect(header).not.toContain('showUnavailableSearch');
+    expect(header).not.toContain('home-header__search');
+    expect(header).not.toContain('Búsqueda próximamente');
+    expect(header).not.toContain('home-search-availability');
+    expect(header).not.toContain('La búsqueda todavía no está disponible');
+    expect(header).toContain("aria-current={catalogIsCurrent ? 'page' : undefined}");
+    expect(header).toContain("aria-current={productsIsCurrent ? 'page' : undefined}");
+    expect(header).toContain("aria-current={helpIsCurrent ? 'page' : undefined}");
+
+    expect(responsiveStyles).toMatch(
+      /^@import '.\/home-responsive-base\.css';\n@import '.\/home-responsive-desktop\.css';\n@import '.\/home-responsive-tablet\.css';\n@import '.\/home-responsive-motion\.css';/,
+    );
+    expect(responsiveStyles).not.toContain('.home-header__search');
+    expect(responsiveStyles).toContain('@media (min-width: 1024px)');
+    expect(responsiveStyles).toContain('@media (min-width: 1200px)');
+    expect(desktopStyles).toContain('@media (min-width: 1024px)');
+    expect(desktopStyles).not.toContain('@media (min-width: 640px)');
+    expect(desktopStyles).not.toContain('prefers-reduced-motion');
+    expect(tabletStyles).toContain('@media (min-width: 640px) and (max-width: 767px)');
+    expect(tabletStyles).toContain('@media (min-width: 768px) and (max-width: 1023px)');
+    expect(tabletStyles).toContain('@media (max-width: 360px)');
+    expect(tabletStyles).not.toContain('@media (min-width: 1024px)');
+    expect(tabletStyles).not.toContain('prefers-reduced-motion');
+    expect(motionStyles).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(motionStyles).not.toContain('@media (min-width:');
+    expect(motionStyles).not.toContain('@media (max-width:');
+
+    const footerLinks = [
+      ['Productos', '/products'],
+      ['Ayuda', '/help'],
+      ['Nosotros', '/aboutUs'],
+      ['Términos', '/terms'],
+      ['Privacidad', '/privacy'],
+    ] as const;
+    for (const [label, href] of footerLinks) {
+      expect(footer).toContain(`<a href="${href}">${label}</a>`);
+    }
+    expect(
+      footer.match(/<nav class="home-footer__links"[\s\S]*?<\/nav>/)?.[0].match(/<a /g),
+    ).toHaveLength(5);
+    expect(footer).not.toContain('Preguntas frecuentes');
+    expect(footer).not.toContain('Paso a paso');
+    expect(footer).not.toContain('home-footer__tagline');
+    expect(footer).not.toContain('home-footer__heading');
+    expect(footer).toContain('id="ayuda"');
+    expect(footer).toContain('© 2026 Mundo 3D. Todos los derechos reservados.');
+
+    expect(footerStyles).toContain('@media (max-width: 639px)');
+    expect(footerStyles).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))');
+    expect(footerStyles).toContain('width: min(100%, 280px)');
+    expect(footerStyles).toMatch(
+      /\.home-footer__links a \{[\s\S]*?min-width: 44px;[\s\S]*?min-height: 44px;[\s\S]*?box-sizing: border-box;[\s\S]*?\}/,
+    );
+    expect(footerStyles).toMatch(
+      /\.home-footer__links a:last-child \{\s*grid-column: 1 \/ -1;\s*\}/,
+    );
+  });
+});
+
 describe('Header browser modules', () => {
   afterEach(() => vi.restoreAllMocks());
 
@@ -261,7 +383,10 @@ describe('Header browser modules', () => {
     const fixture = createFixture();
     const { document, window } = fixture;
 
-    const cleanup = initializeSessionUI(document as unknown as Document, window as unknown as Window);
+    const cleanup = initializeSessionUI(
+      document as unknown as Document,
+      window as unknown as Window,
+    );
     const channel = FakeBroadcastChannel.instances.at(-1)!;
 
     cleanup();
@@ -272,16 +397,16 @@ describe('Header browser modules', () => {
     expect(document.listeners.has('visibilitychange')).toBe(false);
   });
 
-  it('normalizes and persists color theme, including the dark default', () => {
+  it('falls back to light for an invalid persisted theme', () => {
     const fixture = createFixture();
     fixture.storage.setItem('theme', 'invalid');
     initializeThemeToggle(
       fixture.document as unknown as Document,
       fixture.storage as unknown as Storage,
     );
-    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('light');
     expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
-      'Cambiar a tema claro',
+      'Cambiar a tema oscuro',
     );
     expect(fixture.document.elements.get('theme-icon')!.textContent).toBe('');
 
@@ -289,11 +414,11 @@ describe('Header browser modules', () => {
       fixture.document as unknown as Document,
       fixture.storage as unknown as Storage,
     );
-    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('light');
     fixture.document.elements.get('theme-toggle')!.click();
-    expect(fixture.storage.setItem).toHaveBeenCalledWith('theme', 'light');
+    expect(fixture.storage.setItem).toHaveBeenCalledWith('theme', 'dark');
     expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
-      'Cambiar a tema oscuro',
+      'Cambiar a tema claro',
     );
     cleanup();
     cleanup();

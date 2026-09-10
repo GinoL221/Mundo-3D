@@ -8,9 +8,9 @@ const fixtureJsonHeaders = {
 export const homeProducts = [
   {
     idProduct: 101,
-    nameProduct: 'Fixture Cube',
-    price: 1200,
-    descriptionProduct: 'Deterministic fixture product.',
+    nameProduct: 'Cubo de Compañía de Portal',
+    price: 24500,
+    descriptionProduct: 'Deterministic fixture for the editorial Home product.',
     image: 'cubo_compania_portal.jpg',
     category: 'Figura',
   },

@@ -52,109 +52,29 @@ The system MUST load CSS through ordered `<link>` tags in `head.ejs`: normalize,
 - WHEN `[data-theme="light"]` selectors apply
 - THEN component files MUST correctly inherit the light theme custom properties from `colors.css`
 
-### Requirement: Pixel Art Global Rendering Rules
+### Requirement: Scoped Image Rendering Rules
 
-All pages MUST apply `image-rendering: pixelated` to images, `border-radius: 0` globally, and the Press Start 2P / VT323 font stack.
+Real product imagery and approved brand imagery MUST use normal browser image rendering and MUST NOT be globally pixelated, reconstructed, recolored, filtered, or otherwise altered by the shared contract. Intentional pixel-art placeholders MAY retain pixelated rendering only through an explicit, isolated semantic marker. Existing square geometry and legacy typography rules MAY remain for known legacy consumers through the compatibility mapping, but Wave 0 MUST NOT promote PICO-8, CRT/JRPG, pixel-font, orange/crimson, shadow, gradient, or glow treatments into shared authority.
 
-#### Scenario: Pixelated rendering on images
+(Previously: Pixelated rendering, square geometry, and the Press Start 2P / VT323 font stack applied globally to all pages and images.)
 
-- GIVEN any `<img>` element on any page
-- WHEN the browser computes its style
-- THEN `image-rendering` MUST be `pixelated`
+#### Scenario: Real product or brand imagery renders normally
 
-#### Scenario: No border radius anywhere
+- GIVEN an image is approved product photography, a product image, or an approved brand asset
+- WHEN the shared and legacy styles are computed
+- THEN its image rendering MUST be normal
+- AND the shared contract MUST NOT recolor, filter, reconstruct, or pixelate it
 
-- GIVEN any element on any page
-- WHEN `border-radius` is computed
-- THEN it MUST be `0` unless explicitly overridden by a utility class
+#### Scenario: Intentional pixel art remains isolated
 
-#### Scenario: Press Start 2P minimum size enforcement
+- GIVEN an image is an intentional pixel-art placeholder
+- WHEN it carries the explicit pixel-art semantic marker
+- THEN it MAY use pixelated rendering
+- AND removing that marker MUST restore normal rendering
 
-- GIVEN an element uses `--font-heading` (Press Start 2P)
-- WHEN the element's computed `font-size` is below 14px
-- THEN the font MUST NOT render Press Start 2P — a fallback MUST apply instead
+#### Scenario: Legacy geometry and typography remain compatible
 
-### Requirement: Pixel Art Icon and Illustration Assets
-
-The system MUST include Kenney.nl pixel art icons (CC0) in `public/images/icons/` and 5 category illustrations (64×64 px) plus an empty-state 3D printer illustration in `public/images/illustrations/`.
-
-#### Scenario: Icon assets accessible
-
-- GIVEN the `/images/icons/` directory in public
-- WHEN an EJS template references an icon by path (e.g. `/images/icons/cart.png`)
-- THEN the file MUST exist and be served as a static asset
-
-#### Scenario: Category illustrations for each product type
-
-- GIVEN the 5 product categories (Llavero, Busto, Figura, Máscara, Otras)
-- WHEN the homepage renders a product card for any category
-- THEN an illustration asset at `/images/illustrations/{category}.png` (64×64) MUST be available
-
-### Requirement: Header and Footer Pixel Art Styling
-
-`header.ejs` and `footer.ejs` MUST use the PICO-8 design system, Press Start 2P headings, VT323 body text, and pixel art icons for navigation and cart. A theme toggle button MUST be present in the header. The button text MUST toggle between "MODE: DARK" and "MODE: LIGHT" on desktop viewports. On mobile viewports (<640px), the button text MUST collapse to the "◐" icon. The current theme preference MUST be saved to `localStorage` on click.
-(Previously: Styled header and footer in dark theme only without theme controls.)
-
-#### Scenario: Header renders with pixel art style
-
-- GIVEN the homepage loads
-- WHEN the header partial renders
-- THEN the logo/branding MUST use `--font-heading`
-- AND navigation links MUST use `--font-body`
-- AND the cart counter MUST display the distinct product count
-- AND the cart counter MUST be hidden when empty (no "0" badge)
-
-#### Scenario: Footer renders with pixel art style
-
-- GIVEN any page loads
-- WHEN the footer partial renders
-- THEN footer text MUST use `--font-body`
-- AND footer links MUST follow PICO-8 color roles
-
-#### Scenario: Theme toggle click updates theme and storage
-
-- GIVEN the theme toggle button is rendered in the header
-- WHEN a user clicks the theme toggle button
-- THEN the document's theme attribute `data-theme` MUST toggle between "dark" and "light"
-- AND the new theme preference MUST be saved in `localStorage`
-- AND the button text/icon MUST update to match the active theme
-
-#### Scenario: Theme toggle collapsed on mobile
-
-- GIVEN a viewport width narrower than 640px
-- WHEN the header renders the theme toggle button
-- THEN the toggle button text MUST render as "◐"
-
-### Requirement: Flash of Unstyled Content (FOUC) Prevention
-
-The system MUST execute a synchronous inline script in the `<head>` of all pages to apply the saved theme preference from `localStorage` to the `<html>` element before the page body renders.
-
-#### Scenario: Saved theme applied before render
-
-- GIVEN a user has set the theme preference to "light" in `localStorage`
-- WHEN any page is requested and loaded
-- THEN the inline script in `<head>` MUST read "light" from `localStorage`
-- AND set `data-theme="light"` on the `<html>` element before the first paint
-
-### Requirement: Responsive Home Identity and Product Targets
-
-Responsive Home states MUST preserve the current pixel-art palette, typography, square geometry, wordmark safeguards, and SVG control identity. Interactive product controls MUST provide a local target area of at least 44 by 44 CSS pixels. This 44px product policy MUST be documented as stricter than, and distinct from, the WCAG 2.2 Level AA 24px minimum.
-
-#### Scenario: Identity persists across layout modes
-
-- GIVEN Home renders in compact and exposed navigation modes
-- WHEN visual properties are inspected
-- THEN the established pixel-art palette, fonts, square geometry, wordmark behavior, and SVG controls MUST remain recognizable and uncropped
-
-#### Scenario: Product controls meet local target policy
-
-- GIVEN an interactive product control is rendered on Home
-- WHEN its actionable area is measured at any supported viewport
-- THEN its width and height MUST each be at least 44 CSS pixels
-
-#### Scenario: Conformance claims remain accurate
-
-- GIVEN documentation or test evidence describes target sizing
-- WHEN it references the 44px Home policy
-- THEN it MUST identify 44px as a local product requirement
-- AND MUST NOT describe 44px as the WCAG AA minimum
+- GIVEN a known legacy consumer depends on square geometry or legacy font treatment
+- WHEN Wave 0 is applied
+- THEN its compatibility mapping MUST preserve the consumer's existing behavior
+- AND those treatments MUST NOT be classified as shared semantic foundations

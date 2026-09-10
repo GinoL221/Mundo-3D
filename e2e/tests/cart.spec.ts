@@ -3,7 +3,10 @@ import { test, expect, type Page } from '@playwright/test';
 // Shared by the hydration-trigger and bounded-race test groups below — each
 // needs a fresh, real account (not a shared fixture) since they manipulate
 // login/logout and network timing directly.
-async function registerFreshUser(page: Page, label: string): Promise<{ email: string; password: string }> {
+async function registerFreshUser(
+  page: Page,
+  label: string,
+): Promise<{ email: string; password: string }> {
   const email = `${label}_${Date.now()}@example.com`;
   const password = 'Password123!';
 
@@ -24,10 +27,28 @@ async function registerFreshUser(page: Page, label: string): Promise<{ email: st
   return { email, password };
 }
 
+async function waitForLoginHandler(page: Page): Promise<void> {
+  await page.locator('#login-form').evaluate(async (form: HTMLFormElement) => {
+    const error = form.querySelector<HTMLElement>('#login-error');
+    const expectedError = 'Por favor completá todos los campos.';
+    const preventNativeNavigation = (event: Event): void => event.preventDefault();
+    form.addEventListener('submit', preventNativeNavigation, { capture: true });
+    try {
+      while (error?.textContent?.trim() !== expectedError) {
+        form.requestSubmit();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+    } finally {
+      form.removeEventListener('submit', preventNativeNavigation, { capture: true });
+    }
+  });
+  await expect(page.locator('#login-error')).toHaveText('Por favor completá todos los campos.');
+}
+
 test.describe('Cart E2E Tests - Guest Flow', () => {
   // Clear localStorage cart before each guest test
   test.beforeEach(async ({ page }) => {
-    page.on('console', msg => console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`));
     await page.goto('/');
     await page.evaluate(() => localStorage.removeItem('cart'));
   });
@@ -53,7 +74,7 @@ test.describe('Cart E2E Tests - Guest Flow', () => {
     // Add product 1 to cart
     await page.goto('/product?id=1');
     await page.click('#add-to-cart-btn');
-    
+
     const badge = page.locator('#navbar-cart-badge');
     await expect(badge).toBeVisible();
     await expect(badge).toHaveText('1');
@@ -65,25 +86,39 @@ test.describe('Cart E2E Tests - Guest Flow', () => {
   });
 
   test('Persisting Items inside Cart View', async ({ page }) => {
-    // Add product 1
     await page.goto('/product?id=1');
     await page.click('#add-to-cart-btn');
-
-    // Add product 2
     await page.goto('/product?id=2');
     await page.click('#add-to-cart-btn');
-
-    // Go to cart page
     await page.goto('/cart');
 
-    // Verify cart items container renders both products
     const items = page.locator('.cart__item');
     await expect(items).toHaveCount(2);
+    await expect(page.getByRole('heading', { level: 1, name: 'Tu carrito' })).toBeVisible();
+    await expect(page.locator('main.cart.system-frame.system-section')).toBeVisible();
+    await expect(page.locator('#cart-items-container')).toHaveAttribute('aria-busy', 'false');
+    await expect(page.getByText(/Env[ií]o:/)).toHaveCount(0);
 
-    const totalEl = page.locator('#cart-total');
-    await expect(totalEl).toBeVisible();
-    const totalText = await totalEl.textContent();
-    expect(parseFloat(totalText || '0')).toBeGreaterThan(0);
+    const firstItem = items.first();
+    const productName = (await firstItem.locator('.cart__item-name').textContent())?.trim() ?? '';
+    await expect(firstItem.locator('.cart__item-remove')).toHaveAccessibleName(
+      `Eliminar ${productName} del carrito`,
+    );
+
+    const image = firstItem.locator('.cart__item-image');
+    await image.evaluate((element) => {
+      const img = element as HTMLImageElement;
+      img.src = '/images/does-not-exist.png';
+      img.dispatchEvent(new Event('error'));
+    });
+    await expect(image).toHaveAttribute('src', '/images/illustrations/Otras.svg');
+
+    const totalText = await page.locator('#cart-total').textContent();
+    const normalizedTotal = (totalText ?? '')
+      .replace(/\./g, '')
+      .replace(',', '.')
+      .replace(/[^0-9.]/g, '');
+    expect(Number.parseFloat(normalizedTotal)).toBeGreaterThan(0);
   });
 
   test('Update Item Quantity in Cart', async ({ page }) => {
@@ -110,12 +145,21 @@ test.describe('Cart E2E Tests - Guest Flow', () => {
     await expect(items).toHaveCount(1);
 
     const qtyEl = items.first().locator('.cart__item-qty');
-    await expect(qtyEl).toHaveText('Cantidad: 2');
+    await expect(qtyEl).toHaveText('2');
 
-    const priceText = await items.first().locator('.cart__item-price').textContent();
-    const unitPrice = parseFloat((priceText || '').replace(/[^0-9.]/g, ''));
-    const subtotalText = await items.first().locator('.cart__item-subtotal').textContent();
-    const subtotal = parseFloat((subtotalText || '').replace(/[^0-9.]/g, ''));
+    const parseEsArPrice = (value: string | null): number =>
+      Number.parseFloat(
+        (value ?? '')
+          .replace(/\./g, '')
+          .replace(',', '.')
+          .replace(/[^0-9.]/g, ''),
+      );
+    const unitPrice = parseEsArPrice(
+      await items.first().locator('.cart__item-price').textContent(),
+    );
+    const subtotal = parseEsArPrice(
+      await items.first().locator('.cart__item-subtotal').textContent(),
+    );
     expect(subtotal).toBeCloseTo(unitPrice * 2, 2);
   });
 
@@ -162,16 +206,18 @@ test.describe('Cart E2E Tests - Guest Flow', () => {
 });
 
 test.describe('Cart E2E Tests - Authenticated Flow', () => {
-  // Use saved storage state for authenticated user
-  test.use({ storageState: '.auth/user.json' });
-
   test.beforeEach(async ({ page }) => {
-    page.on('console', msg => console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`));
     await page.goto('/');
     await page.evaluate(() => localStorage.removeItem('cart'));
   });
 
   test('Checkout Navigation Authenticated Success', async ({ page }) => {
+    // Global setup resets the database, so create a valid session instead of
+    // relying on the persisted storage state from a previous database state.
+    await registerFreshUser(page, 'Checkout');
+    await page.evaluate(() => localStorage.removeItem('cart'));
+
     // Add product 1. Wait for the product fetch to resolve (which is what
     // attaches the click listener to #add-to-cart-btn) before clicking —
     // the button exists in the static markup immediately, but clicking it
@@ -180,7 +226,7 @@ test.describe('Cart E2E Tests - Authenticated Flow', () => {
     await page.goto('/product?id=1');
     await expect(page.locator('#product-name')).not.toBeEmpty();
     const addToCartPut = page.waitForResponse(
-      (res) => res.url().includes('/api/cart') && res.request().method() === 'PUT'
+      (res) => res.url().includes('/api/cart') && res.request().method() === 'PUT',
     );
     await page.click('#add-to-cart-btn');
     await expect(async () => {
@@ -193,7 +239,8 @@ test.describe('Cart E2E Tests - Authenticated Flow', () => {
     // cartSync.ts's module state, and the pagehide-triggered flush racing
     // the cart page's GET is a real, accepted, client-unsolvable race
     // (design.md) if this PUT hasn't landed yet.
-    await addToCartPut;
+    const addToCartPutResponse = await addToCartPut;
+    expect(addToCartPutResponse.ok()).toBeTruthy();
 
     // Go to cart page and click checkout
     await page.goto('/cart');
@@ -216,7 +263,7 @@ test.describe('Cart E2E Tests - Authenticated Flow', () => {
 
 test.describe('Cart E2E Tests - Guest-to-Account Merge on Login', () => {
   test.beforeEach(({ page }) => {
-    page.on('console', msg => console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`));
   });
 
   test('Guest cart merges with an existing account cart item on login', async ({ page }) => {
@@ -245,14 +292,15 @@ test.describe('Cart E2E Tests - Guest-to-Account Merge on Login', () => {
     await page.goto('/product?id=2');
     await expect(page.locator('#product-name')).not.toBeEmpty();
     const accountCartPut = page.waitForResponse(
-      (res) => res.url().includes('/api/cart') && res.request().method() === 'PUT'
+      (res) => res.url().includes('/api/cart') && res.request().method() === 'PUT',
     );
     await page.click('#add-to-cart-btn');
     await accountCartPut;
 
     // Log out and clear the local cart, so product 2 now lives only
     // server-side, tied to the account.
-    await page.locator('.nav-item__trigger').hover();
+    await page.locator('#navbar-user-menu-trigger').click();
+    await expect(page.locator('#navbar-user-menu')).toBeVisible();
     await page.locator('#navbar-logout').click();
     await expect(page).toHaveURL('/login');
     await page.evaluate(() => localStorage.removeItem('cart'));
@@ -284,13 +332,16 @@ test.describe('Cart E2E Tests - Guest-to-Account Merge on Login', () => {
 });
 
 test.describe('Cart E2E Tests - Login Redirect Bounded Race', () => {
-  test('redirect still fires when GET /api/cart never resolves (design.md: HYDRATION_REDIRECT_TIMEOUT_MS = 1500)', async ({ page }) => {
+  test('redirect still fires when GET /api/cart never resolves (design.md: HYDRATION_REDIRECT_TIMEOUT_MS = 1500)', async ({
+    page,
+  }) => {
     // Register (auto-logs in), then log out so the next login goes through
     // LoginForm.astro's real submit handler.
     const { email, password } = await registerFreshUser(page, 'Stall');
     await page.locator('#navbar-user-menu-trigger').click();
     await page.locator('#navbar-logout').click();
     await expect(page).toHaveURL('/login');
+    await waitForLoginHandler(page);
 
     // A GET /api/cart that never resolves is the worst case the bounded
     // race exists for. Only GET is intercepted — the login POST itself, and
@@ -318,11 +369,14 @@ test.describe('Cart E2E Tests - Login Redirect Bounded Race', () => {
     expect(elapsedMs).toBeLessThan(3500);
   });
 
-  test('redirect proceeds quickly when GET /api/cart fails fast, without waiting out the timeout', async ({ page }) => {
+  test('redirect proceeds quickly when GET /api/cart fails fast, without waiting out the timeout', async ({
+    page,
+  }) => {
     const { email, password } = await registerFreshUser(page, 'FastFail');
     await page.locator('#navbar-user-menu-trigger').click();
     await page.locator('#navbar-logout').click();
     await expect(page).toHaveURL('/login');
+    await waitForLoginHandler(page);
 
     // Unlike the stall test above (GET never resolves), this GET resolves
     // immediately with a server error — hydrateFromServer() should settle
@@ -336,6 +390,18 @@ test.describe('Cart E2E Tests - Login Redirect Bounded Race', () => {
         await route.continue();
       }
     });
+
+    // Prevent native form navigation while polling an empty submission. The
+    // validation error appears only after the bundled submit handler is installed.
+    await page.locator('#login-form').evaluate((form: HTMLFormElement) => {
+      form.addEventListener('submit', (event) => event.preventDefault(), { capture: true });
+    });
+    await expect
+      .poll(async () => {
+        await page.locator('#login-form').evaluate((form: HTMLFormElement) => form.requestSubmit());
+        return page.locator('#login-error').textContent();
+      })
+      .toBe('Por favor completá todos los campos.');
 
     const start = Date.now();
     await page.fill('#email', email);
@@ -351,13 +417,17 @@ test.describe('Cart E2E Tests - Login Redirect Bounded Race', () => {
 });
 
 test.describe('Cart E2E Tests - Hydration Trigger Scope', () => {
-  test('cart-page load renders a server-only item even with a stale/empty local cart', async ({ page }) => {
+  test('cart-page load renders a server-only item even with a stale/empty local cart', async ({
+    page,
+  }) => {
     await registerFreshUser(page, 'CartTrig');
 
     // Add a real, server-synced item while logged in.
     await page.goto('/product?id=1');
     await expect(page.locator('#product-name')).not.toBeEmpty();
-    const put = page.waitForResponse((r) => r.url().includes('/api/cart') && r.request().method() === 'PUT');
+    const put = page.waitForResponse(
+      (r) => r.url().includes('/api/cart') && r.request().method() === 'PUT',
+    );
     await page.click('#add-to-cart-btn');
     await put;
 
@@ -375,7 +445,8 @@ test.describe('Cart E2E Tests - Hydration Trigger Scope', () => {
 
     const cartGetRequests: string[] = [];
     page.on('request', (req) => {
-      if (req.url().includes('/api/cart') && req.method() === 'GET') cartGetRequests.push(req.url());
+      if (req.url().includes('/api/cart') && req.method() === 'GET')
+        cartGetRequests.push(req.url());
     });
 
     // Home and product pages both call CartService.loadCartFromStorage()
@@ -388,19 +459,25 @@ test.describe('Cart E2E Tests - Hydration Trigger Scope', () => {
     expect(cartGetRequests).toHaveLength(0);
   });
 
-  test('a price change since adding the item renders one notice per drifted item', async ({ page }) => {
+  test('a price change since adding the item renders one notice per drifted item', async ({
+    page,
+  }) => {
     await registerFreshUser(page, 'PriceDrift');
 
     // Two real, server-synced items with their real current prices.
     await page.goto('/product?id=1');
     await expect(page.locator('#product-name')).not.toBeEmpty();
-    let put = page.waitForResponse((r) => r.url().includes('/api/cart') && r.request().method() === 'PUT');
+    let put = page.waitForResponse(
+      (r) => r.url().includes('/api/cart') && r.request().method() === 'PUT',
+    );
     await page.click('#add-to-cart-btn');
     await put;
 
     await page.goto('/product?id=2');
     await expect(page.locator('#product-name')).not.toBeEmpty();
-    put = page.waitForResponse((r) => r.url().includes('/api/cart') && r.request().method() === 'PUT');
+    put = page.waitForResponse(
+      (r) => r.url().includes('/api/cart') && r.request().method() === 'PUT',
+    );
     await page.click('#add-to-cart-btn');
     await put;
 

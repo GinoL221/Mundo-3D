@@ -12,12 +12,19 @@ async function openHome(page: Page): Promise<void> {
 
 test.describe('Home product loading', () => {
   test('renders routed product success in existing content regions', async ({ page }) => {
+    let catalogRequestCount = 0;
+    page.on('request', (request) => {
+      if (new URL(request.url()).pathname === '/api/products') catalogRequestCount += 1;
+    });
     await installHomeProductFixtures(page);
     await openHome(page);
 
     await expect(page.locator('#home-products-content')).toBeVisible();
     await expect(page.locator('.home-product-card')).toHaveCount(homeProducts.length);
-    await expect(page.locator('.home-featured-card__name')).toHaveText(homeProducts[0].nameProduct);
+    await expect(page.locator('.home-featured-card__name')).toHaveText(
+      'Cubo de Compañía de Portal',
+    );
+    await expect.poll(() => catalogRequestCount).toBe(1);
   });
 
   test('renders existing empty states for an empty catalog', async ({ page }) => {

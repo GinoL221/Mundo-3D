@@ -1,4 +1,43 @@
 @import './home-responsive-base.css';
-@import './home-responsive-tablet.css';
 @import './home-responsive-desktop.css';
+@import './home-responsive-tablet.css';
 @import './home-responsive-motion.css';
+
+@media (min-width: 1024px) {
+  .home-header__inner {
+    gap: 12px;
+  }
+
+  .home-header__primary {
+    order: 3;
+  }
+
+  .home-header__utility {
+    order: 4;
+  }
+
+  .home-header__cart > span:not(.cart-link__badge),
+  .home-header .navbar__greeting {
+    display: none;
+  }
+
+  .home-header__cart {
+    justify-content: center;
+    gap: 0;
+  }
+}
+
+@media (min-width: 1200px) {
+  .home-header__inner {
+    gap: 24px;
+  }
+
+  .home-header__cart > span:not(.cart-link__badge),
+  .home-header .navbar__greeting {
+    display: inline;
+  }
+
+  .home-header__cart {
+    gap: 6px;
+  }
+}

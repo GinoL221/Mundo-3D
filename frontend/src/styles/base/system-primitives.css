@@ -1,0 +1,72 @@
+/* Opt-in system primitives; route and legacy selectors keep ownership. */
+:where(.system-frame) {
+  width: min(100%, var(--sys-frame-max));
+  margin-inline: auto;
+  padding-inline: var(--sys-frame-gutter);
+}
+
+:where(.system-section) {
+  padding-block: var(--sys-space-section);
+}
+
+:where(.system-prose) {
+  max-width: var(--sys-prose-max);
+}
+
+:where(.system-action) {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--sys-action-text-link);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  justify-content: center;
+  min-height: var(--sys-target-min);
+  min-width: var(--sys-target-min);
+  padding: var(--sys-space-control) var(--space-md);
+  text-decoration: none;
+}
+
+:where(.system-action--primary) {
+  background: var(--sys-action-bg);
+  border-color: var(--sys-action-bg);
+  color: var(--sys-action-text);
+}
+
+:where(.system-action--text) {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+:where(.system-action):focus-visible {
+  outline: 3px solid var(--sys-focus);
+  outline-offset: 2px;
+}
+
+:where(.system-action):disabled,
+:where(.system-action)[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+:where(.system-state) {
+  border: 1px solid var(--sys-border);
+  color: var(--sys-text);
+  font: inherit;
+  padding: var(--sys-space-control) var(--space-md);
+}
+
+:where(.system-state--loading),
+:where(.system-state--status) {
+  border-color: var(--sys-focus);
+}
+
+:where(.system-state--error) {
+  border-color: var(--sys-danger-text);
+  color: var(--sys-danger-text);
+}
+
+:where([data-image-rendering='pixel-art']) {
+  image-rendering: pixelated;
+}

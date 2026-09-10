@@ -1,3 +1,16 @@
+---
+interface Props {
+  pathname: string;
+}
+
+const { pathname } = Astro.props;
+const currentPath = pathname === '/' ? pathname : pathname.replace(/\/+$/, '');
+const catalogIsCurrent = currentPath === '/';
+const productsIsCurrent = currentPath === '/products';
+const helpIsCurrent = currentPath === '/help';
+const adminProductsIsCurrent = currentPath === '/admin/products';
+---
+
 <header class="home-header">
   <div class="home-header__inner">
     <div class="home-header__top">
@@ -20,15 +33,14 @@
               aria-label="Menú de usuario"
               aria-expanded="false"
               aria-controls="navbar-user-menu"
-              aria-haspopup="menu"
             >
               <img id="navbar-avatar" src="/img/users/default-avatar.png" width="32" height="32" alt="" />
               <span class="navbar__greeting" id="navbar-greeting">Hola</span>
             </button>
-            <ul class="nav-item__dropdown" id="navbar-user-menu" role="menu" hidden>
-              <li><a href="/profile" role="menuitem">Mi perfil</a></li>
-              <li><a href="/orders" role="menuitem">Mis pedidos</a></li>
-              <li><a href="#" id="navbar-logout" role="menuitem">Cerrar sesión</a></li>
+            <ul class="nav-item__dropdown" id="navbar-user-menu" hidden>
+              <li><a href="/profile">Mi perfil</a></li>
+              <li><a href="/orders">Mis pedidos</a></li>
+              <li><a href="#" id="navbar-logout">Cerrar sesión</a></li>
             </ul>
           </li>
         </ul>
@@ -72,8 +84,8 @@
       </div>
     </div>
 
-    <nav class="home-header__primary" id="home-primary-navigation" aria-label="Navegación principal" hidden>
-      <div class="home-header__account-section">
+        <nav class="home-header__primary" id="home-primary-navigation" aria-label="Navegación principal" hidden>
+          <div class="home-header__account-section">
         <h2 class="home-header__account-heading guest-only">Cuenta</h2>
         <ul class="home-header__auth-links">
           <li class="guest-only"><a class="home-header__link" href="/login">Iniciar sesión</a></li>
@@ -81,10 +93,11 @@
         </ul>
       </div>
       <ul>
-        <li><a class="home-header__link home-header__link--active" href="/#catalogo">Productos</a></li>
+        <li><a class:list={["home-header__link", { "home-header__link--active": catalogIsCurrent }]} href="/#catalogo" aria-current={catalogIsCurrent ? 'page' : undefined}>Catálogo</a></li>
         <li><a class="home-header__link" href="/#encargos">Encargos</a></li>
-        <li><a class="home-header__link" href="/help">Ayuda</a></li>
-        <li class="admin-only" style="display: none;"><a class="home-header__link" href="/admin/products">Administrar productos</a></li>
+        <li><a class:list={["home-header__link", { "home-header__link--active": productsIsCurrent }]} href="/products" aria-current={productsIsCurrent ? 'page' : undefined}>Productos</a></li>
+        <li><a class:list={["home-header__link", { "home-header__link--active": helpIsCurrent }]} href="/help" aria-current={helpIsCurrent ? 'page' : undefined}>Guía de compra</a></li>
+        <li class="admin-only" style="display: none;"><a class:list={["home-header__link", { "home-header__link--active": adminProductsIsCurrent }]} href="/admin/products" aria-current={adminProductsIsCurrent ? 'page' : undefined}>Administrar productos</a></li>
       </ul>
     </nav>
   </div>
