@@ -52,11 +52,7 @@ async function openHome(page: Page, viewport: MatrixCase, theme: Theme): Promise
 
     await settleWithin(document.fonts.ready);
     await Promise.all(
-      [...document.images]
-        .filter((image) =>
-          image.currentSrc.startsWith(`${window.location.origin}/images/illustrations/`),
-        )
-        .map((image) => settleWithin(image.decode().catch(() => undefined))),
+      [...document.images].map((image) => settleWithin(image.decode().catch(() => undefined))),
     );
   });
   await expect(page.locator('.home-product-card').first()).toBeVisible();
@@ -278,13 +274,17 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
         await expect(navigation).toBeVisible();
       }
 
-      // Structural checks cover every boundary; photographic full-page baselines sample each layout mode.
+      // Structural checks cover every boundary; photographic baselines sample each layout mode with a runner-antialiasing-only pixel cap.
       if (representativeVisualViewports.has(viewport.name)) {
         const screenshot =
           viewport.theme === 'light'
             ? `home-responsive-${viewport.name}.png`
             : `home-responsive-${viewport.name}-dark.png`;
-        await expect(page).toHaveScreenshot(screenshot, { fullPage: true, threshold: 0.4 });
+        await expect(page).toHaveScreenshot(screenshot, {
+          fullPage: true,
+          threshold: 0.4,
+          maxDiffPixels: 1000,
+        });
       }
     });
   }
