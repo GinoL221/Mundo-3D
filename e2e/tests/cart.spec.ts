@@ -27,6 +27,24 @@ async function registerFreshUser(
   return { email, password };
 }
 
+async function waitForLoginHandler(page: Page): Promise<void> {
+  await page.locator('#login-form').evaluate(async (form: HTMLFormElement) => {
+    const error = form.querySelector<HTMLElement>('#login-error');
+    const expectedError = 'Por favor completá todos los campos.';
+    const preventNativeNavigation = (event: Event): void => event.preventDefault();
+    form.addEventListener('submit', preventNativeNavigation, { capture: true });
+    try {
+      while (error?.textContent?.trim() !== expectedError) {
+        form.requestSubmit();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+    } finally {
+      form.removeEventListener('submit', preventNativeNavigation, { capture: true });
+    }
+  });
+  await expect(page.locator('#login-error')).toHaveText('Por favor completá todos los campos.');
+}
+
 test.describe('Cart E2E Tests - Guest Flow', () => {
   // Clear localStorage cart before each guest test
   test.beforeEach(async ({ page }) => {
@@ -323,6 +341,7 @@ test.describe('Cart E2E Tests - Login Redirect Bounded Race', () => {
     await page.locator('#navbar-user-menu-trigger').click();
     await page.locator('#navbar-logout').click();
     await expect(page).toHaveURL('/login');
+    await waitForLoginHandler(page);
 
     // A GET /api/cart that never resolves is the worst case the bounded
     // race exists for. Only GET is intercepted — the login POST itself, and
@@ -357,6 +376,7 @@ test.describe('Cart E2E Tests - Login Redirect Bounded Race', () => {
     await page.locator('#navbar-user-menu-trigger').click();
     await page.locator('#navbar-logout').click();
     await expect(page).toHaveURL('/login');
+    await waitForLoginHandler(page);
 
     // Unlike the stall test above (GET never resolves), this GET resolves
     // immediately with a server error — hydrateFromServer() should settle

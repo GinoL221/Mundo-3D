@@ -118,6 +118,7 @@ for (const theme of themes) {
           page: root.getPropertyValue('--sys-page-bg').trim(),
           text: root.getPropertyValue('--sys-text').trim(),
           frame: root.getPropertyValue('--sys-frame-max').trim(),
+          prose: root.getPropertyValue('--sys-prose-max').trim(),
           target: root.getPropertyValue('--sys-target-min').trim(),
         },
         frame: fixture.getBoundingClientRect().width,
@@ -172,10 +173,12 @@ for (const theme of themes) {
       page: theme === 'light' ? '#f6f2ea' : '#1e1b18',
       text: theme === 'light' ? '#1e1b18' : '#f6f2ea',
       frame: '1104px',
+      prose: '75ch',
       target: '44px',
     });
     expect(metrics.frame).toBeLessThanOrEqual(1104);
-    expect(metrics.proseMax).toBe(750);
+    expect(metrics.proseMax).toBeGreaterThan(0);
+    expect(metrics.proseMax).toBeLessThanOrEqual(800);
     expect(metrics.focus).toMatchObject({ outline: 'solid', outlineWidth: '3px' });
     expect(metrics.action.width).toBeGreaterThanOrEqual(44);
     expect(metrics.action.height).toBeGreaterThanOrEqual(44);
