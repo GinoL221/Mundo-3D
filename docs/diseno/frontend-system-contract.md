@@ -28,17 +28,17 @@ Home and `docs/diseno/manual-identidad.md` are visual authority; `PRODUCT.md` an
 
 `semantic.css` aliases primitive ownership: `--sys-page-bg`, `--sys-surface`, `--sys-text`, `--sys-text-muted`, `--sys-border`, `--sys-action-bg`, `--sys-action-text`, `--sys-action-text-link`, `--sys-danger-text`, `--sys-focus`, font/text/space roles, `--sys-frame-max`, `--sys-frame-gutter`, `--sys-prose-max`, and `--sys-target-min`. The opt-in action role uses contrast-adjusted blue `#2d66f0`, while focus resolves to the theme foreground; Home keeps its existing `--accent` and focus colors. No Home-only or legacy value becomes a system token.
 
-`system-primitives.css` supplies only `.system-frame`, `.system-section`, `.system-prose`, `.system-action` (`--primary`, `--text`), `.system-state` (`--loading`, `--empty`, `--error`, `--status`), visible `:focus-visible`, disabled presentation, and `[data-image-rendering="pixel-art"]`. These are opt-in presentation hooks, never route selectors or CSS-created semantics; no global radius, shadow, gradient, or glow exists.
+`system-primitives.css` supplies only `.system-frame`, `.system-section`, `.system-prose`, `.system-action` (`--primary`, `--text`), `.system-state` (`--loading`, `--empty`, `--error`, `--status`), visible `:focus-visible`, disabled presentation, and `[data-image-rendering="pixel-art"]`. These are opt-in presentation hooks, never route selectors or CSS-created semantics; no global radius, shadow, gradient, or glow exists. Native `disabled` is the reusable behavior primitive. The `[aria-disabled]` rule is presentation only: each custom control owner must block pointer and keyboard activation.
 
 ## State and accessibility contracts
 
-| State    | Required markup/behavior                                                                                      |
-| -------- | ------------------------------------------------------------------------------------------------------------- |
-| loading  | truthful text, affected region `aria-busy`; polite status only for announced transitions                      |
-| empty    | labelled/heading region, truthful absence and next action                                                     |
-| error    | recovery text; newly occurring actionable failure may use `role="alert"`                                      |
-| disabled | native `disabled` preferred; custom control requires `aria-disabled`, blocked activation, and keyboard parity |
-| status   | visible outcome and polite live status when asynchronous                                                      |
+| State    | Required markup/behavior                                                                                                                                         |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| loading  | truthful text, affected region `aria-busy`; polite status only for announced transitions                                                                         |
+| empty    | labelled/heading region, truthful absence and next action                                                                                                        |
+| error    | recovery text; newly occurring actionable failure may use `role="alert"`                                                                                         |
+| disabled | native `disabled` is the reusable primitive; custom controls require `aria-disabled`, owner-implemented blocked pointer/keyboard activation, and keyboard parity |
+| status   | visible outcome and polite live status when asynchronous                                                                                                         |
 
 ### WCAG 2.2 AA ledger
 

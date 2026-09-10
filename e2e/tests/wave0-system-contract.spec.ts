@@ -17,6 +17,7 @@ async function openHomeWithFoundationFixture(page: Page, theme: Theme): Promise<
     const elements = [
       ['h1', 'Foundation contract', ''],
       ['p', 'Visible state meaning is not conveyed by color alone.', ''],
+      ['p', 'Supporting information', ''],
       ['button', 'Continue', 'system-action system-action--primary'],
       ['a', 'Learn more', 'system-action system-action--text'],
       ['button', 'Unavailable', 'system-action'],
@@ -32,13 +33,33 @@ async function openHomeWithFoundationFixture(page: Page, theme: Theme): Promise<
       element.className = className;
       section.append(element);
     }
-    const [heading, , action, link, disabled, customDisabled, loading, , error, status] =
+    const [heading, , mutedText, action, link, disabled, customDisabled, loading, , error, status] =
       section.children;
     heading.id = 'foundation-title';
+    mutedText.setAttribute('data-test-muted-text', '');
+    mutedText.setAttribute('style', 'color: var(--sys-text-muted)');
     link.setAttribute('href', '#foundation-title');
     disabled.setAttribute('disabled', '');
     customDisabled.setAttribute('aria-disabled', 'true');
     customDisabled.setAttribute('tabindex', '-1');
+    customDisabled.setAttribute('data-activation-count', '0');
+    const activateCustomControl = (event: Event) => {
+      if (customDisabled.getAttribute('aria-disabled') === 'true') {
+        event.preventDefault();
+        return;
+      }
+      customDisabled.setAttribute(
+        'data-activation-count',
+        String(Number(customDisabled.getAttribute('data-activation-count')) + 1),
+      );
+    };
+    customDisabled.addEventListener('click', activateCustomControl);
+    customDisabled.addEventListener('keydown', (event) => {
+      const keyboardEvent = event as KeyboardEvent;
+      if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
+        activateCustomControl(keyboardEvent);
+      }
+    });
     loading.setAttribute('aria-busy', 'true');
     loading.setAttribute('role', 'status');
     error.setAttribute('role', 'alert');
@@ -63,6 +84,7 @@ for (const theme of themes) {
       const textAction = fixture.querySelector<HTMLElement>('.system-action--text');
       const disabled = fixture.querySelector<HTMLButtonElement>('button[disabled]');
       const customDisabled = fixture.querySelector<HTMLElement>('[aria-disabled="true"]');
+      const mutedText = fixture.querySelector<HTMLElement>('[data-test-muted-text]');
       const prose = fixture.querySelector<HTMLElement>('.system-prose');
       const heading = fixture.querySelector<HTMLElement>('#foundation-title');
       const error = fixture.querySelector<HTMLElement>('.system-state--error');
@@ -72,6 +94,7 @@ for (const theme of themes) {
         !textAction ||
         !disabled ||
         !customDisabled ||
+        !mutedText ||
         !prose ||
         !heading ||
         !error ||
@@ -158,7 +181,7 @@ for (const theme of themes) {
         })),
         contrast: {
           text: contrastRatio(getComputedStyle(heading).color, pageBackground),
-          mutedText: contrastRatio(getComputedStyle(prose).color, pageBackground),
+          mutedText: contrastRatio(getComputedStyle(mutedText).color, pageBackground),
           link: contrastRatio(getComputedStyle(textAction).color, pageBackground),
           primaryActionText: contrastRatio(actionStyle.color, actionStyle.backgroundColor),
           focusAgainstPage: contrastRatio(focusStyle.outlineColor, pageBackground),
@@ -192,6 +215,11 @@ for (const theme of themes) {
       opacity: '0.5',
       cursor: 'not-allowed',
     });
+    const customDisabled = page.locator('[data-test-foundation] [aria-disabled="true"]');
+    await customDisabled.click({ force: true });
+    await customDisabled.press('Enter');
+    await customDisabled.press('Space');
+    await expect(customDisabled).toHaveAttribute('data-activation-count', '0');
     expect(metrics.states).toHaveLength(4);
     expect(metrics.states).toEqual(
       expect.arrayContaining([
@@ -212,6 +240,7 @@ for (const theme of themes) {
     expect(metrics.contrast.statusBoundary).toBeGreaterThanOrEqual(3);
 
     const primaryAction = page.locator('[data-test-foundation] .system-action--primary');
+    await page.locator('[data-test-foundation] .system-action--text').focus();
     await page.keyboard.press('Shift+Tab');
     await expect(primaryAction).toBeFocused();
     const keyboardFocus = await primaryAction.evaluate((element) => {
