@@ -46,10 +46,6 @@
     text-align: left;
   }
 
-  .home-footer__brand p {
-    display: none;
-  }
-
   .home-footer__links {
     grid-area: links;
     justify-content: flex-start;
@@ -87,5 +83,12 @@
     width: 100%;
     max-width: 360px;
     min-width: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .home-header__logo {
+    flex-basis: 104px;
+    width: 104px;
   }
 }

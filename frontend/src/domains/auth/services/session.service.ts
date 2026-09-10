@@ -82,7 +82,7 @@ export function broadcastSessionChanged(state: SessionState): void {
  * did, means a tab that navigates away never broadcasts at all. Best-effort
  * throughout (same "never block on cleanup" spirit as
  * backend/src/infrastructure/utils/cleanupUploadedFile.ts). Used both by
- * explicit logout (Header.astro) and by admin pages reacting to a 401 from
+ * explicit logout (HomeHeader.astro) and by admin pages reacting to a 401 from
  * the API (stale/invalid session) before redirecting to /login.
  */
 export async function clearSession(): Promise<void> {

@@ -252,7 +252,8 @@ test.describe('Cart E2E Tests - Guest-to-Account Merge on Login', () => {
 
     // Log out and clear the local cart, so product 2 now lives only
     // server-side, tied to the account.
-    await page.locator('.nav-item__trigger').hover();
+    await page.locator('#navbar-user-menu-trigger').click();
+    await expect(page.locator('#navbar-user-menu')).toBeVisible();
     await page.locator('#navbar-logout').click();
     await expect(page).toHaveURL('/login');
     await page.evaluate(() => localStorage.removeItem('cart'));

@@ -1,9 +1,8 @@
 /* ============================================================
-   components/nav-toggles.css — Cart Link, Theme Toggle, CRT Toggle,
-   JRPG Hover Cursor
+   components/nav-toggles.css — Cart Link and Theme Toggle
    Split out of navbar.css (2026-08-31 audit) to stay under the
-   250-line cap; these are standalone BEM blocks and decorations
-   rendered inside the navbar, not part of the .navbar block itself.
+   250-line cap; these are standalone BEM blocks rendered inside
+   the navbar, not part of the .navbar block itself.
    ============================================================ */
 
 /* ── Cart Link (standalone BEM block) ──────────────────────── */
@@ -55,7 +54,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s,
+    border-color 0.15s;
 }
 
 .theme-toggle-btn:hover {
@@ -82,77 +84,20 @@
   display: none;
 }
 
-html[data-theme="light"] .theme-toggle-btn__icon--moon,
+html[data-theme='light'] .theme-toggle-btn__icon--moon,
 html:not([data-theme]) .theme-toggle-btn__icon--moon {
   display: none;
 }
 
-html[data-theme="dark"] .theme-toggle-btn__icon--sun {
+html[data-theme='dark'] .theme-toggle-btn__icon--sun {
   display: none;
 }
 
-html[data-theme="dark"] .theme-toggle-btn__icon--moon {
+html[data-theme='dark'] .theme-toggle-btn__icon--moon {
   display: block;
 }
 
 .theme-toggle-btn:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
-}
-
-/* ── CRT Toggle Button (standalone BEM block) ──────────────── */
-.crt-toggle-btn {
-  background-color: var(--surface);
-  color: var(--fg);
-  border: 2px solid var(--fg);
-  padding: var(--space-xs) var(--space-sm);
-  cursor: pointer;
-  font-family: var(--font-body);
-  font-size: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.15s, color 0.15s;
-}
-
-.crt-toggle-btn:hover {
-  background-color: var(--accent);
-  color: var(--pico-white);
-  border-color: var(--accent);
-}
-
-.crt-toggle-btn__icon {
-  display: inline-block;
-  font-size: 18px;
-}
-
-/* ── JRPG Hover Cursors on Navbar Links ────────────────────── */
-/* Space for the arrow is reserved unconditionally (once, when CRT turns on),
-   not animated on every hover — animating padding-left forced a reflow of
-   every sibling nav item per hover (Impeccable audit finding). Only opacity
-   (already compositor-only) changes on :hover now. */
-html.crt-theme-active .navbar__link {
-  position: relative;
-  padding-left: calc(var(--space-sm) + 14px);
-}
-
-html.crt-theme-active .navbar__link::before {
-  content: "▶";
-  position: absolute;
-  left: var(--space-sm);
-  opacity: 0;
-  color: var(--accent);
-  transition: opacity 0.2s ease-out;
-  pointer-events: none;
-}
-
-html.crt-theme-active .navbar__link:hover::before {
-  opacity: 1;
-  animation: jrpg-blink 0.8s steps(2, start) infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html.crt-theme-active .navbar__link:hover::before {
-    animation: none;
-  }
 }

@@ -43,6 +43,8 @@ export type FetchLatestProductResult =
   | { ok: true; product: Product }
   | { ok: false; reason: 'not-found' | 'network' | 'server' };
 
+const HOME_FEATURED_PRODUCT_NAME = 'Cubo de Compañía de Portal';
+
 /**
  * `GET /api/products` — full unpaginated product list, used by the
  * homepage's "Nuestros Seleccionados" grid (contrast with
@@ -69,10 +71,30 @@ export async function fetchProducts(): Promise<FetchProductsResult> {
   return { ok: true, products: adaptAPIProducts(rawProducts) };
 }
 
+/** Selects Home's editorial product from live catalog data, with the legacy
+ * latest-product endpoint as the honest fallback for absence or list failure.
+ */
+export async function fetchFeaturedProduct(
+  catalogRequest: Promise<FetchProductsResult> = fetchProducts(),
+): Promise<FetchLatestProductResult> {
+  try {
+    const catalog = await catalogRequest;
+    if (catalog.ok) {
+      const featured = catalog.products.find(
+        (product) => product.name === HOME_FEATURED_PRODUCT_NAME,
+      );
+      if (featured) return { ok: true, product: featured };
+    }
+  } catch {
+    // Preserve the legacy latest-product fallback for an unexpected catalog failure.
+  }
+
+  return fetchLatestProduct();
+}
+
 /**
- * `GET /api/products/latest` — the public product used by Home's featured
- * piece. A missing catalog is distinct from a transport/server failure so the
- * page can keep an honest empty state.
+ * `GET /api/products/latest` — fallback product for Home's featured piece.
+ * A missing catalog remains distinct from a transport/server failure.
  */
 export async function fetchLatestProduct(): Promise<FetchLatestProductResult> {
   let res: Response;

@@ -62,7 +62,6 @@ html[data-theme='dark'] .home-footer__brand-dark {
   display: block;
 }
 
-.home-footer__brand p,
 .home-footer__copyright,
 .home-footer__links a {
   margin: 0;
@@ -71,24 +70,21 @@ html[data-theme='dark'] .home-footer__brand-dark {
   line-height: 20px;
 }
 
-.home-footer__brand p {
-  max-width: 190px;
-}
-
 .home-footer__links {
   display: flex;
-  flex: 0 1 208px;
+  flex: 0 1 360px;
   justify-content: center;
-  gap: 24px;
+  gap: 32px;
 }
 
 .home-footer__links a {
+  min-width: 44px;
   min-height: 44px;
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   color: var(--home-brand-muted);
   font-weight: 600;
-  white-space: nowrap;
   transition: color 200ms ease;
 }
 
@@ -126,13 +122,17 @@ html[data-theme='dark'] .home-footer__brand-dark {
   color: var(--home-brand-ink);
   cursor: pointer;
   touch-action: manipulation;
-  transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease;
 }
 
 .home-footer__social-link .social-icon {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
+  color: currentColor;
 }
 
 .home-footer__social-link:hover {
@@ -143,6 +143,47 @@ html[data-theme='dark'] .home-footer__brand-dark {
 .home-footer__social-link:focus-visible {
   outline: 3px solid var(--home-blue);
   outline-offset: 2px;
+}
+
+@media (max-width: 639px) {
+  .home-footer {
+    padding: 16px 0;
+  }
+
+  .home-footer__inner {
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .home-footer__brand,
+  .home-footer__end {
+    flex: 0 1 auto;
+    justify-content: center;
+  }
+
+  .home-footer__links {
+    width: min(100%, 280px);
+    flex: 0 1 auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+  }
+
+  .home-footer__links a {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .home-footer__links a:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .home-footer__end {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
