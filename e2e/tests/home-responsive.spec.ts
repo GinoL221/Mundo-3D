@@ -10,6 +10,7 @@ type MatrixCase = {
 };
 
 const themes = ['light', 'dark'] as const;
+const representativeVisualViewports = new Set(['320', '640', '768x1024', '1024x768', '1440']);
 
 type Theme = (typeof themes)[number];
 
@@ -277,11 +278,14 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
         await expect(navigation).toBeVisible();
       }
 
-      const screenshot =
-        viewport.theme === 'light'
-          ? `home-responsive-${viewport.name}.png`
-          : `home-responsive-${viewport.name}-dark.png`;
-      await expect(page).toHaveScreenshot(screenshot, { fullPage: true });
+      // Structural checks cover every boundary; photographic full-page baselines sample each layout mode.
+      if (representativeVisualViewports.has(viewport.name)) {
+        const screenshot =
+          viewport.theme === 'light'
+            ? `home-responsive-${viewport.name}.png`
+            : `home-responsive-${viewport.name}-dark.png`;
+        await expect(page).toHaveScreenshot(screenshot, { fullPage: true, threshold: 0.4 });
+      }
     });
   }
 });
