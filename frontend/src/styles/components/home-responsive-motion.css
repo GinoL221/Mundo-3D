@@ -1,0 +1,13 @@
+@media (prefers-reduced-motion: reduce) {
+  .home-header__link,
+  .home-header__theme,
+  .home-header__menu-toggle,
+  .home-button,
+  .home-text-action,
+  .home-products__link,
+  .home-product-card,
+  .home-footer__links a,
+  .home-footer__social-link {
+    transition-duration: 0s;
+  }
+}
