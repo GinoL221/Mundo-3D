@@ -111,9 +111,10 @@
         image.src = resolveImageUrl(item.image, 'products');
         image.alt = item.name;
         image.addEventListener('error', () => {
-          if (image.dataset.fallback) return;
+          const fallbackSrc = '/images/illustrations/Otras.svg';
+          if (image.dataset.fallback && image.getAttribute('src') === fallbackSrc) return;
           image.dataset.fallback = 'true';
-          image.src = '/images/illustrations/Otras.svg';
+          image.src = fallbackSrc;
           image.alt = `${item.name} — imagen no disponible`;
           image.classList.add('cart__item-image--placeholder');
         });
