@@ -1,0 +1,57 @@
+.product-detail__status-copy {
+  min-height: 1.5em;
+  margin: -8px 0 0;
+  font-size: var(--text-small);
+}
+
+.product-detail__state {
+  display: grid;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+  padding: var(--space-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  text-align: center;
+  justify-items: center;
+}
+
+.product-detail__state p {
+  margin: 0;
+}
+
+.product-detail__state .product-detail__action {
+  width: auto;
+  max-width: 100%;
+}
+
+.product-detail__skeleton {
+  display: grid;
+  width: min(100%, 720px);
+  gap: 10px;
+}
+
+.product-detail__skeleton span {
+  display: block;
+  min-width: 0;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.product-detail__skeleton-image {
+  min-height: 112px;
+}
+
+.product-detail__skeleton-info {
+  min-height: 28px;
+}
+
+.product-detail__skeleton-specs {
+  min-height: 44px;
+}
+
+.product-detail__skeleton-action {
+  min-height: 44px;
+}
