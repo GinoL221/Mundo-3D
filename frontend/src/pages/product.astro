@@ -115,13 +115,21 @@ import Layout from '../layouts/Layout.astro';
     setText('product-production', product.productionTime);
     setText('product-dimensions', product.hasDimensions ? `H: ${product.height} | W: ${product.width} | D: ${product.depth}` : 'A consultar');
 
+    const placeholder = isPlaceholderImage(product.image);
+    const categoryImage = `/images/illustrations/${getCategoryImg(product.category)}.svg`;
+    const resolvedProduct = {
+      ...product,
+      image: placeholder ? categoryImage : resolveImageUrl(product.image, 'products'),
+    };
+
     if (image) {
-      const placeholder = isPlaceholderImage(product.image);
-      image.src = placeholder ? `/images/illustrations/${getCategoryImg(product.category)}.svg` : resolveImageUrl(product.image, 'products');
+      image.src = resolvedProduct.image;
       image.classList.toggle('product-detail__image--pixelart', placeholder);
-      image.alt = product.name;
+      image.alt = placeholder ? `Ilustración de ${product.category} para ${product.name}` : product.name;
       image.addEventListener('error', () => {
-        image.src = '/images/illustrations/Otras.svg';
+        resolvedProduct.image = '/images/illustrations/Otras.svg';
+        image.src = resolvedProduct.image;
+        image.alt = `Ilustración genérica para ${product.name}`;
         image.classList.add('product-detail__image--pixelart');
       }, { once: true });
     }
@@ -133,13 +141,33 @@ import Layout from '../layouts/Layout.astro';
     if (shareButton) shareButton.hidden = false;
 
     addButton?.addEventListener('click', () => {
-      CartService.addToCart(product);
+      const status = get('cart-status');
+      let resetTimer: number | undefined;
+      const resetButton = () => {
+        addButton.textContent = 'Agregar al carrito';
+        addButton.disabled = false;
+      };
+      const onSyncError = (event: Event) => {
+        if (resetTimer !== undefined) window.clearTimeout(resetTimer);
+        const message = (event as CustomEvent<{ message?: string }>).detail?.message;
+        if (status) {
+          status.setAttribute('role', 'alert');
+          status.textContent = message || 'No pudimos agregar el producto al carrito.';
+        }
+        resetButton();
+      };
+
+      if (status) status.removeAttribute('role');
+      if (CartService.hasToken()) {
+        window.addEventListener('cart-sync-error', onSyncError, { once: true });
+      }
+      CartService.addToCart(resolvedProduct);
       addButton.disabled = true;
       addButton.textContent = 'Agregado al carrito';
       setText('cart-status', `${product.name} se agregó al carrito.`);
-      window.setTimeout(() => {
-        addButton.textContent = 'Agregar al carrito';
-        addButton.disabled = false;
+      resetTimer = window.setTimeout(() => {
+        window.removeEventListener('cart-sync-error', onSyncError);
+        resetButton();
       }, 2000);
     });
 

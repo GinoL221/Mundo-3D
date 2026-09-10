@@ -5,7 +5,7 @@ const product = {
   nameProduct: 'Figura de prueba',
   price: 12500,
   descriptionProduct: 'Una figura lista para compartir.',
-  image: null,
+  image: null as string | null,
   category: 'Figura',
   material: 'PLA',
   height: 15,
@@ -15,14 +15,21 @@ const product = {
   productionTime: 3,
 };
 
-test('keeps share in the responsive top utility row and cart actions focused', async ({ page }) => {
+async function mockProduct(
+  page: import('@playwright/test').Page,
+  overrides: Partial<typeof product> = {},
+) {
   await page.route('**/api/product/1', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(product),
+      body: JSON.stringify({ ...product, ...overrides }),
     });
   });
+}
+
+test('keeps share in the responsive top utility row and cart actions focused', async ({ page }) => {
+  await mockProduct(page);
 
   for (const width of [375, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 });
@@ -75,4 +82,58 @@ test('keeps share in the responsive top utility row and cart actions focused', a
     await expect(actions.locator(':scope > a[href="/cart"]')).toHaveCount(1);
     await expect(actions.locator('#share-product-btn')).toHaveCount(0);
   }
+});
+
+test('replaces optimistic success when an authenticated cart sync is rejected', async ({
+  page,
+}) => {
+  await mockProduct(page);
+  await page.route('**/api/cart', async (route) => {
+    await route.fulfill({ status: 409, contentType: 'application/json', body: '{}' });
+  });
+  await page.goto('/');
+  await page.evaluate(() => {
+    document.cookie = `m3d_user=${encodeURIComponent(JSON.stringify({ idRole: 2 }))}; path=/`;
+    localStorage.removeItem('cart');
+  });
+
+  await page.goto('/product?id=1');
+  const button = page.locator('#add-to-cart-btn');
+  const status = page.locator('#cart-status');
+  await expect(page.locator('#product-content')).toBeVisible();
+  await button.click();
+  await expect(status).toHaveText('Figura de prueba se agregó al carrito.');
+  await expect(button).toBeDisabled();
+
+  await expect(status).toHaveAttribute('role', 'alert');
+  await expect(status).toHaveText('No se pudo sincronizar el carrito con el servidor.');
+  await expect(button).toBeEnabled();
+  await expect(button).toHaveText('Agregar al carrito');
+  await page.waitForTimeout(2100);
+  await expect(status).toHaveText('No se pudo sincronizar el carrito con el servidor.');
+});
+
+test('stores the rendered fallback image for placeholder and failed product images', async ({
+  page,
+}) => {
+  await mockProduct(page);
+  await page.goto('/product?id=1');
+  await page.locator('#add-to-cart-btn').click();
+  let image = await page.evaluate(() => JSON.parse(localStorage.getItem('cart') ?? '[]')[0]?.image);
+  expect(image).toBe('/images/illustrations/Figura.svg');
+
+  await page.unroute('**/api/product/1');
+  await mockProduct(page, { image: 'broken.png' });
+  await page.route('**/img/products/broken.png', async (route) => {
+    await route.fulfill({ status: 404, body: '' });
+  });
+  await page.evaluate(() => localStorage.removeItem('cart'));
+  await page.goto('/product?id=1');
+  const detailImage = page.locator('#product-img');
+  await expect(detailImage).toHaveAttribute('src', '/images/illustrations/Otras.svg');
+  await expect(detailImage).toHaveAttribute('alt', 'Ilustración genérica para Figura de prueba');
+  await page.locator('#add-to-cart-btn').click();
+
+  image = await page.evaluate(() => JSON.parse(localStorage.getItem('cart') ?? '[]')[0]?.image);
+  expect(image).toBe('/images/illustrations/Otras.svg');
 });
