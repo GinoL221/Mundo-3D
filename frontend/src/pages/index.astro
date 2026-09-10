@@ -55,9 +55,9 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
     <section class="home-commission" id="encargos" aria-labelledby="home-commission-title">
       <div class="home-commission__inner">
         <div class="home-commission__copy">
-          <p class="home-eyebrow">ENCARGOS A MEDIDA</p>
-          <h2 class="home-commission__title" id="home-commission-title">¿Tenés una idea en mente?</h2>
-          <p class="home-commission__description">La convertimos en una pieza real, impresa y terminada en el taller.</p>
+          <p class="home-eyebrow">CREÁ TU PRODUCTO</p>
+          <h2 class="home-commission__title" id="home-commission-title">Creá tu producto personalizado</h2>
+          <p class="home-commission__description">Convertimos tu idea en una pieza real, impresa y terminada en el taller.</p>
         </div>
         <a class="home-button home-button--commission" href="/help">Contanos tu idea →</a>
       </div>
@@ -81,7 +81,7 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
 
   <template id="home-featured-product-template">
     <a class="home-featured-card__link" href="">
-      <img class="home-featured-card__image" src="" alt="" width="420" height="420" loading="eager" decoding="async" />
+          <img class="home-featured-card__image" src="/img/products/cubo_compania_portal.jpg" alt="Cubo de Compañía de Portal" width="420" height="420" loading="eager" decoding="async" />
       <div class="home-featured-card__caption">
         <div>
           <p class="home-featured-card__label">PIEZA DESTACADA</p>
@@ -110,9 +110,10 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
 <script>
   import { getCategoryImg, isPlaceholderImage } from '../domains/products';
   import { resolveImageUrl } from '../lib/imageUrl';
-  import { fetchLatestProduct, fetchProducts } from '../domains/products/services/product.service';
+  import { fetchFeaturedProduct, fetchProducts } from '../domains/products/services/product.service';
 
   const formatPrice = (price: number): string => `$ ${new Intl.NumberFormat('es-AR').format(price)}`;
+  const productsResultPromise = fetchProducts();
 
   async function loadFeaturedProduct(): Promise<void> {
     const content = document.getElementById('home-featured-content');
@@ -124,9 +125,9 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
       if (stateTemplate) content.replaceChildren(stateTemplate.content.cloneNode(true));
     };
 
-    let result: Awaited<ReturnType<typeof fetchLatestProduct>>;
+    let result: Awaited<ReturnType<typeof fetchFeaturedProduct>>;
     try {
-      result = await fetchLatestProduct();
+      result = await fetchFeaturedProduct(productsResultPromise);
     } catch {
       showState('home-featured-error-state-template');
       return;
@@ -183,7 +184,7 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
 
     let result: Awaited<ReturnType<typeof fetchProducts>>;
     try {
-      result = await fetchProducts();
+      result = await productsResultPromise;
     } catch {
       showState('home-error-state-template');
       return;

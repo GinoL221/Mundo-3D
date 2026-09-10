@@ -118,8 +118,9 @@
 
 .home-header__icon {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
+  color: currentColor;
 }
 
 .home-header .cart-link__badge {
@@ -152,8 +153,9 @@
 
 .home-header__theme .theme-toggle-btn__icon,
 .home-header__theme .theme-toggle-btn__icon svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
+  color: currentColor;
 }
 
 .home-header .nav-item {
@@ -195,7 +197,6 @@
   border: 1px solid var(--home-brand-line);
   border-radius: 4px;
   background: var(--home-brand-surface);
-  box-shadow: 0 8px 24px rgb(30 27 24 / 12%);
 }
 
 .home-header .nav-item__dropdown[hidden] {
@@ -207,8 +208,9 @@
 }
 
 .home-header .nav-item__dropdown a {
-  display: block;
-  min-height: 40px;
+  display: flex;
+  min-height: 44px;
+  align-items: center;
   padding: 10px 12px;
   color: var(--home-brand-ink);
   font-size: 14px;

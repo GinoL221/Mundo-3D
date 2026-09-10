@@ -82,8 +82,7 @@
   touch-action: manipulation;
   transition:
     background-color 200ms ease,
-    border-color 200ms ease,
-    box-shadow 200ms ease;
+    border-color 200ms ease;
 }
 
 .home-header__menu-toggle:hover,
@@ -91,11 +90,6 @@
 .home-header__menu-toggle[aria-expanded='true'] {
   border-color: var(--home-blue);
   background: var(--home-brand-paper);
-}
-
-.home-header__menu-toggle.is-open,
-.home-header__menu-toggle[aria-expanded='true'] {
-  box-shadow: 0 0 0 1px var(--home-blue);
 }
 
 .home-header__menu-toggle:focus-visible {
@@ -175,7 +169,7 @@
 }
 
 .home-header__primary > ul > li > .home-header__link--active {
-  box-shadow: inset 3px 0 var(--home-blue);
+  border-inline-start: 3px solid var(--home-blue);
 }
 
 .home-hero__actions,

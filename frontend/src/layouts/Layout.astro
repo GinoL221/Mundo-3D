@@ -1,6 +1,4 @@
 ---
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
 import HomeHeader from '../components/HomeHeader.astro';
 import HomeFooter from '../components/HomeFooter.astro';
 import WhatsAppFloating from '../components/WhatsAppFloating.astro';
@@ -15,7 +13,6 @@ import '../styles/base/reset.css';
 import '../styles/base/layout.css';
 import '../styles/base/utilities.css';
 import '../styles/base/system-primitives.css';
-import '../styles/components/navbar.css';
 import '../styles/components/nav-toggles.css';
 import '../styles/components/carousel.css';
 import '../styles/components/feature-strip.css';
@@ -25,12 +22,13 @@ import '../styles/components/home.css';
 import '../styles/components/home-products.css';
 import '../styles/components/home-footer.css';
 import '../styles/components/home-responsive.css';
-import '../styles/components/footer.css';
 import '../styles/components/whatsapp-floating.css';
 import '../styles/components/product-grid.css';
 import '../styles/components/product-card.css';
 import '../styles/components/price.css';
 import '../styles/components/product-detail.css';
+import '../styles/components/product-detail-states.css';
+import '../styles/components/product-detail-responsive.css';
 import '../styles/components/cart.css';
 import '../styles/components/forms.css';
 import '../styles/components/profile.css';
@@ -65,21 +63,13 @@ const { title = "Mundo 3D", variant = 'default' } = Astro.props;
 			(function () {
 				const theme = localStorage.getItem('theme') || 'light';
 				document.documentElement.setAttribute('data-theme', theme);
-
-				const crtPreference = localStorage.getItem('retro-theme-preference') || 'disabled';
-				if (crtPreference === 'enabled') {
-					document.documentElement.classList.add('crt-theme-active');
-				} else {
-					document.documentElement.classList.remove('crt-theme-active');
-				}
 			})();
 		</script>
 	</head>
-	<body class={variant === 'home' ? 'home-shell' : undefined}>
-		{variant === 'home' ? <HomeHeader /> : <Header />}
+	<body class="home-shell">
+		<HomeHeader pathname={Astro.url.pathname} />
 		<slot />
-			{variant === 'home' ? <HomeFooter /> : <Footer />}
+			<HomeFooter />
 			{variant === 'home' && <WhatsAppFloating />}
-			<div class="crt-overlay"></div>
 	</body>
 </html>

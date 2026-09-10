@@ -90,6 +90,7 @@
 
 .home-product-card__content {
   display: flex;
+  height: 100%;
   min-height: 0;
   flex-direction: column;
   gap: 10px;
@@ -116,9 +117,9 @@
 .home-product-card__copy {
   display: flex;
   width: 100%;
-  min-height: 20px;
+  min-height: 40px;
   height: auto;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
@@ -174,8 +175,8 @@
 .home-commission {
   min-height: 200px;
   padding: 40px 0;
-  background: var(--home-night);
-  color: var(--home-on-dark);
+  background: var(--home-blue, var(--accent));
+  color: #ffffff;
 }
 
 .home-commission__inner {
@@ -195,12 +196,12 @@
 }
 
 .home-commission .home-eyebrow {
-  color: var(--home-commission-eyebrow);
+  color: #ffffff;
 }
 
 .home-commission__title {
   margin: 0;
-  color: var(--home-on-dark);
+  color: #ffffff;
   font-size: clamp(var(--home-section-heading-min), 3vw, var(--home-section-heading-max));
   font-weight: 600;
   line-height: 1.25;
@@ -208,7 +209,7 @@
 
 .home-commission__description {
   margin: 0;
-  color: var(--home-commission-muted);
+  color: #ffffff;
   font-size: var(--text-body);
   line-height: 24px;
 }
@@ -216,11 +217,18 @@
 .home-button--commission {
   width: 190px;
   min-height: 48px;
-  background: var(--home-commission-button-bg);
-  color: var(--home-commission-button-fg);
+  border-color: #ffffff;
+  background: #ffffff;
+  color: #1e1b18;
 }
 
+.home-button--commission:hover,
 html[data-theme='dark'] .home-button--commission:hover {
-  background: var(--home-on-dark);
+  border-color: #1e1b18;
+  background: #f6f2ea;
   color: #1e1b18;
+}
+
+.home-button--commission:focus-visible {
+  outline-color: #ffffff;
 }

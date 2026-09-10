@@ -8,10 +8,10 @@ const fixtureJsonHeaders = {
 export const homeProducts = [
   {
     idProduct: 101,
-    nameProduct: 'Fixture Cube',
-    price: 1200,
-    descriptionProduct: 'Deterministic fixture product.',
-    image: 'productoSinImagen.svg',
+    nameProduct: 'Cubo de Compañía de Portal',
+    price: 24500,
+    descriptionProduct: 'Deterministic fixture for the editorial Home product.',
+    image: 'portal-cube.webp',
     category: 'Figura',
   },
   {
@@ -61,6 +61,9 @@ export async function installHomeProductFixtures(page: Page): Promise<void> {
     route.fulfill({ headers: fixtureJsonHeaders, body: JSON.stringify(homeProducts[0]) }),
   );
   await page.route('**/api/products', (route) =>
-    route.fulfill({ headers: fixtureJsonHeaders, body: JSON.stringify({ products: homeProducts }) }),
+    route.fulfill({
+      headers: fixtureJsonHeaders,
+      body: JSON.stringify({ products: homeProducts }),
+    }),
   );
 }
