@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
   quality:
@@ -23,7 +22,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: "pnpm"
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -117,7 +116,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: "pnpm"
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -129,7 +128,7 @@ jobs:
         env:
           DB_HOST: 127.0.0.1
           DB_USER: root
-          DB_PASS: ""
+          DB_PASS: ''
           DB_NAME: mundo_3d_migrate_ci
 
       - name: Run backend real-DB integration tests
@@ -138,7 +137,7 @@ jobs:
         env:
           DB_HOST: 127.0.0.1
           DB_USER: root
-          DB_PASS: ""
+          DB_PASS: ''
 
   e2e:
     name: End-to-end (Playwright)
@@ -165,7 +164,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: "pnpm"
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -180,8 +179,6 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
 
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
@@ -196,14 +193,16 @@ jobs:
         env:
           DB_HOST: 127.0.0.1
           DB_USER: root
-          DB_PASS: ""
+          DB_PASS: ''
 
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: e2e/playwright-report/
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
           if-no-files-found: ignore
 
   verification-gate:

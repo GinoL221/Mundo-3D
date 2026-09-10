@@ -11,7 +11,7 @@ export const homeProducts = [
     nameProduct: 'Fixture Cube',
     price: 1200,
     descriptionProduct: 'Deterministic fixture product.',
-    image: 'productoSinImagen.svg',
+    image: 'cubo_compania_portal.jpg',
     category: 'Figura',
   },
   {
@@ -19,7 +19,7 @@ export const homeProducts = [
     nameProduct: 'Fixture Bust',
     price: 1800,
     descriptionProduct: 'Deterministic fixture product.',
-    image: 'productoSinImagen.svg',
+    image: 'busto_darth_vader.jpg',
     category: 'Busto',
   },
   {
@@ -27,7 +27,7 @@ export const homeProducts = [
     nameProduct: 'Fixture Keychain',
     price: 900,
     descriptionProduct: 'Deterministic fixture product.',
-    image: 'productoSinImagen.svg',
+    image: 'llavero_batisenal.jpg',
     category: 'Llavero',
   },
   {
@@ -35,7 +35,7 @@ export const homeProducts = [
     nameProduct: 'Fixture Mask',
     price: 1500,
     descriptionProduct: 'Deterministic fixture product.',
-    image: 'productoSinImagen.svg',
+    image: 'mascara_batman.jpg',
     category: 'Máscara',
   },
   {
@@ -43,7 +43,7 @@ export const homeProducts = [
     nameProduct: 'Fixture Other',
     price: 1100,
     descriptionProduct: 'Deterministic fixture product.',
-    image: 'productoSinImagen.svg',
+    image: 'soporte_maceta_groot.jpg',
     category: 'Otras',
   },
   {
@@ -51,7 +51,7 @@ export const homeProducts = [
     nameProduct: 'Fixture Reserve',
     price: 1300,
     descriptionProduct: 'Deterministic fixture product.',
-    image: 'productoSinImagen.svg',
+    image: 'figura_mario.jpg',
     category: 'Figura',
   },
 ] as const;
@@ -61,6 +61,9 @@ export async function installHomeProductFixtures(page: Page): Promise<void> {
     route.fulfill({ headers: fixtureJsonHeaders, body: JSON.stringify(homeProducts[0]) }),
   );
   await page.route('**/api/products', (route) =>
-    route.fulfill({ headers: fixtureJsonHeaders, body: JSON.stringify({ products: homeProducts }) }),
+    route.fulfill({
+      headers: fixtureJsonHeaders,
+      body: JSON.stringify({ products: homeProducts }),
+    }),
   );
 }
