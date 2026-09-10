@@ -59,7 +59,7 @@ const { title = "Mundo 3D", variant = 'default' } = Astro.props;
 		<!-- Theme initialization script (runs immediately to prevent flash of wrong theme) -->
 		<script is:inline>
 			(function () {
-				const theme = localStorage.getItem('theme') || 'light';
+				const theme = localStorage.getItem('theme') === 'dark' ? 'dark' : 'light';
 				document.documentElement.setAttribute('data-theme', theme);
 			})();
 		</script>
