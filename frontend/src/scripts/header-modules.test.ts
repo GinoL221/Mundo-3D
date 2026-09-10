@@ -397,16 +397,16 @@ describe('Header browser modules', () => {
     expect(document.listeners.has('visibilitychange')).toBe(false);
   });
 
-  it('normalizes and persists color theme, including the dark default', () => {
+  it('falls back to light for an invalid persisted theme', () => {
     const fixture = createFixture();
     fixture.storage.setItem('theme', 'invalid');
     initializeThemeToggle(
       fixture.document as unknown as Document,
       fixture.storage as unknown as Storage,
     );
-    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('light');
     expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
-      'Cambiar a tema claro',
+      'Cambiar a tema oscuro',
     );
     expect(fixture.document.elements.get('theme-icon')!.textContent).toBe('');
 
@@ -414,11 +414,11 @@ describe('Header browser modules', () => {
       fixture.document as unknown as Document,
       fixture.storage as unknown as Storage,
     );
-    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('light');
     fixture.document.elements.get('theme-toggle')!.click();
-    expect(fixture.storage.setItem).toHaveBeenCalledWith('theme', 'light');
+    expect(fixture.storage.setItem).toHaveBeenCalledWith('theme', 'dark');
     expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
-      'Cambiar a tema oscuro',
+      'Cambiar a tema claro',
     );
     cleanup();
     cleanup();
