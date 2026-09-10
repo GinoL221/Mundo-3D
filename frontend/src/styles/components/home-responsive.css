@@ -1,2 +1,4 @@
 @import './home-responsive-base.css';
+@import './home-responsive-tablet.css';
 @import './home-responsive-desktop.css';
+@import './home-responsive-motion.css';
