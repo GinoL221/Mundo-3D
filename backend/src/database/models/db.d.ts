@@ -36,6 +36,18 @@ export interface UserAttributes {
   passwordUser: string;
   idRole?: number;
   category?: string;
+  emailVerifiedAt?: Date | null;
+}
+
+export interface EmailConfirmationTokenAttributes {
+  idEmailConfirmationToken: number;
+  idUser: number;
+  tokenHash: string;
+  expiresAt: Date;
+  consumedAt: Date | null;
+  invalidatedAt: Date | null;
+  activeSlot: number | null;
+  createdAt: Date;
 }
 
 export interface RememberTokenAttributes {
@@ -78,34 +90,52 @@ export interface OrderItemAttributes {
   unitPrice: number;
 }
 
-export interface ProductInstance extends Model<ProductAttributes, Partial<ProductAttributes>>, ProductAttributes {
+export interface ProductInstance
+  extends Model<ProductAttributes, Partial<ProductAttributes>>, ProductAttributes {
   Category?: CategoryInstance;
   Franchise?: FranchiseInstance;
 }
 
-export interface CategoryInstance extends Model<CategoryAttributes, Partial<CategoryAttributes>>, CategoryAttributes {}
+export interface CategoryInstance
+  extends Model<CategoryAttributes, Partial<CategoryAttributes>>, CategoryAttributes {}
 
-export interface FranchiseInstance extends Model<FranchiseAttributes, Partial<FranchiseAttributes>>, FranchiseAttributes {}
+export interface FranchiseInstance
+  extends Model<FranchiseAttributes, Partial<FranchiseAttributes>>, FranchiseAttributes {}
 
-export interface UserInstance extends Model<UserAttributes, Partial<UserAttributes>>, UserAttributes {
+export interface UserInstance
+  extends Model<UserAttributes, Partial<UserAttributes>>, UserAttributes {
   RememberTokens?: RememberTokenInstance[];
+  EmailConfirmationTokens?: EmailConfirmationTokenInstance[];
 }
 
-export interface RememberTokenInstance extends Model<RememberTokenAttributes, Partial<RememberTokenAttributes>>, RememberTokenAttributes {
+export interface EmailConfirmationTokenInstance
+  extends
+    Model<EmailConfirmationTokenAttributes, Partial<EmailConfirmationTokenAttributes>>,
+    EmailConfirmationTokenAttributes {
   User?: UserInstance;
 }
 
-export interface ShoppingCartInstance extends Model<ShoppingCartAttributes, Partial<ShoppingCartAttributes>>, ShoppingCartAttributes {
+export interface RememberTokenInstance
+  extends
+    Model<RememberTokenAttributes, Partial<RememberTokenAttributes>>,
+    RememberTokenAttributes {
+  User?: UserInstance;
+}
+
+export interface ShoppingCartInstance
+  extends Model<ShoppingCartAttributes, Partial<ShoppingCartAttributes>>, ShoppingCartAttributes {
   product?: ProductInstance;
   User?: UserInstance;
 }
 
-export interface OrderInstance extends Model<OrderAttributes, Partial<OrderAttributes>>, OrderAttributes {
+export interface OrderInstance
+  extends Model<OrderAttributes, Partial<OrderAttributes>>, OrderAttributes {
   items?: OrderItemInstance[];
   User?: UserInstance;
 }
 
-export interface OrderItemInstance extends Model<OrderItemAttributes, Partial<OrderItemAttributes>>, OrderItemAttributes {
+export interface OrderItemInstance
+  extends Model<OrderItemAttributes, Partial<OrderItemAttributes>>, OrderItemAttributes {
   product?: ProductInstance;
 }
 
@@ -113,6 +143,7 @@ export const Product: ModelCtor<ProductInstance>;
 export const Category: ModelCtor<CategoryInstance>;
 export const Franchise: ModelCtor<FranchiseInstance>;
 export const User: ModelCtor<UserInstance>;
+export const EmailConfirmationToken: ModelCtor<EmailConfirmationTokenInstance>;
 export const RememberToken: ModelCtor<RememberTokenInstance>;
 export const ShoppingCart: ModelCtor<ShoppingCartInstance>;
 export const Order: ModelCtor<OrderInstance>;

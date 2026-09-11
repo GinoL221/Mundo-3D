@@ -20,6 +20,8 @@ jest.mock('sequelize', () => {
     INTEGER: 'INTEGER',
     STRING: jest.fn().mockReturnValue('STRING'),
     CHAR: jest.fn().mockReturnValue('CHAR'),
+    BIGINT: { UNSIGNED: 'BIGINT UNSIGNED' },
+    TINYINT: 'TINYINT',
     DATE: 'DATE',
     DECIMAL: jest.fn().mockReturnValue('DECIMAL'),
     TEXT: 'TEXT',
