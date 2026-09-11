@@ -159,3 +159,271 @@ The authored migration and unit test are 153 lines before progress evidence. Add
 - `applyState: ready`; `actionContext.mode: repo-local`; allowed root: `/home/ginopc/Desarrollo/Mundo-3D`.
 - Delivery path: resolved `stacked-to-main`; native review budget: 400 changed lines.
 - Pre-existing tracked and untracked worktree changes were preserved; no commit, stage, reset, stash, push, or unrelated edit occurred.
+
+## Slice 1 — persistence-triangulate
+
+**Status:** completed without source changes. The existing real-MySQL migration integration test already contains the four assigned focused regressions, so no duplicate assertion or production change was added.
+
+### Completed task and persisted checkbox
+
+- [x] **TRIANGULATE — extend persistence cases** for multiple historical null active slots, duplicate active-slot rejection, cascade behavior, and down safety without changing existing user/session/login/checkout rows. <!-- sdd-owner: implementation -->
+
+### TDD Cycle Evidence
+
+| Task                      | Test file                                                    | Layer                  | Safety net                                      | RED                                                                                   | GREEN                                            | TRIANGULATE                                                                                                                                                                                                                 | REFACTOR                                |
+| ------------------------- | ------------------------------------------------------------ | ---------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Persistence triangulation | `backend/src/database/__tests__/migrate.integration.test.js` | Real MySQL integration | 8/8 integration and 58/58 database tests passed | No new RED was warranted: the committed test already exercises the requested behavior | Existing migration/model behavior remained green | Fresh real-MySQL execution proved two historical `NULL` slots are permitted, a second active slot is rejected, deleting the user cascades token deletion, and migration down drops token storage before `email_verified_at` | No refactor required; no source changed |
+
+### Verification evidence
+
+- `pnpm --filter backend test:integration -- --runInBand backend/src/database` — passed (1 suite, 8 tests).
+- `pnpm --filter backend test -- --runInBand backend/src/database` — passed (17 suites, 58 tests).
+- The real-MySQL case `creates digest-only storage with real authority, index, and cascade constraints` inserts one active row, rejects a duplicate active row, permits two `active_slot = NULL` historical rows, and confirms cascade deletion.
+- The real-MySQL case `down four times removes email-confirmation dependencies before restoring the baseline shape` proves the token table is removed before `User.email_verified_at` and subsequently validates rollback of the existing dependent migration order.
+
+### Files changed
+
+- `openspec/changes/email-confirmation-vertical-slice/tasks.md`
+- `openspec/changes/email-confirmation-vertical-slice/apply-progress.md`
+
+### Scope, workload, and next boundary
+
+- Work-unit boundary: `persistence-triangulate`, stacked-to-main slice 1. No production or test source was changed because the required cases were already present and freshly passed.
+- Authored diff for this work unit is 41 changed lines (40 additions, 1 deletion), entirely OpenSpec task/progress evidence; it is within the 400-line review budget.
+- Deviation: none. Existing proof also checks the ordered rollback against the baseline/order/refresh-token migration sequence, providing stronger down-safety evidence than a duplicated unit-only assertion.
+- Next implementation task is ready: `- [ ] **REFACTOR — keep migration/model files below 250 source lines** and make entity mapping internal-only; confirm no public DTO gains \`emailVerifiedAt\`. Run \`pnpm --filter backend test -- --runInBand backend/src/database backend/src/application/**tests**/DomainEntities.test.ts\`. <!-- sdd-owner: implementation -->`
+
+### Status consumed
+
+- `applyState: ready`; `nextRecommended: sdd-apply`; `actionContext.mode: repo-local`; allowed root: `/home/ginopc/Desarrollo/Mundo-3D`.
+- Delivery path: resolved `stacked-to-main`; current bounded work unit: `persistence-triangulate`; native review budget: 400 changed lines.
+- Pre-existing tracked and untracked worktree changes were preserved; no commit, stage, reset, stash, push, or unrelated edit occurred.
+
+## Slice 1 — persistence-refactor
+
+**Status:** completed without production or test-source changes. The committed migration/model/entity structure already meets the file-size and internal-mapping constraints, so duplicating approval tests or extracting code would not improve the implementation.
+
+### Completed task and persisted checkbox
+
+- [x] **REFACTOR — keep migration/model files below 250 source lines** and make entity mapping internal-only; confirm no public DTO gains `emailVerifiedAt`. Run `pnpm --filter backend test -- --runInBand backend/src/database backend/src/application/__tests__/DomainEntities.test.ts`. <!-- sdd-owner: implementation -->
+
+### Structural proof
+
+- Individual production file line counts: migration `139`; `models/User.js` `87`; `models/EmailConfirmationToken.js` `55`; `models/index.js` `84`; `models/db.d.ts` `151`; domain `User.ts` `13`; domain `EmailConfirmationToken.ts` `12`. Every file is below the 250-source-line limit.
+- `emailVerifiedAt` exists only in the internal Sequelize `User` mapping, database typing, and domain `User` entity. `EmailConfirmationToken` is a separate internal digest-only entity.
+- Public inspection: `backend/src/application/dtos/UserDTO.ts` has only `idUser`, `firstName`, `lastName`, `email`, `image`, `idRole`, and `category`; the cookie-session `UserAuthDto` has the same public shape. CodeGraph traced the DTO callers and found no `emailVerifiedAt` exposure path.
+- No routes, sessions, login, cart, checkout, roles, migrations, DTOs, or production mappings changed in this work unit.
+
+### TDD Cycle Evidence
+
+| Task                               | Test file                                                                             | Layer                 | Safety net                      | RED                                                                                       | GREEN                            | TRIANGULATE                                                                                                           | REFACTOR                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------------- | --------------------- | ------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Persistence mapping refactor proof | `backend/src/database/**`, `backend/src/application/__tests__/DomainEntities.test.ts` | Unit/model regression | `18` suites / `75` tests passed | No new RED: this bounded refactor found no missing behavior or concrete structural defect | Existing mappings remained green | Existing model/entity tests cover nullable mapping, digest-only token fields, associations, and internal entity state | No production refactor warranted; line-count and DTO-boundary inspection passed |
+
+### Verification evidence
+
+- `pnpm --filter backend test -- --runInBand backend/src/database backend/src/application/__tests__/DomainEntities.test.ts` — passed (18 suites, 75 tests).
+- `git diff --check` — passed before the OpenSpec artifact updates.
+
+### Files changed
+
+- `openspec/changes/email-confirmation-vertical-slice/tasks.md`
+- `openspec/changes/email-confirmation-vertical-slice/apply-progress.md`
+
+### Scope, workload, and next boundary
+
+- Work-unit boundary: `persistence-refactor`, stacked-to-main slice 1. This work unit authored 46 OpenSpec artifact lines (44 progress additions plus one checkbox replacement: one addition and one deletion); no production or test-source lines changed, so the work unit remains well below the 400-line budget. The worktree's cumulative OpenSpec diff is 87 lines because prior slice evidence was already uncommitted.
+- Deviation: none. A no-source-change refactor proof is intentional because all inspected files already satisfy the required structure and behavior.
+- The next domain/security RED task is ready (see `tasks.md`): write unit tests for trim/lowercase normalization, 32-byte CSPRNG base64url token output, SHA-256 lowercase-hex digest, a clock-controlled exact 24-hour expiry, approved non-secret record-id idempotency keys, trusted-origin URL acceptance/rejection, and unchanged DTO serialization. Tests exercise the deployment-owned `PUBLIC_APP_URL` parser through the origin port. Run `pnpm --filter backend test -- --runInBand backend/src/domain backend/src/infrastructure/security backend/src/infrastructure/config`. <!-- sdd-owner: implementation -->
+- Remaining unchecked implementation tasks: 32; parent lifecycle tasks remain deferred and unchecked.
+
+### Status consumed
+
+- `applyState: ready`; `nextRecommended: sdd-apply`; `actionContext.mode: repo-local`; allowed root: `/home/ginopc/Desarrollo/Mundo-3D`.
+- Delivery path: resolved `stacked-to-main`; bounded work unit: `persistence-refactor`; native review budget: 400 changed lines.
+- Pre-existing tracked and untracked worktree changes were preserved; no commit, stage, reset, stash, push, or unrelated edit occurred.
+
+## Slice 1 — domain-security-red
+
+**Status:** completed RED-only work unit. Production primitives remain intentionally unimplemented for the next GREEN work unit.
+
+### Completed task and persisted checkbox
+
+- [x] **RED — write unit tests** for trim/lowercase normalization, 32-byte CSPRNG base64url token output, SHA-256 lowercase-hex digest, a clock-controlled exact 24-hour expiry, approved non-secret record-id idempotency keys, trusted-origin URL acceptance/rejection, and unchanged DTO serialization. Tests exercise the deployment-owned `PUBLIC_APP_URL` parser through the origin port. <!-- sdd-owner: implementation -->
+
+### TDD Cycle Evidence
+
+| Task                       | Test files                                                                                                                                                                | Layer | Safety net                                    | RED                                                                                                                                | GREEN                                 | TRIANGULATE                                                                              | REFACTOR                             |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------ |
+| Domain/security primitives | `NormalizedEmail.test.ts`, `EmailConfirmationToken.test.ts`, `CryptoConfirmationTokenGenerator.test.ts`, `emailConfirmationConfig.test.ts`, `RegisterUserUseCase.test.ts` | Unit  | Focused baseline: 10 suites / 81 tests passed | Focused command: 4 suites failed as expected; missing normalization, CSPRNG, and config modules plus missing pending-token methods | Deferred: RED-only assigned work unit | Multiple normalization, origin, and token-shape cases written before any production code | Deferred: no production code changed |
+
+### Verification evidence
+
+- Baseline: `pnpm --filter backend test -- --runInBand backend/src/domain backend/src/infrastructure/security backend/src/infrastructure/config` — passed (10 suites, 81 tests).
+- RED: same focused command — failed as expected (4 suites failed, 10 passed; 2 failing assertions, 81 passing tests). The failures are `Cannot find module '../NormalizedEmail'`, `Cannot find module '../CryptoConfirmationTokenGenerator'`, `Cannot find module '../emailConfirmationConfig'`, and absent `EmailConfirmationToken.createPending` / `deliveryIdempotencyKey` methods.
+- DTO regression: `pnpm --filter backend test -- --runInBand backend/src/application/__tests__/RegisterUserUseCase.test.ts` — passed (1 suite, 6 tests), including an internally verified user whose registration DTO has no verification field.
+
+### Files changed
+
+- `backend/src/domain/entities/__tests__/NormalizedEmail.test.ts`
+- `backend/src/domain/entities/__tests__/EmailConfirmationToken.test.ts`
+- `backend/src/infrastructure/security/__tests__/CryptoConfirmationTokenGenerator.test.ts`
+- `backend/src/infrastructure/config/__tests__/emailConfirmationConfig.test.ts`
+- `backend/src/application/__tests__/RegisterUserUseCase.test.ts`
+- `openspec/changes/email-confirmation-vertical-slice/tasks.md`
+- `openspec/changes/email-confirmation-vertical-slice/apply-progress.md`
+
+### Scope, workload, and next boundary
+
+- Work-unit boundary: `domain-security-red`, stacked-to-main slice 1. Estimated authored diff: 185 changed lines, within the 400-line review budget. No production primitive, issuance, confirmation, registration wiring, resend, SMTP, route, frontend, or E2E code changed.
+- Deviation: `EmailConfirmationToken` owns the RED timing and record-id identity contract in the tests, keeping calculation and key formation out of infrastructure and preventing email/token/URL material from becoming a delivery key.
+- The domain/security GREEN task is ready: `- [ ] **GREEN — add domain entities, exceptions, and ports plus crypto/config adapters** with no infrastructure imports from domain; origin validation rejects credentials/query/fragment/non-root paths and requires HTTPS outside localhost demo. Run the focused backend command. <!-- sdd-owner: implementation -->`
+- Other implementation tasks remain unchecked in `tasks.md`; parent lifecycle rows remain deferred and unchecked.
+
+### Status consumed
+
+- `applyState: ready`; `nextRecommended: sdd-apply`; `actionContext.mode: repo-local`; allowed root: `/home/ginopc/Desarrollo/Mundo-3D`.
+- Delivery path: resolved `stacked-to-main`; bounded work unit: `domain-security-red`; native review budget: 400 changed lines.
+- RED compiler diagnostics are intentional missing-production evidence and must not be resolved until the assigned GREEN work unit. No commit, stage, reset, stash, push, or unrelated edit occurred.
+
+## Slice 1 — domain-security-green
+
+**Status:** blocked during the GREEN verification gate by a pre-existing SHA-256 test-vector mismatch. The new domain/config/CSPRNG production primitives compile and their tests pass, but the focused command cannot be declared green while the unchanged SHA-256 adapter returns the standard digest that differs from the RED assertion.
+
+### TDD Cycle Evidence
+
+| Task                  | Test files                                                                                                                                 | Layer | RED                                                    | GREEN                                                                         | TRIANGULATE                   | REFACTOR    |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----- | ------------------------------------------------------ | ----------------------------------------------------------------------------- | ----------------------------- | ----------- |
+| Domain/security GREEN | `NormalizedEmail.test.ts`, `EmailConfirmationToken.test.ts`, `CryptoConfirmationTokenGenerator.test.ts`, `emailConfirmationConfig.test.ts` | Unit  | Completed in preceding `domain-security-red` work unit | Blocked: 13 suites / 93 tests passed, but the SHA-256 vector assertion failed | Deferred to next ordered task | Not started |
+
+### Verification evidence
+
+- `pnpm --filter backend test -- --runInBand backend/src/domain backend/src/infrastructure/security backend/src/infrastructure/config` — failed: 13 suites and 93 tests passed; one SHA-256 assertion failed.
+- The unchanged `Sha256TokenHasher` returns `23a0f8a5d44eb66f9f082c737258aaf003ccf023127f695078f39fd7f57cd2e6` for the exact test input `confirmation-token`, the standard SHA-256 digest. The RED assertion expects `4a1958834191a18850db70dc8ee2aa97cf7f49e2e672e868e3a30d6ed7aa6f7d`, which does not match that input's SHA-256 digest.
+
+### Files changed
+
+- `backend/src/domain/entities/NormalizedEmail.ts`
+- `backend/src/domain/entities/EmailConfirmationToken.ts`
+- `backend/src/domain/ports/TokenGeneratorPort.ts`
+- `backend/src/domain/ports/ConfirmationTokenGeneratorPort.ts`
+- `backend/src/domain/ports/PublicOriginPort.ts`
+- `backend/src/domain/ports/ClockPort.ts`
+- `backend/src/domain/ports/EmailConfirmationIssuerPort.ts`
+- `backend/src/domain/ports/EmailConfirmationRateLimitPort.ts`
+- `backend/src/domain/exceptions/InvalidEmailConfirmationToken.ts`
+- `backend/src/infrastructure/security/CryptoConfirmationTokenGenerator.ts`
+- `backend/src/infrastructure/config/emailConfirmationConfig.ts`
+- `openspec/changes/email-confirmation-vertical-slice/apply-progress.md`
+
+### Blocker and next boundary
+
+- The assigned GREEN checkbox remains unchecked because the required focused command is not green.
+- The SHA-256 adapter is shared with existing token flows. Altering its standards-compliant digest output merely to satisfy the incorrect vector would violate the task's SHA-256 requirement and risk existing authentication behavior; changing the RED assertion would require explicit correction authorization because the task forbids hiding or weakening failures.
+- The next domain/security TRIANGULATE task is not ready until the SHA-256 expected vector is resolved and the GREEN task can be completed.
+- No routes, controllers, repositories, migrations, session/auth code, registration wiring, SMTP, frontend, or E2E code was changed. No commit, stage, reset, stash, push, or PR action occurred.
+
+### GREEN resolution
+
+- The parent corrected the RED assertion to the standard SHA-256 vector for `confirmation-token`: `23a0f8a5d44eb66f9f082c737258aaf003ccf023127f695078f39fd7f57cd2e6`.
+- `pnpm --filter backend test -- --runInBand backend/src/domain backend/src/infrastructure/security backend/src/infrastructure/config` passed: 14 suites / 94 tests.
+- The domain/security GREEN task is now complete and its persisted checkbox was updated to `[x]`.
+- Deviation: the initial RED SHA-256 expected value was corrected to the standard digest; production hashing behavior was not changed.
+- The next ordered domain/security TRIANGULATE task is ready, but no TRIANGULATE work was started in this unit.
+
+## Slice 1 — domain-security-triangulate
+
+**Status:** completed with adversarial regression coverage; no production defect was demonstrated, so no source fix was needed.
+
+### Completed task and persisted checkbox
+
+- [x] **TRIANGULATE — test adversarial inputs**: malformed origins, encoded tokens, different clock values, token collision retry behavior if supported by repository contract, and proof that token/email/URL material is absent from observable DTOs and idempotency keys. <!-- sdd-owner: implementation -->
+
+### TDD Cycle Evidence
+
+| Task                                   | Test files                                                                                         | Layer | Safety net                  | RED                                      | GREEN                                      | TRIANGULATE                                                                                                                                               | REFACTOR                                       |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------- | ----- | --------------------------- | ---------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Domain/security adversarial boundaries | `EmailConfirmationToken.test.ts`, `emailConfirmationConfig.test.ts`, `RegisterUserUseCase.test.ts` | Unit  | 14 suites / 94 tests passed | Completed by the preceding RED work unit | Completed by the preceding GREEN work unit | Added encoded-token URL, malformed-origin, leap-day clock, secret-safe token-state/idempotency, and DTO-boundary assertions; 14 suites / 100 tests passed | No refactor or production change was warranted |
+
+### Verification evidence
+
+- Baseline: `pnpm --filter backend test -- --runInBand backend/src/domain backend/src/infrastructure/security backend/src/infrastructure/config` — passed (14 suites, 94 tests).
+- `pnpm --filter backend test -- --runInBand backend/src/domain backend/src/infrastructure/security backend/src/infrastructure/config` — passed (14 suites, 100 tests).
+- `pnpm --filter backend test -- --runInBand backend/src/application/__tests__/RegisterUserUseCase.test.ts` — passed (1 suite, 6 tests).
+- `pnpm --filter backend test -- --runInBand backend/src/architecture` — passed (1 suite, 43 tests).
+- `git diff --check` — passed.
+
+### Adversarial coverage and deferral
+
+- `PUBLIC_APP_URL` rejects non-absolute, FTP, encoded non-root-path, and deceptive `localhost`-lookalike values; production HTTPS and local HTTP localhost behavior remain unchanged.
+- URL construction encodes reserved token characters through `URLSearchParams`; token plaintext is not stored in the token entity, delivery idempotency key, or registration DTO output.
+- Pending-token expiry remains exactly 24 hours for a normal timestamp and a leap-day boundary.
+- Collision retry is explicitly deferred: no token repository or issuer collision-retry port contract exists in this bounded domain/security slice, so none was invented.
+
+### Files changed
+
+- `backend/src/application/__tests__/RegisterUserUseCase.test.ts`
+- `backend/src/domain/entities/__tests__/EmailConfirmationToken.test.ts`
+- `backend/src/infrastructure/config/__tests__/emailConfirmationConfig.test.ts`
+- `openspec/changes/email-confirmation-vertical-slice/tasks.md`
+- `openspec/changes/email-confirmation-vertical-slice/apply-progress.md`
+
+### Scope, workload, and next boundary
+
+- Work-unit boundary: `domain-security-triangulate`, stacked-to-main slice 1. No production source, repository, issuance, confirmation, registration wiring, SMTP, route, frontend, or E2E code changed.
+- Estimated authored diff: approximately 85 changed lines, including regression assertions and OpenSpec evidence; it remains below the 400-line budget.
+- Deviation: the existing public registration DTO intentionally retains its pre-existing `email` field. The new boundary assertion proves it adds no confirmation token, digest, URL, or verification-state material; delivery idempotency remains record-id-only.
+- The domain/security REFACTOR task is ready: `- [ ] **REFACTOR — split contracts/adapters by responsibility** and update architecture-boundary tests if new allowed ports require explicit recognition. Run \`pnpm --filter backend test -- --runInBand backend/src/architecture backend/src/domain backend/src/infrastructure/security\`. <!-- sdd-owner: implementation -->`
+- Remaining implementation tasks include the exact unchecked REFACTOR line above; later task groups remain intentionally unchecked.
+
+### Status consumed
+
+- `applyState: ready`; `nextRecommended: apply`; `actionContext.mode: repo-local`; allowed root: `/home/ginopc/Desarrollo/Mundo-3D`.
+- Delivery path: resolved `stacked-to-main`; current bounded work unit: `domain-security-triangulate`; native review budget: 400 changed lines.
+- Existing tracked and untracked worktree files outside the allowed work-unit scope were preserved. No acquire, settle, commit, stage, reset, stash, push, or PR action occurred.
+
+## Slice 1 — domain-security-refactor
+
+**Status:** completed with a no-source-change refactor proof. The existing discrete domain contracts and infrastructure adapters already have one responsibility each, and the architecture checker explicitly permits all `domain/{entities,ports,exceptions}` contracts. No new architecture exception or duplicate test is necessary.
+
+### Completed task and persisted checkbox
+
+- [x] **REFACTOR — split contracts/adapters by responsibility** and update architecture-boundary tests if new allowed ports require explicit recognition. <!-- sdd-owner: implementation -->
+
+### Structural and boundary proof
+
+- `NormalizedEmail` owns pure normalization; `EmailConfirmationToken` owns expiry and non-secret delivery identity; `InvalidEmailConfirmationToken` is the isolated domain outcome.
+- Each confirmation port is isolated in its own file. `ConfirmationTokenGeneratorPort` narrows the generic `TokenGeneratorPort`; clock, trusted origin, issuer, and rate-limit seams remain independent.
+- `CryptoConfirmationTokenGenerator` adapts Node crypto only; `Sha256TokenHasher` remains the separate digest adapter; `emailConfirmationConfig` owns only trusted-origin parsing. Domain files import neither infrastructure nor Node I/O.
+- The architecture engine's `isDomainContract` allowlist already explicitly recognizes every file under `backend/src/domain/entities`, `ports`, and `exceptions`; its focused suite passed, so no boundary-test change was warranted.
+- Production source line counts are all below 250: `NormalizedEmail` 7, `EmailConfirmationToken` 41, exception 7, individual ports 3–4, crypto generator 8, SHA-256 adapter 8, origin config 47, and architecture engine 79.
+
+### TDD Cycle Evidence
+
+| Task                       | RED                              | GREEN                            | TRIANGULATE                     | REFACTOR                                                                                                                          |
+| -------------------------- | -------------------------------- | -------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Domain/security primitives | Completed in prior bounded units | Completed in prior bounded units | Completed in prior bounded unit | Fresh architecture/domain/security regression passed; existing split has no structural defect, so no source extraction was added. |
+
+### Verification evidence
+
+- `pnpm --filter backend test -- --runInBand backend/src/architecture backend/src/domain backend/src/infrastructure/security` — passed (14 suites, 132 tests).
+- `git diff --check` — passed before and after the OpenSpec artifact updates.
+
+### Files changed
+
+- `openspec/changes/email-confirmation-vertical-slice/tasks.md`
+- `openspec/changes/email-confirmation-vertical-slice/apply-progress.md`
+
+### Scope, workload, and next boundary
+
+- Work-unit boundary: `domain-security-refactor`, stacked-to-main slice 1. No production or test source changed; no repository, issuance, confirmation, registration, SMTP, frontend, or E2E work began.
+- Authored work-unit estimate: 53 changed lines (OpenSpec evidence plus one checkbox replacement), below the 400-line review budget. The existing worktree contains unrelated and prior-slice changes that were not modified.
+- Deviation: none. A no-source-change proof is intentional because further splitting would create speculative abstractions and the existing architecture rule already recognizes the ports directory.
+- Next persistence/repository RED task is ready: `- [ ] **RED — add repository/use-case tests** for lock-user-first replacement, invalidate-and-insert as one transaction, no mail before token commit, no token/mail on persistence failure, one active token under concurrent replacements, and post-commit mail failure retaining the usable token. Run \`pnpm --filter backend test:integration -- --runInBand backend/src/infrastructure/repositories\` plus focused application tests. <!-- sdd-owner: implementation -->`
+- Remaining unchecked implementation tasks are the exact unchecked rows beginning with that persistence/repository RED task in `tasks.md`; parent lifecycle rows remain deferred and unchanged.
+
+### Status consumed
+
+- `applyState: ready`; `nextRecommended: apply`; `actionContext.mode: repo-local`; allowed root: `/home/ginopc/Desarrollo/Mundo-3D`.
+- Delivery path: resolved `stacked-to-main`; bounded work unit: `domain-security-refactor`; native review budget: 400 changed lines.
+- No acquire, settle, commit, stage, reset, stash, push, or PR action occurred.
