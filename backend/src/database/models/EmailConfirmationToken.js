@@ -50,6 +50,13 @@ module.exports = (sequelize) => {
     {
       tableName: 'EmailConfirmationToken',
       timestamps: false,
+      indexes: [
+        {
+          name: 'uq_email_confirmation_token_user_active_slot',
+          unique: true,
+          fields: ['id_user', 'active_slot'],
+        },
+      ],
     },
   );
 };

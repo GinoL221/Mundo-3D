@@ -132,4 +132,55 @@ describe('SequelizeEmailConfirmationTokenRepository — real MySQL replacement',
     expect(attempts.filter((result) => result.status === 'rejected')).toHaveLength(1);
     expect(await activeRows(userId)).toHaveLength(1);
   });
+
+  it('rolls back partial confirmation and serializes a stale confirm behind its resend replacement', async () => {
+    const staleHash = `confirm-stale-${crypto.randomUUID()}`;
+    await db.EmailConfirmationToken.update(
+      { activeSlot: null, invalidatedAt: new Date() },
+      { where: { idUser: userId, activeSlot: 1 } },
+    );
+    await db.EmailConfirmationToken.create({
+      idUser: userId,
+      tokenHash: staleHash,
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 86400000),
+      activeSlot: 1,
+    });
+    const confirm = (repository as any).verifyAndConsume;
+
+    await expect(
+      db.sequelize.transaction(async (transaction: Transaction) => {
+        await confirm.call(repository, {
+          userId,
+          tokenHash: staleHash,
+          now: new Date(),
+          tx: asTx(transaction),
+        });
+        throw new Error('forced confirmation rollback');
+      }),
+    ).rejects.toThrow('forced confirmation rollback');
+    expect((await db.User.findByPk(userId))?.emailVerifiedAt).toBeNull();
+    expect(
+      (await db.EmailConfirmationToken.findOne({ where: { tokenHash: staleHash } }))?.consumedAt,
+    ).toBeNull();
+
+    await db.sequelize.transaction((transaction: Transaction) =>
+      repository.replaceForUnverifiedUser({
+        userId,
+        tokenHash: `resend-${crypto.randomUUID()}`,
+        now: new Date(),
+        tx: asTx(transaction),
+      }),
+    );
+    await expect(
+      db.sequelize.transaction((transaction: Transaction) =>
+        confirm.call(repository, {
+          userId,
+          tokenHash: staleHash,
+          now: new Date(),
+          tx: asTx(transaction),
+        }),
+      ),
+    ).resolves.toEqual({ outcome: 'invalid' });
+  });
 });
