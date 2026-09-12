@@ -1,0 +1,17 @@
+---
+import Layout from '../layouts/Layout.astro';
+import EmailConfirmationForm from '../domains/auth/components/EmailConfirmationForm.astro';
+---
+
+<Layout title="Confirmá tu correo - Mundo 3D">
+  <main class="auth-page email-confirmation-page">
+    <header class="auth-page__header">
+      <h1>Confirmá tu correo electrónico</h1>
+      <p>Este paso se completa solo cuando elegís confirmarlo.</p>
+    </header>
+
+    <div class="auth-page__body">
+      <EmailConfirmationForm />
+    </div>
+  </main>
+</Layout>
