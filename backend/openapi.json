@@ -664,6 +664,89 @@
         }
       }
     },
+    "/users/email-confirmation/confirm": {
+      "post": {
+        "summary": "Confirm an email address with an opaque token",
+        "description": "Unauthenticated. The token is accepted only in the JSON request body.",
+        "tags": [
+          "Users"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Confirmation completed or was already completed."
+          },
+          "400": {
+            "description": "Invalid or expired confirmation token."
+          }
+        }
+      }
+    },
+    "/users/email-confirmation/resend": {
+      "post": {
+        "summary": "Request an email confirmation resend",
+        "description": "Unauthenticated. Syntactically valid requests receive the same acceptance response without disclosing account eligibility, send status, or rate-limit outcome. Local rate limiting is single-process only.",
+        "tags": [
+          "Users"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted without disclosing account eligibility, send status, or rate-limit outcome.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/logout": {
       "post": {
         "summary": "Clear session cookies and revoke the refresh token family",
