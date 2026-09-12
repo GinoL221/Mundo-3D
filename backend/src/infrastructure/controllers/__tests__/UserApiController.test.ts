@@ -132,6 +132,7 @@ describe('UserApiController', () => {
         image: 'https://pub-test.r2.dev/users/uuid-1.png',
       });
       expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith({ user: mockUserDto });
 
       const cookieNames = (res.cookie as jest.Mock).mock.calls.map((call) => call[0]);
       expect(cookieNames).toEqual(
