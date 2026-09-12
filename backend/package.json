@@ -41,7 +41,7 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.3.0",
     "mysql2": "^3.9.7",
-    "nodemailer": "^7.0.13",
+    "nodemailer": "^9.1.1",
     "pino": "10.3.1",
     "sequelize": "^6.37.3",
     "umzug": "^3.8.3",
