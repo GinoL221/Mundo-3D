@@ -29,10 +29,6 @@ module.exports = tseslint.config(
           message: "Use the structured logger (pino) instead of console.log in production code paths.",
         },
       ],
-      "max-lines": [
-        "error",
-        { max: 250, skipBlankLines: false, skipComments: false },
-      ],
     },
   },
   {
@@ -76,7 +72,6 @@ module.exports = tseslint.config(
       "@typescript-eslint/no-require-imports": "off",
       "@typescript-eslint/no-unused-vars": "off",
       "no-unused-vars": "off",
-      "max-lines": "off",
     },
   },
   eslintConfigPrettier
