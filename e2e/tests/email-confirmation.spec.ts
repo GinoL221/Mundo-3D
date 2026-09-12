@@ -47,8 +47,12 @@ async function registerUnverifiedUser(page: Page) {
 
 async function waitForLoginHandler(page: Page): Promise<void> {
   await page.locator('#login-form').evaluate(async (form: HTMLFormElement) => {
+    const emailInput = form.querySelector<HTMLInputElement>('#email');
+    const passwordInput = form.querySelector<HTMLInputElement>('#password');
     const emailError = form.querySelector<HTMLElement>('#email-error');
     const passwordError = form.querySelector<HTMLElement>('#password-error');
+    if (emailInput) emailInput.value = '';
+    if (passwordInput) passwordInput.value = '';
     const preventNativeNavigation = (event: Event): void => event.preventDefault();
     form.addEventListener('submit', preventNativeNavigation, { capture: true });
     try {
