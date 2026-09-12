@@ -67,6 +67,9 @@ importers:
       mysql2:
         specifier: ^3.23.1
         version: 3.24.2(@types/node@25.9.2)
+      nodemailer:
+        specifier: ^7.0.13
+        version: 7.0.13
       pino:
         specifier: 10.3.1
         version: 10.3.1
@@ -98,6 +101,9 @@ importers:
       '@types/node':
         specifier: 25.9.2
         version: 25.9.2
+      '@types/nodemailer':
+        specifier: ^7.0.12
+        version: 7.0.12
       '@types/sequelize':
         specifier: 4.28.20
         version: 4.28.20
@@ -2350,6 +2356,12 @@ packages:
     resolution:
       {
         integrity: sha512-G05zqtJhcDLb8uslf5EjCxXg9G1KQxiV8OS0R26IC//Eoyitzqe8z37I7cqvnZlrlSfgocQRfSn/AHBZJJFyGw==,
+      }
+
+  '@types/nodemailer@7.0.12':
+    resolution:
+      {
+        integrity: sha512-80vKwiIsVSyFA1rRovH59jNPLBOuc6dRZIHEu40gXTkBkZnQv8vog1xSGEb9j5q/tdMAs5ivvDR2pLTU0hGHXA==,
       }
 
   '@types/qs@6.15.1':
@@ -5690,6 +5702,13 @@ packages:
         integrity: sha512-D9UOmYG3UH1V+ENW56t5QXBwJw1YEY18ruVeus89Rw+SyIgjPkCO84bRzO3uNIYosJbNwiabWVn48o3uJLjxFQ==,
       }
     engines: { node: '>=18' }
+
+  nodemailer@7.0.13:
+    resolution:
+      {
+        integrity: sha512-PNDFSJdP+KFgdsG3ZzMXCgquO7I6McjY2vlqILjtJd0hy8wEvtugS9xKRF2NWlPNGxvLCXlTNIae4serI7dinw==,
+      }
+    engines: { node: '>=6.0.0' }
 
   nodemon@3.1.14:
     resolution:
@@ -9148,6 +9167,10 @@ snapshots:
     dependencies:
       undici-types: 7.24.6
 
+  '@types/nodemailer@7.0.12':
+    dependencies:
+      '@types/node': 25.9.2
+
   '@types/qs@6.15.1': {}
 
   '@types/range-parser@1.2.7': {}
@@ -11313,6 +11336,8 @@ snapshots:
   node-mock-http@1.0.4: {}
 
   node-releases@2.0.53: {}
+
+  nodemailer@7.0.13: {}
 
   nodemon@3.1.14:
     dependencies:

@@ -29,10 +29,62 @@ describe('email confirmation public origin configuration', () => {
   });
 
   it('allows an HTTP localhost origin for the local demo only', () => {
-    const config = loadEmailConfirmationConfig({ PUBLIC_APP_URL: 'http://localhost:4321' });
+    const config = loadEmailConfirmationConfig({
+      PUBLIC_APP_URL: 'http://localhost:4321',
+      SMTP_HOST: 'localhost',
+      SMTP_PORT: '1025',
+      SMTP_SECURE: 'false',
+      SMTP_FROM: 'Mundo-3D <no-reply@example.test>',
+    });
 
     expect(config.publicOrigin.buildConfirmationUrl('opaque-token')).toBe(
       'http://localhost:4321/confirm-email?token=opaque-token',
     );
+  });
+
+  it('parses validated SMTP settings while keeping credentials optional for local Mailpit', () => {
+    const config = loadEmailConfirmationConfig({
+      PUBLIC_APP_URL: 'https://shop.example.com',
+      SMTP_HOST: 'mailpit',
+      SMTP_PORT: '1025',
+      SMTP_SECURE: 'false',
+      SMTP_FROM: 'Mundo-3D <no-reply@example.test>',
+    });
+
+    expect((config as { smtp?: unknown }).smtp).toEqual({
+      host: 'mailpit',
+      port: 1025,
+      secure: false,
+      user: undefined,
+      password: undefined,
+      from: 'Mundo-3D <no-reply@example.test>',
+    });
+  });
+
+  it.each([
+    { SMTP_HOST: '', SMTP_PORT: '1025', SMTP_SECURE: 'false', SMTP_FROM: 'no-reply@example.test' },
+    {
+      SMTP_HOST: 'mailpit',
+      SMTP_PORT: '0',
+      SMTP_SECURE: 'false',
+      SMTP_FROM: 'no-reply@example.test',
+    },
+    {
+      SMTP_HOST: 'mailpit',
+      SMTP_PORT: '1025.5',
+      SMTP_SECURE: 'false',
+      SMTP_FROM: 'no-reply@example.test',
+    },
+    {
+      SMTP_HOST: 'mailpit',
+      SMTP_PORT: '1025',
+      SMTP_SECURE: 'sometimes',
+      SMTP_FROM: 'no-reply@example.test',
+    },
+    { SMTP_HOST: 'mailpit', SMTP_PORT: '1025', SMTP_SECURE: 'false', SMTP_FROM: '' },
+  ])('rejects invalid required SMTP configuration: %o', (smtp) => {
+    expect(() =>
+      loadEmailConfirmationConfig({ PUBLIC_APP_URL: 'https://shop.example.com', ...smtp }),
+    ).toThrow();
   });
 });
