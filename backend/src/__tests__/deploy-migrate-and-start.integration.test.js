@@ -116,9 +116,12 @@ describe('deploy-migrate-and-start.integration: real migrate-then-start against 
     DB_NAME: 'mundo_3d_deploy_scratch',
     JWT_SECRET: 'integration-test-secret',
     COOKIE_SECRET: 'integration-test-cookie-secret',
+<<<<<<< HEAD
     // The spawned child intentionally uses NODE_ENV=production, whose real
     // composition fails closed unless the trusted origin and SMTP settings are
     // explicit. These are non-secret local Mailpit values, not provider creds.
+=======
+>>>>>>> test/email-confirmation-15-mailpit-e2e
     PUBLIC_APP_URL: 'http://localhost:4321',
     SMTP_HOST: '127.0.0.1',
     SMTP_PORT: '1025',
