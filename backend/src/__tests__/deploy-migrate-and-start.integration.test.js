@@ -117,6 +117,11 @@ describe('deploy-migrate-and-start.integration: real migrate-then-start against 
     DB_NAME: 'mundo_3d_migrate_scratch',
     JWT_SECRET: 'integration-test-secret',
     COOKIE_SECRET: 'integration-test-cookie-secret',
+    PUBLIC_APP_URL: 'http://localhost:4321',
+    SMTP_HOST: '127.0.0.1',
+    SMTP_PORT: '1025',
+    SMTP_SECURE: 'false',
+    SMTP_FROM: 'Mundo 3D <no-reply@mundo3d.test>',
   };
 
   beforeAll(async () => {
