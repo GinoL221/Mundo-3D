@@ -3,8 +3,16 @@ import path from 'path';
 import request from 'supertest';
 import { buildOpenApiSpec } from '../openapiSpec';
 
+// The real app-wiring test loads the route composition root, which validates
+// startup configuration. Keep those values local and non-secret to this test.
+process.env.PUBLIC_APP_URL = 'http://localhost:4321';
+process.env.SMTP_HOST = 'localhost';
+process.env.SMTP_PORT = '1025';
+process.env.SMTP_SECURE = 'false';
+process.env.SMTP_FROM = 'noreply@example.test';
+
 const { version } = JSON.parse(
-  fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', 'package.json'), 'utf-8')
+  fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', 'package.json'), 'utf-8'),
 ) as { version: string };
 
 interface OpenApiDocument {
@@ -58,6 +66,8 @@ const EXPECTED_ENDPOINTS: Array<[path: string, method: string]> = [
   ['/users/register', 'post'],
   ['/users/logout', 'post'],
   ['/users/refresh', 'post'],
+  ['/users/email-confirmation/confirm', 'post'],
+  ['/users/email-confirmation/resend', 'post'],
   ['/users', 'get'],
   ['/users/{id}', 'get'],
 ];
@@ -95,15 +105,59 @@ describe('buildOpenApiSpec', () => {
 
     it('covers exactly the endpoints mounted by the 6 route groups (no missing, no stale)', () => {
       const actual = Object.entries(spec.paths)
-        .flatMap(([path, methods]) => Object.keys(methods).map((method) => `${method.toUpperCase()} ${path}`))
+        .flatMap(([path, methods]) =>
+          Object.keys(methods).map((method) => `${method.toUpperCase()} ${path}`),
+        )
         .sort();
-      const expected = EXPECTED_ENDPOINTS.map(([path, method]) => `${method.toUpperCase()} ${path}`).sort();
+      const expected = EXPECTED_ENDPOINTS.map(
+        ([path, method]) => `${method.toUpperCase()} ${path}`,
+      ).sort();
       expect(actual).toEqual(expected);
     });
 
+    it('documents token confirmation and the non-enumerating resend contract', () => {
+      const confirmation = spec.paths['/users/email-confirmation/confirm'].post as {
+        requestBody: { content: { 'application/json': { schema: unknown } } };
+        responses: Record<string, unknown>;
+      };
+      const resend = spec.paths['/users/email-confirmation/resend'].post as {
+        requestBody: { content: { 'application/json': { schema: unknown } } };
+        responses: Record<string, unknown>;
+      };
+      const resendAcceptance = {
+        description:
+          'Accepted without disclosing account eligibility, send status, or rate-limit outcome.',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: { message: { type: 'string' } },
+              required: ['message'],
+            },
+          },
+        },
+      };
+
+      expect(confirmation.requestBody.content['application/json'].schema).toEqual({
+        type: 'object',
+        properties: { token: { type: 'string' } },
+        required: ['token'],
+      });
+      expect(confirmation.responses).toEqual({
+        '204': { description: 'Confirmation completed or was already completed.' },
+        '400': { description: 'Invalid or expired confirmation token.' },
+      });
+      expect(resend.requestBody.content['application/json'].schema).toEqual({
+        type: 'object',
+        properties: { email: { type: 'string', format: 'email' } },
+        required: ['email'],
+      });
+      expect(resend.responses).toEqual({ '202': resendAcceptance });
+    });
+
     it('every operation declares at least one response', () => {
-      for (const [path, methods] of Object.entries(spec.paths)) {
-        for (const [method, operation] of Object.entries(methods)) {
+      for (const [, methods] of Object.entries(spec.paths)) {
+        for (const [, operation] of Object.entries(methods)) {
           const responses = (operation as { responses?: Record<string, unknown> }).responses;
           expect(Object.keys(responses ?? {}).length).toBeGreaterThan(0);
         }
@@ -114,17 +168,32 @@ describe('buildOpenApiSpec', () => {
       const { schemas } = spec.components;
       expect(Object.keys(schemas)).toEqual(
         expect.arrayContaining([
-          'Order', 'OrderItem', 'Product', 'Category', 'Franchise', 'User', 'CartResult', 'ShoppingCartLine',
-        ])
+          'Order',
+          'OrderItem',
+          'Product',
+          'Category',
+          'Franchise',
+          'User',
+          'CartResult',
+          'ShoppingCartLine',
+        ]),
       );
 
       // OrderDTO.ts / OrderItemDTO — the DTOs this change was explicitly
       // required to mirror.
       expect(Object.keys((schemas.Order as { properties: object }).properties).sort()).toEqual(
-        ['idOrder', 'idUser', 'status', 'items', 'totalAmount', 'createdAt', 'paymentReference'].sort()
+        [
+          'idOrder',
+          'idUser',
+          'status',
+          'items',
+          'totalAmount',
+          'createdAt',
+          'paymentReference',
+        ].sort(),
       );
       expect(Object.keys((schemas.OrderItem as { properties: object }).properties).sort()).toEqual(
-        ['idOrderItem', 'idProduct', 'productName', 'quantity', 'unitPrice', 'subtotal'].sort()
+        ['idOrderItem', 'idProduct', 'productName', 'quantity', 'unitPrice', 'subtotal'].sort(),
       );
     });
   });
@@ -140,16 +209,20 @@ describe('buildOpenApiSpec', () => {
 const APP_BOOT_TIMEOUT_MS = 20_000;
 
 describe('GET /api/openapi.json (real app wiring)', () => {
-  it('serves the committed backend/openapi.json artifact unchanged, unauthenticated, through the actual app.js mount point', async () => {
-    const fullApp = require('../../../app');
-    const committedArtifact = JSON.parse(
-      fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', 'openapi.json'), 'utf-8')
-    ) as OpenApiDocument;
+  it(
+    'serves the committed backend/openapi.json artifact unchanged, unauthenticated, through the actual app.js mount point',
+    async () => {
+      const fullApp = require('../../../app');
+      const committedArtifact = JSON.parse(
+        fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', 'openapi.json'), 'utf-8'),
+      ) as OpenApiDocument;
 
-    // Unauthenticated: no cookie/header sent at all.
-    const res = await request(fullApp).get('/api/openapi.json');
+      // Unauthenticated: no cookie/header sent at all.
+      const res = await request(fullApp).get('/api/openapi.json');
 
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual(committedArtifact);
-  }, APP_BOOT_TIMEOUT_MS);
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(committedArtifact);
+    },
+    APP_BOOT_TIMEOUT_MS,
+  );
 });
