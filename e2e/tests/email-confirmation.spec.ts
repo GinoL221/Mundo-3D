@@ -45,27 +45,6 @@ async function registerUnverifiedUser(page: Page) {
   return { email, password };
 }
 
-async function waitForLoginHandler(page: Page): Promise<void> {
-  await page.locator('#login-form').evaluate(async (form: HTMLFormElement) => {
-    form.reset();
-    const emailError = form.querySelector<HTMLElement>('#email-error');
-    const passwordError = form.querySelector<HTMLElement>('#password-error');
-    const preventNativeNavigation = (event: Event): void => event.preventDefault();
-    form.addEventListener('submit', preventNativeNavigation, { capture: true });
-    try {
-      while (
-        emailError?.textContent?.trim() !== 'Ingresá tu correo electrónico.' ||
-        passwordError?.textContent?.trim() !== 'Ingresá tu contraseña.'
-      ) {
-        form.requestSubmit();
-        await new Promise((resolve) => setTimeout(resolve, 50));
-      }
-    } finally {
-      form.removeEventListener('submit', preventNativeNavigation, { capture: true });
-    }
-  });
-}
-
 test.describe('email confirmation', () => {
   test.beforeEach(async () => {
     await clearMailpit();
@@ -207,7 +186,7 @@ test.describe('email confirmation', () => {
     await expect(page.locator('#navbar-user-menu')).toBeVisible();
     await page.locator('#navbar-logout').click();
     await expect(page).toHaveURL('/login');
-    await waitForLoginHandler(page);
+    await page.reload();
     await page.fill('#email', email);
     await page.fill('#password', password);
     await page.click('#login-btn');
