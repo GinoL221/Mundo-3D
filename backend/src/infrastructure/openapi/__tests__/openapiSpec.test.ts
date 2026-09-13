@@ -3,6 +3,12 @@ import path from 'path';
 import request from 'supertest';
 import { buildOpenApiSpec } from '../openapiSpec';
 
+process.env.PUBLIC_APP_URL = 'http://localhost:4321';
+process.env.SMTP_HOST = 'localhost';
+process.env.SMTP_PORT = '1025';
+process.env.SMTP_SECURE = 'false';
+process.env.SMTP_FROM = 'noreply@example.test';
+
 const { version } = JSON.parse(
   fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', 'package.json'), 'utf-8')
 ) as { version: string };
@@ -58,6 +64,8 @@ const EXPECTED_ENDPOINTS: Array<[path: string, method: string]> = [
   ['/users/register', 'post'],
   ['/users/logout', 'post'],
   ['/users/refresh', 'post'],
+  ['/users/email-confirmation/confirm', 'post'],
+  ['/users/email-confirmation/resend', 'post'],
   ['/users', 'get'],
   ['/users/{id}', 'get'],
 ];
