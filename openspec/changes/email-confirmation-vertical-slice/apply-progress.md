@@ -108,3 +108,54 @@ The authored migration and unit test are 153 lines before progress evidence. Add
 - `applyState: ready`; `actionContext.mode: repo-local`; allowed root: `/home/ginopc/Desarrollo/Mundo-3D`.
 - Delivery path: `stacked-to-main`; current bounded work unit: `migration-integration`; native review budget: 400 changed lines.
 - Pre-existing tracked and untracked worktree changes were preserved; no commit, stage, reset, stash, push, or unrelated edit occurred.
+
+## Slice 1 — persistence-model
+
+**Status:** completed. The committed migration foundation is now represented by internal Sequelize and domain mappings without changing public DTOs or existing access/session behavior.
+
+### Completed task and persisted checkbox
+
+- [x] **GREEN — implement the additive migration and Sequelize mappings**: add nullable `User.emailVerifiedAt`/`email_verified_at`, create the digest-only token table with expiry/consumed/invalidated/active-slot timestamps and indexes, register association/types, and implement down as token table first then user column; record statement-attributed migration errors because MySQL DDL auto-commits. <!-- sdd-owner: implementation -->
+
+### TDD Cycle Evidence
+
+| Task                       | Test files                                                                                            | RED                                                                                                       | GREEN                                                                                                                                                          | TRIANGULATE                                                                                                                                        | REFACTOR                                                                                   |
+| -------------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Persistence-model mappings | `UserModel.test.js`, `EmailConfirmationTokenModel.test.js`, `index.test.js`, `DomainEntities.test.ts` | Focused command failed: missing token model; User field, association, and entity state assertions failed. | Added nullable User mapping, digest-only token model, registry/associations, declarations, and internal entities; focused command passed (4 suites, 22 tests). | Added token-entity state coverage and ran the full model/domain focus (10 suites, 30 tests) plus real-MySQL migration evidence (1 suite, 8 tests). | All new production files are below 250 lines; no DTO or application serialization changed. |
+
+### Verification evidence
+
+- `pnpm --filter backend test -- --runInBand backend/src/database/models/__tests__/UserModel.test.js backend/src/database/models/__tests__/EmailConfirmationTokenModel.test.js backend/src/database/models/__tests__/index.test.js backend/src/application/__tests__/DomainEntities.test.ts` — RED failed as expected (4 suites; missing model and mapping assertions).
+- Same focused command — GREEN passed (4 suites, 22 tests).
+- `pnpm --filter backend test:integration -- --runInBand backend/src/database` — passed (1 suite, 8 tests).
+- `pnpm --filter backend test -- --runInBand backend/src/database/models backend/src/application/__tests__/DomainEntities.test.ts` — passed (10 suites, 30 tests).
+- `git diff --check` — passed.
+
+### Files changed
+
+- `backend/src/database/models/User.js`
+- `backend/src/database/models/EmailConfirmationToken.js`
+- `backend/src/database/models/index.js`
+- `backend/src/database/models/db.d.ts`
+- `backend/src/database/models/__tests__/UserModel.test.js`
+- `backend/src/database/models/__tests__/EmailConfirmationTokenModel.test.js`
+- `backend/src/database/models/__tests__/index.test.js`
+- `backend/src/database/models/__tests__/index.production-connection.test.js`
+- `backend/src/domain/entities/User.ts`
+- `backend/src/domain/entities/EmailConfirmationToken.ts`
+- `backend/src/application/__tests__/DomainEntities.test.ts`
+- `openspec/changes/email-confirmation-vertical-slice/tasks.md`
+- `openspec/changes/email-confirmation-vertical-slice/apply-progress.md`
+
+### Scope, workload, and remaining tasks
+
+- Work-unit boundary: `persistence-model`, stacked-to-main slice 1. The migration from `e5f605f` was not changed; no DTO, route, controller, registration, SMTP, frontend, or access behavior changed.
+- Current work-unit estimate: 262 changed lines (260 additions, 2 deletions), including tests and OpenSpec evidence; below the 400-line review budget.
+- Deviation: none from the approved model/entity mapping design. The registry test mocks were extended only with Sequelize types used by the new model.
+- Remaining next implementation task: `- [ ] **TRIANGULATE — extend persistence cases** for multiple historical null active slots, duplicate active-slot rejection, cascade behavior, and down safety without changing existing user/session/login/checkout rows. Run \`pnpm --filter backend test:integration -- --runInBand backend/src/database\` and \`pnpm --filter backend test -- --runInBand backend/src/database\`. <!-- sdd-owner: implementation -->`
+
+### Status consumed
+
+- `applyState: ready`; `actionContext.mode: repo-local`; allowed root: `/home/ginopc/Desarrollo/Mundo-3D`.
+- Delivery path: resolved `stacked-to-main`; native review budget: 400 changed lines.
+- Pre-existing tracked and untracked worktree changes were preserved; no commit, stage, reset, stash, push, or unrelated edit occurred.

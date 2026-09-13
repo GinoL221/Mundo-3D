@@ -47,6 +47,12 @@ module.exports = (sequelize) => {
         defaultValue: 'User',
         field: 'category',
       },
+      emailVerifiedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null,
+        field: 'email_verified_at',
+      },
     },
     {
       tableName: 'User',

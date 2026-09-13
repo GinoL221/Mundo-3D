@@ -16,6 +16,10 @@ function initializeModels() {
   const CategoryModel = require('./Category')(sequelize, Sequelize.DataTypes);
   const FranchiseModel = require('./Franchise')(sequelize, Sequelize.DataTypes);
   const RememberTokenModel = require('./RememberToken')(sequelize, Sequelize.DataTypes);
+  const EmailConfirmationTokenModel = require('./EmailConfirmationToken')(
+    sequelize,
+    Sequelize.DataTypes,
+  );
   const OrderModel = require('./Order')(sequelize, Sequelize.DataTypes);
   const OrderItemModel = require('./OrderItem')(sequelize, Sequelize.DataTypes);
 
@@ -25,6 +29,7 @@ function initializeModels() {
   db['Category'] = CategoryModel;
   db['Franchise'] = FranchiseModel;
   db['RememberToken'] = RememberTokenModel;
+  db['EmailConfirmationToken'] = EmailConfirmationTokenModel;
   db['Order'] = OrderModel;
   db['OrderItem'] = OrderItemModel;
 
@@ -32,6 +37,8 @@ function initializeModels() {
   ShoppingCartModel.belongsTo(UserModel, { foreignKey: 'idUser' });
   UserModel.hasMany(RememberTokenModel, { foreignKey: 'idUser' });
   RememberTokenModel.belongsTo(UserModel, { foreignKey: 'idUser' });
+  UserModel.hasMany(EmailConfirmationTokenModel, { foreignKey: 'idUser' });
+  EmailConfirmationTokenModel.belongsTo(UserModel, { foreignKey: 'idUser' });
   ProductModel.hasMany(ShoppingCartModel, {
     foreignKey: 'idProduct',
     as: 'ShoppingCarts',
