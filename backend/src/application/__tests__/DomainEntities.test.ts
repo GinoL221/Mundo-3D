@@ -3,6 +3,7 @@ import { Category } from '../../domain/entities/Category';
 import { Franchise } from '../../domain/entities/Franchise';
 import { User } from '../../domain/entities/User';
 import { RememberToken } from '../../domain/entities/RememberToken';
+import { EmailConfirmationToken } from '../../domain/entities/EmailConfirmationToken';
 
 describe('Domain Entities', () => {
   it('should create a Category entity correctly', () => {
@@ -62,6 +63,50 @@ describe('Domain Entities', () => {
     expect(user.image).toBe('john.jpg');
     expect(user.idRole).toBe(2);
     expect(user.category).toBe('Admin');
+  });
+
+  it('keeps email verification state internal on the User entity', () => {
+    const verifiedAt = new Date('2026-09-02T00:00:00.000Z');
+    const user = new User(
+      1,
+      'John',
+      'Doe',
+      'john@example.com',
+      'hashedpassword',
+      'john.jpg',
+      2,
+      'Admin',
+      verifiedAt
+    );
+
+    expect(user.emailVerifiedAt).toBe(verifiedAt);
+    expect(Object.keys(user)).toContain('emailVerifiedAt');
+  });
+
+  it('maps the digest-only email confirmation token state internally', () => {
+    const expiresAt = new Date('2026-09-03T00:00:00.000Z');
+    const createdAt = new Date('2026-09-02T00:00:00.000Z');
+    const token = new EmailConfirmationToken(
+      9,
+      1,
+      'a'.repeat(64),
+      expiresAt,
+      null,
+      null,
+      1,
+      createdAt
+    );
+
+    expect(token).toMatchObject({
+      idEmailConfirmationToken: 9,
+      idUser: 1,
+      tokenHash: 'a'.repeat(64),
+      expiresAt,
+      consumedAt: null,
+      invalidatedAt: null,
+      activeSlot: 1,
+      createdAt,
+    });
   });
 
   it('should create a RememberToken entity correctly with camelCase properties', () => {

@@ -19,15 +19,14 @@ export default defineConfig({
       // are now gated on JEST_WORKER_ID so a misconfigured deploy can never
       // reach them. The values below are throwaway fixtures for this suite
       // only; the limits are raised rather than disabled because the suite
-      // logs in far more than the production defaults allow.
+      // logs in far more than the production defaults allow. A fresh backend
+      // is required for each run so its in-memory limiter state cannot leak
+      // into a repeated focused execution.
       //
       // EVERY limiter needs raising here, including any added later. The
-      // per-account one is the subtle case: it caps failed attempts per
-      // EMAIL, and `reuseExistingServer` keeps one backend alive across local
-      // runs, so a handful of runs inside its 15-minute window would exhaust
-      // the failed-login test's account. That test only asserts an error box
-      // appears — a 429 renders one just as a wrong password does, so it
-      // would keep passing while testing nothing at all.
+      // per-account limiter caps failed attempts per EMAIL; a fresh process
+      // keeps the failed-login assertion tied to its intended wrong-password
+      // path instead of a stale rate-limit response.
       env: {
         NODE_ENV: 'test',
         PORT: '3032',
@@ -37,8 +36,17 @@ export default defineConfig({
         LOGIN_LIMIT_MAX: '1000',
         REGISTER_LIMIT_MAX: '1000',
         ACCOUNT_LOGIN_LIMIT_MAX: '1000',
+        // Confirmation limits remain enabled in E2E; these raised test values
+        // document the intended isolated-run configuration for the RED contracts.
+        EMAIL_CONFIRMATION_ATTEMPT_LIMIT_MAX: '1000',
+        RESEND_CONFIRMATION_IP_LIMIT_MAX: '1000',
+        PUBLIC_APP_URL: 'http://localhost:4322',
+        SMTP_HOST: 'localhost',
+        SMTP_PORT: '1025',
+        SMTP_SECURE: 'false',
+        SMTP_FROM: 'noreply@example.test',
       },
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
     },
     {
       command: 'pnpm --filter frontend dev --port 4322 --ignore-lock',
@@ -47,13 +55,13 @@ export default defineConfig({
         PUBLIC_API_URL: 'http://localhost:3032',
         ASTRO_DEV_BACKGROUND: '0',
       },
-      reuseExistingServer: !process.env.CI,
-    }
+      reuseExistingServer: false,
+    },
   ],
   projects: [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-    }
-  ]
+    },
+  ],
 });

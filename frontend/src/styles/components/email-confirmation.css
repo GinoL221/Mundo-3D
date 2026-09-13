@@ -1,0 +1,43 @@
+.email-confirmation {
+  display: grid;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  border: 1px solid var(--sys-border);
+  background: var(--sys-surface);
+}
+
+.email-confirmation h2,
+.email-confirmation p {
+  margin: 0;
+}
+
+.email-confirmation > p {
+  color: var(--sys-text-muted);
+}
+
+.email-confirmation__form {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.email-confirmation__form--resend {
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--sys-border);
+}
+
+.email-confirmation__feedback {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--sys-action-bg);
+  color: var(--sys-text);
+}
+
+.email-confirmation__feedback:focus-visible {
+  outline: 2px solid var(--sys-focus);
+  outline-offset: 3px;
+}
+
+@media (max-width: 639px) {
+  .email-confirmation {
+    padding: var(--space-lg) var(--space-md);
+  }
+}
