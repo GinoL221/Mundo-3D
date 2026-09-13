@@ -3,6 +3,8 @@ import path from 'path';
 import request from 'supertest';
 import { buildOpenApiSpec } from '../openapiSpec';
 
+// The real app-wiring test loads the route composition root, which validates
+// startup configuration. Keep those values local and non-secret to this test.
 process.env.PUBLIC_APP_URL = 'http://localhost:4321';
 process.env.SMTP_HOST = 'localhost';
 process.env.SMTP_PORT = '1025';
@@ -109,9 +111,49 @@ describe('buildOpenApiSpec', () => {
       expect(actual).toEqual(expected);
     });
 
+    it('documents token confirmation and the non-enumerating resend contract', () => {
+      const confirmation = spec.paths['/users/email-confirmation/confirm'].post as {
+        requestBody: { content: { 'application/json': { schema: unknown } } };
+        responses: Record<string, unknown>;
+      };
+      const resend = spec.paths['/users/email-confirmation/resend'].post as {
+        requestBody: { content: { 'application/json': { schema: unknown } } };
+        responses: Record<string, unknown>;
+      };
+      const resendAcceptance = {
+        description:
+          'Accepted without disclosing account eligibility, send status, or rate-limit outcome.',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: { message: { type: 'string' } },
+              required: ['message'],
+            },
+          },
+        },
+      };
+
+      expect(confirmation.requestBody.content['application/json'].schema).toEqual({
+        type: 'object',
+        properties: { token: { type: 'string' } },
+        required: ['token'],
+      });
+      expect(confirmation.responses).toEqual({
+        '204': { description: 'Confirmation completed or was already completed.' },
+        '400': { description: 'Invalid or expired confirmation token.' },
+      });
+      expect(resend.requestBody.content['application/json'].schema).toEqual({
+        type: 'object',
+        properties: { email: { type: 'string', format: 'email' } },
+        required: ['email'],
+      });
+      expect(resend.responses).toEqual({ '202': resendAcceptance });
+    });
+
     it('every operation declares at least one response', () => {
-      for (const [path, methods] of Object.entries(spec.paths)) {
-        for (const [method, operation] of Object.entries(methods)) {
+      for (const [, methods] of Object.entries(spec.paths)) {
+        for (const [, operation] of Object.entries(methods)) {
           const responses = (operation as { responses?: Record<string, unknown> }).responses;
           expect(Object.keys(responses ?? {}).length).toBeGreaterThan(0);
         }
