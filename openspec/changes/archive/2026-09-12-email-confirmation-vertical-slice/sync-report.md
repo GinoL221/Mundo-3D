@@ -1,0 +1,22 @@
+# Sync Report: email-confirmation-vertical-slice
+
+- **status:** synced
+- **domains synced:** `e2e`, `email-confirmation`, `schema-migrations`, `user-auth`
+- **canonical files updated:**
+  - `openspec/specs/e2e/spec.md`
+  - `openspec/specs/email-confirmation/spec.md` (created because no canonical domain spec existed)
+  - `openspec/specs/schema-migrations/spec.md`
+  - `openspec/specs/user-auth/spec.md`
+- **delta requirements:**
+  - `e2e`: ADDED `Email Confirmation Vertical-Slice Evidence`
+  - `email-confirmation`: ADDED 10 requirements: `Persisted Verification State`; `Secure Confirmation Token Lifecycle`; `Atomic and Idempotent Confirmation`; `Generic Invalid Confirmation Contract`; `Browser GET Is Presentation-Only`; `Private and Rate-Limited Resend`; `Confirmation Attempt Limit`; `Provider-Agnostic Post-Commit Mail Boundary`; `Local Mailpit-Compatible SMTP Demo`; `Post-Commit Failure Semantics and Secret-Safe Logging`
+  - `schema-migrations`: ADDED `Email Verification Migration and Existing-User Backfill`
+  - `user-auth`: MODIFIED `Controller Dependency Injection and API JSON Authentication (Sequential Path)`
+- **canonical preservation:** native append semantics were used for ADDED requirements; the full exact-name user-auth requirement block was replaced for MODIFIED semantics; unrelated requirements and document sections were preserved. No `RENAMED` or `REMOVED` delta exists.
+- **active same-domain collisions:** none reported by authoritative status.
+- **destructive sync approvals/blockers:** none; no REMOVED requirements or large MODIFIED delta requiring approval.
+- **verification:** active `verify-report.md` is clearly passing (`PASS WITH WARNINGS`), with blockers `0`, critical findings `0`, requirements `13/13`, scenarios `38/38`, and test/build gates reported successful. Warnings are non-blocking.
+- **validation checks:** read all proposal, design, tasks, apply-progress, delta specs, canonical target specs, config, and verification artifacts directly; confirmed exact MODIFIED requirement heading exists; confirmed no legacy flat change spec; confirmed all canonical paths are within the authoritative workspace and allowed edit root; confirmed no source/test files or archive paths were changed; confirmed no commit was made.
+- **structured status:** change `email-confirmation-vertical-slice`; artifact store `openspec`; apply `all_done`; verify `all_done`; action context `repo-local`; workspace root `/home/ginopc/Desarrollo/Mundo-3D`; allowed edit root `/home/ginopc/Desarrollo/Mundo-3D`.
+- **operations skill resolution:** `paths-injected`; Gentle AI `2.7.0` was checked. The installed version is newer than the operations reference matrix's verification-envelope baseline, so no version-specific command guidance was invented; parent-provided native status and lifecycle findings were preserved unmodified.
+- **next recommended phase:** `sdd-archive` when native lifecycle authorization remains ready.
