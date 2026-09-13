@@ -13,4 +13,13 @@ export interface EmailConfirmationTokenRepositoryPort {
     now: Date;
     tx: TransactionContext;
   }): Promise<EmailConfirmationTokenReplacement | null>;
+  findUserIdByTokenHash(tokenHash: string): Promise<number | null>;
+  verifyAndConsume(input: {
+    userId: number;
+    tokenHash: string;
+    now: Date;
+    tx: TransactionContext;
+  }): Promise<{
+    outcome: 'confirmed' | 'idempotent' | 'invalid' | 'unknown' | 'expired' | 'superseded';
+  }>;
 }

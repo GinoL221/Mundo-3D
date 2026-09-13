@@ -24,6 +24,58 @@ export class SequelizeEmailConfirmationTokenRepository implements EmailConfirmat
     );
   }
 
+  async findUserIdByTokenHash(tokenHash: string): Promise<number | null> {
+    const token = await db.EmailConfirmationToken.findOne({
+      where: { tokenHash },
+      attributes: ['idUser'],
+    });
+    return token?.idUser ?? null;
+  }
+
+  async verifyAndConsume({
+    userId,
+    tokenHash,
+    now,
+    tx,
+  }: {
+    userId: number;
+    tokenHash: string;
+    now: Date;
+    tx: TransactionContext;
+  }): Promise<{ outcome: 'confirmed' | 'idempotent' | 'invalid' }> {
+    // SAFETY: SequelizeUnitOfWork creates this opaque context from a Sequelize Transaction.
+    // This user-first lock serializes confirmation with token replacement.
+    const transaction = tx as unknown as Transaction;
+    const user = await db.User.findByPk(userId, { transaction, lock: Transaction.LOCK.UPDATE });
+    if (!user) {
+      return { outcome: 'invalid' };
+    }
+
+    const token = await db.EmailConfirmationToken.findOne({
+      where: { tokenHash },
+      transaction,
+      lock: Transaction.LOCK.UPDATE,
+    });
+    if (!token || token.idUser !== userId) {
+      return { outcome: 'invalid' };
+    }
+    if (token.consumedAt) {
+      return { outcome: user.emailVerifiedAt ? 'idempotent' : 'invalid' };
+    }
+    if (
+      user.emailVerifiedAt ||
+      token.invalidatedAt ||
+      token.activeSlot !== 1 ||
+      token.expiresAt <= now
+    ) {
+      return { outcome: 'invalid' };
+    }
+
+    await user.update({ emailVerifiedAt: now }, { transaction });
+    await token.update({ consumedAt: now, activeSlot: null }, { transaction });
+    return { outcome: 'confirmed' };
+  }
+
   async replaceForUnverifiedUser({
     userId,
     tokenHash,
