@@ -3,6 +3,7 @@ import { PasswordHasherPort } from '../../domain/ports/PasswordHasherPort';
 import { UserAlreadyExistsException } from '../../domain/exceptions/UserAlreadyExistsException';
 import { UserDTO } from '../dtos/UserDTO';
 import { User } from '../../domain/entities/User';
+import { EmailConfirmationIssuerPort } from '../../domain/ports/EmailConfirmationIssuerPort';
 
 export interface RegisterUserInput {
   firstName: string;
@@ -16,7 +17,8 @@ export interface RegisterUserInput {
 export class RegisterUserUseCase {
   constructor(
     private readonly userRepo: UserRepositoryPort,
-    private readonly passwordHasher: PasswordHasherPort
+    private readonly passwordHasher: PasswordHasherPort,
+    private readonly emailConfirmationIssuer?: EmailConfirmationIssuerPort,
   ) {}
 
   async execute(input: RegisterUserInput): Promise<UserDTO> {
@@ -42,10 +44,16 @@ export class RegisterUserUseCase {
       hashedPassword,
       input.image,
       2,
-      'User'
+      'User',
     );
 
     const createdUser = await this.userRepo.create(userEntity);
+
+    try {
+      await this.emailConfirmationIssuer?.issueForUser(createdUser.idUser);
+    } catch {
+      // Issuance is post-commit: failure must not change the registration result.
+    }
 
     return {
       idUser: createdUser.idUser,
