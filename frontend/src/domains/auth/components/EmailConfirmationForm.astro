@@ -1,0 +1,67 @@
+<section class="email-confirmation" aria-labelledby="email-confirmation-title">
+  <h2 id="email-confirmation-title">Confirmá tu correo</h2>
+  <p>Cuando estés listo, confirmá tu dirección desde este enlace.</p>
+
+  <form id="email-confirmation-form" class="email-confirmation__form">
+    <button class="auth-form__button auth-form__button--primary" type="submit">Confirmar correo</button>
+  </form>
+
+  <p id="email-confirmation-feedback" class="email-confirmation__feedback" aria-live="polite" tabindex="-1" hidden></p>
+
+  <form id="resend-confirmation-form" class="email-confirmation__form email-confirmation__form--resend">
+    <label class="auth-form__field" for="resend-email">
+      <span>Correo electrónico</span>
+      <input class="auth-form__input" id="resend-email" name="email" type="email" autocomplete="email" required />
+    </label>
+    <button class="auth-form__button auth-form__button--secondary" type="submit">Solicitar otro enlace</button>
+  </form>
+</section>
+
+<script>
+  import {
+    ConfirmationNetworkError,
+    EmailConfirmationService,
+  } from '../services/emailConfirmation.service';
+
+  const confirmationForm = document.getElementById('email-confirmation-form') as HTMLFormElement | null;
+  const resendForm = document.getElementById('resend-confirmation-form') as HTMLFormElement | null;
+  const resendEmail = document.getElementById('resend-email') as HTMLInputElement | null;
+  const feedback = document.getElementById('email-confirmation-feedback') as HTMLElement | null;
+
+  function showFeedback(message: string) {
+    if (!feedback) return;
+    feedback.textContent = message;
+    feedback.hidden = false;
+    feedback.focus();
+  }
+
+  confirmationForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+      const outcome = await EmailConfirmationService.confirmFromCurrentLocation();
+      if (outcome === 'confirmed') {
+        showFeedback('Tu correo fue confirmado.');
+      }
+      if (outcome === 'invalid') {
+        showFeedback('El enlace no es válido o ya venció. Podés solicitar otro.');
+      }
+    } catch (error) {
+      if (error instanceof ConfirmationNetworkError) {
+        showFeedback('No pudimos confirmar tu correo. Revisá tu conexión e intentá de nuevo.');
+      }
+    }
+  });
+
+  resendForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!resendEmail?.value) return;
+    try {
+      await EmailConfirmationService.resend(resendEmail.value.trim());
+      showFeedback('Si la cuenta es elegible, podrá recibir un nuevo enlace de confirmación.');
+    } catch (error) {
+      if (error instanceof ConfirmationNetworkError) {
+        showFeedback('No pudimos procesar la solicitud. Revisá tu conexión e intentá de nuevo.');
+      }
+    }
+  });
+</script>

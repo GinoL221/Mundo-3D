@@ -109,14 +109,21 @@ describe('deploy-migrate-and-start.integration: real migrate-then-start against 
     DB_HOST: process.env.DB_HOST || '127.0.0.1',
     DB_USER: process.env.DB_USER || 'root',
     DB_PASS: process.env.DB_PASS ?? '',
-    // Dedicated scratch DB (matching database/__tests__/migrate.integration.test.js's
-    // convention) — NOT `mundo_3d_test`, which other integration files share via
-    // testDb.ts's `sequelize.sync()`. Reusing that shared DB made the baseline
-    // migration's CREATE TABLE collide with tables sync() already created,
-    // since sync() never records anything in SequelizeMeta.
-    DB_NAME: 'mundo_3d_migrate_scratch',
+    // Dedicated scratch DB — NOT `mundo_3d_test`, which other integration
+    // files share via testDb.ts's `sequelize.sync()`, nor the migration CLI
+    // suite's `mundo_3d_migrate_scratch`. This lets both integration files run
+    // independently when Jest schedules them concurrently.
+    DB_NAME: 'mundo_3d_deploy_scratch',
     JWT_SECRET: 'integration-test-secret',
     COOKIE_SECRET: 'integration-test-cookie-secret',
+    // The spawned child intentionally uses NODE_ENV=production, whose real
+    // composition fails closed unless the trusted origin and SMTP settings are
+    // explicit. These are non-secret local Mailpit values, not provider creds.
+    PUBLIC_APP_URL: 'http://localhost:4321',
+    SMTP_HOST: '127.0.0.1',
+    SMTP_PORT: '1025',
+    SMTP_SECURE: 'false',
+    SMTP_FROM: 'Mundo 3D <no-reply@mundo3d.test>',
   };
 
   beforeAll(async () => {
@@ -144,91 +151,83 @@ describe('deploy-migrate-and-start.integration: real migrate-then-start against 
     }
   });
 
-  it(
-    'migrates then boots the real server, reaching a healthy /health/ready',
-    async () => {
-      const child = spawnMigrateAndStart(dbEnv);
+  it('migrates then boots the real server, reaching a healthy /health/ready', async () => {
+    const child = spawnMigrateAndStart(dbEnv);
 
-      let stdout = '';
-      let stderr = '';
-      child.stdout.on('data', (chunk) => (stdout += chunk.toString()));
-      child.stderr.on('data', (chunk) => (stderr += chunk.toString()));
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (chunk) => (stdout += chunk.toString()));
+    child.stderr.on('data', (chunk) => (stderr += chunk.toString()));
 
-      let port;
-      try {
-        // A cold, uncompiled boot (two separate pnpm workspace resolutions
-        // — db:migrate then start — each cold-starting ts-node/register,
-        // plus a real migrate and full-catalog seed insert) is meaningfully
-        // slower than the already-compiled path boot.integration.test.js
-        // exercises (~25-35s observed locally). Generous on purpose.
-        port = await waitFor(() => extractPort(stdout), 45000);
-      } catch (waitErr) {
-        // No cleanup here: afterEach owns it, and runs on this failure path too.
-        throw new Error(
-          `Never reported a listening port.\n--- stdout ---\n${stdout}\n--- stderr ---\n${stderr}\n${waitErr.message}`,
-          { cause: waitErr }
+    let port;
+    try {
+      // A cold, uncompiled boot (two separate pnpm workspace resolutions
+      // — db:migrate then start — each cold-starting ts-node/register,
+      // plus a real migrate and full-catalog seed insert) is meaningfully
+      // slower than the already-compiled path boot.integration.test.js
+      // exercises (~25-35s observed locally). Generous on purpose.
+      port = await waitFor(() => extractPort(stdout), 45000);
+    } catch (waitErr) {
+      // No cleanup here: afterEach owns it, and runs on this failure path too.
+      throw new Error(
+        `Never reported a listening port.\n--- stdout ---\n${stdout}\n--- stderr ---\n${stderr}\n${waitErr.message}`,
+        { cause: waitErr },
+      );
+    }
+
+    const response = await fetch(`http://127.0.0.1:${port}/health/ready`);
+    expect(response.status).toBe(200);
+
+    // 'close', not 'exit', is the assertion that matters. 'exit' only says
+    // migrate-and-start.js's own process is gone; 'close' fires only once
+    // EVERY process holding the inherited stdio write end has gone with it.
+    // An orphaned `node index.js` grandchild — the real bug here, pnpm on CI
+    // dying from SIGTERM without ever relaying it — passes the first and
+    // fails the second.
+    const { exitCode, signal } = await new Promise((resolve, reject) => {
+      const orphanTimer = setTimeout(() => {
+        reject(
+          new Error(
+            'Stdio never closed after SIGTERM: something in the process tree outlived the shutdown',
+          ),
         );
-      }
-
-      const response = await fetch(`http://127.0.0.1:${port}/health/ready`);
-      expect(response.status).toBe(200);
-
-      // 'close', not 'exit', is the assertion that matters. 'exit' only says
-      // migrate-and-start.js's own process is gone; 'close' fires only once
-      // EVERY process holding the inherited stdio write end has gone with it.
-      // An orphaned `node index.js` grandchild — the real bug here, pnpm on CI
-      // dying from SIGTERM without ever relaying it — passes the first and
-      // fails the second.
-      const { exitCode, signal } = await new Promise((resolve, reject) => {
-        const orphanTimer = setTimeout(() => {
-          reject(
-            new Error(
-              'Stdio never closed after SIGTERM: something in the process tree outlived the shutdown'
-            )
-          );
-        }, 20000);
-        let exited;
-        child.once('exit', (code, exitSignal) => {
-          exited = { exitCode: code, signal: exitSignal };
-        });
-        child.once('close', () => {
-          clearTimeout(orphanTimer);
-          resolve(exited);
-        });
-        child.kill('SIGTERM');
+      }, 20000);
+      let exited;
+      child.once('exit', (code, exitSignal) => {
+        exited = { exitCode: code, signal: exitSignal };
       });
-
-      // The wrapper installs its own signal handlers, so it always exits under
-      // its own control; a non-null signal would mean forwarding never ran.
-      expect(signal).toBeNull();
-      // Deliberately not pinned to a number: it reflects how this environment's
-      // pnpm reacts to SIGTERM (relaying it and exiting 0, or dying from it,
-      // which migrate-and-start.js maps to 128 + signal). What must never come
-      // back is null — Node's "killed by a signal" code, which
-      // `process.exitCode = null` silently turned into a successful 0 and which
-      // is what hid the orphaned server from this test in the first place. The
-      // exit-code contract itself is pinned deterministically in
-      // scripts/deploy/migrate-and-start.test.js.
-      expect(exitCode).not.toBeNull();
-    },
-    60000
-  );
-
-  it(
-    'never starts the server when migrate fails (bad DB credentials)',
-    async () => {
-      const child = spawnMigrateAndStart({ ...dbEnv, DB_PASS: 'definitely-wrong-password' });
-
-      let stdout = '';
-      child.stdout.on('data', (chunk) => (stdout += chunk.toString()));
-
-      const exitCode = await new Promise((resolve) => {
-        child.once('exit', (code) => resolve(code));
+      child.once('close', () => {
+        clearTimeout(orphanTimer);
+        resolve(exited);
       });
+      child.kill('SIGTERM');
+    });
 
-      expect(exitCode).not.toBe(0);
-      expect(extractPort(stdout)).toBeNull();
-    },
-    30000
-  );
+    // The wrapper installs its own signal handlers, so it always exits under
+    // its own control; a non-null signal would mean forwarding never ran.
+    expect(signal).toBeNull();
+    // Deliberately not pinned to a number: it reflects how this environment's
+    // pnpm reacts to SIGTERM (relaying it and exiting 0, or dying from it,
+    // which migrate-and-start.js maps to 128 + signal). What must never come
+    // back is null — Node's "killed by a signal" code, which
+    // `process.exitCode = null` silently turned into a successful 0 and which
+    // is what hid the orphaned server from this test in the first place. The
+    // exit-code contract itself is pinned deterministically in
+    // scripts/deploy/migrate-and-start.test.js.
+    expect(exitCode).not.toBeNull();
+  }, 60000);
+
+  it('never starts the server when migrate fails (bad DB credentials)', async () => {
+    const child = spawnMigrateAndStart({ ...dbEnv, DB_PASS: 'definitely-wrong-password' });
+
+    let stdout = '';
+    child.stdout.on('data', (chunk) => (stdout += chunk.toString()));
+
+    const exitCode = await new Promise((resolve) => {
+      child.once('exit', (code) => resolve(code));
+    });
+
+    expect(exitCode).not.toBe(0);
+    expect(extractPort(stdout)).toBeNull();
+  }, 30000);
 });

@@ -58,11 +58,17 @@ describe('User Model Definition', () => {
           defaultValue: 'User',
           field: 'category',
         }),
+        emailVerifiedAt: expect.objectContaining({
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: null,
+          field: 'email_verified_at',
+        }),
       }),
       expect.objectContaining({
         tableName: 'User',
         timestamps: false,
-      })
+      }),
     );
   });
 });

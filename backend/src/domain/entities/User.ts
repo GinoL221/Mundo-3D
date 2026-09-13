@@ -7,6 +7,7 @@ export class User {
     public readonly password: string,
     public readonly image: string | null,
     public readonly idRole?: number | null,
-    public readonly category?: string | null
+    public readonly category?: string | null,
+    public readonly emailVerifiedAt?: Date | null,
   ) {}
 }
