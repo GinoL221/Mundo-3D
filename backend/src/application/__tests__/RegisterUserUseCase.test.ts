@@ -42,7 +42,7 @@ describe('RegisterUserUseCase', () => {
       expectedHashedPassword,
       input.image,
       2,
-      'User'
+      'User',
     );
 
     mockUserRepo.findByEmail.mockResolvedValue(null);
@@ -72,7 +72,7 @@ describe('RegisterUserUseCase', () => {
         image: 'avatar.jpg',
         idRole: 2,
         category: 'User',
-      })
+      }),
     );
   });
 
@@ -96,7 +96,7 @@ describe('RegisterUserUseCase', () => {
       expectedHashedPassword,
       input.image,
       2,
-      'User'
+      'User',
     );
 
     mockUserRepo.findByEmail.mockResolvedValue(null);
@@ -112,7 +112,7 @@ describe('RegisterUserUseCase', () => {
       expect.objectContaining({
         idRole: 2,
         category: 'User',
-      })
+      }),
     );
   });
 
@@ -134,7 +134,7 @@ describe('RegisterUserUseCase', () => {
       expectedHashedPassword,
       input.image,
       null,
-      null
+      null,
     );
 
     mockUserRepo.findByEmail.mockResolvedValue(null);
@@ -164,7 +164,7 @@ describe('RegisterUserUseCase', () => {
       'alreadyhashed',
       null,
       null,
-      null
+      null,
     );
 
     mockUserRepo.findByEmail.mockResolvedValue(existingUser);
@@ -188,5 +188,45 @@ describe('RegisterUserUseCase', () => {
     mockUserRepo.findByEmail.mockResolvedValue(null);
 
     await expect(useCase.execute(input)).rejects.toThrow('Password is required');
+  });
+
+  it('keeps internal verification state out of the registration DTO', async () => {
+    const input: RegisterUserInput = {
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      email: 'ada@example.com',
+      password: 'plainPassword123',
+      image: 'ada.jpg',
+    };
+    const createdUser = new User(
+      43,
+      input.firstName,
+      input.lastName,
+      input.email,
+      'hashedPassword123',
+      input.image,
+      2,
+      'User',
+      new Date('2026-09-10T12:34:56.000Z'),
+    );
+
+    mockUserRepo.findByEmail.mockResolvedValue(null);
+    mockPasswordHasher.hash.mockResolvedValue('hashedPassword123');
+    mockUserRepo.create.mockResolvedValue(createdUser);
+
+    const result = await useCase.execute(input);
+
+    expect(result).toEqual({
+      idUser: 43,
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      email: 'ada@example.com',
+      image: 'ada.jpg',
+      idRole: 2,
+      category: 'User',
+    });
+    expect(JSON.stringify(result)).not.toMatch(
+      /emailVerifiedAt|opaque-token|tokenHash|confirm-email|https?:\/\//i,
+    );
   });
 });
