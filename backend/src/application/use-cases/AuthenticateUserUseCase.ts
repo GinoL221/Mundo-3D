@@ -1,7 +1,7 @@
-import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
-import { PasswordHasherPort } from '../../domain/ports/PasswordHasherPort';
-import { InvalidCredentialsException } from '../../domain/exceptions/InvalidCredentialsException';
-import { UserDTO } from '../dtos/UserDTO';
+import { UserRepositoryPort } from "../../domain/ports/UserRepositoryPort";
+import { PasswordHasherPort } from "../../domain/ports/PasswordHasherPort";
+import { InvalidCredentialsException } from "../../domain/exceptions/InvalidCredentialsException";
+import { UserDTO } from "../dtos/UserDTO";
 
 export interface AuthenticateUserInput {
   email: string;
@@ -12,7 +12,7 @@ export interface AuthenticateUserInput {
 export class AuthenticateUserUseCase {
   constructor(
     private readonly userRepo: UserRepositoryPort,
-    private readonly passwordHasher: PasswordHasherPort
+    private readonly passwordHasher: PasswordHasherPort,
   ) {}
 
   async execute(input: AuthenticateUserInput): Promise<UserDTO> {
@@ -32,16 +32,25 @@ export class AuthenticateUserUseCase {
       if (plainPassword) {
         await this.passwordHasher.compareAgainstDecoy(plainPassword);
       }
-      throw new InvalidCredentialsException('El email o la contraseña no coinciden');
+      throw new InvalidCredentialsException(
+        "El email o la contraseña no coinciden",
+      );
     }
 
     if (!plainPassword) {
-      throw new InvalidCredentialsException('El email o la contraseña no coinciden');
+      throw new InvalidCredentialsException(
+        "El email o la contraseña no coinciden",
+      );
     }
 
-    const isMatch = await this.passwordHasher.compare(plainPassword, user.password);
+    const isMatch = await this.passwordHasher.compare(
+      plainPassword,
+      user.password,
+    );
     if (!isMatch) {
-      throw new InvalidCredentialsException('El email o la contraseña no coinciden');
+      throw new InvalidCredentialsException(
+        "El email o la contraseña no coinciden",
+      );
     }
 
     return {
