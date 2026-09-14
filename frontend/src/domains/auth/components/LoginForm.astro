@@ -1,7 +1,13 @@
 <form id="login-form" class="form-card__form" novalidate>
   <h2>Iniciar Sesión</h2>
 
-  <div id="login-error" class="form-card__error" role="alert" style="display: none;"></div>
+  <div
+    id="login-error"
+    class="form-card__error"
+    role="alert"
+    style="display: none;"
+  >
+  </div>
 
   <label for="email">Correo Electrónico:</label>
   <input
@@ -28,7 +34,9 @@
   </label>
 
   <div class="form-card__actions">
-    <button type="submit" id="login-btn" class="form-card__btn">Iniciar Sesión</button>
+    <button type="submit" id="login-btn" class="form-card__btn"
+      >Iniciar Sesión</button
+    >
   </div>
 
   <p class="form-card__hint">
@@ -45,9 +53,9 @@
 </style>
 
 <script>
-  import { AuthService } from '../services/auth.service';
-  import { broadcastSessionChanged } from '../services/session.service';
-  import { CartService } from '../../cart/services/CartService';
+  import { AuthService } from "../services/auth.service";
+  import { broadcastSessionChanged } from "../services/session.service";
+  import { CartService } from "../../cart/services/CartService";
 
   // Bounded race, not fire-and-forget (design.md "Resolved: the
   // redirect-vs-GET race"): the redirect must never be delayed beyond this
@@ -56,44 +64,50 @@
   // hydration errors or a timeout must never fail or skip the redirect.
   const HYDRATION_REDIRECT_TIMEOUT_MS = 1500;
 
-  const form = document.getElementById('login-form') as HTMLFormElement | null;
-  const errorBox = document.getElementById('login-error') as HTMLElement | null;
-  const loginBtn = document.getElementById('login-btn') as HTMLButtonElement | null;
+  const form = document.getElementById("login-form") as HTMLFormElement | null;
+  const errorBox = document.getElementById("login-error") as HTMLElement | null;
+  const loginBtn = document.getElementById(
+    "login-btn",
+  ) as HTMLButtonElement | null;
 
   // One-time cleanup of stale localStorage session keys left over from
   // before the cookie-based auth migration (design.md "Migration/Rollout").
   // Nothing writes/reads them anymore, so leaving them would let a dead
   // "logged in" navbar render forever in already-visited browsers.
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
 
   function showError(msg: string): void {
     if (errorBox) {
       errorBox.textContent = msg;
-      errorBox.style.display = 'block';
+      errorBox.style.display = "block";
     }
   }
 
   function hideError(): void {
     if (errorBox) {
-      errorBox.style.display = 'none';
+      errorBox.style.display = "none";
     }
   }
 
-  form?.addEventListener('submit', async (e) => {
+  form?.addEventListener("submit", async (e) => {
     e.preventDefault();
     hideError();
 
-    const emailEl = document.getElementById('email') as HTMLInputElement | null;
-    const passwordEl = document.getElementById('password') as HTMLInputElement | null;
-    const rememberEl = document.getElementById('remember') as HTMLInputElement | null;
+    const emailEl = document.getElementById("email") as HTMLInputElement | null;
+    const passwordEl = document.getElementById(
+      "password",
+    ) as HTMLInputElement | null;
+    const rememberEl = document.getElementById(
+      "remember",
+    ) as HTMLInputElement | null;
 
-    const email = emailEl?.value?.trim() || '';
-    const password = passwordEl?.value || '';
+    const email = emailEl?.value?.trim() || "";
+    const password = passwordEl?.value || "";
     const remember = rememberEl?.checked ?? false;
 
     if (!email || !password) {
-      showError('Por favor completá todos los campos.');
+      showError("Por favor completá todos los campos.");
       return;
     }
 
@@ -108,25 +122,27 @@
 
       // Notify header and other components in this tab, and any other open
       // tab (symmetric with clearSession()'s broadcast on logout).
-      window.dispatchEvent(new CustomEvent('session-changed'));
-      broadcastSessionChanged('logged-in');
+      window.dispatchEvent(new CustomEvent("session-changed"));
+      broadcastSessionChanged("logged-in");
 
       // Merge the guest cart into the account's server cart before
       // redirecting, bounded so a slow/failed GET never blocks navigation
       // beyond the cap (cart-hydration spec: "Hydration Entry Point and
       // Triggers").
       const redirect = () => {
-        window.location.href = '/';
+        window.location.href = "/";
       };
       await Promise.race([
         CartService.hydrateFromServer({ mergeLocal: true }),
-        new Promise((resolve) => setTimeout(resolve, HYDRATION_REDIRECT_TIMEOUT_MS)),
+        new Promise((resolve) =>
+          setTimeout(resolve, HYDRATION_REDIRECT_TIMEOUT_MS),
+        ),
       ]).then(redirect, redirect);
     } catch (err) {
       if (err instanceof Error) {
         showError(err.message);
       } else {
-        showError('No se pudo conectar con el servidor. Intentá de nuevo.');
+        showError("No se pudo conectar con el servidor. Intentá de nuevo.");
       }
     } finally {
       if (loginBtn) loginBtn.disabled = false;
