@@ -11,6 +11,6 @@ export class RememberToken {
     public readonly familyId?: string | null,
     public readonly supersededAt?: Date | null,
     public readonly successorHash?: string | null,
-    public readonly revokedAt?: Date | null
+    public readonly revokedAt?: Date | null,
   ) {}
 }
