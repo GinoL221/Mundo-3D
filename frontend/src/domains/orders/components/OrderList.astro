@@ -6,9 +6,16 @@
 // component into a page, matching OrderDetail.astro's convention.
 ---
 
-<div id="my-orders-loading" class="orders-state" aria-live="polite">Cargando tus órdenes...</div>
+<div id="my-orders-loading" class="orders-state" aria-live="polite">
+  Cargando tus órdenes...
+</div>
 
-<div id="my-orders-error" class="orders-state orders-state--error" role="alert" style="display:none;">
+<div
+  id="my-orders-error"
+  class="orders-state orders-state--error"
+  role="alert"
+  style="display:none;"
+>
   <p id="my-orders-error-message">No se pudieron cargar tus órdenes.</p>
   <p><a class="orders-action" href="/">Volver al inicio</a></p>
 </div>
@@ -21,26 +28,26 @@
 
 <div id="my-orders-content" class="order-list__container" style="display:none;">
   <div class="order-list__table-frame">
-  <table class="order-list__table">
-    <thead>
-      <tr>
-        <th>Orden</th>
-        <th>Estado</th>
-        <th>Fecha</th>
-        <th>Total</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody id="my-orders-body"></tbody>
-      </table>
-    </div>
-
-    <nav class="order-list__pagination" aria-label="Paginación de órdenes">
-      <a id="my-orders-prev" href="#" style="display:none;">&laquo; Anterior</a>
-      <span id="my-orders-page-label"></span>
-      <a id="my-orders-next" href="#" style="display:none;">Siguiente &raquo;</a>
-    </nav>
+    <table class="order-list__table">
+      <thead>
+        <tr>
+          <th>Orden</th>
+          <th>Estado</th>
+          <th>Fecha</th>
+          <th>Total</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="my-orders-body"></tbody>
+    </table>
   </div>
+
+  <nav class="order-list__pagination" aria-label="Paginación de órdenes">
+    <a id="my-orders-prev" href="#" style="display:none;">&laquo; Anterior</a>
+    <span id="my-orders-page-label"></span>
+    <a id="my-orders-next" href="#" style="display:none;">Siguiente &raquo;</a>
+  </nav>
+</div>
 
 <template id="my-orders-row-template">
   <tr>
@@ -53,39 +60,45 @@
 </template>
 
 <script>
-  import { fetchMyOrders } from '../services/order.service';
-  import type { MyOrdersPageViewModel } from '../services/order.service';
-  import { presentMyOrdersPage } from '../services/orderPresenter';
+  import { fetchMyOrders } from "../services/order.service";
+  import type { MyOrdersPageViewModel } from "../services/order.service";
+  import { presentMyOrdersPage } from "../services/orderPresenter";
 
   function getPage(): number {
-    const raw = new URLSearchParams(window.location.search).get('page');
+    const raw = new URLSearchParams(window.location.search).get("page");
     if (!raw) return 1;
     const page = Number.parseInt(raw, 10);
     return Number.isNaN(page) || page < 1 ? 1 : page;
   }
 
   function showError(message: string): void {
-    const loadingEl = document.getElementById('my-orders-loading');
-    const errorEl = document.getElementById('my-orders-error');
-    const messageEl = document.getElementById('my-orders-error-message');
-    if (loadingEl) loadingEl.style.display = 'none';
+    const loadingEl = document.getElementById("my-orders-loading");
+    const errorEl = document.getElementById("my-orders-error");
+    const messageEl = document.getElementById("my-orders-error-message");
+    if (loadingEl) loadingEl.style.display = "none";
     if (messageEl) messageEl.textContent = message;
-    if (errorEl) errorEl.style.display = 'block';
+    if (errorEl) errorEl.style.display = "block";
   }
 
-  function renderRows(rows: ReturnType<typeof presentMyOrdersPage>['rows']): void {
-    const bodyEl = document.getElementById('my-orders-body');
-    const rowTemplate = document.getElementById('my-orders-row-template') as HTMLTemplateElement | null;
+  function renderRows(
+    rows: ReturnType<typeof presentMyOrdersPage>["rows"],
+  ): void {
+    const bodyEl = document.getElementById("my-orders-body");
+    const rowTemplate = document.getElementById(
+      "my-orders-row-template",
+    ) as HTMLTemplateElement | null;
     if (!bodyEl || !rowTemplate) return;
 
     bodyEl.replaceChildren();
     rows.forEach((row) => {
       const clone = rowTemplate.content.cloneNode(true) as DocumentFragment;
-      const idEl = clone.querySelector('.order-row-id');
-      const statusEl = clone.querySelector('.order-row-status');
-      const createdEl = clone.querySelector('.order-row-created-at');
-      const totalEl = clone.querySelector('.order-row-total');
-      const linkEl = clone.querySelector('.order-row-link') as HTMLAnchorElement | null;
+      const idEl = clone.querySelector(".order-row-id");
+      const statusEl = clone.querySelector(".order-row-status");
+      const createdEl = clone.querySelector(".order-row-created-at");
+      const totalEl = clone.querySelector(".order-row-total");
+      const linkEl = clone.querySelector(
+        ".order-row-link",
+      ) as HTMLAnchorElement | null;
       if (idEl) idEl.textContent = row.idOrderLabel;
       if (statusEl) statusEl.textContent = row.statusLabel;
       if (createdEl) createdEl.textContent = row.createdAtLabel;
@@ -95,18 +108,26 @@
     });
   }
 
-  function renderPagination(pageLabel: string, prevHref: string | null, nextHref: string | null): void {
-    const pageLabelEl = document.getElementById('my-orders-page-label');
-    const prevEl = document.getElementById('my-orders-prev') as HTMLAnchorElement | null;
-    const nextEl = document.getElementById('my-orders-next') as HTMLAnchorElement | null;
+  function renderPagination(
+    pageLabel: string,
+    prevHref: string | null,
+    nextHref: string | null,
+  ): void {
+    const pageLabelEl = document.getElementById("my-orders-page-label");
+    const prevEl = document.getElementById(
+      "my-orders-prev",
+    ) as HTMLAnchorElement | null;
+    const nextEl = document.getElementById(
+      "my-orders-next",
+    ) as HTMLAnchorElement | null;
 
     if (pageLabelEl) pageLabelEl.textContent = pageLabel;
     if (prevEl) {
-      prevEl.style.display = prevHref ? 'inline' : 'none';
+      prevEl.style.display = prevHref ? "inline" : "none";
       if (prevHref) prevEl.href = prevHref;
     }
     if (nextEl) {
-      nextEl.style.display = nextHref ? 'inline' : 'none';
+      nextEl.style.display = nextHref ? "inline" : "none";
       if (nextHref) nextEl.href = nextHref;
     }
   }
@@ -114,21 +135,25 @@
   function renderPage(pageData: MyOrdersPageViewModel): void {
     const presentation = presentMyOrdersPage(pageData);
 
-    const loadingEl = document.getElementById('my-orders-loading');
-    const emptyEl = document.getElementById('my-orders-empty');
-    const contentEl = document.getElementById('my-orders-content');
+    const loadingEl = document.getElementById("my-orders-loading");
+    const emptyEl = document.getElementById("my-orders-empty");
+    const contentEl = document.getElementById("my-orders-content");
 
-    if (loadingEl) loadingEl.style.display = 'none';
+    if (loadingEl) loadingEl.style.display = "none";
 
     if (presentation.isEmpty) {
-      if (emptyEl) emptyEl.style.display = 'block';
+      if (emptyEl) emptyEl.style.display = "block";
       return;
     }
 
     renderRows(presentation.rows);
-    renderPagination(presentation.pageLabel, presentation.prevHref, presentation.nextHref);
+    renderPagination(
+      presentation.pageLabel,
+      presentation.prevHref,
+      presentation.nextHref,
+    );
 
-    if (contentEl) contentEl.style.display = 'block';
+    if (contentEl) contentEl.style.display = "block";
   }
 
   async function loadMyOrders(): Promise<void> {

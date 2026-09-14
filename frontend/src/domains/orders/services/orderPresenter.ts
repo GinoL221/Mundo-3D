@@ -1,4 +1,4 @@
-import type { OrderViewModel, MyOrdersPageViewModel } from './order.service';
+import type { OrderViewModel, MyOrdersPageViewModel } from "./order.service";
 
 // Pure formatting layer between the fetched OrderViewModel and
 // OrderDetail.astro's DOM-writing script. Extracted so the actual rendering
@@ -30,10 +30,10 @@ export function presentOrder(order: OrderViewModel): OrderPresentation {
   return {
     idOrderLabel: String(order.idOrder),
     statusLabel: `Estado: ${order.status}`,
-    createdAtLabel: `Fecha: ${new Date(order.createdAt).toLocaleString('es-AR')}`,
+    createdAtLabel: `Fecha: ${new Date(order.createdAt).toLocaleString("es-AR")}`,
     paymentReferenceLabel: order.paymentReference
       ? `Referencia de pago: ${order.paymentReference}`
-      : '',
+      : "",
     totalLabel: formatCurrency(order.totalAmount),
     items: order.items.map((item) => ({
       productName: item.productName,
@@ -63,18 +63,21 @@ export interface MyOrdersPresentation {
   nextHref: string | null;
 }
 
-export function presentMyOrdersPage(page: MyOrdersPageViewModel): MyOrdersPresentation {
+export function presentMyOrdersPage(
+  page: MyOrdersPageViewModel,
+): MyOrdersPresentation {
   return {
     rows: page.orders.map((order) => ({
       idOrderLabel: String(order.idOrder),
       statusLabel: `Estado: ${order.status}`,
       totalLabel: formatCurrency(order.totalAmount),
-      createdAtLabel: new Date(order.createdAt).toLocaleString('es-AR'),
+      createdAtLabel: new Date(order.createdAt).toLocaleString("es-AR"),
       detailHref: `/order?id=${order.idOrder}`,
     })),
     isEmpty: page.total === 0,
     pageLabel: `Página ${page.page} de ${Math.max(page.totalPages, 1)}`,
     prevHref: page.page > 1 ? `/orders?page=${page.page - 1}` : null,
-    nextHref: page.page < page.totalPages ? `/orders?page=${page.page + 1}` : null,
+    nextHref:
+      page.page < page.totalPages ? `/orders?page=${page.page + 1}` : null,
   };
 }

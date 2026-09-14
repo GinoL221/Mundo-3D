@@ -1,4 +1,4 @@
-import { API_URL, authFetch } from '../../../config';
+import { API_URL, authFetch } from "../../../config";
 
 // Mirrors backend/src/application/dtos/OrderDTO.ts exactly (order-checkout
 // spec, "Buyer order-detail response DTO") — GET /api/orders/:id returns the
@@ -24,7 +24,7 @@ export interface OrderViewModel {
   paymentReference: string | null;
 }
 
-export type FetchOrderErrorCode = 'NOT_FOUND' | 'NETWORK' | 'UNKNOWN';
+export type FetchOrderErrorCode = "NOT_FOUND" | "NETWORK" | "UNKNOWN";
 
 export type FetchOrderResult =
   | { ok: true; order: OrderViewModel }
@@ -39,17 +39,23 @@ export type FetchOrderResult =
 export async function fetchOrder(idOrder: number): Promise<FetchOrderResult> {
   let res: Response;
   try {
-    res = await authFetch(`${API_URL}/api/orders/${idOrder}`, { method: 'GET' });
+    res = await authFetch(`${API_URL}/api/orders/${idOrder}`, {
+      method: "GET",
+    });
   } catch {
-    return { ok: false, code: 'NETWORK', message: 'No se pudo conectar con el servidor.' };
+    return {
+      ok: false,
+      code: "NETWORK",
+      message: "No se pudo conectar con el servidor.",
+    };
   }
 
   if (res.status === 404) {
-    return { ok: false, code: 'NOT_FOUND', message: 'Orden no encontrada.' };
+    return { ok: false, code: "NOT_FOUND", message: "Orden no encontrada." };
   }
 
   if (!res.ok) {
-    return { ok: false, code: 'UNKNOWN', message: `Error ${res.status}` };
+    return { ok: false, code: "UNKNOWN", message: `Error ${res.status}` };
   }
 
   const order = (await res.json()) as OrderViewModel;
@@ -76,7 +82,11 @@ export interface MyOrdersPageViewModel {
   totalPages: number;
 }
 
-export type FetchMyOrdersErrorCode = 'UNAUTHENTICATED' | 'INVALID_PAGINATION' | 'NETWORK' | 'UNKNOWN';
+export type FetchMyOrdersErrorCode =
+  | "UNAUTHENTICATED"
+  | "INVALID_PAGINATION"
+  | "NETWORK"
+  | "UNKNOWN";
 
 export type FetchMyOrdersResult =
   | { ok: true; page: MyOrdersPageViewModel }
@@ -90,29 +100,47 @@ export type FetchMyOrdersResult =
  * attempts a transparent refresh on a 401 (refresh-token-rotation spec) —
  * UNAUTHENTICATED here means that refresh itself failed too.
  */
-export async function fetchMyOrders(page?: number, pageSize?: number): Promise<FetchMyOrdersResult> {
+export async function fetchMyOrders(
+  page?: number,
+  pageSize?: number,
+): Promise<FetchMyOrdersResult> {
   const params = new URLSearchParams();
-  if (page !== undefined) params.set('page', String(page));
-  if (pageSize !== undefined) params.set('pageSize', String(pageSize));
+  if (page !== undefined) params.set("page", String(page));
+  if (pageSize !== undefined) params.set("pageSize", String(pageSize));
   const query = params.toString();
 
   let res: Response;
   try {
-    res = await authFetch(`${API_URL}/api/orders/mine${query ? `?${query}` : ''}`, { method: 'GET' });
+    res = await authFetch(
+      `${API_URL}/api/orders/mine${query ? `?${query}` : ""}`,
+      { method: "GET" },
+    );
   } catch {
-    return { ok: false, code: 'NETWORK', message: 'No se pudo conectar con el servidor.' };
+    return {
+      ok: false,
+      code: "NETWORK",
+      message: "No se pudo conectar con el servidor.",
+    };
   }
 
   if (res.status === 401) {
-    return { ok: false, code: 'UNAUTHENTICATED', message: 'Necesitás iniciar sesión.' };
+    return {
+      ok: false,
+      code: "UNAUTHENTICATED",
+      message: "Necesitás iniciar sesión.",
+    };
   }
 
   if (res.status === 400) {
-    return { ok: false, code: 'INVALID_PAGINATION', message: 'Parámetros de paginación inválidos.' };
+    return {
+      ok: false,
+      code: "INVALID_PAGINATION",
+      message: "Parámetros de paginación inválidos.",
+    };
   }
 
   if (!res.ok) {
-    return { ok: false, code: 'UNKNOWN', message: `Error ${res.status}` };
+    return { ok: false, code: "UNKNOWN", message: `Error ${res.status}` };
   }
 
   const page_ = (await res.json()) as MyOrdersPageViewModel;

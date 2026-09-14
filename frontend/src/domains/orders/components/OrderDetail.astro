@@ -7,9 +7,16 @@
 // script convention.
 ---
 
-<div id="order-loading" class="orders-state" aria-live="polite">Cargando orden...</div>
+<div id="order-loading" class="orders-state" aria-live="polite">
+  Cargando orden...
+</div>
 
-<div id="order-error" class="orders-state orders-state--error" role="alert" style="display:none;">
+<div
+  id="order-error"
+  class="orders-state orders-state--error"
+  role="alert"
+  style="display:none;"
+>
   <p id="order-error-message">No se pudo cargar la orden.</p>
   <p><a class="orders-action" href="/">Volver al inicio</a></p>
 </div>
@@ -28,24 +35,24 @@
   </section>
 
   <div class="order-detail__table-frame">
-  <table class="order-detail__items">
-    <thead>
-      <tr>
-        <th>Producto</th>
-        <th>Cantidad</th>
-        <th>Precio unitario</th>
-        <th>Subtotal</th>
-      </tr>
-    </thead>
-    <tbody id="order-items-body"></tbody>
-      </table>
-    </div>
-
-    <div class="order-detail__total">
-      <span>Total registrado</span>
-      <strong>$<span id="order-total"></span></strong>
-    </div>
+    <table class="order-detail__items">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Cantidad</th>
+          <th>Precio unitario</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody id="order-items-body"></tbody>
+    </table>
   </div>
+
+  <div class="order-detail__total">
+    <span>Total registrado</span>
+    <strong>$<span id="order-total"></span></strong>
+  </div>
+</div>
 
 <template id="order-item-row-template">
   <tr>
@@ -57,40 +64,42 @@
 </template>
 
 <script>
-  import { fetchOrder } from '../services/order.service';
-  import type { OrderViewModel } from '../services/order.service';
-  import { presentOrder } from '../services/orderPresenter';
+  import { fetchOrder } from "../services/order.service";
+  import type { OrderViewModel } from "../services/order.service";
+  import { presentOrder } from "../services/orderPresenter";
 
   function getOrderId(): number | null {
-    const raw = new URLSearchParams(window.location.search).get('id');
+    const raw = new URLSearchParams(window.location.search).get("id");
     if (!raw) return null;
     const id = Number.parseInt(raw, 10);
     return Number.isNaN(id) ? null : id;
   }
 
   function showError(message: string): void {
-    const loadingEl = document.getElementById('order-loading');
-    const errorEl = document.getElementById('order-error');
-    const messageEl = document.getElementById('order-error-message');
-    if (loadingEl) loadingEl.style.display = 'none';
+    const loadingEl = document.getElementById("order-loading");
+    const errorEl = document.getElementById("order-error");
+    const messageEl = document.getElementById("order-error-message");
+    if (loadingEl) loadingEl.style.display = "none";
     if (messageEl) messageEl.textContent = message;
-    if (errorEl) errorEl.style.display = 'block';
+    if (errorEl) errorEl.style.display = "block";
   }
 
   function renderOrder(order: OrderViewModel): void {
     const presentation = presentOrder(order);
 
-    const loadingEl = document.getElementById('order-loading');
-    const contentEl = document.getElementById('order-content');
-    const idEl = document.getElementById('order-id');
-    const statusEl = document.getElementById('order-status');
-    const createdEl = document.getElementById('order-created-at');
-    const paymentEl = document.getElementById('order-payment-reference');
-    const totalEl = document.getElementById('order-total');
-    const bodyEl = document.getElementById('order-items-body');
-    const rowTemplate = document.getElementById('order-item-row-template') as HTMLTemplateElement | null;
+    const loadingEl = document.getElementById("order-loading");
+    const contentEl = document.getElementById("order-content");
+    const idEl = document.getElementById("order-id");
+    const statusEl = document.getElementById("order-status");
+    const createdEl = document.getElementById("order-created-at");
+    const paymentEl = document.getElementById("order-payment-reference");
+    const totalEl = document.getElementById("order-total");
+    const bodyEl = document.getElementById("order-items-body");
+    const rowTemplate = document.getElementById(
+      "order-item-row-template",
+    ) as HTMLTemplateElement | null;
 
-    if (loadingEl) loadingEl.style.display = 'none';
+    if (loadingEl) loadingEl.style.display = "none";
     if (idEl) idEl.textContent = presentation.idOrderLabel;
     if (statusEl) statusEl.textContent = presentation.statusLabel;
     if (createdEl) createdEl.textContent = presentation.createdAtLabel;
@@ -101,10 +110,10 @@
       bodyEl.replaceChildren();
       presentation.items.forEach((item) => {
         const clone = rowTemplate.content.cloneNode(true) as DocumentFragment;
-        const nameEl = clone.querySelector('.order-item-name');
-        const qtyEl = clone.querySelector('.order-item-qty');
-        const priceEl = clone.querySelector('.order-item-price');
-        const subtotalEl = clone.querySelector('.order-item-subtotal');
+        const nameEl = clone.querySelector(".order-item-name");
+        const qtyEl = clone.querySelector(".order-item-qty");
+        const priceEl = clone.querySelector(".order-item-price");
+        const subtotalEl = clone.querySelector(".order-item-subtotal");
         if (nameEl) nameEl.textContent = item.productName;
         if (qtyEl) qtyEl.textContent = item.quantityLabel;
         if (priceEl) priceEl.textContent = item.unitPriceLabel;
@@ -113,13 +122,13 @@
       });
     }
 
-    if (contentEl) contentEl.style.display = 'block';
+    if (contentEl) contentEl.style.display = "block";
   }
 
   async function loadOrder(): Promise<void> {
     const idOrder = getOrderId();
     if (idOrder === null) {
-      showError('Orden no encontrada.');
+      showError("Orden no encontrada.");
       return;
     }
 
