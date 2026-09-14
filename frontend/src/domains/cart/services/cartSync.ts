@@ -1,5 +1,5 @@
-import { API_URL, authFetch, getSessionUser } from '../../../config';
-import { cartItems, persistCart, type CartItem } from './cartState';
+import { API_URL, authFetch, getSessionUser } from "../../../config";
+import { cartItems, persistCart, type CartItem } from "./cartState";
 
 // Monotonic sequence guard: syncToBackend calls are fire-and-forget with no
 // sequencing between them, so responses can arrive out of order (e.g. an
@@ -13,18 +13,24 @@ let syncSeq = 0;
 // Background sync to backend API.
 // `previousItems` must reflect the cart state BEFORE the optimistic local
 // update, so that a failed sync can roll back to a known-good state.
-export async function syncToBackend(items: CartItem[], previousItems: CartItem[]): Promise<void> {
+export async function syncToBackend(
+  items: CartItem[],
+  previousItems: CartItem[],
+): Promise<void> {
   const sessionUser = getSessionUser();
   if (!sessionUser) return; // Not authenticated — skip sync
 
   const mySeq = ++syncSeq;
 
   try {
-    const payload = items.map((i) => ({ productId: i.productId, quantity: i.quantity }));
+    const payload = items.map((i) => ({
+      productId: i.productId,
+      quantity: i.quantity,
+    }));
     const res = await authFetch(`${API_URL}/api/cart`, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ items: payload }),
       // `keepalive` gives this request its best chance of actually reaching
@@ -50,9 +56,11 @@ export async function syncToBackend(items: CartItem[], previousItems: CartItem[]
         persistCart(previousItems);
       }
       window.dispatchEvent(
-        new CustomEvent('cart-sync-error', {
-          detail: { message: 'No se pudo sincronizar el carrito con el servidor.' },
-        })
+        new CustomEvent("cart-sync-error", {
+          detail: {
+            message: "No se pudo sincronizar el carrito con el servidor.",
+          },
+        }),
       );
     }
   } catch {
@@ -72,9 +80,11 @@ export async function syncToBackend(items: CartItem[], previousItems: CartItem[]
     // which re-sends the already-diverged local state rather than
     // reconciling against the server.
     window.dispatchEvent(
-      new CustomEvent('cart-sync-error', {
-        detail: { message: 'No se pudo sincronizar el carrito con el servidor.' },
-      })
+      new CustomEvent("cart-sync-error", {
+        detail: {
+          message: "No se pudo sincronizar el carrito con el servidor.",
+        },
+      }),
     );
   }
 }
@@ -97,7 +107,10 @@ let pendingItems: CartItem[] | null = null;
 // the debounce handle stale for one tick).
 let burstPreviousItems: CartItem[] | null = null;
 
-export function scheduleSync(items: CartItem[], previousItems: CartItem[]): void {
+export function scheduleSync(
+  items: CartItem[],
+  previousItems: CartItem[],
+): void {
   if (!getSessionUser()) return; // Guest carts never arm a timer.
 
   pendingItems = items; // Latest snapshot wins.
@@ -160,24 +173,24 @@ let teardownFlushListeners: (() => void) | null = null;
 // return-cleanup convention. `beforeunload` is deliberately not used.
 export function registerCartFlushListeners(
   win: Window = window,
-  doc: Document = document
+  doc: Document = document,
 ): () => void {
   if (teardownFlushListeners) return teardownFlushListeners;
 
   const onPagehide = () => void flushCartSync();
   const onVisibilityChange = () => {
-    if (doc.visibilityState === 'hidden') void flushCartSync();
+    if (doc.visibilityState === "hidden") void flushCartSync();
   };
 
-  win.addEventListener('pagehide', onPagehide);
-  doc.addEventListener('visibilitychange', onVisibilityChange);
+  win.addEventListener("pagehide", onPagehide);
+  doc.addEventListener("visibilitychange", onVisibilityChange);
 
   let active = true;
   const teardown = () => {
     if (!active) return;
     active = false;
-    win.removeEventListener('pagehide', onPagehide);
-    doc.removeEventListener('visibilitychange', onVisibilityChange);
+    win.removeEventListener("pagehide", onPagehide);
+    doc.removeEventListener("visibilitychange", onVisibilityChange);
     teardownFlushListeners = null;
   };
   teardownFlushListeners = teardown;
@@ -187,6 +200,6 @@ export function registerCartFlushListeners(
 // Self-register at import so no entry point can forget to wire the forced
 // flush. No-op during Astro SSR and under vitest's default `node` test
 // environment, where `window`/`document` are undefined at import time.
-if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+if (typeof window !== "undefined" && typeof document !== "undefined") {
   registerCartFlushListeners();
 }
