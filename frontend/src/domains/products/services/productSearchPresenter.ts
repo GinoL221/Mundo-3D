@@ -1,5 +1,5 @@
-import type { ProductSearchPage } from '../adapters/product.adapter';
-import type { ProductSearchCriteria } from './product.search.service';
+import type { ProductSearchPage } from "../adapters/product.adapter";
+import type { ProductSearchCriteria } from "./product.search.service";
 
 // Pure formatting/href layer between the fetched ProductSearchPage and
 // ProductSearch.astro's DOM-writing script, mirroring orderPresenter.ts's
@@ -18,10 +18,12 @@ export interface ProductSearchPresentation {
 function buildHref(criteria: ProductSearchCriteria, page: number): string {
   const params = new URLSearchParams();
   const trimmedSearch = criteria.search?.trim();
-  if (trimmedSearch) params.set('search', trimmedSearch);
-  if (criteria.idCategory !== undefined) params.set('idCategory', String(criteria.idCategory));
-  if (criteria.idFranchise !== undefined) params.set('idFranchise', String(criteria.idFranchise));
-  params.set('page', String(page));
+  if (trimmedSearch) params.set("search", trimmedSearch);
+  if (criteria.idCategory !== undefined)
+    params.set("idCategory", String(criteria.idCategory));
+  if (criteria.idFranchise !== undefined)
+    params.set("idFranchise", String(criteria.idFranchise));
+  params.set("page", String(page));
   return `/products?${params.toString()}`;
 }
 
@@ -33,6 +35,7 @@ export function presentProductSearchPage(
     isEmpty: page.products.length === 0,
     pageLabel: `Página ${page.page} de ${Math.max(page.totalPages, 1)}`,
     prevHref: page.page > 1 ? buildHref(criteria, page.page - 1) : null,
-    nextHref: page.page < page.totalPages ? buildHref(criteria, page.page + 1) : null,
+    nextHref:
+      page.page < page.totalPages ? buildHref(criteria, page.page + 1) : null,
   };
 }
