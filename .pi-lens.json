@@ -1,3 +1,6 @@
 {
-  "ignore": ["openspec/changes/**/preproposal.md"]
+  "ignore": ["openspec/changes/**/preproposal.md"],
+  "format": {
+    "enabled": false
+  }
 }

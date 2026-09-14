@@ -4,7 +4,9 @@
   "private": true,
   "description": "Mundo-3D monorepo workspace",
   "packageManager": "pnpm@11.0.9",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "pnpm --filter backend dev",
     "test": "pnpm --filter \"!e2e\" test",
@@ -14,6 +16,7 @@
     "test:coverage": "pnpm --filter backend test:coverage",
     "lint": "pnpm -r lint",
     "format": "prettier --write \"backend/src/**/*.{js,ts}\" \"frontend/src/**/*.{js,ts,astro}\"",
+    "format:check": "prettier --check \"backend/src/**/*.{js,ts}\" \"frontend/src/**/*.{js,ts,astro}\"",
     "type-check": "pnpm --filter backend type-check",
     "check:openapi": "pnpm --filter backend check:openapi",
     "frontend:dev": "pnpm --filter frontend dev",
@@ -25,7 +28,13 @@
     "test:e2e:all": "pnpm --filter e2e test",
     "test:deploy-scripts": "node --test \"scripts/deploy/**/*.test.js\" \"backend/scripts/**/*.test.js\""
   },
+  "prettier": {
+    "plugins": [
+      "prettier-plugin-astro"
+    ]
+  },
   "devDependencies": {
-    "prettier": "3.8.3"
+    "prettier": "3.8.3",
+    "prettier-plugin-astro": "0.14.1"
   }
 }
