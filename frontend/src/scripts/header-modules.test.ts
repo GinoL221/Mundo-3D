@@ -204,7 +204,9 @@ describe("Shared route shell", () => {
     expect(layout).not.toContain("crt-theme-active");
     expect(layout).not.toContain('class="crt-overlay"');
     for (const route of routeSources) {
-      expect(route).toContain("import Layout from '../layouts/Layout.astro'");
+      expect(route).toMatch(
+        /import\s+Layout\s+from\s+["']\.\.\/layouts\/Layout\.astro["']\s*;?/,
+      );
       expect(route).toMatch(/<Layout(?:\s|>)/);
       expect(route).toContain("</Layout>");
     }
