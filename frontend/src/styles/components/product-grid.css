@@ -29,7 +29,9 @@
 
 .product-search__form {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(180px, 220px) minmax(180px, 220px) 112px;
+  grid-template-columns:
+    minmax(240px, 1fr) minmax(180px, 220px) minmax(180px, 220px)
+    112px;
   gap: 12px;
   max-width: 1280px;
   margin: 0 auto;

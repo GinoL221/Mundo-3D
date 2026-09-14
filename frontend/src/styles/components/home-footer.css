@@ -54,11 +54,11 @@
   image-rendering: auto;
 }
 
-html[data-theme='dark'] .home-footer__brand-full {
+html[data-theme="dark"] .home-footer__brand-full {
   display: none;
 }
 
-html[data-theme='dark'] .home-footer__brand-dark {
+html[data-theme="dark"] .home-footer__brand-dark {
   display: block;
 }
 

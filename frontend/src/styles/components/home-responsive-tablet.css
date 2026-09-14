@@ -3,8 +3,8 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
-      'brand end'
-      'links links';
+      "brand end"
+      "links links";
     align-items: center;
     justify-content: initial;
     gap: 16px;
@@ -34,7 +34,7 @@
   .home-footer__inner {
     display: grid;
     grid-template-columns: auto auto minmax(0, 1fr);
-    grid-template-areas: 'brand links end';
+    grid-template-areas: "brand links end";
     align-items: center;
     justify-content: initial;
     gap: 8px;

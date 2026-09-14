@@ -15,7 +15,9 @@
   box-shadow: 0 8px 20px rgb(30 27 24 / 24%);
   cursor: pointer;
   touch-action: manipulation;
-  transition: transform 200ms ease, box-shadow 200ms ease;
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease;
 }
 
 .whatsapp-floating:hover {

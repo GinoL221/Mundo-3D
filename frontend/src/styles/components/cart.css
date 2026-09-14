@@ -21,7 +21,8 @@
 
 .cart__header h1 {
   margin: 0;
-  font: 700 clamp(32px, 5vw, var(--sys-text-display))/1.15 var(--sys-font-heading);
+  font: 700 clamp(32px, 5vw, var(--sys-text-display))/1.15
+    var(--sys-font-heading);
 }
 
 .cart__header > p:last-child {

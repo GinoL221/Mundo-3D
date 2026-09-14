@@ -77,7 +77,9 @@
   }
 
   .home-header__primary li,
-  .home-header__account-section:has(.home-header__account-heading:not([style*='display: none']))
+  .home-header__account-section:has(
+      .home-header__account-heading:not([style*="display: none"])
+    )
     + ul {
     padding: 0;
     border: 0;

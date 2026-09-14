@@ -66,16 +66,20 @@
   display: none;
 }
 
-.email-confirmation__feedback[data-state='pending'] {
+.email-confirmation__feedback[data-state="pending"] {
   border-color: var(--sys-border);
   background: var(--sys-surface);
   color: var(--sys-text-muted);
 }
 
-.email-confirmation__feedback[data-state='invalid'],
-.email-confirmation__feedback[data-state='error'] {
+.email-confirmation__feedback[data-state="invalid"],
+.email-confirmation__feedback[data-state="error"] {
   border-color: var(--sys-error, #b42318);
-  background: color-mix(in srgb, var(--sys-error, #b42318) 8%, var(--sys-surface));
+  background: color-mix(
+    in srgb,
+    var(--sys-error, #b42318) 8%,
+    var(--sys-surface)
+  );
 }
 
 .email-confirmation__feedback:focus-visible {

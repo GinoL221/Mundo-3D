@@ -23,7 +23,8 @@
 }
 
 .profile-page__header h1 {
-  font: 600 clamp(32px, 5vw, var(--sys-text-display)) / 1.15 var(--sys-font-heading);
+  font: 600 clamp(32px, 5vw, var(--sys-text-display)) / 1.15
+    var(--sys-font-heading);
 }
 
 .profile-page__header p,

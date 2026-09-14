@@ -1,7 +1,7 @@
-@import './home-responsive-base.css';
-@import './home-responsive-desktop.css';
-@import './home-responsive-tablet.css';
-@import './home-responsive-motion.css';
+@import "./home-responsive-base.css";
+@import "./home-responsive-desktop.css";
+@import "./home-responsive-tablet.css";
+@import "./home-responsive-motion.css";
 
 @media (min-width: 1024px) {
   .home-header__inner {

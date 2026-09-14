@@ -1,4 +1,4 @@
-html[data-theme='dark'] .home-shell {
+html[data-theme="dark"] .home-shell {
   --home-paper: var(--bg);
   --home-surface: var(--surface);
   --home-ink: var(--fg);
@@ -26,10 +26,10 @@ html[data-theme='dark'] .home-shell {
   height: 55px;
 }
 
-html[data-theme='dark'] .home-header__logo-full {
+html[data-theme="dark"] .home-header__logo-full {
   display: none;
 }
 
-html[data-theme='dark'] .home-header__logo-dark {
+html[data-theme="dark"] .home-header__logo-dark {
   display: block;
 }

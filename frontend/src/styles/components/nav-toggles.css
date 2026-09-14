@@ -84,16 +84,16 @@
   display: none;
 }
 
-html[data-theme='light'] .theme-toggle-btn__icon--moon,
+html[data-theme="light"] .theme-toggle-btn__icon--moon,
 html:not([data-theme]) .theme-toggle-btn__icon--moon {
   display: none;
 }
 
-html[data-theme='dark'] .theme-toggle-btn__icon--sun {
+html[data-theme="dark"] .theme-toggle-btn__icon--sun {
   display: none;
 }
 
-html[data-theme='dark'] .theme-toggle-btn__icon--moon {
+html[data-theme="dark"] .theme-toggle-btn__icon--moon {
   display: block;
 }
 

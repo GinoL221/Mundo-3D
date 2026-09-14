@@ -51,8 +51,12 @@
   font-family: var(--font-body);
 }
 
-.carousel__prev { left: var(--space-sm); }
-.carousel__next { right: var(--space-sm); }
+.carousel__prev {
+  left: var(--space-sm);
+}
+.carousel__next {
+  right: var(--space-sm);
+}
 
 .carousel__prev:hover,
 .carousel__next:hover {
@@ -110,7 +114,6 @@
   overflow: hidden;
 }
 
-
 .carousel--lcd .carousel__container {
   display: flex;
   height: 100%;
@@ -147,11 +150,17 @@
 
 /* Glow animation */
 @keyframes lcd-glow {
-  0%, 100% {
-    text-shadow: 0 0 2px currentColor, 0 0 8px currentColor;
+  0%,
+  100% {
+    text-shadow:
+      0 0 2px currentColor,
+      0 0 8px currentColor;
   }
   50% {
-    text-shadow: 0 0 4px currentColor, 0 0 12px currentColor, 0 0 16px currentColor;
+    text-shadow:
+      0 0 4px currentColor,
+      0 0 12px currentColor,
+      0 0 16px currentColor;
   }
 }
 
@@ -164,13 +173,15 @@
   content: " ";
   display: block;
   position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
   background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
   background-size: 100% 4px;
   z-index: 2;
   pointer-events: none;
 }
-
 
 /* Custom navigation buttons for LCD panel */
 .carousel--lcd .carousel__prev,
@@ -189,7 +200,6 @@
   background-color: var(--lcd-fg);
   color: var(--lcd-bg);
 }
-
 
 /* Custom indicators for LCD panel */
 .carousel--lcd .carousel__indicators {

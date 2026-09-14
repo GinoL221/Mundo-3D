@@ -202,7 +202,11 @@
 .home-commission__title {
   margin: 0;
   color: #ffffff;
-  font-size: clamp(var(--home-section-heading-min), 3vw, var(--home-section-heading-max));
+  font-size: clamp(
+    var(--home-section-heading-min),
+    3vw,
+    var(--home-section-heading-max)
+  );
   font-weight: 600;
   line-height: 1.25;
 }
@@ -223,7 +227,7 @@
 }
 
 .home-button--commission:hover,
-html[data-theme='dark'] .home-button--commission:hover {
+html[data-theme="dark"] .home-button--commission:hover {
   border-color: #1e1b18;
   background: #f6f2ea;
   color: #1e1b18;

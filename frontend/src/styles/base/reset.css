@@ -11,6 +11,6 @@
 }
 
 /* ── Default Image Rendering ───────────────────────────────── */
-img:where(:not([data-image-rendering='pixel-art'])) {
+img:where(:not([data-image-rendering="pixel-art"])) {
   image-rendering: auto;
 }

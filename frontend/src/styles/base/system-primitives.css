@@ -45,7 +45,7 @@
 }
 
 :where(.system-action):disabled,
-:where(.system-action)[aria-disabled='true'] {
+:where(.system-action)[aria-disabled="true"] {
   cursor: not-allowed;
   opacity: 0.5;
 }
@@ -67,6 +67,6 @@
   color: var(--sys-danger-text);
 }
 
-:where([data-image-rendering='pixel-art']) {
+:where([data-image-rendering="pixel-art"]) {
   image-rendering: pixelated;
 }
