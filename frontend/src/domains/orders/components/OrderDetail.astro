@@ -7,19 +7,27 @@
 // script convention.
 ---
 
-<div id="order-loading" style="text-align:center; padding:2rem;">Cargando orden...</div>
+<div id="order-loading" class="orders-state" aria-live="polite">Cargando orden...</div>
 
-<div id="order-error" style="display:none;">
+<div id="order-error" class="orders-state orders-state--error" role="alert" style="display:none;">
   <p id="order-error-message">No se pudo cargar la orden.</p>
-  <p><a href="/">Volver al inicio</a></p>
+  <p><a class="orders-action" href="/">Volver al inicio</a></p>
 </div>
 
 <div id="order-content" class="order-detail__container" style="display:none;">
-  <h2>Orden #<span id="order-id"></span></h2>
-  <p id="order-status"></p>
-  <p id="order-created-at"></p>
-  <p id="order-payment-reference"></p>
+  <section class="order-detail__summary" aria-labelledby="order-summary-title">
+    <div>
+      <p class="order-detail__label">Pedido</p>
+      <h2 id="order-summary-title">Orden #<span id="order-id"></span></h2>
+    </div>
+    <div class="order-detail__meta">
+      <p id="order-status"></p>
+      <p id="order-created-at"></p>
+      <p id="order-payment-reference"></p>
+    </div>
+  </section>
 
+  <div class="order-detail__table-frame">
   <table class="order-detail__items">
     <thead>
       <tr>
@@ -30,17 +38,21 @@
       </tr>
     </thead>
     <tbody id="order-items-body"></tbody>
-  </table>
+      </table>
+    </div>
 
-  <h3>Total: $<span id="order-total"></span></h3>
-</div>
+    <div class="order-detail__total">
+      <span>Total registrado</span>
+      <strong>$<span id="order-total"></span></strong>
+    </div>
+  </div>
 
 <template id="order-item-row-template">
   <tr>
-    <td class="order-item-name"></td>
-    <td class="order-item-qty"></td>
-    <td class="order-item-price"></td>
-    <td class="order-item-subtotal"></td>
+    <td class="order-item-name" data-label="Producto"></td>
+    <td class="order-item-qty" data-label="Cantidad"></td>
+    <td class="order-item-price" data-label="Precio unitario"></td>
+    <td class="order-item-subtotal" data-label="Subtotal"></td>
   </tr>
 </template>
 

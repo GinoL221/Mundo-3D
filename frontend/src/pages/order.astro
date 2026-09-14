@@ -4,8 +4,12 @@ import { OrderDetail } from '../domains/orders';
 ---
 
 <Layout title="Detalle de la Orden - Mundo 3D">
-  <h1 class="sr-only">Mundo 3D — Detalle de la orden</h1>
-  <main class="order-detail">
+  <main class="orders-page order-detail">
+    <header class="orders-page__header">
+      <p class="orders-page__eyebrow">Mis órdenes</p>
+      <h1>Detalle de la orden</h1>
+      <p>Consultá los productos, importes y el estado registrado del pedido.</p>
+    </header>
     <OrderDetail />
   </main>
 </Layout>

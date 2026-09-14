@@ -4,8 +4,12 @@ import { OrderList } from '../domains/orders';
 ---
 
 <Layout title="Mis Órdenes - Mundo 3D">
-  <h1 class="sr-only">Mundo 3D — Mis órdenes</h1>
-  <main class="order-list">
+  <main class="orders-page order-list">
+    <header class="orders-page__header">
+      <p class="orders-page__eyebrow">Tu cuenta</p>
+      <h1>Mis órdenes</h1>
+      <p>Revisá el estado y el detalle de tus pedidos.</p>
+    </header>
     <OrderList />
   </main>
 </Layout>

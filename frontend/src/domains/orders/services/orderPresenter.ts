@@ -72,7 +72,7 @@ export function presentMyOrdersPage(page: MyOrdersPageViewModel): MyOrdersPresen
       createdAtLabel: new Date(order.createdAt).toLocaleString('es-AR'),
       detailHref: `/order?id=${order.idOrder}`,
     })),
-    isEmpty: page.orders.length === 0,
+    isEmpty: page.total === 0,
     pageLabel: `Página ${page.page} de ${Math.max(page.totalPages, 1)}`,
     prevHref: page.page > 1 ? `/orders?page=${page.page - 1}` : null,
     nextHref: page.page < page.totalPages ? `/orders?page=${page.page + 1}` : null,

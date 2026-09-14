@@ -13,7 +13,14 @@ const SAMPLE_ORDER: OrderViewModel = {
   idUser: 7,
   status: 'AWAITING_PAYMENT',
   items: [
-    { idOrderItem: 88, idProduct: 12, productName: 'Maceta Groot', quantity: 2, unitPrice: 1500.0, subtotal: 3000.0 },
+    {
+      idOrderItem: 88,
+      idProduct: 12,
+      productName: 'Maceta Groot',
+      quantity: 2,
+      unitPrice: 1500.0,
+      subtotal: 3000.0,
+    },
   ],
   totalAmount: 3000.0,
   createdAt: '2026-08-28T14:03:11.000Z',
@@ -48,8 +55,22 @@ describe('presentOrder', () => {
     const twoItemOrder: OrderViewModel = {
       ...SAMPLE_ORDER,
       items: [
-        { idOrderItem: 1, idProduct: 1, productName: 'A', quantity: 1, unitPrice: 10, subtotal: 10 },
-        { idOrderItem: 2, idProduct: null, productName: 'B (producto eliminado)', quantity: 3, unitPrice: 5, subtotal: 15 },
+        {
+          idOrderItem: 1,
+          idProduct: 1,
+          productName: 'A',
+          quantity: 1,
+          unitPrice: 10,
+          subtotal: 10,
+        },
+        {
+          idOrderItem: 2,
+          idProduct: null,
+          productName: 'B (producto eliminado)',
+          quantity: 3,
+          unitPrice: 5,
+          subtotal: 15,
+        },
       ],
     };
 
@@ -106,10 +127,30 @@ describe('presentMyOrdersPage', () => {
   });
 
   it('flags an empty page and produces no rows when there are no orders yet', () => {
-    const presentation = presentMyOrdersPage({ ...SAMPLE_MY_ORDERS_PAGE, orders: [], total: 0, totalPages: 0 });
+    const presentation = presentMyOrdersPage({
+      ...SAMPLE_MY_ORDERS_PAGE,
+      orders: [],
+      total: 0,
+      totalPages: 0,
+    });
 
     expect(presentation.isEmpty).toBe(true);
     expect(presentation.rows).toEqual([]);
+  });
+
+  it('keeps pagination recovery visible when an out-of-range page has no rows but the account has orders', () => {
+    const presentation = presentMyOrdersPage({
+      ...SAMPLE_MY_ORDERS_PAGE,
+      orders: [],
+      page: 3,
+      total: 37,
+      totalPages: 2,
+    });
+
+    expect(presentation.isEmpty).toBe(false);
+    expect(presentation.rows).toEqual([]);
+    expect(presentation.pageLabel).toBe('Página 3 de 2');
+    expect(presentation.prevHref).toBe('/orders?page=2');
   });
 
   it('computes prev/next hrefs from page/totalPages, omitting prev on page 1 and next on the last page', () => {

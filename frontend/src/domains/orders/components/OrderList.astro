@@ -6,19 +6,21 @@
 // component into a page, matching OrderDetail.astro's convention.
 ---
 
-<div id="my-orders-loading" style="text-align:center; padding:2rem;">Cargando tus órdenes...</div>
+<div id="my-orders-loading" class="orders-state" aria-live="polite">Cargando tus órdenes...</div>
 
-<div id="my-orders-error" style="display:none;">
+<div id="my-orders-error" class="orders-state orders-state--error" role="alert" style="display:none;">
   <p id="my-orders-error-message">No se pudieron cargar tus órdenes.</p>
-  <p><a href="/">Volver al inicio</a></p>
+  <p><a class="orders-action" href="/">Volver al inicio</a></p>
 </div>
 
-<div id="my-orders-empty" style="display:none;">
-  <p>Todavía no tenés órdenes.</p>
-  <p><a href="/products">Ver productos</a></p>
+<div id="my-orders-empty" class="orders-state" style="display:none;">
+  <h2>Todavía no tenés órdenes</h2>
+  <p>Cuando hagas un pedido, vas a poder seguirlo desde acá.</p>
+  <p><a class="orders-action" href="/products">Ver productos</a></p>
 </div>
 
 <div id="my-orders-content" class="order-list__container" style="display:none;">
+  <div class="order-list__table-frame">
   <table class="order-list__table">
     <thead>
       <tr>
@@ -30,22 +32,23 @@
       </tr>
     </thead>
     <tbody id="my-orders-body"></tbody>
-  </table>
+      </table>
+    </div>
 
-  <nav class="order-list__pagination">
-    <a id="my-orders-prev" href="#" style="display:none;">&laquo; Anterior</a>
-    <span id="my-orders-page-label"></span>
-    <a id="my-orders-next" href="#" style="display:none;">Siguiente &raquo;</a>
-  </nav>
-</div>
+    <nav class="order-list__pagination" aria-label="Paginación de órdenes">
+      <a id="my-orders-prev" href="#" style="display:none;">&laquo; Anterior</a>
+      <span id="my-orders-page-label"></span>
+      <a id="my-orders-next" href="#" style="display:none;">Siguiente &raquo;</a>
+    </nav>
+  </div>
 
 <template id="my-orders-row-template">
   <tr>
-    <td class="order-row-id"></td>
-    <td class="order-row-status"></td>
-    <td class="order-row-created-at"></td>
-    <td class="order-row-total"></td>
-    <td><a class="order-row-link">Ver detalle</a></td>
+    <td class="order-row-id" data-label="Orden"></td>
+    <td class="order-row-status" data-label="Estado"></td>
+    <td class="order-row-created-at" data-label="Fecha"></td>
+    <td class="order-row-total" data-label="Total"></td>
+    <td class="order-row-action"><a class="order-row-link">Ver detalle</a></td>
   </tr>
 </template>
 
