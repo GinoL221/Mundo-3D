@@ -1,4 +1,4 @@
-import { ShoppingCart } from '../../domain/entities/ShoppingCart';
+import { ShoppingCart } from "../../domain/entities/ShoppingCart";
 
 export interface ShoppingCartDTO {
   idCart: number;
@@ -22,7 +22,9 @@ export interface GetCartResult {
 }
 
 export function mapToShoppingCartDTO(entity: ShoppingCart): ShoppingCartDTO {
-  const hasDrift = entity.product ? entity.hasPriceDrift(entity.product.price) : false;
+  const hasDrift = entity.product
+    ? entity.hasPriceDrift(entity.product.price)
+    : false;
 
   return {
     idCart: entity.idCart,
@@ -34,7 +36,9 @@ export function mapToShoppingCartDTO(entity: ShoppingCart): ShoppingCartDTO {
     hasPriceDrift: hasDrift,
     product: {
       idProduct: entity.idProduct,
-      nameProduct: entity.product ? entity.product.nameProduct : 'Unknown Product',
+      nameProduct: entity.product
+        ? entity.product.nameProduct
+        : "Unknown Product",
       price: entity.product ? entity.product.price : entity.unitPrice,
       image: entity.product ? entity.product.image : null,
     },
