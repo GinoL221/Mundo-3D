@@ -1,0 +1,108 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Tu perfil - Mundo 3D">
+  <main class="profile-page">
+    <header class="profile-page__header">
+      <h1>Tu perfil</h1>
+      <p>Acá podés consultar los datos de tu cuenta.</p>
+    </header>
+
+    <section id="profile-loading" class="profile-state" aria-live="polite">
+      <p>Cargando tu perfil...</p>
+    </section>
+
+    <section id="profile-guest" class="profile-state" hidden>
+      <h2>Iniciá sesión para ver tu perfil</h2>
+      <p>Tu información personal está disponible únicamente dentro de tu sesión.</p>
+      <a class="profile-action" href="/login">Ir a iniciar sesión</a>
+    </section>
+
+    <section id="profile-error" class="profile-state profile-state--error" role="alert" hidden>
+      <h2>No pudimos cargar tu perfil</h2>
+      <p id="profile-error-message">Probá de nuevo en unos minutos.</p>
+      <a class="profile-action" href="/">Volver al inicio</a>
+    </section>
+
+    <section id="profile-content" class="profile" aria-labelledby="profile-name" hidden>
+      <div class="profile__portrait">
+        <img
+          id="profile-image"
+          class="profile__image"
+          src="/img/users/default-avatar.png"
+          alt=""
+          width="240"
+          height="240"
+        />
+      </div>
+      <div class="profile__details">
+        <h2 id="profile-name"></h2>
+        <dl class="profile__data">
+          <div>
+            <dt>Nombre</dt>
+            <dd id="profile-full-name"></dd>
+          </div>
+          <div>
+            <dt>Email</dt>
+            <dd id="profile-email"></dd>
+          </div>
+        </dl>
+        <p class="profile__note">Estos son los datos asociados a tu cuenta.</p>
+      </div>
+    </section>
+  </main>
+</Layout>
+
+<script>
+  import { fetchProfile, ProfileServiceError } from '../domains/auth/services/profile.service';
+
+  const fallbackImage = '/img/users/default-avatar.png';
+
+  function hideLoading(): void {
+    const loading = document.getElementById('profile-loading');
+    if (loading) loading.hidden = true;
+  }
+
+  function showState(id: 'profile-guest' | 'profile-error'): void {
+    hideLoading();
+    const state = document.getElementById(id);
+    if (state) state.hidden = false;
+  }
+
+  async function loadProfile(): Promise<void> {
+    try {
+      const user = await fetchProfile();
+      const fullName = `${user.firstName} ${user.lastName}`.trim();
+      const image = document.getElementById('profile-image') as HTMLImageElement | null;
+      const name = document.getElementById('profile-name');
+      const fullNameValue = document.getElementById('profile-full-name');
+      const email = document.getElementById('profile-email');
+      const content = document.getElementById('profile-content');
+
+      if (image) {
+        image.src = user.image || fallbackImage;
+        image.alt = fullName ? `Foto de perfil de ${fullName}` : 'Foto de perfil';
+        image.addEventListener('error', () => {
+          if (!image.src.endsWith(fallbackImage)) image.src = fallbackImage;
+        });
+      }
+      if (name) name.textContent = fullName;
+      if (fullNameValue) fullNameValue.textContent = fullName;
+      if (email) email.textContent = user.email;
+      hideLoading();
+      if (content) content.hidden = false;
+    } catch (error) {
+      if (error instanceof ProfileServiceError && error.status === 401) {
+        showState('profile-guest');
+        return;
+      }
+
+      const message = document.getElementById('profile-error-message');
+      if (message && error instanceof ProfileServiceError) message.textContent = error.message;
+      showState('profile-error');
+    }
+  }
+
+  void loadProfile();
+</script>

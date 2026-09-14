@@ -27,7 +27,7 @@ export class UserApiController {
     private readonly registerUserUseCase?: RegisterUserUseCase,
     private readonly createRememberTokenUseCase?: CreateRememberTokenUseCase,
     private readonly refreshSessionUseCase?: RefreshSessionUseCase,
-    private readonly revokeRefreshTokenUseCase?: RevokeRefreshTokenUseCase
+    private readonly revokeRefreshTokenUseCase?: RevokeRefreshTokenUseCase,
   ) {}
 
   login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -48,7 +48,7 @@ export class UserApiController {
           image: userDto.image,
           idRole: userDto.idRole,
           category: userDto.category,
-        }
+        },
       });
     } catch (error) {
       if (error instanceof InvalidCredentialsException) {
@@ -94,7 +94,10 @@ export class UserApiController {
       }
 
       const newPlainToken = generateRefreshToken();
-      const result = await this.refreshSessionUseCase.execute({ presentedPlainToken, newPlainToken });
+      const result = await this.refreshSessionUseCase.execute({
+        presentedPlainToken,
+        newPlainToken,
+      });
 
       // 'reuse-detected' MUST fold into the same 401 as an ordinary
       // rejection (design.md D2/D3) — the response must never reveal that
@@ -109,8 +112,14 @@ export class UserApiController {
       // Passing nothing here re-issued every remembered session at 2h.
       issueAccessCookie(
         res,
-        { userId: user.idUser, email: user.email, category: user.category, idRole: user.idRole, familyId },
-        Math.max(0, familyExpiresAt.getTime() - Date.now())
+        {
+          userId: user.idUser,
+          email: user.email,
+          category: user.category,
+          idRole: user.idRole,
+          familyId,
+        },
+        Math.max(0, familyExpiresAt.getTime() - Date.now()),
       );
 
       // Only the rotation winner ever writes the refresh cookie (design.md
@@ -130,7 +139,7 @@ export class UserApiController {
           image: user.image,
           idRole: user.idRole,
           category: user.category,
-        }
+        },
       });
     } catch (error) {
       next(error);
@@ -140,7 +149,7 @@ export class UserApiController {
   register = async (
     req: Request & { file?: { key: string; location: string } },
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> => {
     try {
       if (!this.registerUserUseCase) {
@@ -155,7 +164,13 @@ export class UserApiController {
       const { firstName, lastName, email, password } = req.body;
       const image = req.file.location;
 
-      const userDto = await this.registerUserUseCase.execute({ firstName, lastName, email, password, image });
+      const userDto = await this.registerUserUseCase.execute({
+        firstName,
+        lastName,
+        email,
+        password,
+        image,
+      });
       await establishSession(res, this.createRememberTokenUseCase, userDto);
 
       res.status(201).json({
@@ -167,7 +182,7 @@ export class UserApiController {
           image: userDto.image,
           idRole: userDto.idRole,
           category: userDto.category,
-        }
+        },
       });
     } catch (error) {
       if (error instanceof UserAlreadyExistsException) {
@@ -181,11 +196,30 @@ export class UserApiController {
     }
   };
 
-  index = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  index = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const users = await this.listUsersUseCase.execute();
       res.json({ count: users.length, users });
     } catch (error) {
+      next(error);
+    }
+  };
+
+  me = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const principal = req.user;
+      if (!principal) {
+        res.status(401).json({ error: 'Autenticación requerida' });
+        return;
+      }
+
+      const user = await this.getUserByIdUseCase.execute(principal.userId);
+      res.json({ user });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'User not found') {
+        res.status(404).json({ error: 'Usuario no encontrado' });
+        return;
+      }
       next(error);
     }
   };

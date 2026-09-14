@@ -1,26 +1,139 @@
-/* ============================================================
-   profile.css — Profile Component (BEM)
-   Extracted from styles.css lines 994-1012
-   ============================================================ */
+.profile-page :is(.profile, .profile-state)[hidden] {
+  display: none;
+}
 
-/* ── Profile Block ─────────────────────────────────────────── */
+.profile-page {
+  min-width: 0;
+  overflow-x: clip;
+  color: var(--sys-text);
+}
+
+.profile-page__header {
+  display: grid;
+  max-width: var(--sys-prose-max);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xl);
+}
+
+.profile-page__header :is(h1, p),
+.profile-state :is(h2, p),
+.profile__details :is(h2, p),
+.profile__data {
+  margin: 0;
+}
+
+.profile-page__header h1 {
+  font: 600 clamp(32px, 5vw, var(--sys-text-display)) / 1.15 var(--sys-font-heading);
+}
+
+.profile-page__header p,
+.profile__note {
+  color: var(--sys-text-muted);
+}
+
+.profile-state {
+  display: grid;
+  min-height: 240px;
+  place-items: center;
+  align-content: center;
+  gap: var(--space-md);
+  padding: var(--space-xl) var(--space-md);
+  border: 1px solid var(--sys-border);
+  background: var(--sys-surface);
+  text-align: center;
+}
+
+.profile-state--error {
+  border-color: var(--sys-danger-text);
+}
+
+.profile-action {
+  display: inline-flex;
+  min-height: var(--sys-target-min);
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--sys-border);
+  color: var(--sys-action-text-link);
+  font-weight: 600;
+}
+
 .profile {
-  max-width: 800px;
-  margin: var(--space-lg) auto;
-  padding: var(--space-lg);
-  background-color: var(--surface);
-  border: 2px solid var(--pico-muted);
+  display: grid;
+  min-width: 0;
+  border-block: 1px solid var(--sys-border);
+  background: var(--sys-surface);
 }
 
-/* ── Profile Image ─────────────────────────────────────────── */
+.profile__portrait {
+  display: grid;
+  min-width: 0;
+  place-items: center;
+  padding: var(--space-xl);
+  background: var(--sys-page-bg);
+}
+
 .profile__image {
-  max-width: 70%;
-  height: auto;
-  border: 2px solid var(--pico-muted);
+  width: min(240px, 100%);
+  aspect-ratio: 1;
+  border: 1px solid var(--sys-border);
+  background: var(--sys-surface);
+  object-fit: cover;
+  image-rendering: auto;
 }
 
-/* ── Profile Email ─────────────────────────────────────────── */
-.profile__email {
-  color: var(--fg);
-  font-size: 20px;
+.profile__details {
+  display: grid;
+  min-width: 0;
+  align-content: center;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+}
+
+.profile__details h2 {
+  overflow-wrap: anywhere;
+  font-size: var(--text-h2);
+}
+
+.profile__data {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.profile__data > div {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-xs);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--sys-border);
+}
+
+.profile__data dt {
+  color: var(--sys-text-muted);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.profile__data dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.profile-page :is(a, button):focus-visible {
+  outline: 3px solid var(--sys-focus);
+  outline-offset: 3px;
+}
+
+@media (min-width: 640px) {
+  .profile {
+    grid-template-columns: minmax(240px, 0.8fr) minmax(0, 1.5fr);
+  }
+}
+
+@media (max-width: 639px) {
+  .profile__portrait,
+  .profile__details {
+    padding: var(--space-lg);
+  }
 }

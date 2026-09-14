@@ -24,7 +24,9 @@ const JWT_SECRET = getJwtSecret();
 const mockAuthenticateExecute = jest.fn();
 
 jest.mock('../../../../application/use-cases/AuthenticateUserUseCase', () => ({
-  AuthenticateUserUseCase: jest.fn().mockImplementation(() => ({ execute: mockAuthenticateExecute })),
+  AuthenticateUserUseCase: jest
+    .fn()
+    .mockImplementation(() => ({ execute: mockAuthenticateExecute })),
 }));
 
 // This is the integration-level guard-matrix test for the user admin
@@ -50,7 +52,7 @@ const signToken = (idRole: number) =>
   jwt.sign(
     { userId: 1, email: 'principal@test.com', category: 'test', idRole, typ: 'access' },
     JWT_SECRET,
-    accessTokenSignOptions('1h')
+    accessTokenSignOptions('1h'),
   );
 
 const adminToken = signToken(Role.ADMIN);
@@ -74,7 +76,9 @@ describe('api/users admin routes — guard matrix', () => {
     });
 
     it('returns 401 with a bad/malformed Bearer token', async () => {
-      const res = await request(app).get('/api/users').set('Cookie', authCookie('not-a-real-token'));
+      const res = await request(app)
+        .get('/api/users')
+        .set('Cookie', authCookie('not-a-real-token'));
 
       expect(res.status).toBe(401);
       expect(mockListExecute).not.toHaveBeenCalled();
@@ -105,6 +109,60 @@ describe('api/users admin routes — guard matrix', () => {
     });
   });
 
+  describe('GET /api/users/me', () => {
+    it('returns the middleware 401 without an authenticated session', async () => {
+      const res = await request(app).get('/api/users/me');
+
+      expect(res.status).toBe(401);
+      expect(res.body).toEqual({ error: 'Token de autenticación no proporcionado' });
+      expect(mockGetByIdExecute).not.toHaveBeenCalled();
+    });
+
+    it('returns only the authenticated user DTO and ignores substitute IDs', async () => {
+      mockGetByIdExecute.mockResolvedValue({
+        idUser: 1,
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        email: 'principal@test.com',
+        image: null,
+        idRole: Role.USER,
+        category: null,
+      });
+
+      const res = await request(app)
+        .get('/api/users/me?id=999')
+        .set('Cookie', authCookie(userToken))
+        .send({ id: 999 });
+
+      expect(res.status).toBe(200);
+      expect(mockGetByIdExecute).toHaveBeenCalledWith(1);
+      expect(res.body).toEqual({
+        user: {
+          idUser: 1,
+          firstName: 'Ada',
+          lastName: 'Lovelace',
+          email: 'principal@test.com',
+          image: null,
+          idRole: Role.USER,
+          category: null,
+        },
+      });
+      expect(res.body.user).not.toHaveProperty('password');
+      expect(res.body.user).not.toHaveProperty('refreshToken');
+      expect(res.body.user).not.toHaveProperty('confirmationToken');
+    });
+
+    it('keeps the generic 404 when the authenticated principal is missing', async () => {
+      mockGetByIdExecute.mockRejectedValue(new Error('User not found'));
+
+      const res = await request(app).get('/api/users/me').set('Cookie', authCookie(userToken));
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: 'Usuario no encontrado' });
+      expect(mockGetByIdExecute).toHaveBeenCalledWith(1);
+    });
+  });
+
   describe('GET /api/users/:id', () => {
     it('returns 401 without an Authorization header', async () => {
       const res = await request(app).get('/api/users/1');
@@ -114,7 +172,9 @@ describe('api/users admin routes — guard matrix', () => {
     });
 
     it('returns 401 with a bad/malformed Bearer token', async () => {
-      const res = await request(app).get('/api/users/1').set('Cookie', authCookie('not-a-real-token'));
+      const res = await request(app)
+        .get('/api/users/1')
+        .set('Cookie', authCookie('not-a-real-token'));
 
       expect(res.status).toBe(401);
       expect(mockGetByIdExecute).not.toHaveBeenCalled();

@@ -386,6 +386,53 @@ describe('UserApiController', () => {
     });
   });
 
+  describe('me', () => {
+    it('loads the verified principal through the existing safe user DTO boundary', async () => {
+      req.user = { userId: 42, email: 'ada@example.test', idRole: 2 };
+      req.params = { id: '999' };
+      req.body = { id: 999 };
+      mockGetUserByIdUseCase.execute.mockResolvedValue({
+        idUser: 42,
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        email: 'ada@example.test',
+        image: null,
+        idRole: 2,
+        category: null,
+      });
+
+      await controller.me(req as Request, res as Response, next);
+
+      expect(mockGetUserByIdUseCase.execute).toHaveBeenCalledWith(42);
+      expect(res.json).toHaveBeenCalledWith({
+        user: {
+          idUser: 42,
+          firstName: 'Ada',
+          lastName: 'Lovelace',
+          email: 'ada@example.test',
+          image: null,
+          idRole: 2,
+          category: null,
+        },
+      });
+      expect(res.json).not.toHaveBeenCalledWith(
+        expect.objectContaining({ password: expect.anything() }),
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('returns the existing generic user-not-found response for a missing principal', async () => {
+      req.user = { userId: 42, email: 'ada@example.test', idRole: 2 };
+      mockGetUserByIdUseCase.execute.mockRejectedValue(new Error('User not found'));
+
+      await controller.me(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Usuario no encontrado' });
+      expect(next).not.toHaveBeenCalled();
+    });
+  });
+
   describe('logout', () => {
     it('clears all 4 session cookies with byte-identical flags to login and responds 204', async () => {
       const payload = {

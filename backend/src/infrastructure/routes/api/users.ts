@@ -284,6 +284,23 @@ const normalizeLoginBody = (req: Request, _res: Response, next: NextFunction) =>
  *             schema: { $ref: '#/components/schemas/UsersIndexResponse' }
  *       '401': { description: Not authenticated. }
  *       '403': { description: Authenticated but not ADMIN. }
+ * /users/me:
+ *   get:
+ *     summary: Get the authenticated user's profile
+ *     tags: [Users]
+ *     security: [{ cookieAuth: [] }]
+ *     responses:
+ *       '200':
+ *         description: The authenticated user's safe profile.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user: { $ref: '#/components/schemas/User' }
+ *               required: [user]
+ *       '401': { description: Not authenticated. }
+ *       '404': { description: Authenticated principal no longer exists. }
  * /users/{id}:
  *   get:
  *     summary: Get one user by id (admin only)
@@ -364,6 +381,7 @@ router.post(
 );
 
 router.get('/users', apiAuthMiddleware, adminGuard, controller.index);
+router.get('/users/me', apiAuthMiddleware, controller.me);
 router.get('/users/:id', apiAuthMiddleware, adminGuard, controller.show);
 
 export default router;
