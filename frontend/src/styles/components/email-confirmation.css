@@ -1,18 +1,34 @@
 .email-confirmation {
   display: grid;
-  gap: var(--space-md);
+  gap: var(--space-xl);
   padding: var(--space-xl);
   border: 1px solid var(--sys-border);
   background: var(--sys-surface);
 }
 
 .email-confirmation h2,
+.email-confirmation h3,
 .email-confirmation p {
   margin: 0;
 }
 
-.email-confirmation > p {
+.email-confirmation__intro,
+.email-confirmation__resend > div {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.email-confirmation__intro > p:last-child,
+.email-confirmation__resend p {
   color: var(--sys-text-muted);
+}
+
+.email-confirmation__eyebrow {
+  color: var(--sys-action-bg);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .email-confirmation__form {
@@ -20,15 +36,46 @@
   gap: var(--space-md);
 }
 
-.email-confirmation__form--resend {
-  padding-top: var(--space-lg);
+.email-confirmation__form[aria-busy] {
+  cursor: wait;
+}
+
+.email-confirmation__form :disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.email-confirmation__resend {
+  display: grid;
+  gap: var(--space-lg);
+  padding-top: var(--space-xl);
   border-top: 1px solid var(--sys-border);
 }
 
 .email-confirmation__feedback {
-  padding: var(--space-sm) var(--space-md);
+  display: grid;
+  gap: var(--space-md);
+  padding: var(--space-md);
   border: 1px solid var(--sys-action-bg);
+  border-inline-start-width: 4px;
+  background: color-mix(in srgb, var(--sys-action-bg) 8%, var(--sys-surface));
   color: var(--sys-text);
+}
+
+.email-confirmation__feedback[hidden] {
+  display: none;
+}
+
+.email-confirmation__feedback[data-state='pending'] {
+  border-color: var(--sys-border);
+  background: var(--sys-surface);
+  color: var(--sys-text-muted);
+}
+
+.email-confirmation__feedback[data-state='invalid'],
+.email-confirmation__feedback[data-state='error'] {
+  border-color: var(--sys-error, #b42318);
+  background: color-mix(in srgb, var(--sys-error, #b42318) 8%, var(--sys-surface));
 }
 
 .email-confirmation__feedback:focus-visible {
@@ -36,8 +83,20 @@
   outline-offset: 3px;
 }
 
+.email-confirmation__login-link {
+  justify-self: start;
+  font-weight: 700;
+  color: var(--sys-action-bg);
+  text-underline-offset: 0.2em;
+}
+
+.email-confirmation__login-link:hover {
+  text-decoration-thickness: 2px;
+}
+
 @media (max-width: 639px) {
   .email-confirmation {
+    gap: var(--space-lg);
     padding: var(--space-lg) var(--space-md);
   }
 }

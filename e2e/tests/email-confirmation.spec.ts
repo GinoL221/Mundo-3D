@@ -18,7 +18,7 @@ async function submitResend(page: Page, email: string) {
   await page.getByRole('button', { name: 'Solicitar otro enlace' }).click();
   const response = await responsePromise;
   expect(response.status()).toBe(202);
-  await expect(page.locator('#email-confirmation-feedback')).toHaveText(
+  await expect(page.locator('.email-confirmation__feedback-message')).toHaveText(
     'Si la cuenta es elegible, podrá recibir un nuevo enlace de confirmación.',
   );
   return response.json();
@@ -79,9 +79,14 @@ test.describe('email confirmation', () => {
     );
     await page.getByRole('button', { name: 'Confirmar correo' }).click();
     expect((await confirmationResponse).status()).toBe(204);
-    await expect(page.locator('#email-confirmation-feedback')).toHaveText(
-      'Tu correo fue confirmado.',
+    await expect(page.locator('#email-confirmation-feedback')).toContainText(
+      'Tu correo fue confirmado. Ya podés iniciar sesión.',
     );
+    await expect(page.getByRole('link', { name: 'Ir a iniciar sesión' })).toHaveAttribute(
+      'href',
+      '/login',
+    );
+    await expect(page).toHaveURL(/\/confirm-email\?token=/);
     await expect(readConfirmationState(email)).resolves.toEqual({
       emailVerifiedAt: expect.any(Date),
       consumedAt: expect.any(Date),
@@ -102,8 +107,8 @@ test.describe('email confirmation', () => {
     );
     await page.getByRole('button', { name: 'Confirmar correo' }).click();
     expect((await confirmationResponse).status()).toBe(400);
-    await expect(page.locator('#email-confirmation-feedback')).toHaveText(
-      'El enlace no es válido o ya venció. Podés solicitar otro.',
+    await expect(page.locator('.email-confirmation__feedback-message')).toHaveText(
+      'El enlace no es válido, falta o ya venció. Podés solicitar otro.',
     );
     await expect(page.locator('#email-confirmation-feedback')).not.toContainText(invalidToken);
   });
@@ -123,8 +128,8 @@ test.describe('email confirmation', () => {
       );
       await page.getByRole('button', { name: 'Confirmar correo' }).click();
       expect((await confirmationResponse).status()).toBe(204);
-      await expect(page.locator('#email-confirmation-feedback')).toHaveText(
-        'Tu correo fue confirmado.',
+      await expect(page.locator('#email-confirmation-feedback')).toContainText(
+        'Tu correo fue confirmado. Ya podés iniciar sesión.',
       );
       await expect(readConfirmationState(email)).resolves.toEqual(expectedState);
     }

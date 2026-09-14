@@ -1,20 +1,43 @@
 <section class="email-confirmation" aria-labelledby="email-confirmation-title">
-  <h2 id="email-confirmation-title">Confirmá tu correo</h2>
-  <p>Cuando estés listo, confirmá tu dirección desde este enlace.</p>
+  <div class="email-confirmation__intro">
+    <p class="email-confirmation__eyebrow">Último paso</p>
+    <h2 id="email-confirmation-title">Confirmá tu correo</h2>
+    <p>Cuando estés listo, confirmá tu dirección desde este enlace.</p>
+  </div>
 
   <form id="email-confirmation-form" class="email-confirmation__form">
-    <button class="auth-form__button auth-form__button--primary" type="submit">Confirmar correo</button>
+    <button class="auth-form__button auth-form__button--primary" type="submit">
+      <span class="email-confirmation__button-label">Confirmar correo</span>
+    </button>
   </form>
 
-  <p id="email-confirmation-feedback" class="email-confirmation__feedback" aria-live="polite" tabindex="-1" hidden></p>
+  <div
+    id="email-confirmation-feedback"
+    class="email-confirmation__feedback"
+    role="status"
+    aria-live="polite"
+    tabindex="-1"
+    hidden
+  >
+    <p class="email-confirmation__feedback-message"></p>
+    <a class="email-confirmation__login-link" href="/login" hidden>Ir a iniciar sesión</a>
+  </div>
 
-  <form id="resend-confirmation-form" class="email-confirmation__form email-confirmation__form--resend">
-    <label class="auth-form__field" for="resend-email">
-      <span>Correo electrónico</span>
-      <input class="auth-form__input" id="resend-email" name="email" type="email" autocomplete="email" required />
-    </label>
-    <button class="auth-form__button auth-form__button--secondary" type="submit">Solicitar otro enlace</button>
-  </form>
+  <div class="email-confirmation__resend">
+    <div>
+      <h3>¿Necesitás otro enlace?</h3>
+      <p>Ingresá tu correo y te ayudamos a continuar.</p>
+    </div>
+    <form id="resend-confirmation-form" class="email-confirmation__form email-confirmation__form--resend">
+      <label class="auth-form__field" for="resend-email">
+        <span>Correo electrónico</span>
+        <input class="auth-form__input" id="resend-email" name="email" type="email" autocomplete="email" required />
+      </label>
+      <button class="auth-form__button auth-form__button--secondary" type="submit">
+        <span class="email-confirmation__button-label">Solicitar otro enlace</span>
+      </button>
+    </form>
+  </div>
 </section>
 
 <script>
@@ -23,45 +46,88 @@
     EmailConfirmationService,
   } from '../services/emailConfirmation.service';
 
+  type FeedbackState = 'pending' | 'success' | 'invalid' | 'error' | 'resend-success';
+
   const confirmationForm = document.getElementById('email-confirmation-form') as HTMLFormElement | null;
   const resendForm = document.getElementById('resend-confirmation-form') as HTMLFormElement | null;
   const resendEmail = document.getElementById('resend-email') as HTMLInputElement | null;
   const feedback = document.getElementById('email-confirmation-feedback') as HTMLElement | null;
+  const feedbackMessage = feedback?.querySelector('.email-confirmation__feedback-message') as HTMLElement | null;
+  const loginLink = feedback?.querySelector('.email-confirmation__login-link') as HTMLAnchorElement | null;
+  let confirmationPending = false;
+  let resendPending = false;
 
-  function showFeedback(message: string) {
-    if (!feedback) return;
-    feedback.textContent = message;
+  function setFormPending(form: HTMLFormElement, pending: boolean, pendingLabel: string) {
+    form.toggleAttribute('aria-busy', pending);
+    for (const control of form.elements) {
+      if (control instanceof HTMLButtonElement || control instanceof HTMLInputElement) {
+        control.disabled = pending;
+      }
+    }
+
+    const label = form.querySelector('.email-confirmation__button-label');
+    const button = form.querySelector('button');
+    if (label && button) {
+      if (pending) button.dataset.defaultLabel = label.textContent ?? '';
+      label.textContent = pending ? pendingLabel : button.dataset.defaultLabel ?? label.textContent;
+    }
+  }
+
+  function showFeedback(message: string, state: FeedbackState, showLogin = false) {
+    if (!feedback || !feedbackMessage) return;
+    feedbackMessage.textContent = message;
+    feedback.dataset.state = state;
     feedback.hidden = false;
+    if (loginLink) loginLink.hidden = !showLogin;
     feedback.focus();
   }
 
   confirmationForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (confirmationPending) return;
+
+    confirmationPending = true;
+    setFormPending(confirmationForm, true, 'Confirmando…');
+    showFeedback('Estamos confirmando tu correo…', 'pending');
+
     try {
       const outcome = await EmailConfirmationService.confirmFromCurrentLocation();
       if (outcome === 'confirmed') {
-        showFeedback('Tu correo fue confirmado.');
-      }
-      if (outcome === 'invalid') {
-        showFeedback('El enlace no es válido o ya venció. Podés solicitar otro.');
+        showFeedback('Tu correo fue confirmado. Ya podés iniciar sesión.', 'success', true);
+      } else {
+        showFeedback('El enlace no es válido, falta o ya venció. Podés solicitar otro.', 'invalid');
       }
     } catch (error) {
       if (error instanceof ConfirmationNetworkError) {
-        showFeedback('No pudimos confirmar tu correo. Revisá tu conexión e intentá de nuevo.');
+        showFeedback('No pudimos confirmar tu correo. Intentá de nuevo en unos instantes.', 'error');
       }
+    } finally {
+      confirmationPending = false;
+      setFormPending(confirmationForm, false, 'Confirmando…');
     }
   });
 
   resendForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (!resendEmail?.value) return;
+    if (resendPending || !resendEmail?.value) return;
+
+    resendPending = true;
+    setFormPending(resendForm, true, 'Solicitando…');
+    showFeedback('Estamos solicitando un nuevo enlace…', 'pending');
+
     try {
       await EmailConfirmationService.resend(resendEmail.value.trim());
-      showFeedback('Si la cuenta es elegible, podrá recibir un nuevo enlace de confirmación.');
+      showFeedback(
+        'Si la cuenta es elegible, podrá recibir un nuevo enlace de confirmación.',
+        'resend-success',
+      );
     } catch (error) {
       if (error instanceof ConfirmationNetworkError) {
-        showFeedback('No pudimos procesar la solicitud. Revisá tu conexión e intentá de nuevo.');
+        showFeedback('No pudimos procesar la solicitud. Intentá de nuevo en unos instantes.', 'error');
       }
+    } finally {
+      resendPending = false;
+      setFormPending(resendForm, false, 'Solicitando…');
     }
   });
 </script>

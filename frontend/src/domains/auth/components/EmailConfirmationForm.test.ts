@@ -10,6 +10,7 @@ describe('EmailConfirmationForm source contract', () => {
   it('provides an explicit confirmation submit control and keyboard-focused live feedback', () => {
     expect(componentSource).toContain('id="email-confirmation-form"');
     expect(componentSource).toContain('type="submit"');
+    expect(componentSource).toContain('role="status"');
     expect(componentSource).toContain('aria-live="polite"');
     expect(componentSource).toContain('tabindex="-1"');
     expect(componentSource).toContain('feedback.hidden = false');
@@ -17,11 +18,26 @@ describe('EmailConfirmationForm source contract', () => {
     expect(componentSource).toContain('EmailConfirmationService.confirmFromCurrentLocation()');
   });
 
-  it('keeps confirmation outcomes distinct without persisting the opaque token', () => {
+  it('presents pending, success, invalid, and retryable error states without duplicate submits', () => {
+    expect(componentSource).toContain(
+      "type FeedbackState = 'pending' | 'success' | 'invalid' | 'error' | 'resend-success'",
+    );
+    expect(componentSource).toContain('if (confirmationPending) return');
+    expect(componentSource).toContain('if (resendPending || !resendEmail?.value) return');
+    expect(componentSource).toContain("setFormPending(confirmationForm, true, 'Confirmando…')");
+    expect(componentSource).toContain("setFormPending(resendForm, true, 'Solicitando…')");
+    expect(componentSource).toContain('control.disabled = pending');
     expect(componentSource).toContain("'confirmed'");
     expect(componentSource).toContain("'invalid'");
     expect(componentSource).toContain('ConfirmationNetworkError');
     expect(componentSource).not.toMatch(/localStorage|sessionStorage|document\.cookie|analytics/i);
+  });
+
+  it('shows a login CTA only after successful confirmation and never redirects automatically', () => {
+    expect(componentSource).toContain('href="/login"');
+    expect(componentSource).toContain("'success', true");
+    expect(componentSource).toContain('loginLink.hidden = !showLogin');
+    expect(componentSource).not.toMatch(/location\.(assign|replace)|window\.location\s*=/);
   });
 
   it('submits resend email explicitly and uses non-enumerating acceptance copy', () => {
