@@ -88,7 +88,7 @@ Fixtures MUST prove green domain-to-port, application-to-port, adapter/database,
 
 ### Requirement: The Gate Blocks Independently Without Product Changes
 
-The architecture check MUST be a standalone command that exits zero only when checked edges pass and non-zero for violations. Current CI MUST invoke it independently of `verification-baseline-and-ci-gates` and MUST block on non-zero or unavailable execution. The capability MUST NOT move production files, change runtime/product/schema/authentication/cart behavior, or exceed 250 lines per production source file. Rollback MUST remove only checker assets, command wiring, and CI invocation.
+The architecture check MUST be a standalone command that exits zero only when checked edges pass and non-zero for violations. Current CI MUST invoke it independently of `verification-baseline-and-ci-gates` and MUST block on non-zero or unavailable execution. The capability MUST NOT move production files or change runtime/product/schema/authentication/cart behavior. Rollback MUST remove only checker assets, command wiring, and CI invocation.
 
 #### Scenario: Standalone command reports success
 

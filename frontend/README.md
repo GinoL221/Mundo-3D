@@ -11,7 +11,7 @@ pnpm dev             # Astro dev server, puerto 4321
 pnpm build           # Build de producción (requiere PUBLIC_API_URL)
 pnpm check           # astro check (TypeScript/Astro)
 pnpm test            # Vitest
-pnpm quality:check   # console.log y límite de 250 líneas por archivo
+pnpm quality:check   # prohíbe console.log en código de producción
 ```
 
 Ver la sección "Comandos" del README de la raíz para el resto del monorepo (backend, E2E, migraciones).
