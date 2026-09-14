@@ -1,6 +1,6 @@
-import { API_URL, authFetch, getSessionUser } from '../../../config';
-import { cartItems, persistCart, type CartItem } from './cartState';
-import { flushCartSync, hasPendingSync, scheduleSync } from './cartSync';
+import { API_URL, authFetch, getSessionUser } from "../../../config";
+import { cartItems, persistCart, type CartItem } from "./cartState";
+import { flushCartSync, hasPendingSync, scheduleSync } from "./cartSync";
 
 // The frontend cannot import from backend/; this mirrors backend
 // ShoppingCartDTO / GetCartResult and is kept in sync by hand.
@@ -8,7 +8,12 @@ export interface ServerCartItemDTO {
   idProduct: number;
   quantity: number;
   unitPrice: number;
-  product: { idProduct: number; nameProduct: string; price: number; image: string | null };
+  product: {
+    idProduct: number;
+    nameProduct: string;
+    price: number;
+    image: string | null;
+  };
 }
 
 export interface ServerCartResponse {
@@ -29,7 +34,7 @@ export interface HydrationResult {
   items: CartItem[]; // state now in the store (or the untouched local state)
   priceDrifts: PriceDrift[]; // [] unless ok
   syncScheduled: boolean; // true only when a merge PUT was issued
-  reason?: 'guest' | 'network' | 'http' | 'superseded';
+  reason?: "guest" | "network" | "http" | "superseded";
 }
 
 // Maps a GET /api/cart DTO entry to the local CartItem shape. unitPrice comes
@@ -40,7 +45,7 @@ export function mapServerCart(dtos: ServerCartItemDTO[]): CartItem[] {
   return dtos.map((dto) => ({
     productId: dto.idProduct,
     name: dto.product.nameProduct,
-    image: dto.product.image ?? '',
+    image: dto.product.image ?? "",
     unitPrice: dto.product.price,
     quantity: dto.quantity,
   }));
@@ -56,14 +61,22 @@ export function mapServerCart(dtos: ServerCartItemDTO[]): CartItem[] {
 // PUT on an out-of-bounds quantity — one corrupt entry must not veto the
 // rest of the merge. Output order is deterministic: server items in server
 // order, then local-only items appended in their original local order.
-export function mergeCartItems(local: CartItem[], server: CartItem[]): CartItem[] {
-  const remainingLocalByProduct = new Map(local.map((item) => [item.productId, item]));
+export function mergeCartItems(
+  local: CartItem[],
+  server: CartItem[],
+): CartItem[] {
+  const remainingLocalByProduct = new Map(
+    local.map((item) => [item.productId, item]),
+  );
   const merged: CartItem[] = [];
 
   for (const serverItem of server) {
     const localItem = remainingLocalByProduct.get(serverItem.productId);
     if (localItem) {
-      merged.push({ ...serverItem, quantity: localItem.quantity + serverItem.quantity });
+      merged.push({
+        ...serverItem,
+        quantity: localItem.quantity + serverItem.quantity,
+      });
       remainingLocalByProduct.delete(serverItem.productId);
     } else {
       merged.push({ ...serverItem });
@@ -75,7 +88,10 @@ export function mergeCartItems(local: CartItem[], server: CartItem[]): CartItem[
   }
 
   return merged
-    .map((item) => ({ ...item, quantity: Math.min(MAX_ITEM_QUANTITY, item.quantity) }))
+    .map((item) => ({
+      ...item,
+      quantity: Math.min(MAX_ITEM_QUANTITY, item.quantity),
+    }))
     .filter((item) => Number.isFinite(item.quantity) && item.quantity >= 1);
 }
 
@@ -85,7 +101,10 @@ export function mergeCartItems(local: CartItem[], server: CartItem[]): CartItem[
 // own `hasPriceDrift` field: that field compares the cart row's stored price
 // against the current product price (a different, server-internal
 // comparand), not what the user actually saw client-side.
-export function detectPriceDrift(local: CartItem[], server: CartItem[]): PriceDrift[] {
+export function detectPriceDrift(
+  local: CartItem[],
+  server: CartItem[],
+): PriceDrift[] {
   const localByProduct = new Map(local.map((item) => [item.productId, item]));
   const drifts: PriceDrift[] = [];
 
@@ -110,7 +129,9 @@ export function detectPriceDrift(local: CartItem[], server: CartItem[]): PriceDr
 // debounce burst before the GET so a just-made local edit reaches the server
 // before we read it back (checkout's own scheduleSync+flushCartSync pattern
 // is reused, never bypassed, for the merge write itself).
-export async function hydrateFromServer(options?: { mergeLocal?: boolean }): Promise<HydrationResult> {
+export async function hydrateFromServer(options?: {
+  mergeLocal?: boolean;
+}): Promise<HydrationResult> {
   // Read at call time, before any await — this is the guest/pre-hydration
   // snapshot used for the merge/shouldMerge decision and for drift
   // detection, per design's "mode is an explicit flag" decision.
@@ -118,7 +139,13 @@ export async function hydrateFromServer(options?: { mergeLocal?: boolean }): Pro
 
   try {
     if (!getSessionUser()) {
-      return { ok: false, items: initialLocal, priceDrifts: [], syncScheduled: false, reason: 'guest' };
+      return {
+        ok: false,
+        items: initialLocal,
+        priceDrifts: [],
+        syncScheduled: false,
+        reason: "guest",
+      };
     }
 
     // Awaited: the GET below must observe this PUT's result, not race it.
@@ -130,22 +157,41 @@ export async function hydrateFromServer(options?: { mergeLocal?: boolean }): Pro
 
     let res: Response;
     try {
-      res = await authFetch(`${API_URL}/api/cart`, { method: 'GET' });
+      res = await authFetch(`${API_URL}/api/cart`, { method: "GET" });
     } catch {
-      return { ok: false, items: cartItems.get(), priceDrifts: [], syncScheduled: false, reason: 'network' };
+      return {
+        ok: false,
+        items: cartItems.get(),
+        priceDrifts: [],
+        syncScheduled: false,
+        reason: "network",
+      };
     }
 
     if (!res.ok) {
-      return { ok: false, items: cartItems.get(), priceDrifts: [], syncScheduled: false, reason: 'http' };
+      return {
+        ok: false,
+        items: cartItems.get(),
+        priceDrifts: [],
+        syncScheduled: false,
+        reason: "http",
+      };
     }
 
     let server: CartItem[];
     try {
       const body = (await res.json()) as ServerCartResponse;
-      if (!Array.isArray(body.items)) throw new Error('malformed cart response: items is not an array');
+      if (!Array.isArray(body.items))
+        throw new Error("malformed cart response: items is not an array");
       server = mapServerCart(body.items);
     } catch {
-      return { ok: false, items: cartItems.get(), priceDrifts: [], syncScheduled: false, reason: 'http' };
+      return {
+        ok: false,
+        items: cartItems.get(),
+        priceDrifts: [],
+        syncScheduled: false,
+        reason: "http",
+      };
     }
 
     const shouldMerge = options?.mergeLocal === true && initialLocal.length > 0;
@@ -160,7 +206,7 @@ export async function hydrateFromServer(options?: { mergeLocal?: boolean }): Pro
           items: cartItems.get(),
           priceDrifts: [],
           syncScheduled: false,
-          reason: 'superseded',
+          reason: "superseded",
         };
       }
 
@@ -184,6 +230,12 @@ export async function hydrateFromServer(options?: { mergeLocal?: boolean }): Pro
     void flushCartSync();
     return { ok: true, items: merged, priceDrifts: [], syncScheduled: true };
   } catch {
-    return { ok: false, items: cartItems.get(), priceDrifts: [], syncScheduled: false, reason: 'network' };
+    return {
+      ok: false,
+      items: cartItems.get(),
+      priceDrifts: [],
+      syncScheduled: false,
+      reason: "network",
+    };
   }
 }
