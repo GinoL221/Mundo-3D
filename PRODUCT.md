@@ -50,7 +50,7 @@ The shopping context the storefront depicts is ordinary consumer browsing: catal
 
 - Astro frontend, Express/TypeScript backend in hexagonal layers, Sequelize over MySQL/MariaDB, pnpm workspace monorepo.
 - Architecture rule `frontend.domain.locality`: a file under `frontend/src/domains/**` may import only from its own domain or from `frontend/src/config.ts`.
-- 250-line cap per source file (tests exempt).
+- Prefer small, cohesive modules with clear responsibilities and loose coupling. File length is advisory; refactor when responsibilities, coupling, complexity, or testability indicate the design is degrading.
 - CSS has no build step; tokens live in `frontend/src/styles/tokens/` and are consumed by component stylesheets.
 - Helmet CSP is explicit and stricter than defaults; no inline scripts in backend-served HTML.
 
