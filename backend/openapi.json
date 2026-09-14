@@ -20,7 +20,9 @@
             "description": "Human-readable message (Spanish), safe to show to end users."
           }
         },
-        "required": ["error"]
+        "required": [
+          "error"
+        ]
       },
       "ErrorWithCode": {
         "type": "object",
@@ -33,7 +35,10 @@
             "description": "Stable machine-readable error code for programmatic handling."
           }
         },
-        "required": ["error", "code"]
+        "required": [
+          "error",
+          "code"
+        ]
       },
       "StockShortage": {
         "type": "object",
@@ -51,7 +56,12 @@
             "type": "integer"
           }
         },
-        "required": ["idProduct", "productName", "requested", "available"]
+        "required": [
+          "idProduct",
+          "productName",
+          "requested",
+          "available"
+        ]
       },
       "InsufficientStockError": {
         "type": "object",
@@ -61,7 +71,9 @@
           },
           "code": {
             "type": "string",
-            "enum": ["INSUFFICIENT_STOCK"]
+            "enum": [
+              "INSUFFICIENT_STOCK"
+            ]
           },
           "shortages": {
             "type": "array",
@@ -70,7 +82,11 @@
             }
           }
         },
-        "required": ["error", "code", "shortages"]
+        "required": [
+          "error",
+          "code",
+          "shortages"
+        ]
       },
       "Category": {
         "type": "object",
@@ -82,7 +98,10 @@
             "type": "string"
           }
         },
-        "required": ["idCategory", "nameCategory"]
+        "required": [
+          "idCategory",
+          "nameCategory"
+        ]
       },
       "Franchise": {
         "type": "object",
@@ -94,7 +113,10 @@
             "type": "string"
           }
         },
-        "required": ["idFranchise", "nameFranchise"]
+        "required": [
+          "idFranchise",
+          "nameFranchise"
+        ]
       },
       "Product": {
         "type": "object",
@@ -186,10 +208,15 @@
                 "type": "integer"
               }
             },
-            "required": ["idCategory"]
+            "required": [
+              "idCategory"
+            ]
           }
         },
-        "required": ["count", "category"]
+        "required": [
+          "count",
+          "category"
+        ]
       },
       "ListProductsResponse": {
         "type": "object",
@@ -211,7 +238,11 @@
             }
           }
         },
-        "required": ["count", "products", "countByCategory"]
+        "required": [
+          "count",
+          "products",
+          "countByCategory"
+        ]
       },
       "CartLineProduct": {
         "type": "object",
@@ -230,7 +261,12 @@
             "nullable": true
           }
         },
-        "required": ["idProduct", "nameProduct", "price", "image"]
+        "required": [
+          "idProduct",
+          "nameProduct",
+          "price",
+          "image"
+        ]
       },
       "ShoppingCartLine": {
         "type": "object",
@@ -285,20 +321,28 @@
             "type": "number"
           }
         },
-        "required": ["items", "total"]
+        "required": [
+          "items",
+          "total"
+        ]
       },
       "CartSyncResponse": {
         "type": "object",
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [true]
+            "enum": [
+              true
+            ]
           },
           "cart": {
             "$ref": "#/components/schemas/CartResult"
           }
         },
-        "required": ["success", "cart"]
+        "required": [
+          "success",
+          "cart"
+        ]
       },
       "User": {
         "type": "object",
@@ -329,7 +373,13 @@
             "nullable": true
           }
         },
-        "required": ["idUser", "firstName", "lastName", "email", "image"]
+        "required": [
+          "idUser",
+          "firstName",
+          "lastName",
+          "email",
+          "image"
+        ]
       },
       "AuthResponse": {
         "type": "object",
@@ -338,7 +388,9 @@
             "$ref": "#/components/schemas/User"
           }
         },
-        "required": ["user"]
+        "required": [
+          "user"
+        ]
       },
       "UsersIndexResponse": {
         "type": "object",
@@ -353,7 +405,10 @@
             }
           }
         },
-        "required": ["count", "users"]
+        "required": [
+          "count",
+          "users"
+        ]
       },
       "OrderItem": {
         "type": "object",
@@ -378,7 +433,14 @@
             "type": "number"
           }
         },
-        "required": ["idOrderItem", "idProduct", "productName", "quantity", "unitPrice", "subtotal"]
+        "required": [
+          "idOrderItem",
+          "idProduct",
+          "productName",
+          "quantity",
+          "unitPrice",
+          "subtotal"
+        ]
       },
       "Order": {
         "type": "object",
@@ -444,7 +506,14 @@
             "nullable": true
           }
         },
-        "required": ["idOrder", "idUser", "status", "totalAmount", "createdAt", "paymentReference"]
+        "required": [
+          "idOrder",
+          "idUser",
+          "status",
+          "totalAmount",
+          "createdAt",
+          "paymentReference"
+        ]
       }
     },
     "securitySchemes": {
@@ -467,7 +536,9 @@
       "post": {
         "summary": "Authenticate and receive session cookies",
         "description": "Sets m3d_auth (JWT, httpOnly), m3d_csrf and a display-data cookie. Also accepts `Email`/`Password` (normalized to lowercase before validation).",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -487,7 +558,10 @@
                     "type": "boolean"
                   }
                 },
-                "required": ["email", "password"]
+                "required": [
+                  "email",
+                  "password"
+                ]
               }
             }
           }
@@ -518,7 +592,9 @@
     "/users/register": {
       "post": {
         "summary": "Register a new user and receive session cookies",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -592,7 +668,9 @@
       "post": {
         "summary": "Confirm an email address with an opaque token",
         "description": "Unauthenticated. The token is accepted only in the JSON request body.",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -604,7 +682,9 @@
                     "type": "string"
                   }
                 },
-                "required": ["token"]
+                "required": [
+                  "token"
+                ]
               }
             }
           }
@@ -623,7 +703,9 @@
       "post": {
         "summary": "Request an email confirmation resend",
         "description": "Unauthenticated. Syntactically valid requests receive the same acceptance response without disclosing account eligibility, send status, or rate-limit outcome. Local rate limiting is single-process only.",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -636,7 +718,9 @@
                     "format": "email"
                   }
                 },
-                "required": ["email"]
+                "required": [
+                  "email"
+                ]
               }
             }
           }
@@ -653,7 +737,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["message"]
+                  "required": [
+                    "message"
+                  ]
                 }
               }
             }
@@ -665,7 +751,9 @@
       "post": {
         "summary": "Clear session cookies and revoke the refresh token family",
         "description": "No apiAuthMiddleware — logout only ever removes authority, so it must succeed even with no/expired auth cookie (api-jwt-auth spec, \"Logout without an active session\"). Revokes the refresh family carried in the (verified) access JWT's familyId claim, when present.",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "responses": {
           "204": {
             "description": "Logged out (always",
@@ -678,7 +766,9 @@
       "post": {
         "summary": "Exchange a valid refresh cookie for a fresh access token",
         "description": "Authenticates solely via the httpOnly, path-scoped m3d_refresh cookie — does NOT require a valid/unexpired m3d_auth. Not behind apiAuthMiddleware, exempt from csrfGuard, rate-limited (refreshLimiter). Rotates the presented token on every current use; a token superseded less than 30s ago (grace window) returns a fresh access cookie only and sets no refresh cookie (refresh-token-rotation spec).",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "responses": {
           "200": {
             "description": "Refreshed. Sets a new m3d_auth cookie, and a new m3d_refresh cookie only on rotation (never on a grace hit).",
@@ -705,7 +795,9 @@
     "/users": {
       "get": {
         "summary": "List all users (admin only)",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -734,7 +826,9 @@
     "/users/me": {
       "get": {
         "summary": "Get the authenticated user's profile",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -752,7 +846,9 @@
                       "$ref": "#/components/schemas/User"
                     }
                   },
-                  "required": ["user"]
+                  "required": [
+                    "user"
+                  ]
                 }
               }
             }
@@ -769,7 +865,9 @@
     "/users/{id}": {
       "get": {
         "summary": "Get one user by id (admin only)",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -812,7 +910,9 @@
       "get": {
         "summary": "Search and filter products, paginated (public)",
         "description": "Public, paginated product search-and-filter (product-catalog-search spec). Combines `search`, `idCategory`, `idFranchise` with AND semantics; `search` matches case-insensitively as a substring against `name_product` OR `description_product`. No matches, an empty search term, or a well-formed filter matching nothing is a 200 with an empty page, never a 404. Independent of `GET /products` and its pagination constants.\n",
-        "tags": ["Products"],
+        "tags": [
+          "Products"
+        ],
         "parameters": [
           {
             "in": "query",
@@ -903,7 +1003,9 @@
     "/products": {
       "get": {
         "summary": "List all products, with a per-category count breakdown",
-        "tags": ["Products"],
+        "tags": [
+          "Products"
+        ],
         "responses": {
           "200": {
             "description": "Products plus counts.",
@@ -919,7 +1021,9 @@
       },
       "post": {
         "summary": "Create a product (ADMIN/STAFF)",
-        "tags": ["Products"],
+        "tags": [
+          "Products"
+        ],
         "security": [
           {
             "cookieAuth": [],
@@ -1029,7 +1133,9 @@
     "/product/{id}": {
       "get": {
         "summary": "Get one product by id",
-        "tags": ["Products"],
+        "tags": [
+          "Products"
+        ],
         "parameters": [
           {
             "in": "path",
@@ -1063,7 +1169,9 @@
     "/products/latest": {
       "get": {
         "summary": "Get the most recently created product",
-        "tags": ["Products"],
+        "tags": [
+          "Products"
+        ],
         "responses": {
           "200": {
             "description": "The latest product.",
@@ -1085,7 +1193,9 @@
       "put": {
         "summary": "Update a product (ADMIN/STAFF) — never modifies stock",
         "description": "All body fields optional (partial update). `stock` is intentionally ignored even if sent — stock mutation happens exclusively via PATCH /products/{id}/stock.",
-        "tags": ["Products"],
+        "tags": [
+          "Products"
+        ],
         "security": [
           {
             "cookieAuth": [],
@@ -1192,7 +1302,9 @@
       },
       "delete": {
         "summary": "Delete a product (ADMIN only)",
-        "tags": ["Products"],
+        "tags": [
+          "Products"
+        ],
         "security": [
           {
             "cookieAuth": [],
@@ -1231,7 +1343,9 @@
     "/products/{id}/stock": {
       "patch": {
         "summary": "Adjust a product's stock by a signed delta (ADMIN/STAFF)",
-        "tags": ["Products"],
+        "tags": [
+          "Products"
+        ],
         "security": [
           {
             "cookieAuth": [],
@@ -1260,7 +1374,9 @@
                     "description": "Non-zero integer; negative decreases stock."
                   }
                 },
-                "required": ["delta"]
+                "required": [
+                  "delta"
+                ]
               }
             }
           }
@@ -1297,7 +1413,9 @@
     "/orders": {
       "post": {
         "summary": "Check out the caller's cart into an order",
-        "tags": ["Orders"],
+        "tags": [
+          "Orders"
+        ],
         "security": [
           {
             "cookieAuth": [],
@@ -1360,7 +1478,9 @@
       },
       "get": {
         "summary": "List all orders (admin only)",
-        "tags": ["Orders"],
+        "tags": [
+          "Orders"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -1393,7 +1513,9 @@
       "get": {
         "summary": "List the caller's own orders, paginated",
         "description": "Buyer-scoped order history (order-history spec). Registered before `/orders/{id}` — \"mine\" must never be captured by that route's `:id` param.\n",
-        "tags": ["Orders"],
+        "tags": [
+          "Orders"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -1471,7 +1593,9 @@
       "get": {
         "summary": "Get one order by id",
         "description": "No adminGuard: the controller compares the requester against the order's owner and returns 404 for a non-owner (avoids order-id enumeration), with an ADMIN bypass — design.md \"Routes and the ADMIN guard\".\n",
-        "tags": ["Orders"],
+        "tags": [
+          "Orders"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -1520,7 +1644,9 @@
     "/orders/{id}/confirm-payment": {
       "post": {
         "summary": "Confirm payment for an order (admin only)",
-        "tags": ["Orders"],
+        "tags": [
+          "Orders"
+        ],
         "security": [
           {
             "cookieAuth": [],
@@ -1573,7 +1699,9 @@
     "/orders/{id}/cancel": {
       "post": {
         "summary": "Cancel an order and restock its items (admin only)",
-        "tags": ["Orders"],
+        "tags": [
+          "Orders"
+        ],
         "security": [
           {
             "cookieAuth": [],
@@ -1626,7 +1754,9 @@
     "/franchises": {
       "get": {
         "summary": "List all franchises",
-        "tags": ["Franchises"],
+        "tags": [
+          "Franchises"
+        ],
         "responses": {
           "200": {
             "description": "All franchises.",
@@ -1645,7 +1775,9 @@
       },
       "post": {
         "summary": "Create a franchise (ADMIN/STAFF)",
-        "tags": ["Franchises"],
+        "tags": [
+          "Franchises"
+        ],
         "security": [
           {
             "cookieAuth": [],
@@ -1666,7 +1798,9 @@
                     "non-empty.": null
                   }
                 },
-                "required": ["nameFranchise"]
+                "required": [
+                  "nameFranchise"
+                ]
               }
             }
           }
@@ -1700,7 +1834,9 @@
     "/franchises/{id}": {
       "get": {
         "summary": "Get one franchise by id",
-        "tags": ["Franchises"],
+        "tags": [
+          "Franchises"
+        ],
         "parameters": [
           {
             "in": "path",
@@ -1732,7 +1868,9 @@
       },
       "put": {
         "summary": "Update a franchise (ADMIN/STAFF)",
-        "tags": ["Franchises"],
+        "tags": [
+          "Franchises"
+        ],
         "security": [
           {
             "cookieAuth": [],
@@ -1763,7 +1901,9 @@
                     "non-empty.": null
                   }
                 },
-                "required": ["nameFranchise"]
+                "required": [
+                  "nameFranchise"
+                ]
               }
             }
           }
@@ -1798,7 +1938,9 @@
       },
       "delete": {
         "summary": "Delete a franchise (ADMIN only)",
-        "tags": ["Franchises"],
+        "tags": [
+          "Franchises"
+        ],
         "security": [
           {
             "cookieAuth": [],
@@ -1840,7 +1982,9 @@
     "/categories": {
       "get": {
         "summary": "List all categories",
-        "tags": ["Categories"],
+        "tags": [
+          "Categories"
+        ],
         "responses": {
           "200": {
             "description": "All categories.",
@@ -1859,7 +2003,9 @@
       },
       "post": {
         "summary": "Create a category (ADMIN/STAFF)",
-        "tags": ["Categories"],
+        "tags": [
+          "Categories"
+        ],
         "security": [
           {
             "cookieAuth": [],
@@ -1880,7 +2026,9 @@
                     "non-empty.": null
                   }
                 },
-                "required": ["nameCategory"]
+                "required": [
+                  "nameCategory"
+                ]
               }
             }
           }
@@ -1914,7 +2062,9 @@
     "/categories/{id}": {
       "get": {
         "summary": "Get one category by id",
-        "tags": ["Categories"],
+        "tags": [
+          "Categories"
+        ],
         "parameters": [
           {
             "in": "path",
@@ -1946,7 +2096,9 @@
       },
       "put": {
         "summary": "Update a category (ADMIN/STAFF)",
-        "tags": ["Categories"],
+        "tags": [
+          "Categories"
+        ],
         "security": [
           {
             "cookieAuth": [],
@@ -1977,7 +2129,9 @@
                     "non-empty.": null
                   }
                 },
-                "required": ["nameCategory"]
+                "required": [
+                  "nameCategory"
+                ]
               }
             }
           }
@@ -2012,7 +2166,9 @@
       },
       "delete": {
         "summary": "Delete a category (ADMIN only)",
-        "tags": ["Categories"],
+        "tags": [
+          "Categories"
+        ],
         "security": [
           {
             "cookieAuth": [],
@@ -2054,7 +2210,9 @@
     "/cart": {
       "get": {
         "summary": "Get the caller's cart",
-        "tags": ["Cart"],
+        "tags": [
+          "Cart"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -2078,7 +2236,9 @@
       },
       "put": {
         "summary": "Full-replace sync the caller's cart",
-        "tags": ["Cart"],
+        "tags": [
+          "Cart"
+        ],
         "security": [
           {
             "cookieAuth": [],
@@ -2108,11 +2268,16 @@
                           "description": "Max MAX_CART_ITEM_QUANTITY."
                         }
                       },
-                      "required": ["productId", "quantity"]
+                      "required": [
+                        "productId",
+                        "quantity"
+                      ]
                     }
                   }
                 },
-                "required": ["items"]
+                "required": [
+                  "items"
+                ]
               }
             }
           }

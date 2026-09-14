@@ -3,3 +3,6 @@ openspec/changes/**/preproposal.md
 
 # Generated OpenAPI artifact; its JSON.stringify output is checked byte-for-byte.
 backend/openapi.json
+
+# Dependency graph lockfile; never reserialize it through a generic formatter.
+pnpm-lock.yaml

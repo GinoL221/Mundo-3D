@@ -109,6 +109,8 @@ Todos los comandos de esta tabla se ejecutan desde la raíz.
 | Quality check frontend               | `pnpm frontend:quality-check`                                                  | Prohíbe `console.log` en rutas de producción; los tests quedan exentos.                                                                                                                                                        |
 | Formatear                            | `pnpm format`                                                                  | Modifica fuentes backend y frontend con Prettier.                                                                                                                                                                              |
 
+> **Límite del formatter:** use sólo `pnpm format` para fuentes bajo `backend/src` y `frontend/src`. No aplique formatters genéricos al repositorio: `pnpm-lock.yaml` está excluido y `backend/openapi.json` se actualiza únicamente con `pnpm --filter backend generate:openapi`; verifíquelo con `pnpm run check:openapi`.
+
 Antes del primer E2E local, instale Chromium y sus dependencias:
 
 ```bash
