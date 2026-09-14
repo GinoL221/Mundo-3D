@@ -1,5 +1,5 @@
-import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
-import { CategoryDTO } from '../dtos/CategoryDTO';
+import { CategoryRepositoryPort } from "../../domain/ports/CategoryRepositoryPort";
+import { CategoryDTO } from "../dtos/CategoryDTO";
 
 export interface CreateCategoryInput {
   nameCategory: string;
