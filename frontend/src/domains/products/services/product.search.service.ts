@@ -24,7 +24,9 @@ export type FetchProductSearchResult =
  * this is the public, unauthenticated search endpoint noted above — it
  * sends no credentials and can never 401.
  */
-export async function fetchProductSearch(criteria: ProductSearchCriteria): Promise<FetchProductSearchResult> {
+export async function fetchProductSearch(
+  criteria: ProductSearchCriteria,
+): Promise<FetchProductSearchResult> {
   const params = new URLSearchParams();
   const trimmedSearch = criteria.search?.trim();
   if (trimmedSearch) params.set('search', trimmedSearch);
@@ -73,7 +75,10 @@ interface FranchiseDTO {
  * Both calls are deliberately plain `fetch`, not `authFetch` (design.md D6,
  * task 3.10): both are public, no-credentials reads that cannot 401.
  */
-export async function fetchFilterOptions(): Promise<{ categories: FilterOption[]; franchises: FilterOption[] }> {
+export async function fetchFilterOptions(): Promise<{
+  categories: FilterOption[];
+  franchises: FilterOption[];
+}> {
   try {
     const [categoriesRes, franchisesRes] = await Promise.all([
       fetch(`${API_URL}/api/categories`),

@@ -34,7 +34,7 @@ test.describe('Authentication E2E Tests', () => {
   const testPassword = 'Password123!';
 
   test.beforeEach(({ page }) => {
-    page.on('console', msg => console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`));
   });
 
   test('Successful User Registration', async ({ page }) => {
@@ -46,7 +46,7 @@ test.describe('Authentication E2E Tests', () => {
     await page.fill('#email', registrationEmail);
     await page.fill('#password', testPassword);
     await page.fill('#confirmPassword', testPassword);
-    
+
     // Set mock profile image (required by backend validator)
     await page.setInputFiles('#image', {
       name: 'avatar.png',
@@ -69,7 +69,7 @@ test.describe('Authentication E2E Tests', () => {
 
     await expect(page).toHaveURL('/');
     await expect(page.locator('#navbar-greeting')).toContainText('Hola Test');
-    
+
     // Save storage state to reuse in cart tests
     await page.context().storageState({ path: '.auth/user.json' });
   });
@@ -85,7 +85,9 @@ test.describe('Authentication E2E Tests', () => {
     await expect(errorBox).not.toBeEmpty();
   });
 
-  test('Recuérdame puts 30 days on both the refresh and access cookies, while the access TOKEN stays short', async ({ page }) => {
+  test('Recuérdame puts 30 days on both the refresh and access cookies, while the access TOKEN stays short', async ({
+    page,
+  }) => {
     const rememberEmail = `remember_${Date.now()}@example.com`;
 
     // Register a dedicated user so this test doesn't depend on run order
@@ -146,7 +148,9 @@ test.describe('Authentication E2E Tests', () => {
     expect(authRemaining).toBeGreaterThan(thirtyDaysSeconds - 3600);
   });
 
-  test('Leaving Recuérdame unchecked keeps the 2h default on the refresh cookie', async ({ page }) => {
+  test('Leaving Recuérdame unchecked keeps the 2h default on the refresh cookie', async ({
+    page,
+  }) => {
     const { email, password } = await registerFreshAccount(page);
 
     await page.fill('#email', email);
@@ -174,7 +178,9 @@ test.describe('Authentication E2E Tests', () => {
     expect(authRemaining).toBeLessThan(twoHoursSeconds + 300);
   });
 
-  test('m3d_auth is httpOnly (invisible to document.cookie) while m3d_user/m3d_csrf are readable', async ({ page }) => {
+  test('m3d_auth is httpOnly (invisible to document.cookie) while m3d_user/m3d_csrf are readable', async ({
+    page,
+  }) => {
     const { email, password } = await registerFreshAccount(page);
 
     await page.fill('#email', email);

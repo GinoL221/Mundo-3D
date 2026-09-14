@@ -5,7 +5,14 @@ import type { ProductSearchCriteria } from './product.search.service';
 
 const SAMPLE_PAGE: ProductSearchPage = {
   products: [
-    { idProduct: 1, nameProduct: 'Goku', price: 1500, descriptionProduct: null, image: null, category: 'Figura' },
+    {
+      idProduct: 1,
+      nameProduct: 'Goku',
+      price: 1500,
+      descriptionProduct: null,
+      image: null,
+      category: 'Figura',
+    },
   ],
   page: 1,
   pageSize: 20,
@@ -15,7 +22,10 @@ const SAMPLE_PAGE: ProductSearchPage = {
 
 describe('presentProductSearchPage', () => {
   it('flags an empty page when there are no products', () => {
-    const presentation = presentProductSearchPage({ ...SAMPLE_PAGE, products: [], total: 0, totalPages: 0 }, {});
+    const presentation = presentProductSearchPage(
+      { ...SAMPLE_PAGE, products: [], total: 0, totalPages: 0 },
+      {},
+    );
     expect(presentation.isEmpty).toBe(true);
   });
 

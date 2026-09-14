@@ -33,7 +33,9 @@ function stubCookie(cookie: string) {
 
 const LOGGED_IN_COOKIE = `m3d_user=${encodeURIComponent(JSON.stringify({ idRole: 2 }))}; m3d_csrf=random.hmac`;
 
-function buildProduct(overrides: Partial<{ id: number; name: string; image: string; price: number }> = {}) {
+function buildProduct(
+  overrides: Partial<{ id: number; name: string; image: string; price: number }> = {},
+) {
   return {
     id: 1,
     name: 'Figura Mario',
@@ -110,7 +112,7 @@ describe('CartService', () => {
           this.type = type;
           this.detail = params?.detail;
         }
-      }
+      },
     );
     vi.stubGlobal('fetch', fetchMock);
     stubCookie(''); // default: logged out
@@ -175,16 +177,20 @@ describe('CartService', () => {
       CartService.addToCart(buildProduct());
 
       expect(cartItems.get()).toEqual([
-        { productId: 1, name: 'Figura Mario', image: 'figura_mario.jpg', unitPrice: 1500, quantity: 1 },
+        {
+          productId: 1,
+          name: 'Figura Mario',
+          image: 'figura_mario.jpg',
+          unitPrice: 1500,
+          quantity: 1,
+        },
       ]);
     });
 
     it('adds a new item with a custom quantity', () => {
       CartService.addToCart(buildProduct(), 3);
 
-      expect(cartItems.get()).toEqual([
-        expect.objectContaining({ productId: 1, quantity: 3 }),
-      ]);
+      expect(cartItems.get()).toEqual([expect.objectContaining({ productId: 1, quantity: 3 })]);
     });
 
     it('merges quantity when the product is already present in the cart', () => {
@@ -208,7 +214,7 @@ describe('CartService', () => {
 
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'cart',
-        JSON.stringify(cartItems.get())
+        JSON.stringify(cartItems.get()),
       );
       expect(dispatchEventSpy).toHaveBeenCalledTimes(1);
       expect(dispatchEventSpy.mock.calls[0][0]).toMatchObject({
@@ -320,7 +326,7 @@ describe('CartService', () => {
     // test uses a genuine 2-mutation burst (S0=[] -> S1=[7] -> S2=[7,8]) so a
     // sync failure must expose S0, catching a regression that re-captures
     // the rollback baseline on every mutation instead of only the first.
-    it('rolls back to the state before the burst\'s first mutation, not the state before only the last mutation, when a multi-mutation burst fails to sync', async () => {
+    it("rolls back to the state before the burst's first mutation, not the state before only the last mutation, when a multi-mutation burst fails to sync", async () => {
       stubCookie(LOGGED_IN_COOKIE);
       fetchMock.mockResolvedValue({ ok: false, status: 500 });
 
@@ -357,7 +363,7 @@ describe('CartService', () => {
 
       await flushSync();
       const errorEventCall = dispatchEventSpy.mock.calls.find(
-        (call) => call[0].type === 'cart-sync-error'
+        (call) => call[0].type === 'cart-sync-error',
       );
       expect(errorEventCall).toBeDefined();
     });
@@ -370,11 +376,11 @@ describe('CartService', () => {
 
       await flushSync();
       const errorEventCall = dispatchEventSpy.mock.calls.find(
-        (call) => call[0].type === 'cart-sync-error'
+        (call) => call[0].type === 'cart-sync-error',
       );
       expect(errorEventCall).toBeDefined();
       expect(errorEventCall?.[0].detail.message).toBe(
-        'No se pudo sincronizar el carrito con el servidor.'
+        'No se pudo sincronizar el carrito con el servidor.',
       );
     });
 
@@ -401,9 +407,7 @@ describe('CartService', () => {
       CartService.addToCart(buildProduct({ id: 7 }));
       await flushSync();
 
-      expect(cartItems.get()).toEqual([
-        expect.objectContaining({ productId: 7 }),
-      ]);
+      expect(cartItems.get()).toEqual([expect.objectContaining({ productId: 7 })]);
     });
 
     // Regression test for a real concurrency bug: coalesced flushes are
@@ -531,7 +535,7 @@ describe('CartService', () => {
       CartService.addToCart(buildProduct({ id: 3 }));
 
       const cartUpdatedCalls = dispatchEventSpy.mock.calls.filter(
-        (call) => call[0].type === 'cart-updated'
+        (call) => call[0].type === 'cart-updated',
       );
       expect(cartUpdatedCalls).toHaveLength(3);
 
@@ -646,7 +650,9 @@ describe('CartService', () => {
 
     it('delegates to the real checkout flow and resolves a CheckoutResult on success', async () => {
       stubCookie(LOGGED_IN_COOKIE);
-      cartItems.set([{ productId: 1, name: 'Figura Mario', image: 'a.jpg', unitPrice: 1500, quantity: 1 }]);
+      cartItems.set([
+        { productId: 1, name: 'Figura Mario', image: 'a.jpg', unitPrice: 1500, quantity: 1 },
+      ]);
       fetchMock.mockResolvedValueOnce({
         ok: true,
         status: 201,

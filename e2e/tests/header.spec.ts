@@ -13,10 +13,7 @@ test('applies persisted visual preferences before HomeHeader hydration', async (
   await expect(page.locator('#theme-toggle')).toBeVisible();
 });
 
-test('preserves HomeHeader navigation and keyboard dropdown access', async ({
-  page,
-  context,
-}) => {
+test('preserves HomeHeader navigation and keyboard dropdown access', async ({ page, context }) => {
   // Session state is now a non-httpOnly cookie (m3d_user), not localStorage
   // (JWT cookie migration) — sessionUI.ts reads document.cookie only.
   await context.addCookies([

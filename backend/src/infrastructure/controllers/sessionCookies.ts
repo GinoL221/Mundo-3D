@@ -17,9 +17,9 @@ import {
   authMaxAge,
 } from '../security/cookieOptions';
 
-// Moved verbatim from UserApiController.ts (refresh-token-reuse-detection
-// design.md D4) — the controller was at 247/250 lines and the reuse-detection
-// branch adds 4 more. UserAuthDto shape is whatever
+// Moved verbatim from UserApiController.ts during refresh-token reuse
+// detection work (design.md D4) to keep session-cookie responsibilities
+// cohesive. UserAuthDto shape is whatever
 // AuthenticateUserUseCase/RegisterUserUseCase return.
 export interface UserAuthDto {
   idUser: number;
@@ -31,8 +31,8 @@ export interface UserAuthDto {
   category?: string | null;
 }
 
-// Extracted from UserApiController.ts (task 2.2) — the controller was at
-// 204/250 lines and PR2 adds a refresh handler on top (design.md D4).
+// Extracted from UserApiController.ts (task 2.2) so the controller could stay
+// focused while PR2 added a refresh handler (design.md D4).
 export interface UserDisplayData {
   firstName: string;
   image: string | null;
@@ -72,14 +72,18 @@ export const generateRefreshToken = (): string => crypto.randomBytes(32).toStrin
 // remembered session on its first refresh. A security-relevant lifetime that
 // can be omitted will eventually be omitted; making the compiler ask for it
 // is what stops that recurring.
-export const issueAccessCookie = (res: Response, jwtPayload: JwtPayload, maxAgeMs: number): void => {
+export const issueAccessCookie = (
+  res: Response,
+  jwtPayload: JwtPayload,
+  maxAgeMs: number,
+): void => {
   // Algorithm, issuer and audience come from `jwtOptions`, shared with both
   // verify sites (`apiAuthMiddleware` and `readFamilyIdFromAccessToken`) so
   // the three cannot drift apart. The TTL stays the caller's business.
   const token = jwt.sign(
     { ...jwtPayload, typ: 'access' },
     getJwtSecret(),
-    accessTokenSignOptions(ACCESS_TOKEN_TTL_SECONDS)
+    accessTokenSignOptions(ACCESS_TOKEN_TTL_SECONDS),
   );
   // The token's own `expiresIn` stays fixed; only the cookie's `maxAge`
   // follows the session, so the expired token survives in the jar as the
@@ -102,7 +106,7 @@ export const setSessionCookies = (
   jwtPayload: JwtPayload,
   display: UserDisplayData,
   refreshPlainToken: string,
-  remember?: boolean
+  remember?: boolean,
 ): void => {
   issueAccessCookie(res, jwtPayload, authMaxAge(remember));
 
@@ -125,7 +129,7 @@ export const establishSession = async (
   res: Response,
   createRememberTokenUseCase: CreateRememberTokenUseCase | undefined,
   userDto: UserAuthDto,
-  remember?: boolean
+  remember?: boolean,
 ): Promise<void> => {
   if (!createRememberTokenUseCase) {
     throw new Error('CreateRememberTokenUseCase not injected');
@@ -150,9 +154,14 @@ export const establishSession = async (
     res,
     userDto.idUser,
     payload,
-    { firstName: userDto.firstName, image: userDto.image, idRole: userDto.idRole, category: userDto.category },
+    {
+      firstName: userDto.firstName,
+      image: userDto.image,
+      idRole: userDto.idRole,
+      category: userDto.category,
+    },
     refreshPlainToken,
-    remember
+    remember,
   );
 };
 
@@ -201,7 +210,11 @@ export const clearSessionCookies = (res: Response): void => {
  */
 export const readFamilyIdFromAccessToken = (token: string): string | undefined => {
   try {
-    const decoded = jwt.verify(token, getJwtSecret(), accessTokenVerifyOptions({ ignoreExpiration: true }));
+    const decoded = jwt.verify(
+      token,
+      getJwtSecret(),
+      accessTokenVerifyOptions({ ignoreExpiration: true }),
+    );
     return (decoded as { familyId?: string }).familyId;
   } catch {
     return undefined;

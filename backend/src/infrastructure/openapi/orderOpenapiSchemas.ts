@@ -1,7 +1,6 @@
-// Order-related component schemas, split out of openapiSchemas.ts to keep
-// that file under the repo's 250-line cap. Mirrors OrderDTO.ts /
-// OrderItemDTO / OrderSummaryDTO (application/dtos/OrderDTO.ts) — never
-// guessed.
+// Cohesive order-related component schemas, separated from openapiSchemas.ts.
+// Mirrors OrderDTO.ts / OrderItemDTO / OrderSummaryDTO
+// (application/dtos/OrderDTO.ts) — never guessed.
 
 const orderItemSchema = {
   type: 'object',
@@ -27,7 +26,15 @@ const orderSchema = {
     createdAt: { type: 'string', format: 'date-time' },
     paymentReference: { type: 'string', nullable: true },
   },
-  required: ['idOrder', 'idUser', 'status', 'items', 'totalAmount', 'createdAt', 'paymentReference'],
+  required: [
+    'idOrder',
+    'idUser',
+    'status',
+    'items',
+    'totalAmount',
+    'createdAt',
+    'paymentReference',
+  ],
 };
 
 // Mirrors `OrderSummaryDTO` (application/dtos/OrderDTO.ts): the scalar

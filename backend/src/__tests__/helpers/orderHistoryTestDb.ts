@@ -1,8 +1,7 @@
 /**
  * Order-history-specific real-DB test fixtures, layered on top of
  * `testDb.ts`'s generic Category/Franchise/Product/User primitives. Kept in
- * its own file (not folded into `orderTestDb.ts` or `testDb.ts`) to respect
- * the 250-line file cap — these helpers seed orders directly (via the real
+ * its own file because these helpers seed orders directly (via the real
  * `SequelizeOrderRepository.createWithItems`, inside a real transaction),
  * independent of the checkout flow's cart-based fixtures.
  */
@@ -42,7 +41,9 @@ export async function seedBuyerWithOrders(itemCounts: number[]): Promise<OrderHi
   const userId = await seedTestUser();
   const categoryId = await createTestCategory();
   const franchiseId = await createTestFranchise();
-  const productId = await createTestProduct(categoryId, franchiseId, { nameProduct: 'Order History Fixture Product' });
+  const productId = await createTestProduct(categoryId, franchiseId, {
+    nameProduct: 'Order History Fixture Product',
+  });
 
   const uow = new SequelizeUnitOfWork();
   const orderRepo = new SequelizeOrderRepository();
@@ -56,7 +57,10 @@ export async function seedBuyerWithOrders(itemCounts: number[]): Promise<OrderHi
       unitPrice: 10,
     }));
     const order = await uow.runInTransaction((tx) =>
-      orderRepo.createWithItems({ idUser: userId, idempotencyKey: `order-history-fixture-${userId}-${i}`, items }, tx)
+      orderRepo.createWithItems(
+        { idUser: userId, idempotencyKey: `order-history-fixture-${userId}-${i}`, items },
+        tx,
+      ),
     );
     orderIds.push(order.idOrder);
   }

@@ -2,14 +2,14 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Product Listing - Error & Empty States', () => {
   test.beforeEach(({ page }) => {
-    page.on('console', msg => console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`));
   });
 
   test('Renders error state when the products API fails', async ({ page }) => {
     // /products now drives ProductSearch.astro, which fetches
     // GET /api/products/search (product-catalog-search), not the old
     // unpaginated GET /api/products the admin pages still use.
-    await page.route('**/api/products/search*', async route => {
+    await page.route('**/api/products/search*', async (route) => {
       await route.fulfill({ status: 500 });
     });
 
@@ -21,7 +21,7 @@ test.describe('Product Listing - Error & Empty States', () => {
   });
 
   test('Renders empty state when the products API returns zero products', async ({ page }) => {
-    await page.route('**/api/products/search*', async route => {
+    await page.route('**/api/products/search*', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -39,7 +39,7 @@ test.describe('Product Listing - Error & Empty States', () => {
 
 test.describe('Product Detail - Error State', () => {
   test.beforeEach(({ page }) => {
-    page.on('console', msg => console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`));
   });
 
   test('Renders error state for a nonexistent product id (real 404)', async ({ page }) => {
@@ -53,7 +53,7 @@ test.describe('Product Detail - Error State', () => {
   });
 
   test('Renders error state when the product API request fails', async ({ page }) => {
-    await page.route('**/api/product/1', async route => {
+    await page.route('**/api/product/1', async (route) => {
       await route.fulfill({ status: 500 });
     });
 

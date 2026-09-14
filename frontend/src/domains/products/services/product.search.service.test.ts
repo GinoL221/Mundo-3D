@@ -122,7 +122,9 @@ describe('fetchFilterOptions', () => {
   });
 
   it('falls back to empty arrays when either request fails', async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse(500, {})).mockResolvedValueOnce(jsonResponse(200, []));
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(500, {}))
+      .mockResolvedValueOnce(jsonResponse(200, []));
 
     const result = await fetchFilterOptions();
 

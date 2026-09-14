@@ -8,14 +8,17 @@
 // envelope used by domain-error mapping), against the actual controller code
 // — never guessed. Kept as plain objects (not TS interfaces) so swagger-jsdoc
 // can embed them verbatim into `components.schemas`. Order-related schemas
-// live in `orderOpenapiSchemas.ts` (split out to stay under the 250-line cap).
+// live in the cohesive `orderOpenapiSchemas.ts` module.
 
 import { orderOpenapiSchemas } from './orderOpenapiSchemas';
 
 const errorSchema = {
   type: 'object',
   properties: {
-    error: { type: 'string', description: 'Human-readable message (Spanish), safe to show to end users.' },
+    error: {
+      type: 'string',
+      description: 'Human-readable message (Spanish), safe to show to end users.',
+    },
   },
   required: ['error'],
 };
@@ -24,7 +27,10 @@ const errorWithCodeSchema = {
   type: 'object',
   properties: {
     error: { type: 'string' },
-    code: { type: 'string', description: 'Stable machine-readable error code for programmatic handling.' },
+    code: {
+      type: 'string',
+      description: 'Stable machine-readable error code for programmatic handling.',
+    },
   },
   required: ['error', 'code'],
 };
@@ -88,9 +94,21 @@ const productSchema = {
     stock: { type: 'integer' },
   },
   required: [
-    'idProduct', 'nameProduct', 'price', 'descriptionProduct', 'image', 'idCategory',
-    'idFranchise', 'category', 'material', 'height', 'width', 'depth', 'finish',
-    'productionTime', 'stock',
+    'idProduct',
+    'nameProduct',
+    'price',
+    'descriptionProduct',
+    'image',
+    'idCategory',
+    'idFranchise',
+    'category',
+    'material',
+    'height',
+    'width',
+    'depth',
+    'finish',
+    'productionTime',
+    'stock',
   ],
 };
 
@@ -142,10 +160,22 @@ const shoppingCartLineSchema = {
     quantity: { type: 'integer' },
     unitPrice: { type: 'number' },
     status: { type: 'string' },
-    hasPriceDrift: { type: 'boolean', description: 'True when unitPrice no longer matches the live product price.' },
+    hasPriceDrift: {
+      type: 'boolean',
+      description: 'True when unitPrice no longer matches the live product price.',
+    },
     product: { $ref: '#/components/schemas/CartLineProduct' },
   },
-  required: ['idCart', 'idUser', 'idProduct', 'quantity', 'unitPrice', 'status', 'hasPriceDrift', 'product'],
+  required: [
+    'idCart',
+    'idUser',
+    'idProduct',
+    'quantity',
+    'unitPrice',
+    'status',
+    'hasPriceDrift',
+    'product',
+  ],
 };
 
 const cartResultSchema = {

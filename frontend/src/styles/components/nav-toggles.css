@@ -1,8 +1,8 @@
 /* ============================================================
    components/nav-toggles.css — Cart Link and Theme Toggle
-   Split out of navbar.css (2026-08-31 audit) to stay under the
-   250-line cap; these are standalone BEM blocks rendered inside
-   the navbar, not part of the .navbar block itself.
+   Split out of navbar.css during the 2026-08-31 audit; these are
+   cohesive standalone BEM blocks rendered inside the navbar, not
+   part of the .navbar block itself.
    ============================================================ */
 
 /* ── Cart Link (standalone BEM block) ──────────────────────── */
