@@ -1,16 +1,25 @@
-import { UnitOfWorkPort, TransactionContext } from '../../domain/ports/UnitOfWorkPort';
-import { OrderRepositoryPort, NewOrderItemInput } from '../../domain/ports/OrderRepositoryPort';
-import { ShoppingCartRepositoryPort } from '../../domain/ports/ShoppingCartRepositoryPort';
-import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
-import { PaymentGatewayPort } from '../../domain/ports/PaymentGatewayPort';
-import { LoggerPort } from '../../domain/ports/LoggerPort';
-import { Order } from '../../domain/entities/Order';
-import { EmptyCartException } from '../../domain/exceptions/EmptyCartException';
-import { InsufficientStockException, StockShortage } from '../../domain/exceptions/InsufficientStockException';
-import { DuplicateIdempotencyKeyException } from '../../domain/exceptions/DuplicateIdempotencyKeyException';
-import { OrderDTO, mapToOrderDTO } from '../dtos/OrderDTO';
+import {
+  UnitOfWorkPort,
+  TransactionContext,
+} from "../../domain/ports/UnitOfWorkPort";
+import {
+  OrderRepositoryPort,
+  NewOrderItemInput,
+} from "../../domain/ports/OrderRepositoryPort";
+import { ShoppingCartRepositoryPort } from "../../domain/ports/ShoppingCartRepositoryPort";
+import { ProductRepositoryPort } from "../../domain/ports/ProductRepositoryPort";
+import { PaymentGatewayPort } from "../../domain/ports/PaymentGatewayPort";
+import { LoggerPort } from "../../domain/ports/LoggerPort";
+import { Order } from "../../domain/entities/Order";
+import { EmptyCartException } from "../../domain/exceptions/EmptyCartException";
+import {
+  InsufficientStockException,
+  StockShortage,
+} from "../../domain/exceptions/InsufficientStockException";
+import { DuplicateIdempotencyKeyException } from "../../domain/exceptions/DuplicateIdempotencyKeyException";
+import { OrderDTO, mapToOrderDTO } from "../dtos/OrderDTO";
 
-const CHECKOUT_CURRENCY = 'ARS';
+const CHECKOUT_CURRENCY = "ARS";
 
 // Checkout transaction flow (see design.md's Data Flow section):
 //   1. Idempotency short-circuit outside any transaction.
@@ -27,21 +36,29 @@ export class CreateOrderUseCase {
     private readonly cartRepo: ShoppingCartRepositoryPort,
     private readonly productRepo: ProductRepositoryPort,
     private readonly paymentGateway: PaymentGatewayPort,
-    private readonly logger: LoggerPort
+    private readonly logger: LoggerPort,
   ) {}
 
   async execute(userId: number, idempotencyKey: string): Promise<OrderDTO> {
-    const existing = await this.orderRepo.findByIdempotencyKey(userId, idempotencyKey);
+    const existing = await this.orderRepo.findByIdempotencyKey(
+      userId,
+      idempotencyKey,
+    );
     if (existing) {
       return mapToOrderDTO(existing);
     }
 
     let order: Order;
     try {
-      order = await this.uow.runInTransaction((tx) => this.checkout(userId, idempotencyKey, tx));
+      order = await this.uow.runInTransaction((tx) =>
+        this.checkout(userId, idempotencyKey, tx),
+      );
     } catch (error) {
       if (error instanceof DuplicateIdempotencyKeyException) {
-        const replay = await this.orderRepo.findByIdempotencyKey(userId, idempotencyKey);
+        const replay = await this.orderRepo.findByIdempotencyKey(
+          userId,
+          idempotencyKey,
+        );
         if (replay) {
           return mapToOrderDTO(replay);
         }
@@ -55,7 +72,11 @@ export class CreateOrderUseCase {
     return mapToOrderDTO(finalOrder);
   }
 
-  private async checkout(userId: number, idempotencyKey: string, tx: TransactionContext): Promise<Order> {
+  private async checkout(
+    userId: number,
+    idempotencyKey: string,
+    tx: TransactionContext,
+  ): Promise<Order> {
     const cartRows = await this.cartRepo.findActiveForUpdate(userId, tx);
     if (cartRows.length === 0) {
       throw new EmptyCartException();
@@ -87,12 +108,17 @@ export class CreateOrderUseCase {
       unitPrice: row.unitPrice,
     }));
 
-    const order = await this.orderRepo.createWithItems({ idUser: userId, idempotencyKey, items }, tx);
+    const order = await this.orderRepo.createWithItems(
+      { idUser: userId, idempotencyKey, items },
+      tx,
+    );
 
     const cartIds = cartRows.map((row) => row.idCart);
     const affected = await this.cartRepo.markOrdered(userId, cartIds, tx);
     if (affected !== cartIds.length) {
-      throw new Error('Checkout failed to mark all locked cart rows as ordered');
+      throw new Error(
+        "Checkout failed to mark all locked cart rows as ordered",
+      );
     }
 
     return order;
@@ -105,11 +131,18 @@ export class CreateOrderUseCase {
         amount: order.totalAmount,
         currency: CHECKOUT_CURRENCY,
       });
-      await this.orderRepo.attachPaymentReference(order.idOrder, intent.reference);
+      await this.orderRepo.attachPaymentReference(
+        order.idOrder,
+        intent.reference,
+      );
     } catch (error) {
       this.logger.warn(
-        { event: 'payment_initiate_failed', orderId: order.idOrder, error: (error as Error).message },
-        'Payment gateway initiation failed after order commit; order remains AWAITING_PAYMENT'
+        {
+          event: "payment_initiate_failed",
+          orderId: order.idOrder,
+          error: (error as Error).message,
+        },
+        "Payment gateway initiation failed after order commit; order remains AWAITING_PAYMENT",
       );
     }
   }
