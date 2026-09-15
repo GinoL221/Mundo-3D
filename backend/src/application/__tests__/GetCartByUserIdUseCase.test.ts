@@ -1,9 +1,9 @@
-import { GetCartByUserIdUseCase } from '../use-cases/GetCartByUserIdUseCase';
-import { ShoppingCartRepositoryPort } from '../../domain/ports/ShoppingCartRepositoryPort';
-import { ShoppingCart, CartStatus } from '../../domain/entities/ShoppingCart';
-import { Product } from '../../domain/entities/Product';
+import { GetCartByUserIdUseCase } from "../use-cases/GetCartByUserIdUseCase";
+import { ShoppingCartRepositoryPort } from "../../domain/ports/ShoppingCartRepositoryPort";
+import { ShoppingCart, CartStatus } from "../../domain/entities/ShoppingCart";
+import { Product } from "../../domain/entities/Product";
 
-describe('GetCartByUserIdUseCase', () => {
+describe("GetCartByUserIdUseCase", () => {
   let repositoryMock: jest.Mocked<ShoppingCartRepositoryPort>;
   let useCase: GetCartByUserIdUseCase;
 
@@ -18,7 +18,7 @@ describe('GetCartByUserIdUseCase', () => {
     useCase = new GetCartByUserIdUseCase(repositoryMock);
   });
 
-  it('should return empty items and 0 total when cart is empty', async () => {
+  it("should return empty items and 0 total when cart is empty", async () => {
     repositoryMock.findByUserId.mockResolvedValue([]);
 
     const result = await useCase.execute(5);
@@ -28,13 +28,53 @@ describe('GetCartByUserIdUseCase', () => {
     expect(result.total).toBe(0);
   });
 
-  it('should only return ACTIVE items, map them to DTO, and compute correct total', async () => {
-    const productA = new Product(10, 'Product A', 100.0, 'Desc A', 'imgA.png', 1, 2);
-    const productB = new Product(20, 'Product B', 50.0, 'Desc B', 'imgB.png', 1, 2);
+  it("should only return ACTIVE items, map them to DTO, and compute correct total", async () => {
+    const productA = new Product(
+      10,
+      "Product A",
+      100.0,
+      "Desc A",
+      "imgA.png",
+      1,
+      2,
+    );
+    const productB = new Product(
+      20,
+      "Product B",
+      50.0,
+      "Desc B",
+      "imgB.png",
+      1,
+      2,
+    );
 
-    const itemA = new ShoppingCart(1, 5, 10, 2, 100.0, CartStatus.ACTIVE, productA); // Active: 2 * 100 = 200
-    const itemB = new ShoppingCart(2, 5, 20, 3, 50.0, CartStatus.ACTIVE, productB);  // Active: 3 * 50 = 150
-    const itemC = new ShoppingCart(3, 5, 30, 1, 25.0, CartStatus.ORDERED, productB); // Ordered: should be ignored
+    const itemA = new ShoppingCart(
+      1,
+      5,
+      10,
+      2,
+      100.0,
+      CartStatus.ACTIVE,
+      productA,
+    ); // Active: 2 * 100 = 200
+    const itemB = new ShoppingCart(
+      2,
+      5,
+      20,
+      3,
+      50.0,
+      CartStatus.ACTIVE,
+      productB,
+    ); // Active: 3 * 50 = 150
+    const itemC = new ShoppingCart(
+      3,
+      5,
+      30,
+      1,
+      25.0,
+      CartStatus.ORDERED,
+      productB,
+    ); // Ordered: should be ignored
 
     repositoryMock.findByUserId.mockResolvedValue([itemA, itemB, itemC]);
 
@@ -43,14 +83,30 @@ describe('GetCartByUserIdUseCase', () => {
     expect(result.items).toHaveLength(2);
     expect(result.total).toBe(350.0);
     expect(result.items[0].idCart).toBe(1);
-    expect(result.items[0].product.nameProduct).toBe('Product A');
+    expect(result.items[0].product.nameProduct).toBe("Product A");
     expect(result.items[1].idCart).toBe(2);
-    expect(result.items[1].product.nameProduct).toBe('Product B');
+    expect(result.items[1].product.nameProduct).toBe("Product B");
   });
 
-  it('should detect price drift in mapped items correctly', async () => {
-    const productA = new Product(10, 'Product A', 120.0, 'Desc A', 'imgA.png', 1, 2); // Catalog price 120
-    const itemA = new ShoppingCart(1, 5, 10, 2, 100.0, CartStatus.ACTIVE, productA); // Cart unitPrice 100
+  it("should detect price drift in mapped items correctly", async () => {
+    const productA = new Product(
+      10,
+      "Product A",
+      120.0,
+      "Desc A",
+      "imgA.png",
+      1,
+      2,
+    ); // Catalog price 120
+    const itemA = new ShoppingCart(
+      1,
+      5,
+      10,
+      2,
+      100.0,
+      CartStatus.ACTIVE,
+      productA,
+    ); // Cart unitPrice 100
 
     repositoryMock.findByUserId.mockResolvedValue([itemA]);
 
