@@ -1,5 +1,5 @@
-import { FranchiseRepositoryPort } from '../../domain/ports/FranchiseRepositoryPort';
-import { FranchiseDTO } from '../dtos/FranchiseDTO';
+import { FranchiseRepositoryPort } from "../../domain/ports/FranchiseRepositoryPort";
+import { FranchiseDTO } from "../dtos/FranchiseDTO";
 
 export interface CreateFranchiseInput {
   nameFranchise: string;

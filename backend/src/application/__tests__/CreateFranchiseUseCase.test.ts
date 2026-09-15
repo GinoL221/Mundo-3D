@@ -1,8 +1,11 @@
-import { CreateFranchiseUseCase, CreateFranchiseInput } from '../use-cases/CreateFranchiseUseCase';
-import { FranchiseRepositoryPort } from '../../domain/ports/FranchiseRepositoryPort';
-import { Franchise } from '../../domain/entities/Franchise';
+import {
+  CreateFranchiseUseCase,
+  CreateFranchiseInput,
+} from "../use-cases/CreateFranchiseUseCase";
+import { FranchiseRepositoryPort } from "../../domain/ports/FranchiseRepositoryPort";
+import { Franchise } from "../../domain/entities/Franchise";
 
-describe('CreateFranchiseUseCase', () => {
+describe("CreateFranchiseUseCase", () => {
   let franchiseRepo: jest.Mocked<FranchiseRepositoryPort>;
   let useCase: CreateFranchiseUseCase;
 
@@ -18,24 +21,26 @@ describe('CreateFranchiseUseCase', () => {
     useCase = new CreateFranchiseUseCase(franchiseRepo);
   });
 
-  it('creates a franchise and returns its DTO', async () => {
-    const input: CreateFranchiseInput = { nameFranchise: 'Studio Ghibli' };
-    franchiseRepo.create.mockResolvedValue(new Franchise(1, 'Studio Ghibli'));
+  it("creates a franchise and returns its DTO", async () => {
+    const input: CreateFranchiseInput = { nameFranchise: "Studio Ghibli" };
+    franchiseRepo.create.mockResolvedValue(new Franchise(1, "Studio Ghibli"));
 
     await expect(useCase.execute(input)).resolves.toEqual({
       idFranchise: 1,
-      nameFranchise: 'Studio Ghibli',
+      nameFranchise: "Studio Ghibli",
     });
-    expect(franchiseRepo.create).toHaveBeenCalledWith({ nameFranchise: 'Studio Ghibli' });
+    expect(franchiseRepo.create).toHaveBeenCalledWith({
+      nameFranchise: "Studio Ghibli",
+    });
   });
 
-  it('maps the repository-created franchise rather than the input identifier', async () => {
-    const input: CreateFranchiseInput = { nameFranchise: 'Marvel' };
-    franchiseRepo.create.mockResolvedValue(new Franchise(8, 'Marvel'));
+  it("maps the repository-created franchise rather than the input identifier", async () => {
+    const input: CreateFranchiseInput = { nameFranchise: "Marvel" };
+    franchiseRepo.create.mockResolvedValue(new Franchise(8, "Marvel"));
 
     await expect(useCase.execute(input)).resolves.toEqual({
       idFranchise: 8,
-      nameFranchise: 'Marvel',
+      nameFranchise: "Marvel",
     });
   });
 });
