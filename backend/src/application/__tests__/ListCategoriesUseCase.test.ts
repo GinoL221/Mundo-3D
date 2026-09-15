@@ -1,8 +1,8 @@
-import { ListCategoriesUseCase } from '../use-cases/ListCategoriesUseCase';
-import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
-import { Category } from '../../domain/entities/Category';
+import { ListCategoriesUseCase } from "../use-cases/ListCategoriesUseCase";
+import { CategoryRepositoryPort } from "../../domain/ports/CategoryRepositoryPort";
+import { Category } from "../../domain/entities/Category";
 
-describe('ListCategoriesUseCase', () => {
+describe("ListCategoriesUseCase", () => {
   let mockCategoryRepo: jest.Mocked<CategoryRepositoryPort>;
   let useCase: ListCategoriesUseCase;
 
@@ -18,7 +18,7 @@ describe('ListCategoriesUseCase', () => {
     useCase = new ListCategoriesUseCase(mockCategoryRepo);
   });
 
-  it('should return an empty array when the repository has no categories', async () => {
+  it("should return an empty array when the repository has no categories", async () => {
     mockCategoryRepo.findAll.mockResolvedValue([]);
 
     const result = await useCase.execute();
@@ -27,15 +27,18 @@ describe('ListCategoriesUseCase', () => {
     expect(mockCategoryRepo.findAll).toHaveBeenCalledTimes(1);
   });
 
-  it('should return a list of CategoryDTO mapped from domain entities', async () => {
-    const categories = [new Category(1, 'Figures'), new Category(2, 'Decorations')];
+  it("should return a list of CategoryDTO mapped from domain entities", async () => {
+    const categories = [
+      new Category(1, "Figures"),
+      new Category(2, "Decorations"),
+    ];
     mockCategoryRepo.findAll.mockResolvedValue(categories);
 
     const result = await useCase.execute();
 
     expect(result).toEqual([
-      { idCategory: 1, nameCategory: 'Figures' },
-      { idCategory: 2, nameCategory: 'Decorations' },
+      { idCategory: 1, nameCategory: "Figures" },
+      { idCategory: 2, nameCategory: "Decorations" },
     ]);
   });
 });

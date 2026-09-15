@@ -1,5 +1,5 @@
-import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
-import { CategoryDTO } from '../dtos/CategoryDTO';
+import { CategoryRepositoryPort } from "../../domain/ports/CategoryRepositoryPort";
+import { CategoryDTO } from "../dtos/CategoryDTO";
 
 export class GetCategoryByIdUseCase {
   constructor(private readonly categoryRepo: CategoryRepositoryPort) {}
@@ -7,7 +7,7 @@ export class GetCategoryByIdUseCase {
   async execute(id: number): Promise<CategoryDTO> {
     const category = await this.categoryRepo.findById(id);
     if (!category) {
-      throw new Error('Category not found');
+      throw new Error("Category not found");
     }
 
     return {
