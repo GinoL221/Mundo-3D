@@ -1,7 +1,7 @@
-import { OrderRepositoryPort } from '../../domain/ports/OrderRepositoryPort';
-import { OrderStatus } from '../../domain/entities/Order';
-import { IllegalOrderTransitionException } from '../../domain/exceptions/IllegalOrderTransitionException';
-import { OrderDTO, mapToOrderDTO } from '../dtos/OrderDTO';
+import { OrderRepositoryPort } from "../../domain/ports/OrderRepositoryPort";
+import { OrderStatus } from "../../domain/entities/Order";
+import { IllegalOrderTransitionException } from "../../domain/exceptions/IllegalOrderTransitionException";
+import { OrderDTO, mapToOrderDTO } from "../dtos/OrderDTO";
 
 // ADMIN-only payment confirmation. `transitionStatus`'s guarded conditional
 // update (`WHERE order_status = 'AWAITING_PAYMENT'`) is the single source of
@@ -16,7 +16,7 @@ export class ConfirmOrderPaymentUseCase {
     const transitioned = await this.orderRepo.transitionStatus(
       idOrder,
       OrderStatus.AWAITING_PAYMENT,
-      OrderStatus.PAID
+      OrderStatus.PAID,
     );
 
     if (!transitioned) {
@@ -25,7 +25,9 @@ export class ConfirmOrderPaymentUseCase {
 
     const order = await this.orderRepo.findById(idOrder);
     if (!order) {
-      throw new IllegalOrderTransitionException('Order not found after confirmation');
+      throw new IllegalOrderTransitionException(
+        "Order not found after confirmation",
+      );
     }
 
     return mapToOrderDTO(order);

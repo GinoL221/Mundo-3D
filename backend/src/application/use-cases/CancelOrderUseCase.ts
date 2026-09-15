@@ -1,9 +1,12 @@
-import { UnitOfWorkPort, TransactionContext } from '../../domain/ports/UnitOfWorkPort';
-import { OrderRepositoryPort } from '../../domain/ports/OrderRepositoryPort';
-import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
-import { Order, OrderStatus } from '../../domain/entities/Order';
-import { IllegalOrderTransitionException } from '../../domain/exceptions/IllegalOrderTransitionException';
-import { OrderDTO, mapToOrderDTO } from '../dtos/OrderDTO';
+import {
+  UnitOfWorkPort,
+  TransactionContext,
+} from "../../domain/ports/UnitOfWorkPort";
+import { OrderRepositoryPort } from "../../domain/ports/OrderRepositoryPort";
+import { ProductRepositoryPort } from "../../domain/ports/ProductRepositoryPort";
+import { Order, OrderStatus } from "../../domain/entities/Order";
+import { IllegalOrderTransitionException } from "../../domain/exceptions/IllegalOrderTransitionException";
+import { OrderDTO, mapToOrderDTO } from "../dtos/OrderDTO";
 
 // ADMIN-only cancellation. Multi-step (transition + N stock restorations), so
 // it runs inside one UnitOfWork transaction, unlike ConfirmOrderPaymentUseCase.
@@ -19,7 +22,7 @@ export class CancelOrderUseCase {
   constructor(
     private readonly uow: UnitOfWorkPort,
     private readonly orderRepo: OrderRepositoryPort,
-    private readonly productRepo: ProductRepositoryPort
+    private readonly productRepo: ProductRepositoryPort,
   ) {}
 
   async execute(idOrder: number): Promise<OrderDTO> {
@@ -30,7 +33,7 @@ export class CancelOrderUseCase {
         idOrder,
         OrderStatus.AWAITING_PAYMENT,
         OrderStatus.CANCELLED,
-        tx
+        tx,
       );
 
       if (!transitioned || !existing) {
@@ -50,7 +53,7 @@ export class CancelOrderUseCase {
         OrderStatus.CANCELLED,
         existing.items,
         existing.createdAt,
-        existing.paymentReference
+        existing.paymentReference,
       );
 
       return mapToOrderDTO(cancelled);
