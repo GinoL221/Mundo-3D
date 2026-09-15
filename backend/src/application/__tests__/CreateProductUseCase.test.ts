@@ -1,10 +1,13 @@
-import { CreateProductUseCase, CreateProductInput } from '../use-cases/CreateProductUseCase';
-import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
-import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
-import { Product } from '../../domain/entities/Product';
-import { Category } from '../../domain/entities/Category';
+import {
+  CreateProductUseCase,
+  CreateProductInput,
+} from "../use-cases/CreateProductUseCase";
+import { ProductRepositoryPort } from "../../domain/ports/ProductRepositoryPort";
+import { CategoryRepositoryPort } from "../../domain/ports/CategoryRepositoryPort";
+import { Product } from "../../domain/entities/Product";
+import { Category } from "../../domain/entities/Category";
 
-describe('CreateProductUseCase', () => {
+describe("CreateProductUseCase", () => {
   let mockProductRepo: jest.Mocked<ProductRepositoryPort>;
   let mockCategoryRepo: jest.Mocked<CategoryRepositoryPort>;
   let useCase: CreateProductUseCase;
@@ -30,18 +33,26 @@ describe('CreateProductUseCase', () => {
     useCase = new CreateProductUseCase(mockProductRepo, mockCategoryRepo);
   });
 
-  it('should create a product and map it to a ProductDTO with fetched Category name', async () => {
+  it("should create a product and map it to a ProductDTO with fetched Category name", async () => {
     const input: CreateProductInput = {
-      nameProduct: 'New Product',
+      nameProduct: "New Product",
       price: 100,
-      descriptionProduct: 'Brand new',
-      image: 'new.jpg',
+      descriptionProduct: "Brand new",
+      image: "new.jpg",
       idCategory: 1,
       idFranchise: 2,
     };
 
-    const createdProduct = new Product(10, 'New Product', 100, 'Brand new', 'new.jpg', 1, 2);
-    const mockCategory = new Category(1, 'Figures');
+    const createdProduct = new Product(
+      10,
+      "New Product",
+      100,
+      "Brand new",
+      "new.jpg",
+      1,
+      2,
+    );
+    const mockCategory = new Category(1, "Figures");
 
     mockProductRepo.create.mockResolvedValue(createdProduct);
     mockCategoryRepo.findById.mockResolvedValue(mockCategory);
@@ -50,13 +61,13 @@ describe('CreateProductUseCase', () => {
 
     expect(result).toEqual({
       idProduct: 10,
-      nameProduct: 'New Product',
+      nameProduct: "New Product",
       price: 100,
-      descriptionProduct: 'Brand new',
-      image: 'new.jpg',
+      descriptionProduct: "Brand new",
+      image: "new.jpg",
       idCategory: 1,
       idFranchise: 2,
-      category: 'Figures',
+      category: "Figures",
       material: null,
       height: null,
       width: null,
@@ -84,87 +95,138 @@ describe('CreateProductUseCase', () => {
     expect(mockCategoryRepo.findById).toHaveBeenCalledWith(1);
   });
 
-  it('should default stock to 0 when omitted from input', async () => {
+  it("should default stock to 0 when omitted from input", async () => {
     const input: CreateProductInput = {
-      nameProduct: 'New Product',
+      nameProduct: "New Product",
       price: 100,
-      descriptionProduct: 'Brand new',
-      image: 'new.jpg',
+      descriptionProduct: "Brand new",
+      image: "new.jpg",
       idCategory: 1,
       idFranchise: 2,
     };
 
-    const createdProduct = new Product(10, 'New Product', 100, 'Brand new', 'new.jpg', 1, 2, undefined, undefined, null, null, null, null, null, null, 0);
+    const createdProduct = new Product(
+      10,
+      "New Product",
+      100,
+      "Brand new",
+      "new.jpg",
+      1,
+      2,
+      undefined,
+      undefined,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      0,
+    );
     mockProductRepo.create.mockResolvedValue(createdProduct);
 
     const result = await useCase.execute(input);
 
     expect(result.stock).toBe(0);
     expect(mockProductRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ stock: 0 })
+      expect.objectContaining({ stock: 0 }),
     );
   });
 
-  it('should propagate an explicit stock value into the DTO and repository call', async () => {
+  it("should propagate an explicit stock value into the DTO and repository call", async () => {
     const input: CreateProductInput = {
-      nameProduct: 'New Product',
+      nameProduct: "New Product",
       price: 100,
-      descriptionProduct: 'Brand new',
-      image: 'new.jpg',
+      descriptionProduct: "Brand new",
+      image: "new.jpg",
       idCategory: 1,
       idFranchise: 2,
       stock: 15,
     };
 
-    const createdProduct = new Product(10, 'New Product', 100, 'Brand new', 'new.jpg', 1, 2, undefined, undefined, null, null, null, null, null, null, 15);
+    const createdProduct = new Product(
+      10,
+      "New Product",
+      100,
+      "Brand new",
+      "new.jpg",
+      1,
+      2,
+      undefined,
+      undefined,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      15,
+    );
     mockProductRepo.create.mockResolvedValue(createdProduct);
 
     const result = await useCase.execute(input);
 
     expect(result.stock).toBe(15);
     expect(mockProductRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ stock: 15 })
+      expect.objectContaining({ stock: 15 }),
     );
   });
 
-  it('should use Category name from relation if already populated', async () => {
+  it("should use Category name from relation if already populated", async () => {
     const input: CreateProductInput = {
-      nameProduct: 'New Product',
+      nameProduct: "New Product",
       price: 100,
-      descriptionProduct: 'Brand new',
-      image: 'new.jpg',
+      descriptionProduct: "Brand new",
+      image: "new.jpg",
       idCategory: 1,
       idFranchise: 2,
     };
 
-    const mockCategory = new Category(1, 'Figures');
-    const createdProduct = new Product(10, 'New Product', 100, 'Brand new', 'new.jpg', 1, 2, mockCategory);
+    const mockCategory = new Category(1, "Figures");
+    const createdProduct = new Product(
+      10,
+      "New Product",
+      100,
+      "Brand new",
+      "new.jpg",
+      1,
+      2,
+      mockCategory,
+    );
 
     mockProductRepo.create.mockResolvedValue(createdProduct);
 
     const result = await useCase.execute(input);
 
-    expect(result.category).toBe('Figures');
+    expect(result.category).toBe("Figures");
     expect(mockCategoryRepo.findById).not.toHaveBeenCalled();
   });
 
-  it('should fallback to Sin categoría if Category is not found', async () => {
+  it("should fallback to Sin categoría if Category is not found", async () => {
     const input: CreateProductInput = {
-      nameProduct: 'New Product',
+      nameProduct: "New Product",
       price: 100,
-      descriptionProduct: 'Brand new',
-      image: 'new.jpg',
+      descriptionProduct: "Brand new",
+      image: "new.jpg",
       idCategory: 999,
       idFranchise: 2,
     };
 
-    const createdProduct = new Product(10, 'New Product', 100, 'Brand new', 'new.jpg', 999, 2);
+    const createdProduct = new Product(
+      10,
+      "New Product",
+      100,
+      "Brand new",
+      "new.jpg",
+      999,
+      2,
+    );
 
     mockProductRepo.create.mockResolvedValue(createdProduct);
     mockCategoryRepo.findById.mockResolvedValue(null);
 
     const result = await useCase.execute(input);
 
-    expect(result.category).toBe('Sin categoría');
+    expect(result.category).toBe("Sin categoría");
   });
 });
