@@ -1,5 +1,5 @@
-import { OrderRepositoryPort } from '../../domain/ports/OrderRepositoryPort';
-import { OrderSummaryDTO, mapToOrderSummaryDTO } from '../dtos/OrderDTO';
+import { OrderRepositoryPort } from "../../domain/ports/OrderRepositoryPort";
+import { OrderSummaryDTO, mapToOrderSummaryDTO } from "../dtos/OrderDTO";
 
 // Buyer-scoped, paginated listing (order-history feature), alongside the
 // ADMIN-only `ListOrdersUseCase` rather than through it.
@@ -26,9 +26,16 @@ export class ListMyOrdersUseCase {
   // (Work Unit 2's `listMyOrdersValidation`) — no defensive clamping here,
   // per design decision #6: a silent clamp would contradict the
   // reject-with-400 contract enforced upstream.
-  async execute(idUser: number, page: number, pageSize: number): Promise<MyOrdersPageDTO> {
+  async execute(
+    idUser: number,
+    page: number,
+    pageSize: number,
+  ): Promise<MyOrdersPageDTO> {
     const offset = (page - 1) * pageSize;
-    const { orders, total } = await this.orderRepo.findByUserId(idUser, { limit: pageSize, offset });
+    const { orders, total } = await this.orderRepo.findByUserId(idUser, {
+      limit: pageSize,
+      offset,
+    });
 
     return {
       orders: orders.map(mapToOrderSummaryDTO),
