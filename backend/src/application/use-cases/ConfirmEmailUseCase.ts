@@ -20,7 +20,12 @@ export class ConfirmEmailUseCase {
     }
 
     const result = await this.unitOfWork.runInTransaction((tx) =>
-      this.repository.verifyAndConsume({ userId, tokenHash, now: this.clock.now(), tx }),
+      this.repository.verifyAndConsume({
+        userId,
+        tokenHash,
+        now: this.clock.now(),
+        tx,
+      }),
     );
     if (result.outcome !== 'confirmed' && result.outcome !== 'idempotent') {
       throw new InvalidEmailConfirmationToken();

@@ -44,7 +44,16 @@ describe('IssueEmailConfirmationUseCase', () => {
       { now: () => now },
       logger,
     );
-    return { events, repository, generator, hasher, origin, mail, logger, useCase };
+    return {
+      events,
+      repository,
+      generator,
+      hasher,
+      origin,
+      mail,
+      logger,
+      useCase,
+    };
   }
 
   it('commits the replacement before sending the mail intent', async () => {
@@ -55,7 +64,10 @@ describe('IssueEmailConfirmationUseCase', () => {
       now,
     });
     const f = setup(
-      jest.fn().mockResolvedValue({ token: replacement, recipient: 'recipient@example.test' }),
+      jest.fn().mockResolvedValue({
+        token: replacement,
+        recipient: 'recipient@example.test',
+      }),
     );
 
     await f.useCase.issueForUser(7);
@@ -98,13 +110,22 @@ describe('IssueEmailConfirmationUseCase', () => {
       new Error('recipient and token must stay secret'),
     );
 
-    await expect(mailFailure.useCase.issueForUser(7)).resolves.toEqual({ outcome: 'mail-failed' });
+    await expect(mailFailure.useCase.issueForUser(7)).resolves.toEqual({
+      outcome: 'mail-failed',
+    });
 
     expect(mailFailure.events).toEqual(['begin', 'commit']);
     expect(replacement).toEqual(
-      expect.objectContaining({ activeSlot: 1, consumedAt: null, invalidatedAt: null }),
+      expect.objectContaining({
+        activeSlot: 1,
+        consumedAt: null,
+        invalidatedAt: null,
+      }),
     );
-    expect(mailFailure.logger.warn).toHaveBeenCalledWith({ outcome: 'smtp_failed', recordId: 92 });
+    expect(mailFailure.logger.warn).toHaveBeenCalledWith({
+      outcome: 'smtp_failed',
+      recordId: 92,
+    });
     const loggedArguments = mailFailure.logger.warn.mock.calls.flat().map(String).join(' ');
     for (const forbidden of [recipient, token, digest, 'https://app.example/confirm-email']) {
       expect(loggedArguments).not.toContain(forbidden);

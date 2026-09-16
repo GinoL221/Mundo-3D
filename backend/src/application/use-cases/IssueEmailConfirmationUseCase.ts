@@ -56,7 +56,10 @@ export class IssueEmailConfirmationUseCase implements EmailConfirmationIssuerPor
       });
       return true;
     } catch {
-      this.logger.warn({ outcome: 'smtp_failed', recordId: token.idEmailConfirmationToken });
+      this.logger.warn({
+        outcome: 'smtp_failed',
+        recordId: token.idEmailConfirmationToken,
+      });
       return false;
     }
   }
