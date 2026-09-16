@@ -1,8 +1,8 @@
-import { ListFranchisesUseCase } from "../use-cases/ListFranchisesUseCase";
-import { FranchiseRepositoryPort } from "../../domain/ports/FranchiseRepositoryPort";
-import { Franchise } from "../../domain/entities/Franchise";
+import { ListFranchisesUseCase } from '../use-cases/ListFranchisesUseCase';
+import { FranchiseRepositoryPort } from '../../domain/ports/FranchiseRepositoryPort';
+import { Franchise } from '../../domain/entities/Franchise';
 
-describe("ListFranchisesUseCase", () => {
+describe('ListFranchisesUseCase', () => {
   let franchiseRepo: jest.Mocked<FranchiseRepositoryPort>;
   let useCase: ListFranchisesUseCase;
 
@@ -18,22 +18,22 @@ describe("ListFranchisesUseCase", () => {
     useCase = new ListFranchisesUseCase(franchiseRepo);
   });
 
-  it("returns an empty DTO list when the repository has no franchises", async () => {
+  it('returns an empty DTO list when the repository has no franchises', async () => {
     franchiseRepo.findAll.mockResolvedValue([]);
 
     await expect(useCase.execute()).resolves.toEqual([]);
     expect(franchiseRepo.findAll).toHaveBeenCalledTimes(1);
   });
 
-  it("maps each franchise entity to a FranchiseDTO", async () => {
+  it('maps each franchise entity to a FranchiseDTO', async () => {
     franchiseRepo.findAll.mockResolvedValue([
-      new Franchise(1, "Studio Ghibli"),
-      new Franchise(2, "Marvel"),
+      new Franchise(1, 'Studio Ghibli'),
+      new Franchise(2, 'Marvel'),
     ]);
 
     await expect(useCase.execute()).resolves.toEqual([
-      { idFranchise: 1, nameFranchise: "Studio Ghibli" },
-      { idFranchise: 2, nameFranchise: "Marvel" },
+      { idFranchise: 1, nameFranchise: 'Studio Ghibli' },
+      { idFranchise: 2, nameFranchise: 'Marvel' },
     ]);
   });
 });

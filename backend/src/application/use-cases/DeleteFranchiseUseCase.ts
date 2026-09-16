@@ -1,4 +1,4 @@
-import { FranchiseRepositoryPort } from "../../domain/ports/FranchiseRepositoryPort";
+import { FranchiseRepositoryPort } from '../../domain/ports/FranchiseRepositoryPort';
 
 export class DeleteFranchiseUseCase {
   constructor(private readonly franchiseRepo: FranchiseRepositoryPort) {}

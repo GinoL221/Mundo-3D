@@ -1,7 +1,7 @@
-import { DeleteFranchiseUseCase } from "../use-cases/DeleteFranchiseUseCase";
-import { FranchiseRepositoryPort } from "../../domain/ports/FranchiseRepositoryPort";
+import { DeleteFranchiseUseCase } from '../use-cases/DeleteFranchiseUseCase';
+import { FranchiseRepositoryPort } from '../../domain/ports/FranchiseRepositoryPort';
 
-describe("DeleteFranchiseUseCase", () => {
+describe('DeleteFranchiseUseCase', () => {
   let franchiseRepo: jest.Mocked<FranchiseRepositoryPort>;
   let useCase: DeleteFranchiseUseCase;
 
@@ -17,27 +17,23 @@ describe("DeleteFranchiseUseCase", () => {
     useCase = new DeleteFranchiseUseCase(franchiseRepo);
   });
 
-  it("returns true when the repository deletes the franchise", async () => {
+  it('returns true when the repository deletes the franchise', async () => {
     franchiseRepo.delete.mockResolvedValue(true);
 
     await expect(useCase.execute(1)).resolves.toBe(true);
     expect(franchiseRepo.delete).toHaveBeenCalledWith(1);
   });
 
-  it("returns false when the repository cannot find the franchise", async () => {
+  it('returns false when the repository cannot find the franchise', async () => {
     franchiseRepo.delete.mockResolvedValue(false);
 
     await expect(useCase.execute(999)).resolves.toBe(false);
     expect(franchiseRepo.delete).toHaveBeenCalledWith(999);
   });
 
-  it("propagates a translated referential-integrity error from the repository", async () => {
-    franchiseRepo.delete.mockRejectedValue(
-      new Error("Franchise has associated products"),
-    );
+  it('propagates a translated referential-integrity error from the repository', async () => {
+    franchiseRepo.delete.mockRejectedValue(new Error('Franchise has associated products'));
 
-    await expect(useCase.execute(1)).rejects.toThrow(
-      "Franchise has associated products",
-    );
+    await expect(useCase.execute(1)).rejects.toThrow('Franchise has associated products');
   });
 });
