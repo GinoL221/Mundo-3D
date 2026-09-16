@@ -31,7 +31,10 @@
   "prettier": {
     "plugins": [
       "prettier-plugin-astro"
-    ]
+    ],
+    "singleQuote": true,
+    "trailingComma": "all",
+    "printWidth": 100
   },
   "devDependencies": {
     "prettier": "3.8.3",
