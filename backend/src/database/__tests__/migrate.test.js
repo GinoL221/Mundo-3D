@@ -78,7 +78,7 @@ describe('run — adopt-baseline CLI wiring', () => {
     expect(success).toBe(true);
     expect(migrator.storage.logMigration).not.toHaveBeenCalled();
     expect(logSpy).toHaveBeenCalledWith(
-      'Nothing to adopt — no pending migrations matched the requested scope.'
+      'Nothing to adopt — no pending migrations matched the requested scope.',
     );
     logSpy.mockRestore();
   });
@@ -104,7 +104,7 @@ describe('run — non-adopt-baseline commands', () => {
     buildMigrator.mockReset();
   });
 
-  it('delegates any other command straight to the migrator\'s own CLI runner', async () => {
+  it("delegates any other command straight to the migrator's own CLI runner", async () => {
     const runAsCLI = jest.fn().mockResolvedValue(true);
     buildMigrator.mockReturnValue({ runAsCLI });
 
@@ -114,7 +114,7 @@ describe('run — non-adopt-baseline commands', () => {
     expect(runAsCLI).toHaveBeenCalledWith(['up']);
   });
 
-  it('surfaces the migrator CLI runner\'s own failure result unchanged', async () => {
+  it("surfaces the migrator CLI runner's own failure result unchanged", async () => {
     const runAsCLI = jest.fn().mockResolvedValue(false);
     buildMigrator.mockReturnValue({ runAsCLI });
 

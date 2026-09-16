@@ -7,17 +7,12 @@
 // `window.location.search` on load — no `pushState`, since
 // `astro.config.mjs` builds fully static and `Astro.url.searchParams` is a
 // build-time-only value (design.md decision #5).
-import ProductCard from "./ProductCard.astro";
+import ProductCard from './ProductCard.astro';
 ---
 
 <div class="product-search">
   <div class="product-search__toolbar">
-    <form
-      method="get"
-      action="/products"
-      class="product-search__form"
-      id="product-search-form"
-    >
+    <form method="get" action="/products" class="product-search__form" id="product-search-form">
       <label class="sr-only" for="product-search-input">Buscar productos</label>
       <input
         type="search"
@@ -37,15 +32,10 @@ import ProductCard from "./ProductCard.astro";
     </form>
   </div>
 
-  <section
-    class="product-search__catalog"
-    aria-labelledby="product-grid-heading"
-  >
+  <section class="product-search__catalog" aria-labelledby="product-grid-heading">
     <h2 id="product-grid-heading">Piezas disponibles</h2>
     <div class="product-grid" id="product-grid-container" aria-live="polite">
-      <p id="loading-msg" class="product-search__loading">
-        Cargando productos...
-      </p>
+      <p id="loading-msg" class="product-search__loading">Cargando productos...</p>
     </div>
   </section>
 
@@ -60,11 +50,7 @@ import ProductCard from "./ProductCard.astro";
 
 <template id="empty-state-template">
   <div class="empty-state">
-    <img
-      src="/images/illustrations/empty-state.svg"
-      alt="Próximamente"
-      class="empty-state-img"
-    />
+    <img src="/images/illustrations/empty-state.svg" alt="Próximamente" class="empty-state-img" />
     <h2>Próximamente</h2>
     <p>Estamos preparando productos increíbles para vos.</p>
   </div>
@@ -72,11 +58,7 @@ import ProductCard from "./ProductCard.astro";
 
 <template id="no-results-state-template">
   <div class="empty-state">
-    <img
-      src="/images/illustrations/empty-state.svg"
-      alt="Sin resultados"
-      class="empty-state-img"
-    />
+    <img src="/images/illustrations/empty-state.svg" alt="Sin resultados" class="empty-state-img" />
     <h2>Sin resultados</h2>
     <p>No encontramos productos para esa búsqueda.</p>
   </div>
@@ -84,44 +66,34 @@ import ProductCard from "./ProductCard.astro";
 
 <template id="error-state-template">
   <div class="empty-state">
-    <img
-      src="/images/illustrations/empty-state.svg"
-      alt="Error"
-      class="empty-state-img"
-    />
+    <img src="/images/illustrations/empty-state.svg" alt="Error" class="empty-state-img" />
     <h2>No se pudo cargar</h2>
     <p>Verificá tu conexión e intentá de nuevo.</p>
   </div>
 </template>
 
 <script>
-  import {
-    getCategoryImg,
-    isPlaceholderImage,
-  } from "../adapters/product.adapter";
-  import { resolveImageUrl } from "../../../lib/imageUrl";
-  import type { APIProduct } from "../adapters/product.adapter";
-  import {
-    fetchProductSearch,
-    fetchFilterOptions,
-  } from "../services/product.search.service";
-  import type { ProductSearchCriteria } from "../services/product.search.service";
-  import { presentProductSearchPage } from "../services/productSearchPresenter";
+  import { getCategoryImg, isPlaceholderImage } from '../adapters/product.adapter';
+  import { resolveImageUrl } from '../../../lib/imageUrl';
+  import type { APIProduct } from '../adapters/product.adapter';
+  import { fetchProductSearch, fetchFilterOptions } from '../services/product.search.service';
+  import type { ProductSearchCriteria } from '../services/product.search.service';
+  import { presentProductSearchPage } from '../services/productSearchPresenter';
 
   function getCriteria(): ProductSearchCriteria {
     const params = new URLSearchParams(window.location.search);
     const criteria: ProductSearchCriteria = {};
 
-    const search = params.get("search");
+    const search = params.get('search');
     if (search) criteria.search = search;
 
-    const idCategory = params.get("idCategory");
+    const idCategory = params.get('idCategory');
     if (idCategory) criteria.idCategory = Number.parseInt(idCategory, 10);
 
-    const idFranchise = params.get("idFranchise");
+    const idFranchise = params.get('idFranchise');
     if (idFranchise) criteria.idFranchise = Number.parseInt(idFranchise, 10);
 
-    const rawPage = params.get("page");
+    const rawPage = params.get('page');
     const parsedPage = rawPage ? Number.parseInt(rawPage, 10) : 1;
     criteria.page = Number.isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage;
 
@@ -130,61 +102,53 @@ import ProductCard from "./ProductCard.astro";
 
   function hasActiveFilters(criteria: ProductSearchCriteria): boolean {
     return Boolean(
-      criteria.search ||
-      criteria.idCategory !== undefined ||
-      criteria.idFranchise !== undefined,
+      criteria.search || criteria.idCategory !== undefined || criteria.idFranchise !== undefined,
     );
   }
 
   async function rehydrateForm(criteria: ProductSearchCriteria): Promise<void> {
-    const searchInput = document.getElementById(
-      "product-search-input",
-    ) as HTMLInputElement | null;
+    const searchInput = document.getElementById('product-search-input') as HTMLInputElement | null;
     if (searchInput && criteria.search) searchInput.value = criteria.search;
 
     const categorySelect = document.getElementById(
-      "product-search-category",
+      'product-search-category',
     ) as HTMLSelectElement | null;
     const franchiseSelect = document.getElementById(
-      "product-search-franchise",
+      'product-search-franchise',
     ) as HTMLSelectElement | null;
     const { categories, franchises } = await fetchFilterOptions();
 
     if (categorySelect) {
       for (const category of categories) {
-        const option = document.createElement("option");
+        const option = document.createElement('option');
         option.value = String(category.id);
         option.textContent = category.name;
         categorySelect.appendChild(option);
       }
-      if (criteria.idCategory !== undefined)
-        categorySelect.value = String(criteria.idCategory);
+      if (criteria.idCategory !== undefined) categorySelect.value = String(criteria.idCategory);
     }
 
     if (franchiseSelect) {
       for (const franchise of franchises) {
-        const option = document.createElement("option");
+        const option = document.createElement('option');
         option.value = String(franchise.id);
         option.textContent = franchise.name;
         franchiseSelect.appendChild(option);
       }
-      if (criteria.idFranchise !== undefined)
-        franchiseSelect.value = String(criteria.idFranchise);
+      if (criteria.idFranchise !== undefined) franchiseSelect.value = String(criteria.idFranchise);
     }
   }
 
   function showState(templateId: string, container: HTMLElement): void {
-    const template = document.getElementById(
-      templateId,
-    ) as HTMLTemplateElement | null;
+    const template = document.getElementById(templateId) as HTMLTemplateElement | null;
     if (!template) return;
-    container.innerHTML = "";
+    container.innerHTML = '';
     container.appendChild(template.content.cloneNode(true));
   }
 
   function renderGrid(products: APIProduct[], container: HTMLElement): void {
     const cardTemplate = document.getElementById(
-      "product-card-template",
+      'product-card-template',
     ) as HTMLTemplateElement | null;
     if (!cardTemplate) return;
 
@@ -192,51 +156,41 @@ import ProductCard from "./ProductCard.astro";
     for (const product of products) {
       const clone = cardTemplate.content.cloneNode(true) as DocumentFragment;
 
-      const catImg = getCategoryImg(product.category || "Otras");
-      const article = clone.querySelector("article") as HTMLElement | null;
+      const catImg = getCategoryImg(product.category || 'Otras');
+      const article = clone.querySelector('article') as HTMLElement | null;
       if (article) article.dataset.category = catImg;
 
-      const link = clone.querySelector(
-        ".product-card-link",
-      ) as HTMLAnchorElement | null;
-      const img = clone.querySelector(
-        ".product-card__category-img",
-      ) as HTMLImageElement | null;
-      const name = clone.querySelector(
-        ".product-card-name",
-      ) as HTMLElement | null;
-      const category = clone.querySelector(
-        ".product-card-category",
-      ) as HTMLElement | null;
-      const price = clone.querySelector(
-        ".product-card-price",
-      ) as HTMLElement | null;
+      const link = clone.querySelector('.product-card-link') as HTMLAnchorElement | null;
+      const img = clone.querySelector('.product-card__category-img') as HTMLImageElement | null;
+      const name = clone.querySelector('.product-card-name') as HTMLElement | null;
+      const category = clone.querySelector('.product-card-category') as HTMLElement | null;
+      const price = clone.querySelector('.product-card-price') as HTMLElement | null;
 
       if (link) link.href = `/product?id=${product.idProduct}`;
       if (img) {
         const isPlaceholder = isPlaceholderImage(product.image);
         if (isPlaceholder) {
           img.src = `/images/illustrations/${catImg}.svg`;
-          img.alt = product.category || "Otras";
-          img.classList.add("product-card__category-img--pixelart");
+          img.alt = product.category || 'Otras';
+          img.classList.add('product-card__category-img--pixelart');
         } else {
-          img.src = resolveImageUrl(product.image, "products");
+          img.src = resolveImageUrl(product.image, 'products');
           img.alt = product.nameProduct;
-          img.classList.remove("product-card__category-img--pixelart");
+          img.classList.remove('product-card__category-img--pixelart');
         }
-        img.addEventListener("error", () => {
-          img.src = "/images/illustrations/Otras.svg";
-          img.classList.add("product-card__category-img--pixelart");
+        img.addEventListener('error', () => {
+          img.src = '/images/illustrations/Otras.svg';
+          img.classList.add('product-card__category-img--pixelart');
         });
       }
       if (name) name.textContent = product.nameProduct;
-      if (category) category.textContent = product.category || "Otras";
+      if (category) category.textContent = product.category || 'Otras';
       if (price) price.textContent = `$${product.price}`;
 
       fragment.appendChild(clone);
     }
 
-    container.innerHTML = "";
+    container.innerHTML = '';
     container.appendChild(fragment);
   }
 
@@ -245,13 +199,9 @@ import ProductCard from "./ProductCard.astro";
     prevHref: string | null,
     nextHref: string | null,
   ): void {
-    const pageLabelEl = document.getElementById("product-search-page-label");
-    const prevEl = document.getElementById(
-      "product-search-prev",
-    ) as HTMLAnchorElement | null;
-    const nextEl = document.getElementById(
-      "product-search-next",
-    ) as HTMLAnchorElement | null;
+    const pageLabelEl = document.getElementById('product-search-page-label');
+    const prevEl = document.getElementById('product-search-prev') as HTMLAnchorElement | null;
+    const nextEl = document.getElementById('product-search-next') as HTMLAnchorElement | null;
 
     if (pageLabelEl) pageLabelEl.textContent = pageLabel;
     if (prevEl) {
@@ -265,9 +215,7 @@ import ProductCard from "./ProductCard.astro";
   }
 
   async function loadProducts(): Promise<void> {
-    const container = document.getElementById(
-      "product-grid-container",
-    ) as HTMLElement | null;
+    const container = document.getElementById('product-grid-container') as HTMLElement | null;
     if (!container) return;
 
     const criteria = getCriteria();
@@ -275,16 +223,14 @@ import ProductCard from "./ProductCard.astro";
 
     const result = await fetchProductSearch(criteria);
     if (!result.ok) {
-      showState("error-state-template", container);
+      showState('error-state-template', container);
       return;
     }
 
     const presentation = presentProductSearchPage(result.page, criteria);
     if (presentation.isEmpty) {
       showState(
-        hasActiveFilters(criteria)
-          ? "no-results-state-template"
-          : "empty-state-template",
+        hasActiveFilters(criteria) ? 'no-results-state-template' : 'empty-state-template',
         container,
       );
       renderPagination(presentation.pageLabel, null, null);
@@ -292,23 +238,15 @@ import ProductCard from "./ProductCard.astro";
     }
 
     renderGrid(result.page.products, container);
-    renderPagination(
-      presentation.pageLabel,
-      presentation.prevHref,
-      presentation.nextHref,
-    );
+    renderPagination(presentation.pageLabel, presentation.prevHref, presentation.nextHref);
   }
 
   function disableEmptyControlsBeforeSubmit(): void {
-    const form = document.getElementById(
-      "product-search-form",
-    ) as HTMLFormElement | null;
+    const form = document.getElementById('product-search-form') as HTMLFormElement | null;
     if (!form) return;
 
-    form.addEventListener("submit", () => {
-      const controls = form.querySelectorAll<
-        HTMLInputElement | HTMLSelectElement
-      >("input, select");
+    form.addEventListener('submit', () => {
+      const controls = form.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select');
       controls.forEach((control) => {
         if (!control.value) control.disabled = true;
       });

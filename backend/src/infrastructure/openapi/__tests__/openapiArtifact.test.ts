@@ -1,10 +1,18 @@
 import fs from 'fs';
 import type { Request, Response } from 'express';
-import { OPENAPI_ARTIFACT_PATH, loadOpenApiArtifact, createOpenApiRouteHandler } from '../openapiArtifact';
+import {
+  OPENAPI_ARTIFACT_PATH,
+  loadOpenApiArtifact,
+  createOpenApiRouteHandler,
+} from '../openapiArtifact';
 
 function stubRes() {
-  const res: Partial<Response> & { status: jest.Mock; type: jest.Mock; send: jest.Mock; json: jest.Mock } =
-    {} as never;
+  const res: Partial<Response> & {
+    status: jest.Mock;
+    type: jest.Mock;
+    send: jest.Mock;
+    json: jest.Mock;
+  } = {} as never;
   res.status = jest.fn().mockReturnValue(res);
   res.type = jest.fn().mockReturnValue(res);
   res.send = jest.fn().mockReturnValue(res);

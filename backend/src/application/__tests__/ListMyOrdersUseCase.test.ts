@@ -1,25 +1,25 @@
-import { ListMyOrdersUseCase } from "../use-cases/ListMyOrdersUseCase";
-import { OrderRepositoryPort } from "../../domain/ports/OrderRepositoryPort";
-import { Order, OrderStatus } from "../../domain/entities/Order";
-import { OrderItem } from "../../domain/entities/OrderItem";
+import { ListMyOrdersUseCase } from '../use-cases/ListMyOrdersUseCase';
+import { OrderRepositoryPort } from '../../domain/ports/OrderRepositoryPort';
+import { Order, OrderStatus } from '../../domain/entities/Order';
+import { OrderItem } from '../../domain/entities/OrderItem';
 
 function makeOrder(
   idOrder: number,
   idUser: number,
   status: OrderStatus = OrderStatus.AWAITING_PAYMENT,
 ): Order {
-  const items = [new OrderItem(idOrder * 10, idOrder, 10, "Figure A", 1, 1500)];
+  const items = [new OrderItem(idOrder * 10, idOrder, 10, 'Figure A', 1, 1500)];
   return new Order(
     idOrder,
     idUser,
     `key-${idOrder}`,
     status,
     items,
-    new Date("2026-08-28T14:03:11.000Z"),
+    new Date('2026-08-28T14:03:11.000Z'),
   );
 }
 
-describe("ListMyOrdersUseCase", () => {
+describe('ListMyOrdersUseCase', () => {
   let orderRepo: jest.Mocked<OrderRepositoryPort>;
   let useCase: ListMyOrdersUseCase;
 
@@ -36,7 +36,7 @@ describe("ListMyOrdersUseCase", () => {
     useCase = new ListMyOrdersUseCase(orderRepo);
   });
 
-  it("passes idUser through untouched and converts page/pageSize into limit/offset", async () => {
+  it('passes idUser through untouched and converts page/pageSize into limit/offset', async () => {
     orderRepo.findByUserId.mockResolvedValue({ orders: [], total: 0 });
 
     await useCase.execute(7, 3, 10);
@@ -47,7 +47,7 @@ describe("ListMyOrdersUseCase", () => {
     });
   });
 
-  it("computes offset as (page - 1) * pageSize for the first page", async () => {
+  it('computes offset as (page - 1) * pageSize for the first page', async () => {
     orderRepo.findByUserId.mockResolvedValue({ orders: [], total: 0 });
 
     await useCase.execute(7, 1, 20);
@@ -58,7 +58,7 @@ describe("ListMyOrdersUseCase", () => {
     });
   });
 
-  it("maps orders to OrderSummaryDTO (no items) and computes totalPages from total/pageSize", async () => {
+  it('maps orders to OrderSummaryDTO (no items) and computes totalPages from total/pageSize', async () => {
     const orders = [makeOrder(2, 7, OrderStatus.PAID), makeOrder(1, 7)];
     orderRepo.findByUserId.mockResolvedValue({ orders, total: 37 });
 
@@ -70,19 +70,17 @@ describe("ListMyOrdersUseCase", () => {
       idUser: 7,
       status: OrderStatus.PAID,
       totalAmount: 1500,
-      createdAt: "2026-08-28T14:03:11.000Z",
+      createdAt: '2026-08-28T14:03:11.000Z',
       paymentReference: null,
     });
-    expect(
-      (result.orders[0] as unknown as Record<string, unknown>).items,
-    ).toBeUndefined();
+    expect((result.orders[0] as unknown as Record<string, unknown>).items).toBeUndefined();
     expect(result.page).toBe(1);
     expect(result.pageSize).toBe(20);
     expect(result.total).toBe(37);
     expect(result.totalPages).toBe(2);
   });
 
-  it("returns totalPages: 0 when the caller has zero orders (never 0/pageSize -> 0 by coincidence only)", async () => {
+  it('returns totalPages: 0 when the caller has zero orders (never 0/pageSize -> 0 by coincidence only)', async () => {
     orderRepo.findByUserId.mockResolvedValue({ orders: [], total: 0 });
 
     const result = await useCase.execute(7, 1, 20);
@@ -92,7 +90,7 @@ describe("ListMyOrdersUseCase", () => {
     expect(result.orders).toEqual([]);
   });
 
-  it("trusts an already-validated pageSize with no defensive clamping", async () => {
+  it('trusts an already-validated pageSize with no defensive clamping', async () => {
     orderRepo.findByUserId.mockResolvedValue({ orders: [], total: 0 });
 
     // 999 would be rejected by the HTTP validator upstream (Work Unit 2) —

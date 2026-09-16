@@ -100,7 +100,14 @@ function createFixture() {
   vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
 
   const document = new FakeDocument();
-  for (const id of ['guest', 'user', 'admin', 'navbar-greeting', 'navbar-avatar', 'navbar-logout']) {
+  for (const id of [
+    'guest',
+    'user',
+    'admin',
+    'navbar-greeting',
+    'navbar-avatar',
+    'navbar-logout',
+  ]) {
     document.elements.set(id, new FakeElement());
   }
   const userMenuTrigger = new FakeElement();
@@ -130,8 +137,7 @@ function createFixture() {
   return {
     document,
     window,
-    start: () =>
-      initializeSessionUI(document as unknown as Document, window as unknown as Window),
+    start: () => initializeSessionUI(document as unknown as Document, window as unknown as Window),
     channel: () => FakeBroadcastChannel.instances.at(-1)!,
     visibility: () => ({
       guest: document.elements.get('guest')!.style.display,

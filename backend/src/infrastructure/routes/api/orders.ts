@@ -14,7 +14,10 @@ import { ListMyOrdersUseCase } from '../../../application/use-cases/ListMyOrders
 import { OrderApiController } from '../../controllers/OrderApiController';
 import { apiAuthMiddleware, adminGuard } from '../../middlewares/auth';
 import { csrfGuard } from '../../middlewares/csrf';
-import { orderCreateValidation, listMyOrdersValidation } from '../../middlewares/validators/orderValidators';
+import {
+  orderCreateValidation,
+  listMyOrdersValidation,
+} from '../../middlewares/validators/orderValidators';
 
 const router = Router();
 
@@ -25,7 +28,14 @@ const uow = new SequelizeUnitOfWork();
 const paymentGateway = new ManualPaymentGateway();
 const logger = new PinoLogger();
 
-const createOrderUseCase = new CreateOrderUseCase(uow, orderRepo, cartRepo, productRepo, paymentGateway, logger);
+const createOrderUseCase = new CreateOrderUseCase(
+  uow,
+  orderRepo,
+  cartRepo,
+  productRepo,
+  paymentGateway,
+  logger,
+);
 const getOrderByIdUseCase = new GetOrderByIdUseCase(orderRepo);
 const listOrdersUseCase = new ListOrdersUseCase(orderRepo);
 const confirmOrderPaymentUseCase = new ConfirmOrderPaymentUseCase(orderRepo);
@@ -38,7 +48,7 @@ const controller = new OrderApiController(
   listOrdersUseCase,
   confirmOrderPaymentUseCase,
   cancelOrderUseCase,
-  listMyOrdersUseCase
+  listMyOrdersUseCase,
 );
 
 /**
@@ -212,7 +222,13 @@ router.post('/orders', apiAuthMiddleware, csrfGuard, orderCreateValidation, cont
 router.get('/orders/mine', apiAuthMiddleware, listMyOrdersValidation, controller.listMine);
 router.get('/orders/:id', apiAuthMiddleware, controller.show);
 router.get('/orders', apiAuthMiddleware, adminGuard, controller.index);
-router.post('/orders/:id/confirm-payment', apiAuthMiddleware, csrfGuard, adminGuard, controller.confirmPayment);
+router.post(
+  '/orders/:id/confirm-payment',
+  apiAuthMiddleware,
+  csrfGuard,
+  adminGuard,
+  controller.confirmPayment,
+);
 router.post('/orders/:id/cancel', apiAuthMiddleware, csrfGuard, adminGuard, controller.cancel);
 
 export default router;

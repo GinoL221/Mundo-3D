@@ -9,6 +9,8 @@ import db from '../../database/models/db';
 // this class does not call `.commit()`/`.rollback()` itself.
 export class SequelizeUnitOfWork implements UnitOfWorkPort {
   async runInTransaction<T>(work: (tx: TransactionContext) => Promise<T>): Promise<T> {
-    return db.sequelize.transaction((transaction) => work(transaction as unknown as TransactionContext));
+    return db.sequelize.transaction((transaction) =>
+      work(transaction as unknown as TransactionContext),
+    );
   }
 }

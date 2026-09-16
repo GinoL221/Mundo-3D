@@ -16,7 +16,7 @@ describe('ensureRefreshed', () => {
       () =>
         new Promise<Response>((resolve) => {
           resolveFetch = resolve;
-        })
+        }),
     );
     vi.stubGlobal('fetch', fetchMock);
 
@@ -27,7 +27,7 @@ describe('ensureRefreshed', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('/api/users/refresh'),
-      expect.objectContaining({ method: 'POST', credentials: 'include' })
+      expect.objectContaining({ method: 'POST', credentials: 'include' }),
     );
 
     resolveFetch(new Response(null, { status: 200 }));

@@ -1,22 +1,22 @@
-import { ConfirmOrderPaymentUseCase } from "../use-cases/ConfirmOrderPaymentUseCase";
-import { OrderRepositoryPort } from "../../domain/ports/OrderRepositoryPort";
-import { Order, OrderStatus } from "../../domain/entities/Order";
-import { OrderItem } from "../../domain/entities/OrderItem";
-import { IllegalOrderTransitionException } from "../../domain/exceptions/IllegalOrderTransitionException";
+import { ConfirmOrderPaymentUseCase } from '../use-cases/ConfirmOrderPaymentUseCase';
+import { OrderRepositoryPort } from '../../domain/ports/OrderRepositoryPort';
+import { Order, OrderStatus } from '../../domain/entities/Order';
+import { OrderItem } from '../../domain/entities/OrderItem';
+import { IllegalOrderTransitionException } from '../../domain/exceptions/IllegalOrderTransitionException';
 
 function makeOrder(idOrder: number, status: OrderStatus): Order {
-  const items = [new OrderItem(1, idOrder, 10, "Figure A", 1, 1500)];
+  const items = [new OrderItem(1, idOrder, 10, 'Figure A', 1, 1500)];
   return new Order(
     idOrder,
     7,
     `key-${idOrder}`,
     status,
     items,
-    new Date("2026-08-28T14:03:11.000Z"),
+    new Date('2026-08-28T14:03:11.000Z'),
   );
 }
 
-describe("ConfirmOrderPaymentUseCase", () => {
+describe('ConfirmOrderPaymentUseCase', () => {
   let orderRepo: jest.Mocked<OrderRepositoryPort>;
   let useCase: ConfirmOrderPaymentUseCase;
 
@@ -33,7 +33,7 @@ describe("ConfirmOrderPaymentUseCase", () => {
     useCase = new ConfirmOrderPaymentUseCase(orderRepo);
   });
 
-  it("transitions an AWAITING_PAYMENT order to PAID", async () => {
+  it('transitions an AWAITING_PAYMENT order to PAID', async () => {
     orderRepo.transitionStatus.mockResolvedValue(true);
     orderRepo.findById.mockResolvedValue(makeOrder(41, OrderStatus.PAID));
 
@@ -47,20 +47,16 @@ describe("ConfirmOrderPaymentUseCase", () => {
     expect(dto.status).toBe(OrderStatus.PAID);
   });
 
-  it("rejects confirming an order that is not AWAITING_PAYMENT (double-confirm)", async () => {
+  it('rejects confirming an order that is not AWAITING_PAYMENT (double-confirm)', async () => {
     orderRepo.transitionStatus.mockResolvedValue(false);
 
-    await expect(useCase.execute(41)).rejects.toThrow(
-      IllegalOrderTransitionException,
-    );
+    await expect(useCase.execute(41)).rejects.toThrow(IllegalOrderTransitionException);
     expect(orderRepo.findById).not.toHaveBeenCalled();
   });
 
-  it("rejects confirming a nonexistent order id", async () => {
+  it('rejects confirming a nonexistent order id', async () => {
     orderRepo.transitionStatus.mockResolvedValue(false);
 
-    await expect(useCase.execute(999)).rejects.toThrow(
-      IllegalOrderTransitionException,
-    );
+    await expect(useCase.execute(999)).rejects.toThrow(IllegalOrderTransitionException);
   });
 });

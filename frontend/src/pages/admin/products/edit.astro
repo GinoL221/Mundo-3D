@@ -15,7 +15,9 @@ import Layout from '../../../layouts/Layout.astro';
       <a href="/">Volver al inicio</a>
     </div>
 
-    <div id="admin-edit-loading" style="display:none; text-align:center; padding:2rem;">Cargando producto...</div>
+    <div id="admin-edit-loading" style="display:none; text-align:center; padding:2rem;">
+      Cargando producto...
+    </div>
     <div id="admin-edit-load-error" style="display:none; text-align:center; padding:2rem;">
       <p>No se pudo cargar el producto.</p>
       <a href="/admin/products">Volver al listado</a>
@@ -33,48 +35,138 @@ import Layout from '../../../layouts/Layout.astro';
 
         <div id="edit-error" class="form-card__error" role="alert" style="display:none;"></div>
 
-        <p style="font-size: var(--text-small); color: var(--pico-muted); text-align:left; margin-bottom: var(--space-sm);">
+        <p
+          style="font-size: var(--text-small); color: var(--pico-muted); text-align:left; margin-bottom: var(--space-sm);"
+        >
           Los campos marcados con <span aria-hidden="true">*</span> son obligatorios.
         </p>
 
         <label for="nameProduct">Nombre: <span aria-hidden="true">*</span></label>
-        <input type="text" id="nameProduct" name="nameProduct" class="form-card__input" minlength="5" maxlength="20" required />
+        <input
+          type="text"
+          id="nameProduct"
+          name="nameProduct"
+          class="form-card__input"
+          minlength="5"
+          maxlength="20"
+          required
+        />
 
         <label for="price">Precio: <span aria-hidden="true">*</span></label>
-        <input type="number" id="price" name="price" class="form-card__input" min="0.01" step="0.01" required />
+        <input
+          type="number"
+          id="price"
+          name="price"
+          class="form-card__input"
+          min="0.01"
+          step="0.01"
+          required
+        />
 
         <label for="descriptionProduct">Descripción: <span aria-hidden="true">*</span></label>
-        <input type="text" id="descriptionProduct" name="descriptionProduct" class="form-card__input" maxlength="40" required />
+        <input
+          type="text"
+          id="descriptionProduct"
+          name="descriptionProduct"
+          class="form-card__input"
+          maxlength="40"
+          required
+        />
 
         <label for="idCategory">ID de categoría: <span aria-hidden="true">*</span></label>
-        <input type="number" id="idCategory" name="idCategory" class="form-card__input" min="1" step="1" required />
+        <input
+          type="number"
+          id="idCategory"
+          name="idCategory"
+          class="form-card__input"
+          min="1"
+          step="1"
+          required
+        />
 
         <label for="idFranchise">ID de franquicia: <span aria-hidden="true">*</span></label>
-        <input type="number" id="idFranchise" name="idFranchise" class="form-card__input" min="1" step="1" required />
+        <input
+          type="number"
+          id="idFranchise"
+          name="idFranchise"
+          class="form-card__input"
+          min="1"
+          step="1"
+          required
+        />
 
         <label for="material">Material (PLA, Resina, PETG, Flex, u "Otros: detalle"):</label>
-        <input type="text" id="material" name="material" class="form-card__input" placeholder="Opcional" />
+        <input
+          type="text"
+          id="material"
+          name="material"
+          class="form-card__input"
+          placeholder="Opcional"
+        />
 
         <label for="height">Alto (cm):</label>
-        <input type="number" id="height" name="height" class="form-card__input" min="0" step="0.1" placeholder="Opcional" />
+        <input
+          type="number"
+          id="height"
+          name="height"
+          class="form-card__input"
+          min="0"
+          step="0.1"
+          placeholder="Opcional"
+        />
 
         <label for="width">Ancho (cm):</label>
-        <input type="number" id="width" name="width" class="form-card__input" min="0" step="0.1" placeholder="Opcional" />
+        <input
+          type="number"
+          id="width"
+          name="width"
+          class="form-card__input"
+          min="0"
+          step="0.1"
+          placeholder="Opcional"
+        />
 
         <label for="depth">Profundidad (cm):</label>
-        <input type="number" id="depth" name="depth" class="form-card__input" min="0" step="0.1" placeholder="Opcional" />
+        <input
+          type="number"
+          id="depth"
+          name="depth"
+          class="form-card__input"
+          min="0"
+          step="0.1"
+          placeholder="Opcional"
+        />
 
         <label for="finish">Acabado:</label>
-        <input type="text" id="finish" name="finish" class="form-card__input" placeholder="Opcional" />
+        <input
+          type="text"
+          id="finish"
+          name="finish"
+          class="form-card__input"
+          placeholder="Opcional"
+        />
 
         <label for="productionTime">Tiempo de producción (días):</label>
-        <input type="number" id="productionTime" name="productionTime" class="form-card__input" min="1" max="30" step="1" placeholder="Opcional" />
+        <input
+          type="number"
+          id="productionTime"
+          name="productionTime"
+          class="form-card__input"
+          min="1"
+          max="30"
+          step="1"
+          placeholder="Opcional"
+        />
 
         <label for="image">Reemplazar imagen (.jpg, .png):</label>
         <input type="file" id="image" name="image" accept=".jpg,.png" />
 
         <div class="form-card__actions">
-          <a href="/admin/products" class="form-card__btn" style="text-decoration:none; text-align:center;">Cancelar</a>
+          <a
+            href="/admin/products"
+            class="form-card__btn"
+            style="text-decoration:none; text-align:center;">Cancelar</a
+          >
           <button type="submit" id="edit-btn" class="form-card__btn">Guardar cambios</button>
         </div>
       </form>

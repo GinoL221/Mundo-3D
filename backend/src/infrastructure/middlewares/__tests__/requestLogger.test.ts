@@ -13,9 +13,9 @@ describe('requestLogger middleware', () => {
     req = {
       method: 'GET',
       url: '/test-route',
-      reqId: 'test-req-id'
+      reqId: 'test-req-id',
     };
-    
+
     // Stub res.on so we can intercept the 'finish' event callback
     res = {
       statusCode: 200,
@@ -24,7 +24,7 @@ describe('requestLogger middleware', () => {
           finishCallback = callback;
         }
         return res;
-      })
+      }),
     } as unknown as Partial<Response>;
 
     next = jest.fn();
@@ -54,9 +54,9 @@ describe('requestLogger middleware', () => {
         method: 'GET',
         url: '/test-route',
         status: 200,
-        latencyMs: expect.any(Number)
+        latencyMs: expect.any(Number),
       }),
-      expect.stringContaining('GET /test-route 200')
+      expect.stringContaining('GET /test-route 200'),
     );
   });
 });

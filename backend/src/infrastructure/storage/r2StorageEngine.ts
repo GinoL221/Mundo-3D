@@ -75,7 +75,7 @@ export class R2StorageEngine {
             // adversarial `evil.png.exe` original name.
             ContentType: file.mimetype,
             ContentLength: body.length,
-          })
+          }),
         )
         .then(() => {
           if (settled) return;

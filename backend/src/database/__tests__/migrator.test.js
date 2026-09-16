@@ -41,7 +41,7 @@ describe('buildMigrator', () => {
     const migrator = buildMigrator();
 
     expect(SequelizeStorage).toHaveBeenCalledWith(
-      expect.objectContaining({ sequelize: db.sequelize })
+      expect.objectContaining({ sequelize: db.sequelize }),
     );
     expect(migrator.options.storage.__isSequelizeStorage).toBe(true);
   });

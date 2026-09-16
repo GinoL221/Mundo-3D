@@ -1,23 +1,19 @@
-import { getSessionUser } from "../../../config";
+import { getSessionUser } from '../../../config';
 import {
   cartItems,
   cartTotal,
   persistCart,
   type APICartSyncPayload,
   type CartItem,
-} from "./cartState";
-import { discardPendingSync, scheduleSync } from "./cartSync";
-import {
-  hydrateFromServer,
-  type HydrationResult,
-  type PriceDrift,
-} from "./cartHydration";
+} from './cartState';
+import { discardPendingSync, scheduleSync } from './cartSync';
+import { hydrateFromServer, type HydrationResult, type PriceDrift } from './cartHydration';
 import {
   checkout,
   type CheckoutErrorCode,
   type CheckoutResult,
   type StockShortage,
-} from "./checkout";
+} from './checkout';
 
 export { cartItems, cartTotal };
 export type { CartItem, APICartSyncPayload, HydrationResult, PriceDrift };
@@ -26,7 +22,7 @@ export type { CheckoutErrorCode, CheckoutResult, StockShortage };
 export class CartService {
   static loadCartFromStorage(): void {
     try {
-      const raw = localStorage.getItem("cart");
+      const raw = localStorage.getItem('cart');
       if (raw) {
         const parsed = JSON.parse(raw) as CartItem[];
         if (Array.isArray(parsed)) {
@@ -96,9 +92,7 @@ export class CartService {
   // Sole entry point for reconciling local cart state against
   // GET /api/cart (cart-hydration spec: "Hydration Entry Point and
   // Triggers"). Thin delegating static — all logic lives in cartHydration.ts.
-  static hydrateFromServer(options?: {
-    mergeLocal?: boolean;
-  }): Promise<HydrationResult> {
+  static hydrateFromServer(options?: { mergeLocal?: boolean }): Promise<HydrationResult> {
     return hydrateFromServer(options);
   }
 

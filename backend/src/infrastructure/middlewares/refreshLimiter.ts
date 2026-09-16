@@ -8,9 +8,7 @@ const windowMs = process.env.REFRESH_LIMIT_WINDOW
   ? parseInt(process.env.REFRESH_LIMIT_WINDOW, 10)
   : 15 * 60 * 1000; // 15 minutes
 
-const max = process.env.REFRESH_LIMIT_MAX
-  ? parseInt(process.env.REFRESH_LIMIT_MAX, 10)
-  : 10;
+const max = process.env.REFRESH_LIMIT_MAX ? parseInt(process.env.REFRESH_LIMIT_MAX, 10) : 10;
 
 const limiter = rateLimit({
   windowMs,

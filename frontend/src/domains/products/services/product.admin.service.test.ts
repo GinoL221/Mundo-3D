@@ -56,9 +56,17 @@ describe('ProductAdminService', () => {
     });
 
     it('throws a ProductAdminApiError carrying status 400 when the response is not ok', async () => {
-      fetchMock.mockResolvedValue({ ok: false, status: 400, json: async () => ({ error: 'Debe ingresar un nombre' }) });
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: 'Debe ingresar un nombre' }),
+      });
 
-      await expectApiError(() => ProductAdminService.create(new FormData()), 400, 'Debe ingresar un nombre');
+      await expectApiError(
+        () => ProductAdminService.create(new FormData()),
+        400,
+        'Debe ingresar un nombre',
+      );
     });
 
     it('retries transparently after a 401 triggers a successful refresh (authFetch, task 3.9)', async () => {
@@ -95,9 +103,17 @@ describe('ProductAdminService', () => {
     });
 
     it('throws a ProductAdminApiError carrying status 404 when the product does not exist', async () => {
-      fetchMock.mockResolvedValue({ ok: false, status: 404, json: async () => ({ error: 'Producto no encontrado' }) });
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 404,
+        json: async () => ({ error: 'Producto no encontrado' }),
+      });
 
-      await expectApiError(() => ProductAdminService.update(999, new FormData()), 404, 'Producto no encontrado');
+      await expectApiError(
+        () => ProductAdminService.update(999, new FormData()),
+        404,
+        'Producto no encontrado',
+      );
     });
 
     it('retries transparently after a 401 triggers a successful refresh (authFetch, task 3.9)', async () => {
@@ -130,7 +146,11 @@ describe('ProductAdminService', () => {
     });
 
     it('throws a ProductAdminApiError carrying status 403 when the caller lacks permission (e.g. STAFF)', async () => {
-      fetchMock.mockResolvedValue({ ok: false, status: 403, json: async () => ({ error: 'Forbidden' }) });
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 403,
+        json: async () => ({ error: 'Forbidden' }),
+      });
 
       await expectApiError(() => ProductAdminService.remove(3), 403, 'Forbidden');
     });
@@ -167,9 +187,17 @@ describe('ProductAdminService', () => {
     });
 
     it('throws a ProductAdminApiError carrying status 409 when the delta would make stock negative', async () => {
-      fetchMock.mockResolvedValue({ ok: false, status: 409, json: async () => ({ error: 'Stock insuficiente' }) });
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: async () => ({ error: 'Stock insuficiente' }),
+      });
 
-      await expectApiError(() => ProductAdminService.adjustStock(3, -50), 409, 'Stock insuficiente');
+      await expectApiError(
+        () => ProductAdminService.adjustStock(3, -50),
+        409,
+        'Stock insuficiente',
+      );
     });
 
     it('retries transparently after a 401 triggers a successful refresh (authFetch, task 3.9)', async () => {
@@ -214,7 +242,11 @@ describe('ProductAdminService', () => {
     });
 
     it('throws a ProductAdminApiError carrying the status when the response is not ok', async () => {
-      fetchMock.mockResolvedValue({ ok: false, status: 500, json: async () => ({ error: 'Error del servidor' }) });
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'Error del servidor' }),
+      });
 
       await expectApiError(() => ProductAdminService.list(), 500, 'Error del servidor');
     });
@@ -235,7 +267,11 @@ describe('ProductAdminService', () => {
     });
 
     it('throws a ProductAdminApiError carrying status 404 for an unknown id', async () => {
-      fetchMock.mockResolvedValue({ ok: false, status: 404, json: async () => ({ error: 'Producto no encontrado' }) });
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 404,
+        json: async () => ({ error: 'Producto no encontrado' }),
+      });
 
       await expectApiError(() => ProductAdminService.getById(999), 404, 'Producto no encontrado');
     });
@@ -256,7 +292,11 @@ describe('ProductAdminService', () => {
 
     it('surfaces a 401 response as a ProductAdminApiError with status 401', async () => {
       stubCookie('');
-      fetchMock.mockResolvedValue({ ok: false, status: 401, json: async () => ({ error: 'No autorizado' }) });
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 401,
+        json: async () => ({ error: 'No autorizado' }),
+      });
 
       await expectApiError(() => ProductAdminService.create(new FormData()), 401, 'No autorizado');
     });

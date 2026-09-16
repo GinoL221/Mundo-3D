@@ -1,6 +1,6 @@
-import { ProductRepositoryPort } from "../../domain/ports/ProductRepositoryPort";
-import { CategoryRepositoryPort } from "../../domain/ports/CategoryRepositoryPort";
-import { ProductDTO } from "../dtos/ProductDTO";
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
+import { ProductDTO } from '../dtos/ProductDTO';
 
 export interface UpdateProductInput {
   nameProduct?: string;
@@ -23,16 +23,13 @@ export class UpdateProductUseCase {
     private readonly categoryRepo?: CategoryRepositoryPort,
   ) {}
 
-  async execute(
-    id: number,
-    input: UpdateProductInput,
-  ): Promise<ProductDTO | null> {
+  async execute(id: number, input: UpdateProductInput): Promise<ProductDTO | null> {
     const updated = await this.productRepo.update(id, input);
     if (!updated) {
       return null;
     }
 
-    let categoryName = "Sin categoría";
+    let categoryName = 'Sin categoría';
     if (updated.Category) {
       categoryName = updated.Category.nameCategory;
     } else if (this.categoryRepo && updated.idCategory) {

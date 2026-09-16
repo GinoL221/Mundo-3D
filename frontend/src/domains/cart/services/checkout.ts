@@ -1,13 +1,13 @@
-import { API_URL, authFetch, getSessionUser } from "../../../config";
-import { cartItems, persistCart } from "./cartState";
-import { discardPendingSync, flushCartSync } from "./cartSync";
+import { API_URL, authFetch, getSessionUser } from '../../../config';
+import { cartItems, persistCart } from './cartState';
+import { discardPendingSync, flushCartSync } from './cartSync';
 
 export type CheckoutErrorCode =
-  | "UNAUTHENTICATED"
-  | "EMPTY_CART"
-  | "INSUFFICIENT_STOCK"
-  | "NETWORK"
-  | "UNKNOWN";
+  | 'UNAUTHENTICATED'
+  | 'EMPTY_CART'
+  | 'INSUFFICIENT_STOCK'
+  | 'NETWORK'
+  | 'UNKNOWN';
 
 export interface StockShortage {
   idProduct: number;
@@ -44,15 +44,12 @@ interface OrderApiSuccessBody {
 // rejection, so a genuinely NEW checkout attempt gets a fresh key.
 let pendingCheckoutKey: string | null = null;
 
-const KNOWN_ERROR_CODES: readonly CheckoutErrorCode[] = [
-  "EMPTY_CART",
-  "INSUFFICIENT_STOCK",
-];
+const KNOWN_ERROR_CODES: readonly CheckoutErrorCode[] = ['EMPTY_CART', 'INSUFFICIENT_STOCK'];
 
 function toCheckoutErrorCode(code: string | undefined): CheckoutErrorCode {
-  return (KNOWN_ERROR_CODES as readonly string[]).includes(code ?? "")
+  return (KNOWN_ERROR_CODES as readonly string[]).includes(code ?? '')
     ? (code as CheckoutErrorCode)
-    : "UNKNOWN";
+    : 'UNKNOWN';
 }
 
 /**
@@ -68,8 +65,8 @@ export async function checkout(): Promise<CheckoutResult> {
   if (!getSessionUser()) {
     return {
       ok: false,
-      code: "UNAUTHENTICATED",
-      message: "Debe iniciar sesión para finalizar la compra.",
+      code: 'UNAUTHENTICATED',
+      message: 'Debe iniciar sesión para finalizar la compra.',
     };
   }
 
@@ -85,12 +82,12 @@ export async function checkout(): Promise<CheckoutResult> {
   let res: Response;
   try {
     res = await authFetch(`${API_URL}/api/orders`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Idempotency-Key": idempotencyKey,
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
       },
-      body: "{}",
+      body: '{}',
     });
   } catch {
     // fetch() itself threw: an ambiguous/genuine network failure. Keep the
@@ -98,8 +95,8 @@ export async function checkout(): Promise<CheckoutResult> {
     // is left untouched (no side effect happened on the server either).
     return {
       ok: false,
-      code: "NETWORK",
-      message: "No se pudo conectar con el servidor. Intente nuevamente.",
+      code: 'NETWORK',
+      message: 'No se pudo conectar con el servidor. Intente nuevamente.',
     };
   }
 

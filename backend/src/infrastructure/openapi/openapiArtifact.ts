@@ -28,14 +28,16 @@ const defaultArtifact = loadOpenApiArtifact();
 if (defaultArtifact === null) {
   logger.warn(
     { event: 'openapi_artifact_missing', path: OPENAPI_ARTIFACT_PATH },
-    'Committed OpenAPI artifact is missing or unreadable; GET /api/openapi.json will respond 404.'
+    'Committed OpenAPI artifact is missing or unreadable; GET /api/openapi.json will respond 404.',
   );
 }
 
 // Factory (rather than a bare handler) keeps the composition root
 // (routes/api/index.ts) thin and makes the 404 branch unit-testable without
 // mocking `fs` — the artifact is injected directly.
-export function createOpenApiRouteHandler(artifact: string | null = defaultArtifact): RequestHandler {
+export function createOpenApiRouteHandler(
+  artifact: string | null = defaultArtifact,
+): RequestHandler {
   return (_req, res) => {
     if (artifact === null) {
       res.status(404).json({ error: 'OpenAPI contract artifact is not available.' });

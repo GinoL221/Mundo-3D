@@ -1,13 +1,10 @@
-import { CancelOrderUseCase } from "../use-cases/CancelOrderUseCase";
-import {
-  UnitOfWorkPort,
-  TransactionContext,
-} from "../../domain/ports/UnitOfWorkPort";
-import { OrderRepositoryPort } from "../../domain/ports/OrderRepositoryPort";
-import { ProductRepositoryPort } from "../../domain/ports/ProductRepositoryPort";
-import { Order, OrderStatus } from "../../domain/entities/Order";
-import { OrderItem } from "../../domain/entities/OrderItem";
-import { IllegalOrderTransitionException } from "../../domain/exceptions/IllegalOrderTransitionException";
+import { CancelOrderUseCase } from '../use-cases/CancelOrderUseCase';
+import { UnitOfWorkPort, TransactionContext } from '../../domain/ports/UnitOfWorkPort';
+import { OrderRepositoryPort } from '../../domain/ports/OrderRepositoryPort';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { Order, OrderStatus } from '../../domain/entities/Order';
+import { OrderItem } from '../../domain/entities/OrderItem';
+import { IllegalOrderTransitionException } from '../../domain/exceptions/IllegalOrderTransitionException';
 
 function makeOrder(
   idOrder: number,
@@ -20,11 +17,11 @@ function makeOrder(
     `key-${idOrder}`,
     status,
     items,
-    new Date("2026-08-28T14:03:11.000Z"),
+    new Date('2026-08-28T14:03:11.000Z'),
   );
 }
 
-describe("CancelOrderUseCase", () => {
+describe('CancelOrderUseCase', () => {
   let uow: jest.Mocked<UnitOfWorkPort>;
   let orderRepo: jest.Mocked<OrderRepositoryPort>;
   let productRepo: jest.Mocked<ProductRepositoryPort>;
@@ -32,9 +29,8 @@ describe("CancelOrderUseCase", () => {
 
   beforeEach(() => {
     uow = {
-      runInTransaction: jest.fn(
-        (work: (tx: TransactionContext) => Promise<unknown>) =>
-          work({} as TransactionContext),
+      runInTransaction: jest.fn((work: (tx: TransactionContext) => Promise<unknown>) =>
+        work({} as TransactionContext),
       ),
     } as unknown as jest.Mocked<UnitOfWorkPort>;
     orderRepo = {
@@ -59,10 +55,10 @@ describe("CancelOrderUseCase", () => {
     useCase = new CancelOrderUseCase(uow, orderRepo, productRepo);
   });
 
-  it("cancels an AWAITING_PAYMENT order and restores exactly the decremented stock per line item", async () => {
+  it('cancels an AWAITING_PAYMENT order and restores exactly the decremented stock per line item', async () => {
     const items = [
-      new OrderItem(1, 41, 10, "Figure A", 3, 1500),
-      new OrderItem(2, 41, 20, "Figure B", 1, 500),
+      new OrderItem(1, 41, 10, 'Figure A', 3, 1500),
+      new OrderItem(2, 41, 20, 'Figure B', 1, 500),
     ];
     orderRepo.findById.mockResolvedValue(makeOrder(41, items));
     orderRepo.transitionStatus.mockResolvedValue(true);
@@ -81,10 +77,10 @@ describe("CancelOrderUseCase", () => {
     expect(dto.status).toBe(OrderStatus.CANCELLED);
   });
 
-  it("skips restocking a line item whose product was deleted (idProduct === null)", async () => {
+  it('skips restocking a line item whose product was deleted (idProduct === null)', async () => {
     const items = [
-      new OrderItem(1, 41, null, "Figure A (deleted)", 3, 1500),
-      new OrderItem(2, 41, 20, "Figure B", 1, 500),
+      new OrderItem(1, 41, null, 'Figure A (deleted)', 3, 1500),
+      new OrderItem(2, 41, 20, 'Figure B', 1, 500),
     ];
     orderRepo.findById.mockResolvedValue(makeOrder(41, items));
     orderRepo.transitionStatus.mockResolvedValue(true);
@@ -95,27 +91,21 @@ describe("CancelOrderUseCase", () => {
     expect(productRepo.adjustStock).toHaveBeenCalledWith(20, 1, {});
   });
 
-  it("is a no-op restoring no stock when the order is already CANCELLED (second cancel)", async () => {
-    const items = [new OrderItem(1, 41, 10, "Figure A", 3, 1500)];
-    orderRepo.findById.mockResolvedValue(
-      makeOrder(41, items, OrderStatus.CANCELLED),
-    );
+  it('is a no-op restoring no stock when the order is already CANCELLED (second cancel)', async () => {
+    const items = [new OrderItem(1, 41, 10, 'Figure A', 3, 1500)];
+    orderRepo.findById.mockResolvedValue(makeOrder(41, items, OrderStatus.CANCELLED));
     orderRepo.transitionStatus.mockResolvedValue(false);
 
-    await expect(useCase.execute(41)).rejects.toThrow(
-      IllegalOrderTransitionException,
-    );
+    await expect(useCase.execute(41)).rejects.toThrow(IllegalOrderTransitionException);
 
     expect(productRepo.adjustStock).not.toHaveBeenCalled();
   });
 
-  it("rejects cancelling a nonexistent order id without touching stock", async () => {
+  it('rejects cancelling a nonexistent order id without touching stock', async () => {
     orderRepo.findById.mockResolvedValue(null);
     orderRepo.transitionStatus.mockResolvedValue(false);
 
-    await expect(useCase.execute(999)).rejects.toThrow(
-      IllegalOrderTransitionException,
-    );
+    await expect(useCase.execute(999)).rejects.toThrow(IllegalOrderTransitionException);
 
     expect(productRepo.adjustStock).not.toHaveBeenCalled();
   });

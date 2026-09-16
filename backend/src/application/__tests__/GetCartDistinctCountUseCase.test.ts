@@ -1,7 +1,7 @@
-import { GetCartDistinctCountUseCase } from "../use-cases/GetCartDistinctCountUseCase";
-import { ShoppingCartRepositoryPort } from "../../domain/ports/ShoppingCartRepositoryPort";
+import { GetCartDistinctCountUseCase } from '../use-cases/GetCartDistinctCountUseCase';
+import { ShoppingCartRepositoryPort } from '../../domain/ports/ShoppingCartRepositoryPort';
 
-describe("GetCartDistinctCountUseCase", () => {
+describe('GetCartDistinctCountUseCase', () => {
   let repositoryMock: jest.Mocked<ShoppingCartRepositoryPort>;
   let useCase: GetCartDistinctCountUseCase;
 
@@ -16,7 +16,7 @@ describe("GetCartDistinctCountUseCase", () => {
     useCase = new GetCartDistinctCountUseCase(repositoryMock);
   });
 
-  it("should call repository.getDistinctCount and return the count", async () => {
+  it('should call repository.getDistinctCount and return the count', async () => {
     repositoryMock.getDistinctCount.mockResolvedValue(5);
 
     const result = await useCase.execute(42);

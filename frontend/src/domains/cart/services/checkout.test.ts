@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { checkout } from "./checkout";
-import { cartItems, type CartItem } from "./cartState";
-import { discardPendingSync, hasPendingSync } from "./cartSync";
-import { CartService } from "./CartService";
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { checkout } from './checkout';
+import { cartItems, type CartItem } from './cartState';
+import { discardPendingSync, hasPendingSync } from './cartSync';
+import { CartService } from './CartService';
 
 function createLocalStorageMock() {
   let store: Record<string, string> = {};
@@ -21,7 +21,7 @@ function createLocalStorageMock() {
 }
 
 function stubCookie(cookie: string) {
-  vi.stubGlobal("document", { cookie });
+  vi.stubGlobal('document', { cookie });
 }
 
 const LOGGED_IN_COOKIE = `m3d_user=${encodeURIComponent(JSON.stringify({ idRole: 2 }))}; m3d_csrf=random.hmac`;
@@ -41,23 +41,23 @@ function seedCart(items: CartItem[]) {
 const SAMPLE_ORDER_DTO = {
   idOrder: 41,
   idUser: 7,
-  status: "AWAITING_PAYMENT",
+  status: 'AWAITING_PAYMENT',
   items: [
     {
       idOrderItem: 88,
       idProduct: 12,
-      productName: "Maceta Groot",
+      productName: 'Maceta Groot',
       quantity: 2,
       unitPrice: 1500,
       subtotal: 3000,
     },
   ],
   totalAmount: 3000,
-  createdAt: "2026-08-28T14:03:11.000Z",
-  paymentReference: "MANUAL-41-9f2c1a",
+  createdAt: '2026-08-28T14:03:11.000Z',
+  paymentReference: 'MANUAL-41-9f2c1a',
 };
 
-describe("checkout", () => {
+describe('checkout', () => {
   let localStorageMock: ReturnType<typeof createLocalStorageMock>;
   let fetchMock: ReturnType<typeof vi.fn>;
 
@@ -67,10 +67,10 @@ describe("checkout", () => {
     localStorageMock = createLocalStorageMock();
     fetchMock = vi.fn();
 
-    vi.stubGlobal("localStorage", localStorageMock);
-    vi.stubGlobal("window", { dispatchEvent: vi.fn() });
+    vi.stubGlobal('localStorage', localStorageMock);
+    vi.stubGlobal('window', { dispatchEvent: vi.fn() });
     vi.stubGlobal(
-      "CustomEvent",
+      'CustomEvent',
       class {
         type: string;
         detail: unknown;
@@ -80,8 +80,8 @@ describe("checkout", () => {
         }
       },
     );
-    vi.stubGlobal("fetch", fetchMock);
-    stubCookie("");
+    vi.stubGlobal('fetch', fetchMock);
+    stubCookie('');
   });
 
   afterEach(() => {
@@ -90,31 +90,29 @@ describe("checkout", () => {
     vi.restoreAllMocks();
   });
 
-  it("returns UNAUTHENTICATED without calling fetch when there is no session", async () => {
-    stubCookie("");
-    seedCart([
-      { productId: 1, name: "X", image: "a.jpg", unitPrice: 100, quantity: 1 },
-    ]);
+  it('returns UNAUTHENTICATED without calling fetch when there is no session', async () => {
+    stubCookie('');
+    seedCart([{ productId: 1, name: 'X', image: 'a.jpg', unitPrice: 100, quantity: 1 }]);
 
     const result = await checkout();
 
     expect(result).toEqual({
       ok: false,
-      code: "UNAUTHENTICATED",
+      code: 'UNAUTHENTICATED',
       message: expect.any(String),
     });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(cartItems.get()).toHaveLength(1);
   });
 
-  it("awaits flushCartSync() before issuing POST /api/orders (fixes the never-awaited flush bug)", async () => {
+  it('awaits flushCartSync() before issuing POST /api/orders (fixes the never-awaited flush bug)', async () => {
     stubCookie(LOGGED_IN_COOKIE);
     // addToCart schedules a pending debounce burst that flushCartSync() must
     // resolve before checkout() is allowed to hit /api/orders.
     CartService.addToCart({
       id: 7,
-      name: "Figura",
-      image: "a.jpg",
+      name: 'Figura',
+      image: 'a.jpg',
       price: 100,
     });
 
@@ -133,35 +131,35 @@ describe("checkout", () => {
     // The flushed PUT /api/cart has not resolved yet, so the orders POST
     // must not have fired.
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toContain("/api/cart");
+    expect(fetchMock.mock.calls[0][0]).toContain('/api/cart');
 
     resolveCartPut({ ok: true });
     const result = await checkoutPromise;
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls[1][0]).toContain("/api/orders");
+    expect(fetchMock.mock.calls[1][0]).toContain('/api/orders');
     expect(result.ok).toBe(true);
   });
 
-  it("does not clear the local cart when the server rejects with INSUFFICIENT_STOCK", async () => {
+  it('does not clear the local cart when the server rejects with INSUFFICIENT_STOCK', async () => {
     stubCookie(LOGGED_IN_COOKIE);
     seedCart([
       {
         productId: 12,
-        name: "Maceta Groot",
-        image: "a.jpg",
+        name: 'Maceta Groot',
+        image: 'a.jpg',
         unitPrice: 1500,
         quantity: 3,
       },
     ]);
     fetchMock.mockResolvedValueOnce(
       jsonResponse(409, {
-        error: "Stock insuficiente para uno o más productos",
-        code: "INSUFFICIENT_STOCK",
+        error: 'Stock insuficiente para uno o más productos',
+        code: 'INSUFFICIENT_STOCK',
         shortages: [
           {
             idProduct: 12,
-            productName: "Maceta Groot",
+            productName: 'Maceta Groot',
             requested: 3,
             available: 1,
           },
@@ -173,12 +171,12 @@ describe("checkout", () => {
 
     expect(result).toEqual({
       ok: false,
-      code: "INSUFFICIENT_STOCK",
-      message: "Stock insuficiente para uno o más productos",
+      code: 'INSUFFICIENT_STOCK',
+      message: 'Stock insuficiente para uno o más productos',
       shortages: [
         {
           idProduct: 12,
-          productName: "Maceta Groot",
+          productName: 'Maceta Groot',
           requested: 3,
           available: 1,
         },
@@ -188,33 +186,31 @@ describe("checkout", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("does not clear the local cart on EMPTY_CART either", async () => {
+  it('does not clear the local cart on EMPTY_CART either', async () => {
     stubCookie(LOGGED_IN_COOKIE);
-    seedCart([
-      { productId: 1, name: "X", image: "a.jpg", unitPrice: 100, quantity: 1 },
-    ]);
+    seedCart([{ productId: 1, name: 'X', image: 'a.jpg', unitPrice: 100, quantity: 1 }]);
     fetchMock.mockResolvedValueOnce(
-      jsonResponse(409, { error: "El carrito está vacío", code: "EMPTY_CART" }),
+      jsonResponse(409, { error: 'El carrito está vacío', code: 'EMPTY_CART' }),
     );
 
     const result = await checkout();
 
     expect(result).toEqual({
       ok: false,
-      code: "EMPTY_CART",
-      message: "El carrito está vacío",
+      code: 'EMPTY_CART',
+      message: 'El carrito está vacío',
       shortages: undefined,
     });
     expect(cartItems.get()).toHaveLength(1);
   });
 
-  it("clears the local cart WITHOUT scheduling a background sync on success", async () => {
+  it('clears the local cart WITHOUT scheduling a background sync on success', async () => {
     stubCookie(LOGGED_IN_COOKIE);
     seedCart([
       {
         productId: 12,
-        name: "Maceta Groot",
-        image: "a.jpg",
+        name: 'Maceta Groot',
+        image: 'a.jpg',
         unitPrice: 1500,
         quantity: 2,
       },
@@ -230,29 +226,25 @@ describe("checkout", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("sends the Idempotency-Key header and credentials on the POST /api/orders call", async () => {
+  it('sends the Idempotency-Key header and credentials on the POST /api/orders call', async () => {
     stubCookie(LOGGED_IN_COOKIE);
-    seedCart([
-      { productId: 1, name: "X", image: "a.jpg", unitPrice: 100, quantity: 1 },
-    ]);
+    seedCart([{ productId: 1, name: 'X', image: 'a.jpg', unitPrice: 100, quantity: 1 }]);
     fetchMock.mockResolvedValueOnce(jsonResponse(201, SAMPLE_ORDER_DTO));
 
     await checkout();
 
     const [url, options] = fetchMock.mock.calls[0];
-    expect(url).toContain("/api/orders");
-    expect(options.method).toBe("POST");
-    expect(options.credentials).toBe("include");
-    expect(options.headers["X-CSRF-Token"]).toBe("random.hmac");
-    expect(typeof options.headers["Idempotency-Key"]).toBe("string");
-    expect(options.headers["Idempotency-Key"].length).toBeGreaterThan(0);
+    expect(url).toContain('/api/orders');
+    expect(options.method).toBe('POST');
+    expect(options.credentials).toBe('include');
+    expect(options.headers['X-CSRF-Token']).toBe('random.hmac');
+    expect(typeof options.headers['Idempotency-Key']).toBe('string');
+    expect(options.headers['Idempotency-Key'].length).toBeGreaterThan(0);
   });
 
-  it("retries transparently after a 401 triggers a successful refresh (authFetch, task 3.9)", async () => {
+  it('retries transparently after a 401 triggers a successful refresh (authFetch, task 3.9)', async () => {
     stubCookie(LOGGED_IN_COOKIE);
-    seedCart([
-      { productId: 1, name: "X", image: "a.jpg", unitPrice: 100, quantity: 1 },
-    ]);
+    seedCart([{ productId: 1, name: 'X', image: 'a.jpg', unitPrice: 100, quantity: 1 }]);
     fetchMock
       .mockResolvedValueOnce(jsonResponse(401, {})) // initial POST /api/orders, expired access token
       .mockResolvedValueOnce(jsonResponse(200, {})) // POST /api/users/refresh succeeds
@@ -261,48 +253,42 @@ describe("checkout", () => {
     const result = await checkout();
 
     expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(fetchMock.mock.calls[1][0]).toContain("/api/users/refresh");
+    expect(fetchMock.mock.calls[1][0]).toContain('/api/users/refresh');
     expect(result).toEqual({ ok: true, idOrder: 41, totalAmount: 3000 });
   });
 
-  it("reuses the SAME idempotency key on a NETWORK-failure retry of the same attempt", async () => {
+  it('reuses the SAME idempotency key on a NETWORK-failure retry of the same attempt', async () => {
     stubCookie(LOGGED_IN_COOKIE);
-    seedCart([
-      { productId: 1, name: "X", image: "a.jpg", unitPrice: 100, quantity: 1 },
-    ]);
-    fetchMock.mockRejectedValueOnce(new Error("network down"));
+    seedCart([{ productId: 1, name: 'X', image: 'a.jpg', unitPrice: 100, quantity: 1 }]);
+    fetchMock.mockRejectedValueOnce(new Error('network down'));
     fetchMock.mockResolvedValueOnce(jsonResponse(201, SAMPLE_ORDER_DTO));
 
     const first = await checkout();
     expect(first).toEqual({
       ok: false,
-      code: "NETWORK",
+      code: 'NETWORK',
       message: expect.any(String),
     });
     expect(cartItems.get()).toHaveLength(1);
 
     await checkout();
 
-    const firstKey = fetchMock.mock.calls[0][1].headers["Idempotency-Key"];
-    const secondKey = fetchMock.mock.calls[1][1].headers["Idempotency-Key"];
+    const firstKey = fetchMock.mock.calls[0][1].headers['Idempotency-Key'];
+    const secondKey = fetchMock.mock.calls[1][1].headers['Idempotency-Key'];
     expect(firstKey).toBe(secondKey);
   });
 
-  it("issues a FRESH idempotency key for a genuinely new attempt after a definitive 4xx rejection", async () => {
+  it('issues a FRESH idempotency key for a genuinely new attempt after a definitive 4xx rejection', async () => {
     stubCookie(LOGGED_IN_COOKIE);
-    seedCart([
-      { productId: 1, name: "X", image: "a.jpg", unitPrice: 100, quantity: 1 },
-    ]);
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse(409, { error: "vacío", code: "EMPTY_CART" }),
-    );
+    seedCart([{ productId: 1, name: 'X', image: 'a.jpg', unitPrice: 100, quantity: 1 }]);
+    fetchMock.mockResolvedValueOnce(jsonResponse(409, { error: 'vacío', code: 'EMPTY_CART' }));
     fetchMock.mockResolvedValueOnce(jsonResponse(201, SAMPLE_ORDER_DTO));
 
     await checkout();
     await checkout();
 
-    const firstKey = fetchMock.mock.calls[0][1].headers["Idempotency-Key"];
-    const secondKey = fetchMock.mock.calls[1][1].headers["Idempotency-Key"];
+    const firstKey = fetchMock.mock.calls[0][1].headers['Idempotency-Key'];
+    const secondKey = fetchMock.mock.calls[1][1].headers['Idempotency-Key'];
     expect(firstKey).not.toBe(secondKey);
   });
 });

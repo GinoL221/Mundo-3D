@@ -44,7 +44,7 @@ describe('baseline migration — up()', () => {
     const queryInterface = makeUpQueryInterface({ failOnTableName: 'Product' });
 
     await expect(baseline.up({ context: queryInterface })).rejects.toThrow(
-      /already created: \[User, Category, Franchise\]/
+      /already created: \[User, Category, Franchise\]/,
     );
     const attemptedSql = queryInterface.sequelize.query.mock.calls.map(([sql]) => sql);
     expect(attemptedSql.some((sql) => sql.startsWith('CREATE TABLE `ShoppingCart`'))).toBe(false);
@@ -70,7 +70,7 @@ describe('baseline migration — down()', () => {
     const queryInterface = makeDownQueryInterface({ failOnTableName: 'Product' });
 
     await expect(baseline.down({ context: queryInterface })).rejects.toThrow(
-      /already dropped: \[RememberToken, ShoppingCart\]/
+      /already dropped: \[RememberToken, ShoppingCart\]/,
     );
     const attemptedNames = queryInterface.dropTable.mock.calls.map(([name]) => name);
     expect(attemptedNames).not.toContain('Franchise');

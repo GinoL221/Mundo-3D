@@ -18,7 +18,7 @@ describe('productValidators - productCreateValidators', () => {
   beforeEach(() => {
     req = {
       body: {},
-      file: undefined
+      file: undefined,
     };
   });
 
@@ -39,7 +39,7 @@ describe('productValidators - productCreateValidators', () => {
       price: '100',
       descriptionProduct: 'valid description here',
       idCategory: '1',
-      idFranchise: '2'
+      idFranchise: '2',
     };
     req.file = { originalname: 'test.jpg' } as any;
 
@@ -54,7 +54,7 @@ describe('productValidators - productCreateValidators', () => {
       price: 'not-a-number',
       descriptionProduct: 'valid description here',
       idCategory: '1',
-      idFranchise: '2'
+      idFranchise: '2',
     };
     req.file = { originalname: 'test.jpg' } as any;
 
@@ -69,7 +69,7 @@ describe('productValidators - productCreateValidators', () => {
       price: '123.45',
       descriptionProduct: 'valid description here',
       idCategory: '1',
-      idFranchise: '2'
+      idFranchise: '2',
     };
     req.file = undefined;
 
@@ -84,13 +84,15 @@ describe('productValidators - productCreateValidators', () => {
       price: '123.45',
       descriptionProduct: 'valid description here',
       idCategory: '1',
-      idFranchise: '2'
+      idFranchise: '2',
     };
     req.file = { originalname: 'test.gif' } as any;
 
     const errors = await runValidation(req as Request, productCreateValidators);
     expect(errors.mapped().image).toBeDefined();
-    expect(errors.mapped().image.msg).toContain('Las extensiones de archivos permitidas son .jpg, .png');
+    expect(errors.mapped().image.msg).toContain(
+      'Las extensiones de archivos permitidas son .jpg, .png',
+    );
   });
 
   it('fails when stock is negative', async () => {
@@ -100,7 +102,7 @@ describe('productValidators - productCreateValidators', () => {
       descriptionProduct: 'An awesome action figure',
       idCategory: '1',
       idFranchise: '2',
-      stock: '-1'
+      stock: '-1',
     };
     req.file = { originalname: 'mario.png' } as any;
 
@@ -114,7 +116,7 @@ describe('productValidators - productCreateValidators', () => {
       price: '0',
       descriptionProduct: 'An awesome action figure',
       idCategory: '1',
-      idFranchise: '2'
+      idFranchise: '2',
     };
     req.file = { originalname: 'mario.png' } as any;
 
@@ -132,7 +134,7 @@ describe('productValidators - productCreateValidators', () => {
       price: '1250',
       descriptionProduct: 'An awesome action figure',
       idCategory: '1',
-      idFranchise: '2'
+      idFranchise: '2',
     };
     req.file = { originalname: 'mario.png' } as any;
 
@@ -147,7 +149,7 @@ describe('productValidators - productCreateValidators', () => {
       descriptionProduct: 'An awesome action figure',
       idCategory: '1',
       idFranchise: '2',
-      stock: '5'
+      stock: '5',
     };
     req.file = { originalname: 'mario.png' } as any;
 
@@ -161,7 +163,7 @@ describe('productValidators - productCreateValidators', () => {
       price: '1250',
       descriptionProduct: 'An awesome action figure',
       idCategory: '1',
-      idFranchise: '2'
+      idFranchise: '2',
     };
     const validFile = { originalname: 'mario.png' } as any;
 
@@ -241,7 +243,7 @@ describe('productValidators - productUpdateValidators', () => {
   beforeEach(() => {
     req = {
       body: {},
-      file: undefined
+      file: undefined,
     };
   });
 
@@ -304,7 +306,7 @@ describe('userValidators - validationsUsers', () => {
   beforeEach(() => {
     req = {
       body: {},
-      file: undefined
+      file: undefined,
     };
   });
 
@@ -314,7 +316,7 @@ describe('userValidators - validationsUsers', () => {
       lastName: 'AVeryLongLastNameThatExceedsLimit', // too long (more than 10)
       email: 'not-an-email',
       password: '123', // too short
-      confirmPassword: '123'
+      confirmPassword: '123',
     };
     req.file = { originalname: 'user.jpg' } as any;
 
@@ -331,7 +333,7 @@ describe('userValidators - validationsUsers', () => {
       lastName: 'Doe',
       email: 'john@doe.com',
       password: 'Password123!',
-      confirmPassword: 'Password123!'
+      confirmPassword: 'Password123!',
     };
     req.file = { originalname: 'photo.png' } as any;
 
@@ -345,7 +347,7 @@ describe('userValidators - validationsUsers', () => {
       lastName: 'Doe',
       email: 'john@doe.com',
       password: 'Password123!',
-      confirmPassword: 'Password123!'
+      confirmPassword: 'Password123!',
     };
     req.file = undefined;
 
@@ -360,7 +362,7 @@ describe('userValidators - validationsUsers', () => {
       lastName: 'Doe',
       email: 'john@doe.com',
       password: 'Password123!',
-      confirmPassword: 'Password123!'
+      confirmPassword: 'Password123!',
     };
     req.file = { originalname: 'photo.gif' } as any;
 
@@ -375,7 +377,7 @@ describe('userValidators - validationsUsers', () => {
       lastName: 'Doe',
       email: 'john@doe.com',
       password: 'Password123!',
-      confirmPassword: ''
+      confirmPassword: '',
     };
     req.file = { originalname: 'photo.png' } as any;
 
@@ -390,7 +392,7 @@ describe('userValidators - validationsUsers', () => {
       lastName: 'Doe',
       email: 'john@doe.com',
       password: 'Password123!',
-      confirmPassword: 'DifferentPassword123!'
+      confirmPassword: 'DifferentPassword123!',
     };
     req.file = { originalname: 'photo.png' } as any;
 
@@ -405,14 +407,14 @@ describe('userValidators - loginValidation', () => {
 
   beforeEach(() => {
     req = {
-      body: {}
+      body: {},
     };
   });
 
   it('fails on invalid login credentials', async () => {
     req.body = {
       email: 'invalid-email',
-      password: '123' // too short
+      password: '123', // too short
     };
 
     const errors = await runValidation(req as Request, loginValidation);
@@ -423,7 +425,7 @@ describe('userValidators - loginValidation', () => {
   it('passes on valid login credentials structure', async () => {
     req.body = {
       email: 'admin@mundo3d.com',
-      password: 'securePassword123'
+      password: 'securePassword123',
     };
 
     const errors = await runValidation(req as Request, loginValidation);

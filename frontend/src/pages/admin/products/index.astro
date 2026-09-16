@@ -29,7 +29,13 @@ import Layout from '../../../layouts/Layout.astro';
         </a>
       </div>
 
-      <div id="admin-error" class="form-card__error" role="alert" style="display:none; text-align:center;"></div>
+      <div
+        id="admin-error"
+        class="form-card__error"
+        role="alert"
+        style="display:none; text-align:center;"
+      >
+      </div>
       <p id="admin-loading-msg" style="text-align:center; padding: 2rem;">Cargando productos...</p>
 
       <!--
@@ -50,7 +56,9 @@ import Layout from '../../../layouts/Layout.astro';
       <p>Categoría: <span class="admin-product-category"></span></p>
       <p>Stock: <strong class="admin-product-stock"></strong></p>
 
-      <div style="display:flex; gap: var(--space-xs); justify-content:center; align-items:center; margin: var(--space-sm) 0;">
+      <div
+        style="display:flex; gap: var(--space-xs); justify-content:center; align-items:center; margin: var(--space-sm) 0;"
+      >
         <input
           type="number"
           class="admin-product-delta form-card__input"
@@ -60,12 +68,19 @@ import Layout from '../../../layouts/Layout.astro';
           step="1"
           aria-label="Cantidad a ajustar"
         />
-        <button type="button" class="admin-product-stock-plus form-card__btn" style="width:auto;">+</button>
-        <button type="button" class="admin-product-stock-minus form-card__btn" style="width:auto;">-</button>
+        <button type="button" class="admin-product-stock-plus form-card__btn" style="width:auto;"
+          >+</button
+        >
+        <button type="button" class="admin-product-stock-minus form-card__btn" style="width:auto;"
+          >-</button
+        >
       </div>
 
       <div style="display:flex; gap: var(--space-xs); justify-content:center;">
-        <a class="admin-product-edit form-card__btn" style="width:auto; text-decoration:none; display:inline-block;">Editar</a>
+        <a
+          class="admin-product-edit form-card__btn"
+          style="width:auto; text-decoration:none; display:inline-block;">Editar</a
+        >
         <button type="button" class="admin-product-delete users-list__btn--danger">Eliminar</button>
       </div>
     </article>
@@ -124,7 +139,9 @@ import Layout from '../../../layouts/Layout.astro';
 
       if (loadingMsg) loadingMsg.remove();
 
-      const rowTemp = document.getElementById('admin-product-row-template') as HTMLTemplateElement | null;
+      const rowTemp = document.getElementById(
+        'admin-product-row-template',
+      ) as HTMLTemplateElement | null;
       if (!rowTemp) return;
 
       const fragment = document.createDocumentFragment();
@@ -163,7 +180,8 @@ import Layout from '../../../layouts/Layout.astro';
       // entries with no way to tell them apart.
       editLink.setAttribute('aria-label', `Editar ${product.nameProduct}`);
     }
-    if (deltaInput) deltaInput.setAttribute('aria-label', `Cantidad a ajustar - ${product.nameProduct}`);
+    if (deltaInput)
+      deltaInput.setAttribute('aria-label', `Cantidad a ajustar - ${product.nameProduct}`);
     if (plusBtn) plusBtn.setAttribute('aria-label', `Aumentar stock de ${product.nameProduct}`);
     if (minusBtn) minusBtn.setAttribute('aria-label', `Disminuir stock de ${product.nameProduct}`);
 
@@ -207,7 +225,8 @@ import Layout from '../../../layouts/Layout.astro';
       if (isAdmin) {
         const originalLabel = deleteBtn.textContent;
         deleteBtn.addEventListener('click', () => {
-          if (!confirm(`¿Eliminar "${product.nameProduct}"? Esta acción no se puede deshacer.`)) return;
+          if (!confirm(`¿Eliminar "${product.nameProduct}"? Esta acción no se puede deshacer.`))
+            return;
           // In-flight guard: a rapid double-click must not fire two DELETE
           // requests (the second would otherwise surface a confusing 404
           // right after a successful delete).

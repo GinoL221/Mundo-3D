@@ -3,19 +3,8 @@
 ---
 
 <div class="cart__notices" aria-live="polite" aria-atomic="false">
-  <div
-    class="alert system-state system-state--status"
-    id="cart-price-drift"
-    hidden
-  >
-  </div>
-  <div
-    class="alert system-state system-state--error"
-    id="checkout-error"
-    role="alert"
-    hidden
-  >
-  </div>
+  <div class="alert system-state system-state--status" id="cart-price-drift" hidden></div>
+  <div class="alert system-state system-state--error" id="checkout-error" role="alert" hidden></div>
 </div>
 
 <div class="cart__container">
@@ -25,11 +14,7 @@
     aria-label="Productos en el carrito"
     aria-busy="true"
   >
-    <p
-      class="cart__state system-state system-state--loading"
-      id="cart-loading"
-      role="status"
-    >
+    <p class="cart__state system-state system-state--loading" id="cart-loading" role="status">
       Cargando tu carrito…
     </p>
   </section>
@@ -43,20 +28,15 @@
     <div class="cart__summary-details">
       <p class="cart__summary-label">RESUMEN</p>
       <h2 id="cart-summary-title">Resumen de tu compra</h2>
-      <p class="cart__summary-count" id="cart-count">
-        Cantidad de productos: 0
-      </p>
+      <p class="cart__summary-count" id="cart-count">Cantidad de productos: 0</p>
       <p class="cart__summary-total">
         Total <strong id="cart-total">$ 0</strong>
       </p>
     </div>
     <div class="cart__summary-actions">
-      <a href="/products" class="cart__btn-continue system-action"
-        >Seguir comprando</a
-      >
-      <button
-        class="cart__btn-checkout system-action system-action--primary"
-        type="button">Finalizar compra</button
+      <a href="/products" class="cart__btn-continue system-action">Seguir comprando</a>
+      <button class="cart__btn-checkout system-action system-action--primary" type="button"
+        >Finalizar compra</button
       >
     </div>
   </section>
@@ -82,9 +62,7 @@
         <div><dt>Cantidad</dt><dd class="cart__item-qty"></dd></div>
         <div><dt>Subtotal</dt><dd class="cart__item-subtotal"></dd></div>
       </dl>
-      <button class="cart__item-remove system-action" type="button"
-        >Eliminar</button
-      >
+      <button class="cart__item-remove system-action" type="button">Eliminar</button>
     </div>
   </article>
 </template>
@@ -101,30 +79,28 @@
     />
     <h2>Tu carrito está vacío</h2>
     <p>Cuando elijas una pieza del taller, va a aparecer acá.</p>
-    <a href="/products" class="system-action system-action--primary"
-      >Ver productos</a
-    >
+    <a href="/products" class="system-action system-action--primary">Ver productos</a>
   </div>
 </template>
 
 <script>
-  import { cartItems, cartTotal, CartService } from "../services/CartService";
-  import type { PriceDrift, CheckoutResult } from "../services/CartService";
-  import { resolveImageUrl } from "../../../lib/imageUrl";
+  import { cartItems, cartTotal, CartService } from '../services/CartService';
+  import type { PriceDrift, CheckoutResult } from '../services/CartService';
+  import { resolveImageUrl } from '../../../lib/imageUrl';
 
   const formatPrice = (price: number): string =>
-    `$ ${new Intl.NumberFormat("es-AR").format(price)}`;
+    `$ ${new Intl.NumberFormat('es-AR').format(price)}`;
   const setHidden = (element: HTMLElement | null, hidden: boolean): void => {
     if (element) element.hidden = hidden;
   };
 
   function renderPriceDrift(drifts: PriceDrift[]): void {
-    const driftEl = document.getElementById("cart-price-drift");
+    const driftEl = document.getElementById('cart-price-drift');
     if (!driftEl) return;
     driftEl.replaceChildren();
     for (const drift of drifts) {
-      const line = document.createElement("p");
-      line.className = "alert__text";
+      const line = document.createElement('p');
+      line.className = 'alert__text';
       line.textContent = `El precio de "${drift.name}" cambió de ${formatPrice(drift.oldPrice)} a ${formatPrice(drift.newPrice)}.`;
       driftEl.appendChild(line);
     }
@@ -132,74 +108,59 @@
   }
 
   function renderCart(): void {
-    const container = document.getElementById("cart-items-container");
-    const summaryEl = document.getElementById("cart-summary");
+    const container = document.getElementById('cart-items-container');
+    const summaryEl = document.getElementById('cart-summary');
     if (!container) return;
 
-    document.getElementById("cart-loading")?.remove();
+    document.getElementById('cart-loading')?.remove();
     container.replaceChildren();
-    container.setAttribute("aria-busy", "false");
+    container.setAttribute('aria-busy', 'false');
     const items = cartItems.get();
 
     if (items.length === 0) {
       setHidden(summaryEl, true);
-      const template = document.getElementById(
-        "cart-empty-template",
-      ) as HTMLTemplateElement | null;
+      const template = document.getElementById('cart-empty-template') as HTMLTemplateElement | null;
       if (template) container.appendChild(template.content.cloneNode(true));
       return;
     }
 
-    const template = document.getElementById(
-      "cart-item-template",
-    ) as HTMLTemplateElement | null;
+    const template = document.getElementById('cart-item-template') as HTMLTemplateElement | null;
     if (!template) return;
     for (const item of items) {
       const clone = template.content.cloneNode(true) as DocumentFragment;
-      const image = clone.querySelector(
-        ".cart__item-image",
-      ) as HTMLImageElement | null;
-      const remove = clone.querySelector(
-        ".cart__item-remove",
-      ) as HTMLButtonElement | null;
-      const name = clone.querySelector(".cart__item-name");
-      const price = clone.querySelector(".cart__item-price");
-      const quantity = clone.querySelector(".cart__item-qty");
-      const subtotal = clone.querySelector(".cart__item-subtotal");
+      const image = clone.querySelector('.cart__item-image') as HTMLImageElement | null;
+      const remove = clone.querySelector('.cart__item-remove') as HTMLButtonElement | null;
+      const name = clone.querySelector('.cart__item-name');
+      const price = clone.querySelector('.cart__item-price');
+      const quantity = clone.querySelector('.cart__item-qty');
+      const subtotal = clone.querySelector('.cart__item-subtotal');
 
       if (name) name.textContent = item.name;
       if (price) price.textContent = formatPrice(item.unitPrice);
       if (quantity) quantity.textContent = String(item.quantity);
-      if (subtotal)
-        subtotal.textContent = formatPrice(item.unitPrice * item.quantity);
+      if (subtotal) subtotal.textContent = formatPrice(item.unitPrice * item.quantity);
       if (image) {
-        image.src = resolveImageUrl(item.image, "products");
+        image.src = resolveImageUrl(item.image, 'products');
         image.alt = item.name;
-        image.addEventListener("error", () => {
-          const fallbackSrc = "/images/illustrations/Otras.svg";
-          if (
-            image.dataset.fallback &&
-            image.getAttribute("src") === fallbackSrc
-          )
-            return;
-          image.dataset.fallback = "true";
+        image.addEventListener('error', () => {
+          const fallbackSrc = '/images/illustrations/Otras.svg';
+          if (image.dataset.fallback && image.getAttribute('src') === fallbackSrc) return;
+          image.dataset.fallback = 'true';
           image.src = fallbackSrc;
           image.alt = `${item.name} — imagen no disponible`;
-          image.classList.add("cart__item-image--placeholder");
+          image.classList.add('cart__item-image--placeholder');
         });
       }
       if (remove) {
-        remove.setAttribute("aria-label", `Eliminar ${item.name} del carrito`);
-        remove.addEventListener("click", () =>
-          CartService.removeFromCart(item.productId),
-        );
+        remove.setAttribute('aria-label', `Eliminar ${item.name} del carrito`);
+        remove.addEventListener('click', () => CartService.removeFromCart(item.productId));
       }
       container.appendChild(clone);
     }
 
     setHidden(summaryEl, false);
-    const count = document.getElementById("cart-count");
-    const total = document.getElementById("cart-total");
+    const count = document.getElementById('cart-count');
+    const total = document.getElementById('cart-total');
     if (count) count.textContent = `Cantidad de productos: ${items.length}`;
     if (total) total.textContent = formatPrice(cartTotal.get());
   }
@@ -207,27 +168,21 @@
   CartService.loadCartFromStorage();
   renderCart();
   cartItems.subscribe(renderCart);
-  void CartService.hydrateFromServer().then((result) =>
-    renderPriceDrift(result.priceDrifts),
-  );
+  void CartService.hydrateFromServer().then((result) => renderPriceDrift(result.priceDrifts));
 
   function setCheckoutBusy(busy: boolean): void {
-    const button = document.querySelector(
-      ".cart__btn-checkout",
-    ) as HTMLButtonElement | null;
+    const button = document.querySelector('.cart__btn-checkout') as HTMLButtonElement | null;
     if (!button) return;
     button.disabled = busy;
-    button.setAttribute("aria-busy", String(busy));
-    button.textContent = busy ? "Procesando…" : "Finalizar compra";
+    button.setAttribute('aria-busy', String(busy));
+    button.textContent = busy ? 'Procesando…' : 'Finalizar compra';
   }
 
-  function renderCheckoutError(
-    result: Extract<CheckoutResult, { ok: false }>,
-  ): void {
-    const error = document.getElementById("checkout-error");
+  function renderCheckoutError(result: Extract<CheckoutResult, { ok: false }>): void {
+    const error = document.getElementById('checkout-error');
     if (!error) return;
     const lines =
-      result.code === "INSUFFICIENT_STOCK" && result.shortages?.length
+      result.code === 'INSUFFICIENT_STOCK' && result.shortages?.length
         ? result.shortages.map(
             (item) =>
               `Sin stock suficiente de "${item.productName}": pediste ${item.requested}, quedan ${item.available}.`,
@@ -235,8 +190,8 @@
         : [result.message];
     error.replaceChildren(
       ...lines.map((text) =>
-        Object.assign(document.createElement("p"), {
-          className: "alert__text",
+        Object.assign(document.createElement('p'), {
+          className: 'alert__text',
           textContent: text,
         }),
       ),
@@ -244,23 +199,21 @@
     setHidden(error, false);
   }
 
-  document
-    .querySelector(".cart__btn-checkout")
-    ?.addEventListener("click", async () => {
-      if (!CartService.hasToken()) {
-        window.location.href = "/login";
-        return;
-      }
-      setCheckoutBusy(true);
-      const error = document.getElementById("checkout-error");
-      error?.replaceChildren();
-      setHidden(error, true);
-      try {
-        const result = await CartService.checkout();
-        if (result.ok) window.location.href = `/order?id=${result.idOrder}`;
-        else renderCheckoutError(result);
-      } finally {
-        setCheckoutBusy(false);
-      }
-    });
+  document.querySelector('.cart__btn-checkout')?.addEventListener('click', async () => {
+    if (!CartService.hasToken()) {
+      window.location.href = '/login';
+      return;
+    }
+    setCheckoutBusy(true);
+    const error = document.getElementById('checkout-error');
+    error?.replaceChildren();
+    setHidden(error, true);
+    try {
+      const result = await CartService.checkout();
+      if (result.ok) window.location.href = `/order?id=${result.idOrder}`;
+      else renderCheckoutError(result);
+    } finally {
+      setCheckoutBusy(false);
+    }
+  });
 </script>

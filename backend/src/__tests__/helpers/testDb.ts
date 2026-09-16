@@ -67,7 +67,9 @@ export async function closeTestDatabase(): Promise<void> {
 /** Creates a minimal, uniquely-named Category row for test isolation. */
 export async function createTestCategory(nameOverride?: string): Promise<number> {
   const category = await db.Category.create({
-    nameCategory: nameOverride ?? `IntegrationTestCategory-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    nameCategory:
+      nameOverride ??
+      `IntegrationTestCategory-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   });
   return category.idCategory;
 }
@@ -75,7 +77,9 @@ export async function createTestCategory(nameOverride?: string): Promise<number>
 /** Creates a minimal, uniquely-named Franchise row for test isolation. */
 export async function createTestFranchise(nameOverride?: string): Promise<number> {
   const franchise = await db.Franchise.create({
-    nameFranchise: nameOverride ?? `IntegrationTestFranchise-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    nameFranchise:
+      nameOverride ??
+      `IntegrationTestFranchise-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   });
   return franchise.idFranchise;
 }
@@ -84,7 +88,7 @@ export async function createTestFranchise(nameOverride?: string): Promise<number
 export async function createTestProduct(
   categoryId: number,
   franchiseId: number,
-  overrides: { stock?: number; nameProduct?: string; price?: number } = {}
+  overrides: { stock?: number; nameProduct?: string; price?: number } = {},
 ): Promise<number> {
   const product = await db.Product.create({
     nameProduct: overrides.nameProduct ?? 'Integration Test Product',
@@ -104,7 +108,7 @@ export async function createTestProduct(
  * suites that only need "some valid product to act on".
  */
 export async function seedProductWithDependencies(
-  overrides: { stock?: number; nameProduct?: string; price?: number } = {}
+  overrides: { stock?: number; nameProduct?: string; price?: number } = {},
 ): Promise<TestProductFixture> {
   const categoryId = await createTestCategory();
   const franchiseId = await createTestFranchise();
@@ -142,7 +146,7 @@ export async function cleanupProductFixture(fixture: TestProductFixture): Promis
 
 /** Creates a minimal, uniquely-named User row for test isolation. */
 export async function seedTestUser(
-  overrides: { firstName?: string; lastName?: string; email?: string; passwordUser?: string } = {}
+  overrides: { firstName?: string; lastName?: string; email?: string; passwordUser?: string } = {},
 ): Promise<number> {
   const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const user = await db.User.create({

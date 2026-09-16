@@ -98,7 +98,7 @@ describe('Product Model Definition', () => {
           Finish: expect.any(Function),
           ProductionTime: expect.any(Function),
         }),
-      })
+      }),
     );
   });
 });

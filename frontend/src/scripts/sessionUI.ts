@@ -33,7 +33,9 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
   const existing = cleanups.get(document);
   if (existing) return existing;
 
-  const userMenuTrigger = document.getElementById('navbar-user-menu-trigger') as HTMLButtonElement | null;
+  const userMenuTrigger = document.getElementById(
+    'navbar-user-menu-trigger',
+  ) as HTMLButtonElement | null;
   const userMenu = document.getElementById('navbar-user-menu');
   let userMenuOpen = false;
 

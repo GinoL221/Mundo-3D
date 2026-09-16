@@ -43,7 +43,7 @@ describe('registerLimiter middleware', () => {
         standardHeaders: true,
         legacyHeaders: false,
         statusCode: 429,
-      })
+      }),
     );
   });
 
@@ -63,7 +63,7 @@ describe('registerLimiter middleware', () => {
       expect.objectContaining({
         windowMs: 120000,
         max: 20,
-      })
+      }),
     );
   });
 

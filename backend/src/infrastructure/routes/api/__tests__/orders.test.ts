@@ -23,7 +23,9 @@ jest.mock('../../../../application/use-cases/ListOrdersUseCase', () => ({
   ListOrdersUseCase: jest.fn().mockImplementation(() => ({ execute: mockListOrdersExecute })),
 }));
 jest.mock('../../../../application/use-cases/ConfirmOrderPaymentUseCase', () => ({
-  ConfirmOrderPaymentUseCase: jest.fn().mockImplementation(() => ({ execute: mockConfirmOrderPaymentExecute })),
+  ConfirmOrderPaymentUseCase: jest
+    .fn()
+    .mockImplementation(() => ({ execute: mockConfirmOrderPaymentExecute })),
 }));
 jest.mock('../../../../application/use-cases/CancelOrderUseCase', () => ({
   CancelOrderUseCase: jest.fn().mockImplementation(() => ({ execute: mockCancelOrderExecute })),
@@ -49,9 +51,24 @@ const buildApp = (): Express => {
   return app;
 };
 
-const buyer = authAndCsrf({ userId: 7, email: 'buyer@test.com', category: 'User', idRole: Role.USER });
-const staff = authAndCsrf({ userId: 8, email: 'staff@test.com', category: 'Staff', idRole: Role.STAFF });
-const admin = authAndCsrf({ userId: 1, email: 'admin@test.com', category: 'Admin', idRole: Role.ADMIN });
+const buyer = authAndCsrf({
+  userId: 7,
+  email: 'buyer@test.com',
+  category: 'User',
+  idRole: Role.USER,
+});
+const staff = authAndCsrf({
+  userId: 8,
+  email: 'staff@test.com',
+  category: 'Staff',
+  idRole: Role.STAFF,
+});
+const admin = authAndCsrf({
+  userId: 1,
+  email: 'admin@test.com',
+  category: 'Admin',
+  idRole: Role.ADMIN,
+});
 
 const sampleOrder = {
   idOrder: 41,
@@ -175,7 +192,12 @@ describe('api/orders routes', () => {
     it('returns 404 for a non-owner buyer', async () => {
       mockGetOrderByIdExecute.mockResolvedValue(null);
 
-      const otherBuyer = authAndCsrf({ userId: 99, email: 'other@test.com', category: 'User', idRole: Role.USER });
+      const otherBuyer = authAndCsrf({
+        userId: 99,
+        email: 'other@test.com',
+        category: 'User',
+        idRole: Role.USER,
+      });
       const res = await request(app)
         .get('/api/orders/41')
         .set('Cookie', otherBuyer.cookie)
@@ -244,8 +266,15 @@ describe('api/orders routes', () => {
     });
 
     it('scopes a different buyer to their own userId (cross-user isolation)', async () => {
-      mockListMyOrdersExecute.mockResolvedValue(summaryPage({ orders: [], total: 0, totalPages: 0 }));
-      const otherBuyer = authAndCsrf({ userId: 99, email: 'other@test.com', category: 'User', idRole: Role.USER });
+      mockListMyOrdersExecute.mockResolvedValue(
+        summaryPage({ orders: [], total: 0, totalPages: 0 }),
+      );
+      const otherBuyer = authAndCsrf({
+        userId: 99,
+        email: 'other@test.com',
+        category: 'User',
+        idRole: Role.USER,
+      });
 
       await request(app)
         .get('/api/orders/mine')
@@ -284,22 +313,27 @@ describe('api/orders routes', () => {
       expect(mockListMyOrdersExecute).toHaveBeenCalledWith(7, 2, 10);
     });
 
-    it.each([['page', '0'], ['page', '-1'], ['page', 'abc'], ['pageSize', '0'], ['pageSize', '51']])(
-      'rejects invalid %s=%s with 400 INVALID_PAGINATION',
-      async (param, value) => {
-        const res = await request(app)
-          .get(`/api/orders/mine?${param}=${value}`)
-          .set('Cookie', buyer.cookie)
-          .set('X-CSRF-Token', buyer.csrfToken);
+    it.each([
+      ['page', '0'],
+      ['page', '-1'],
+      ['page', 'abc'],
+      ['pageSize', '0'],
+      ['pageSize', '51'],
+    ])('rejects invalid %s=%s with 400 INVALID_PAGINATION', async (param, value) => {
+      const res = await request(app)
+        .get(`/api/orders/mine?${param}=${value}`)
+        .set('Cookie', buyer.cookie)
+        .set('X-CSRF-Token', buyer.csrfToken);
 
-        expect(res.status).toBe(400);
-        expect(res.body.code).toBe('INVALID_PAGINATION');
-        expect(mockListMyOrdersExecute).not.toHaveBeenCalled();
-      }
-    );
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('INVALID_PAGINATION');
+      expect(mockListMyOrdersExecute).not.toHaveBeenCalled();
+    });
 
     it('returns 200 with an empty history', async () => {
-      mockListMyOrdersExecute.mockResolvedValue(summaryPage({ orders: [], total: 0, totalPages: 0 }));
+      mockListMyOrdersExecute.mockResolvedValue(
+        summaryPage({ orders: [], total: 0, totalPages: 0 }),
+      );
 
       const res = await request(app)
         .get('/api/orders/mine')
@@ -311,7 +345,9 @@ describe('api/orders routes', () => {
     });
 
     it('returns 200 with an empty page past the last page, same total', async () => {
-      mockListMyOrdersExecute.mockResolvedValue(summaryPage({ orders: [], page: 9, total: 1, totalPages: 1 }));
+      mockListMyOrdersExecute.mockResolvedValue(
+        summaryPage({ orders: [], page: 9, total: 1, totalPages: 1 }),
+      );
 
       const res = await request(app)
         .get('/api/orders/mine?page=9')
@@ -340,7 +376,7 @@ describe('api/orders routes', () => {
             { ...summaryPage().orders[0], idOrder: 55 },
             { ...summaryPage().orders[0], idOrder: 41 },
           ],
-        })
+        }),
       );
 
       const res = await request(app)

@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { initializeHomeMenu } from "./homeMenu";
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { initializeHomeMenu } from './homeMenu';
 
 class FakeElement {
   hidden = false;
@@ -39,7 +39,7 @@ class FakeElement {
   }
 
   querySelector(selector: string) {
-    return selector === "a" ? this.querySelectorResult : null;
+    return selector === 'a' ? this.querySelectorResult : null;
   }
 
   focus() {
@@ -47,11 +47,11 @@ class FakeElement {
   }
 
   click() {
-    this.listeners.get("click")?.({ target: this } as unknown as Event);
+    this.listeners.get('click')?.({ target: this } as unknown as Event);
   }
 
   activateWithKeyboard(key: string) {
-    this.listeners.get("click")?.({ key, target: this } as unknown as Event);
+    this.listeners.get('click')?.({ key, target: this } as unknown as Event);
   }
 }
 
@@ -61,11 +61,11 @@ class FakeMediaQueryList {
   constructor(public matches: boolean) {}
 
   addEventListener(type: string, listener: (event: Event) => void) {
-    if (type === "change") this.listeners.add(listener);
+    if (type === 'change') this.listeners.add(listener);
   }
 
   removeEventListener(type: string, listener: (event: Event) => void) {
-    if (type === "change") this.listeners.delete(listener);
+    if (type === 'change') this.listeners.delete(listener);
   }
 
   setMatches(matches: boolean) {
@@ -100,9 +100,9 @@ function createFixture(compact = true) {
   const outside = new FakeElement();
   menu.querySelectorResult = firstLink;
   menu.containedElements.add(firstLink);
-  toggle.setAttribute("aria-controls", "home-primary-navigation");
-  document.elements.set("home-menu-toggle", toggle);
-  document.elements.set("home-primary-navigation", menu);
+  toggle.setAttribute('aria-controls', 'home-primary-navigation');
+  document.elements.set('home-menu-toggle', toggle);
+  document.elements.set('home-primary-navigation', menu);
   const mediaQuery = new FakeMediaQueryList(compact);
   const matchMedia = vi.fn(() => mediaQuery);
   document.defaultView = {
@@ -113,85 +113,81 @@ function createFixture(compact = true) {
 
 afterEach(() => vi.restoreAllMocks());
 
-describe("initializeHomeMenu", () => {
-  it("opens and closes the primary navigation with the button state", () => {
+describe('initializeHomeMenu', () => {
+  it('opens and closes the primary navigation with the button state', () => {
     const fixture = createFixture();
     initializeHomeMenu(fixture.document as unknown as Document);
 
-    expect(fixture.toggle.getAttribute("aria-expanded")).toBe("false");
-    expect(fixture.toggle.getAttribute("aria-label")).toBe(
-      "Abrir menú principal",
-    );
+    expect(fixture.toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(fixture.toggle.getAttribute('aria-label')).toBe('Abrir menú principal');
     expect(fixture.menu.hidden).toBe(true);
 
     fixture.toggle.click();
 
-    expect(fixture.toggle.getAttribute("aria-expanded")).toBe("true");
-    expect(fixture.toggle.getAttribute("aria-label")).toBe(
-      "Cerrar menú principal",
-    );
-    expect(fixture.menu.classList.contains("is-open")).toBe(true);
+    expect(fixture.toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(fixture.toggle.getAttribute('aria-label')).toBe('Cerrar menú principal');
+    expect(fixture.menu.classList.contains('is-open')).toBe(true);
     expect(fixture.menu.hidden).toBe(false);
     expect(fixture.firstLink.focusCount).toBe(1);
 
     fixture.toggle.click();
-    expect(fixture.toggle.getAttribute("aria-expanded")).toBe("false");
-    expect(fixture.menu.classList.contains("is-open")).toBe(false);
+    expect(fixture.toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(fixture.menu.classList.contains('is-open')).toBe(false);
     expect(fixture.menu.hidden).toBe(true);
   });
 
-  it("closes on Escape, restores focus, and ignores clicks inside the menu", () => {
+  it('closes on Escape, restores focus, and ignores clicks inside the menu', () => {
     const fixture = createFixture();
     initializeHomeMenu(fixture.document as unknown as Document);
     fixture.toggle.click();
 
-    fixture.document.listeners.get("click")?.({
+    fixture.document.listeners.get('click')?.({
       target: fixture.firstLink,
     } as unknown as Event);
-    expect(fixture.menu.classList.contains("is-open")).toBe(true);
+    expect(fixture.menu.classList.contains('is-open')).toBe(true);
 
     const preventDefault = vi.fn();
-    fixture.document.listeners.get("keydown")?.({
-      key: "Escape",
+    fixture.document.listeners.get('keydown')?.({
+      key: 'Escape',
       preventDefault,
     } as unknown as Event);
 
     expect(preventDefault).toHaveBeenCalledOnce();
-    expect(fixture.menu.classList.contains("is-open")).toBe(false);
+    expect(fixture.menu.classList.contains('is-open')).toBe(false);
     expect(fixture.toggle.focusCount).toBe(1);
   });
 
-  it("closes on outside click and removes listeners during cleanup", () => {
+  it('closes on outside click and removes listeners during cleanup', () => {
     const fixture = createFixture();
     const cleanup = initializeHomeMenu(fixture.document as unknown as Document);
     fixture.toggle.click();
 
-    fixture.document.listeners.get("click")?.({
+    fixture.document.listeners.get('click')?.({
       target: fixture.outside,
     } as unknown as Event);
-    expect(fixture.menu.classList.contains("is-open")).toBe(false);
+    expect(fixture.menu.classList.contains('is-open')).toBe(false);
 
     cleanup();
-    expect(fixture.toggle.listeners.has("click")).toBe(false);
-    expect(fixture.document.listeners.has("keydown")).toBe(false);
-    expect(fixture.document.listeners.has("click")).toBe(false);
+    expect(fixture.toggle.listeners.has('click')).toBe(false);
+    expect(fixture.document.listeners.has('keydown')).toBe(false);
+    expect(fixture.document.listeners.has('click')).toBe(false);
   });
 
-  it("closes when focus leaves the non-modal disclosure", () => {
+  it('closes when focus leaves the non-modal disclosure', () => {
     const fixture = createFixture();
     initializeHomeMenu(fixture.document as unknown as Document);
     fixture.toggle.click();
 
-    fixture.document.listeners.get("focusin")?.({
+    fixture.document.listeners.get('focusin')?.({
       target: fixture.outside,
     } as unknown as Event);
 
     expect(fixture.menu.hidden).toBe(true);
-    expect(fixture.toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(fixture.toggle.getAttribute('aria-expanded')).toBe('false');
     expect(fixture.toggle.focusCount).toBe(0);
   });
 
-  it("keeps the navigation exposed on desktop", () => {
+  it('keeps the navigation exposed on desktop', () => {
     const fixture = createFixture(false);
 
     initializeHomeMenu(fixture.document as unknown as Document);
@@ -199,44 +195,39 @@ describe("initializeHomeMenu", () => {
     expect(fixture.menu.hidden).toBe(false);
   });
 
-  it("uses compact navigation through tablet widths", () => {
+  it('uses compact navigation through tablet widths', () => {
     const fixture = createFixture();
     initializeHomeMenu(fixture.document as unknown as Document);
 
-    expect(fixture.matchMedia).toHaveBeenCalledWith("(max-width: 1023px)");
+    expect(fixture.matchMedia).toHaveBeenCalledWith('(max-width: 1023px)');
     expect(fixture.menu.hidden).toBe(true);
   });
 
-  it.each(["Enter", " "])(
-    "opens through native %s button activation",
-    (key) => {
-      const fixture = createFixture();
-      initializeHomeMenu(fixture.document as unknown as Document);
+  it.each(['Enter', ' '])('opens through native %s button activation', (key) => {
+    const fixture = createFixture();
+    initializeHomeMenu(fixture.document as unknown as Document);
 
-      // Native buttons emit click for Enter and Space; the disclosure owns click state.
-      fixture.toggle.activateWithKeyboard(key);
+    // Native buttons emit click for Enter and Space; the disclosure owns click state.
+    fixture.toggle.activateWithKeyboard(key);
 
-      expect(fixture.menu.hidden).toBe(false);
-      expect(fixture.toggle.getAttribute("aria-expanded")).toBe("true");
-    },
-  );
+    expect(fixture.menu.hidden).toBe(false);
+    expect(fixture.toggle.getAttribute('aria-expanded')).toBe('true');
+  });
 
-  it("keeps the control relation stable and resets disclosure state at the 1023/1024 boundary", () => {
+  it('keeps the control relation stable and resets disclosure state at the 1023/1024 boundary', () => {
     const fixture = createFixture();
     const cleanup = initializeHomeMenu(fixture.document as unknown as Document);
-    const controls = fixture.toggle.getAttribute("aria-controls");
+    const controls = fixture.toggle.getAttribute('aria-controls');
     fixture.toggle.click();
 
     fixture.mediaQuery.setMatches(false);
     expect(fixture.menu.hidden).toBe(false);
-    expect(fixture.toggle.getAttribute("aria-expanded")).toBe("false");
-    expect(fixture.toggle.getAttribute("aria-controls")).toBe(controls);
+    expect(fixture.toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(fixture.toggle.getAttribute('aria-controls')).toBe(controls);
 
     fixture.mediaQuery.setMatches(true);
     expect(fixture.menu.hidden).toBe(true);
-    expect(fixture.toggle.getAttribute("aria-controls")).toBe(
-      "home-primary-navigation",
-    );
+    expect(fixture.toggle.getAttribute('aria-controls')).toBe('home-primary-navigation');
 
     cleanup();
     expect(fixture.mediaQuery.listeners).toHaveLength(0);

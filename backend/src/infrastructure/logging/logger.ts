@@ -11,15 +11,15 @@ if (!isTest && !isProduction) {
     options: {
       colorize: true,
       ignore: 'pid,hostname',
-      translateTime: 'SYS:standard'
-    }
+      translateTime: 'SYS:standard',
+    },
   });
 }
 
 export const logger = pino(
   {
     level: process.env.LOG_LEVEL || (isTest ? 'silent' : 'info'),
-    redact: isProduction ? ['req.headers.authorization', 'req.headers.cookie'] : []
+    redact: isProduction ? ['req.headers.authorization', 'req.headers.cookie'] : [],
   },
-  transport
+  transport,
 );

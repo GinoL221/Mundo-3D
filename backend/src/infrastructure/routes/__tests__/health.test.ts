@@ -68,30 +68,38 @@ describe('health routes', () => {
   });
 
   describe('GET /api/products regression', () => {
-    it('is not gated by readiness state (stays non-503) while isReady() is false', async () => {
-      markUnready();
-      const fullApp = require('../../../app');
+    it(
+      'is not gated by readiness state (stays non-503) while isReady() is false',
+      async () => {
+        markUnready();
+        const fullApp = require('../../../app');
 
-      const res = await request(fullApp).get('/api/products');
+        const res = await request(fullApp).get('/api/products');
 
-      expect(res.status).not.toBe(503);
-    }, APP_BOOT_TIMEOUT_MS);
+        expect(res.status).not.toBe(503);
+      },
+      APP_BOOT_TIMEOUT_MS,
+    );
   });
 
   describe('mounted at /health in the real app', () => {
-    it('serves /health/live and /health/ready through the actual app.js mount point', async () => {
-      const fullApp = require('../../../app');
+    it(
+      'serves /health/live and /health/ready through the actual app.js mount point',
+      async () => {
+        const fullApp = require('../../../app');
 
-      const liveRes = await request(fullApp).get('/health/live');
-      expect(liveRes.status).toBe(200);
-      expect(liveRes.body).toEqual({ status: 'ok' });
+        const liveRes = await request(fullApp).get('/health/live');
+        expect(liveRes.status).toBe(200);
+        expect(liveRes.body).toEqual({ status: 'ok' });
 
-      const readyBeforeRes = await request(fullApp).get('/health/ready');
-      expect(readyBeforeRes.status).toBe(503);
+        const readyBeforeRes = await request(fullApp).get('/health/ready');
+        expect(readyBeforeRes.status).toBe(503);
 
-      markReady();
-      const readyAfterRes = await request(fullApp).get('/health/ready');
-      expect(readyAfterRes.status).toBe(200);
-    }, APP_BOOT_TIMEOUT_MS);
+        markReady();
+        const readyAfterRes = await request(fullApp).get('/health/ready');
+        expect(readyAfterRes.status).toBe(200);
+      },
+      APP_BOOT_TIMEOUT_MS,
+    );
   });
 });

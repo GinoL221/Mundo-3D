@@ -7,16 +7,29 @@ import Layout from '../layouts/Layout.astro';
     <div class="product-detail__card">
       <div class="product-detail__utility-row">
         <a href="/products" class="product-detail__back-link">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6M9 12h11" /></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"
+            ><path d="m15 18-6-6 6-6M9 12h11"></path></svg
+          >
           Volver a productos
         </a>
         <button id="share-product-btn" type="button" class="product-detail__share-button" hidden>
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5" /></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"
+            ><circle cx="18" cy="5" r="2.5"></circle><circle cx="6" cy="12" r="2.5"></circle><circle
+              cx="18"
+              cy="19"
+              r="2.5"></circle><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"></path></svg
+          >
           Compartir
         </button>
       </div>
 
-      <section id="product-loading" class="product-detail__state" role="status" aria-live="polite" aria-busy="true">
+      <section
+        id="product-loading"
+        class="product-detail__state"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
         <h1 class="product-detail__state-title">Cargando detalle del producto…</h1>
         <div class="product-detail__skeleton" aria-hidden="true">
           <span class="product-detail__skeleton-image"></span>
@@ -27,28 +40,62 @@ import Layout from '../layouts/Layout.astro';
       </section>
 
       <div id="product-content" aria-busy="true" hidden>
-        <img id="product-img" src="/images/illustrations/Otras.svg" alt="" class="product-detail__image product-detail__image--pixelart" />
+        <img
+          id="product-img"
+          src="/images/illustrations/Otras.svg"
+          alt=""
+          class="product-detail__image product-detail__image--pixelart"
+        />
         <section class="product-detail__info" aria-label="Información del producto">
-          <h1 class="product-detail__title" id="product-title"><span id="product-name">Detalle del producto</span></h1>
+          <h1 class="product-detail__title" id="product-title">
+            <span id="product-name">Detalle del producto</span>
+          </h1>
           <p class="price price--lg" id="product-price"></p>
           <p class="product-detail__description" id="product-description"></p>
           <section class="product-specs" aria-label="Especificaciones 3D">
             <table class="product-specs__table">
               <caption class="sr-only">Características de fabricación del producto</caption>
               <tbody>
-                <tr><th class="product-specs__label" scope="row">Material</th><td class="product-specs__value" id="product-material">-</td></tr>
-                <tr><th class="product-specs__label" scope="row">Dimensiones</th><td class="product-specs__value" id="product-dimensions">-</td></tr>
-                <tr><th class="product-specs__label" scope="row">Acabado</th><td class="product-specs__value" id="product-finish">-</td></tr>
-                <tr><th class="product-specs__label" scope="row">Tiempo de producción</th><td class="product-specs__value" id="product-production">-</td></tr>
+                <tr
+                  ><th class="product-specs__label" scope="row">Material</th><td
+                    class="product-specs__value"
+                    id="product-material">-</td
+                  ></tr
+                >
+                <tr
+                  ><th class="product-specs__label" scope="row">Dimensiones</th><td
+                    class="product-specs__value"
+                    id="product-dimensions">-</td
+                  ></tr
+                >
+                <tr
+                  ><th class="product-specs__label" scope="row">Acabado</th><td
+                    class="product-specs__value"
+                    id="product-finish">-</td
+                  ></tr
+                >
+                <tr
+                  ><th class="product-specs__label" scope="row">Tiempo de producción</th><td
+                    class="product-specs__value"
+                    id="product-production">-</td
+                  ></tr
+                >
               </tbody>
             </table>
           </section>
           <div class="product-detail__actions">
-            <button id="add-to-cart-btn" class="product-detail__action product-detail__action--primary">Agregar al carrito</button>
-            <a href="/cart" class="product-detail__action product-detail__action--secondary">Ir al carrito</a>
+            <button
+              id="add-to-cart-btn"
+              class="product-detail__action product-detail__action--primary"
+              >Agregar al carrito</button
+            >
+            <a href="/cart" class="product-detail__action product-detail__action--secondary"
+              >Ir al carrito</a
+            >
           </div>
           <p id="cart-status" class="product-detail__status-copy" aria-live="polite"></p>
-          <p id="share-status" class="product-detail__status-copy" role="status" aria-live="polite"></p>
+          <p id="share-status" class="product-detail__status-copy" role="status" aria-live="polite">
+          </p>
         </section>
       </div>
 
@@ -56,7 +103,9 @@ import Layout from '../layouts/Layout.astro';
         <h1 id="product-error-title" class="product-detail__state-title">Producto no encontrado</h1>
         <p id="product-error-copy">No encontramos el producto que buscás.</p>
         <a href="/products" class="product-detail__action product-detail__recovery-link">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6M9 12h11" /></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"
+            ><path d="m15 18-6-6 6-6M9 12h11"></path></svg
+          >
           Volver al catálogo
         </a>
       </section>
@@ -85,12 +134,14 @@ import Layout from '../layouts/Layout.astro';
     if (loading) loading.hidden = true;
     if (content) content.hidden = true;
     if (error) error.hidden = false;
-    const title = reason === 'not-found' ? 'Producto no encontrado' : 'No pudimos cargar el producto';
+    const title =
+      reason === 'not-found' ? 'Producto no encontrado' : 'No pudimos cargar el producto';
     if (get('product-error-title')) get('product-error-title')!.textContent = title;
     if (reason !== 'not-found' && get('product-error-copy')) {
-      get('product-error-copy')!.textContent = reason === 'network'
-        ? 'Revisá tu conexión e intentá de nuevo.'
-        : 'El servidor no pudo responder. Intentá de nuevo en unos minutos.';
+      get('product-error-copy')!.textContent =
+        reason === 'network'
+          ? 'Revisá tu conexión e intentá de nuevo.'
+          : 'El servidor no pudo responder. Intentá de nuevo en unos minutos.';
     }
   }
 
@@ -101,7 +152,10 @@ import Layout from '../layouts/Layout.astro';
     if (!result.ok) return showError(result.reason);
     const { product } = result;
     const get = (id: string) => document.getElementById(id);
-    const setText = (id: string, value: string) => { const node = get(id); if (node) node.textContent = value; };
+    const setText = (id: string, value: string) => {
+      const node = get(id);
+      if (node) node.textContent = value;
+    };
     const image = get('product-img') as HTMLImageElement | null;
     const content = get('product-content');
     const addButton = get('add-to-cart-btn') as HTMLButtonElement | null;
@@ -109,11 +163,19 @@ import Layout from '../layouts/Layout.astro';
 
     setText('product-name', product.name);
     setText('product-price', `Precio: $${product.price}`);
-    setText('product-description', product.description.trim() || 'Este producto todavía no tiene una descripción disponible.');
+    setText(
+      'product-description',
+      product.description.trim() || 'Este producto todavía no tiene una descripción disponible.',
+    );
     setText('product-material', product.material);
     setText('product-finish', product.finish);
     setText('product-production', product.productionTime);
-    setText('product-dimensions', product.hasDimensions ? `H: ${product.height} | W: ${product.width} | D: ${product.depth}` : 'A consultar');
+    setText(
+      'product-dimensions',
+      product.hasDimensions
+        ? `H: ${product.height} | W: ${product.width} | D: ${product.depth}`
+        : 'A consultar',
+    );
 
     const placeholder = isPlaceholderImage(product.image);
     const categoryImage = `/images/illustrations/${getCategoryImg(product.category)}.svg`;
@@ -125,19 +187,28 @@ import Layout from '../layouts/Layout.astro';
     if (image) {
       image.src = resolvedProduct.image;
       image.classList.toggle('product-detail__image--pixelart', placeholder);
-      image.alt = placeholder ? `Ilustración de ${product.category} para ${product.name}` : product.name;
-      image.addEventListener('error', () => {
-        resolvedProduct.image = '/images/illustrations/Otras.svg';
-        image.src = resolvedProduct.image;
-        image.alt = `Ilustración genérica para ${product.name}`;
-        image.classList.add('product-detail__image--pixelart');
-      }, { once: true });
+      image.alt = placeholder
+        ? `Ilustración de ${product.category} para ${product.name}`
+        : product.name;
+      image.addEventListener(
+        'error',
+        () => {
+          resolvedProduct.image = '/images/illustrations/Otras.svg';
+          image.src = resolvedProduct.image;
+          image.alt = `Ilustración genérica para ${product.name}`;
+          image.classList.add('product-detail__image--pixelart');
+        },
+        { once: true },
+      );
     }
 
     document.title = `${product.name} - Mundo 3D`;
     const loading = get('product-loading');
     if (loading) loading.hidden = true;
-    if (content) { content.hidden = false; content.setAttribute('aria-busy', 'false'); }
+    if (content) {
+      content.hidden = false;
+      content.setAttribute('aria-busy', 'false');
+    }
     if (shareButton) shareButton.hidden = false;
 
     addButton?.addEventListener('click', () => {
@@ -172,7 +243,11 @@ import Layout from '../layouts/Layout.astro';
     });
 
     shareButton?.addEventListener('click', async () => {
-      const shareData = { title: product.name, text: product.description, url: window.location.href };
+      const shareData = {
+        title: product.name,
+        text: product.description,
+        url: window.location.href,
+      };
       setText('share-status', '');
       try {
         if (navigator.share) {
@@ -185,7 +260,10 @@ import Layout from '../layouts/Layout.astro';
         }
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return;
-        setText('share-status', 'No pudimos compartir el producto. Copiá la dirección desde el navegador.');
+        setText(
+          'share-status',
+          'No pudimos compartir el producto. Copiá la dirección desde el navegador.',
+        );
       }
     });
   }

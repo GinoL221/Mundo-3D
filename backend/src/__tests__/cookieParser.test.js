@@ -22,7 +22,7 @@ describe('cookie-parser wiring', () => {
     const token = jwt.sign(
       { userId: 1, idRole: 2, typ: 'access' },
       'test-only-jwt-secret-not-for-production',
-      accessTokenSignOptions('2h')
+      accessTokenSignOptions('2h'),
     );
 
     const res = await request(app).get('/api/users').set('Cookie', `${AUTH_COOKIE}=${token}`);

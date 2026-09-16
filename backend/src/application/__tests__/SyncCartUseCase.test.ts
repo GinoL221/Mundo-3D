@@ -1,10 +1,10 @@
-import { SyncCartUseCase } from "../use-cases/SyncCartUseCase";
-import { ShoppingCartRepositoryPort } from "../../domain/ports/ShoppingCartRepositoryPort";
-import { ProductRepositoryPort } from "../../domain/ports/ProductRepositoryPort";
-import { Product } from "../../domain/entities/Product";
-import { CartValidationException } from "../../domain/exceptions/CartValidationException";
+import { SyncCartUseCase } from '../use-cases/SyncCartUseCase';
+import { ShoppingCartRepositoryPort } from '../../domain/ports/ShoppingCartRepositoryPort';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { Product } from '../../domain/entities/Product';
+import { CartValidationException } from '../../domain/exceptions/CartValidationException';
 
-describe("SyncCartUseCase", () => {
+describe('SyncCartUseCase', () => {
   let cartRepoMock: jest.Mocked<ShoppingCartRepositoryPort>;
   let productRepoMock: jest.Mocked<ProductRepositoryPort>;
   let useCase: SyncCartUseCase;
@@ -30,25 +30,9 @@ describe("SyncCartUseCase", () => {
     useCase = new SyncCartUseCase(cartRepoMock, productRepoMock);
   });
 
-  it("should sync items successfully by looking up prices in product repository", async () => {
-    const productA = new Product(
-      10,
-      "Product A",
-      100.0,
-      "Desc A",
-      "imgA.png",
-      1,
-      2,
-    );
-    const productB = new Product(
-      20,
-      "Product B",
-      50.0,
-      "Desc B",
-      "imgB.png",
-      1,
-      2,
-    );
+  it('should sync items successfully by looking up prices in product repository', async () => {
+    const productA = new Product(10, 'Product A', 100.0, 'Desc A', 'imgA.png', 1, 2);
+    const productB = new Product(20, 'Product B', 50.0, 'Desc B', 'imgB.png', 1, 2);
 
     productRepoMock.findById.mockImplementation(async (id: number) => {
       if (id === 10) return productA;
@@ -72,7 +56,7 @@ describe("SyncCartUseCase", () => {
     ]);
   });
 
-  it("should skip product and not call sync if product is not found in catalog", async () => {
+  it('should skip product and not call sync if product is not found in catalog', async () => {
     productRepoMock.findById.mockResolvedValue(null);
 
     const items = [{ productId: 999, quantity: 1 }];
@@ -83,16 +67,8 @@ describe("SyncCartUseCase", () => {
     expect(cartRepoMock.syncCart).toHaveBeenCalledWith(5, []);
   });
 
-  it("should merge duplicate productId entries into a single summed row before persisting", async () => {
-    const productA = new Product(
-      10,
-      "Product A",
-      100.0,
-      "Desc A",
-      "imgA.png",
-      1,
-      2,
-    );
+  it('should merge duplicate productId entries into a single summed row before persisting', async () => {
+    const productA = new Product(10, 'Product A', 100.0, 'Desc A', 'imgA.png', 1, 2);
     productRepoMock.findById.mockResolvedValue(productA);
 
     const items = [
@@ -109,25 +85,21 @@ describe("SyncCartUseCase", () => {
     ]);
   });
 
-  it("should reject with CartValidationException when merged duplicate quantity exceeds the ceiling, without calling the repository", async () => {
+  it('should reject with CartValidationException when merged duplicate quantity exceeds the ceiling, without calling the repository', async () => {
     const items = [
       { productId: 10, quantity: 60 },
       { productId: 10, quantity: 60 },
     ];
 
-    await expect(useCase.execute(5, items)).rejects.toThrow(
-      CartValidationException,
-    );
+    await expect(useCase.execute(5, items)).rejects.toThrow(CartValidationException);
 
     expect(cartRepoMock.syncCart).not.toHaveBeenCalled();
   });
 
-  it("should reject with CartValidationException when a single non-duplicate item quantity exceeds the ceiling, without calling the repository", async () => {
+  it('should reject with CartValidationException when a single non-duplicate item quantity exceeds the ceiling, without calling the repository', async () => {
     const items = [{ productId: 10, quantity: 100 }];
 
-    await expect(useCase.execute(5, items)).rejects.toThrow(
-      CartValidationException,
-    );
+    await expect(useCase.execute(5, items)).rejects.toThrow(CartValidationException);
 
     expect(cartRepoMock.syncCart).not.toHaveBeenCalled();
   });

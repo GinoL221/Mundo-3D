@@ -8,15 +8,11 @@ export const validationsCart = [
   // (see SyncCartUseCase / SequelizeShoppingCartRepository.syncCart), and an
   // empty array is the valid way to represent an emptied cart (e.g. after
   // checkout). Rejecting it here breaks that flow.
-  body('items')
-    .isArray()
-    .withMessage('Items must be an array'),
-  body('items.*.productId')
-    .isInt({ min: 1 })
-    .withMessage('productId must be an integer >= 1'),
+  body('items').isArray().withMessage('Items must be an array'),
+  body('items.*.productId').isInt({ min: 1 }).withMessage('productId must be an integer >= 1'),
   body('items.*.quantity')
     .isInt({ min: 1, max: MAX_CART_ITEM_QUANTITY })
-    .withMessage(`quantity must be an integer between 1 and ${MAX_CART_ITEM_QUANTITY}`)
+    .withMessage(`quantity must be an integer between 1 and ${MAX_CART_ITEM_QUANTITY}`),
 ];
 
 export const cartSyncValidation = [
@@ -27,5 +23,5 @@ export const cartSyncValidation = [
       throw new CartValidationException('Invalid cart items');
     }
     next();
-  }
+  },
 ];

@@ -20,10 +20,7 @@ describe('CartApiController', () => {
       execute: jest.fn(),
     } as any;
 
-    controller = new CartApiController(
-      mockGetCartByUserIdUseCase,
-      mockSyncCartUseCase
-    );
+    controller = new CartApiController(mockGetCartByUserIdUseCase, mockSyncCartUseCase);
 
     req = {
       user: { userId: 5, email: 'user@test.com', category: 'User', idRole: 2 },

@@ -1,13 +1,10 @@
-import {
-  UpdateProductUseCase,
-  UpdateProductInput,
-} from "../use-cases/UpdateProductUseCase";
-import { ProductRepositoryPort } from "../../domain/ports/ProductRepositoryPort";
-import { CategoryRepositoryPort } from "../../domain/ports/CategoryRepositoryPort";
-import { Product } from "../../domain/entities/Product";
-import { Category } from "../../domain/entities/Category";
+import { UpdateProductUseCase, UpdateProductInput } from '../use-cases/UpdateProductUseCase';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
+import { Product } from '../../domain/entities/Product';
+import { Category } from '../../domain/entities/Category';
 
-describe("UpdateProductUseCase", () => {
+describe('UpdateProductUseCase', () => {
   let mockProductRepo: jest.Mocked<ProductRepositoryPort>;
   let mockCategoryRepo: jest.Mocked<CategoryRepositoryPort>;
   let useCase: UpdateProductUseCase;
@@ -33,19 +30,19 @@ describe("UpdateProductUseCase", () => {
     useCase = new UpdateProductUseCase(mockProductRepo, mockCategoryRepo);
   });
 
-  it("should update the product and map it to a ProductDTO", async () => {
+  it('should update the product and map it to a ProductDTO', async () => {
     const input: UpdateProductInput = {
-      nameProduct: "Updated Product",
+      nameProduct: 'Updated Product',
       price: 150,
     };
 
-    const mockCategory = new Category(1, "Figures");
+    const mockCategory = new Category(1, 'Figures');
     const updatedProduct = new Product(
       10,
-      "Updated Product",
+      'Updated Product',
       150,
-      "Desc",
-      "img.jpg",
+      'Desc',
+      'img.jpg',
       1,
       2,
       mockCategory,
@@ -65,13 +62,13 @@ describe("UpdateProductUseCase", () => {
 
     expect(result).toEqual({
       idProduct: 10,
-      nameProduct: "Updated Product",
+      nameProduct: 'Updated Product',
       price: 150,
-      descriptionProduct: "Desc",
-      image: "img.jpg",
+      descriptionProduct: 'Desc',
+      image: 'img.jpg',
       idCategory: 1,
       idFranchise: 2,
-      category: "Figures",
+      category: 'Figures',
       material: null,
       height: null,
       width: null,
@@ -84,33 +81,33 @@ describe("UpdateProductUseCase", () => {
     expect(mockProductRepo.update).toHaveBeenCalledWith(10, input);
   });
 
-  it("should return null if the product does not exist", async () => {
+  it('should return null if the product does not exist', async () => {
     mockProductRepo.update.mockResolvedValue(null);
 
-    const result = await useCase.execute(999, { nameProduct: "Nonexistent" });
+    const result = await useCase.execute(999, { nameProduct: 'Nonexistent' });
 
     expect(result).toBeNull();
     expect(mockProductRepo.update).toHaveBeenCalledWith(999, {
-      nameProduct: "Nonexistent",
+      nameProduct: 'Nonexistent',
     });
   });
 
-  it("should not accept a stock override: the returned stock always comes from the repository result, never from the input", async () => {
+  it('should not accept a stock override: the returned stock always comes from the repository result, never from the input', async () => {
     // `stock` is not part of `UpdateProductInput` at the type level (compile-time
     // enforcement lives in ProductRepositoryPort.update()'s `Omit<Partial<Product>, 'stock'>`
     // signature). This test proves the runtime behavior: even if a caller smuggles a
     // `stock` value into the input via an unsafe cast, the use case's output DTO reflects
     // only what the repository actually persisted/returned — never the attempted input value.
     const maliciousInput = {
-      nameProduct: "Updated Product",
+      nameProduct: 'Updated Product',
       stock: 999,
     } as unknown as UpdateProductInput;
     const updatedProduct = new Product(
       10,
-      "Updated Product",
+      'Updated Product',
       150,
-      "Desc",
-      "img.jpg",
+      'Desc',
+      'img.jpg',
       1,
       2,
       undefined,

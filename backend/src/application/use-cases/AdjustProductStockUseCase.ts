@@ -1,6 +1,6 @@
-import { ProductRepositoryPort } from "../../domain/ports/ProductRepositoryPort";
-import { LoggerPort } from "../../domain/ports/LoggerPort";
-import { ProductDTO } from "../dtos/ProductDTO";
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { LoggerPort } from '../../domain/ports/LoggerPort';
+import { ProductDTO } from '../dtos/ProductDTO';
 
 export class AdjustProductStockUseCase {
   constructor(
@@ -29,13 +29,13 @@ export class AdjustProductStockUseCase {
     try {
       updated = await this.productRepo.adjustStock(id, delta);
     } catch (error) {
-      const reason = error instanceof Error ? error.message : "Unknown error";
+      const reason = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(
         {
-          event: "stock_adjustment",
+          event: 'stock_adjustment',
           productId: id,
           delta,
-          outcome: "rejected",
+          outcome: 'rejected',
           reason,
           timestamp: new Date().toISOString(),
         },
@@ -47,11 +47,11 @@ export class AdjustProductStockUseCase {
     if (!updated) {
       this.logger.warn(
         {
-          event: "stock_adjustment",
+          event: 'stock_adjustment',
           productId: id,
           delta,
-          outcome: "rejected",
-          reason: "not_found",
+          outcome: 'rejected',
+          reason: 'not_found',
           timestamp: new Date().toISOString(),
         },
         `Stock adjustment rejected for product ${id}: product not found`,
@@ -61,19 +61,17 @@ export class AdjustProductStockUseCase {
 
     this.logger.info(
       {
-        event: "stock_adjustment",
+        event: 'stock_adjustment',
         productId: id,
         delta,
-        outcome: "success",
+        outcome: 'success',
         resultingStock: updated.Stock,
         timestamp: new Date().toISOString(),
       },
       `Stock adjustment succeeded for product ${id}`,
     );
 
-    const categoryName = updated.Category
-      ? updated.Category.nameCategory
-      : "Sin categoría";
+    const categoryName = updated.Category ? updated.Category.nameCategory : 'Sin categoría';
 
     return {
       idProduct: updated.idProduct,

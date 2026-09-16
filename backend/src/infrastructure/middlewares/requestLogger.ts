@@ -2,7 +2,11 @@ import { Request, Response, NextFunction } from 'express';
 import { performance } from 'perf_hooks';
 import { logger } from '../logging/logger';
 
-export default function requestLoggerMiddleware(req: Request, res: Response, next: NextFunction): void {
+export default function requestLoggerMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
   const start = performance.now();
 
   res.on('finish', () => {
@@ -16,9 +20,9 @@ export default function requestLoggerMiddleware(req: Request, res: Response, nex
         method,
         url,
         status: statusCode,
-        latencyMs: parseFloat(duration.toFixed(3))
+        latencyMs: parseFloat(duration.toFixed(3)),
       },
-      `${method} ${url} ${statusCode} - ${duration.toFixed(3)}ms`
+      `${method} ${url} ${statusCode} - ${duration.toFixed(3)}ms`,
     );
   });
 

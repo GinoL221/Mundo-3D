@@ -57,7 +57,7 @@ function makeProduct(idProduct: number): Product {
     1,
     2,
     new Category(1, 'Figuras'),
-    new Franchise(2, 'Dragon Ball')
+    new Franchise(2, 'Dragon Ball'),
   );
 }
 
@@ -91,7 +91,7 @@ describe('GET /api/products/search', () => {
     await request(app).get('/api/products/search?idCategory=3');
 
     expect(mockSearchPaged).toHaveBeenCalledWith(
-      expect.objectContaining({ search: undefined, idCategory: 3, idFranchise: undefined })
+      expect.objectContaining({ search: undefined, idCategory: 3, idFranchise: undefined }),
     );
   });
 
@@ -101,7 +101,7 @@ describe('GET /api/products/search', () => {
     await request(app).get('/api/products/search?idFranchise=5');
 
     expect(mockSearchPaged).toHaveBeenCalledWith(
-      expect.objectContaining({ search: undefined, idCategory: undefined, idFranchise: 5 })
+      expect.objectContaining({ search: undefined, idCategory: undefined, idFranchise: 5 }),
     );
   });
 
@@ -111,7 +111,7 @@ describe('GET /api/products/search', () => {
     await request(app).get('/api/products/search?search=goku&idCategory=3&idFranchise=5');
 
     expect(mockSearchPaged).toHaveBeenCalledWith(
-      expect.objectContaining({ search: 'goku', idCategory: 3, idFranchise: 5 })
+      expect.objectContaining({ search: 'goku', idCategory: 3, idFranchise: 5 }),
     );
   });
 
@@ -131,10 +131,10 @@ describe('GET /api/products/search', () => {
     expect(mockSearchPaged).toHaveBeenCalledWith(expect.objectContaining({ search: '50%' }));
   });
 
-  it("a search term containing a single quote returns a plain 200, not a crash", async () => {
+  it('a search term containing a single quote returns a plain 200, not a crash', async () => {
     mockSearchPaged.mockResolvedValue({ products: [], total: 0 });
 
-    const res = await request(app).get("/api/products/search").query({ search: "o'brien" });
+    const res = await request(app).get('/api/products/search').query({ search: "o'brien" });
 
     expect(res.status).toBe(200);
   });
@@ -161,30 +161,35 @@ describe('GET /api/products/search', () => {
 
     await request(app).get('/api/products/search?page=2&pageSize=10');
 
-    expect(mockSearchPaged).toHaveBeenCalledWith(expect.objectContaining({ limit: 10, offset: 10 }));
+    expect(mockSearchPaged).toHaveBeenCalledWith(
+      expect.objectContaining({ limit: 10, offset: 10 }),
+    );
   });
 
-  it.each([['page', '0'], ['page', '-1'], ['page', 'abc'], ['pageSize', '0'], ['pageSize', '51']])(
-    'rejects invalid %s=%s with 400 INVALID_PAGINATION',
-    async (param, value) => {
-      const res = await request(app).get(`/api/products/search?${param}=${value}`);
+  it.each([
+    ['page', '0'],
+    ['page', '-1'],
+    ['page', 'abc'],
+    ['pageSize', '0'],
+    ['pageSize', '51'],
+  ])('rejects invalid %s=%s with 400 INVALID_PAGINATION', async (param, value) => {
+    const res = await request(app).get(`/api/products/search?${param}=${value}`);
 
-      expect(res.status).toBe(400);
-      expect(res.body.code).toBe('INVALID_PAGINATION');
-      expect(mockSearchPaged).not.toHaveBeenCalled();
-    }
-  );
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INVALID_PAGINATION');
+    expect(mockSearchPaged).not.toHaveBeenCalled();
+  });
 
-  it.each([['idCategory', 'abc'], ['idFranchise', 'abc']])(
-    'rejects a non-integer %s=%s with 400 INVALID_FILTER',
-    async (param, value) => {
-      const res = await request(app).get(`/api/products/search?${param}=${value}`);
+  it.each([
+    ['idCategory', 'abc'],
+    ['idFranchise', 'abc'],
+  ])('rejects a non-integer %s=%s with 400 INVALID_FILTER', async (param, value) => {
+    const res = await request(app).get(`/api/products/search?${param}=${value}`);
 
-      expect(res.status).toBe(400);
-      expect(res.body.code).toBe('INVALID_FILTER');
-      expect(mockSearchPaged).not.toHaveBeenCalled();
-    }
-  );
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INVALID_FILTER');
+    expect(mockSearchPaged).not.toHaveBeenCalled();
+  });
 
   it('treats an empty-string idCategory/idFranchise as "no filter", not a 400', async () => {
     mockSearchPaged.mockResolvedValue({ products: [], total: 0 });
@@ -193,12 +198,15 @@ describe('GET /api/products/search', () => {
 
     expect(res.status).toBe(200);
     expect(mockSearchPaged).toHaveBeenCalledWith(
-      expect.objectContaining({ idCategory: undefined, idFranchise: undefined })
+      expect.objectContaining({ idCategory: undefined, idFranchise: undefined }),
     );
   });
 
   it('trusts the repository for deterministic idProduct ASC ordering (pass-through, no reordering in the wiring layer)', async () => {
-    mockSearchPaged.mockResolvedValue({ products: [makeProduct(3), makeProduct(9), makeProduct(15)], total: 3 });
+    mockSearchPaged.mockResolvedValue({
+      products: [makeProduct(3), makeProduct(9), makeProduct(15)],
+      total: 3,
+    });
 
     const res = await request(app).get('/api/products/search');
 
@@ -211,7 +219,13 @@ describe('GET /api/products/search', () => {
     const res = await request(app).get('/api/products/search?search=goku');
 
     expect(res.body).toEqual(
-      expect.objectContaining({ page: 1, pageSize: 20, total: 1, totalPages: 1, products: expect.any(Array) })
+      expect.objectContaining({
+        page: 1,
+        pageSize: 20,
+        total: 1,
+        totalPages: 1,
+        products: expect.any(Array),
+      }),
     );
   });
 });

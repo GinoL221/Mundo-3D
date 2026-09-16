@@ -21,7 +21,7 @@ export interface PagedOrders {
 export interface OrderRepositoryPort {
   createWithItems(
     input: { idUser: number; idempotencyKey: string; items: NewOrderItemInput[] },
-    tx: TransactionContext
+    tx: TransactionContext,
   ): Promise<Order>; // throws DuplicateIdempotencyKeyException
   findByIdempotencyKey(idUser: number, idempotencyKey: string): Promise<Order | null>;
   findById(idOrder: number): Promise<Order | null>;
@@ -31,7 +31,7 @@ export interface OrderRepositoryPort {
     idOrder: number,
     from: OrderStatus,
     to: OrderStatus,
-    tx?: TransactionContext
+    tx?: TransactionContext,
   ): Promise<boolean>; // true iff exactly 1 row changed
   attachPaymentReference(idOrder: number, reference: string): Promise<void>;
 }

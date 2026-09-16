@@ -48,9 +48,24 @@ const buildApp = (): Express => {
   return app;
 };
 
-const adminAuth = authAndCsrf({ userId: 1, email: 'principal@test.com', category: 'test', idRole: Role.ADMIN });
-const staffAuth = authAndCsrf({ userId: 1, email: 'principal@test.com', category: 'test', idRole: Role.STAFF });
-const userAuth = authAndCsrf({ userId: 1, email: 'principal@test.com', category: 'test', idRole: Role.USER });
+const adminAuth = authAndCsrf({
+  userId: 1,
+  email: 'principal@test.com',
+  category: 'test',
+  idRole: Role.ADMIN,
+});
+const staffAuth = authAndCsrf({
+  userId: 1,
+  email: 'principal@test.com',
+  category: 'test',
+  idRole: Role.STAFF,
+});
+const userAuth = authAndCsrf({
+  userId: 1,
+  email: 'principal@test.com',
+  category: 'test',
+  idRole: Role.USER,
+});
 
 describe('api/categories routes', () => {
   let app: Express;

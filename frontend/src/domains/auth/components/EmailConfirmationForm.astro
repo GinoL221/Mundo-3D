@@ -20,9 +20,7 @@
     hidden
   >
     <p class="email-confirmation__feedback-message"></p>
-    <a class="email-confirmation__login-link" href="/login" hidden
-      >Ir a iniciar sesión</a
-    >
+    <a class="email-confirmation__login-link" href="/login" hidden>Ir a iniciar sesión</a>
   </div>
 
   <div class="email-confirmation__resend">
@@ -45,13 +43,8 @@
           required
         />
       </label>
-      <button
-        class="auth-form__button auth-form__button--secondary"
-        type="submit"
-      >
-        <span class="email-confirmation__button-label"
-          >Solicitar otro enlace</span
-        >
+      <button class="auth-form__button auth-form__button--secondary" type="submit">
+        <span class="email-confirmation__button-label">Solicitar otro enlace</span>
       </button>
     </form>
   </div>
@@ -61,66 +54,44 @@
   import {
     ConfirmationNetworkError,
     EmailConfirmationService,
-  } from "../services/emailConfirmation.service";
+  } from '../services/emailConfirmation.service';
 
-  type FeedbackState =
-    | "pending"
-    | "success"
-    | "invalid"
-    | "error"
-    | "resend-success";
+  type FeedbackState = 'pending' | 'success' | 'invalid' | 'error' | 'resend-success';
 
   const confirmationForm = document.getElementById(
-    "email-confirmation-form",
+    'email-confirmation-form',
   ) as HTMLFormElement | null;
-  const resendForm = document.getElementById(
-    "resend-confirmation-form",
-  ) as HTMLFormElement | null;
-  const resendEmail = document.getElementById(
-    "resend-email",
-  ) as HTMLInputElement | null;
-  const feedback = document.getElementById(
-    "email-confirmation-feedback",
-  ) as HTMLElement | null;
+  const resendForm = document.getElementById('resend-confirmation-form') as HTMLFormElement | null;
+  const resendEmail = document.getElementById('resend-email') as HTMLInputElement | null;
+  const feedback = document.getElementById('email-confirmation-feedback') as HTMLElement | null;
   const feedbackMessage = feedback?.querySelector(
-    ".email-confirmation__feedback-message",
+    '.email-confirmation__feedback-message',
   ) as HTMLElement | null;
   const loginLink = feedback?.querySelector(
-    ".email-confirmation__login-link",
+    '.email-confirmation__login-link',
   ) as HTMLAnchorElement | null;
   let confirmationPending = false;
   let resendPending = false;
 
-  function setFormPending(
-    form: HTMLFormElement,
-    pending: boolean,
-    pendingLabel: string,
-  ) {
-    form.toggleAttribute("aria-busy", pending);
+  function setFormPending(form: HTMLFormElement, pending: boolean, pendingLabel: string) {
+    form.toggleAttribute('aria-busy', pending);
     for (const control of form.elements) {
-      if (
-        control instanceof HTMLButtonElement ||
-        control instanceof HTMLInputElement
-      ) {
+      if (control instanceof HTMLButtonElement || control instanceof HTMLInputElement) {
         control.disabled = pending;
       }
     }
 
-    const label = form.querySelector(".email-confirmation__button-label");
-    const button = form.querySelector("button");
+    const label = form.querySelector('.email-confirmation__button-label');
+    const button = form.querySelector('button');
     if (label && button) {
-      if (pending) button.dataset.defaultLabel = label.textContent ?? "";
+      if (pending) button.dataset.defaultLabel = label.textContent ?? '';
       label.textContent = pending
         ? pendingLabel
         : (button.dataset.defaultLabel ?? label.textContent);
     }
   }
 
-  function showFeedback(
-    message: string,
-    state: FeedbackState,
-    showLogin = false,
-  ) {
+  function showFeedback(message: string, state: FeedbackState, showLogin = false) {
     if (!feedback || !feedbackMessage) return;
     feedbackMessage.textContent = message;
     feedback.dataset.state = state;
@@ -129,66 +100,58 @@
     feedback.focus();
   }
 
-  confirmationForm?.addEventListener("submit", async (event) => {
+  confirmationForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (confirmationPending) return;
 
     confirmationPending = true;
-    setFormPending(confirmationForm, true, "Confirmando…");
-    showFeedback("Estamos confirmando tu correo…", "pending");
+    setFormPending(confirmationForm, true, 'Confirmando…');
+    showFeedback('Estamos confirmando tu correo…', 'pending');
 
     try {
-      const outcome =
-        await EmailConfirmationService.confirmFromCurrentLocation();
-      if (outcome === "confirmed") {
-        showFeedback(
-          "Tu correo fue confirmado. Ya podés iniciar sesión.",
-          "success",
-          true,
-        );
+      const outcome = await EmailConfirmationService.confirmFromCurrentLocation();
+      if (outcome === 'confirmed') {
+        showFeedback('Tu correo fue confirmado. Ya podés iniciar sesión.', 'success', true);
       } else {
-        showFeedback(
-          "El enlace no es válido, falta o ya venció. Podés solicitar otro.",
-          "invalid",
-        );
+        showFeedback('El enlace no es válido, falta o ya venció. Podés solicitar otro.', 'invalid');
       }
     } catch (error) {
       if (error instanceof ConfirmationNetworkError) {
         showFeedback(
-          "No pudimos confirmar tu correo. Intentá de nuevo en unos instantes.",
-          "error",
+          'No pudimos confirmar tu correo. Intentá de nuevo en unos instantes.',
+          'error',
         );
       }
     } finally {
       confirmationPending = false;
-      setFormPending(confirmationForm, false, "Confirmando…");
+      setFormPending(confirmationForm, false, 'Confirmando…');
     }
   });
 
-  resendForm?.addEventListener("submit", async (event) => {
+  resendForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (resendPending || !resendEmail?.value) return;
 
     resendPending = true;
-    setFormPending(resendForm, true, "Solicitando…");
-    showFeedback("Estamos solicitando un nuevo enlace…", "pending");
+    setFormPending(resendForm, true, 'Solicitando…');
+    showFeedback('Estamos solicitando un nuevo enlace…', 'pending');
 
     try {
       await EmailConfirmationService.resend(resendEmail.value.trim());
       showFeedback(
-        "Si la cuenta es elegible, podrá recibir un nuevo enlace de confirmación.",
-        "resend-success",
+        'Si la cuenta es elegible, podrá recibir un nuevo enlace de confirmación.',
+        'resend-success',
       );
     } catch (error) {
       if (error instanceof ConfirmationNetworkError) {
         showFeedback(
-          "No pudimos procesar la solicitud. Intentá de nuevo en unos instantes.",
-          "error",
+          'No pudimos procesar la solicitud. Intentá de nuevo en unos instantes.',
+          'error',
         );
       }
     } finally {
       resendPending = false;
-      setFormPending(resendForm, false, "Solicitando…");
+      setFormPending(resendForm, false, 'Solicitando…');
     }
   });
 </script>

@@ -36,7 +36,7 @@ function createLocalStorageEngine(dest: string): unknown {
     filename: (
       _req: Request,
       file: { originalname: string },
-      cb: (e: Error | null, f: string) => void
+      cb: (e: Error | null, f: string) => void,
     ) => cb(null, `${uuidv4()}${path.extname(file.originalname)}`),
   });
 
@@ -44,7 +44,7 @@ function createLocalStorageEngine(dest: string): unknown {
     _handleFile(
       req: Request,
       file: { key?: string; path?: string },
-      cb: (e: unknown, info?: Record<string, unknown>) => void
+      cb: (e: unknown, info?: Record<string, unknown>) => void,
     ): void {
       disk._handleFile(
         req,
@@ -58,7 +58,7 @@ function createLocalStorageEngine(dest: string): unknown {
           file.key = key;
           file.path = info.path;
           cb(null, { ...info, key, location: info.filename });
-        }
+        },
       );
     },
     _removeFile(req: Request, file: unknown, cb: (e: unknown) => void): void {
@@ -79,7 +79,7 @@ export default function createUpload(dest: string): MulterInstance {
   const fileFilter = (
     _req: Request,
     file: MulterFile,
-    callback: (error: Error | null, acceptFile?: boolean) => void
+    callback: (error: Error | null, acceptFile?: boolean) => void,
   ): void => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());

@@ -116,8 +116,12 @@ describe('POST /api/users/login', () => {
   });
 
   it('returns 401 with an error message when the user does not exist', async () => {
-    const { InvalidCredentialsException } = require('../domain/exceptions/InvalidCredentialsException');
-    mockAuthenticateUserExecute.mockRejectedValue(new InvalidCredentialsException('El email o la contraseña no coinciden'));
+    const {
+      InvalidCredentialsException,
+    } = require('../domain/exceptions/InvalidCredentialsException');
+    mockAuthenticateUserExecute.mockRejectedValue(
+      new InvalidCredentialsException('El email o la contraseña no coinciden'),
+    );
 
     const res = await request(app)
       .post('/api/users/login')
@@ -128,8 +132,12 @@ describe('POST /api/users/login', () => {
   });
 
   it('returns 401 with an error message when the password does not match', async () => {
-    const { InvalidCredentialsException } = require('../domain/exceptions/InvalidCredentialsException');
-    mockAuthenticateUserExecute.mockRejectedValue(new InvalidCredentialsException('El email o la contraseña no coinciden'));
+    const {
+      InvalidCredentialsException,
+    } = require('../domain/exceptions/InvalidCredentialsException');
+    mockAuthenticateUserExecute.mockRejectedValue(
+      new InvalidCredentialsException('El email o la contraseña no coinciden'),
+    );
 
     const res = await request(app)
       .post('/api/users/login')
@@ -268,9 +276,7 @@ describe('apiAuthMiddleware mounted on /api/users routes', () => {
       accessTokenSignOptions('1h'),
     );
 
-    const res = await request(app)
-      .get('/api/users')
-      .set('Cookie', `${AUTH_COOKIE}=${token}`);
+    const res = await request(app).get('/api/users').set('Cookie', `${AUTH_COOKIE}=${token}`);
 
     expect(res.status).toBe(200);
     expect(mockListUsersExecute).toHaveBeenCalledTimes(1);
@@ -283,9 +289,7 @@ describe('apiAuthMiddleware mounted on /api/users routes', () => {
       { expiresIn: '1h' },
     );
 
-    const res = await request(app)
-      .get('/api/users')
-      .set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get('/api/users').set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(401);
     expect(mockListUsersExecute).not.toHaveBeenCalled();

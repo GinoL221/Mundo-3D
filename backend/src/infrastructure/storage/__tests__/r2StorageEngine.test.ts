@@ -1,10 +1,6 @@
 import { Readable, PassThrough } from 'stream';
 import type { Request } from 'express';
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { createR2StorageEngine } from '../r2StorageEngine';
 import { resetR2Client } from '../r2Client';
 
@@ -28,8 +24,14 @@ interface EngineFile {
 const req = {} as Request;
 
 const handle = (
-  engine: { _handleFile: (req: Request, file: EngineFile, cb: (err: unknown, info?: Record<string, unknown>) => void) => void },
-  file: EngineFile
+  engine: {
+    _handleFile: (
+      req: Request,
+      file: EngineFile,
+      cb: (err: unknown, info?: Record<string, unknown>) => void,
+    ) => void;
+  },
+  file: EngineFile,
 ): Promise<{ err: unknown; info?: Record<string, unknown> }> =>
   new Promise((resolve) => {
     engine._handleFile(req, file, (err, info) => resolve({ err, info }));
@@ -153,9 +155,11 @@ describe('r2StorageEngine._removeFile', () => {
     const file = { key: 'products/abc-123.png' } as EngineFile;
 
     await new Promise<void>((resolve, reject) => {
-      (engine as unknown as {
-        _removeFile: (req: Request, file: EngineFile, cb: (err: unknown) => void) => void;
-      })._removeFile(req, file, (err) => (err ? reject(err) : resolve()));
+      (
+        engine as unknown as {
+          _removeFile: (req: Request, file: EngineFile, cb: (err: unknown) => void) => void;
+        }
+      )._removeFile(req, file, (err) => (err ? reject(err) : resolve()));
     });
 
     expect(sendMock).toHaveBeenCalledTimes(1);

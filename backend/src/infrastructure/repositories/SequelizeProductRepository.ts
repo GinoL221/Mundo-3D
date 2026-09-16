@@ -2,7 +2,11 @@ import { QueryTypes, Transaction } from 'sequelize';
 import { Product } from '../../domain/entities/Product';
 import { Category } from '../../domain/entities/Category';
 import { Franchise } from '../../domain/entities/Franchise';
-import { ProductRepositoryPort, ProductSearchOptions, PagedProducts } from '../../domain/ports/ProductRepositoryPort';
+import {
+  ProductRepositoryPort,
+  ProductSearchOptions,
+  PagedProducts,
+} from '../../domain/ports/ProductRepositoryPort';
 import { TransactionContext } from '../../domain/ports/UnitOfWorkPort';
 import db, { ProductInstance, ProductAttributes } from '../../database/models/db';
 import { buildProductSearchWhere } from './productSearchWhere';
@@ -38,8 +42,10 @@ export class SequelizeProductRepository implements ProductRepositoryPort {
       instance.width !== null && instance.width !== undefined ? Number(instance.width) : null,
       instance.depth !== null && instance.depth !== undefined ? Number(instance.depth) : null,
       instance.finish,
-      instance.productionTime !== null && instance.productionTime !== undefined ? Number(instance.productionTime) : null,
-      instance.stock !== null && instance.stock !== undefined ? Number(instance.stock) : null
+      instance.productionTime !== null && instance.productionTime !== undefined
+        ? Number(instance.productionTime)
+        : null,
+      instance.stock !== null && instance.stock !== undefined ? Number(instance.stock) : null,
     );
   }
 
@@ -111,7 +117,28 @@ export class SequelizeProductRepository implements ProductRepositoryPort {
     return this.toEntity(instance);
   }
 
-  async create(product: Omit<Product, 'idProduct' | 'IDProduct' | 'NameProduct' | 'Price' | 'DescriptionProduct' | 'Image' | 'IDCategory' | 'IDFranchise' | 'Category' | 'Franchise' | 'Material' | 'Height' | 'Width' | 'Depth' | 'Finish' | 'ProductionTime' | 'Stock'>): Promise<Product> {
+  async create(
+    product: Omit<
+      Product,
+      | 'idProduct'
+      | 'IDProduct'
+      | 'NameProduct'
+      | 'Price'
+      | 'DescriptionProduct'
+      | 'Image'
+      | 'IDCategory'
+      | 'IDFranchise'
+      | 'Category'
+      | 'Franchise'
+      | 'Material'
+      | 'Height'
+      | 'Width'
+      | 'Depth'
+      | 'Finish'
+      | 'ProductionTime'
+      | 'Stock'
+    >,
+  ): Promise<Product> {
     const instance = await db.Product.create({
       nameProduct: product.nameProduct,
       price: product.price,
@@ -145,8 +172,10 @@ export class SequelizeProductRepository implements ProductRepositoryPort {
         instance.width !== null && instance.width !== undefined ? Number(instance.width) : null,
         instance.depth !== null && instance.depth !== undefined ? Number(instance.depth) : null,
         instance.finish,
-        instance.productionTime !== null && instance.productionTime !== undefined ? Number(instance.productionTime) : null,
-        instance.stock !== null && instance.stock !== undefined ? Number(instance.stock) : null
+        instance.productionTime !== null && instance.productionTime !== undefined
+          ? Number(instance.productionTime)
+          : null,
+        instance.stock !== null && instance.stock !== undefined ? Number(instance.stock) : null,
       );
     }
     return created;
@@ -163,7 +192,8 @@ export class SequelizeProductRepository implements ProductRepositoryPort {
     const updatedData: Partial<ProductInstance> = {};
     if (product.nameProduct !== undefined) updatedData.nameProduct = product.nameProduct;
     if (product.price !== undefined) updatedData.price = product.price;
-    if (product.descriptionProduct !== undefined) updatedData.descriptionProduct = product.descriptionProduct;
+    if (product.descriptionProduct !== undefined)
+      updatedData.descriptionProduct = product.descriptionProduct;
     if (product.image !== undefined) updatedData.image = product.image;
     if (product.idCategory !== undefined) updatedData.idCategory = product.idCategory;
     if (product.idFranchise !== undefined) updatedData.idFranchise = product.idFranchise;
@@ -213,7 +243,7 @@ export class SequelizeProductRepository implements ProductRepositoryPort {
         replacements: { id, delta },
         type: QueryTypes.UPDATE,
         transaction,
-      }
+      },
     );
 
     if (affectedRows === 0) {
@@ -231,7 +261,13 @@ export class SequelizeProductRepository implements ProductRepositoryPort {
   // `Category`/`Franchise` are belongsTo (N:1, models/index.js:45,55), so
   // the join cannot multiply rows and `COUNT(*)` is already the product
   // count.
-  async searchPaged({ search, idCategory, idFranchise, limit, offset }: ProductSearchOptions): Promise<PagedProducts> {
+  async searchPaged({
+    search,
+    idCategory,
+    idFranchise,
+    limit,
+    offset,
+  }: ProductSearchOptions): Promise<PagedProducts> {
     const { rows, count } = await db.Product.findAndCountAll({
       where: buildProductSearchWhere({ search, idCategory, idFranchise }),
       include: [

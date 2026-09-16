@@ -10,7 +10,10 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
         <div class="home-hero__copy">
           <p class="home-eyebrow">TALLER / CATÁLOGO</p>
           <h1 class="home-hero__title" id="home-hero-title">Piezas impresas para tener cerca.</h1>
-          <p class="home-hero__description">Figuras, bustos y accesorios nacidos en el taller de Mundo 3D. Elegí una pieza lista o imaginá la próxima con nosotros.</p>
+          <p class="home-hero__description">
+            Figuras, bustos y accesorios nacidos en el taller de Mundo 3D. Elegí una pieza lista o
+            imaginá la próxima con nosotros.
+          </p>
           <div class="home-hero__actions">
             <a class="home-button" href="#catalogo">Ver catálogo →</a>
             <a class="home-text-action" href="#encargos">Pedir un encargo</a>
@@ -31,8 +34,13 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
       <div class="home-catalogue-intro__inner">
         <div class="home-catalogue-intro__copy">
           <p class="home-eyebrow">CATÁLOGO</p>
-          <h2 class="home-section-title" id="catalogue-title">Piezas listas para salir del taller</h2>
-          <p class="home-section-description">Una selección de figuras, bustos y accesorios impresos para sumar algo único a tu espacio.</p>
+          <h2 class="home-section-title" id="catalogue-title">
+            Piezas listas para salir del taller
+          </h2>
+          <p class="home-section-description">
+            Una selección de figuras, bustos y accesorios impresos para sumar algo único a tu
+            espacio.
+          </p>
         </div>
       </div>
     </section>
@@ -44,7 +52,9 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
           <a class="home-products__link" href="/products">Ver catálogo completo →</a>
         </div>
         <div class="home-products__body" id="home-products-container">
-          <p class="home-products__loading" id="home-loading-msg" role="status">Cargando productos...</p>
+          <p class="home-products__loading" id="home-loading-msg" role="status">
+            Cargando productos...
+          </p>
           <div id="home-products-content" hidden>
             <div class="home-products__grid" id="home-product-grid"></div>
           </div>
@@ -56,8 +66,12 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
       <div class="home-commission__inner">
         <div class="home-commission__copy">
           <p class="home-eyebrow">CREÁ TU PRODUCTO</p>
-          <h2 class="home-commission__title" id="home-commission-title">Creá tu producto personalizado</h2>
-          <p class="home-commission__description">Convertimos tu idea en una pieza real, impresa y terminada en el taller.</p>
+          <h2 class="home-commission__title" id="home-commission-title">
+            Creá tu producto personalizado
+          </h2>
+          <p class="home-commission__description">
+            Convertimos tu idea en una pieza real, impresa y terminada en el taller.
+          </p>
         </div>
         <a class="home-button home-button--commission" href="/help">Contanos tu idea →</a>
       </div>
@@ -81,7 +95,15 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
 
   <template id="home-featured-product-template">
     <a class="home-featured-card__link" href="">
-          <img class="home-featured-card__image" src="/img/products/cubo_compania_portal.jpg" alt="Cubo de Compañía de Portal" width="420" height="420" loading="eager" decoding="async" />
+      <img
+        class="home-featured-card__image"
+        src="/img/products/cubo_compania_portal.jpg"
+        alt="Cubo de Compañía de Portal"
+        width="420"
+        height="420"
+        loading="eager"
+        decoding="async"
+      />
       <div class="home-featured-card__caption">
         <div>
           <p class="home-featured-card__label">PIEZA DESTACADA</p>
@@ -110,14 +132,20 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
 <script>
   import { getCategoryImg, isPlaceholderImage } from '../domains/products';
   import { resolveImageUrl } from '../lib/imageUrl';
-  import { fetchFeaturedProduct, fetchProducts } from '../domains/products/services/product.service';
+  import {
+    fetchFeaturedProduct,
+    fetchProducts,
+  } from '../domains/products/services/product.service';
 
-  const formatPrice = (price: number): string => `$ ${new Intl.NumberFormat('es-AR').format(price)}`;
+  const formatPrice = (price: number): string =>
+    `$ ${new Intl.NumberFormat('es-AR').format(price)}`;
   const productsResultPromise = fetchProducts();
 
   async function loadFeaturedProduct(): Promise<void> {
     const content = document.getElementById('home-featured-content');
-    const template = document.getElementById('home-featured-product-template') as HTMLTemplateElement | null;
+    const template = document.getElementById(
+      'home-featured-product-template',
+    ) as HTMLTemplateElement | null;
     if (!content || !template) return;
 
     const showState = (id: string): void => {
@@ -134,7 +162,11 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
     }
 
     if (!result.ok) {
-      showState(result.reason === 'not-found' ? 'home-featured-empty-state-template' : 'home-featured-error-state-template');
+      showState(
+        result.reason === 'not-found'
+          ? 'home-featured-empty-state-template'
+          : 'home-featured-error-state-template',
+      );
       return;
     }
 
@@ -200,7 +232,9 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
       return;
     }
 
-    const cardTemp = document.getElementById('home-product-card-template') as HTMLTemplateElement | null;
+    const cardTemp = document.getElementById(
+      'home-product-card-template',
+    ) as HTMLTemplateElement | null;
     if (!cardTemp || !gridContainer || !contentEl) return;
 
     const products = result.products.slice(0, 6);

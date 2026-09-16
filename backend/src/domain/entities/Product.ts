@@ -1,8 +1,8 @@
-import { Category } from "./Category";
-import { Franchise } from "./Franchise";
+import { Category } from './Category';
+import { Franchise } from './Franchise';
 
-export const ALLOWED_MATERIALS = ["PLA", "Resina", "PETG", "Flex"];
-export const CUSTOM_MATERIAL_PREFIX = "Otros: ";
+export const ALLOWED_MATERIALS = ['PLA', 'Resina', 'PETG', 'Flex'];
+export const CUSTOM_MATERIAL_PREFIX = 'Otros: ';
 export const MAX_PRODUCTION_TIME_DAYS = 30;
 
 export class Product {
@@ -25,36 +25,35 @@ export class Product {
     public readonly stock?: number | null,
   ) {
     if (price <= 0.0) {
-      throw new Error("Price must be greater than 0.00");
+      throw new Error('Price must be greater than 0.00');
     }
     if (material !== null && material !== undefined) {
       const isAllowed =
-        ALLOWED_MATERIALS.includes(material) ||
-        material.startsWith(CUSTOM_MATERIAL_PREFIX);
+        ALLOWED_MATERIALS.includes(material) || material.startsWith(CUSTOM_MATERIAL_PREFIX);
       if (!isAllowed) {
-        throw new Error("Invalid material");
+        throw new Error('Invalid material');
       }
     }
     if (height !== null && height !== undefined && height < 0) {
-      throw new Error("Height must be greater than or equal to 0");
+      throw new Error('Height must be greater than or equal to 0');
     }
     if (width !== null && width !== undefined && width < 0) {
-      throw new Error("Width must be greater than or equal to 0");
+      throw new Error('Width must be greater than or equal to 0');
     }
     if (depth !== null && depth !== undefined && depth < 0) {
-      throw new Error("Depth must be greater than or equal to 0");
+      throw new Error('Depth must be greater than or equal to 0');
     }
     if (productionTime !== null && productionTime !== undefined) {
       if (!Number.isInteger(productionTime) || productionTime <= 0) {
-        throw new Error("Production time must be a positive integer");
+        throw new Error('Production time must be a positive integer');
       }
       if (productionTime > MAX_PRODUCTION_TIME_DAYS) {
-        throw new Error("Production time must not exceed 30 days");
+        throw new Error('Production time must not exceed 30 days');
       }
     }
     if (stock !== null && stock !== undefined) {
       if (!Number.isInteger(stock) || stock < 0) {
-        throw new Error("Stock must be a non-negative integer");
+        throw new Error('Stock must be a non-negative integer');
       }
     }
   }

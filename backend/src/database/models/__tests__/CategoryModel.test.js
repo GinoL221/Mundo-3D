@@ -35,7 +35,7 @@ describe('Category Model Definition', () => {
           IDCategory: expect.any(Function),
           NameCategory: expect.any(Function),
         }),
-      })
+      }),
     );
   });
 });

@@ -1,18 +1,18 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { initializeCartBadge } from "./cartBadge";
-import { initializeCrtToggle } from "./crtToggle";
-import { initializeSessionUI } from "./sessionUI";
-import { initializeThemeToggle } from "./themeToggle";
-import { cartItems } from "../domains/cart/services/CartService";
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { initializeCartBadge } from './cartBadge';
+import { initializeCrtToggle } from './crtToggle';
+import { initializeSessionUI } from './sessionUI';
+import { initializeThemeToggle } from './themeToggle';
+import { cartItems } from '../domains/cart/services/CartService';
 
 class FakeElement {
   style: Record<string, string> = {};
   attributes = new Map<string, string>();
-  textContent = "";
-  src = "";
-  href = "";
+  textContent = '';
+  src = '';
+  href = '';
   clickCount = 0;
   listeners = new Map<string, (event: Event) => void>();
 
@@ -34,7 +34,7 @@ class FakeElement {
 
   click() {
     this.clickCount += 1;
-    this.listeners.get("click")?.({
+    this.listeners.get('click')?.({
       preventDefault: vi.fn(),
     } as unknown as Event);
   }
@@ -42,26 +42,22 @@ class FakeElement {
 
 class FakeDocument {
   elements = new Map<string, FakeElement>();
-  cookie = "";
+  cookie = '';
   listeners = new Map<string, (event: Event) => void>();
   documentElement = {
     attributes: new Map<string, string>(),
     classList: {
       values: new Set<string>(),
       add: (value: string) => this.documentElement.classList.values.add(value),
-      remove: (value: string) =>
-        this.documentElement.classList.values.delete(value),
-      contains: (value: string) =>
-        this.documentElement.classList.values.has(value),
+      remove: (value: string) => this.documentElement.classList.values.delete(value),
+      contains: (value: string) => this.documentElement.classList.values.has(value),
       toggle: (value: string, force: boolean) => {
         if (force) this.documentElement.classList.values.add(value);
         else this.documentElement.classList.values.delete(value);
       },
     },
-    setAttribute: (name: string, value: string) =>
-      this.documentElement.attributes.set(name, value),
-    getAttribute: (name: string) =>
-      this.documentElement.attributes.get(name) ?? null,
+    setAttribute: (name: string, value: string) => this.documentElement.attributes.set(name, value),
+    getAttribute: (name: string) => this.documentElement.attributes.get(name) ?? null,
   };
 
   addEventListener(type: string, listener: (event: Event) => void) {
@@ -77,16 +73,16 @@ class FakeDocument {
   }
 
   querySelectorAll(selector: string) {
-    if (selector === ".guest-only") return [this.elements.get("guest")!];
-    if (selector === ".user-only") return [this.elements.get("user")!];
-    if (selector === ".admin-only") return [this.elements.get("admin")!];
+    if (selector === '.guest-only') return [this.elements.get('guest')!];
+    if (selector === '.user-only') return [this.elements.get('user')!];
+    if (selector === '.admin-only') return [this.elements.get('admin')!];
     return [];
   }
 
   querySelector(selector: string) {
     const ids: Record<string, string> = {
-      ".theme-toggle-btn__icon": "theme-icon",
-      ".crt-toggle-btn__icon": "crt-icon",
+      '.theme-toggle-btn__icon': 'theme-icon',
+      '.crt-toggle-btn__icon': 'crt-icon',
     };
     return this.elements.get(ids[selector]) ?? null;
   }
@@ -125,29 +121,29 @@ function createStorage() {
 function createFixture() {
   const document = new FakeDocument();
   for (const id of [
-    "guest",
-    "user",
-    "admin",
-    "navbar-greeting",
-    "navbar-avatar",
-    "navbar-logout",
-    "theme-toggle",
-    "theme-icon",
-    "crt-toggle",
-    "crt-icon",
-    "navbar-cart-badge",
-    "product-link",
-    "profile-link",
-    "search-button",
+    'guest',
+    'user',
+    'admin',
+    'navbar-greeting',
+    'navbar-avatar',
+    'navbar-logout',
+    'theme-toggle',
+    'theme-icon',
+    'crt-toggle',
+    'crt-icon',
+    'navbar-cart-badge',
+    'product-link',
+    'profile-link',
+    'search-button',
   ]) {
     document.elements.set(id, new FakeElement());
   }
-  document.elements.get("product-link")!.href = "/products";
-  document.elements.get("profile-link")!.href = "/profile";
+  document.elements.get('product-link')!.href = '/products';
+  document.elements.get('profile-link')!.href = '/profile';
   const storage = createStorage();
   const window = {
     listeners: new Map<string, (event: Event) => void>(),
-    location: { href: "" },
+    location: { href: '' },
     dispatchEvent: vi.fn(),
     addEventListener(type: string, listener: (event: Event) => void) {
       this.listeners.set(type, listener);
@@ -156,59 +152,44 @@ function createFixture() {
       if (this.listeners.get(type) === listener) this.listeners.delete(type);
     },
   };
-  vi.stubGlobal("localStorage", storage);
-  vi.stubGlobal("window", window);
+  vi.stubGlobal('localStorage', storage);
+  vi.stubGlobal('window', window);
   return { document, window, storage };
 }
 
-describe("Shared route shell", () => {
-  it("uses the Home visual shell and complete navigation contract on non-Home routes", () => {
+describe('Shared route shell', () => {
+  it('uses the Home visual shell and complete navigation contract on non-Home routes', () => {
     const source = (relativePath: string) =>
-      readFileSync(
-        fileURLToPath(new URL(relativePath, import.meta.url)),
-        "utf8",
-      );
-    const layout = source("../layouts/Layout.astro");
-    const header = source("../components/HomeHeader.astro");
-    const footer = source("../components/HomeFooter.astro");
-    const headerStyles = source("../styles/components/home-shell.css");
-    const footerStyles = source("../styles/components/home-footer.css");
+      readFileSync(fileURLToPath(new URL(relativePath, import.meta.url)), 'utf8');
+    const layout = source('../layouts/Layout.astro');
+    const header = source('../components/HomeHeader.astro');
+    const footer = source('../components/HomeFooter.astro');
+    const headerStyles = source('../styles/components/home-shell.css');
+    const footerStyles = source('../styles/components/home-footer.css');
     const routeSources = [
-      "../pages/index.astro",
-      "../pages/products.astro",
-      "../pages/product.astro",
-      "../pages/cart.astro",
+      '../pages/index.astro',
+      '../pages/products.astro',
+      '../pages/product.astro',
+      '../pages/cart.astro',
     ].map(source);
-    const responsiveStyles = source("../styles/components/home-responsive.css");
-    const desktopStyles = source(
-      "../styles/components/home-responsive-desktop.css",
-    );
-    const tabletStyles = source(
-      "../styles/components/home-responsive-tablet.css",
-    );
-    const motionStyles = source(
-      "../styles/components/home-responsive-motion.css",
-    );
+    const responsiveStyles = source('../styles/components/home-responsive.css');
+    const desktopStyles = source('../styles/components/home-responsive-desktop.css');
+    const tabletStyles = source('../styles/components/home-responsive-tablet.css');
+    const motionStyles = source('../styles/components/home-responsive-motion.css');
 
-    expect(layout).not.toContain(
-      "import Header from '../components/Header.astro'",
-    );
-    expect(layout).not.toContain(
-      "import Footer from '../components/Footer.astro'",
-    );
+    expect(layout).not.toContain("import Header from '../components/Header.astro'");
+    expect(layout).not.toContain("import Footer from '../components/Footer.astro'");
     expect(layout).toContain('<body class="home-shell">');
-    expect(layout).toContain("<HomeHeader pathname={Astro.url.pathname} />");
-    expect(layout).not.toContain("showUnavailableSearch");
-    expect(layout).toContain("<HomeFooter />");
-    expect(layout).not.toContain("retro-theme-preference");
-    expect(layout).not.toContain("crt-theme-active");
+    expect(layout).toContain('<HomeHeader pathname={Astro.url.pathname} />');
+    expect(layout).not.toContain('showUnavailableSearch');
+    expect(layout).toContain('<HomeFooter />');
+    expect(layout).not.toContain('retro-theme-preference');
+    expect(layout).not.toContain('crt-theme-active');
     expect(layout).not.toContain('class="crt-overlay"');
     for (const route of routeSources) {
-      expect(route).toMatch(
-        /import\s+Layout\s+from\s+["']\.\.\/layouts\/Layout\.astro["']\s*;?/,
-      );
+      expect(route).toMatch(/import\s+Layout\s+from\s+["']\.\.\/layouts\/Layout\.astro["']\s*;?/);
       expect(route).toMatch(/<Layout(?:\s|>)/);
-      expect(route).toContain("</Layout>");
+      expect(route).toContain('</Layout>');
     }
 
     expect(header).toContain('id="navbar-user-menu-trigger"');
@@ -222,26 +203,26 @@ describe("Shared route shell", () => {
     );
 
     for (const href of [
-      "/#catalogo",
-      "/#encargos",
-      "/products",
-      "/help",
-      "/login",
-      "/register",
-      "/profile",
-      "/orders",
-      "/admin/products",
-      "/cart",
+      '/#catalogo',
+      '/#encargos',
+      '/products',
+      '/help',
+      '/login',
+      '/register',
+      '/profile',
+      '/orders',
+      '/admin/products',
+      '/cart',
     ]) {
       expect(header).toContain(`href="${href}"`);
     }
-    expect(header).toContain("pathname: string;");
-    expect(header).toContain("const { pathname } = Astro.props;");
-    expect(header).not.toContain("showUnavailableSearch");
-    expect(header).not.toContain("home-header__search");
-    expect(header).not.toContain("Búsqueda próximamente");
-    expect(header).not.toContain("home-search-availability");
-    expect(header).not.toContain("La búsqueda todavía no está disponible");
+    expect(header).toContain('pathname: string;');
+    expect(header).toContain('const { pathname } = Astro.props;');
+    expect(header).not.toContain('showUnavailableSearch');
+    expect(header).not.toContain('home-header__search');
+    expect(header).not.toContain('Búsqueda próximamente');
+    expect(header).not.toContain('home-search-availability');
+    expect(header).not.toContain('La búsqueda todavía no está disponible');
     expect(header).toMatch(
       /aria-current=\{\s*catalogIsCurrent\s*\?\s*["']page["']\s*:\s*undefined\s*\}/,
     );
@@ -255,52 +236,44 @@ describe("Shared route shell", () => {
     expect(responsiveStyles).toMatch(
       /^@import ["']\.\/home-responsive-base\.css["'];\n@import ["']\.\/home-responsive-desktop\.css["'];\n@import ["']\.\/home-responsive-tablet\.css["'];\n@import ["']\.\/home-responsive-motion\.css["'];/,
     );
-    expect(responsiveStyles).not.toContain(".home-header__search");
-    expect(responsiveStyles).toContain("@media (min-width: 1024px)");
-    expect(responsiveStyles).toContain("@media (min-width: 1200px)");
-    expect(desktopStyles).toContain("@media (min-width: 1024px)");
-    expect(desktopStyles).not.toContain("@media (min-width: 640px)");
-    expect(desktopStyles).not.toContain("prefers-reduced-motion");
-    expect(tabletStyles).toContain(
-      "@media (min-width: 640px) and (max-width: 767px)",
-    );
-    expect(tabletStyles).toContain(
-      "@media (min-width: 768px) and (max-width: 1023px)",
-    );
-    expect(tabletStyles).toContain("@media (max-width: 360px)");
-    expect(tabletStyles).not.toContain("@media (min-width: 1024px)");
-    expect(tabletStyles).not.toContain("prefers-reduced-motion");
-    expect(motionStyles).toContain("@media (prefers-reduced-motion: reduce)");
-    expect(motionStyles).not.toContain("@media (min-width:");
-    expect(motionStyles).not.toContain("@media (max-width:");
+    expect(responsiveStyles).not.toContain('.home-header__search');
+    expect(responsiveStyles).toContain('@media (min-width: 1024px)');
+    expect(responsiveStyles).toContain('@media (min-width: 1200px)');
+    expect(desktopStyles).toContain('@media (min-width: 1024px)');
+    expect(desktopStyles).not.toContain('@media (min-width: 640px)');
+    expect(desktopStyles).not.toContain('prefers-reduced-motion');
+    expect(tabletStyles).toContain('@media (min-width: 640px) and (max-width: 767px)');
+    expect(tabletStyles).toContain('@media (min-width: 768px) and (max-width: 1023px)');
+    expect(tabletStyles).toContain('@media (max-width: 360px)');
+    expect(tabletStyles).not.toContain('@media (min-width: 1024px)');
+    expect(tabletStyles).not.toContain('prefers-reduced-motion');
+    expect(motionStyles).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(motionStyles).not.toContain('@media (min-width:');
+    expect(motionStyles).not.toContain('@media (max-width:');
 
     const footerLinks = [
-      ["Productos", "/products"],
-      ["Ayuda", "/help"],
-      ["Nosotros", "/aboutUs"],
-      ["Términos", "/terms"],
-      ["Privacidad", "/privacy"],
+      ['Productos', '/products'],
+      ['Ayuda', '/help'],
+      ['Nosotros', '/aboutUs'],
+      ['Términos', '/terms'],
+      ['Privacidad', '/privacy'],
     ] as const;
     for (const [label, href] of footerLinks) {
       expect(footer).toContain(`<a href="${href}">${label}</a>`);
     }
     expect(
-      footer
-        .match(/<nav class="home-footer__links"[\s\S]*?<\/nav>/)?.[0]
-        .match(/<a /g),
+      footer.match(/<nav class="home-footer__links"[\s\S]*?<\/nav>/)?.[0].match(/<a /g),
     ).toHaveLength(5);
-    expect(footer).not.toContain("Preguntas frecuentes");
-    expect(footer).not.toContain("Paso a paso");
-    expect(footer).not.toContain("home-footer__tagline");
-    expect(footer).not.toContain("home-footer__heading");
+    expect(footer).not.toContain('Preguntas frecuentes');
+    expect(footer).not.toContain('Paso a paso');
+    expect(footer).not.toContain('home-footer__tagline');
+    expect(footer).not.toContain('home-footer__heading');
     expect(footer).toContain('id="ayuda"');
-    expect(footer).toContain("© 2026 Mundo 3D. Todos los derechos reservados.");
+    expect(footer).toContain('© 2026 Mundo 3D. Todos los derechos reservados.');
 
-    expect(footerStyles).toContain("@media (max-width: 639px)");
-    expect(footerStyles).toContain(
-      "grid-template-columns: repeat(2, minmax(0, 1fr))",
-    );
-    expect(footerStyles).toContain("width: min(100%, 280px)");
+    expect(footerStyles).toContain('@media (max-width: 639px)');
+    expect(footerStyles).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))');
+    expect(footerStyles).toContain('width: min(100%, 280px)');
     expect(footerStyles).toMatch(
       /\.home-footer__links a \{[\s\S]*?min-width: 44px;[\s\S]*?min-height: 44px;[\s\S]*?box-sizing: border-box;[\s\S]*?\}/,
     );
@@ -310,132 +283,111 @@ describe("Shared route shell", () => {
   });
 });
 
-describe("Header browser modules", () => {
+describe('Header browser modules', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it("renders guest, user, and admin visibility and reacts to session-changed and BroadcastChannel events", () => {
+  it('renders guest, user, and admin visibility and reacts to session-changed and BroadcastChannel events', () => {
     FakeBroadcastChannel.instances = [];
-    vi.stubGlobal("BroadcastChannel", FakeBroadcastChannel);
+    vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
     const fixture = createFixture();
     const { document, window } = fixture;
-    setUserCookie(document, { firstName: "Ada", idRole: 1, image: "ada.png" });
+    setUserCookie(document, { firstName: 'Ada', idRole: 1, image: 'ada.png' });
 
-    initializeSessionUI(
-      document as unknown as Document,
-      window as unknown as Window,
-    );
+    initializeSessionUI(document as unknown as Document, window as unknown as Window);
 
-    expect(document.elements.get("guest")!.style.display).toBe("none");
-    expect(document.elements.get("user")!.style.display).toBe("block");
-    expect(document.elements.get("admin")!.style.display).toBe("block");
-    expect(document.elements.get("navbar-greeting")!.textContent).toBe(
-      "Hola Ada",
-    );
-    expect(document.elements.get("navbar-avatar")!.src).toBe(
-      "/img/users/ada.png",
-    );
-    expect(document.elements.get("search-button")!.listeners.has("click")).toBe(
-      false,
-    );
+    expect(document.elements.get('guest')!.style.display).toBe('none');
+    expect(document.elements.get('user')!.style.display).toBe('block');
+    expect(document.elements.get('admin')!.style.display).toBe('block');
+    expect(document.elements.get('navbar-greeting')!.textContent).toBe('Hola Ada');
+    expect(document.elements.get('navbar-avatar')!.src).toBe('/img/users/ada.png');
+    expect(document.elements.get('search-button')!.listeners.has('click')).toBe(false);
 
-    document.cookie = "";
-    window.listeners.get("session-changed")?.({} as Event);
-    expect(document.elements.get("guest")!.style.display).toBe("block");
-    expect(document.elements.get("user")!.style.display).toBe("none");
+    document.cookie = '';
+    window.listeners.get('session-changed')?.({} as Event);
+    expect(document.elements.get('guest')!.style.display).toBe('block');
+    expect(document.elements.get('user')!.style.display).toBe('none');
 
     // A BroadcastChannel login message from another tab (e.g. that tab
     // logging out and back in as staff) re-reads the cookie the same way.
     // The logout direction deliberately does NOT — see sessionUI.test.ts,
     // which owns the message-payload contract.
-    setUserCookie(document, { firstName: "User", idRole: 3 });
+    setUserCookie(document, { firstName: 'User', idRole: 3 });
     const channel = FakeBroadcastChannel.instances.at(-1)!;
     channel.onmessage?.({
-      data: { type: "session-changed", state: "logged-in" },
+      data: { type: 'session-changed', state: 'logged-in' },
     } as MessageEvent);
-    expect(document.elements.get("user")!.style.display).toBe("block");
-    expect(document.elements.get("admin")!.style.display).toBe("block");
+    expect(document.elements.get('user')!.style.display).toBe('block');
+    expect(document.elements.get('admin')!.style.display).toBe('block');
   });
 
-  it("falls back to visibilitychange and focus to refresh stale session state", () => {
+  it('falls back to visibilitychange and focus to refresh stale session state', () => {
     const fixture = createFixture();
     const { document, window } = fixture;
 
-    initializeSessionUI(
-      document as unknown as Document,
-      window as unknown as Window,
-    );
-    expect(document.elements.get("user")!.style.display).toBe("none");
+    initializeSessionUI(document as unknown as Document, window as unknown as Window);
+    expect(document.elements.get('user')!.style.display).toBe('none');
 
-    setUserCookie(document, { firstName: "Ada", idRole: 2 });
-    document.listeners.get("visibilitychange")?.({} as Event);
-    expect(document.elements.get("user")!.style.display).toBe("block");
+    setUserCookie(document, { firstName: 'Ada', idRole: 2 });
+    document.listeners.get('visibilitychange')?.({} as Event);
+    expect(document.elements.get('user')!.style.display).toBe('block');
 
-    document.cookie = "";
-    window.listeners.get("focus")?.({} as Event);
-    expect(document.elements.get("user")!.style.display).toBe("none");
+    document.cookie = '';
+    window.listeners.get('focus')?.({} as Event);
+    expect(document.elements.get('user')!.style.display).toBe('none');
   });
 
-  it("preserves navigation and dropdown links while search remains visual-only", () => {
+  it('preserves navigation and dropdown links while search remains visual-only', () => {
     const fixture = createFixture();
     const { document, window } = fixture;
-    setUserCookie(document, { firstName: "Ada", idRole: 1 });
+    setUserCookie(document, { firstName: 'Ada', idRole: 1 });
 
-    initializeSessionUI(
-      document as unknown as Document,
-      window as unknown as Window,
-    );
+    initializeSessionUI(document as unknown as Document, window as unknown as Window);
 
-    expect(document.elements.get("product-link")!.href).toBe("/products");
-    expect(document.elements.get("profile-link")!.href).toBe("/profile");
+    expect(document.elements.get('product-link')!.href).toBe('/products');
+    expect(document.elements.get('profile-link')!.href).toBe('/profile');
 
-    const search = document.elements.get("search-button")!;
+    const search = document.elements.get('search-button')!;
     search.click();
     expect(search.clickCount).toBe(1);
-    expect(search.listeners.has("click")).toBe(false);
-    expect(window.location.href).toBe("");
+    expect(search.listeners.has('click')).toBe(false);
+    expect(window.location.href).toBe('');
   });
 
-  it("resets to guest without throwing on a corrupt session cookie", () => {
+  it('resets to guest without throwing on a corrupt session cookie', () => {
     const fixture = createFixture();
     const { document, window } = fixture;
-    document.cookie = "m3d_user=%7Bnot-valid-json";
+    document.cookie = 'm3d_user=%7Bnot-valid-json';
 
     expect(() =>
-      initializeSessionUI(
-        document as unknown as Document,
-        window as unknown as Window,
-      ),
+      initializeSessionUI(document as unknown as Document, window as unknown as Window),
     ).not.toThrow();
-    expect(document.elements.get("guest")!.style.display).toBe("block");
-    expect(document.elements.get("user")!.style.display).toBe("none");
+    expect(document.elements.get('guest')!.style.display).toBe('block');
+    expect(document.elements.get('user')!.style.display).toBe('none');
   });
 
-  it("performs logout by clearing the cart, best-effort clearing the session, and redirecting", async () => {
+  it('performs logout by clearing the cart, best-effort clearing the session, and redirecting', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 204 });
-    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal('fetch', fetchMock);
     const fixture = createFixture();
     const { document, window } = fixture;
-    setUserCookie(document, { firstName: "Ada", idRole: 1 });
+    setUserCookie(document, { firstName: 'Ada', idRole: 1 });
 
-    initializeSessionUI(
-      document as unknown as Document,
-      window as unknown as Window,
-    );
+    initializeSessionUI(document as unknown as Document, window as unknown as Window);
 
-    document.elements.get("navbar-logout")!.click();
+    document.elements.get('navbar-logout')!.click();
 
     // Redirect happens immediately — logout never blocks on the network
     // call (fire-and-forget, see session.service.ts clearSession()).
-    expect(window.location.href).toBe("/login");
+    expect(window.location.href).toBe('/login');
     await Promise.resolve();
     await Promise.resolve();
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toContain("/api/users/logout");
+    expect(fetchMock.mock.calls[0][0]).toContain('/api/users/logout');
   });
 
-  it("closes the BroadcastChannel and removes all listeners on cleanup", () => {
+  it('closes the BroadcastChannel and removes all listeners on cleanup', () => {
     FakeBroadcastChannel.instances = [];
-    vi.stubGlobal("BroadcastChannel", FakeBroadcastChannel);
+    vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
     const fixture = createFixture();
     const { document, window } = fixture;
 
@@ -448,109 +400,82 @@ describe("Header browser modules", () => {
     cleanup();
 
     expect(channel.close).toHaveBeenCalledTimes(1);
-    expect(window.listeners.has("session-changed")).toBe(false);
-    expect(window.listeners.has("focus")).toBe(false);
-    expect(document.listeners.has("visibilitychange")).toBe(false);
+    expect(window.listeners.has('session-changed')).toBe(false);
+    expect(window.listeners.has('focus')).toBe(false);
+    expect(document.listeners.has('visibilitychange')).toBe(false);
   });
 
-  it("falls back to light for an invalid persisted theme", () => {
+  it('falls back to light for an invalid persisted theme', () => {
     const fixture = createFixture();
-    fixture.storage.setItem("theme", "invalid");
+    fixture.storage.setItem('theme', 'invalid');
     initializeThemeToggle(
       fixture.document as unknown as Document,
       fixture.storage as unknown as Storage,
     );
-    expect(fixture.document.documentElement.getAttribute("data-theme")).toBe(
-      "light",
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Cambiar a tema oscuro',
     );
-    expect(
-      fixture.document.elements.get("theme-toggle")!.getAttribute("aria-label"),
-    ).toBe("Cambiar a tema oscuro");
-    expect(fixture.document.elements.get("theme-icon")!.textContent).toBe("");
+    expect(fixture.document.elements.get('theme-icon')!.textContent).toBe('');
 
     const cleanup = initializeThemeToggle(
       fixture.document as unknown as Document,
       fixture.storage as unknown as Storage,
     );
-    expect(fixture.document.documentElement.getAttribute("data-theme")).toBe(
-      "light",
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('light');
+    fixture.document.elements.get('theme-toggle')!.click();
+    expect(fixture.storage.setItem).toHaveBeenCalledWith('theme', 'dark');
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Cambiar a tema claro',
     );
-    fixture.document.elements.get("theme-toggle")!.click();
-    expect(fixture.storage.setItem).toHaveBeenCalledWith("theme", "dark");
-    expect(
-      fixture.document.elements.get("theme-toggle")!.getAttribute("aria-label"),
-    ).toBe("Cambiar a tema claro");
     cleanup();
     cleanup();
   });
 
-  it("hydrates an absent theme as light and persists the toggle to dark", () => {
+  it('hydrates an absent theme as light and persists the toggle to dark', () => {
     const absentFixture = createFixture();
     initializeThemeToggle(
       absentFixture.document as unknown as Document,
       absentFixture.storage as unknown as Storage,
     );
-    expect(
-      absentFixture.document.documentElement.getAttribute("data-theme"),
-    ).toBe("light");
-    expect(
-      absentFixture.document.elements
-        .get("theme-toggle")!
-        .getAttribute("aria-label"),
-    ).toBe("Cambiar a tema oscuro");
-    expect(absentFixture.document.elements.get("theme-icon")!.textContent).toBe(
-      "",
+    expect(absentFixture.document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(absentFixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Cambiar a tema oscuro',
     );
+    expect(absentFixture.document.elements.get('theme-icon')!.textContent).toBe('');
 
     const lightFixture = createFixture();
-    lightFixture.storage.setItem("theme", "light");
+    lightFixture.storage.setItem('theme', 'light');
     initializeThemeToggle(
       lightFixture.document as unknown as Document,
       lightFixture.storage as unknown as Storage,
     );
-    expect(
-      lightFixture.document.documentElement.getAttribute("data-theme"),
-    ).toBe("light");
-    expect(
-      lightFixture.document.elements
-        .get("theme-toggle")!
-        .getAttribute("aria-label"),
-    ).toBe("Cambiar a tema oscuro");
-    expect(lightFixture.document.elements.get("theme-icon")!.textContent).toBe(
-      "",
+    expect(lightFixture.document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(lightFixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Cambiar a tema oscuro',
     );
+    expect(lightFixture.document.elements.get('theme-icon')!.textContent).toBe('');
 
-    lightFixture.document.elements.get("theme-toggle")!.click();
-    expect(lightFixture.storage.getItem("theme")).toBe("dark");
-    expect(
-      lightFixture.document.documentElement.getAttribute("data-theme"),
-    ).toBe("dark");
-    expect(
-      lightFixture.document.elements
-        .get("theme-toggle")!
-        .getAttribute("aria-label"),
-    ).toBe("Cambiar a tema claro");
-    expect(lightFixture.document.elements.get("theme-icon")!.textContent).toBe(
-      "",
+    lightFixture.document.elements.get('theme-toggle')!.click();
+    expect(lightFixture.storage.getItem('theme')).toBe('dark');
+    expect(lightFixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(lightFixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Cambiar a tema claro',
     );
+    expect(lightFixture.document.elements.get('theme-icon')!.textContent).toBe('');
   });
 
-  it("persists CRT toggles and cleans up duplicate initialization", () => {
+  it('persists CRT toggles and cleans up duplicate initialization', () => {
     const fixture = createFixture();
-    fixture.storage.setItem("retro-theme-preference", "disabled");
+    fixture.storage.setItem('retro-theme-preference', 'disabled');
     const cleanup = initializeCrtToggle(
       fixture.document as unknown as Document,
       fixture.storage as unknown as Storage,
     );
-    expect(
-      fixture.document.documentElement.classList.contains("crt-theme-active"),
-    ).toBe(false);
-    expect(fixture.document.elements.get("crt-icon")!.textContent).toBe("🔌");
-    fixture.document.elements.get("crt-toggle")!.click();
-    expect(fixture.storage.setItem).toHaveBeenCalledWith(
-      "retro-theme-preference",
-      "enabled",
-    );
+    expect(fixture.document.documentElement.classList.contains('crt-theme-active')).toBe(false);
+    expect(fixture.document.elements.get('crt-icon')!.textContent).toBe('🔌');
+    fixture.document.elements.get('crt-toggle')!.click();
+    expect(fixture.storage.setItem).toHaveBeenCalledWith('retro-theme-preference', 'enabled');
     expect(
       initializeCrtToggle(
         fixture.document as unknown as Document,
@@ -561,79 +486,69 @@ describe("Header browser modules", () => {
     cleanup();
   });
 
-  it("starts CRT enabled and persists the disabled state when toggled off", () => {
+  it('starts CRT enabled and persists the disabled state when toggled off', () => {
     const fixture = createFixture();
     const cleanup = initializeCrtToggle(
       fixture.document as unknown as Document,
       fixture.storage as unknown as Storage,
     );
 
-    expect(
-      fixture.document.documentElement.classList.contains("crt-theme-active"),
-    ).toBe(true);
-    expect(fixture.document.elements.get("crt-icon")!.textContent).toBe("📺");
+    expect(fixture.document.documentElement.classList.contains('crt-theme-active')).toBe(true);
+    expect(fixture.document.elements.get('crt-icon')!.textContent).toBe('📺');
 
-    fixture.document.elements.get("crt-toggle")!.click();
-    expect(fixture.storage.getItem("retro-theme-preference")).toBe("disabled");
-    expect(
-      fixture.document.documentElement.classList.contains("crt-theme-active"),
-    ).toBe(false);
-    expect(fixture.document.elements.get("crt-icon")!.textContent).toBe("🔌");
+    fixture.document.elements.get('crt-toggle')!.click();
+    expect(fixture.storage.getItem('retro-theme-preference')).toBe('disabled');
+    expect(fixture.document.documentElement.classList.contains('crt-theme-active')).toBe(false);
+    expect(fixture.document.elements.get('crt-icon')!.textContent).toBe('🔌');
 
     cleanup();
   });
 
-  it("renders distinct cart items, hides empty state, and unsubscribes", () => {
+  it('renders distinct cart items, hides empty state, and unsubscribes', () => {
     const fixture = createFixture();
-    fixture.storage.setItem("cart", JSON.stringify([]));
+    fixture.storage.setItem('cart', JSON.stringify([]));
     cartItems.set([]);
-    const cleanup = initializeCartBadge(
-      fixture.document as unknown as Document,
-    );
-    const badge = fixture.document.elements.get("navbar-cart-badge")!;
-    expect(badge.style.display).toBe("none");
+    const cleanup = initializeCartBadge(fixture.document as unknown as Document);
+    const badge = fixture.document.elements.get('navbar-cart-badge')!;
+    expect(badge.style.display).toBe('none');
 
     cartItems.set([
       {
         productId: 1,
-        name: "One",
-        image: "one.png",
+        name: 'One',
+        image: 'one.png',
         unitPrice: 10,
         quantity: 4,
       },
       {
         productId: 2,
-        name: "Two",
-        image: "two.png",
+        name: 'Two',
+        image: 'two.png',
         unitPrice: 20,
         quantity: 1,
       },
     ]);
-    expect(badge.style.display).toBe("inline-block");
-    expect(badge.textContent).toBe("2");
+    expect(badge.style.display).toBe('inline-block');
+    expect(badge.textContent).toBe('2');
 
     cartItems.set([]);
-    expect(badge.style.display).toBe("none");
+    expect(badge.style.display).toBe('none');
 
     cleanup();
     cartItems.set([
       {
         productId: 3,
-        name: "Three",
-        image: "three.png",
+        name: 'Three',
+        image: 'three.png',
         unitPrice: 30,
         quantity: 1,
       },
     ]);
-    expect(badge.style.display).toBe("none");
+    expect(badge.style.display).toBe('none');
 
     const emptyFixture = createFixture();
-    const emptyCleanup = initializeCartBadge(
-      emptyFixture.document as unknown as Document,
-    );
-    expect(
-      emptyFixture.document.elements.get("navbar-cart-badge")!.style.display,
-    ).toBe("none");
+    const emptyCleanup = initializeCartBadge(emptyFixture.document as unknown as Document);
+    expect(emptyFixture.document.elements.get('navbar-cart-badge')!.style.display).toBe('none');
     emptyCleanup();
   });
 });

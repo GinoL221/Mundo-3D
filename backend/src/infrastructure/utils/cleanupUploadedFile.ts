@@ -26,7 +26,7 @@ export function cleanupUploadedFile(key: string | undefined | null): void {
       .catch((error) => {
         logger.warn(
           { event: 'upload_cleanup_failed', key, bucket, error },
-          `Failed to remove orphaned upload: ${key}`
+          `Failed to remove orphaned upload: ${key}`,
         );
       });
     return;
@@ -36,7 +36,7 @@ export function cleanupUploadedFile(key: string | undefined | null): void {
   fs.promises.unlink(filePath).catch((error) => {
     logger.warn(
       { event: 'upload_cleanup_failed', key, filePath, error },
-      `Failed to remove orphaned upload: ${key}`
+      `Failed to remove orphaned upload: ${key}`,
     );
   });
 }

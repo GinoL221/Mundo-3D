@@ -13,7 +13,11 @@ interface DecodedToken {
   typ?: string;
 }
 
-export const apiAuthMiddleware = (req: Request, res: Response, next: NextFunction): void | Response => {
+export const apiAuthMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void | Response => {
   const token = req.cookies?.[AUTH_COOKIE];
 
   if (!token) {
@@ -45,22 +49,20 @@ export const apiAuthMiddleware = (req: Request, res: Response, next: NextFunctio
 // The principal always comes from `req.user`, set by apiAuthMiddleware from
 // the JWT cookie. This API has exactly one authentication path — there is no
 // server-side session store to fall back to.
-export const requireRoles = (...roles: Role[]) => (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void | Response => {
-  const principal = req.user;
+export const requireRoles =
+  (...roles: Role[]) =>
+  (req: Request, res: Response, next: NextFunction): void | Response => {
+    const principal = req.user;
 
-  if (!principal) {
-    return res.status(401).json({ error: 'Autenticación requerida' });
-  }
+    if (!principal) {
+      return res.status(401).json({ error: 'Autenticación requerida' });
+    }
 
-  if (!roles.includes(principal.idRole as Role)) {
-    return res.status(403).json({ error: 'Acceso restringido' });
-  }
+    if (!roles.includes(principal.idRole as Role)) {
+      return res.status(403).json({ error: 'Acceso restringido' });
+    }
 
-  next();
-};
+    next();
+  };
 
 export const adminGuard = requireRoles(Role.ADMIN);

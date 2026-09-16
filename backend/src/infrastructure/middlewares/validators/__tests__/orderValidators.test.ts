@@ -20,7 +20,11 @@ const runValidation = async (query: Record<string, unknown>) => {
     if (typeof (middleware as ValidationChain).run === 'function') {
       await (middleware as ValidationChain).run(req);
     } else {
-      await (middleware as (req: Request, res: Response, next: NextFunction) => void)(req, res, next);
+      await (middleware as (req: Request, res: Response, next: NextFunction) => void)(
+        req,
+        res,
+        next,
+      );
     }
   }
 
@@ -42,13 +46,18 @@ describe('listMyOrdersValidation', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
-  it.each([['0'], ['-1'], ['abc']])('rejects an invalid page=%s with 400 INVALID_PAGINATION', async (page) => {
-    const { res, next } = await runValidation({ page });
+  it.each([['0'], ['-1'], ['abc']])(
+    'rejects an invalid page=%s with 400 INVALID_PAGINATION',
+    async (page) => {
+      const { res, next } = await runValidation({ page });
 
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'INVALID_PAGINATION' }));
-    expect(next).not.toHaveBeenCalled();
-  });
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'INVALID_PAGINATION' }),
+      );
+      expect(next).not.toHaveBeenCalled();
+    },
+  );
 
   it.each([['0'], ['-1'], ['51'], ['abc']])(
     'rejects an invalid pageSize=%s with 400 INVALID_PAGINATION',
@@ -56,8 +65,10 @@ describe('listMyOrdersValidation', () => {
       const { res, next } = await runValidation({ pageSize });
 
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'INVALID_PAGINATION' }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'INVALID_PAGINATION' }),
+      );
       expect(next).not.toHaveBeenCalled();
-    }
+    },
   );
 });

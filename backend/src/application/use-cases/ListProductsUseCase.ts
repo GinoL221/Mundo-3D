@@ -1,5 +1,5 @@
-import { ProductRepositoryPort } from "../../domain/ports/ProductRepositoryPort";
-import { ProductDTO } from "../dtos/ProductDTO";
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { ProductDTO } from '../dtos/ProductDTO';
 
 export interface CategoryCountInfo {
   count: number;
@@ -22,9 +22,7 @@ export class ListProductsUseCase {
     const countByCategory: Record<string, CategoryCountInfo> = {};
 
     const mapped = products.map((p) => {
-      const categoryName = p.Category
-        ? p.Category.nameCategory
-        : "Sin categoría";
+      const categoryName = p.Category ? p.Category.nameCategory : 'Sin categoría';
 
       const categoryInfo = p.Category
         ? {

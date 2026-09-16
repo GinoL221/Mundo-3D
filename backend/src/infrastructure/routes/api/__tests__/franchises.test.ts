@@ -45,14 +45,24 @@ const signToken = (idRole: Role) =>
   jwt.sign(
     { userId: 1, email: 'principal@test.com', category: 'test', idRole, typ: 'access' },
     getJwtSecret(),
-    accessTokenSignOptions('1h')
+    accessTokenSignOptions('1h'),
   );
 
 const adminToken = signToken(Role.ADMIN);
 const userToken = signToken(Role.USER);
 
-const adminAuth = authAndCsrf({ userId: 1, email: 'principal@test.com', category: 'test', idRole: Role.ADMIN });
-const staffAuth = authAndCsrf({ userId: 1, email: 'principal@test.com', category: 'test', idRole: Role.STAFF });
+const adminAuth = authAndCsrf({
+  userId: 1,
+  email: 'principal@test.com',
+  category: 'test',
+  idRole: Role.ADMIN,
+});
+const staffAuth = authAndCsrf({
+  userId: 1,
+  email: 'principal@test.com',
+  category: 'test',
+  idRole: Role.STAFF,
+});
 
 describe('api/franchises routes', () => {
   let app: Express;

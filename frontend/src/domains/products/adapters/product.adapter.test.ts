@@ -34,9 +34,7 @@ describe('adaptAPIProduct — dimension fallback logic', () => {
   });
 
   it('treats a defined 0 among null/undefined siblings as present, not "A consultar"', () => {
-    const product = adaptAPIProduct(
-      buildAPIProduct({ height: null, width: 0, depth: undefined }),
-    );
+    const product = adaptAPIProduct(buildAPIProduct({ height: null, width: 0, depth: undefined }));
 
     expect(product.height).toBe('no definida');
     expect(product.width).toBe('0 cm');
@@ -45,9 +43,7 @@ describe('adaptAPIProduct — dimension fallback logic', () => {
   });
 
   it('formats defined dimensions as "X cm" and undefined ones as "no definida" when at least one is defined', () => {
-    const product = adaptAPIProduct(
-      buildAPIProduct({ height: 12, width: null, depth: undefined }),
-    );
+    const product = adaptAPIProduct(buildAPIProduct({ height: 12, width: null, depth: undefined }));
 
     expect(product.height).toBe('12 cm');
     expect(product.width).toBe('no definida');
@@ -55,9 +51,7 @@ describe('adaptAPIProduct — dimension fallback logic', () => {
   });
 
   it('formats all dimensions as "X cm" when all are fully defined', () => {
-    const product = adaptAPIProduct(
-      buildAPIProduct({ height: 10.5, width: 8, depth: 5.5 }),
-    );
+    const product = adaptAPIProduct(buildAPIProduct({ height: 10.5, width: 8, depth: 5.5 }));
 
     expect(product.height).toBe('10.5 cm');
     expect(product.width).toBe('8 cm');
@@ -65,9 +59,7 @@ describe('adaptAPIProduct — dimension fallback logic', () => {
   });
 
   it('treats a defined 0 dimension as a valid value, not "no definida"', () => {
-    const product = adaptAPIProduct(
-      buildAPIProduct({ height: 12, width: 8, depth: 0 }),
-    );
+    const product = adaptAPIProduct(buildAPIProduct({ height: 12, width: 8, depth: 0 }));
 
     expect(product.height).toBe('12 cm');
     expect(product.width).toBe('8 cm');
@@ -75,9 +67,7 @@ describe('adaptAPIProduct — dimension fallback logic', () => {
   });
 
   it('renders "0 cm" for all dimensions when all three are legitimately 0, not "A consultar"', () => {
-    const product = adaptAPIProduct(
-      buildAPIProduct({ height: 0, width: 0, depth: 0 }),
-    );
+    const product = adaptAPIProduct(buildAPIProduct({ height: 0, width: 0, depth: 0 }));
 
     expect(product.height).toBe('0 cm');
     expect(product.width).toBe('0 cm');

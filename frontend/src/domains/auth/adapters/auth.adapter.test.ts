@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { createAuthAdapter, createUserAdapter, type APILoginResponse, type APIUser } from './auth.adapter';
+import {
+  createAuthAdapter,
+  createUserAdapter,
+  type APILoginResponse,
+  type APIUser,
+} from './auth.adapter';
 
 function buildAPIUser(overrides: Partial<APIUser> = {}): APIUser {
   return {

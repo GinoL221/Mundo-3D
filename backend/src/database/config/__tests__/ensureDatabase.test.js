@@ -19,7 +19,7 @@ describe('ensureDatabaseExists', () => {
 
   it('throws a clear configuration error for an unsupported NODE_ENV', async () => {
     await expect(ensureDatabaseExists('staging')).rejects.toThrow(
-      "Unsupported NODE_ENV: 'staging' — expected one of: development, test, production"
+      "Unsupported NODE_ENV: 'staging' — expected one of: development, test, production",
     );
     expect(mysql.createConnection).not.toHaveBeenCalled();
   });
@@ -46,7 +46,7 @@ describe('ensureDatabaseExists', () => {
 
   it('still validates an unsupported NODE_ENV before the production short-circuit', async () => {
     await expect(ensureDatabaseExists('staging')).rejects.toThrow(
-      "Unsupported NODE_ENV: 'staging' — expected one of: development, test, production"
+      "Unsupported NODE_ENV: 'staging' — expected one of: development, test, production",
     );
     expect(mysql.createConnection).not.toHaveBeenCalled();
   });

@@ -1,4 +1,4 @@
-import { atom, computed } from "nanostores";
+import { atom, computed } from 'nanostores';
 
 export interface CartItem {
   productId: number;
@@ -26,10 +26,8 @@ export const cartTotal = computed(cartItems, (items) =>
 // Persist cart to localStorage
 export function persistCart(items: CartItem[]): void {
   try {
-    localStorage.setItem("cart", JSON.stringify(items));
-    window.dispatchEvent(
-      new CustomEvent("cart-updated", { detail: { count: items.length } }),
-    );
+    localStorage.setItem('cart', JSON.stringify(items));
+    window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count: items.length } }));
   } catch {
     // localStorage may be unavailable in SSR context
   }

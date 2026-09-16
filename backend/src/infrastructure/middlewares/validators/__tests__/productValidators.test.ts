@@ -28,7 +28,11 @@ const runValidation = async (query: Record<string, unknown>) => {
       const next = (() => {
         calledNext = true;
       }) as NextFunction;
-      await (middleware as (req: Request, res: Response, next: NextFunction) => void)(req, res, next);
+      await (middleware as (req: Request, res: Response, next: NextFunction) => void)(
+        req,
+        res,
+        next,
+      );
       if (!calledNext) {
         return { res, reachedEnd: false };
       }
@@ -58,13 +62,18 @@ describe('searchProductsValidation', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
-  it.each([['0'], ['-1'], ['abc']])('rejects an invalid page=%s with 400 INVALID_PAGINATION', async (page) => {
-    const { res, reachedEnd } = await runValidation({ page });
+  it.each([['0'], ['-1'], ['abc']])(
+    'rejects an invalid page=%s with 400 INVALID_PAGINATION',
+    async (page) => {
+      const { res, reachedEnd } = await runValidation({ page });
 
-    expect(reachedEnd).toBe(false);
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'INVALID_PAGINATION' }));
-  });
+      expect(reachedEnd).toBe(false);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'INVALID_PAGINATION' }),
+      );
+    },
+  );
 
   it.each([['0'], ['-1'], ['51'], ['100000'], ['abc']])(
     'rejects an invalid pageSize=%s with 400 INVALID_PAGINATION',
@@ -73,8 +82,10 @@ describe('searchProductsValidation', () => {
 
       expect(reachedEnd).toBe(false);
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'INVALID_PAGINATION' }));
-    }
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'INVALID_PAGINATION' }),
+      );
+    },
   );
 
   it('empty-string idCategory is treated as "no filter", not a 400', async () => {

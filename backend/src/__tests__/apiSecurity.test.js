@@ -77,9 +77,7 @@ describe('REST API Security & Role Gating', () => {
     });
 
     it('returns 403 when authenticated user is not an admin (idRole !== Role.ADMIN)', async () => {
-      const res = await request(app)
-        .get('/api/users')
-        .set('Cookie', userAuth.cookie);
+      const res = await request(app).get('/api/users').set('Cookie', userAuth.cookie);
       expect(res.status).toBe(403);
       expect(res.body.error).toBe('Acceso restringido');
       expect(mockListUsersExecute).not.toHaveBeenCalled();
@@ -87,9 +85,7 @@ describe('REST API Security & Role Gating', () => {
 
     it('allows access and returns 200 when authenticated user is admin (idRole === Role.ADMIN)', async () => {
       mockListUsersExecute.mockResolvedValue([]);
-      const res = await request(app)
-        .get('/api/users')
-        .set('Cookie', adminAuth.cookie);
+      const res = await request(app).get('/api/users').set('Cookie', adminAuth.cookie);
       expect(res.status).toBe(200);
       expect(mockListUsersExecute).toHaveBeenCalledTimes(1);
     });
@@ -103,18 +99,14 @@ describe('REST API Security & Role Gating', () => {
     });
 
     it('returns 403 when authenticated user is not an admin', async () => {
-      const res = await request(app)
-        .get('/api/users/2')
-        .set('Cookie', userAuth.cookie);
+      const res = await request(app).get('/api/users/2').set('Cookie', userAuth.cookie);
       expect(res.status).toBe(403);
       expect(mockGetUserByIdExecute).not.toHaveBeenCalled();
     });
 
     it('allows access and returns 200 when authenticated user is admin', async () => {
       mockGetUserByIdExecute.mockResolvedValue({ idUser: 2, email: 'user@test.com' });
-      const res = await request(app)
-        .get('/api/users/2')
-        .set('Cookie', adminAuth.cookie);
+      const res = await request(app).get('/api/users/2').set('Cookie', adminAuth.cookie);
       expect(res.status).toBe(200);
       expect(mockGetUserByIdExecute).toHaveBeenCalledWith(2);
     });
@@ -129,9 +121,7 @@ describe('REST API Security & Role Gating', () => {
 
     it('allows access and returns 200 for a standard authenticated user', async () => {
       mockGetCartByUserIdExecute.mockResolvedValue({ items: [], total: 0 });
-      const res = await request(app)
-        .get('/api/cart')
-        .set('Cookie', userAuth.cookie);
+      const res = await request(app).get('/api/cart').set('Cookie', userAuth.cookie);
       expect(res.status).toBe(200);
       expect(mockGetCartByUserIdExecute).toHaveBeenCalledWith(2);
     });
@@ -195,9 +185,7 @@ describe('REST API Security & Role Gating', () => {
       const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
 
       mockListUsersExecute.mockRejectedValue(new Error('Test uncaught exception'));
-      const res = await request(app)
-        .get('/api/users')
-        .set('Cookie', adminAuth.cookie);
+      const res = await request(app).get('/api/users').set('Cookie', adminAuth.cookie);
 
       expect(res.status).toBe(500);
       expect(loggerErrorSpy).toHaveBeenCalled();
@@ -229,7 +217,9 @@ describe('REST API Security & Role Gating', () => {
       // Hit 4
       const res4 = await agent.post('/api/users/register').send({});
       expect(res4.status).toBe(429);
-      expect(res4.body.error).toBe('Demasiados intentos de registro. Intente nuevamente en 15 minutos.');
+      expect(res4.body.error).toBe(
+        'Demasiados intentos de registro. Intente nuevamente en 15 minutos.',
+      );
     });
   });
 
@@ -267,7 +257,7 @@ describe('REST API Security & Role Gating', () => {
       const blocked = await agent.post('/api/users/refresh');
       expect(blocked.status).toBe(429);
       expect(blocked.body.error).toBe(
-        'Demasiados intentos de refresco de sesión. Intente nuevamente en 15 minutos.'
+        'Demasiados intentos de refresco de sesión. Intente nuevamente en 15 minutos.',
       );
     });
   });

@@ -35,14 +35,14 @@ describe('AuthService', () => {
   describe('login', () => {
     it('throws without calling fetch when email is missing', async () => {
       await expect(AuthService.login('', 'password123')).rejects.toThrow(
-        'Por favor completá todos los campos.'
+        'Por favor completá todos los campos.',
       );
       expect(fetchMock).not.toHaveBeenCalled();
     });
 
     it('throws without calling fetch when password is missing', async () => {
       await expect(AuthService.login('ada@test.com', '')).rejects.toThrow(
-        'Por favor completá todos los campos.'
+        'Por favor completá todos los campos.',
       );
       expect(fetchMock).not.toHaveBeenCalled();
     });
@@ -87,7 +87,7 @@ describe('AuthService', () => {
       fetchMock.mockResolvedValue(jsonResponse(401, { error: 'Credenciales inválidas' }));
 
       await expect(AuthService.login('ada@test.com', 'wrong')).rejects.toThrow(
-        'Credenciales inválidas'
+        'Credenciales inválidas',
       );
     });
 
@@ -101,7 +101,7 @@ describe('AuthService', () => {
       fetchMock.mockResolvedValue(jsonResponse(500, {}));
 
       await expect(AuthService.login('ada@test.com', 'wrong')).rejects.toThrow(
-        'Error al iniciar sesión.'
+        'Error al iniciar sesión.',
       );
     });
   });
@@ -133,38 +133,36 @@ describe('AuthService', () => {
 
     it('extracts the first field error when "errors" is a field-keyed object', async () => {
       fetchMock.mockResolvedValue(
-        jsonResponse(400, { errors: { email: { msg: 'El email ya está en uso' } } })
+        jsonResponse(400, { errors: { email: { msg: 'El email ya está en uso' } } }),
       );
 
       await expect(AuthService.register(buildFormData())).rejects.toThrow(
-        'El email ya está en uso'
+        'El email ya está en uso',
       );
     });
 
     it('falls back to the default message when the field-keyed "errors" object is empty', async () => {
       fetchMock.mockResolvedValue(jsonResponse(400, { errors: {} }));
 
-      await expect(AuthService.register(buildFormData())).rejects.toThrow(
-        'Error al registrarse.'
-      );
+      await expect(AuthService.register(buildFormData())).rejects.toThrow('Error al registrarse.');
     });
 
     it('extracts the first message when "errors" is an express-validator array', async () => {
       fetchMock.mockResolvedValue(
-        jsonResponse(400, { errors: [{ msg: 'La contraseña es muy corta' }, { msg: 'otro error' }] })
+        jsonResponse(400, {
+          errors: [{ msg: 'La contraseña es muy corta' }, { msg: 'otro error' }],
+        }),
       );
 
       await expect(AuthService.register(buildFormData())).rejects.toThrow(
-        'La contraseña es muy corta'
+        'La contraseña es muy corta',
       );
     });
 
     it('falls back to the default message when the "errors" array is empty', async () => {
       fetchMock.mockResolvedValue(jsonResponse(400, { errors: [] }));
 
-      await expect(AuthService.register(buildFormData())).rejects.toThrow(
-        'Error al registrarse.'
-      );
+      await expect(AuthService.register(buildFormData())).rejects.toThrow('Error al registrarse.');
     });
 
     it('uses the root "error" field when "errors" is absent', async () => {
@@ -176,9 +174,7 @@ describe('AuthService', () => {
     it('falls back to the default message when no error information is present', async () => {
       fetchMock.mockResolvedValue(jsonResponse(500, {}));
 
-      await expect(AuthService.register(buildFormData())).rejects.toThrow(
-        'Error al registrarse.'
-      );
+      await expect(AuthService.register(buildFormData())).rejects.toThrow('Error al registrarse.');
     });
   });
 });

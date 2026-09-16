@@ -32,11 +32,13 @@ import { CreateRememberTokenUseCase } from '../../../application/use-cases/Creat
 import { SequelizeRememberTokenRepository } from '../SequelizeRememberTokenRepository';
 import { Sha256TokenHasher } from '../../security/Sha256TokenHasher';
 import { CryptoRandomIdGenerator } from '../../security/CryptoRandomIdGenerator';
-import { bootstrapTestDatabase, closeTestDatabase, getTestDb } from '../../../__tests__/helpers/testDb';
+import {
+  bootstrapTestDatabase,
+  closeTestDatabase,
+  getTestDb,
+} from '../../../__tests__/helpers/testDb';
 
-const unlinkMock = jest
-  .spyOn(fs.promises, 'unlink')
-  .mockResolvedValue(undefined as never);
+const unlinkMock = jest.spyOn(fs.promises, 'unlink').mockResolvedValue(undefined as never);
 
 const uploadDir = (key: string): string => path.join(process.cwd(), 'public', 'img', key);
 
@@ -46,7 +48,8 @@ const uploadDir = (key: string): string => path.join(process.cwd(), 'public', 'i
 // testDb.ts), but these are set explicitly to match the documented
 // prerequisite and to stay correct if that fallback ever changes.
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-only-jwt-secret-not-for-production';
-process.env.COOKIE_SECRET = process.env.COOKIE_SECRET || 'test-only-cookie-secret-not-for-production';
+process.env.COOKIE_SECRET =
+  process.env.COOKIE_SECRET || 'test-only-cookie-secret-not-for-production';
 
 jest.setTimeout(30000);
 
@@ -88,7 +91,7 @@ describe('SequelizeUserRepository.create — real DB registration race', () => {
     const getStub = { execute: jest.fn() } as any;
     const registerUserUseCase = new RegisterUserUseCase(
       new SequelizeUserRepository(),
-      new BcryptPasswordHasher()
+      new BcryptPasswordHasher(),
     );
     // `register` now establishes a session, which writes a real RememberToken
     // row — so this must be the genuine use case, not a stub, or the
@@ -99,14 +102,14 @@ describe('SequelizeUserRepository.create — real DB registration race', () => {
     const createRememberTokenUseCase = new CreateRememberTokenUseCase(
       new SequelizeRememberTokenRepository(),
       new Sha256TokenHasher(),
-      new CryptoRandomIdGenerator()
+      new CryptoRandomIdGenerator(),
     );
     controller = new UserApiController(
       authStub,
       listStub,
       getStub,
       registerUserUseCase,
-      createRememberTokenUseCase
+      createRememberTokenUseCase,
     );
   });
 
@@ -144,8 +147,12 @@ describe('SequelizeUserRepository.create — real DB registration race', () => {
       { res: resB, next: nextB, req: reqB },
     ];
 
-    const winners = outcomes.filter((o) => (o.res.status as jest.Mock).mock.calls.some((c) => c[0] === 201));
-    const losers = outcomes.filter((o) => (o.res.status as jest.Mock).mock.calls.some((c) => c[0] === 400));
+    const winners = outcomes.filter((o) =>
+      (o.res.status as jest.Mock).mock.calls.some((c) => c[0] === 201),
+    );
+    const losers = outcomes.filter((o) =>
+      (o.res.status as jest.Mock).mock.calls.some((c) => c[0] === 400),
+    );
 
     expect(winners).toHaveLength(1);
     expect(losers).toHaveLength(1);
@@ -163,7 +170,7 @@ describe('SequelizeUserRepository.create — real DB registration race', () => {
     // The winner's res.json call carries the persisted row's idUser.
     const persisted = await db.User.findOne({ where: { email } });
     const winnerJsonCall = (winners[0].res.json as jest.Mock).mock.calls.find(
-      (c) => c[0]?.user?.idUser !== undefined
+      (c) => c[0]?.user?.idUser !== undefined,
     );
     expect(winnerJsonCall[0].user.idUser).toBe(persisted.idUser);
 
@@ -175,7 +182,7 @@ describe('SequelizeUserRepository.create — real DB registration race', () => {
     expect(unlinked).toBe(true);
 
     const winnerUnlinked = unlinkMock.mock.calls.some(
-      ([target]) => target === uploadDir(winnerKey)
+      ([target]) => target === uploadDir(winnerKey),
     );
     expect(winnerUnlinked).toBe(false);
   });

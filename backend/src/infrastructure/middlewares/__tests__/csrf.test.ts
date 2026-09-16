@@ -12,18 +12,21 @@ describe('csrfGuard', () => {
     req = { method: 'POST', path: '/cart', headers: {}, cookies: {}, user: { userId: 1 } };
     res = {
       status: jest.fn().mockReturnThis() as any,
-      json: jest.fn().mockReturnThis() as any
+      json: jest.fn().mockReturnThis() as any,
     };
     next = jest.fn();
   });
 
   describe('safe methods', () => {
-    it.each(['GET', 'HEAD', 'OPTIONS'])('calls next() for %s without requiring a token', (method) => {
-      req.method = method;
-      csrfGuard(req as Request, res as Response, next);
-      expect(next).toHaveBeenCalledTimes(1);
-      expect(res.status).not.toHaveBeenCalled();
-    });
+    it.each(['GET', 'HEAD', 'OPTIONS'])(
+      'calls next() for %s without requiring a token',
+      (method) => {
+        req.method = method;
+        csrfGuard(req as Request, res as Response, next);
+        expect(next).toHaveBeenCalledTimes(1);
+        expect(res.status).not.toHaveBeenCalled();
+      },
+    );
   });
 
   describe('missing token', () => {
@@ -98,7 +101,7 @@ describe('csrfGuard', () => {
         csrfGuard(exemptReq as Request, res as Response, next);
         expect(next).toHaveBeenCalledTimes(1);
         expect(res.status).not.toHaveBeenCalled();
-      }
+      },
     );
   });
 
@@ -107,7 +110,13 @@ describe('csrfGuard', () => {
   // EXEMPT_PATHS must list it for consistency with the other 3 (design.md D5).
   describe('refresh route exemption', () => {
     it('calls next() for POST /users/refresh without requiring a token', () => {
-      const exemptReq = { method: 'POST', path: '/users/refresh', headers: {}, cookies: {}, user: undefined };
+      const exemptReq = {
+        method: 'POST',
+        path: '/users/refresh',
+        headers: {},
+        cookies: {},
+        user: undefined,
+      };
       csrfGuard(exemptReq as Request, res as Response, next);
       expect(next).toHaveBeenCalledTimes(1);
       expect(res.status).not.toHaveBeenCalled();

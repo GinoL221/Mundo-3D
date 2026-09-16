@@ -64,7 +64,10 @@ describe('authFetch', () => {
     stubCookie('');
     const unauthorized = new Response(null, { status: 401 });
     const stillUnauthorized = new Response(null, { status: 401 });
-    const fetchMock = vi.fn().mockResolvedValueOnce(unauthorized).mockResolvedValueOnce(stillUnauthorized);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(unauthorized)
+      .mockResolvedValueOnce(stillUnauthorized);
     vi.stubGlobal('fetch', fetchMock);
     ensureRefreshedMock.mockResolvedValue(true);
 
@@ -84,12 +87,15 @@ describe('authFetch', () => {
     vi.stubGlobal('window', win);
     const unauthorized = new Response(null, { status: 401 });
     let resolveLogout!: (value: Response) => void;
-    const fetchMock = vi.fn().mockImplementationOnce(() => Promise.resolve(unauthorized)).mockImplementationOnce(
-      () =>
-        new Promise<Response>((resolve) => {
-          resolveLogout = resolve;
-        })
-    );
+    const fetchMock = vi
+      .fn()
+      .mockImplementationOnce(() => Promise.resolve(unauthorized))
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveLogout = resolve;
+          }),
+      );
     vi.stubGlobal('fetch', fetchMock);
     ensureRefreshedMock.mockResolvedValue(false);
 

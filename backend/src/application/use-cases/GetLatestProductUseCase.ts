@@ -1,5 +1,5 @@
-import { ProductRepositoryPort } from "../../domain/ports/ProductRepositoryPort";
-import { ProductDTO } from "../dtos/ProductDTO";
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { ProductDTO } from '../dtos/ProductDTO';
 
 export class GetLatestProductUseCase {
   constructor(private readonly productRepo: ProductRepositoryPort) {}
@@ -7,12 +7,10 @@ export class GetLatestProductUseCase {
   async execute(): Promise<ProductDTO> {
     const product = await this.productRepo.findLatest();
     if (!product) {
-      throw new Error("Product not found");
+      throw new Error('Product not found');
     }
 
-    const categoryName = product.Category
-      ? product.Category.nameCategory
-      : "Sin categoría";
+    const categoryName = product.Category ? product.Category.nameCategory : 'Sin categoría';
 
     return {
       idProduct: product.idProduct,

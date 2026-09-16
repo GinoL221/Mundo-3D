@@ -22,7 +22,9 @@ jest.mock('../../../../application/use-cases/DeleteProductUseCase', () => ({
 }));
 
 jest.mock('../../../../application/use-cases/AdjustProductStockUseCase', () => ({
-  AdjustProductStockUseCase: jest.fn().mockImplementation(() => ({ execute: mockAdjustStockExecute })),
+  AdjustProductStockUseCase: jest
+    .fn()
+    .mockImplementation(() => ({ execute: mockAdjustStockExecute })),
 }));
 
 // The R2 upload path runs for real in this pipeline test; only the S3
@@ -65,9 +67,24 @@ const buildApp = (): Express => {
   return app;
 };
 
-const adminAuth = authAndCsrf({ userId: 1, email: 'principal@test.com', category: 'test', idRole: Role.ADMIN });
-const staffAuth = authAndCsrf({ userId: 1, email: 'principal@test.com', category: 'test', idRole: Role.STAFF });
-const userAuth = authAndCsrf({ userId: 1, email: 'principal@test.com', category: 'test', idRole: Role.USER });
+const adminAuth = authAndCsrf({
+  userId: 1,
+  email: 'principal@test.com',
+  category: 'test',
+  idRole: Role.ADMIN,
+});
+const staffAuth = authAndCsrf({
+  userId: 1,
+  email: 'principal@test.com',
+  category: 'test',
+  idRole: Role.STAFF,
+});
+const userAuth = authAndCsrf({
+  userId: 1,
+  email: 'principal@test.com',
+  category: 'test',
+  idRole: Role.USER,
+});
 
 const validProductFields = {
   nameProduct: 'Super Mario 3D',
@@ -172,7 +189,9 @@ describe('api/products mutation routes — guard matrix', () => {
 
   describe('PUT /api/products/:id', () => {
     it('returns 401 without an auth cookie', async () => {
-      const res = await request(app).put('/api/products/1').send({ nameProduct: 'Updated Name Here' });
+      const res = await request(app)
+        .put('/api/products/1')
+        .send({ nameProduct: 'Updated Name Here' });
 
       expect(res.status).toBe(401);
       expect(mockUpdateExecute).not.toHaveBeenCalled();
@@ -189,7 +208,11 @@ describe('api/products mutation routes — guard matrix', () => {
     });
 
     it('returns 200 for STAFF', async () => {
-      mockUpdateExecute.mockResolvedValue({ idProduct: 1, nameProduct: 'Updated Name Here', stock: 5 });
+      mockUpdateExecute.mockResolvedValue({
+        idProduct: 1,
+        nameProduct: 'Updated Name Here',
+        stock: 5,
+      });
 
       const res = await request(app)
         .put('/api/products/1')
@@ -202,7 +225,11 @@ describe('api/products mutation routes — guard matrix', () => {
     });
 
     it('returns 200 for ADMIN', async () => {
-      mockUpdateExecute.mockResolvedValue({ idProduct: 1, nameProduct: 'Updated Name Here', stock: 5 });
+      mockUpdateExecute.mockResolvedValue({
+        idProduct: 1,
+        nameProduct: 'Updated Name Here',
+        stock: 5,
+      });
 
       const res = await request(app)
         .put('/api/products/1')
@@ -236,7 +263,11 @@ describe('api/products mutation routes — guard matrix', () => {
     });
 
     it('never forwards a stock field present in the request body to the use case', async () => {
-      mockUpdateExecute.mockResolvedValue({ idProduct: 1, nameProduct: 'Updated Name Here', stock: 5 });
+      mockUpdateExecute.mockResolvedValue({
+        idProduct: 1,
+        nameProduct: 'Updated Name Here',
+        stock: 5,
+      });
 
       await request(app)
         .put('/api/products/1')
@@ -249,7 +280,11 @@ describe('api/products mutation routes — guard matrix', () => {
     });
 
     it('coerces a blank material field to null instead of forwarding an empty string (#69)', async () => {
-      mockUpdateExecute.mockResolvedValue({ idProduct: 1, nameProduct: 'Updated Name Here', stock: 5 });
+      mockUpdateExecute.mockResolvedValue({
+        idProduct: 1,
+        nameProduct: 'Updated Name Here',
+        stock: 5,
+      });
 
       const res = await request(app)
         .put('/api/products/1')

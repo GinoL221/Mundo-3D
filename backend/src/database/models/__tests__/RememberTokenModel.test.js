@@ -68,7 +68,7 @@ describe('RememberToken Model Definition', () => {
       expect.objectContaining({
         tableName: 'RememberToken',
         timestamps: false,
-      })
+      }),
     );
   });
 });

@@ -167,7 +167,7 @@ describe('api/cart routes', () => {
       // The removed product must not be part of the synced payload.
       expect(mockSyncCartExecute).not.toHaveBeenCalledWith(
         5,
-        expect.arrayContaining([expect.objectContaining({ productId: 10 })])
+        expect.arrayContaining([expect.objectContaining({ productId: 10 })]),
       );
     });
 

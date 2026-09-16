@@ -47,7 +47,12 @@ jest.setTimeout(30000);
 
 const db = getTestDb();
 
-async function seedCurrentToken(idUser: number, familyId: string, tokenHash: string, expiryDate: Date): Promise<number> {
+async function seedCurrentToken(
+  idUser: number,
+  familyId: string,
+  tokenHash: string,
+  expiryDate: Date,
+): Promise<number> {
   const row = await db.RememberToken.create({
     idUser,
     tokenHash,
@@ -62,7 +67,9 @@ async function countFamilyRows(familyId: string): Promise<number> {
   return db.RememberToken.count({ where: { familyId } });
 }
 
-async function familyRows(familyId: string): Promise<Array<{ tokenHash: string; familyId: string | null }>> {
+async function familyRows(
+  familyId: string,
+): Promise<Array<{ tokenHash: string; familyId: string | null }>> {
   const rows = await db.RememberToken.findAll({ where: { familyId } });
   return rows.map((row: { tokenHash: string; familyId: string | null }) => ({
     tokenHash: row.tokenHash,
@@ -84,7 +91,7 @@ function asTx(transaction: Transaction): TransactionContext {
 async function rewindSupersededAt(tokenHash: string, secondsAgo: number): Promise<void> {
   await db.sequelize.query(
     'UPDATE `RememberToken` SET `superseded_at` = NOW() - INTERVAL :secondsAgo SECOND WHERE `token_hash` = :tokenHash',
-    { replacements: { secondsAgo, tokenHash } }
+    { replacements: { secondsAgo, tokenHash } },
   );
 }
 
@@ -120,7 +127,7 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
             presentedHash: currentHash,
             successorHash,
             tx: asTx(transaction),
-          })
+          }),
         );
 
       const [resultA, resultB] = await Promise.all([
@@ -134,14 +141,16 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
 
       const [[updatedRow]] = await db.sequelize.query(
         'SELECT `successor_hash`, `superseded_at` FROM `RememberToken` WHERE `token_hash` = :hash',
-        { replacements: { hash: currentHash } }
+        { replacements: { hash: currentHash } },
       );
       // The row was superseded exactly once, by whichever successor hash
       // the winner presented — not both, not neither.
       expect(updatedRow.superseded_at).not.toBeNull();
-      expect(['successor-a', 'successor-b'].some((prefix) => updatedRow.successor_hash.startsWith(prefix))).toBe(
-        true
-      );
+      expect(
+        ['successor-a', 'successor-b'].some((prefix) =>
+          updatedRow.successor_hash.startsWith(prefix),
+        ),
+      ).toBe(true);
     });
 
     it('rejects a second claim once the row is already superseded (loser re-reads a fresh, no-longer-current row)', async () => {
@@ -155,7 +164,7 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
           presentedHash: currentHash,
           successorHash: `successor-1-${crypto.randomUUID()}`,
           tx: asTx(transaction),
-        })
+        }),
       );
       expect(firstClaim).toBe(true);
 
@@ -164,7 +173,7 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
           presentedHash: currentHash,
           successorHash: `successor-2-${crypto.randomUUID()}`,
           tx: asTx(transaction),
-        })
+        }),
       );
       expect(secondClaim).toBe(false);
     });
@@ -196,7 +205,11 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
         const successorHash = `rotation-${i}-${crypto.randomUUID()}`;
         await db.sequelize.transaction(async (transaction: Transaction) => {
           const tx = asTx(transaction);
-          const claimed = await repository.claimRotation({ presentedHash: currentHash, successorHash, tx });
+          const claimed = await repository.claimRotation({
+            presentedHash: currentHash,
+            successorHash,
+            tx,
+          });
           expect(claimed).toBe(true);
 
           const successor = await repository.insertSuccessor(
@@ -206,7 +219,7 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
               expiryDate: expiry,
               familyId,
             } as any,
-            tx
+            tx,
           );
           expect(successor.familyId).toBe(familyId);
 
@@ -307,7 +320,7 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
           presentedHash,
           successorHash: `never-${crypto.randomUUID()}`,
           tx: asTx(transaction),
-        })
+        }),
       );
 
       expect(claimed).toBe(false);
@@ -325,7 +338,7 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
         await repository.claimRotation({ presentedHash: currentHash, successorHash, tx });
         await repository.insertSuccessor(
           { idUser: userId, tokenHash: successorHash, expiryDate: expiry, familyId } as any,
-          tx
+          tx,
         );
         // A large graceSeconds means the just-superseded row is still
         // "in grace" and reapFamily MUST NOT delete it.
@@ -354,7 +367,7 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
         await repository.claimRotation({ presentedHash: currentHash, successorHash, tx });
         await repository.insertSuccessor(
           { idUser: userId, tokenHash: successorHash, expiryDate: expiry, familyId } as any,
-          tx
+          tx,
         );
       });
 
@@ -364,7 +377,7 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
       await rewindSupersededAt(currentHash, 3600);
 
       await db.sequelize.transaction(async (transaction: Transaction) =>
-        repository.reapFamily(familyId, REAP_SECONDS, asTx(transaction))
+        repository.reapFamily(familyId, REAP_SECONDS, asTx(transaction)),
       );
 
       const rows = await familyRows(familyId);
@@ -392,7 +405,7 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
         await repository.claimRotation({ presentedHash: currentHash, successorHash, tx });
         await repository.insertSuccessor(
           { idUser: userId, tokenHash: successorHash, expiryDate: expiry, familyId } as any,
-          tx
+          tx,
         );
         await repository.reapFamily(familyId, REAP_SECONDS, tx);
       });
@@ -411,7 +424,7 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
       await seedCurrentToken(userId, familyId, currentHash, expiry);
       await db.sequelize.query(
         'UPDATE `RememberToken` SET `superseded_at` = NOW() - INTERVAL 60 SECOND, `successor_hash` = :h WHERE `token_hash` = :s',
-        { replacements: { h: currentHash, s: supersededHash } }
+        { replacements: { h: currentHash, s: supersededHash } },
       );
 
       const revoked = await repository.revokeFamily(familyId);
@@ -436,11 +449,15 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
       const rotate = () =>
         db.sequelize.transaction(async (transaction: Transaction) => {
           const tx = asTx(transaction);
-          const claimed = await repository.claimRotation({ presentedHash: currentHash, successorHash, tx });
+          const claimed = await repository.claimRotation({
+            presentedHash: currentHash,
+            successorHash,
+            tx,
+          });
           if (claimed) {
             await repository.insertSuccessor(
               { idUser: userId, tokenHash: successorHash, expiryDate: expiry, familyId } as any,
-              tx
+              tx,
             );
             await repository.reapFamily(familyId, REAP_SECONDS, tx);
           }
@@ -492,11 +509,15 @@ describe('SequelizeRememberTokenRepository — real DB rotation', () => {
         const successorHash = `storage-${i}-${crypto.randomUUID()}`;
         await db.sequelize.transaction(async (transaction: Transaction) => {
           const tx = asTx(transaction);
-          const claimed = await repository.claimRotation({ presentedHash: currentHash, successorHash, tx });
+          const claimed = await repository.claimRotation({
+            presentedHash: currentHash,
+            successorHash,
+            tx,
+          });
           expect(claimed).toBe(true);
           await repository.insertSuccessor(
             { idUser: userId, tokenHash: successorHash, expiryDate: expiry, familyId } as any,
-            tx
+            tx,
           );
           // The 24h production cutoff — every superseded row from this loop
           // is seconds old, so none of them is reapable yet.

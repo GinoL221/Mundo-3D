@@ -1,4 +1,4 @@
-import { API_URL, authFetch } from "../../../config";
+import { API_URL, authFetch } from '../../../config';
 
 // Mirrors backend/src/application/dtos/OrderDTO.ts exactly (order-checkout
 // spec, "Buyer order-detail response DTO") — GET /api/orders/:id returns the
@@ -24,7 +24,7 @@ export interface OrderViewModel {
   paymentReference: string | null;
 }
 
-export type FetchOrderErrorCode = "NOT_FOUND" | "NETWORK" | "UNKNOWN";
+export type FetchOrderErrorCode = 'NOT_FOUND' | 'NETWORK' | 'UNKNOWN';
 
 export type FetchOrderResult =
   | { ok: true; order: OrderViewModel }
@@ -40,22 +40,22 @@ export async function fetchOrder(idOrder: number): Promise<FetchOrderResult> {
   let res: Response;
   try {
     res = await authFetch(`${API_URL}/api/orders/${idOrder}`, {
-      method: "GET",
+      method: 'GET',
     });
   } catch {
     return {
       ok: false,
-      code: "NETWORK",
-      message: "No se pudo conectar con el servidor.",
+      code: 'NETWORK',
+      message: 'No se pudo conectar con el servidor.',
     };
   }
 
   if (res.status === 404) {
-    return { ok: false, code: "NOT_FOUND", message: "Orden no encontrada." };
+    return { ok: false, code: 'NOT_FOUND', message: 'Orden no encontrada.' };
   }
 
   if (!res.ok) {
-    return { ok: false, code: "UNKNOWN", message: `Error ${res.status}` };
+    return { ok: false, code: 'UNKNOWN', message: `Error ${res.status}` };
   }
 
   const order = (await res.json()) as OrderViewModel;
@@ -83,10 +83,10 @@ export interface MyOrdersPageViewModel {
 }
 
 export type FetchMyOrdersErrorCode =
-  | "UNAUTHENTICATED"
-  | "INVALID_PAGINATION"
-  | "NETWORK"
-  | "UNKNOWN";
+  | 'UNAUTHENTICATED'
+  | 'INVALID_PAGINATION'
+  | 'NETWORK'
+  | 'UNKNOWN';
 
 export type FetchMyOrdersResult =
   | { ok: true; page: MyOrdersPageViewModel }
@@ -105,42 +105,41 @@ export async function fetchMyOrders(
   pageSize?: number,
 ): Promise<FetchMyOrdersResult> {
   const params = new URLSearchParams();
-  if (page !== undefined) params.set("page", String(page));
-  if (pageSize !== undefined) params.set("pageSize", String(pageSize));
+  if (page !== undefined) params.set('page', String(page));
+  if (pageSize !== undefined) params.set('pageSize', String(pageSize));
   const query = params.toString();
 
   let res: Response;
   try {
-    res = await authFetch(
-      `${API_URL}/api/orders/mine${query ? `?${query}` : ""}`,
-      { method: "GET" },
-    );
+    res = await authFetch(`${API_URL}/api/orders/mine${query ? `?${query}` : ''}`, {
+      method: 'GET',
+    });
   } catch {
     return {
       ok: false,
-      code: "NETWORK",
-      message: "No se pudo conectar con el servidor.",
+      code: 'NETWORK',
+      message: 'No se pudo conectar con el servidor.',
     };
   }
 
   if (res.status === 401) {
     return {
       ok: false,
-      code: "UNAUTHENTICATED",
-      message: "Necesitás iniciar sesión.",
+      code: 'UNAUTHENTICATED',
+      message: 'Necesitás iniciar sesión.',
     };
   }
 
   if (res.status === 400) {
     return {
       ok: false,
-      code: "INVALID_PAGINATION",
-      message: "Parámetros de paginación inválidos.",
+      code: 'INVALID_PAGINATION',
+      message: 'Parámetros de paginación inválidos.',
     };
   }
 
   if (!res.ok) {
-    return { ok: false, code: "UNKNOWN", message: `Error ${res.status}` };
+    return { ok: false, code: 'UNKNOWN', message: `Error ${res.status}` };
   }
 
   const page_ = (await res.json()) as MyOrdersPageViewModel;

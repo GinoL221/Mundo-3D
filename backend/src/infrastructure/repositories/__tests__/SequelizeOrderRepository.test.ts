@@ -33,7 +33,14 @@ function mockOrderInstance(overrides: Partial<OrderInstance> = {}): OrderInstanc
     paymentReference: null,
     createdAt: new Date('2026-08-28T10:00:00.000Z'),
     items: [
-      { idOrderItem: 100, idOrder: 1, idProduct: 10, productName: 'Figure A', quantity: 2, unitPrice: '15.00' },
+      {
+        idOrderItem: 100,
+        idOrder: 1,
+        idProduct: 10,
+        productName: 'Figure A',
+        quantity: 2,
+        unitPrice: '15.00',
+      },
     ],
     ...overrides,
   } as unknown as OrderInstance;
@@ -49,39 +56,64 @@ describe('SequelizeOrderRepository', () => {
 
   describe('createWithItems', () => {
     it('creates the Order row, bulk-creates its items, and re-reads within the same transaction', async () => {
-      jest.mocked(db.Order.create).mockResolvedValueOnce({ idOrder: 1 } as unknown as OrderInstance);
+      jest
+        .mocked(db.Order.create)
+        .mockResolvedValueOnce({ idOrder: 1 } as unknown as OrderInstance);
       jest.mocked(db.OrderItem.bulkCreate).mockResolvedValueOnce([] as never);
       jest.mocked(db.Order.findByPk).mockResolvedValueOnce(mockOrderInstance());
 
       const order = await repository.createWithItems(
-        { idUser: 5, idempotencyKey: 'key-1', items: [{ idProduct: 10, productName: 'Figure A', quantity: 2, unitPrice: 15 }] },
-        mockTx
+        {
+          idUser: 5,
+          idempotencyKey: 'key-1',
+          items: [{ idProduct: 10, productName: 'Figure A', quantity: 2, unitPrice: 15 }],
+        },
+        mockTx,
       );
 
       expect(db.Order.create).toHaveBeenCalledWith(
-        expect.objectContaining({ idUser: 5, idempotencyKey: 'key-1', orderStatus: OrderStatus.AWAITING_PAYMENT }),
-        expect.objectContaining({ transaction: mockTx })
+        expect.objectContaining({
+          idUser: 5,
+          idempotencyKey: 'key-1',
+          orderStatus: OrderStatus.AWAITING_PAYMENT,
+        }),
+        expect.objectContaining({ transaction: mockTx }),
       );
       expect(db.OrderItem.bulkCreate).toHaveBeenCalledWith(
-        [expect.objectContaining({ idOrder: 1, idProduct: 10, productName: 'Figure A', quantity: 2, unitPrice: 15 })],
-        expect.objectContaining({ transaction: mockTx })
+        [
+          expect.objectContaining({
+            idOrder: 1,
+            idProduct: 10,
+            productName: 'Figure A',
+            quantity: 2,
+            unitPrice: 15,
+          }),
+        ],
+        expect.objectContaining({ transaction: mockTx }),
       );
-      expect(db.Order.findByPk).toHaveBeenCalledWith(1, expect.objectContaining({ transaction: mockTx }));
+      expect(db.Order.findByPk).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ transaction: mockTx }),
+      );
       expect(order.idOrder).toBe(1);
       expect(order.items).toHaveLength(1);
       expect(order.totalAmount).toBe(30);
     });
 
     it('maps a UNIQUE(id_user, idempotency_key) violation to DuplicateIdempotencyKeyException', async () => {
-      jest.mocked(db.Order.create).mockRejectedValueOnce(
-        new UniqueConstraintError({ message: 'Duplicate entry' })
-      );
+      jest
+        .mocked(db.Order.create)
+        .mockRejectedValueOnce(new UniqueConstraintError({ message: 'Duplicate entry' }));
 
       await expect(
         repository.createWithItems(
-          { idUser: 5, idempotencyKey: 'key-1', items: [{ idProduct: 10, productName: 'Figure A', quantity: 2, unitPrice: 15 }] },
-          mockTx
-        )
+          {
+            idUser: 5,
+            idempotencyKey: 'key-1',
+            items: [{ idProduct: 10, productName: 'Figure A', quantity: 2, unitPrice: 15 }],
+          },
+          mockTx,
+        ),
       ).rejects.toThrow(DuplicateIdempotencyKeyException);
     });
   });
@@ -94,7 +126,7 @@ describe('SequelizeOrderRepository', () => {
 
       expect(order?.idOrder).toBe(1);
       expect(db.Order.findOne).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { idUser: 5, idempotencyKey: 'key-1' } })
+        expect.objectContaining({ where: { idUser: 5, idempotencyKey: 'key-1' } }),
       );
     });
 
@@ -121,7 +153,9 @@ describe('SequelizeOrderRepository', () => {
 
   describe('findAll', () => {
     it('returns every order mapped to the domain entity', async () => {
-      jest.mocked(db.Order.findAll).mockResolvedValueOnce([mockOrderInstance(), mockOrderInstance({ idOrder: 2 })]);
+      jest
+        .mocked(db.Order.findAll)
+        .mockResolvedValueOnce([mockOrderInstance(), mockOrderInstance({ idOrder: 2 })]);
       const orders = await repository.findAll();
       expect(orders).toHaveLength(2);
     });
@@ -130,7 +164,7 @@ describe('SequelizeOrderRepository', () => {
       jest.mocked(db.Order.findAll).mockResolvedValueOnce([]);
       await repository.findAll();
       expect(db.Order.findAll).toHaveBeenCalledWith(
-        expect.objectContaining({ order: [['idOrder', 'DESC']], limit: 100 })
+        expect.objectContaining({ order: [['idOrder', 'DESC']], limit: 100 }),
       );
     });
   });
@@ -148,8 +182,22 @@ describe('SequelizeOrderRepository', () => {
           mockOrderInstance({
             idOrder: 1,
             items: [
-              { idOrderItem: 100, idOrder: 1, idProduct: 10, productName: 'Figure A', quantity: 2, unitPrice: 15 },
-              { idOrderItem: 101, idOrder: 1, idProduct: 11, productName: 'Figure B', quantity: 1, unitPrice: 5 },
+              {
+                idOrderItem: 100,
+                idOrder: 1,
+                idProduct: 10,
+                productName: 'Figure A',
+                quantity: 2,
+                unitPrice: 15,
+              },
+              {
+                idOrderItem: 101,
+                idOrder: 1,
+                idProduct: 11,
+                productName: 'Figure B',
+                quantity: 1,
+                unitPrice: 5,
+              },
             ],
           } as unknown as Partial<OrderInstance>),
         ],
@@ -166,7 +214,7 @@ describe('SequelizeOrderRepository', () => {
           limit: 20,
           offset: 0,
           distinct: true,
-        })
+        }),
       );
       expect(result.total).toBe(2);
       expect(result.orders).toHaveLength(2);
@@ -179,7 +227,7 @@ describe('SequelizeOrderRepository', () => {
       await repository.findByUserId(5, { limit: 10, offset: 30 });
 
       expect(db.Order.findAndCountAll).toHaveBeenCalledWith(
-        expect.objectContaining({ limit: 10, offset: 30 })
+        expect.objectContaining({ limit: 10, offset: 30 }),
       );
     });
   });
@@ -190,21 +238,32 @@ describe('SequelizeOrderRepository', () => {
     it('issues the guarded UPDATE against the reserved-word-quoted Order table and returns true when exactly 1 row changed', async () => {
       mockSequelizeQuery.mockResolvedValueOnce([undefined, 1]);
 
-      const result = await repository.transitionStatus(1, OrderStatus.AWAITING_PAYMENT, OrderStatus.PAID, mockTx);
+      const result = await repository.transitionStatus(
+        1,
+        OrderStatus.AWAITING_PAYMENT,
+        OrderStatus.PAID,
+        mockTx,
+      );
 
       expect(mockSequelizeQuery).toHaveBeenCalledWith(
-        expect.stringMatching(/UPDATE.*`Order`.*SET.*`order_status`.*WHERE.*`id_order`.*AND.*`order_status`/is),
+        expect.stringMatching(
+          /UPDATE.*`Order`.*SET.*`order_status`.*WHERE.*`id_order`.*AND.*`order_status`/is,
+        ),
         expect.objectContaining({
           replacements: { to: OrderStatus.PAID, from: OrderStatus.AWAITING_PAYMENT, id: 1 },
           transaction: mockTx,
-        })
+        }),
       );
       expect(result).toBe(true);
     });
 
     it('returns false when the guard condition matches zero rows (double confirm/cancel)', async () => {
       mockSequelizeQuery.mockResolvedValueOnce([undefined, 0]);
-      const result = await repository.transitionStatus(1, OrderStatus.AWAITING_PAYMENT, OrderStatus.PAID);
+      const result = await repository.transitionStatus(
+        1,
+        OrderStatus.AWAITING_PAYMENT,
+        OrderStatus.PAID,
+      );
       expect(result).toBe(false);
     });
   });
@@ -217,7 +276,7 @@ describe('SequelizeOrderRepository', () => {
 
       expect(db.Order.update).toHaveBeenCalledWith(
         { paymentReference: 'MANUAL-1-abcd' },
-        { where: { idOrder: 1 } }
+        { where: { idOrder: 1 } },
       );
     });
   });

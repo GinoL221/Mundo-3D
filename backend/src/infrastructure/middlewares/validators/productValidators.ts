@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, query, validationResult } from 'express-validator';
 import path from 'path';
-import { ALLOWED_MATERIALS, CUSTOM_MATERIAL_PREFIX, MAX_PRODUCTION_TIME_DAYS } from '../../../domain/entities/Product';
+import {
+  ALLOWED_MATERIALS,
+  CUSTOM_MATERIAL_PREFIX,
+  MAX_PRODUCTION_TIME_DAYS,
+} from '../../../domain/entities/Product';
 import { MAX_PAGE_SIZE } from '../../../application/use-cases/SearchProductsUseCase';
 
 // Image is required on create; optional on update (only validated if a file
@@ -72,7 +76,9 @@ const optionalProductAttributeValidators = [
   body('productionTime')
     .optional({ values: 'falsy' })
     .isInt({ min: 1, max: MAX_PRODUCTION_TIME_DAYS })
-    .withMessage(`El tiempo de producción debe ser un entero entre 1 y ${MAX_PRODUCTION_TIME_DAYS} días`),
+    .withMessage(
+      `El tiempo de producción debe ser un entero entre 1 y ${MAX_PRODUCTION_TIME_DAYS} días`,
+    ),
 
   // `stock` is accepted here only as an optional, non-negative integer for
   // create (defaulted to 0 by CreateProductUseCase when omitted). PUT
@@ -157,9 +163,15 @@ export const productUpdateValidators = [
     .isLength({ max: 40 })
     .withMessage('No puede ser mayor a 40 caracteres'),
 
-  body('idCategory').optional({ values: 'falsy' }).notEmpty().withMessage('Debe seleccionar una categoría'),
+  body('idCategory')
+    .optional({ values: 'falsy' })
+    .notEmpty()
+    .withMessage('Debe seleccionar una categoría'),
 
-  body('idFranchise').optional({ values: 'falsy' }).notEmpty().withMessage('Debe seleccionar una franquicia'),
+  body('idFranchise')
+    .optional({ values: 'falsy' })
+    .notEmpty()
+    .withMessage('Debe seleccionar una franquicia'),
 
   imageValidator(false),
 

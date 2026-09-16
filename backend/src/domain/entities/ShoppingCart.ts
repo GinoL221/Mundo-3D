@@ -1,10 +1,10 @@
-import { CartValidationException } from "../exceptions/CartValidationException";
-import { Product } from "./Product";
+import { CartValidationException } from '../exceptions/CartValidationException';
+import { Product } from './Product';
 
 export enum CartStatus {
-  ACTIVE = "ACTIVE",
-  ORDERED = "ORDERED",
-  ABANDONED = "ABANDONED",
+  ACTIVE = 'ACTIVE',
+  ORDERED = 'ORDERED',
+  ABANDONED = 'ABANDONED',
 }
 
 export const MAX_CART_ITEM_QUANTITY = 99;
@@ -12,10 +12,10 @@ export const MAX_CART_ITEM_QUANTITY = 99;
 export class ShoppingCart {
   static assertValidQuantity(quantity: number): void {
     if (!Number.isInteger(quantity)) {
-      throw new CartValidationException("Quantity must be an integer");
+      throw new CartValidationException('Quantity must be an integer');
     }
     if (quantity <= 0) {
-      throw new CartValidationException("Quantity must be greater than 0");
+      throw new CartValidationException('Quantity must be greater than 0');
     }
     if (quantity > MAX_CART_ITEM_QUANTITY) {
       throw new CartValidationException(

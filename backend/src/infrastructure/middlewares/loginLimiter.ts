@@ -13,9 +13,7 @@ const windowMs = process.env.LOGIN_LIMIT_WINDOW
 // only failures are counted now — so 10 failures per address per window
 // caps spraying just as hard while leaving a shared-NAT office of typing
 // humans well clear of it.
-const max = process.env.LOGIN_LIMIT_MAX
-  ? parseInt(process.env.LOGIN_LIMIT_MAX, 10)
-  : 10;
+const max = process.env.LOGIN_LIMIT_MAX ? parseInt(process.env.LOGIN_LIMIT_MAX, 10) : 10;
 
 const limiter = rateLimit({
   windowMs,

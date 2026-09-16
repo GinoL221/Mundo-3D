@@ -11,7 +11,9 @@ describe('OrderItem', () => {
   });
 
   it('rejects a non-integer quantity', () => {
-    expect(() => new OrderItem(1, 1, 1, 'Maceta Groot', 1.5, 150)).toThrow(OrderValidationException);
+    expect(() => new OrderItem(1, 1, 1, 'Maceta Groot', 1.5, 150)).toThrow(
+      OrderValidationException,
+    );
   });
 
   it('rejects a negative unitPrice', () => {

@@ -1,9 +1,9 @@
-import { GetLatestProductUseCase } from "../use-cases/GetLatestProductUseCase";
-import { ProductRepositoryPort } from "../../domain/ports/ProductRepositoryPort";
-import { Product } from "../../domain/entities/Product";
-import { Category } from "../../domain/entities/Category";
+import { GetLatestProductUseCase } from '../use-cases/GetLatestProductUseCase';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { Product } from '../../domain/entities/Product';
+import { Category } from '../../domain/entities/Category';
 
-describe("GetLatestProductUseCase", () => {
+describe('GetLatestProductUseCase', () => {
   let mockProductRepo: jest.Mocked<ProductRepositoryPort>;
   let useCase: GetLatestProductUseCase;
 
@@ -20,21 +20,21 @@ describe("GetLatestProductUseCase", () => {
     useCase = new GetLatestProductUseCase(mockProductRepo);
   });
 
-  it("should throw an error when no products exist", async () => {
+  it('should throw an error when no products exist', async () => {
     mockProductRepo.findLatest.mockResolvedValue(null);
 
-    await expect(useCase.execute()).rejects.toThrow("Product not found");
+    await expect(useCase.execute()).rejects.toThrow('Product not found');
     expect(mockProductRepo.findLatest).toHaveBeenCalledTimes(1);
   });
 
-  it("should fetch the latest product and map to ProductDTO", async () => {
-    const category = new Category(2, "Figures");
+  it('should fetch the latest product and map to ProductDTO', async () => {
+    const category = new Category(2, 'Figures');
     const product = new Product(
       10,
-      "Latest Figures",
+      'Latest Figures',
       120,
-      "Awesome figures",
-      "fig.jpg",
+      'Awesome figures',
+      'fig.jpg',
       2,
       5,
       category,
@@ -45,13 +45,13 @@ describe("GetLatestProductUseCase", () => {
 
     expect(result).toEqual({
       idProduct: 10,
-      nameProduct: "Latest Figures",
+      nameProduct: 'Latest Figures',
       price: 120,
-      descriptionProduct: "Awesome figures",
-      image: "fig.jpg",
+      descriptionProduct: 'Awesome figures',
+      image: 'fig.jpg',
       idCategory: 2,
       idFranchise: 5,
-      category: "Figures",
+      category: 'Figures',
       material: null,
       height: null,
       width: null,
@@ -63,20 +63,12 @@ describe("GetLatestProductUseCase", () => {
     expect(mockProductRepo.findLatest).toHaveBeenCalledTimes(1);
   });
 
-  it("should handle product without category gracefully", async () => {
-    const product = new Product(
-      10,
-      "Latest Figures",
-      120,
-      "Awesome figures",
-      "fig.jpg",
-      2,
-      5,
-    );
+  it('should handle product without category gracefully', async () => {
+    const product = new Product(10, 'Latest Figures', 120, 'Awesome figures', 'fig.jpg', 2, 5);
     mockProductRepo.findLatest.mockResolvedValue(product);
 
     const result = await useCase.execute();
 
-    expect(result.category).toBe("Sin categoría");
+    expect(result.category).toBe('Sin categoría');
   });
 });

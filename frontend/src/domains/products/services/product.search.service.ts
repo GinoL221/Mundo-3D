@@ -1,5 +1,5 @@
-import { API_URL } from "../../../config";
-import type { ProductSearchPage } from "../adapters/product.adapter";
+import { API_URL } from '../../../config';
+import type { ProductSearchPage } from '../adapters/product.adapter';
 
 // Public, unauthenticated search endpoint (product-catalog-search spec) —
 // no `withCredentials`, unlike order.service.ts's buyer-scoped calls.
@@ -12,7 +12,7 @@ export interface ProductSearchCriteria {
 
 export type FetchProductSearchResult =
   | { ok: true; page: ProductSearchPage }
-  | { ok: false; reason: "network" | "server" };
+  | { ok: false; reason: 'network' | 'server' };
 
 /**
  * `GET /api/products/search` — builds a query string with only the
@@ -29,25 +29,21 @@ export async function fetchProductSearch(
 ): Promise<FetchProductSearchResult> {
   const params = new URLSearchParams();
   const trimmedSearch = criteria.search?.trim();
-  if (trimmedSearch) params.set("search", trimmedSearch);
-  if (criteria.idCategory !== undefined)
-    params.set("idCategory", String(criteria.idCategory));
-  if (criteria.idFranchise !== undefined)
-    params.set("idFranchise", String(criteria.idFranchise));
-  if (criteria.page !== undefined) params.set("page", String(criteria.page));
+  if (trimmedSearch) params.set('search', trimmedSearch);
+  if (criteria.idCategory !== undefined) params.set('idCategory', String(criteria.idCategory));
+  if (criteria.idFranchise !== undefined) params.set('idFranchise', String(criteria.idFranchise));
+  if (criteria.page !== undefined) params.set('page', String(criteria.page));
   const query = params.toString();
 
   let res: Response;
   try {
-    res = await fetch(
-      `${API_URL}/api/products/search${query ? `?${query}` : ""}`,
-    );
+    res = await fetch(`${API_URL}/api/products/search${query ? `?${query}` : ''}`);
   } catch {
-    return { ok: false, reason: "network" };
+    return { ok: false, reason: 'network' };
   }
 
   if (!res.ok) {
-    return { ok: false, reason: "server" };
+    return { ok: false, reason: 'server' };
   }
 
   const page = (await res.json()) as ProductSearchPage;

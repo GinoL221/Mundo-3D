@@ -21,7 +21,7 @@ export class SequelizeShoppingCartRepository implements ShoppingCartRepositoryPo
       instance.descriptionProduct,
       instance.image,
       instance.idCategory,
-      instance.idFranchise
+      instance.idFranchise,
     );
   }
 
@@ -35,7 +35,7 @@ export class SequelizeShoppingCartRepository implements ShoppingCartRepositoryPo
       instance.quantity,
       Number(instance.unitPrice),
       instance.cartStatus as CartStatus,
-      product
+      product,
     );
   }
 
@@ -59,7 +59,10 @@ export class SequelizeShoppingCartRepository implements ShoppingCartRepositoryPo
     return count;
   }
 
-  async syncCart(userId: number, items: { productId: number; quantity: number; unitPrice: number }[]): Promise<void> {
+  async syncCart(
+    userId: number,
+    items: { productId: number; quantity: number; unitPrice: number }[],
+  ): Promise<void> {
     const transaction = await db.sequelize.transaction();
     try {
       await db.ShoppingCart.destroy({
@@ -79,7 +82,7 @@ export class SequelizeShoppingCartRepository implements ShoppingCartRepositoryPo
             unitPrice: item.unitPrice,
             cartStatus: 'ACTIVE',
           },
-          { transaction }
+          { transaction },
         );
       }
 
@@ -118,7 +121,15 @@ export class SequelizeShoppingCartRepository implements ShoppingCartRepositoryPo
     return cartInstances.map((row) => {
       const productInstance = productsById.get(row.idProduct);
       const product = productInstance ? this.toProductEntity(productInstance) : undefined;
-      return new ShoppingCart(row.idCart, row.idUser, row.idProduct, row.quantity, Number(row.unitPrice), row.cartStatus as CartStatus, product);
+      return new ShoppingCart(
+        row.idCart,
+        row.idUser,
+        row.idProduct,
+        row.quantity,
+        Number(row.unitPrice),
+        row.cartStatus as CartStatus,
+        product,
+      );
     });
   }
 
@@ -138,7 +149,7 @@ export class SequelizeShoppingCartRepository implements ShoppingCartRepositoryPo
         replacements: { cartIds, userId },
         type: QueryTypes.UPDATE,
         transaction,
-      }
+      },
     );
 
     return affectedRows as number;

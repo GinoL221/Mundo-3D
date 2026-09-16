@@ -17,7 +17,9 @@ describe('SequelizeUnitOfWork', () => {
 
   it('delegates to db.sequelize.transaction, passing the Sequelize transaction through as the opaque TransactionContext', async () => {
     const fakeTx = { id: 'fake-tx' };
-    (db.sequelize.transaction as jest.Mock).mockImplementation(async (work: (tx: unknown) => Promise<unknown>) => work(fakeTx));
+    (db.sequelize.transaction as jest.Mock).mockImplementation(
+      async (work: (tx: unknown) => Promise<unknown>) => work(fakeTx),
+    );
 
     const result = await uow.runInTransaction(async (tx) => {
       expect(tx).toBe(fakeTx);
@@ -31,12 +33,14 @@ describe('SequelizeUnitOfWork', () => {
   it('propagates a thrown error from the work callback so Sequelize rolls back the managed transaction', async () => {
     const fakeTx = { id: 'fake-tx' };
     const boom = new Error('checkout failed');
-    (db.sequelize.transaction as jest.Mock).mockImplementation(async (work: (tx: unknown) => Promise<unknown>) => work(fakeTx));
+    (db.sequelize.transaction as jest.Mock).mockImplementation(
+      async (work: (tx: unknown) => Promise<unknown>) => work(fakeTx),
+    );
 
     await expect(
       uow.runInTransaction(async () => {
         throw boom;
-      })
+      }),
     ).rejects.toThrow(boom);
   });
 });

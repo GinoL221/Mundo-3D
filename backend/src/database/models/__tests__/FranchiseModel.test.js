@@ -36,7 +36,7 @@ describe('Franchise Model Definition', () => {
           IDFranchise: expect.any(Function),
           NameFranchise: expect.any(Function),
         }),
-      })
+      }),
     );
   });
 });

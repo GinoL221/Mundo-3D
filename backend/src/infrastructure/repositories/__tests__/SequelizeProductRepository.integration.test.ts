@@ -53,7 +53,7 @@ jest.setTimeout(30000);
 async function createSearchTestProduct(
   categoryId: number,
   franchiseId: number,
-  overrides: { nameProduct: string; descriptionProduct?: string }
+  overrides: { nameProduct: string; descriptionProduct?: string },
 ): Promise<number> {
   const db = getTestDb();
   const product = await db.Product.create({
@@ -100,13 +100,13 @@ describe('SequelizeProductRepository — real DB', () => {
         // bypassed (stock ending up negative). With the atomic UPDATE fix,
         // exactly 10 must succeed and exactly 10 must be rejected.
         const results = await Promise.allSettled(
-          Array.from({ length: CONCURRENT_CALLS }, () => repository.adjustStock(fixture.productId, -1))
+          Array.from({ length: CONCURRENT_CALLS }, () =>
+            repository.adjustStock(fixture.productId, -1),
+          ),
         );
 
         const fulfilled = results.filter((r) => r.status === 'fulfilled');
-        const rejected = results.filter(
-          (r): r is PromiseRejectedResult => r.status === 'rejected'
-        );
+        const rejected = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
 
         // (c) every rejection must be the exact floor-guard error, not some
         // other failure mode (e.g. a connection error masquerading as success).
@@ -145,8 +145,12 @@ describe('SequelizeProductRepository — real DB', () => {
         // worst-case sequential ordering (50 - 10*3 = 20 >= 0), so all calls
         // must succeed and the final stock must be the exact arithmetic sum —
         // proving concurrent non-conflicting writes aren't losing each other.
-        const increments = Array.from({ length: 10 }, () => repository.adjustStock(fixture.productId, 5));
-        const decrements = Array.from({ length: 10 }, () => repository.adjustStock(fixture.productId, -3));
+        const increments = Array.from({ length: 10 }, () =>
+          repository.adjustStock(fixture.productId, 5),
+        );
+        const decrements = Array.from({ length: 10 }, () =>
+          repository.adjustStock(fixture.productId, -3),
+        );
 
         await Promise.all([...increments, ...decrements]);
 
@@ -184,40 +188,66 @@ describe('SequelizeProductRepository — real DB', () => {
       };
 
       // Case-insensitive substring match on name_product.
-      await track(createSearchTestProduct(categoryId, franchiseId, { nameProduct: `${token}GokuFigure` }));
+      await track(
+        createSearchTestProduct(categoryId, franchiseId, { nameProduct: `${token}GokuFigure` }),
+      );
 
       // Case-insensitive substring match on description_product (OR'd with name).
       await track(
         createSearchTestProduct(categoryId, franchiseId, {
           nameProduct: `${token}UnrelatedName`,
           descriptionProduct: `${token}SpecialDescriptionTerm`,
-        })
+        }),
       );
 
       // Accent-insensitive match: unaccented search term must match accented name
       // (inherited utf8mb4_unicode_ci collation).
-      await track(createSearchTestProduct(categoryId, franchiseId, { nameProduct: `${token}ZZAccentMáscara` }));
+      await track(
+        createSearchTestProduct(categoryId, franchiseId, {
+          nameProduct: `${token}ZZAccentMáscara`,
+        }),
+      );
 
       // Literal `%` escaping, with a decoy that would match if `%` were treated
       // as a wildcard instead of a literal character.
-      await track(createSearchTestProduct(categoryId, franchiseId, { nameProduct: `${token}50% Off Figure` }));
-      await track(createSearchTestProduct(categoryId, franchiseId, { nameProduct: `${token}5000 Off Figure` }));
+      await track(
+        createSearchTestProduct(categoryId, franchiseId, { nameProduct: `${token}50% Off Figure` }),
+      );
+      await track(
+        createSearchTestProduct(categoryId, franchiseId, {
+          nameProduct: `${token}5000 Off Figure`,
+        }),
+      );
 
       // Literal `_` escaping, with a decoy that would match if `_` were treated
       // as a single-character wildcard instead of a literal character.
-      await track(createSearchTestProduct(categoryId, franchiseId, { nameProduct: `${token}a_b Figure` }));
-      await track(createSearchTestProduct(categoryId, franchiseId, { nameProduct: `${token}axb Figure` }));
+      await track(
+        createSearchTestProduct(categoryId, franchiseId, { nameProduct: `${token}a_b Figure` }),
+      );
+      await track(
+        createSearchTestProduct(categoryId, franchiseId, { nameProduct: `${token}axb Figure` }),
+      );
 
       // Deterministic ordering across pages: 5 rows sharing one search term.
       for (let i = 1; i <= 5; i += 1) {
-        await track(createSearchTestProduct(categoryId, franchiseId, { nameProduct: `${token}PageOrderItem${i}` }));
+        await track(
+          createSearchTestProduct(categoryId, franchiseId, {
+            nameProduct: `${token}PageOrderItem${i}`,
+          }),
+        );
       }
 
       // Combined filters: same search term, only one row matches ALL of
       // search + idCategory + idFranchise.
-      await track(createSearchTestProduct(categoryId, franchiseId, { nameProduct: `${token}ComboItem` }));
-      await track(createSearchTestProduct(otherCategoryId, franchiseId, { nameProduct: `${token}ComboItem` }));
-      await track(createSearchTestProduct(categoryId, otherFranchiseId, { nameProduct: `${token}ComboItem` }));
+      await track(
+        createSearchTestProduct(categoryId, franchiseId, { nameProduct: `${token}ComboItem` }),
+      );
+      await track(
+        createSearchTestProduct(otherCategoryId, franchiseId, { nameProduct: `${token}ComboItem` }),
+      );
+      await track(
+        createSearchTestProduct(categoryId, otherFranchiseId, { nameProduct: `${token}ComboItem` }),
+      );
     });
 
     afterAll(async () => {
@@ -231,21 +261,33 @@ describe('SequelizeProductRepository — real DB', () => {
     });
 
     it('matches case-insensitively on name_product', async () => {
-      const result = await repository.searchPaged({ search: `${token}gokufigure`, limit: 20, offset: 0 });
+      const result = await repository.searchPaged({
+        search: `${token}gokufigure`,
+        limit: 20,
+        offset: 0,
+      });
 
       expect(result.total).toBe(1);
       expect(result.products[0].nameProduct).toBe(`${token}GokuFigure`);
     });
 
     it('matches case-insensitively on description_product, OR-ed with name_product', async () => {
-      const result = await repository.searchPaged({ search: `${token}specialdescriptionterm`, limit: 20, offset: 0 });
+      const result = await repository.searchPaged({
+        search: `${token}specialdescriptionterm`,
+        limit: 20,
+        offset: 0,
+      });
 
       expect(result.total).toBe(1);
       expect(result.products[0].nameProduct).toBe(`${token}UnrelatedName`);
     });
 
     it('matches accent-insensitively (inherited utf8mb4_unicode_ci collation)', async () => {
-      const result = await repository.searchPaged({ search: `${token}zzaccentmascara`, limit: 20, offset: 0 });
+      const result = await repository.searchPaged({
+        search: `${token}zzaccentmascara`,
+        limit: 20,
+        offset: 0,
+      });
 
       expect(result.total).toBe(1);
       expect(result.products[0].nameProduct).toBe(`${token}ZZAccentMáscara`);
@@ -266,15 +308,29 @@ describe('SequelizeProductRepository — real DB', () => {
     });
 
     it('orders deterministically by idProduct ASC, with no overlap or reordering across pages', async () => {
-      const firstPage = await repository.searchPaged({ search: `${token}PageOrderItem`, limit: 2, offset: 0 });
-      const secondPage = await repository.searchPaged({ search: `${token}PageOrderItem`, limit: 2, offset: 2 });
-      const thirdPage = await repository.searchPaged({ search: `${token}PageOrderItem`, limit: 2, offset: 4 });
+      const firstPage = await repository.searchPaged({
+        search: `${token}PageOrderItem`,
+        limit: 2,
+        offset: 0,
+      });
+      const secondPage = await repository.searchPaged({
+        search: `${token}PageOrderItem`,
+        limit: 2,
+        offset: 2,
+      });
+      const thirdPage = await repository.searchPaged({
+        search: `${token}PageOrderItem`,
+        limit: 2,
+        offset: 4,
+      });
 
       expect(firstPage.total).toBe(5);
       expect(secondPage.total).toBe(5);
       expect(thirdPage.total).toBe(5);
 
-      const allIds = [...firstPage.products, ...secondPage.products, ...thirdPage.products].map((p) => p.idProduct);
+      const allIds = [...firstPage.products, ...secondPage.products, ...thirdPage.products].map(
+        (p) => p.idProduct,
+      );
       expect(new Set(allIds).size).toBe(5);
       expect(allIds).toEqual([...allIds].sort((a, b) => a - b));
     });
@@ -300,7 +356,11 @@ describe('SequelizeProductRepository — real DB', () => {
       // hasMany include were added to searchPaged without `distinct: true`,
       // this exact assertion (total === actual row count, not row count times
       // joined rows) would catch it.
-      const result = await repository.searchPaged({ search: `${token}PageOrderItem`, limit: 20, offset: 0 });
+      const result = await repository.searchPaged({
+        search: `${token}PageOrderItem`,
+        limit: 20,
+        offset: 0,
+      });
 
       expect(result.total).toBe(5);
       expect(result.products).toHaveLength(5);

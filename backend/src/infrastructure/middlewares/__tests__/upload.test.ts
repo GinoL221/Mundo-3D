@@ -20,7 +20,7 @@ jest.mock('multer', () => {
         path: '/abs/public/img/products/gen-uuid.png',
         destination: '/abs/public/img/products',
         size: 1234,
-      })
+      }),
     ),
     _removeFile: jest.fn((_req, _file, cb) => cb(null)),
   }));
@@ -73,7 +73,7 @@ describe('createUpload factory', () => {
     // `/img/products/gen-uuid.png` — not a doubled `/img/products//img/...`.
     expect(cb).toHaveBeenCalledWith(
       null,
-      expect.objectContaining({ key: 'products/gen-uuid.png', location: 'gen-uuid.png' })
+      expect.objectContaining({ key: 'products/gen-uuid.png', location: 'gen-uuid.png' }),
     );
     expect(file.key).toBe('products/gen-uuid.png');
     expect(file.path).toBe('/abs/public/img/products/gen-uuid.png');

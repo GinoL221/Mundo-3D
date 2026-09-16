@@ -41,7 +41,7 @@ function expiryScopes(): string[] {
   // dev/CI topology, and losing it because a hostname could not be read
   // would silently turn the whole clear into a no-op.
   const scopes = [''];
-  const hostname = typeof location === 'undefined' ? '' : location?.hostname ?? '';
+  const hostname = typeof location === 'undefined' ? '' : (location?.hostname ?? '');
   const labels = hostname.split('.').filter(Boolean);
   for (let i = 0; i < labels.length - 1; i += 1) {
     scopes.push(`; domain=${labels.slice(i).join('.')}`);

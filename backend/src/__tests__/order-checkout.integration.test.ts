@@ -56,7 +56,7 @@ function buildUseCase(): CreateOrderUseCase {
     new SequelizeShoppingCartRepository(),
     new SequelizeProductRepository(),
     new ManualPaymentGateway(),
-    new NoopLogger()
+    new NoopLogger(),
   );
 }
 
@@ -84,7 +84,9 @@ describe('CreateOrderUseCase — real DB, real adapters', () => {
     it('leaves stock and the ACTIVE cart completely untouched and creates no order', async () => {
       const useCase = buildUseCase();
 
-      await expect(useCase.execute(fixture.userId, 'shortage-key')).rejects.toThrow(InsufficientStockException);
+      await expect(useCase.execute(fixture.userId, 'shortage-key')).rejects.toThrow(
+        InsufficientStockException,
+      );
 
       expect(await readProductStock(fixture.productIds[0])).toBe(5);
       expect(await readProductStock(fixture.productIds[1])).toBe(1);
@@ -100,7 +102,9 @@ describe('CreateOrderUseCase — real DB, real adapters', () => {
     beforeEach(async () => {
       fixture = await seedCheckoutFixture([5], [2]);
       const db = getTestDb();
-      const row = await db.ShoppingCart.findOne({ where: { idUser: fixture.userId, cartStatus: 'ACTIVE' } });
+      const row = await db.ShoppingCart.findOne({
+        where: { idUser: fixture.userId, cartStatus: 'ACTIVE' },
+      });
       cartRowIdBefore = row.idCart;
     });
 
@@ -190,7 +194,10 @@ describe('CreateOrderUseCase — real DB, real adapters', () => {
         useCaseB.execute(fixture.userId, 'race-key-b'),
       ]);
 
-      const fulfilled = results.filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof useCaseA.execute>>> => r.status === 'fulfilled');
+      const fulfilled = results.filter(
+        (r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof useCaseA.execute>>> =>
+          r.status === 'fulfilled',
+      );
       const rejected = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
 
       expect(fulfilled).toHaveLength(1);
@@ -216,14 +223,26 @@ describe('CreateOrderUseCase — real DB, real adapters', () => {
     it('a second createWithItems call with the same key throws DuplicateIdempotencyKeyException against the real UNIQUE constraint', async () => {
       const uow = new SequelizeUnitOfWork();
       const orderRepo = new SequelizeOrderRepository();
-      const items = [{ idProduct: fixture.productIds[0], productName: 'Checkout Product 1', quantity: 1, unitPrice: 10 }];
+      const items = [
+        {
+          idProduct: fixture.productIds[0],
+          productName: 'Checkout Product 1',
+          quantity: 1,
+          unitPrice: 10,
+        },
+      ];
 
       await uow.runInTransaction((tx) =>
-        orderRepo.createWithItems({ idUser: fixture.userId, idempotencyKey: 'dup-key', items }, tx)
+        orderRepo.createWithItems({ idUser: fixture.userId, idempotencyKey: 'dup-key', items }, tx),
       );
 
       await expect(
-        uow.runInTransaction((tx) => orderRepo.createWithItems({ idUser: fixture.userId, idempotencyKey: 'dup-key', items }, tx))
+        uow.runInTransaction((tx) =>
+          orderRepo.createWithItems(
+            { idUser: fixture.userId, idempotencyKey: 'dup-key', items },
+            tx,
+          ),
+        ),
       ).rejects.toThrow(DuplicateIdempotencyKeyException);
 
       expect(await countOrdersForUser(fixture.userId)).toBe(1);

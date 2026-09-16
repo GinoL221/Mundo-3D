@@ -14,7 +14,7 @@ export class SequelizeUserRepository implements UserRepositoryPort {
       instance.passwordUser,
       instance.image || null,
       instance.idRole || null,
-      instance.category || null
+      instance.category || null,
     );
   }
 
@@ -52,6 +52,6 @@ export class SequelizeUserRepository implements UserRepositoryPort {
 
   async findAll(): Promise<User[]> {
     const instances = await db.User.findAll();
-    return instances.map(instance => this.toEntity(instance));
+    return instances.map((instance) => this.toEntity(instance));
   }
 }

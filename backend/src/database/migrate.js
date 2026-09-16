@@ -28,11 +28,14 @@ async function run(argv = process.argv.slice(2)) {
 
   if (argv[0] === 'adopt-baseline') {
     const explicitNames = argv.slice(1);
-    const adopted = await adoptBaseline(migrator, explicitNames.length > 0 ? explicitNames : undefined);
+    const adopted = await adoptBaseline(
+      migrator,
+      explicitNames.length > 0 ? explicitNames : undefined,
+    );
     console.log(
       adopted.length > 0
         ? `Adopted baseline: marked ${adopted.join(', ')} as applied (no DDL executed).`
-        : 'Nothing to adopt — no pending migrations matched the requested scope.'
+        : 'Nothing to adopt — no pending migrations matched the requested scope.',
     );
     return true;
   }

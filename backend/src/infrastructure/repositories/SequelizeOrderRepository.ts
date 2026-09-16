@@ -1,7 +1,12 @@
 import { QueryTypes, Transaction, UniqueConstraintError } from 'sequelize';
 import { Order, OrderStatus } from '../../domain/entities/Order';
 import { OrderItem } from '../../domain/entities/OrderItem';
-import { OrderRepositoryPort, NewOrderItemInput, PaginationOptions, PagedOrders } from '../../domain/ports/OrderRepositoryPort';
+import {
+  OrderRepositoryPort,
+  NewOrderItemInput,
+  PaginationOptions,
+  PagedOrders,
+} from '../../domain/ports/OrderRepositoryPort';
 import { TransactionContext } from '../../domain/ports/UnitOfWorkPort';
 import { DuplicateIdempotencyKeyException } from '../../domain/exceptions/DuplicateIdempotencyKeyException';
 import db, { OrderInstance } from '../../database/models/db';
@@ -17,7 +22,14 @@ export class SequelizeOrderRepository implements OrderRepositoryPort {
   private toEntity(instance: OrderInstance): Order {
     const items = (instance.items ?? []).map(
       (item) =>
-        new OrderItem(item.idOrderItem, item.idOrder, item.idProduct, item.productName, item.quantity, Number(item.unitPrice))
+        new OrderItem(
+          item.idOrderItem,
+          item.idOrder,
+          item.idProduct,
+          item.productName,
+          item.quantity,
+          Number(item.unitPrice),
+        ),
     );
     return new Order(
       instance.idOrder,
@@ -26,14 +38,17 @@ export class SequelizeOrderRepository implements OrderRepositoryPort {
       instance.orderStatus as OrderStatus,
       items,
       instance.createdAt,
-      instance.paymentReference
+      instance.paymentReference,
     );
   }
 
   // Private, transaction-aware follow-up read — same rationale as
   // `SequelizeProductRepository.findByIdInternal`: `createWithItems`'s
   // re-read must run on the transaction's own connection.
-  private async findByIdInternal(idOrder: number, transaction?: Transaction): Promise<Order | null> {
+  private async findByIdInternal(
+    idOrder: number,
+    transaction?: Transaction,
+  ): Promise<Order | null> {
     const instance = await db.Order.findByPk(idOrder, {
       include: [{ model: db.OrderItem, as: 'items' }],
       transaction,
@@ -44,7 +59,7 @@ export class SequelizeOrderRepository implements OrderRepositoryPort {
 
   async createWithItems(
     input: { idUser: number; idempotencyKey: string; items: NewOrderItemInput[] },
-    tx: TransactionContext
+    tx: TransactionContext,
   ): Promise<Order> {
     const transaction = tx as unknown as Transaction;
 
@@ -57,7 +72,7 @@ export class SequelizeOrderRepository implements OrderRepositoryPort {
           orderStatus: OrderStatus.AWAITING_PAYMENT,
           createdAt: new Date(),
         },
-        { transaction }
+        { transaction },
       );
     } catch (error) {
       if (error instanceof UniqueConstraintError) {
@@ -74,7 +89,7 @@ export class SequelizeOrderRepository implements OrderRepositoryPort {
         quantity: item.quantity,
         unitPrice: item.unitPrice,
       })),
-      { transaction }
+      { transaction },
     );
 
     const created = await this.findByIdInternal(orderInstance.idOrder, transaction);
@@ -132,7 +147,12 @@ export class SequelizeOrderRepository implements OrderRepositoryPort {
 
   // Guarded UPDATE mirroring `adjustStock`'s affected-row-count style — a
   // read-then-write would race two admin actions against the same order.
-  async transitionStatus(idOrder: number, from: OrderStatus, to: OrderStatus, tx?: TransactionContext): Promise<boolean> {
+  async transitionStatus(
+    idOrder: number,
+    from: OrderStatus,
+    to: OrderStatus,
+    tx?: TransactionContext,
+  ): Promise<boolean> {
     const transaction = tx as unknown as Transaction | undefined;
     const [, affectedRows] = await db.sequelize.query(
       `UPDATE ${ORDER_TABLE} SET ${ORDER_STATUS_COLUMN} = :to ` +
@@ -141,7 +161,7 @@ export class SequelizeOrderRepository implements OrderRepositoryPort {
         replacements: { to, from, id: idOrder },
         type: QueryTypes.UPDATE,
         transaction,
-      }
+      },
     );
     return affectedRows === 1;
   }

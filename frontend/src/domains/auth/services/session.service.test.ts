@@ -17,8 +17,12 @@ function stubCookie(cookie: string) {
 function stubCookieJar(initial: string): string[] {
   const writes: string[] = [];
   vi.stubGlobal('document', {
-    get cookie() { return initial; },
-    set cookie(value: string) { writes.push(value); },
+    get cookie() {
+      return initial;
+    },
+    set cookie(value: string) {
+      writes.push(value);
+    },
   });
   return writes;
 }
@@ -212,7 +216,10 @@ describe('session.service', () => {
     it('expires the client-readable session cookies before the logout response settles', async () => {
       let settle: () => void = () => {};
       fetchMock.mockImplementation(
-        () => new Promise((resolve) => { settle = () => resolve({ ok: true, status: 204 }); }),
+        () =>
+          new Promise((resolve) => {
+            settle = () => resolve({ ok: true, status: 204 });
+          }),
       );
       const writes = stubCookieJar('m3d_user=%7B%7D; m3d_csrf=abc.hmac');
 
@@ -294,7 +301,10 @@ describe('session.service', () => {
     it('broadcasts before the logout response settles, so other tabs never wait on the network', async () => {
       let settle: () => void = () => {};
       fetchMock.mockImplementation(
-        () => new Promise((resolve) => { settle = () => resolve({ ok: true, status: 204 }); }),
+        () =>
+          new Promise((resolve) => {
+            settle = () => resolve({ ok: true, status: 204 });
+          }),
       );
 
       const pending = clearSession();

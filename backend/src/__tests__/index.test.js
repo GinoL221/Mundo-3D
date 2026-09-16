@@ -1,5 +1,8 @@
 const { createFakeHttpServer } = require('./helpers/fakeHttpServer');
-const { REQUIRED_SCHEMA, REQUIRED_COLUMN_DEFINITIONS } = require('../database/checkPendingMigrations');
+const {
+  REQUIRED_SCHEMA,
+  REQUIRED_COLUMN_DEFINITIONS,
+} = require('../database/checkPendingMigrations');
 
 async function flushPromiseChain() {
   for (let i = 0; i < 10; i += 1) {
@@ -30,7 +33,7 @@ function makeCompatibleQueryInterface() {
       columns.map((column) => {
         const expected = REQUIRED_COLUMN_DEFINITIONS[table][column];
         return [column, { type: expected.replace(/!$/, ''), allowNull: !expected.endsWith('!') }];
-      })
+      }),
     );
   }
 
@@ -172,7 +175,9 @@ describe('index.js boot sequence', () => {
     const sync = jest.fn().mockResolvedValue(undefined);
     const close = jest.fn().mockResolvedValue(undefined);
     const checkNoPendingMigrations = jest.fn().mockResolvedValue(undefined);
-    const seedInitialData = jest.fn().mockRejectedValue(new Error("Table 'mundo_3d_db.Product' doesn't exist"));
+    const seedInitialData = jest
+      .fn()
+      .mockRejectedValue(new Error("Table 'mundo_3d_db.Product' doesn't exist"));
 
     jest.isolateModules(() => {
       jest.doMock('../app', () => fake.app);
@@ -268,10 +273,12 @@ describe('index.js boot sequence', () => {
     expect(mockLogger.error).toHaveBeenCalledWith(
       expect.objectContaining({
         err: expect.objectContaining({
-          message: expect.stringContaining('Database schema is not fully migrated: 1 pending migration(s)'),
+          message: expect.stringContaining(
+            'Database schema is not fully migrated: 1 pending migration(s)',
+          ),
         }),
       }),
-      expect.stringContaining('Error al conectar con la base de datos o insertar datos iniciales')
+      expect.stringContaining('Error al conectar con la base de datos o insertar datos iniciales'),
     );
   });
 
@@ -285,7 +292,9 @@ describe('index.js boot sequence', () => {
     const seedInitialData = jest.fn().mockResolvedValue(undefined);
     const pending = jest.fn().mockResolvedValue([]);
     const queryInterface = makeCompatibleQueryInterface();
-    const buildMigrator = jest.fn().mockReturnValue({ pending, options: { context: queryInterface } });
+    const buildMigrator = jest
+      .fn()
+      .mockReturnValue({ pending, options: { context: queryInterface } });
     const listen = jest.fn((port, cb) => cb && cb());
 
     jest.isolateModules(() => {
@@ -338,10 +347,11 @@ describe('index.js boot sequence', () => {
     expect(mockLogger.error).toHaveBeenCalledWith(
       expect.objectContaining({
         err: expect.objectContaining({
-          message: "Unsupported NODE_ENV: 'staging' — expected one of: development, test, production",
+          message:
+            "Unsupported NODE_ENV: 'staging' — expected one of: development, test, production",
         }),
       }),
-      expect.stringContaining('Error al conectar con la base de datos o insertar datos iniciales')
+      expect.stringContaining('Error al conectar con la base de datos o insertar datos iniciales'),
     );
   });
 
@@ -495,7 +505,7 @@ describe('index.js boot sequence', () => {
           new Promise((resolve) => {
             process.emit('SIGTERM');
             resolve();
-          })
+          }),
       );
 
       jest.isolateModules(() => {

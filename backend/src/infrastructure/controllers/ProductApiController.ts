@@ -6,7 +6,10 @@ import { CreateProductUseCase } from '../../application/use-cases/CreateProductU
 import { UpdateProductUseCase } from '../../application/use-cases/UpdateProductUseCase';
 import { DeleteProductUseCase } from '../../application/use-cases/DeleteProductUseCase';
 import { AdjustProductStockUseCase } from '../../application/use-cases/AdjustProductStockUseCase';
-import { SearchProductsUseCase, DEFAULT_PAGE_SIZE } from '../../application/use-cases/SearchProductsUseCase';
+import {
+  SearchProductsUseCase,
+  DEFAULT_PAGE_SIZE,
+} from '../../application/use-cases/SearchProductsUseCase';
 import { cleanupUploadedFile } from '../utils/cleanupUploadedFile';
 
 type RequestWithFile = Request & { file?: { key: string; location: string } };
@@ -27,7 +30,7 @@ export class ProductApiController {
     private readonly updateProductUseCase: UpdateProductUseCase,
     private readonly deleteProductUseCase: DeleteProductUseCase,
     private readonly adjustProductStockUseCase: AdjustProductStockUseCase,
-    private readonly searchProductsUseCase: SearchProductsUseCase
+    private readonly searchProductsUseCase: SearchProductsUseCase,
   ) {}
 
   index = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -223,8 +226,12 @@ export class ProductApiController {
       const pageSize = req.query.pageSize
         ? parseInt(req.query.pageSize as string, 10)
         : DEFAULT_PAGE_SIZE;
-      const idCategory = req.query.idCategory ? parseInt(req.query.idCategory as string, 10) : undefined;
-      const idFranchise = req.query.idFranchise ? parseInt(req.query.idFranchise as string, 10) : undefined;
+      const idCategory = req.query.idCategory
+        ? parseInt(req.query.idCategory as string, 10)
+        : undefined;
+      const idFranchise = req.query.idFranchise
+        ? parseInt(req.query.idFranchise as string, 10)
+        : undefined;
 
       const result = await this.searchProductsUseCase.execute({
         search: req.query.search as string | undefined,

@@ -64,7 +64,7 @@ describe('ProductApiController', () => {
       mockUpdateProductUseCase,
       mockDeleteProductUseCase,
       mockAdjustProductStockUseCase,
-      mockSearchProductsUseCase
+      mockSearchProductsUseCase,
     );
 
     req = { params: {}, body: {}, query: {} };
@@ -211,7 +211,7 @@ describe('ProductApiController', () => {
         expect.objectContaining({
           image: 'https://pub-test.r2.dev/products/uuid-1.png',
           nameProduct: 'Product A',
-        })
+        }),
       );
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(mockProduct);
@@ -219,7 +219,13 @@ describe('ProductApiController', () => {
     });
 
     it('forwards unexpected errors to next', async () => {
-      req.body = { nameProduct: 'Product A', price: '100', descriptionProduct: 'Desc', idCategory: '1', idFranchise: '2' };
+      req.body = {
+        nameProduct: 'Product A',
+        price: '100',
+        descriptionProduct: 'Desc',
+        idCategory: '1',
+        idFranchise: '2',
+      };
       req.file = {
         key: 'products/uuid-1.png',
         location: 'https://pub-test.r2.dev/products/uuid-1.png',
@@ -238,12 +244,21 @@ describe('ProductApiController', () => {
     it('returns 200 and the updated product on success', async () => {
       req.params = { id: '10' };
       req.body = { nameProduct: 'Updated Name' };
-      const mockProduct = { idProduct: 10, nameProduct: 'Updated Name', price: 100, image: 'a.png', stock: 5 };
+      const mockProduct = {
+        idProduct: 10,
+        nameProduct: 'Updated Name',
+        price: 100,
+        image: 'a.png',
+        stock: 5,
+      };
       mockUpdateProductUseCase.execute.mockResolvedValue(mockProduct as any);
 
       await controller.update(req as Request, res as Response, next);
 
-      expect(mockUpdateProductUseCase.execute).toHaveBeenCalledWith(10, expect.objectContaining({ nameProduct: 'Updated Name' }));
+      expect(mockUpdateProductUseCase.execute).toHaveBeenCalledWith(
+        10,
+        expect.objectContaining({ nameProduct: 'Updated Name' }),
+      );
       expect(res.json).toHaveBeenCalledWith(mockProduct);
       expect(next).not.toHaveBeenCalled();
     });
@@ -304,7 +319,7 @@ describe('ProductApiController', () => {
 
       expect(mockUpdateProductUseCase.execute).toHaveBeenCalledWith(
         10,
-        expect.objectContaining({ image: 'https://pub-test.r2.dev/products/new-uuid.png' })
+        expect.objectContaining({ image: 'https://pub-test.r2.dev/products/new-uuid.png' }),
       );
       expect(cleanupUploadedFile).not.toHaveBeenCalled();
     });
@@ -416,7 +431,9 @@ describe('ProductApiController', () => {
     it('returns 400 when the use case throws "Delta must be a non-zero integer"', async () => {
       req.params = { id: '10' };
       req.body = { delta: 0 };
-      mockAdjustProductStockUseCase.execute.mockRejectedValue(new Error('Delta must be a non-zero integer'));
+      mockAdjustProductStockUseCase.execute.mockRejectedValue(
+        new Error('Delta must be a non-zero integer'),
+      );
 
       await controller.adjustStock(req as Request, res as Response, next);
 

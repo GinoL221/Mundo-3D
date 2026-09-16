@@ -44,7 +44,7 @@ const controller = new ProductApiController(
   updateProductUseCase,
   deleteProductUseCase,
   adjustProductStockUseCase,
-  searchProductsUseCase
+  searchProductsUseCase,
 );
 
 const uploadImgProduct = createUpload('products');
@@ -220,7 +220,7 @@ router.post(
   uploadImgProduct.single('image'),
   productCreateValidators,
   handleValidationErrors,
-  controller.create
+  controller.create,
 );
 
 router.put(
@@ -231,7 +231,7 @@ router.put(
   uploadImgProduct.single('image'),
   productUpdateValidators,
   handleValidationErrors,
-  controller.update
+  controller.update,
 );
 
 router.delete('/products/:id', apiAuthMiddleware, csrfGuard, adminGuard, controller.destroy);
@@ -241,7 +241,7 @@ router.patch(
   apiAuthMiddleware,
   csrfGuard,
   requireRoles(Role.ADMIN, Role.STAFF),
-  controller.adjustStock
+  controller.adjustStock,
 );
 
 export default router;

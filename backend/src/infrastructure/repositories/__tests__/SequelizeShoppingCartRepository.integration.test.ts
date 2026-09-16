@@ -34,7 +34,11 @@ const CONCURRENCY_ERROR_CODES = ['ER_LOCK_DEADLOCK', 'ER_LOCK_WAIT_TIMEOUT'];
 
 function normalize(items: CartRow[]): CartRow[] {
   return [...items]
-    .map((item) => ({ idProduct: item.idProduct, quantity: item.quantity, unitPrice: Number(item.unitPrice) }))
+    .map((item) => ({
+      idProduct: item.idProduct,
+      quantity: item.quantity,
+      unitPrice: Number(item.unitPrice),
+    }))
     .sort((a, b) => a.idProduct - b.idProduct);
 }
 
@@ -107,8 +111,20 @@ describe('SequelizeShoppingCartRepository.syncCart — real DB concurrency', () 
 
       const rows = await readActiveCartRows(fixture.userId);
       const normalizedRows = normalize(rows);
-      const normalizedA = normalize(payloadA.map((i) => ({ idProduct: i.productId, quantity: i.quantity, unitPrice: i.unitPrice })));
-      const normalizedB = normalize(payloadB.map((i) => ({ idProduct: i.productId, quantity: i.quantity, unitPrice: i.unitPrice })));
+      const normalizedA = normalize(
+        payloadA.map((i) => ({
+          idProduct: i.productId,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+        })),
+      );
+      const normalizedB = normalize(
+        payloadB.map((i) => ({
+          idProduct: i.productId,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+        })),
+      );
 
       const matchesA = JSON.stringify(normalizedRows) === JSON.stringify(normalizedA);
       const matchesB = JSON.stringify(normalizedRows) === JSON.stringify(normalizedB);
@@ -155,7 +171,11 @@ describe('SequelizeShoppingCartRepository.syncCart — real DB concurrency', () 
       await repository.syncCart(fixture.userId, payloadB);
 
       const rows = await readActiveCartRows(fixture.userId);
-      const expected = payloadB.map((i) => ({ idProduct: i.productId, quantity: i.quantity, unitPrice: i.unitPrice }));
+      const expected = payloadB.map((i) => ({
+        idProduct: i.productId,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+      }));
 
       expect(normalize(rows)).toEqual(normalize(expected));
     });
@@ -184,7 +204,10 @@ describe('SequelizeShoppingCartRepository.syncCart — real DB concurrency', () 
 
       const cartLockTx = await db.sequelize.transaction();
       try {
-        await repository.findActiveForUpdate(fixture.userId, cartLockTx as unknown as TransactionContext);
+        await repository.findActiveForUpdate(
+          fixture.userId,
+          cartLockTx as unknown as TransactionContext,
+        );
 
         const productLockTx = await db.sequelize.transaction();
         try {

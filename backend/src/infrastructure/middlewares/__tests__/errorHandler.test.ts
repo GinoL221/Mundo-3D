@@ -14,7 +14,7 @@ describe('errorHandler middleware', () => {
     req = {};
     res = {
       status: jest.fn().mockReturnThis() as any,
-      json: jest.fn().mockReturnThis() as any
+      json: jest.fn().mockReturnThis() as any,
     };
     next = jest.fn();
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -38,8 +38,8 @@ describe('errorHandler middleware', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         error: 'Database connection failed',
-        stack: err.stack
-      })
+        stack: err.stack,
+      }),
     );
     expect(loggerErrorSpy).toHaveBeenCalled();
     expect(consoleErrorSpy).not.toHaveBeenCalled();
@@ -54,7 +54,7 @@ describe('errorHandler middleware', () => {
 
     expect(res.status).toHaveBeenCalledWith(503);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'Algo salió mal. Intente nuevamente más tarde.'
+      error: 'Algo salió mal. Intente nuevamente más tarde.',
     });
     expect(loggerErrorSpy).toHaveBeenCalled();
     expect(consoleErrorSpy).not.toHaveBeenCalled();
@@ -80,7 +80,7 @@ describe('errorHandler middleware', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'Invalid file format or size limit exceeded'
+      error: 'Invalid file format or size limit exceeded',
     });
     expect(loggerErrorSpy).toHaveBeenCalled();
     expect(consoleErrorSpy).not.toHaveBeenCalled();
@@ -94,7 +94,7 @@ describe('errorHandler middleware', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'Invalid file format or size limit exceeded'
+      error: 'Invalid file format or size limit exceeded',
     });
     expect(loggerErrorSpy).toHaveBeenCalled();
     expect(consoleErrorSpy).not.toHaveBeenCalled();

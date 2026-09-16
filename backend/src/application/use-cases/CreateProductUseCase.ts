@@ -1,6 +1,6 @@
-import { ProductRepositoryPort } from "../../domain/ports/ProductRepositoryPort";
-import { CategoryRepositoryPort } from "../../domain/ports/CategoryRepositoryPort";
-import { ProductDTO } from "../dtos/ProductDTO";
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
+import { ProductDTO } from '../dtos/ProductDTO';
 
 export interface CreateProductInput {
   nameProduct: string;
@@ -41,7 +41,7 @@ export class CreateProductUseCase {
       stock: input.stock ?? 0,
     });
 
-    let categoryName = "Sin categoría";
+    let categoryName = 'Sin categoría';
     if (created.Category) {
       categoryName = created.Category.nameCategory;
     } else if (this.categoryRepo) {

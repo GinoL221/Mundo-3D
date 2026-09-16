@@ -1,4 +1,4 @@
-import { ShoppingCartRepositoryPort } from "../../domain/ports/ShoppingCartRepositoryPort";
+import { ShoppingCartRepositoryPort } from '../../domain/ports/ShoppingCartRepositoryPort';
 
 export class GetCartDistinctCountUseCase {
   constructor(private readonly cartRepo: ShoppingCartRepositoryPort) {}

@@ -1,5 +1,5 @@
-import { UserRepositoryPort } from "../../domain/ports/UserRepositoryPort";
-import { UserDTO } from "../dtos/UserDTO";
+import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
+import { UserDTO } from '../dtos/UserDTO';
 
 export class ListUsersUseCase {
   constructor(private readonly userRepository: UserRepositoryPort) {}

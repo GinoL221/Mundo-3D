@@ -1,6 +1,6 @@
-import { ShoppingCartRepositoryPort } from "../../domain/ports/ShoppingCartRepositoryPort";
-import { ProductRepositoryPort } from "../../domain/ports/ProductRepositoryPort";
-import { ShoppingCart } from "../../domain/entities/ShoppingCart";
+import { ShoppingCartRepositoryPort } from '../../domain/ports/ShoppingCartRepositoryPort';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { ShoppingCart } from '../../domain/entities/ShoppingCart';
 
 export class SyncCartUseCase {
   constructor(
@@ -8,9 +8,7 @@ export class SyncCartUseCase {
     private readonly productRepo: ProductRepositoryPort,
   ) {}
 
-  private mergeItems(
-    items: { productId: number; quantity: number }[],
-  ): Map<number, number> {
+  private mergeItems(items: { productId: number; quantity: number }[]): Map<number, number> {
     const merged = new Map<number, number>();
     for (const item of items) {
       const currentQuantity = merged.get(item.productId) ?? 0;
@@ -19,10 +17,7 @@ export class SyncCartUseCase {
     return merged;
   }
 
-  async execute(
-    userId: number,
-    items: { productId: number; quantity: number }[],
-  ): Promise<void> {
+  async execute(userId: number, items: { productId: number; quantity: number }[]): Promise<void> {
     const mergedItems = this.mergeItems(items);
 
     for (const quantity of mergedItems.values()) {

@@ -22,7 +22,9 @@ function endSessionAndRedirect(): void {
   // Wrapped in `Promise.resolve` (rather than relying on `fetch` always
   // returning a thenable) purely so a misconfigured test double can never
   // make this throw synchronously and skip the redirect below.
-  Promise.resolve(fetch(`${API_URL}/api/users/logout`, { method: 'POST', credentials: 'include' })).catch(() => {
+  Promise.resolve(
+    fetch(`${API_URL}/api/users/logout`, { method: 'POST', credentials: 'include' }),
+  ).catch(() => {
     // Best-effort — the redirect below happens regardless.
   });
 

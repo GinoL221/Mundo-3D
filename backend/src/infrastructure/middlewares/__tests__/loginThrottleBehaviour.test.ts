@@ -112,7 +112,7 @@ describe('per-account login throttling', () => {
   it('throttles one account even when each attempt arrives from a different IP', async () => {
     const app = buildApp(
       loadLimiter('loginLimiter', { LOGIN_LIMIT_MAX: '10' }),
-      loadLimiter('accountLoginLimiter', { ACCOUNT_LOGIN_LIMIT_MAX: '3' })
+      loadLimiter('accountLoginLimiter', { ACCOUNT_LOGIN_LIMIT_MAX: '3' }),
     );
 
     for (let i = 0; i < 3; i += 1) {
