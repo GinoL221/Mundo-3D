@@ -1,9 +1,9 @@
-import { GetProductByIdUseCase } from '../use-cases/GetProductByIdUseCase';
-import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
-import { Product } from '../../domain/entities/Product';
-import { Category } from '../../domain/entities/Category';
+import { GetProductByIdUseCase } from "../use-cases/GetProductByIdUseCase";
+import { ProductRepositoryPort } from "../../domain/ports/ProductRepositoryPort";
+import { Product } from "../../domain/entities/Product";
+import { Category } from "../../domain/entities/Category";
 
-describe('GetProductByIdUseCase', () => {
+describe("GetProductByIdUseCase", () => {
   let mockProductRepo: jest.Mocked<ProductRepositoryPort>;
   let useCase: GetProductByIdUseCase;
 
@@ -20,9 +20,18 @@ describe('GetProductByIdUseCase', () => {
     useCase = new GetProductByIdUseCase(mockProductRepo);
   });
 
-  it('should return ProductDTO if product is found', async () => {
-    const cat = new Category(1, 'Figures');
-    const product = new Product(1, 'Product A', 50, 'Desc A', 'a.jpg', 1, 10, cat);
+  it("should return ProductDTO if product is found", async () => {
+    const cat = new Category(1, "Figures");
+    const product = new Product(
+      1,
+      "Product A",
+      50,
+      "Desc A",
+      "a.jpg",
+      1,
+      10,
+      cat,
+    );
 
     mockProductRepo.findById.mockResolvedValue(product);
 
@@ -30,13 +39,13 @@ describe('GetProductByIdUseCase', () => {
 
     expect(result).toEqual({
       idProduct: 1,
-      nameProduct: 'Product A',
+      nameProduct: "Product A",
       price: 50,
-      descriptionProduct: 'Desc A',
-      image: 'a.jpg',
+      descriptionProduct: "Desc A",
+      image: "a.jpg",
       idCategory: 1,
       idFranchise: 10,
-      category: 'Figures',
+      category: "Figures",
       material: null,
       height: null,
       width: null,
@@ -48,10 +57,10 @@ describe('GetProductByIdUseCase', () => {
     expect(mockProductRepo.findById).toHaveBeenCalledWith(1);
   });
 
-  it('should throw an error if product is not found', async () => {
+  it("should throw an error if product is not found", async () => {
     mockProductRepo.findById.mockResolvedValue(null);
 
-    await expect(useCase.execute(999)).rejects.toThrow('Product not found');
+    await expect(useCase.execute(999)).rejects.toThrow("Product not found");
     expect(mockProductRepo.findById).toHaveBeenCalledWith(999);
   });
 });

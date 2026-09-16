@@ -1,7 +1,7 @@
-import { DeleteProductUseCase } from '../use-cases/DeleteProductUseCase';
-import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
+import { DeleteProductUseCase } from "../use-cases/DeleteProductUseCase";
+import { ProductRepositoryPort } from "../../domain/ports/ProductRepositoryPort";
 
-describe('DeleteProductUseCase', () => {
+describe("DeleteProductUseCase", () => {
   let mockProductRepo: jest.Mocked<ProductRepositoryPort>;
   let useCase: DeleteProductUseCase;
 
@@ -18,7 +18,7 @@ describe('DeleteProductUseCase', () => {
     useCase = new DeleteProductUseCase(mockProductRepo);
   });
 
-  it('should call delete on repository and return true if successful', async () => {
+  it("should call delete on repository and return true if successful", async () => {
     mockProductRepo.delete.mockResolvedValue(true);
 
     const result = await useCase.execute(5);
@@ -27,7 +27,7 @@ describe('DeleteProductUseCase', () => {
     expect(mockProductRepo.delete).toHaveBeenCalledWith(5);
   });
 
-  it('should call delete on repository and return false if unsuccessful', async () => {
+  it("should call delete on repository and return false if unsuccessful", async () => {
     mockProductRepo.delete.mockResolvedValue(false);
 
     const result = await useCase.execute(999);
