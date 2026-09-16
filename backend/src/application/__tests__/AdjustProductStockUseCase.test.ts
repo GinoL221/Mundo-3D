@@ -1,10 +1,10 @@
-import { AdjustProductStockUseCase } from '../use-cases/AdjustProductStockUseCase';
-import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
-import { LoggerPort } from '../../domain/ports/LoggerPort';
-import { Product } from '../../domain/entities/Product';
-import { Category } from '../../domain/entities/Category';
+import { AdjustProductStockUseCase } from "../use-cases/AdjustProductStockUseCase";
+import { ProductRepositoryPort } from "../../domain/ports/ProductRepositoryPort";
+import { LoggerPort } from "../../domain/ports/LoggerPort";
+import { Product } from "../../domain/entities/Product";
+import { Category } from "../../domain/entities/Category";
 
-describe('AdjustProductStockUseCase', () => {
+describe("AdjustProductStockUseCase", () => {
   let mockProductRepo: jest.Mocked<ProductRepositoryPort>;
   let mockLogger: jest.Mocked<LoggerPort>;
   let useCase: AdjustProductStockUseCase;
@@ -29,9 +29,26 @@ describe('AdjustProductStockUseCase', () => {
     useCase = new AdjustProductStockUseCase(mockProductRepo, mockLogger);
   });
 
-  it('increases stock and maps the updated product to a ProductDTO on a valid positive delta', async () => {
-    const category = new Category(1, 'Figures');
-    const updated = new Product(10, 'Product A', 100, 'Desc', 'a.jpg', 1, 2, category, undefined, null, null, null, null, null, null, 8);
+  it("increases stock and maps the updated product to a ProductDTO on a valid positive delta", async () => {
+    const category = new Category(1, "Figures");
+    const updated = new Product(
+      10,
+      "Product A",
+      100,
+      "Desc",
+      "a.jpg",
+      1,
+      2,
+      category,
+      undefined,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      8,
+    );
     mockProductRepo.adjustStock.mockResolvedValue(updated);
 
     const result = await useCase.execute(10, 3);
@@ -39,24 +56,24 @@ describe('AdjustProductStockUseCase', () => {
     expect(mockProductRepo.adjustStock).toHaveBeenCalledWith(10, 3);
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
-        event: 'stock_adjustment',
+        event: "stock_adjustment",
         productId: 10,
         delta: 3,
-        outcome: 'success',
+        outcome: "success",
         resultingStock: 8,
         timestamp: expect.any(String),
       }),
-      expect.stringContaining('Stock adjustment succeeded')
+      expect.stringContaining("Stock adjustment succeeded"),
     );
     expect(result).toEqual({
       idProduct: 10,
-      nameProduct: 'Product A',
+      nameProduct: "Product A",
       price: 100,
-      descriptionProduct: 'Desc',
-      image: 'a.jpg',
+      descriptionProduct: "Desc",
+      image: "a.jpg",
       idCategory: 1,
       idFranchise: 2,
-      category: 'Figures',
+      category: "Figures",
       material: null,
       height: null,
       width: null,
@@ -67,8 +84,25 @@ describe('AdjustProductStockUseCase', () => {
     });
   });
 
-  it('decreases stock on a valid negative delta', async () => {
-    const updated = new Product(10, 'Product A', 100, 'Desc', 'a.jpg', 1, 2, undefined, undefined, null, null, null, null, null, null, 3);
+  it("decreases stock on a valid negative delta", async () => {
+    const updated = new Product(
+      10,
+      "Product A",
+      100,
+      "Desc",
+      "a.jpg",
+      1,
+      2,
+      undefined,
+      undefined,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      3,
+    );
     mockProductRepo.adjustStock.mockResolvedValue(updated);
 
     const result = await useCase.execute(10, -2);
@@ -77,7 +111,7 @@ describe('AdjustProductStockUseCase', () => {
     expect(result?.stock).toBe(3);
   });
 
-  it('returns null when the product does not exist', async () => {
+  it("returns null when the product does not exist", async () => {
     mockProductRepo.adjustStock.mockResolvedValue(null);
 
     const result = await useCase.execute(999, 1);
@@ -85,50 +119,56 @@ describe('AdjustProductStockUseCase', () => {
     expect(result).toBeNull();
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
-        event: 'stock_adjustment',
+        event: "stock_adjustment",
         productId: 999,
         delta: 1,
-        outcome: 'rejected',
-        reason: 'not_found',
+        outcome: "rejected",
+        reason: "not_found",
         timestamp: expect.any(String),
       }),
-      expect.stringContaining('Stock adjustment rejected')
+      expect.stringContaining("Stock adjustment rejected"),
     );
   });
 
   it('propagates the "Insufficient stock" error thrown by the repository when the delta would go negative, and logs the rejection', async () => {
-    mockProductRepo.adjustStock.mockRejectedValue(new Error('Insufficient stock'));
+    mockProductRepo.adjustStock.mockRejectedValue(
+      new Error("Insufficient stock"),
+    );
 
-    await expect(useCase.execute(10, -5)).rejects.toThrow('Insufficient stock');
+    await expect(useCase.execute(10, -5)).rejects.toThrow("Insufficient stock");
 
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
-        event: 'stock_adjustment',
+        event: "stock_adjustment",
         productId: 10,
         delta: -5,
-        outcome: 'rejected',
-        reason: 'Insufficient stock',
+        outcome: "rejected",
+        reason: "Insufficient stock",
         timestamp: expect.any(String),
       }),
-      expect.stringContaining('Stock adjustment rejected')
+      expect.stringContaining("Stock adjustment rejected"),
     );
   });
 
   it('propagates the "Delta must be a non-zero integer" error thrown by the repository for a zero or non-integer delta, and logs the rejection', async () => {
-    mockProductRepo.adjustStock.mockRejectedValue(new Error('Delta must be a non-zero integer'));
+    mockProductRepo.adjustStock.mockRejectedValue(
+      new Error("Delta must be a non-zero integer"),
+    );
 
-    await expect(useCase.execute(10, 0)).rejects.toThrow('Delta must be a non-zero integer');
+    await expect(useCase.execute(10, 0)).rejects.toThrow(
+      "Delta must be a non-zero integer",
+    );
 
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
-        event: 'stock_adjustment',
+        event: "stock_adjustment",
         productId: 10,
         delta: 0,
-        outcome: 'rejected',
-        reason: 'Delta must be a non-zero integer',
+        outcome: "rejected",
+        reason: "Delta must be a non-zero integer",
         timestamp: expect.any(String),
       }),
-      expect.stringContaining('Stock adjustment rejected')
+      expect.stringContaining("Stock adjustment rejected"),
     );
   });
 });
