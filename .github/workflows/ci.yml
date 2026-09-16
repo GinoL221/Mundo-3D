@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check formatting
+        run: pnpm run format:check
+
       # Gates on the FULL tree, dev dependencies included. That scope only
       # became achievable once the dev tree was cleared (it carried 1
       # moderate and 14 high before "chore(deps): clear the 15 dev-tree
@@ -171,7 +174,7 @@ jobs:
 
       - name: Get Playwright version
         id: playwright-version
-        run: echo "PLAYWRIGHT_VERSION=$(pnpm --filter e2e exec playwright --version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
+        run: echo "PLAYWRIGHT_VERSION=$(pnpm --filter e2e exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
