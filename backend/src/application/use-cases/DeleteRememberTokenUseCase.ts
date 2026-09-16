@@ -1,5 +1,5 @@
-import { RememberTokenRepositoryPort } from "../../domain/ports/RememberTokenRepositoryPort";
-import { TokenHasherPort } from "../../domain/ports/TokenHasherPort";
+import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
+import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
 
 export class DeleteRememberTokenUseCase {
   constructor(

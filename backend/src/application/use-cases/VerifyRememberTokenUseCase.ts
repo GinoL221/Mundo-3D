@@ -1,7 +1,7 @@
-import { RememberTokenRepositoryPort } from "../../domain/ports/RememberTokenRepositoryPort";
-import { UserRepositoryPort } from "../../domain/ports/UserRepositoryPort";
-import { TokenHasherPort } from "../../domain/ports/TokenHasherPort";
-import { UserDTO } from "../dtos/UserDTO";
+import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
+import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
+import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
+import { UserDTO } from '../dtos/UserDTO';
 
 export class VerifyRememberTokenUseCase {
   constructor(

@@ -1,8 +1,8 @@
-import { RememberTokenRepositoryPort } from "../../domain/ports/RememberTokenRepositoryPort";
-import { TokenHasherPort } from "../../domain/ports/TokenHasherPort";
-import { IdGeneratorPort } from "../../domain/ports/IdGeneratorPort";
-import { RememberToken } from "../../domain/entities/RememberToken";
-import { RememberTokenDTO } from "../dtos/RememberTokenDTO";
+import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
+import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
+import { IdGeneratorPort } from '../../domain/ports/IdGeneratorPort';
+import { RememberToken } from '../../domain/entities/RememberToken';
+import { RememberTokenDTO } from '../dtos/RememberTokenDTO';
 
 export interface CreateRememberTokenInput {
   idUser: number;
