@@ -1,12 +1,12 @@
-import { RememberTokenRepositoryPort } from "../../domain/ports/RememberTokenRepositoryPort";
-import { UserRepositoryPort } from "../../domain/ports/UserRepositoryPort";
-import { TokenHasherPort } from "../../domain/ports/TokenHasherPort";
-import { RefreshTokenRotatorPort } from "../../domain/ports/RefreshTokenRotatorPort";
-import { LoggerPort } from "../../domain/ports/LoggerPort";
-import { RememberToken } from "../../domain/entities/RememberToken";
-import { REFRESH_TOKEN_GRACE_SECONDS } from "../../domain/entities/RefreshTokenGrace";
-import { RefreshTokenRotationLostRaceError } from "../../domain/exceptions/RefreshTokenRotationLostRaceError";
-import { UserDTO } from "../dtos/UserDTO";
+import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
+import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
+import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
+import { RefreshTokenRotatorPort } from '../../domain/ports/RefreshTokenRotatorPort';
+import { LoggerPort } from '../../domain/ports/LoggerPort';
+import { RememberToken } from '../../domain/entities/RememberToken';
+import { REFRESH_TOKEN_GRACE_SECONDS } from '../../domain/entities/RefreshTokenGrace';
+import { RefreshTokenRotationLostRaceError } from '../../domain/exceptions/RefreshTokenRotationLostRaceError';
+import { UserDTO } from '../dtos/UserDTO';
 
 export interface RefreshSessionInput {
   presentedPlainToken: string;
@@ -17,19 +17,19 @@ export interface RefreshSessionInput {
 }
 
 export type RefreshSessionResult =
-  | { outcome: "rejected" }
+  | { outcome: 'rejected' }
   // Row 6. Payload-free on purpose: the HTTP response is byte-identical to
   // 'rejected' (proposal decision 4), and withholding familyId makes leaking
   // it into the 401 body structurally impossible (design.md D2).
-  | { outcome: "reuse-detected" }
+  | { outcome: 'reuse-detected' }
   // `familyExpiresAt` is the family's absolute deadline, inherited across
   // rotations rather than slid (design.md). The caller needs it because the
   // access COOKIE must live as long as the session does — without it, every
   // refresh rewrote `m3d_auth` with the 2h default and silently downgraded a
   // remembered session, leaving logout with nothing to revoke from.
-  | { outcome: "grace"; user: UserDTO; familyId: string; familyExpiresAt: Date }
+  | { outcome: 'grace'; user: UserDTO; familyId: string; familyExpiresAt: Date }
   | {
-      outcome: "rotated";
+      outcome: 'rotated';
       user: UserDTO;
       familyId: string;
       familyExpiresAt: Date;
@@ -71,17 +71,17 @@ export class RefreshSessionUseCase {
     const current = await this.rememberTokenRepo.findByHash(presentedHash);
 
     if (!current) {
-      return { outcome: "rejected" }; // row 1: absent
+      return { outcome: 'rejected' }; // row 1: absent
     }
 
     // Row 2: logout beats grace — checked before superseded/expiry so a
     // revoked family is terminal regardless of grace-window timing.
     if (current.revokedAt) {
-      return { outcome: "rejected" };
+      return { outcome: 'rejected' };
     }
 
     if (new Date() > current.expiryDate) {
-      return { outcome: "rejected" }; // row 3: expired
+      return { outcome: 'rejected' }; // row 3: expired
     }
 
     if (!current.supersededAt) {
@@ -95,10 +95,10 @@ export class RefreshSessionUseCase {
         );
         const user = await this.userRepo.findById(current.idUser);
         if (!user || !current.familyId) {
-          return { outcome: "rejected" };
+          return { outcome: 'rejected' };
         }
         return {
-          outcome: "rotated",
+          outcome: 'rotated',
           user: toUserDTO(user),
           familyId: current.familyId,
           familyExpiresAt: current.expiryDate,
@@ -120,16 +120,13 @@ export class RefreshSessionUseCase {
     presentedHash: string,
     alreadyRead?: RememberToken,
   ): Promise<RefreshSessionResult> {
-    const row =
-      alreadyRead ?? (await this.rememberTokenRepo.findByHash(presentedHash));
+    const row = alreadyRead ?? (await this.rememberTokenRepo.findByHash(presentedHash));
 
     if (!row || row.revokedAt || !row.supersededAt || !row.familyId) {
-      return { outcome: "rejected" };
+      return { outcome: 'rejected' };
     }
 
-    const graceDeadline = new Date(
-      row.supersededAt.getTime() + REFRESH_TOKEN_GRACE_SECONDS * 1000,
-    );
+    const graceDeadline = new Date(row.supersededAt.getTime() + REFRESH_TOKEN_GRACE_SECONDS * 1000);
     if (new Date() > graceDeadline) {
       // Row 6: replay past grace -> reuse detection (design.md D2/D3/D6).
       // No try/catch: a revocation failure must propagate as a 500, never
@@ -137,15 +134,13 @@ export class RefreshSessionUseCase {
       // silent 401 while a known-compromised family survives is worse than
       // an inference an attacker can only draw while the DB is already
       // failing every other request too.
-      const revokedRows = await this.rememberTokenRepo.revokeFamily(
-        row.familyId,
-      );
+      const revokedRows = await this.rememberTokenRepo.revokeFamily(row.familyId);
 
       // Revoke first, then log, so `revokedRows` reflects what actually
       // happened rather than an assumption (design.md D6).
       this.logger.warn(
         {
-          event: "refresh_token_reuse_detected",
+          event: 'refresh_token_reuse_detected',
           familyId: row.familyId,
           userId: row.idUser,
           supersededAt: row.supersededAt.toISOString(),
@@ -156,31 +151,25 @@ export class RefreshSessionUseCase {
         `Refresh token reuse detected for family ${row.familyId}`,
       );
 
-      return { outcome: "reuse-detected" };
+      return { outcome: 'reuse-detected' };
     }
 
     if (!row.successorHash) {
-      return { outcome: "rejected" };
+      return { outcome: 'rejected' };
     }
 
-    const successor = await this.rememberTokenRepo.findByHash(
-      row.successorHash,
-    );
-    if (
-      !successor ||
-      successor.revokedAt ||
-      new Date() > successor.expiryDate
-    ) {
-      return { outcome: "rejected" };
+    const successor = await this.rememberTokenRepo.findByHash(row.successorHash);
+    if (!successor || successor.revokedAt || new Date() > successor.expiryDate) {
+      return { outcome: 'rejected' };
     }
 
     const user = await this.userRepo.findById(row.idUser);
     if (!user) {
-      return { outcome: "rejected" };
+      return { outcome: 'rejected' };
     }
 
     return {
-      outcome: "grace",
+      outcome: 'grace',
       user: toUserDTO(user),
       familyId: row.familyId,
       familyExpiresAt: row.expiryDate,
