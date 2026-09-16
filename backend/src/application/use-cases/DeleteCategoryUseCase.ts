@@ -1,4 +1,4 @@
-import { CategoryRepositoryPort } from "../../domain/ports/CategoryRepositoryPort";
+import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
 
 export class DeleteCategoryUseCase {
   constructor(private readonly categoryRepo: CategoryRepositoryPort) {}

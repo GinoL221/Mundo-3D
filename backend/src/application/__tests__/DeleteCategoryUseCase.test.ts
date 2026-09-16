@@ -1,7 +1,7 @@
-import { DeleteCategoryUseCase } from "../use-cases/DeleteCategoryUseCase";
-import { CategoryRepositoryPort } from "../../domain/ports/CategoryRepositoryPort";
+import { DeleteCategoryUseCase } from '../use-cases/DeleteCategoryUseCase';
+import { CategoryRepositoryPort } from '../../domain/ports/CategoryRepositoryPort';
 
-describe("DeleteCategoryUseCase", () => {
+describe('DeleteCategoryUseCase', () => {
   let mockCategoryRepo: jest.Mocked<CategoryRepositoryPort>;
   let useCase: DeleteCategoryUseCase;
 
@@ -17,7 +17,7 @@ describe("DeleteCategoryUseCase", () => {
     useCase = new DeleteCategoryUseCase(mockCategoryRepo);
   });
 
-  it("should call delete on the repository and return true if successful", async () => {
+  it('should call delete on the repository and return true if successful', async () => {
     mockCategoryRepo.delete.mockResolvedValue(true);
 
     const result = await useCase.execute(1);
@@ -26,7 +26,7 @@ describe("DeleteCategoryUseCase", () => {
     expect(mockCategoryRepo.delete).toHaveBeenCalledWith(1);
   });
 
-  it("should call delete on the repository and return false if unsuccessful", async () => {
+  it('should call delete on the repository and return false if unsuccessful', async () => {
     mockCategoryRepo.delete.mockResolvedValue(false);
 
     const result = await useCase.execute(999);
@@ -35,13 +35,9 @@ describe("DeleteCategoryUseCase", () => {
     expect(mockCategoryRepo.delete).toHaveBeenCalledWith(999);
   });
 
-  it("should propagate a repository error (e.g. FK violation translated by the adapter)", async () => {
-    mockCategoryRepo.delete.mockRejectedValue(
-      new Error("Category has associated products"),
-    );
+  it('should propagate a repository error (e.g. FK violation translated by the adapter)', async () => {
+    mockCategoryRepo.delete.mockRejectedValue(new Error('Category has associated products'));
 
-    await expect(useCase.execute(2)).rejects.toThrow(
-      "Category has associated products",
-    );
+    await expect(useCase.execute(2)).rejects.toThrow('Category has associated products');
   });
 });
