@@ -1,4 +1,4 @@
-import { Order } from "../../domain/entities/Order";
+import { Order } from '../../domain/entities/Order';
 
 export interface OrderItemDTO {
   idOrderItem: number;
