@@ -1,8 +1,8 @@
-import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
-import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
-import { IdGeneratorPort } from '../../domain/ports/IdGeneratorPort';
-import { RememberToken } from '../../domain/entities/RememberToken';
-import { RememberTokenDTO } from '../dtos/RememberTokenDTO';
+import { RememberTokenRepositoryPort } from "../../domain/ports/RememberTokenRepositoryPort";
+import { TokenHasherPort } from "../../domain/ports/TokenHasherPort";
+import { IdGeneratorPort } from "../../domain/ports/IdGeneratorPort";
+import { RememberToken } from "../../domain/entities/RememberToken";
+import { RememberTokenDTO } from "../dtos/RememberTokenDTO";
 
 export interface CreateRememberTokenInput {
   idUser: number;
@@ -14,7 +14,7 @@ export class CreateRememberTokenUseCase {
   constructor(
     private readonly rememberTokenRepo: RememberTokenRepositoryPort,
     private readonly tokenHasher: TokenHasherPort,
-    private readonly idGenerator: IdGeneratorPort
+    private readonly idGenerator: IdGeneratorPort,
   ) {}
 
   async execute(input: CreateRememberTokenInput): Promise<RememberTokenDTO> {
@@ -30,7 +30,7 @@ export class CreateRememberTokenUseCase {
       input.idUser,
       expiryDate,
       undefined,
-      familyId
+      familyId,
     );
 
     const createdToken = await this.rememberTokenRepo.create(tokenEntity);

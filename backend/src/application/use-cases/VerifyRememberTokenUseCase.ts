@@ -1,13 +1,13 @@
-import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
-import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
-import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
-import { UserDTO } from '../dtos/UserDTO';
+import { RememberTokenRepositoryPort } from "../../domain/ports/RememberTokenRepositoryPort";
+import { UserRepositoryPort } from "../../domain/ports/UserRepositoryPort";
+import { TokenHasherPort } from "../../domain/ports/TokenHasherPort";
+import { UserDTO } from "../dtos/UserDTO";
 
 export class VerifyRememberTokenUseCase {
   constructor(
     private readonly rememberTokenRepo: RememberTokenRepositoryPort,
     private readonly userRepo: UserRepositoryPort,
-    private readonly tokenHasher: TokenHasherPort
+    private readonly tokenHasher: TokenHasherPort,
   ) {}
 
   async execute(plainToken: string): Promise<UserDTO | null> {
