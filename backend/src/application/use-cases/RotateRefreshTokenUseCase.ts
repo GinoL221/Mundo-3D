@@ -1,9 +1,9 @@
-import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
-import { UnitOfWorkPort } from '../../domain/ports/UnitOfWorkPort';
-import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
-import { RefreshTokenRotatorPort } from '../../domain/ports/RefreshTokenRotatorPort';
-import { RememberToken } from '../../domain/entities/RememberToken';
-import { RefreshTokenRotationLostRaceError } from '../../domain/exceptions/RefreshTokenRotationLostRaceError';
+import { RememberTokenRepositoryPort } from "../../domain/ports/RememberTokenRepositoryPort";
+import { UnitOfWorkPort } from "../../domain/ports/UnitOfWorkPort";
+import { TokenHasherPort } from "../../domain/ports/TokenHasherPort";
+import { RefreshTokenRotatorPort } from "../../domain/ports/RefreshTokenRotatorPort";
+import { RememberToken } from "../../domain/entities/RememberToken";
+import { RefreshTokenRotationLostRaceError } from "../../domain/exceptions/RefreshTokenRotationLostRaceError";
 
 // Re-exported for backward compatibility (PR1's own test file imports it
 // from this module). Canonical source is now domain/ — see
@@ -25,10 +25,13 @@ export class RotateRefreshTokenUseCase implements RefreshTokenRotatorPort {
     // Retention cutoff, decoupled from the 30s grace window (design.md D1).
     // Required, no default — supplied by the composition root from
     // infrastructure/security/refreshTokenRetention.ts.
-    private readonly reapSeconds: number
+    private readonly reapSeconds: number,
   ) {}
 
-  async execute(current: RememberToken, newPlainToken: string): Promise<RememberToken> {
+  async execute(
+    current: RememberToken,
+    newPlainToken: string,
+  ): Promise<RememberToken> {
     const successorHash = this.tokenHasher.hash(newPlainToken);
 
     return this.uow.runInTransaction(async (tx) => {
@@ -43,15 +46,26 @@ export class RotateRefreshTokenUseCase implements RefreshTokenRotatorPort {
       }
 
       if (!current.familyId) {
-        throw new Error('Cannot rotate a RememberToken row with no familyId');
+        throw new Error("Cannot rotate a RememberToken row with no familyId");
       }
 
       const successor = await this.rememberTokenRepo.insertSuccessor(
-        new RememberToken(0, successorHash, current.idUser, current.expiryDate, undefined, current.familyId),
-        tx
+        new RememberToken(
+          0,
+          successorHash,
+          current.idUser,
+          current.expiryDate,
+          undefined,
+          current.familyId,
+        ),
+        tx,
       );
 
-      await this.rememberTokenRepo.reapFamily(current.familyId, this.reapSeconds, tx);
+      await this.rememberTokenRepo.reapFamily(
+        current.familyId,
+        this.reapSeconds,
+        tx,
+      );
 
       return successor;
     });
