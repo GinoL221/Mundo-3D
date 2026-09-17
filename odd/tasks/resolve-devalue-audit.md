@@ -83,7 +83,8 @@ CI run 35281906272 fails at `pnpm audit` because `astro@7.3.1` resolves `devalue
 - `pnpm list` still showed the pre-update installed `devalue@5.8.1` until the frozen install refreshed local links.
 - First independent verification attempt was blocked by a missing closing brace in the manually preserved lockfile entry; the syntax error was corrected before the successful retry.
 - Successful independent verification: frozen install, audit, Astro check, frontend tests, fast tests, diff check, and status all passed. The only non-blocking note was Jest's existing forced-worker-shutdown warning.
+- Work-unit commit: `206f4d2 fix(deps): unblock audit with patched devalue`.
 
 ## Next step
 
-Commit the verified work unit, push the focused branch, and open the PR linked to issue #152.
+Push the focused branch and open the PR linked to issue #152.
