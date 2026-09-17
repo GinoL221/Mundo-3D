@@ -46,10 +46,25 @@ services:
         sync: false
       - key: CORS_ORIGIN
         sync: false
+      - key: PUBLIC_APP_URL
+        sync: false
       - key: COOKIE_DOMAIN
         sync: false
+      # Brevo SMTP — credentials stay in the Render dashboard.
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_SECURE
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
       # Cloudflare R2 — object storage for admin-uploaded product/user images.
-      # See docs/RUNBOOKS.md "Platform bring-up" section 4.
+      # See docs/RUNBOOKS.md "Platform bring-up" section 5.
       - key: R2_ENDPOINT
         sync: false
       - key: R2_ACCESS_KEY_ID

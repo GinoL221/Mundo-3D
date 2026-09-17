@@ -92,6 +92,7 @@
   }
 
   .home-header__primary > ul > li > .home-header__link--active {
+    border-inline-start: 0;
     box-shadow: none;
   }
 
@@ -122,6 +123,11 @@
   .home-hero__copy {
     flex: 1 1 0;
     min-width: 0;
+  }
+
+  .home-hero__actions {
+    align-items: center;
+    flex-direction: row;
   }
 
   .home-featured-card {

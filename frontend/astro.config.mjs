@@ -16,4 +16,8 @@ if (process.argv.includes('build') && !process.env.PUBLIC_API_URL) {
 }
 
 // https://astro.build/config
-export default defineConfig({});
+export default defineConfig({
+  devToolbar: {
+    enabled: false,
+  },
+});
