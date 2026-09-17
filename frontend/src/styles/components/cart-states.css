@@ -1,0 +1,37 @@
+.cart__state {
+  display: grid;
+  min-height: 160px;
+  place-items: center;
+  gap: var(--space-md);
+  margin: 0;
+  text-align: center;
+  background: var(--sys-surface);
+}
+
+.cart__state h2,
+.cart__state p {
+  margin: 0;
+}
+
+.cart__state h2 {
+  color: var(--sys-text);
+  font-family: var(--sys-font-heading);
+  font-size: clamp(24px, 4vw, 32px);
+}
+
+.cart__state > p {
+  max-width: 48ch;
+  color: var(--sys-text-muted);
+  line-height: 1.5;
+}
+
+.cart__state .system-action {
+  min-height: var(--sys-target-min);
+  margin-top: var(--space-sm);
+}
+
+.cart__state .system-action--primary {
+  border-color: var(--sys-action-bg);
+  background: var(--sys-action-bg);
+  color: var(--sys-action-text);
+}

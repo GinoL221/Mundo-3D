@@ -4,10 +4,17 @@ import { RegisterForm } from '../domains/auth';
 ---
 
 <Layout title="Registro - Mundo 3D">
-  <h1 class="sr-only">Registro — Mundo 3D</h1>
-  <main class="form-layout">
-    <div class="form-card--medium">
-      <RegisterForm />
+  <main class="auth-page" data-auth-route="register">
+    <header class="auth-page__header">
+      <h1>Creá tu cuenta</h1>
+      <p>Guardá tu selección y consultá tus pedidos cuando vuelvas.</p>
+    </header>
+
+    <div class="auth-page__body">
+      <section class="auth-page__panel" aria-labelledby="register-panel-title">
+        <h2 id="register-panel-title">Tus datos</h2>
+        <RegisterForm />
+      </section>
     </div>
   </main>
 </Layout>

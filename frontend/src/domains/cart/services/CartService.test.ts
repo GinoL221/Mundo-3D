@@ -231,6 +231,34 @@ describe('CartService', () => {
     });
   });
 
+  describe('updateQuantity', () => {
+    it('optimistically updates and persists a valid quantity', () => {
+      CartService.addToCart(buildProduct(), 2);
+      localStorageMock.setItem.mockClear();
+
+      expect(CartService.updateQuantity(1, 3)).toBe(true);
+
+      expect(cartItems.get()[0].quantity).toBe(3);
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('cart', expect.any(String));
+      expect(JSON.parse(localStorageMock.setItem.mock.calls[0][1])).toEqual([
+        expect.objectContaining({ productId: 1, quantity: 3 }),
+      ]);
+    });
+
+    it.each([0, 100, 1.5, Number.NaN])('rejects an invalid quantity of %s', (quantity) => {
+      CartService.addToCart(buildProduct(), 2);
+      localStorageMock.setItem.mockClear();
+
+      expect(CartService.updateQuantity(1, quantity)).toBe(false);
+      expect(cartItems.get()[0].quantity).toBe(2);
+      expect(localStorageMock.setItem).not.toHaveBeenCalled();
+    });
+
+    it('returns false when the product is absent', () => {
+      expect(CartService.updateQuantity(999, 2)).toBe(false);
+    });
+  });
+
   describe('removeFromCart', () => {
     it('removes only the targeted product', () => {
       CartService.addToCart(buildProduct({ id: 1 }));

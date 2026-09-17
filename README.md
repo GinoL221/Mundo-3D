@@ -2,6 +2,8 @@
 
 Mundo-3D es un e-commerce de productos impresos en 3D. El repositorio contiene una API REST de catálogo, autenticación, administración y carrito, junto con un frontend Astro de estética pixel art. Es un monorepo `pnpm` con persistencia MySQL y una arquitectura hexagonal pragmática en el backend.
 
+La intención del producto, su público principal y sus límites están documentados en [`PRODUCT.md`](PRODUCT.md).
+
 ## Inicio rápido
 
 ### Requisitos

@@ -65,17 +65,32 @@ export class CartService {
       ];
     }
 
-    cartItems.set(updated);
-    persistCart(updated);
-    scheduleSync(updated, current);
+    CartService.applyMutation(updated, current);
+  }
+
+  static updateQuantity(productId: number, quantity: number): boolean {
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) return false;
+    const current = cartItems.get();
+    if (!current.some((item) => item.productId === productId)) return false;
+    const updated = current.map((item) =>
+      item.productId === productId ? { ...item, quantity } : item,
+    );
+    CartService.applyMutation(updated, current);
+    return true;
   }
 
   static removeFromCart(productId: number): void {
     const current = cartItems.get();
-    const updated = current.filter((i) => i.productId !== productId);
+    CartService.applyMutation(
+      current.filter((item) => item.productId !== productId),
+      current,
+    );
+  }
+
+  private static applyMutation(updated: CartItem[], previous: CartItem[]): void {
     cartItems.set(updated);
     persistCart(updated);
-    scheduleSync(updated, current);
+    scheduleSync(updated, previous);
   }
 
   static clearCart(): void {
