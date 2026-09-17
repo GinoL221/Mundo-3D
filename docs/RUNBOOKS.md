@@ -21,6 +21,7 @@ Production logs are structured JSON on stdout (`backend/src/infrastructure/loggi
 3. DB unreachable: confirm `DB_HOST`/`DB_USER`/`DB_PASS`/`DB_NAME` in `.env` are correct and the DB is actually listening (`mysql -h $DB_HOST -u $DB_USER -p`).
 
 **Fix**:
+
 - Pending migrations → `pnpm --filter backend db:migrate`, then retry boot.
 - Bad credentials → fix `.env`, never commit the fix.
 - If this is happening right after a deploy that included new migrations, confirm migrations were applied *before* the new backend code started (see "Rolling back a migration" below if you need to undo one).
@@ -41,6 +42,7 @@ Two real incidents hit this repo in one session (2026-08-26) — both were genui
 2. **`Real-DB integration tests` fails with a `TypeError` inside a test's cleanup/`afterAll`, often masking the real error one frame up.** `backend/jest.integration.config.js` runs with `maxWorkers: 1` specifically because integration tests share one live MySQL database and `bootstrapTestDatabase()` (`backend/src/__tests__/helpers/testDb.ts`) is only idempotent *within one process* — parallel workers racing schema bootstrap (`ALTER TABLE ... ADD INDEX`) can duplicate-key-error. If this config ever gets weakened back to parallel workers, this class of failure returns.
 
 **General triage**:
+
 - Read the actual failing step's log, not just the red X — `gh run view --job <id> --log-failed`, and scroll *up* from the last error if it looks like a masking symptom (a `TypeError` on `undefined` inside a cleanup hook almost always means an earlier `beforeAll`/`beforeEach` step threw first).
 - Before assuming "flaky, just re-run it": check whether the failure is new (did it fail on the last N runs too?) and whether your own most recent change plausibly caused it. A test that failed intermittently across many unrelated runs is more likely genuinely flaky; a test that started failing right after a specific push almost always was caused by that push.
 - `backend/src/__tests__/boot.integration.test.js` spawns a real child process and waits up to 10s for it to report a listening port — it's inherently sensitive to CPU contention on the CI runner and can flake under heavy concurrent load (many integration files/jobs running at once). If *only* this test fails and a re-run passes clean, that's consistent with load-sensitivity, not a regression.
@@ -48,7 +50,7 @@ Two real incidents hit this repo in one session (2026-08-26) — both were genui
 ## Rotating a leaked secret
 
 | Secret | Blast radius on rotation | Procedure |
-|---|---|---|
+| --- | --- | --- |
 | `JWT_SECRET` | **Every existing session is invalidated immediately** — all logged-in users get logged out. | Set the new value in the deploy environment, restart the backend. No migration needed. Warn users beforehand if possible; this is disruptive by design (it's the whole point if the secret leaked). |
 | `COOKIE_SECRET` | Invalidates in-flight CSRF tokens (`m3d_csrf`) — users mid-form-submission get a CSRF rejection on their next state-changing request, resolved by a page reload. Does not log users out. | Set the new value, restart. |
 | `DB_PASS` (or any DB credential) | Backend can't reconnect until updated — a bad rotation order causes the "backend won't start" incident above. | Update the credential in MySQL *and* in every environment's `.env`/deploy config in the same maintenance window, then restart the backend. Never rotate the DB-side credential before the backend's config is ready to pick up the new value. |
@@ -69,7 +71,7 @@ A second `SIGTERM`/`SIGINT` while shutdown is already in progress is a no-op —
 
 ## Compiled production start
 
-Production is meant to run the compiled build, not `ts-node`: `pnpm --filter backend build` (emits `dist/`), then start with both `RUN_COMPILED=true` and `NODE_ENV=production` set. `RUN_COMPILED` is deliberately a separate flag from `NODE_ENV` — see `backend/index.js`'s comments — so setting `NODE_ENV=production` alone is not enough to get the compiled path; both are required together. `render.yaml`'s `buildCommand`/`startCommand` set exactly this (see "Platform bring-up" below) — there is no `Dockerfile`, Render builds and runs the Node process directly.
+Production is meant to run the compiled build, not `ts-node`: `pnpm --filter backend build` (emits `dist/`), then start with both `RUN_COMPILED=true` and `NODE_ENV=production` set. `RUN_COMPILED` is deliberately a separate flag from `NODE_ENV` — see `backend/index.js`'s comments — so setting `NODE_ENV=production` alone is not enough to get the compiled path; both are required together. `render.yaml`'s `buildCommand`/`startCommand` set exactly this (see "Platform bring-up" below), so Render builds and runs the Node process directly. The root `Dockerfile` is the separate Render image-backed path and uses the same deploy pipeline.
 
 ## Why NODE_ENV is checked by value
 
@@ -116,7 +118,7 @@ The first concrete hosting target: the backend runs on Render (free-tier web ser
 ### Topology
 
 | Host | Serves | DNS |
-|---|---|---|
+| --- | --- | --- |
 | Vercel | frontend — apex `<domain>` and `www.<domain>` | apex/`www` → Vercel |
 | Render | API — `api.<domain>` | `api.<domain>` CNAME → the Render service's `onrender.com` host |
 | Aiven | MySQL — private endpoint, non-standard port, private CA | not public |
@@ -130,7 +132,13 @@ The frontend origin and the API differ only by the `api.` label, so they are the
 3. This value becomes `DB_CA_CERT`. Paste it **raw and multi-line**, exactly as issued. Do not collapse it to one line, do not `\n`-escape it, do not wrap it in quotes. The backend passes it straight to the MySQL driver as `ssl.ca` with `rejectUnauthorized: true`; an escaped or re-wrapped PEM fails the TLS handshake with an opaque error at boot.
 4. The scoped Aiven user cannot `CREATE DATABASE`; the backend already skips that step when `NODE_ENV=production`, using the pre-provisioned database directly.
 
-### 2. Render — backend web service
+### 2. Brevo Free — SMTP prerequisites
+
+1. In Brevo, verify the sender email or its domain before sending. Use Brevo's SMTP relay, not a personal mailbox relay.
+2. Record the relay settings for Render: `SMTP_HOST=smtp-relay.brevo.com`, `SMTP_PORT=587`, and `SMTP_SECURE=false`. Set `SMTP_FROM` to the verified sender and `PUBLIC_APP_URL` to the canonical frontend origin (for example, `https://<domain>`, with no trailing slash).
+3. Keep `SMTP_USER` and `SMTP_PASS` in the Brevo and Render dashboards only: never put credentials in git or chat. Brevo Free allows 300 emails/day; transactional and campaign sends share that quota. Check the current provider terms before launch.
+
+### 3. Render — backend web service
 
 1. New → Blueprint, point it at this repo. Render reads `render.yaml`: one web service, build `pnpm install --frozen-lockfile && pnpm --filter backend build`, start `pnpm --filter backend deploy:start`, health check `/health/ready`, Node 22, with `NODE_ENV=production` / `RUN_COMPILED=true` already set.
 2. In the service's **Environment**, fill every `sync: false` key — they are declared in `render.yaml` but intentionally have no value in git:
@@ -138,19 +146,57 @@ The frontend origin and the API differ only by the `api.` label, so they are the
    - `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_HOST`, `DB_PORT` — from Aiven step 1.
    - `DB_CA_CERT` — the raw PEM from Aiven step 2/3.
    - `CORS_ORIGIN` — the **exact** frontend origin, a single string, e.g. `https://<domain>` (scheme + host, no trailing slash, no second value). Pick one canonical host (apex or `www`) and 301-redirect the other at the DNS/Vercel layer; the API allows exactly one origin.
+   - `PUBLIC_APP_URL` — the same canonical frontend origin as `CORS_ORIGIN`.
    - `COOKIE_DOMAIN` — `.<domain>` (leading dot), so the cookie is valid for both the frontend origin and `api.<domain>`.
-   - `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL_BASE` — from Cloudflare R2 step 4 below.
+   - `SMTP_HOST=smtp-relay.brevo.com`, `SMTP_PORT=587`, `SMTP_SECURE=false`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — the Brevo settings from step 2; `SMTP_FROM` must be the verified sender. Keep the credentials dashboard-only, never in git or chat.
+   - `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL_BASE` — from Cloudflare R2 step 5 below.
 3. Deploy. `deploy:start` runs `env-preflight` first: a missing required var (now including `DB_PORT`, `DB_CA_CERT`, and the five `R2_*` keys) fails the deploy before the server starts, listing every missing key at once. Then `db:migrate` runs, then the server binds `0.0.0.0:$PORT`.
 4. Add the custom domain `api.<domain>` to the Render service and create the CNAME it shows you. Wait for Render to issue the TLS cert.
 5. Confirm `https://api.<domain>/health/ready` returns `200`.
 
-### 3. Vercel — frontend
+### Render image-backed alternative — Docker image (no GitHub integration)
+
+Use this backend path when the image is published independently of the repository. In the Render Dashboard, choose **New → Web Service → Existing Image** and enter an immutable image reference, for example `docker.io/gino948/mundo-3d-backend:<immutable-tag>`. GitHub is not required, and source changes do not trigger auto-deploys for this service.
+
+1. Build and publish an immutable image tag from a machine with this repository and authenticated access to Docker Hub. The tag below is a placeholder; choose a new immutable tag for each release rather than treating a changing tag as the canonical instruction:
+
+   ```sh
+   docker build --tag docker.io/gino948/mundo-3d-backend:<immutable-tag> .
+   docker push docker.io/gino948/mundo-3d-backend:<immutable-tag>
+   ```
+
+   The image uses Node 22 and pnpm 11.0.9, installs from `pnpm-lock.yaml`, builds only `backend`, and starts the existing `pnpm --filter backend deploy:start` pipeline. Leave Render's command and entrypoint unset so the image CMD runs that pipeline: production env preflight, migrations, then the compiled server.
+
+2. In Render, configure the service to listen on `0.0.0.0:$PORT`; Render provides `PORT=10000` by default. Do not hard-code `PORT` in the image or application configuration. Set the HTTP health check path to `/health/ready`.
+
+3. A public Docker Hub image needs no registry credential. For a private image, add Docker Hub registry credentials in Render using a read-only Docker Hub token; keep that token in the Render dashboard only.
+
+4. In the Render service **Environment**, set the following values in the dashboard. No values belong in this repository or the image:
+
+   | Variables | Value/source |
+   | --- | --- |
+   | `NODE_ENV`, `RUN_COMPILED` | Literal `production` and `true`. |
+   | `JWT_SECRET`, `COOKIE_SECRET` | Fresh random secrets. |
+   | `CORS_ORIGIN`, `PUBLIC_APP_URL`, `COOKIE_DOMAIN` | Canonical frontend origin, the same canonical origin, and `.<domain>` respectively. `COOKIE_DOMAIN` is optional only when the topology does not need a cross-subdomain cookie. |
+   | `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_HOST`, `DB_PORT`, `DB_CA_CERT` | Aiven MySQL values. `DB_CA_CERT` must be the raw, multi-line PEM—do not quote it or replace line breaks with `\n`. TLS verification remains enabled. |
+   | `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL_BASE` | Cloudflare R2 values. `R2_ENDPOINT` is the S3 API endpoint, while `R2_PUBLIC_URL_BASE` is the public-read URL; they are not interchangeable. |
+   | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Brevo SMTP settings and verified sender. Keep `SMTP_USER`/`SMTP_PASS` dashboard-only. |
+
+   `PORT` is platform-managed as described above. `PUBLIC_API_URL` is not needed by the backend container; set it in Vercel when building the frontend. `env-preflight` fails before migrations or startup if any of its required JWT, DB, CORS, cookie, or R2 variables are absent.
+
+5. Add `api.<domain>` to the Render service and create the CNAME it provides. After its TLS certificate is ready, confirm `https://api.<domain>/health/ready` returns `200`. The first successful deployment applies pending migrations before the new server becomes ready; do not treat a failed migration as a health-check problem.
+
+6. To redeploy manually, publish a new immutable tag (or use an image digest), update the Render image reference, and trigger a redeploy in Render. Pushing bytes alone does not redeploy a service pinned to an immutable tag or digest. Recheck `/health/ready` after every redeploy.
+
+> Koyeb is not the free path for new accounts.
+
+### 4. Vercel — frontend
 
 1. Import the repo as a Vercel project, root `frontend/`, framework preset Astro (static output).
 2. Set `PUBLIC_API_URL=https://api.<domain>` as a build-time environment variable. Astro **bakes** this into the static bundle at build time (`frontend/astro.config.mjs` fails the build if it is unset). Changing it later requires a **rebuild/redeploy** — there is no runtime override.
 3. Add the apex domain `<domain>` and `www.<domain>` to the Vercel project; set whichever host is not `CORS_ORIGIN` to redirect to the canonical one.
 
-### 4. Cloudflare R2 — object storage for admin-uploaded images
+### 5. Cloudflare R2 — object storage for admin-uploaded images
 
 Seeded catalog images are committed to the repo and served by Vercel; only images an admin uploads at runtime (new/edited product images, user avatars) go to R2. Without this, uploaded images are lost on every Render redeploy/spin-down **and** 404 on the Vercel frontend (different origin from the backend).
 
@@ -164,26 +210,27 @@ Seeded catalog images are committed to the repo and served by Vercel; only image
    - **Access Key ID** → `R2_ACCESS_KEY_ID`
    - **Secret Access Key** (shown once) → `R2_SECRET_ACCESS_KEY`
    - **S3 API endpoint** (`https://<account>.r2.cloudflarestorage.com`) → `R2_ENDPOINT`. This is the *API* host, not the public read host — the two are always different.
-5. Set all five `R2_*` values in the Render service Environment (step 2 above).
+5. Set all five `R2_*` values in the Render service Environment (the Render image-backed alternative above).
 6. Free-tier ceiling: 10 GB stored, 1M Class A + 10M Class B operations per month, **zero egress**. Comfortable for a small catalog — revisit only if uploads approach 10 GB or write volume grows sharply.
 7. Verify end to end: create a product with an image via the admin UI → the object appears in the R2 dashboard → the persisted URL opens directly in a browser → redeploy the Render service → the image still renders on the frontend.
 
-### 5. DNS summary
+### 6. DNS summary
 
 - `<domain>` (apex) and `www.<domain>` → Vercel (per Vercel's instructions for the project).
 - `api.<domain>` → CNAME to the Render service host.
 - `img.<domain>` (only if a custom R2 domain is used instead of the r2.dev subdomain) → per Cloudflare's instructions for the bucket's custom domain.
 
-### 6. First-deploy order
+### 7. First-deploy order
 
 TLS certs and DNS propagation make ordering matter:
 
 1. Aiven service up, CA cert in hand.
-2. Cloudflare R2 bucket created, public access enabled, S3 API token issued — the five `R2_*` values in hand.
-3. Render service created, all env keys set (including the `R2_*` keys), `api.<domain>` DNS + cert issued, `/health/ready` green.
-4. Vercel build with the final `PUBLIC_API_URL` (it points at the now-live API).
-5. apex/`www` DNS cut over to Vercel.
-6. Log in from `https://<domain>` and confirm the `m3d_auth` cookie is set and is sent back on the next API call (`deploy:smoke-test` covers health, not auth — verify the login round-trip manually), then upload a product image and confirm it renders from `R2_PUBLIC_URL_BASE`.
+2. Brevo sender/domain verified and SMTP relay credentials obtained — the `SMTP_*` values and verified `SMTP_FROM` in hand.
+3. Cloudflare R2 bucket created, public access enabled, S3 API token issued — the five `R2_*` values in hand.
+4. Render image-backed service created, all env keys set (including `PUBLIC_APP_URL`, `SMTP_*`, and the `R2_*` keys), `api.<domain>` DNS + cert issued, `/health/ready` green.
+5. Vercel build with the final `PUBLIC_API_URL` (it points at the now-live API).
+6. apex/`www` DNS cut over to Vercel.
+7. Log in from `https://<domain>` and confirm the `m3d_auth` cookie is set and is sent back on the next API call (`deploy:smoke-test` covers health, not auth — verify the login round-trip manually), then upload a product image and confirm it renders from `R2_PUBLIC_URL_BASE`.
 
 If `PUBLIC_API_URL` was baked before `api.<domain>` was reachable, the frontend still works once the API comes up (the value is a URL, not a build-time fetch) — but if the value itself is wrong, rebuild.
 

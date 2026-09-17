@@ -35,7 +35,14 @@
       <h2 class="cart__item-name"></h2>
       <dl class="cart__item-details">
         <div><dt>Precio unitario</dt><dd class="cart__item-price"></dd></div>
-        <div><dt>Cantidad</dt><dd class="cart__item-qty"></dd></div>
+        <div>
+          <dt>Cantidad</dt>
+          <dd class="cart__item-quantity">
+            <button class="cart__quantity-btn cart__quantity-decrease" type="button">−</button>
+            <span class="cart__item-qty" aria-live="polite"></span>
+            <button class="cart__quantity-btn cart__quantity-increase" type="button">+</button>
+          </dd>
+        </div>
         <div><dt>Subtotal</dt><dd class="cart__item-subtotal"></dd></div>
       </dl>
       <button class="cart__item-remove system-action" type="button">Eliminar</button>
@@ -54,7 +61,7 @@
 
 <script>
   import { cartItems, cartTotal, CartService } from '../services/CartService';
-  import type { PriceDrift, CheckoutResult } from '../services/CartService';
+  import type { CartItem, PriceDrift, CheckoutResult } from '../services/CartService';
   import { resolveImageUrl } from '../../../lib/imageUrl';
 
   const formatPrice = (price: number): string => `$ ${new Intl.NumberFormat('es-AR').format(price)}`;
@@ -73,6 +80,10 @@
       driftEl.appendChild(line);
     }
     setHidden(driftEl, drifts.length === 0);
+  }
+
+  function updateQuantity(item: CartItem, quantity: number): void {
+    CartService.updateQuantity(item.productId, quantity);
   }
 
   function renderCart(): void {
@@ -97,6 +108,8 @@
     for (const item of items) {
       const clone = template.content.cloneNode(true) as DocumentFragment;
       const image = clone.querySelector('.cart__item-image') as HTMLImageElement | null;
+      const decrease = clone.querySelector('.cart__quantity-decrease') as HTMLButtonElement | null;
+      const increase = clone.querySelector('.cart__quantity-increase') as HTMLButtonElement | null;
       const remove = clone.querySelector('.cart__item-remove') as HTMLButtonElement | null;
       const name = clone.querySelector('.cart__item-name');
       const price = clone.querySelector('.cart__item-price');
@@ -118,6 +131,16 @@
           image.alt = `${item.name} — imagen no disponible`;
           image.classList.add('cart__item-image--placeholder');
         });
+      }
+      if (decrease) {
+        decrease.disabled = item.quantity === 1;
+        decrease.setAttribute('aria-label', `Disminuir cantidad de ${item.name}`);
+        decrease.addEventListener('click', () => updateQuantity(item, item.quantity - 1));
+      }
+      if (increase) {
+        increase.disabled = item.quantity === 99;
+        increase.setAttribute('aria-label', `Aumentar cantidad de ${item.name}`);
+        increase.addEventListener('click', () => updateQuantity(item, item.quantity + 1));
       }
       if (remove) {
         remove.setAttribute('aria-label', `Eliminar ${item.name} del carrito`);

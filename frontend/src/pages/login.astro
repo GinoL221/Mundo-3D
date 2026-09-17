@@ -3,11 +3,18 @@ import Layout from '../layouts/Layout.astro';
 import { LoginForm } from '../domains/auth';
 ---
 
-<Layout title="Iniciar Sesión - Mundo 3D">
-  <h1 class="sr-only">Iniciar Sesión — Mundo 3D</h1>
-  <main class="form-layout">
-    <div class="form-card">
-      <LoginForm />
+<Layout title="Iniciar sesión - Mundo 3D">
+  <main class="auth-page" data-auth-route="login">
+    <header class="auth-page__header">
+      <h1>Volvé a tu cuenta</h1>
+      <p>Iniciá sesión para continuar con tu carrito y consultar tus pedidos.</p>
+    </header>
+
+    <div class="auth-page__body">
+      <section class="auth-page__panel" aria-labelledby="login-panel-title">
+        <h2 id="login-panel-title">Ingresá tus datos</h2>
+        <LoginForm />
+      </section>
     </div>
   </main>
 </Layout>
