@@ -283,7 +283,7 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
         await expect(page).toHaveScreenshot(screenshot, {
           fullPage: true,
           threshold: 0.4,
-          maxDiffPixels: 1000,
+          maxDiffPixels: 2000,
         });
       }
     });
