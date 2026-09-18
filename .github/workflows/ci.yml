@@ -221,7 +221,7 @@ jobs:
           DB_HOST: 127.0.0.1
           DB_USER: root
           DB_PASS: ''
-          CI_RETRY_EVIDENCE_MODE: recovered
+          CI_RETRY_EVIDENCE_MODE: failed
 
       - name: Summarize E2E result
         if: success()
