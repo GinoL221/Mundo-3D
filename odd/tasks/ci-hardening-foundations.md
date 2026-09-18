@@ -83,6 +83,12 @@ Status: complete.
 
 - `294f79d` — `chore(ci): add workflow hardening guardrails`
 
+## Issue gate
+
+- Issue [#154](https://github.com/GinoL221/Mundo-3D/issues/154) created and read back successfully.
+- Labels: `status:needs-review`, `type:chore`.
+- Push and PR creation remain blocked until a maintainer adds `status:approved`.
+
 ## Roadmap boundary
 
 The next `modernize-playwright-ci` SDD should decide:
@@ -100,4 +106,5 @@ The next `modernize-playwright-ci` SDD should decide:
 - [x] Add workflow guardrails.
 - [x] Verify the bounded slice.
 - [x] Commit the work unit.
-- [ ] Push and open the dedicated PR after explicit authorization.
+- [x] Create issue #154 and submit it for approval.
+- [ ] Push and open the dedicated PR after `status:approved`.
