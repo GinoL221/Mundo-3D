@@ -187,6 +187,7 @@ test.describe('email confirmation', () => {
       emailVerifiedAt: null,
       consumedAt: null,
     });
+    await expect(page.locator('#navbar-greeting')).toContainText('Hola Email');
 
     await page.locator('#navbar-user-menu-trigger').click();
     await expect(page.locator('#navbar-user-menu')).toBeVisible();
