@@ -45,7 +45,7 @@ Status: complete.
 - Run `pnpm audit`, `git diff --check`, and status checks.
 - Record the work-unit commit and update the active PR description if this fix remains on the branch.
 
-Status: in progress.
+Status: complete.
 
 ## Acceptance criteria
 
@@ -70,7 +70,8 @@ Status: in progress.
 - [x] Add the focused Prettier ignore rule.
 - [x] Restore the accidental lockfile formatting.
 - [x] Verify the protected artifact and dependency audit.
-- [ ] Commit the work unit and update PR evidence.
+- [x] Commit the work unit.
+- [ ] Update active PR evidence after explicit push authorization.
 
 ## Verification evidence
 
@@ -82,6 +83,10 @@ Status: in progress.
 - `pnpm audit` exited 0 with no known vulnerabilities after one transient retryable `ECONNRESET` warning.
 - `git diff --check` exited 0 and final status listed only `.prettierignore` as tracked modification plus preserved untracked artifacts.
 
+## Work-unit commit
+
+- `8d7fbf5` — `chore: protect pnpm lockfile from prettier`
+
 ## Next step
 
-Commit the focused `.prettierignore` guard and task document, then update the active PR evidence without including the lockfile churn.
+Keep the lockfile guard in the local work unit; push and update PR #153 only after explicit delivery authorization.
