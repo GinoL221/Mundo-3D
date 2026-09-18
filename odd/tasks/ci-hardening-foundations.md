@@ -94,7 +94,9 @@ Status: complete.
 - Pull request [#155](https://github.com/GinoL221/Mundo-3D/pull/155) opened against `main`.
 - PR label: `type:chore`; body links approved issue #154 with `Closes #154`.
 - GitHub Actions checks completed successfully: Quality, Real-DB integration, End-to-end Playwright, and Verification gate.
-- PR merge state is `CLEAN` and mergeable; merge remains a separate user decision.
+- PR checks passed and merge state was `CLEAN` before merge.
+- PR #155 merged by squash at `e1520e46a550e22c241561c1f2312397c7f530b9` on 2026-09-18.
+- The source branch remains on the remote by design.
 
 ## Roadmap boundary
 
@@ -117,4 +119,4 @@ The next `modernize-playwright-ci` SDD should decide:
 - [x] Push `chore/ci-hardening-foundations` after approval.
 - [x] Open PR #155 with the approved issue linked.
 - [x] Observe all required checks passing.
-- [ ] Merge PR #155 after explicit authorization.
+- [x] Merge PR #155 by squash after explicit authorization.
