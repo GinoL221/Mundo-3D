@@ -93,7 +93,8 @@ Status: complete.
 
 - Pull request [#155](https://github.com/GinoL221/Mundo-3D/pull/155) opened against `main`.
 - PR label: `type:chore`; body links approved issue #154 with `Closes #154`.
-- GitHub Actions checks are pending before merge.
+- GitHub Actions checks completed successfully: Quality, Real-DB integration, End-to-end Playwright, and Verification gate.
+- PR merge state is `CLEAN` and mergeable; merge remains a separate user decision.
 
 ## Roadmap boundary
 
@@ -115,4 +116,5 @@ The next `modernize-playwright-ci` SDD should decide:
 - [x] Create issue #154 and receive `status:approved`.
 - [x] Push `chore/ci-hardening-foundations` after approval.
 - [x] Open PR #155 with the approved issue linked.
-- [ ] Wait for required checks before merge.
+- [x] Observe all required checks passing.
+- [ ] Merge PR #155 after explicit authorization.
