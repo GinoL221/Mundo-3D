@@ -54,7 +54,7 @@ Status: complete.
 - Record the commit in this task document and its Engram mirror.
 - Ask before pushing or opening the dedicated PR.
 
-Status: in progress.
+Status: complete.
 
 ## Acceptance criteria
 
@@ -79,6 +79,10 @@ Status: in progress.
 - Targeted inspection confirmed read-only permissions, ref-scoped cancellation, 20/15/20/5-minute job timeouts, and 14-day artifact retention.
 - Final verification changed no tracked or non-cache files; unrelated untracked artifacts remained preserved.
 
+## Work-unit commit
+
+- `294f79d` — `chore(ci): add workflow hardening guardrails`
+
 ## Roadmap boundary
 
 The next `modernize-playwright-ci` SDD should decide:
@@ -95,4 +99,5 @@ The next `modernize-playwright-ci` SDD should decide:
 - [x] Mapped remaining hardening gaps in Engram roadmap `ci/hardening-roadmap`.
 - [x] Add workflow guardrails.
 - [x] Verify the bounded slice.
-- [ ] Commit and prepare delivery.
+- [x] Commit the work unit.
+- [ ] Push and open the dedicated PR after explicit authorization.
