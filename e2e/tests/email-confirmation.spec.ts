@@ -135,7 +135,13 @@ test.describe('email confirmation', () => {
   }) => {
     const { email } = await registerUnverifiedUser(page);
     await page.goto(await confirmationLinkAcceptedByLocalMailpit(email));
+    const confirmationResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/users/email-confirmation/confirm') &&
+        response.request().method() === 'POST',
+    );
     await page.getByRole('button', { name: 'Confirmar correo' }).click();
+    expect((await confirmationResponse).status()).toBe(204);
     await expect(readConfirmationState(email)).resolves.toEqual({
       emailVerifiedAt: expect.any(Date),
       consumedAt: expect.any(Date),
@@ -181,6 +187,7 @@ test.describe('email confirmation', () => {
       emailVerifiedAt: null,
       consumedAt: null,
     });
+    await expect(page.locator('#navbar-greeting')).toContainText('Hola Email');
 
     await page.locator('#navbar-user-menu-trigger').click();
     await expect(page.locator('#navbar-user-menu')).toBeVisible();

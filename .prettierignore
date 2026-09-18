@@ -3,3 +3,6 @@ openspec/changes/**/preproposal.md
 
 # Generated OpenAPI artifact; its JSON.stringify output is checked byte-for-byte.
 backend/openapi.json
+
+# pnpm owns this generated lockfile's YAML layout; do not run Prettier on it.
+pnpm-lock.yaml
