@@ -24,13 +24,13 @@ Production logs are structured JSON on stdout (`backend/src/infrastructure/loggi
 
 - Pending migrations → `pnpm --filter backend db:migrate`, then retry boot.
 - Bad credentials → fix `.env`, never commit the fix.
-- If this is happening right after a deploy that included new migrations, confirm migrations were applied *before* the new backend code started (see "Rolling back a migration" below if you need to undo one).
+- If this is happening right after a deploy that included new migrations, confirm migrations were applied _before_ the new backend code started (see "Rolling back a migration" below if you need to undo one).
 
 ## Incident: `/health/ready` stuck at 503, but `/health/live` returns 200
 
 **Meaning**: the process is alive and listening (`/health/live` never checks dependencies — see `openspec/specs/runtime-resilience/spec.md`), but the boot-completion latch never got set, which only happens once DB auth + migration check + seed have all succeeded. A load balancer or orchestrator will correctly keep routing traffic away from this instance.
 
-**Diagnosis**: this is the same failure class as "backend won't start" above, except the process itself is still running (it didn't exit) — check the same boot-sequence log lines. Common cause: DB became unreachable *after* the process started listening but *before* boot finished (race on a slow-starting DB container).
+**Diagnosis**: this is the same failure class as "backend won't start" above, except the process itself is still running (it didn't exit) — check the same boot-sequence log lines. Common cause: DB became unreachable _after_ the process started listening but _before_ boot finished (race on a slow-starting DB container).
 
 **Do not** restart the process blindly — if the DB is genuinely down, a restart won't help and just adds churn to the logs. Confirm DB reachability first.
 
@@ -39,21 +39,27 @@ Production logs are structured JSON on stdout (`backend/src/infrastructure/loggi
 Two real incidents hit this repo in one session (2026-08-26) — both were genuine infrastructure bugs, not flakes, and both are worth knowing about before assuming "it's just flaky":
 
 1. **`Build frontend` step fails with an `astro build` error.** `frontend/astro.config.mjs` fails the `build` subcommand specifically if `PUBLIC_API_URL` isn't set — deliberate, so a production build can't silently fall back to a localhost API URL. If a CI step or environment stops setting it, every build fails from that point on, on every branch. Check `.github/workflows/ci.yml`'s "Build frontend" step has a `PUBLIC_API_URL` env var.
-2. **`Real-DB integration tests` fails with a `TypeError` inside a test's cleanup/`afterAll`, often masking the real error one frame up.** `backend/jest.integration.config.js` runs with `maxWorkers: 1` specifically because integration tests share one live MySQL database and `bootstrapTestDatabase()` (`backend/src/__tests__/helpers/testDb.ts`) is only idempotent *within one process* — parallel workers racing schema bootstrap (`ALTER TABLE ... ADD INDEX`) can duplicate-key-error. If this config ever gets weakened back to parallel workers, this class of failure returns.
+2. **`Real-DB integration tests` fails with a `TypeError` inside a test's cleanup/`afterAll`, often masking the real error one frame up.** `backend/jest.integration.config.js` runs with `maxWorkers: 1` specifically because integration tests share one live MySQL database and `bootstrapTestDatabase()` (`backend/src/__tests__/helpers/testDb.ts`) is only idempotent _within one process_ — parallel workers racing schema bootstrap (`ALTER TABLE ... ADD INDEX`) can duplicate-key-error. If this config ever gets weakened back to parallel workers, this class of failure returns.
 
 **General triage**:
 
-- Read the actual failing step's log, not just the red X — `gh run view --job <id> --log-failed`, and scroll *up* from the last error if it looks like a masking symptom (a `TypeError` on `undefined` inside a cleanup hook almost always means an earlier `beforeAll`/`beforeEach` step threw first).
+- Read the actual failing step's log, not just the red X — `gh run view --job <id> --log-failed`, and scroll _up_ from the last error if it looks like a masking symptom (a `TypeError` on `undefined` inside a cleanup hook almost always means an earlier `beforeAll`/`beforeEach` step threw first).
 - Before assuming "flaky, just re-run it": check whether the failure is new (did it fail on the last N runs too?) and whether your own most recent change plausibly caused it. A test that failed intermittently across many unrelated runs is more likely genuinely flaky; a test that started failing right after a specific push almost always was caused by that push.
-- `backend/src/__tests__/boot.integration.test.js` spawns a real child process and waits up to 10s for it to report a listening port — it's inherently sensitive to CPU contention on the CI runner and can flake under heavy concurrent load (many integration files/jobs running at once). If *only* this test fails and a re-run passes clean, that's consistent with load-sensitivity, not a regression.
+- `backend/src/__tests__/boot.integration.test.js` spawns a real child process and waits up to 10s for it to report a listening port — it's inherently sensitive to CPU contention on the CI runner and can flake under heavy concurrent load (many integration files/jobs running at once). If _only_ this test fails and a re-run passes clean, that's consistent with load-sensitivity, not a regression.
+
+### CI audit and immutable-reference triage
+
+1. In the `Audit all dependencies` log, treat `AUDIT_ADVISORY` as a dependency remediation: inspect and resolve the advisory, then rerun normally. Treat `AUDIT_AVAILABILITY_FAILURE` as a registry/network outage: repair or wait for connectivity, then rerun. Treat `AUDIT_EXECUTION_FAILURE` as an ambiguous failed audit: inspect the forwarded output before rerunning. Every classification is intentionally nonzero; never add a bypass or `continue-on-error`.
+2. For a Renovate proposal, use [`ci-dependency-provenance.md`](ci-dependency-provenance.md) to verify the official publisher, tag-to-SHA or registry digest mapping, valid signature/provenance evidence, and Linux MySQL manifest intent. Renovate only proposes; maintainers approve provenance through the PR.
+3. If a reviewed reference causes CI regression, preserve the failed-run link and revert the focused workflow, provenance record, and updater configuration to the prior approved immutable values. Do not roll back to mutable tags, disable the audit, or weaken the four-job verification gate.
 
 ## Rotating a leaked secret
 
-| Secret | Blast radius on rotation | Procedure |
-| --- | --- | --- |
-| `JWT_SECRET` | **Every existing session is invalidated immediately** — all logged-in users get logged out. | Set the new value in the deploy environment, restart the backend. No migration needed. Warn users beforehand if possible; this is disruptive by design (it's the whole point if the secret leaked). |
-| `COOKIE_SECRET` | Invalidates in-flight CSRF tokens (`m3d_csrf`) — users mid-form-submission get a CSRF rejection on their next state-changing request, resolved by a page reload. Does not log users out. | Set the new value, restart. |
-| `DB_PASS` (or any DB credential) | Backend can't reconnect until updated — a bad rotation order causes the "backend won't start" incident above. | Update the credential in MySQL *and* in every environment's `.env`/deploy config in the same maintenance window, then restart the backend. Never rotate the DB-side credential before the backend's config is ready to pick up the new value. |
+| Secret                           | Blast radius on rotation                                                                                                                                                                 | Procedure                                                                                                                                                                                                                                     |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `JWT_SECRET`                     | **Every existing session is invalidated immediately** — all logged-in users get logged out.                                                                                              | Set the new value in the deploy environment, restart the backend. No migration needed. Warn users beforehand if possible; this is disruptive by design (it's the whole point if the secret leaked).                                           |
+| `COOKIE_SECRET`                  | Invalidates in-flight CSRF tokens (`m3d_csrf`) — users mid-form-submission get a CSRF rejection on their next state-changing request, resolved by a page reload. Does not log users out. | Set the new value, restart.                                                                                                                                                                                                                   |
+| `DB_PASS` (or any DB credential) | Backend can't reconnect until updated — a bad rotation order causes the "backend won't start" incident above.                                                                            | Update the credential in MySQL _and_ in every environment's `.env`/deploy config in the same maintenance window, then restart the backend. Never rotate the DB-side credential before the backend's config is ready to pick up the new value. |
 
 None of these secrets are recoverable from git history if they were ever committed — if a secret lands in a commit, rotating it is mandatory even after the commit is removed/force-pushed away, because the old value is still in anyone's already-fetched history (see `AGENTS.md`).
 
@@ -95,7 +101,7 @@ Two layers now prevent that:
 Three small, dependency-free Node scripts under `scripts/deploy/` (repo root) implement the platform-agnostic parts of a deploy — they don't provision or target any specific platform, they just sequence and verify what already exists. A future CD job (or a manual deploy) runs them in this order:
 
 1. **Build** — `pnpm --filter backend build` (emits `dist/`; not one of the deploy scripts, it's the existing build step).
-2. **Env preflight** — `pnpm --filter backend deploy:env-preflight`. Fails fast (exit 1) *before* the app process even starts if `NODE_ENV` is anything other than `production` (with `test`, `JwtSecret.ts`/`CookieSecret.ts` fall back to constants committed in this repository and both rate limiters are skipped — see "Why NODE_ENV is checked by value" below), or if any required production env var is missing: `JWT_SECRET`, `CORS_ORIGIN`, `COOKIE_SECRET`, `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_HOST`, `DB_PORT`, `DB_CA_CERT`, `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL_BASE`. Lists every missing var in one message, not one at a time. `COOKIE_DOMAIN` and `PUBLIC_API_URL` are warn-only (exit 0 with a warning): `COOKIE_DOMAIN` is genuinely optional per `cookieOptions.ts` but required for a cross-subdomain deploy topology, and `PUBLIC_API_URL` is a frontend build-time var baked by Vercel at `astro build` — irrelevant to the backend process, so its absence here only warns.
+2. **Env preflight** — `pnpm --filter backend deploy:env-preflight`. Fails fast (exit 1) _before_ the app process even starts if `NODE_ENV` is anything other than `production` (with `test`, `JwtSecret.ts`/`CookieSecret.ts` fall back to constants committed in this repository and both rate limiters are skipped — see "Why NODE_ENV is checked by value" below), or if any required production env var is missing: `JWT_SECRET`, `CORS_ORIGIN`, `COOKIE_SECRET`, `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_HOST`, `DB_PORT`, `DB_CA_CERT`, `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL_BASE`. Lists every missing var in one message, not one at a time. `COOKIE_DOMAIN` and `PUBLIC_API_URL` are warn-only (exit 0 with a warning): `COOKIE_DOMAIN` is genuinely optional per `cookieOptions.ts` but required for a cross-subdomain deploy topology, and `PUBLIC_API_URL` is a frontend build-time var baked by Vercel at `astro build` — irrelevant to the backend process, so its absence here only warns.
 3. **Migrate, then start** — `pnpm --filter backend deploy:migrate-and-start` runs `db:migrate` first; if it fails, the app is never started (exit code propagates, non-zero) — this is what actually enforces "migrations run before the new version serves traffic," since `index.js`'s own boot refuses to auto-migrate (see "Incident: backend process won't start" above). Forwards `SIGTERM`/`SIGINT` to the spawned server process so graceful shutdown still works normally when this wrapper is what the platform sends the signal to (see "Graceful shutdown" above). In production, `render.yaml`'s `startCommand` runs `pnpm --filter backend deploy:start`, which chains steps 2 and 3 (`env-preflight && migrate-and-start`) so a missing required var aborts before any DB or app work happens — steps 2/3 are also runnable standalone, as shown here.
 4. **Smoke test** — `pnpm --filter backend deploy:smoke-test` (needs `SMOKE_TEST_BASE_URL` pointed at the just-deployed instance). Polls `GET /health/live` then `GET /health/ready` until both return 200 or `SMOKE_TEST_TIMEOUT_MS` elapses (default 60000ms) — readiness is never checked before liveness succeeds at least once. Non-zero exit means the deploy did not actually come up healthy, regardless of what the platform's own "deploy succeeded" signal says.
 
@@ -105,11 +111,11 @@ To test any of the three scripts locally without deploying anywhere: `pnpm test:
 
 ### Migration authoring: expand/contract
 
-Schema migrations must stay compatible with **both** the previous and the new app version during a deploy window: additive changes first (nullable columns, new tables), destructive changes (drops, renames, `NOT NULL` tightening) only in a later migration once the old code path is confirmed gone. This is a manual authoring discipline — nothing in `migrate.js`/`checkPendingMigrations.js` enforces it — and it exists so a code rollback never needs a schema rollback. `db:migrate:down` (see "Rolling back a migration" above) remains a manual last resort, not the primary safety net; a deploy that ships code and a migration together should never *need* to roll the schema back if the migration itself followed this discipline.
+Schema migrations must stay compatible with **both** the previous and the new app version during a deploy window: additive changes first (nullable columns, new tables), destructive changes (drops, renames, `NOT NULL` tightening) only in a later migration once the old code path is confirmed gone. This is a manual authoring discipline — nothing in `migrate.js`/`checkPendingMigrations.js` enforces it — and it exists so a code rollback never needs a schema rollback. `db:migrate:down` (see "Rolling back a migration" above) remains a manual last resort, not the primary safety net; a deploy that ships code and a migration together should never _need_ to roll the schema back if the migration itself followed this discipline.
 
 ### Note: physical-schema check now tolerates modern MySQL's integer display-width deprecation
 
-`checkPendingMigrations.js`'s boot-time physical-schema verification used to compare column types as literal strings (e.g. expecting exactly `INT(11)`). MySQL 8.0.19+ stopped reporting that display-width suffix in `DESCRIBE`/`SHOW COLUMNS` output for integer columns not given an explicit width — a real MySQL 8.0.19+ server always reports bare `INT`, never `INT(11)`, which made the boot-time check fail closed against any current MySQL release, discovered while building this deploy pipeline's own real-database integration test. Fixed to tolerate an optional display-width suffix on integer types only (never on `DECIMAL`, where the parenthesized numbers are real precision/scale). If you see a schema-incompatibility error mentioning an integer column on a *very old* MySQL server (pre-8.0.19), that's the one case this fix doesn't paper over — the display width would genuinely differ there.
+`checkPendingMigrations.js`'s boot-time physical-schema verification used to compare column types as literal strings (e.g. expecting exactly `INT(11)`). MySQL 8.0.19+ stopped reporting that display-width suffix in `DESCRIBE`/`SHOW COLUMNS` output for integer columns not given an explicit width — a real MySQL 8.0.19+ server always reports bare `INT`, never `INT(11)`, which made the boot-time check fail closed against any current MySQL release, discovered while building this deploy pipeline's own real-database integration test. Fixed to tolerate an optional display-width suffix on integer types only (never on `DECIMAL`, where the parenthesized numbers are real precision/scale). If you see a schema-incompatibility error mentioning an integer column on a _very old_ MySQL server (pre-8.0.19), that's the one case this fix doesn't paper over — the display width would genuinely differ there.
 
 ## Platform bring-up (Render + Aiven + Vercel)
 
@@ -117,11 +123,11 @@ The first concrete hosting target: the backend runs on Render (free-tier web ser
 
 ### Topology
 
-| Host | Serves | DNS |
-| --- | --- | --- |
-| Vercel | frontend — apex `<domain>` and `www.<domain>` | apex/`www` → Vercel |
-| Render | API — `api.<domain>` | `api.<domain>` CNAME → the Render service's `onrender.com` host |
-| Aiven | MySQL — private endpoint, non-standard port, private CA | not public |
+| Host   | Serves                                                  | DNS                                                             |
+| ------ | ------------------------------------------------------- | --------------------------------------------------------------- |
+| Vercel | frontend — apex `<domain>` and `www.<domain>`           | apex/`www` → Vercel                                             |
+| Render | API — `api.<domain>`                                    | `api.<domain>` CNAME → the Render service's `onrender.com` host |
+| Aiven  | MySQL — private endpoint, non-standard port, private CA | not public                                                      |
 
 The frontend origin and the API differ only by the `api.` label, so they are the **same site**: the auth cookie is issued with `Domain=.<domain>`, `SameSite=Lax`, `Secure`, and round-trips on credentialed XHR from the frontend to the API without `SameSite=None`. Do **not** switch `sameSite` to `none` to "fix" auth — if the cookie is not coming back, the domain wiring below is wrong, not the `sameSite` value.
 
@@ -173,14 +179,14 @@ Use this backend path when the image is published independently of the repositor
 
 4. In the Render service **Environment**, set the following values in the dashboard. No values belong in this repository or the image:
 
-   | Variables | Value/source |
-   | --- | --- |
-   | `NODE_ENV`, `RUN_COMPILED` | Literal `production` and `true`. |
-   | `JWT_SECRET`, `COOKIE_SECRET` | Fresh random secrets. |
-   | `CORS_ORIGIN`, `PUBLIC_APP_URL`, `COOKIE_DOMAIN` | Canonical frontend origin, the same canonical origin, and `.<domain>` respectively. `COOKIE_DOMAIN` is optional only when the topology does not need a cross-subdomain cookie. |
-   | `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_HOST`, `DB_PORT`, `DB_CA_CERT` | Aiven MySQL values. `DB_CA_CERT` must be the raw, multi-line PEM—do not quote it or replace line breaks with `\n`. TLS verification remains enabled. |
-   | `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL_BASE` | Cloudflare R2 values. `R2_ENDPOINT` is the S3 API endpoint, while `R2_PUBLIC_URL_BASE` is the public-read URL; they are not interchangeable. |
-   | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Brevo SMTP settings and verified sender. Keep `SMTP_USER`/`SMTP_PASS` dashboard-only. |
+   | Variables                                                                                         | Value/source                                                                                                                                                                   |
+   | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+   | `NODE_ENV`, `RUN_COMPILED`                                                                        | Literal `production` and `true`.                                                                                                                                               |
+   | `JWT_SECRET`, `COOKIE_SECRET`                                                                     | Fresh random secrets.                                                                                                                                                          |
+   | `CORS_ORIGIN`, `PUBLIC_APP_URL`, `COOKIE_DOMAIN`                                                  | Canonical frontend origin, the same canonical origin, and `.<domain>` respectively. `COOKIE_DOMAIN` is optional only when the topology does not need a cross-subdomain cookie. |
+   | `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_HOST`, `DB_PORT`, `DB_CA_CERT`                               | Aiven MySQL values. `DB_CA_CERT` must be the raw, multi-line PEM—do not quote it or replace line breaks with `\n`. TLS verification remains enabled.                           |
+   | `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL_BASE` | Cloudflare R2 values. `R2_ENDPOINT` is the S3 API endpoint, while `R2_PUBLIC_URL_BASE` is the public-read URL; they are not interchangeable.                                   |
+   | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`                    | Brevo SMTP settings and verified sender. Keep `SMTP_USER`/`SMTP_PASS` dashboard-only.                                                                                          |
 
    `PORT` is platform-managed as described above. `PUBLIC_API_URL` is not needed by the backend container; set it in Vercel when building the frontend. `env-preflight` fails before migrations or startup if any of its required JWT, DB, CORS, cookie, or R2 variables are absent.
 
@@ -209,7 +215,7 @@ Seeded catalog images are committed to the repo and served by Vercel; only image
 4. Create a **bucket-scoped S3 API token**: R2 → Manage API tokens → Create API token, permission **Object Read & Write**, scoped to this bucket. The screen shows:
    - **Access Key ID** → `R2_ACCESS_KEY_ID`
    - **Secret Access Key** (shown once) → `R2_SECRET_ACCESS_KEY`
-   - **S3 API endpoint** (`https://<account>.r2.cloudflarestorage.com`) → `R2_ENDPOINT`. This is the *API* host, not the public read host — the two are always different.
+   - **S3 API endpoint** (`https://<account>.r2.cloudflarestorage.com`) → `R2_ENDPOINT`. This is the _API_ host, not the public read host — the two are always different.
 5. Set all five `R2_*` values in the Render service Environment (the Render image-backed alternative above).
 6. Free-tier ceiling: 10 GB stored, 1M Class A + 10M Class B operations per month, **zero egress**. Comfortable for a small catalog — revisit only if uploads approach 10 GB or write volume grows sharply.
 7. Verify end to end: create a product with an image via the admin UI → the object appears in the R2 dashboard → the persisted URL opens directly in a browser → redeploy the Render service → the image still renders on the frontend.
