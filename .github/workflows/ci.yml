@@ -204,28 +204,61 @@ jobs:
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ steps.pw.outputs.v }}
+          key: ${{ runner.os }}-playwright-${{ steps.pw.outputs.v }}-pw1228
 
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm --filter e2e exec playwright install --with-deps
+        run: pnpm --filter e2e exec playwright install --with-deps chromium
 
       - name: Install Playwright System Dependencies (if cached)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm --filter e2e exec playwright install-deps
 
       - name: Run E2E tests
+        id: e2e-tests
         run: pnpm run test:e2e
         env:
           DB_HOST: 127.0.0.1
           DB_USER: root
           DB_PASS: ''
 
-      - name: Upload Playwright report
-        if: always()
+      - name: Summarize E2E result
+        if: success()
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const reportPath = 'e2e/test-results/results.json';
+          const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+          const stack = [report];
+          let recovered = false;
+          while (stack.length) {
+            const value = stack.pop();
+            if (Array.isArray(value)) stack.push(...value);
+            else if (value && typeof value === 'object') {
+              if (value.retry > 0 && value.status === 'passed') {
+                recovered = true;
+              }
+              stack.push(...Object.values(value));
+            }
+          }
+          const message = recovered
+            ? 'RECOVERED_PASS: one Playwright retry passed.'
+            : 'E2E_PASS_FIRST_ATTEMPT';
+          console.log(message);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${message}\n`);
+          NODE
+
+      - name: Summarize final E2E failure
+        if: failure() && steps.e2e-tests.outcome == 'failure'
+        run: |
+          echo 'FINAL_E2E_FAILURE: single Playwright retry exhausted.' \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Playwright failure diagnostics
+        if: failure() && steps.e2e-tests.outcome == 'failure'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: playwright-report
+          name: playwright-failure-diagnostics
           path: |
             e2e/playwright-report/
             e2e/test-results/
