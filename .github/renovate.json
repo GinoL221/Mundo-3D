@@ -1,0 +1,13 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "enabledManagers": ["github-actions"],
+  "includePaths": [".github/workflows/ci.yml"],
+  "automerge": false,
+  "packageRules": [
+    {
+      "description": "CI dependency changes require maintainer provenance review in a PR.",
+      "automerge": false
+    }
+  ]
+}
