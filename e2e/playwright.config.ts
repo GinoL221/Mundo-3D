@@ -1,14 +1,36 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const isCi = Boolean(process.env.CI);
+
+const ciVisualUse = isCi
+  ? {
+      viewport: { width: 1280, height: 720 },
+      locale: 'es-AR',
+      timezoneId: 'UTC',
+      colorScheme: 'light' as const,
+      reducedMotion: 'reduce' as const,
+      deviceScaleFactor: 1,
+      hasTouch: false,
+      isMobile: false,
+    }
+  : {};
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: false,
   workers: 1,
-  reporter: [['list'], ['html', { open: 'never' }]],
+  retries: isCi ? 1 : 0,
+  reporter: [
+    ['list'],
+    ['html', { open: 'never' }],
+    ['json', { outputFile: 'test-results/results.json' }],
+  ],
   globalSetup: './global-setup',
   use: {
     baseURL: 'http://localhost:4322',
-    trace: 'on-first-retry',
+    trace: isCi ? 'retain-on-failure' : 'on-first-retry',
+    screenshot: isCi ? 'only-on-failure' : 'off',
+    video: isCi ? 'retain-on-failure' : 'off',
   },
   webServer: [
     {
@@ -61,7 +83,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], ...ciVisualUse },
     },
   ],
 });

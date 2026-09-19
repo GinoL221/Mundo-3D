@@ -198,7 +198,7 @@ El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
 | `quality`           | Instalación, `architecture:check`, lint, `type-check`, `test:fast`, `test:coverage` (sube `backend/coverage/{lcov.info,coverage-summary.json,risk-map.json}` como artefacto), `frontend:check`, `frontend:build`. | No             |
 | `integration`       | Migraciones sobre una base nueva (`mundo_3d_migrate_ci`) y `test:integration` real contra MySQL.                                                                                                                  | Sí             |
-| `e2e`               | Instalación/cache de navegadores Playwright y `test:e2e` (Chromium); sube el reporte Playwright como artefacto.                                                                                                   | Sí             |
+| `e2e`               | Instalación/cache de navegadores Playwright y `test:e2e` (Chromium); solo sube diagnósticos Playwright tras un fallo final.                                                                                       | Sí             |
 | `verification-gate` | Se ejecuta siempre (`if: always()`) y solo pasa si `quality`, `integration` y `e2e` resultaron en `success`; cualquier fallo o cancelación bloquea.                                                               | —              |
 
 Los tres jobs de verificación corren en paralelo; `verification-gate` es el único check pensado para exigirse en la protección de la rama `main` (decisión pendiente de autorización explícita del mantenedor fuera de este repositorio — ver `openspec/changes/verification-baseline-and-ci-gates/`).
@@ -208,6 +208,12 @@ Los tres jobs de verificación corren en paralelo; `verification-gate` es el ún
 Las acciones de GitHub y las dos imágenes MySQL de CI usan referencias inmutables registradas en [`docs/ci-dependency-provenance.md`](docs/ci-dependency-provenance.md). Renovate solo puede proponer actualizaciones para este workflow; no hace auto-merge. Un mantenedor debe aprobar el PR después de comprobar editor, SHA o digest, firma/provenance y plataforma Linux de MySQL.
 
 `pnpm audit` sigue siendo obligatorio y fail-closed. `AUDIT_ADVISORY` significa que hay una vulnerabilidad que corregir; `AUDIT_AVAILABILITY_FAILURE` indica un problema de registry/red; `AUDIT_EXECUTION_FAILURE` cubre una ejecución ambigua. Los tres últimos estados bloquean la integración y nunca deben convertirse en warnings. El rollback revierte el cambio focalizado a los valores inmutables aprobados previos, nunca a tags mutables.
+
+### Playwright: línea base y diagnósticos de CI
+
+CI ejecuta el único proyecto Chromium con un retry nativo y solo cuando `CI` está definido fija el entorno visual Linux: viewport `1280x720`, `es-AR`, UTC, esquema claro, movimiento reducido y escala 1 sin touch/móvil. Las pruebas visuales de Home mantienen sus propios viewports y fixtures deterministas, esperan fuentes e imágenes, y la línea base solo se cambia mediante un PR con explicación, diff de imagen, entorno Linux confirmado y aprobación de un mantenedor. La paridad de píxeles local entre plataformas queda explícitamente fuera de alcance.
+
+Un primer fallo seguido de éxito deja `RECOVERED_PASS` en el resumen del job: es informativo, pero debe investigarse si se repite. Un fallo tras el retry deja `FINAL_E2E_FAILURE`, conserva reporte HTML, resultados, traces, screenshots y video durante 14 días, y mantiene el gate cerrado. Los diagnósticos no se suben en un éxito final ni deben incluir datos sensibles intencionalmente. El acceso a artefactos depende de los permisos de Actions del repositorio, no de YAML; como el repositorio es público, un mantenedor debe confirmar que la política de acceso cumple el requisito operativo antes de considerar satisfecho el acceso exclusivo del equipo.
 
 ## Estructura del repositorio
 
