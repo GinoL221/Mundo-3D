@@ -61,6 +61,7 @@ const FLUSH_GRACE_MS = 250;
 let httpServer = null;
 let shuttingDown = false;
 let bootAborted = false;
+let commissionRequestRetention = null;
 
 // Flushes the Pino logger before exiting. `logger.flush(cb)` is not
 // guaranteed to invoke `cb` on a transport-less destination, so a fallback
@@ -91,6 +92,10 @@ function shutdown(signal) {
     return;
   }
   shuttingDown = true;
+  if (commissionRequestRetention) {
+    commissionRequestRetention.stop();
+    commissionRequestRetention = null;
+  }
 
   if (!httpServer) {
     bootAborted = true;
@@ -145,9 +150,27 @@ if (env === "test") {
     .then(() => db.sequelize.authenticate())
     .then(() => checkNoPendingMigrations())
     .then(() => seedInitialData(db))
-    .then(() => {
+    .then(async () => {
       if (bootAborted) {
         return;
+      }
+      if (env !== "test") {
+        const { startCommissionRequestRetention } = require(`${base}/infrastructure/maintenance/commissionRequestRetention`);
+        const { SequelizeCustomCommissionRequestRepository } = require(`${base}/infrastructure/repositories/SequelizeCustomCommissionRequestRepository`);
+        const { PurgeExpiredCommissionRequestsUseCase } = require(`${base}/application/use-cases/PurgeExpiredCommissionRequestsUseCase`);
+        const purgeUseCase = new PurgeExpiredCommissionRequestsUseCase(
+          new SequelizeCustomCommissionRequestRepository(),
+        );
+        commissionRequestRetention = startCommissionRequestRetention(
+          () => purgeUseCase.execute(),
+          logger,
+        );
+        await commissionRequestRetention.ready;
+        if (bootAborted) {
+          commissionRequestRetention.stop();
+          commissionRequestRetention = null;
+          return;
+        }
       }
       // Bind every interface explicitly: the platform routes to this
       // container by its published port and expects 0.0.0.0, not Node's
