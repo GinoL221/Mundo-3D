@@ -54,7 +54,7 @@ THESIS: A visitor can leave an idea without this demo pretending it is a sale. O
 - **Verification:** `pnpm --dir frontend exec vitest run src/domains/commissions/services/customCommissionRequest.service.test.ts` passed (6/6); `pnpm --dir frontend check` passed (97 files, 0 errors/warnings/hints); local `pnpm --dir frontend build` passed with the user's transient `PUBLIC_API_URL=http://localhost:3031` (18 pages); `pnpm --dir frontend quality:check` and `git diff --check` passed. No migration was applied. LSP limitation: Astro files have no configured language server; the service reports the established extensionless-relative-import AST warning. No browser/E2E navigation test is claimed as passed.
 - **Commit:** `1223600` (`feat(commissions): add visitor intake form and disclosures`).
 
-### 4. Add the STAFF/ADMIN request inbox — DONE
+### 4. Add the STAFF/ADMIN request inbox — FOLLOW-UP IN PROGRESS
 
 #### Direction contract (`/admin/commission-requests` local extension)
 
@@ -66,10 +66,11 @@ THESIS: Let authorized staff review real saved requests without implying fulfill
 - [x] Display API-ordered active requests with name, email, idea, created date, and optional product name. Resolve names through `fetchProducts()` by `idProduct`; use `Producto #<id>` when unresolved and indicate no association for null IDs. Catalog delay/failure does not block the request list.
 - [x] Keep the backend API unchanged; add accessible loading, empty, error, and retry states, safe text rendering, and no mutation controls.
 - [x] Focused service tests and Astro check pass; independent verification confirmed role gate, 401 behavior, catalog fallback, and no mutations.
-- **Verification:** `pnpm --dir frontend exec vitest run src/domains/commissions/services/customCommissionRequest.admin.service.test.ts` passed (3/3); `pnpm --dir frontend check` passed (100 files, 0 errors/warnings/hints). Independent verifier confirmed service and UI behavior. Task 5 browser E2E remains pending; no migration was run.
-- **Commit:** pending.
+- [x] Align the service response mapping with the backend's actual JSON-array contract; task 5 E2E exposed that the inbox rendered empty despite successful API reads.
+- **Verification:** `pnpm --dir frontend exec vitest run src/domains/commissions/services/customCommissionRequest.admin.service.test.ts` passed (4/4) for the array contract, malformed/non-array payloads, 401, other HTTP errors, and network behavior. `pnpm --dir frontend check` passed (100 files, 0 errors/warnings/hints). Independent review confirmed page behavior; the focused Playwright scenario subsequently passed and demonstrates the contract end-to-end. No migration was run.
+- **Commits:** `89b5271` (`feat(commissions): add staff request inbox`); response-shape fix commit pending.
 
-### 5. Verify the end-to-end local demo flow — IN PROGRESS
+### 5. Verify the end-to-end local demo flow
 
 - [ ] Add an E2E scenario that follows the existing home CTA from `/` to `/help` before public submission, then verifies STAFF/ADMIN visibility and denial for anonymous/USER reads, without making external calls.
 - [ ] Run focused backend/frontend tests, relevant type-checks/OpenAPI checks, and the targeted Playwright scenario; run broader checks when practical.

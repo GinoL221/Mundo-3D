@@ -27,6 +27,10 @@ export async function listCustomCommissionRequests(): Promise<CustomCommissionRe
     }
     throw new CustomCommissionRequestAdminApiError(response.status, message);
   }
-  const data = (await response.json()) as { requests?: CustomCommissionRequestDTO[] };
-  return data?.requests ?? [];
+  try {
+    const data: unknown = await response.json();
+    return Array.isArray(data) ? (data as CustomCommissionRequestDTO[]) : [];
+  } catch {
+    return [];
+  }
 }
