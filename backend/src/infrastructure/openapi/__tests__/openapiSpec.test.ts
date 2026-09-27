@@ -32,6 +32,9 @@ interface OpenApiDocument {
 const EXPECTED_ENDPOINTS: Array<[path: string, method: string]> = [
   // cart.ts
   ['/cart', 'get'],
+  // customCommissionRequests.ts
+  ['/custom-commission-requests', 'get'],
+  ['/custom-commission-requests', 'post'],
   ['/cart', 'put'],
   // categories.ts
   ['/categories', 'get'],
@@ -165,6 +168,7 @@ describe('buildOpenApiSpec', () => {
       expect(Object.keys(schemas)).toEqual(
         expect.arrayContaining([
           'Order', 'OrderItem', 'Product', 'Category', 'Franchise', 'User', 'CartResult', 'ShoppingCartLine',
+          'CustomCommissionRequest', 'CustomCommissionRequestInput', 'CustomCommissionRequestReceipt',
         ])
       );
 

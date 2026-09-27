@@ -5,6 +5,7 @@ import cartApiRouter from './cart';
 import categoriesApiRouter from './categories';
 import franchisesApiRouter from './franchises';
 import ordersApiRouter from './orders';
+import customCommissionRequestsApiRouter from './customCommissionRequests';
 import { createOpenApiRouteHandler } from '../../openapi/openapiArtifact';
 
 const router = Router();
@@ -15,6 +16,7 @@ router.use(cartApiRouter);
 router.use(categoriesApiRouter);
 router.use(franchisesApiRouter);
 router.use(ordersApiRouter);
+router.use('/custom-commission-requests', customCommissionRequestsApiRouter);
 
 // GET /api/openapi.json — read-only OpenAPI 3.0 contract, no auth required
 // (documentation, not data). Serves the committed, build-time-generated

@@ -11,6 +11,7 @@
 // live in `orderOpenapiSchemas.ts` (split out to stay under the 250-line cap).
 
 import { orderOpenapiSchemas } from './orderOpenapiSchemas';
+import { customCommissionRequestOpenapiSchemas } from './customCommissionRequestOpenapiSchemas';
 
 const errorSchema = {
   type: 'object',
@@ -195,6 +196,8 @@ const usersIndexResponseSchema = {
   required: ['count', 'users'],
 };
 
+
+
 export const openapiSchemas = {
   Error: errorSchema,
   ErrorWithCode: errorWithCodeSchema,
@@ -212,5 +215,6 @@ export const openapiSchemas = {
   User: userSchema,
   AuthResponse: authResponseSchema,
   UsersIndexResponse: usersIndexResponseSchema,
+  ...customCommissionRequestOpenapiSchemas,
   ...orderOpenapiSchemas,
 };
