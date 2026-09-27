@@ -54,7 +54,7 @@ THESIS: A visitor can leave an idea without this demo pretending it is a sale. O
 - **Verification:** `pnpm --dir frontend exec vitest run src/domains/commissions/services/customCommissionRequest.service.test.ts` passed (6/6); `pnpm --dir frontend check` passed (97 files, 0 errors/warnings/hints); local `pnpm --dir frontend build` passed with the user's transient `PUBLIC_API_URL=http://localhost:3031` (18 pages); `pnpm --dir frontend quality:check` and `git diff --check` passed. No migration was applied. LSP limitation: Astro files have no configured language server; the service reports the established extensionless-relative-import AST warning. No browser/E2E navigation test is claimed as passed.
 - **Commit:** `1223600` (`feat(commissions): add visitor intake form and disclosures`).
 
-### 4. Add the STAFF/ADMIN request inbox — FOLLOW-UP IN PROGRESS
+### 4. Add the STAFF/ADMIN request inbox — DONE
 
 #### Direction contract (`/admin/commission-requests` local extension)
 
@@ -68,13 +68,14 @@ THESIS: Let authorized staff review real saved requests without implying fulfill
 - [x] Focused service tests and Astro check pass; independent verification confirmed role gate, 401 behavior, catalog fallback, and no mutations.
 - [x] Align the service response mapping with the backend's actual JSON-array contract; task 5 E2E exposed that the inbox rendered empty despite successful API reads.
 - **Verification:** `pnpm --dir frontend exec vitest run src/domains/commissions/services/customCommissionRequest.admin.service.test.ts` passed (4/4) for the array contract, malformed/non-array payloads, 401, other HTTP errors, and network behavior. `pnpm --dir frontend check` passed (100 files, 0 errors/warnings/hints). Independent review confirmed page behavior; the focused Playwright scenario subsequently passed and demonstrates the contract end-to-end. No migration was run.
-- **Commits:** `89b5271` (`feat(commissions): add staff request inbox`); response-shape fix commit pending.
+- **Commits:** `89b5271` (`feat(commissions): add staff request inbox`); `e05b922` (`fix(commissions): map inbox array response`).
 
-### 5. Verify the end-to-end local demo flow
+### 5. Verify the end-to-end local demo flow — DONE
 
-- [ ] Add an E2E scenario that follows the existing home CTA from `/` to `/help` before public submission, then verifies STAFF/ADMIN visibility and denial for anonymous/USER reads, without making external calls.
-- [ ] Run focused backend/frontend tests, relevant type-checks/OpenAPI checks, and the targeted Playwright scenario; run broader checks when practical.
-- [ ] Inspect final diff and preserve unrelated pre-existing untracked paths.
+- [x] Add an E2E scenario that follows the existing home CTA from `/` to `/help` before public submission, then verifies STAFF/ADMIN visibility and denial for anonymous/USER reads, without making external calls.
+- [x] Run focused frontend tests, Astro check, quality check, local build, and the targeted Playwright scenario. Backend/API/OpenAPI were unchanged; no migration ran.
+- [x] Inspect final diff and preserve unrelated pre-existing untracked paths.
+- **Verification:** focused frontend services 10/10; `pnpm --dir frontend check` passed (100 files, 0 diagnostics); `pnpm --dir frontend quality:check` passed; transient `PUBLIC_API_URL=http://localhost:3031 pnpm --dir frontend build` passed (19 pages); targeted Playwright passed (1/1) with ADMIN/STAFF inbox visibility, anonymous 401 and USER 403/UI denial. E2E setup used only `mundo_3d_test`; no migrations. No push/PR/deploy.
 - **Commit:** pending.
 
 ## Progress log
@@ -84,4 +85,6 @@ THESIS: Let authorized staff review real saved requests without implying fulfill
 - 2026-09-27: Task 1 implementation and independent verification passed; no database migration was applied.
 - 2026-09-27: Task 1 closed in three work-unit commits: `b712534`, `f2511ad`, `973b2f2`. The local pre-commit hook was repaired in this repository only and its lint/quality checks pass.
 - 2026-09-27: Task 2 API implementation and independent verification passed; commit `f0310a2` adds public submission and protected STAFF/ADMIN listing. No database migration was applied. Task 3 is now in progress.
-- 2026-09-27: Task 3 closed in commit `1223600` (`feat(commissions): add visitor intake form and disclosures`). Browser navigation E2E from the home CTA to `/help` remains in Task 5. Native RDD scoping blocker: inspect binds the accumulated feature from `17deb23`; an explicit unit base was rejected as `candidate-target-projection-drift`. No lineage was created; do not start a review on the accumulated branch. Task 4 implementation and focused verification are complete; Task 5 is in progress.
+- 2026-09-27: Task 3 closed in commit `1223600` (`feat(commissions): add visitor intake form and disclosures`). Native RDD scoping blocker remains: inspect binds the accumulated feature from `17deb23`; explicit unit base was rejected as `candidate-target-projection-drift`. No lineage was created; do not review the accumulated branch.
+- 2026-09-27: Task 4 closed in `89b5271` (`feat(commissions): add staff request inbox`) and follow-up `e05b922` (`fix(commissions): map inbox array response`). Task 5 E2E uncovered and fixed the frontend/backend response-shape mismatch without changing the API.
+- 2026-09-27: Task 5 E2E and final frontend verification passed. The E2E runner reset only `mundo_3d_test`; no migrations were run. Unrelated untracked paths were preserved.
