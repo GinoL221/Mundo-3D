@@ -63,6 +63,16 @@ export interface RememberTokenAttributes {
   revokedAt: Date | null;
 }
 
+export interface CustomCommissionRequestAttributes {
+  idCustomCommissionRequest: number;
+  name: string;
+  email: string;
+  idea: string;
+  idProduct: number | null;
+  createdAt: Date;
+  expiresAt: Date;
+}
+
 export interface ShoppingCartAttributes {
   idCart: number;
   idUser: number;
@@ -122,6 +132,12 @@ export interface RememberTokenInstance
   User?: UserInstance;
 }
 
+export interface CustomCommissionRequestInstance
+  extends Model<CustomCommissionRequestAttributes, Partial<CustomCommissionRequestAttributes>>,
+    CustomCommissionRequestAttributes {
+  Product?: ProductInstance | null;
+}
+
 export interface ShoppingCartInstance
   extends Model<ShoppingCartAttributes, Partial<ShoppingCartAttributes>>, ShoppingCartAttributes {
   product?: ProductInstance;
@@ -146,6 +162,7 @@ export const User: ModelCtor<UserInstance>;
 export const EmailConfirmationToken: ModelCtor<EmailConfirmationTokenInstance>;
 export const RememberToken: ModelCtor<RememberTokenInstance>;
 export const ShoppingCart: ModelCtor<ShoppingCartInstance>;
+export const CustomCommissionRequest: ModelCtor<CustomCommissionRequestInstance>;
 export const Order: ModelCtor<OrderInstance>;
 export const OrderItem: ModelCtor<OrderItemInstance>;
 export const sequelize: Sequelize;

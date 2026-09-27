@@ -22,6 +22,7 @@ function initializeModels() {
   );
   const OrderModel = require('./Order')(sequelize, Sequelize.DataTypes);
   const OrderItemModel = require('./OrderItem')(sequelize, Sequelize.DataTypes);
+  const CustomCommissionRequestModel = require('./CustomCommissionRequest')(sequelize, Sequelize.DataTypes);
 
   db['User'] = UserModel;
   db['Product'] = ProductModel;
@@ -32,6 +33,7 @@ function initializeModels() {
   db['EmailConfirmationToken'] = EmailConfirmationTokenModel;
   db['Order'] = OrderModel;
   db['OrderItem'] = OrderItemModel;
+  db['CustomCommissionRequest'] = CustomCommissionRequestModel;
 
   UserModel.hasMany(ShoppingCartModel, { foreignKey: 'idUser' });
   ShoppingCartModel.belongsTo(UserModel, { foreignKey: 'idUser' });
@@ -75,6 +77,12 @@ function initializeModels() {
   OrderItemModel.belongsTo(OrderModel, { foreignKey: 'idOrder' });
   ProductModel.hasMany(OrderItemModel, { foreignKey: 'idProduct', as: 'OrderItems' });
   OrderItemModel.belongsTo(ProductModel, { foreignKey: 'idProduct', as: 'product' });
+  ProductModel.hasMany(CustomCommissionRequestModel, { foreignKey: 'idProduct' });
+  CustomCommissionRequestModel.belongsTo(ProductModel, {
+    foreignKey: 'idProduct',
+    onDelete: 'SET NULL',
+    as: 'Product',
+  });
 
   db.sequelize = sequelize;
   db.Sequelize = Sequelize;
