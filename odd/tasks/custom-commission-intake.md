@@ -76,7 +76,7 @@ THESIS: Let authorized staff review real saved requests without implying fulfill
 - [x] Run focused frontend tests, Astro check, quality check, local build, and the targeted Playwright scenario. Backend/API/OpenAPI were unchanged; no migration ran.
 - [x] Inspect final diff and preserve unrelated pre-existing untracked paths.
 - **Verification:** focused frontend services 10/10; `pnpm --dir frontend check` passed (100 files, 0 diagnostics); `pnpm --dir frontend quality:check` passed; transient `PUBLIC_API_URL=http://localhost:3031 pnpm --dir frontend build` passed (19 pages); targeted Playwright passed (1/1) with ADMIN/STAFF inbox visibility, anonymous 401 and USER 403/UI denial. E2E setup used only `mundo_3d_test`; no migrations. No push/PR/deploy.
-- **Commit:** pending.
+- **Commit:** `1c3b6f0` (`test(commissions): cover intake and staff inbox E2E`).
 
 ## Progress log
 
