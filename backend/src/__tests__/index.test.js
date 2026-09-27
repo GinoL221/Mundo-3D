@@ -374,6 +374,45 @@ describe('index.js boot sequence', () => {
     expect(checkNoPendingMigrations).not.toHaveBeenCalled();
   });
 
+  it('starts retention only after migration checks and seeding, awaits startup purge, and stops it on shutdown', async () => {
+    process.env.NODE_ENV = 'production';
+    const fake = createFakeHttpServer();
+    const ensureDatabaseExists = jest.fn().mockResolvedValue(undefined);
+    const authenticate = jest.fn().mockResolvedValue(undefined);
+    const close = jest.fn().mockResolvedValue(undefined);
+    const checkNoPendingMigrations = jest.fn().mockResolvedValue(undefined);
+    const seedInitialData = jest.fn().mockResolvedValue(undefined);
+    const stop = jest.fn();
+    let finishStartupPurge;
+    const startupPurge = new Promise((resolve) => { finishStartupPurge = resolve; });
+    const startCommissionRequestRetention = jest.fn().mockReturnValue({ ready: startupPurge, stop });
+
+    jest.isolateModules(() => {
+      jest.doMock('../app', () => fake.app);
+      jest.doMock('../infrastructure/logging/logger', () => ({ logger: mockLogger }));
+      jest.doMock('../database/config/ensureDatabase', () => ({ ensureDatabaseExists }));
+      jest.doMock('../database/models/db', () => ({ sequelize: { authenticate, close } }));
+      jest.doMock('../database/checkPendingMigrations', () => ({ checkNoPendingMigrations }));
+      jest.doMock('../database/seed', () => ({ seedInitialData }));
+      jest.doMock('../infrastructure/maintenance/commissionRequestRetention', () => ({ startCommissionRequestRetention }));
+      require('../../index');
+    });
+
+    await flushPromiseChain();
+    expect(startCommissionRequestRetention).toHaveBeenCalledTimes(1);
+    expect(checkNoPendingMigrations.mock.invocationCallOrder[0]).toBeLessThan(startCommissionRequestRetention.mock.invocationCallOrder[0]);
+    expect(seedInitialData.mock.invocationCallOrder[0]).toBeLessThan(startCommissionRequestRetention.mock.invocationCallOrder[0]);
+    expect(fake.app.listen).not.toHaveBeenCalled();
+    finishStartupPurge();
+    await flushPromiseChain();
+    expect(fake.app.listen).toHaveBeenCalledTimes(1);
+
+    process.emit('SIGTERM');
+    expect(stop).toHaveBeenCalledTimes(1);
+    fake.flushClose();
+    await flushPromiseChain();
+  });
+
   describe('graceful shutdown', () => {
     function bootInTestEnv() {
       process.env.NODE_ENV = 'test';
@@ -384,6 +423,7 @@ describe('index.js boot sequence', () => {
       const ensureDatabaseExists = jest.fn().mockResolvedValue(undefined);
       const checkNoPendingMigrations = jest.fn().mockResolvedValue(undefined);
       const seedInitialData = jest.fn().mockResolvedValue(undefined);
+      const startCommissionRequestRetention = jest.fn().mockReturnValue({ ready: Promise.resolve(), stop: jest.fn() });
       let isReady;
 
       jest.isolateModules(() => {
@@ -393,6 +433,7 @@ describe('index.js boot sequence', () => {
         jest.doMock('../database/models/db', () => ({ sequelize: { authenticate, sync, close } }));
         jest.doMock('../database/checkPendingMigrations', () => ({ checkNoPendingMigrations }));
         jest.doMock('../database/seed', () => ({ seedInitialData }));
+        jest.doMock('../infrastructure/maintenance/commissionRequestRetention', () => ({ startCommissionRequestRetention }));
         require('../../index');
         // Required inside the same isolated registry as `../../index` so it
         // shares the exact module instance index.js reads/writes — a
@@ -401,8 +442,14 @@ describe('index.js boot sequence', () => {
         isReady = require('../infrastructure/health/readinessState').isReady;
       });
 
-      return { fake, close, isReady };
+      return { fake, close, isReady, startCommissionRequestRetention };
     }
+
+    it('does not start retention scheduling in test mode', async () => {
+      const { startCommissionRequestRetention } = bootInTestEnv();
+      await flushPromiseChain();
+      expect(startCommissionRequestRetention).not.toHaveBeenCalled();
+    });
 
     it('flips readiness immediately, drains via close(cb), and calls closeIdleConnections on SIGTERM', async () => {
       const { fake, close, isReady } = bootInTestEnv();
