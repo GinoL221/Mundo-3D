@@ -19,7 +19,7 @@ Add an honest, local-demo custom commission request flow: any visitor can submit
 
 ## Tasks
 
-### 1. Persist commission requests and implement retention
+### 1. Persist commission requests and implement retention — DONE
 
 - [x] Add domain entity/port, Sequelize model/repository, migration, and typed model registration.
 - [x] Add create/list/purge application behavior with injectable clock and tests.
@@ -29,15 +29,17 @@ Add an honest, local-demo custom commission request flow: any visitor can submit
 - [x] Focused backend tests and type-check pass.
 - **Verification:** serial focused Jest suite passed (8 suites / 28 tests); `pnpm --dir backend type-check` passed. RED/GREEN was recorded for the new behavior, except the simple entity field test was added after its source and is not counted as TDD evidence. LSP reported one AST rule warning for the extensionless import in `PurgeExpiredCommissionRequestsUseCase.ts`; extensionless relative imports are the established TypeScript convention here and type-check passed. The remaining 15 LSP file checks were inconclusive, not clean.
 - **Work-unit slices:** split this 591-line task into three reviewable commits: `feat(commissions): add request schema and domain contract`; `feat(commissions): persist and expire commission requests`; `feat(commissions): schedule expired request cleanup`.
-- **Commits:** pending.
+- **Commits:** `b712534` (`feat(commissions): add request schema and domain contract`), `f2511ad` (`feat(commissions): persist and expire commission requests`), `973b2f2` (`feat(commissions): schedule expired request cleanup`).
 
-### 2. Expose public submission and STAFF/ADMIN read APIs
+### 2. Expose public submission and STAFF/ADMIN read APIs — READY TO COMMIT
 
-- [ ] Add public POST with field validation and bounded IP rate limiting.
-- [ ] Add protected list API for ADMIN/STAFF only; no public read or mutation endpoint.
-- [ ] Document routes in the generated OpenAPI source and cover public, USER, STAFF, ADMIN, validation, rate-limit, and expiry behavior.
-- [ ] Focused backend route/security tests, type-check, and OpenAPI checks pass.
-- **Commit:** pending.
+- [x] Add public POST with field validation and bounded IP rate limiting.
+- [x] Add protected list API for ADMIN/STAFF only; no public read or mutation endpoint.
+- [x] Document routes in the generated OpenAPI source and cover public, USER, STAFF, ADMIN, validation, rate-limit, and expiry behavior.
+- [x] Focused backend route/security tests, type-check, and OpenAPI checks pass.
+- [x] Independent follow-up fixed newest-first ordering, extracted schemas to keep `openapiSchemas.ts` at 220 lines, mapped the selected-product FK race to a safe 400, and removed request values from validation error responses.
+- **Verification:** serial Jest 8 suites / 93 tests; backend type-check; OpenAPI drift check; `pnpm lint`; `pnpm frontend:quality-check`; `git diff --check` all passed. No migration or database-mutating command was run. LSP reported 22 AST warnings for extensionless relative imports (the established backend TypeScript convention); 3 files were inconclusive, not confirmed clean.
+- **Commit:** pending local work-unit commit.
 
 ### 3. Build the visitor intake experience
 
@@ -67,3 +69,4 @@ Add an honest, local-demo custom commission request flow: any visitor can submit
 - 2026-09-27: Started on `feat/custom-commission-intake`. Feature task artifacts were established before the first source change.
 - 2026-09-27: Product choices confirmed: public name/email + idea, optional product association, STAFF/ADMIN viewing, no email/attachments/quotes/orders/payments, 30-day expiry with deferred local purge if the backend is offline.
 - 2026-09-27: Task 1 implementation and independent verification passed; no database migration was applied.
+- 2026-09-27: Task 1 closed in three work-unit commits: `b712534`, `f2511ad`, `973b2f2`. The local pre-commit hook was repaired in this repository only and its lint/quality checks pass; task 2 is now in progress.
