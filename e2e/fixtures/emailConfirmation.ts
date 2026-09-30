@@ -10,6 +10,7 @@ const mailpitPollIntervalMs = 100;
 type MessageSummary = { ID: string; To?: Array<{ Address?: string }> };
 type MailpitList = { messages?: MessageSummary[] };
 type MailpitMessage = { Text?: string; HTML?: string };
+type MailpitChaos = Record<string, unknown>;
 
 type ConfirmationState = {
   emailVerifiedAt: Date | null;
@@ -45,13 +46,53 @@ async function waitForMailpit(): Promise<void> {
   throw new Error('Mailpit did not become ready before the E2E startup timeout');
 }
 
+async function getMailpitChaos(): Promise<MailpitChaos> {
+  const response = await fetch(`${mailpitUrl}/chaos`);
+  if (!response.ok) throw new Error(`Mailpit chaos read failed: ${response.status}`);
+  return (await response.json()) as MailpitChaos;
+}
+
+async function putMailpitChaos(config: MailpitChaos): Promise<void> {
+  const response = await fetch(`${mailpitUrl}/chaos`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(config),
+  });
+  if (!response.ok) throw new Error(`Mailpit chaos update failed: ${response.status}`);
+}
+
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value).sort(([left], [right]) => left.localeCompare(right));
+    return `{${entries.map(([key, item]) => `${JSON.stringify(key)}:${stableJson(item)}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
+async function applyMailpitChaos(config: MailpitChaos): Promise<MailpitChaos> {
+  await putMailpitChaos(config);
+  return getMailpitChaos();
+}
+
 export async function startMailpit(): Promise<void> {
   runCompose('up', '-d', 'mailpit');
   await waitForMailpit();
-}
-
-function stopMailpit(): void {
-  runCompose('stop', 'mailpit');
+  const defaults = await applyMailpitChaos({});
+  const expectedDefaults = {
+    Sender: { ErrorCode: 451, Probability: 0 },
+    Recipient: { ErrorCode: 451, Probability: 0 },
+    Authentication: { ErrorCode: 535, Probability: 0 },
+  };
+  for (const [kind, expected] of Object.entries(expectedDefaults)) {
+    const actual = defaults[kind] as { ErrorCode?: number; Probability?: number } | undefined;
+    if (actual?.ErrorCode !== expected.ErrorCode || actual.Probability !== expected.Probability) {
+      throw new Error(`Mailpit did not reset ${kind} chaos to defaults: ${JSON.stringify(defaults)}`);
+    }
+  }
+  if (stableJson(defaults) !== stableJson(await getMailpitChaos())) {
+    throw new Error('Mailpit default chaos configuration readback was inconsistent');
+  }
 }
 
 export async function clearMailpit(): Promise<void> {
@@ -59,12 +100,28 @@ export async function clearMailpit(): Promise<void> {
   if (!response.ok) throw new Error(`Mailpit reset failed: ${response.status}`);
 }
 
-export async function withMailpitUnavailable<T>(action: () => Promise<T>): Promise<T> {
-  stopMailpit();
+export async function withMailpitRejectingSmtp<T>(action: () => Promise<T>): Promise<T> {
+  const previous = await getMailpitChaos();
   try {
+    const rejecting = await applyMailpitChaos({ Sender: { ErrorCode: 451, Probability: 100 } });
+    if (stableJson(rejecting.Sender) !== stableJson({ ErrorCode: 451, Probability: 100 })) {
+      throw new Error(`Mailpit SMTP rejection readback mismatch: ${JSON.stringify(rejecting)}`);
+    }
     return await action();
   } finally {
-    await startMailpit();
+    const restored = await applyMailpitChaos(previous);
+    if (stableJson(restored) !== stableJson(previous)) {
+      throw new Error(`Mailpit chaos restore readback mismatch: ${JSON.stringify(restored)}`);
+    }
+  }
+}
+
+export async function expectNoAcceptedMailpitMessage(email: string): Promise<void> {
+  const response = await fetch(`${mailpitUrl}/messages`);
+  if (!response.ok) throw new Error(`Mailpit message list failed: ${response.status}`);
+  const messages = ((await response.json()) as MailpitList).messages ?? [];
+  if (messages.some((candidate) => candidate.To?.some((recipient) => recipient.Address === email))) {
+    throw new Error(`Mailpit unexpectedly accepted a message for ${email}`);
   }
 }
 
