@@ -31,7 +31,7 @@ Add an honest, local-demo custom commission request flow: any visitor can submit
 - **Work-unit slices:** split this 591-line task into three reviewable commits: `feat(commissions): add request schema and domain contract`; `feat(commissions): persist and expire commission requests`; `feat(commissions): schedule expired request cleanup`.
 - **Commits:** `b712534` (`feat(commissions): add request schema and domain contract`), `f2511ad` (`feat(commissions): persist and expire commission requests`), `973b2f2` (`feat(commissions): schedule expired request cleanup`).
 
-### 2. Expose public submission and STAFF/ADMIN read APIs — READY TO COMMIT
+### 2. Expose public submission and STAFF/ADMIN read APIs — DONE
 
 - [x] Add public POST with field validation and bounded IP rate limiting.
 - [x] Add protected list API for ADMIN/STAFF only; no public read or mutation endpoint.
@@ -39,14 +39,19 @@ Add an honest, local-demo custom commission request flow: any visitor can submit
 - [x] Focused backend route/security tests, type-check, and OpenAPI checks pass.
 - [x] Independent follow-up fixed newest-first ordering, extracted schemas to keep `openapiSchemas.ts` at 220 lines, mapped the selected-product FK race to a safe 400, and removed request values from validation error responses.
 - **Verification:** serial Jest 8 suites / 93 tests; backend type-check; OpenAPI drift check; `pnpm lint`; `pnpm frontend:quality-check`; `git diff --check` all passed. No migration or database-mutating command was run. LSP reported 22 AST warnings for extensionless relative imports (the established backend TypeScript convention); 3 files were inconclusive, not confirmed clean.
-- **Commit:** pending local work-unit commit.
+- **Commit:** `f0310a2` (`feat(commissions): expose public and staff request APIs`).
 
-### 3. Build the visitor intake experience
+### 3. Build the visitor intake experience — READY TO COMMIT
 
-- [ ] Extend the existing help route with the request form, optional product association, validation/loading/error/success states, and truthful local-demo disclosure.
-- [ ] Make the home commission CTA lead to this request form; retain the catalogue-first hierarchy.
-- [ ] Update privacy and product documentation with the collected data, purpose, STAFF/ADMIN visibility, 30-day expiry, deferred local purge behavior, and no automated contact/transaction claims.
-- [ ] Focused frontend tests and frontend check/build pass.
+#### Direction contract (`/help` extension)
+
+THESIS: A visitor can leave an idea without this demo pretending it is a sale. OWN-WORLD: Inherit paper/ink, IBM Plex Sans, restrained borders, blue action, and quiet workshop spacing; no shadow or retro chrome. STORY: Explain what is collected, who can review it, how long it remains, and submit without an account. FIRST VIEWPORT: In the existing 800px content column, place a visible title and concise intro above a left-aligned vertical form; put the local-demo/retention disclosure before the primary submit action. FORM: One local extension of `/help`; no concept-seed or seed key because the world and scope are already fixed. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance. The nonblocking Impeccable CLI lacks a surface-brief command, so this local-extension direction contract is recorded here; no new identity or seed was created.
+
+- [x] Add the request service and form with optional product association, validation/loading/error/success states, and truthful local-demo disclosure.
+- [x] Replace the home commission section's unsupported fulfillment promise; preserve its `/help` CTA and catalogue-first placement.
+- [x] Update privacy and product documentation with collected data, purpose, STAFF/ADMIN visibility, 30-day expiry, deferred local purge, and no automated contact/transaction claims.
+- [x] Focused frontend service tests, check/build, and frontend quality checks pass. The targeted form navigation check is tracked in Task 5.
+- **Verification:** `pnpm --dir frontend exec vitest run src/domains/commissions/services/customCommissionRequest.service.test.ts` passed (6/6); `pnpm --dir frontend check` passed (97 files, 0 errors/warnings/hints); local `pnpm --dir frontend build` passed with the user's transient `PUBLIC_API_URL=http://localhost:3031` (18 pages); `pnpm --dir frontend quality:check` and `git diff --check` passed. No migration was applied. LSP limitation: Astro files have no configured language server; the service reports the established extensionless-relative-import AST warning. No browser/E2E navigation test is claimed as passed.
 - **Commit:** pending.
 
 ### 4. Add the STAFF/ADMIN request inbox
@@ -59,7 +64,7 @@ Add an honest, local-demo custom commission request flow: any visitor can submit
 
 ### 5. Verify the end-to-end local demo flow
 
-- [ ] Add an E2E scenario for public submission, STAFF/ADMIN visibility, and denial for anonymous/USER reads, without making external calls.
+- [ ] Add an E2E scenario that follows the existing home CTA from `/` to `/help` before public submission, then verifies STAFF/ADMIN visibility and denial for anonymous/USER reads, without making external calls.
 - [ ] Run focused backend/frontend tests, relevant type-checks/OpenAPI checks, and the targeted Playwright scenario; run broader checks when practical.
 - [ ] Inspect final diff and preserve unrelated pre-existing untracked paths.
 - **Commit:** pending.
@@ -69,4 +74,5 @@ Add an honest, local-demo custom commission request flow: any visitor can submit
 - 2026-09-27: Started on `feat/custom-commission-intake`. Feature task artifacts were established before the first source change.
 - 2026-09-27: Product choices confirmed: public name/email + idea, optional product association, STAFF/ADMIN viewing, no email/attachments/quotes/orders/payments, 30-day expiry with deferred local purge if the backend is offline.
 - 2026-09-27: Task 1 implementation and independent verification passed; no database migration was applied.
-- 2026-09-27: Task 1 closed in three work-unit commits: `b712534`, `f2511ad`, `973b2f2`. The local pre-commit hook was repaired in this repository only and its lint/quality checks pass; task 2 is now in progress.
+- 2026-09-27: Task 1 closed in three work-unit commits: `b712534`, `f2511ad`, `973b2f2`. The local pre-commit hook was repaired in this repository only and its lint/quality checks pass.
+- 2026-09-27: Task 2 API implementation and independent verification passed; commit `f0310a2` adds public submission and protected STAFF/ADMIN listing. No database migration was applied. Task 3 is now in progress.
