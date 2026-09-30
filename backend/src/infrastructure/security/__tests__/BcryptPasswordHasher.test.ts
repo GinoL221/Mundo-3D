@@ -1,3 +1,5 @@
+// @ts-expect-error: bcryptjs does not provide native TypeScript types in all environments
+import bcryptjs from 'bcryptjs';
 import { BcryptPasswordHasher } from '../BcryptPasswordHasher';
 
 describe('BcryptPasswordHasher', () => {
@@ -31,23 +33,45 @@ describe('BcryptPasswordHasher', () => {
       expect(elapsedMs).toBeGreaterThan(15);
     });
 
-    it('costs about what a real comparison costs', async () => {
-      const hashed = await hasher.hash('some password');
+    it('compares the supplied plaintext against a decoy at the real hash cost', async () => {
+      const plain = 'some password';
+      const realHash = await hasher.hash(plain);
+      const compareSpy = jest.spyOn(bcryptjs, 'compare');
 
-      const realStartedAt = process.hrtime.bigint();
-      await hasher.compare('some password', hashed);
-      const realMs = Number(process.hrtime.bigint() - realStartedAt) / 1_000_000;
+      try {
+        await hasher.compareAgainstDecoy(plain);
 
-      const decoyStartedAt = process.hrtime.bigint();
-      await hasher.compareAgainstDecoy('some password');
-      const decoyMs = Number(process.hrtime.bigint() - decoyStartedAt) / 1_000_000;
+        expect(compareSpy).toHaveBeenCalledTimes(1);
+        const [comparedPlain, decoyHash] = compareSpy.mock.calls[0];
+        expect(comparedPlain).toBe(plain);
+        expect(decoyHash).toMatch(/^\$2[aby]\$\d{2}\$/);
+        expect(bcryptjs.getRounds(decoyHash)).toBe(bcryptjs.getRounds(realHash));
+      } finally {
+        jest.restoreAllMocks();
+      }
+    });
 
-      // Same cost factor, so the same order of magnitude. Deliberately loose:
-      // this catches a decoy generated at a lower cost, which is the
-      // regression that matters, without pinning a ratio that scheduling noise
-      // would break.
-      expect(decoyMs).toBeGreaterThan(realMs / 3);
-      expect(decoyMs).toBeLessThan(realMs * 3);
+    it('rejects lower-cost hashes and missing comparisons in its operation oracle', async () => {
+      const plain = 'some password';
+      const realHash = await hasher.hash(plain);
+      const validHash = await hasher.hash(plain);
+      const realRounds = bcryptjs.getRounds(realHash);
+      const validateOperation = (calls: Array<[string, string]>) => {
+        expect(calls).toHaveLength(1);
+        const [comparedPlain, comparedHash] = calls[0];
+        expect(comparedPlain).toBe(plain);
+        expect(comparedHash).toMatch(/^\$2[aby]\$\d{2}\$/);
+        expect(bcryptjs.getRounds(comparedHash)).toBe(realRounds);
+      };
+
+      try {
+        expect(() => validateOperation([])).toThrow();
+        const lowerCostHash = await bcryptjs.hash(plain, realRounds - 1);
+        expect(() => validateOperation([[plain, lowerCostHash]])).toThrow();
+        expect(() => validateOperation([[plain, validHash]])).not.toThrow();
+      } finally {
+        jest.restoreAllMocks();
+      }
     });
   });
 });
