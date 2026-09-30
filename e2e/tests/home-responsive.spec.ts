@@ -45,17 +45,19 @@ async function openHome(page: Page, viewport: MatrixCase, theme: Theme): Promise
   await page.addInitScript((selectedTheme) => localStorage.setItem('theme', selectedTheme), theme);
   await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
-  await page.evaluate(async () => {
-    const settleWithin = async (promise: Promise<unknown>): Promise<void> => {
-      await Promise.race([promise, new Promise((resolve) => window.setTimeout(resolve, 5_000))]);
-    };
-
-    await settleWithin(document.fonts.ready);
-    await Promise.all(
-      [...document.images].map((image) => settleWithin(image.decode().catch(() => undefined))),
-    );
-  });
+  await expect(page.locator('.home-product-card')).toHaveCount(6);
   await expect(page.locator('.home-product-card').first()).toBeVisible();
+  await page.evaluate(async () => {
+    const images = [...document.images];
+    for (const image of images) image.loading = 'eager';
+
+    await Promise.all([document.fonts.ready, ...images.map((image) => image.decode())]);
+    for (const image of images) {
+      if (!image.complete || image.naturalWidth === 0) {
+        throw new Error(`Home image failed to load: ${image.currentSrc || image.src}`);
+      }
+    }
+  });
 }
 
 test.describe('Home responsive contract (fixed Chromium rendering)', () => {

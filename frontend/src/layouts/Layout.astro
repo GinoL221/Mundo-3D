@@ -7,6 +7,7 @@ import WhatsAppFloating from '../components/WhatsAppFloating.astro';
 import '../styles/normalize.css';
 import '../styles/tokens/colors.css';
 import '../styles/tokens/typography.css';
+import '../styles/fonts.css';
 import '../styles/tokens/spacing.css';
 import '../styles/tokens/semantic.css';
 import '../styles/base/reset.css';
@@ -59,11 +60,6 @@ const { title = "Mundo 3D", variant = 'default' } = Astro.props;
 		<link rel="icon" type="image/png" href="/img/brand/Mundo3D_Isotipo.png" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
-		
-		<!-- Google Fonts -->
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 		
 		<!-- Theme initialization script (runs immediately to prevent flash of wrong theme) -->
 		<script is:inline>
