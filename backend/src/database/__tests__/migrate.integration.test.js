@@ -32,7 +32,9 @@ const ORDERS_MIGRATION_NAME = '20260828000000-orders.js';
 // HIGH-1 PR1 — see design.md D1/D2 and proposal.md's "Mandatory schema
 // migration". Alters RememberToken only; creates no new table.
 const REFRESH_ROTATION_MIGRATION_NAME = '20260901000000-refresh-token-rotation.js';
+const CUSTOM_COMMISSION_REQUEST_MIGRATION_NAME = '20260927000000-custom-commission-requests.js';
 const EMAIL_CONFIRMATION_TOKEN_TABLE = 'EmailConfirmationToken';
+const CUSTOM_COMMISSION_REQUEST_TABLE = 'CustomCommissionRequest';
 const ALL_TABLES = ['User', 'Category', 'Franchise', 'Product', 'ShoppingCart', 'RememberToken'];
 // Order/OrderItem come from a second migration (`20260828000000-orders.js`),
 // applied/reverted in addition to the baseline — kept separate from
@@ -61,6 +63,7 @@ describe('migrate CLI — real scratch DB', () => {
     for (const table of [
       'SequelizeMeta',
       EMAIL_CONFIRMATION_TOKEN_TABLE,
+      CUSTOM_COMMISSION_REQUEST_TABLE,
       ...[...ALL_TABLES, ...ORDER_TABLES].reverse(),
     ]) {
       await db.sequelize.query(`DROP TABLE IF EXISTS \`${table}\`;`);
@@ -110,6 +113,7 @@ describe('migrate CLI — real scratch DB', () => {
       ORDERS_MIGRATION_NAME,
       REFRESH_ROTATION_MIGRATION_NAME,
       '20260902000000-email-confirmation.js',
+      CUSTOM_COMMISSION_REQUEST_MIGRATION_NAME,
     ]);
   });
 
@@ -215,28 +219,38 @@ describe('migrate CLI — real scratch DB', () => {
     expect(tables.filter((t) => t === 'Product')).toHaveLength(1);
   });
 
-  it('down four times removes email-confirmation dependencies before restoring the baseline shape', async () => {
+  it('down five times removes each migration in order and restores the baseline shape', async () => {
     // Umzug's `down` with no args reverts only the most recently applied migration.
     const firstDown = await run(['down']);
     expect(firstDown).toBe(true);
     let tables = await showTables();
-    expect(tables).not.toContain('EmailConfirmationToken');
+    expect(tables).not.toContain(CUSTOM_COMMISSION_REQUEST_TABLE);
+    expect(tables).toContain(EMAIL_CONFIRMATION_TOKEN_TABLE);
+    const columnsAfterCommissionDown = await db.sequelize
+      .getQueryInterface()
+      .describeTable('User');
+    expect(columnsAfterCommissionDown).toHaveProperty('email_verified_at');
+
+    const secondDown = await run(['down']);
+    expect(secondDown).toBe(true);
+    tables = await showTables();
+    expect(tables).not.toContain(EMAIL_CONFIRMATION_TOKEN_TABLE);
     const columnsAfterEmailConfirmationDown = await db.sequelize
       .getQueryInterface()
       .describeTable('User');
     expect(columnsAfterEmailConfirmationDown).not.toHaveProperty('email_verified_at');
 
-    const secondDown = await run(['down']);
-    expect(secondDown).toBe(true);
+    const thirdDown = await run(['down']);
+    expect(thirdDown).toBe(true);
     // refresh-token-rotation's down() restores RememberToken byte-for-byte.
-    const columnsAfterFirstDown = await db.sequelize
+    const columnsAfterRefreshRotationDown = await db.sequelize
       .getQueryInterface()
       .describeTable('RememberToken');
     for (const column of REFRESH_ROTATION_COLUMNS) {
-      expect(columnsAfterFirstDown).not.toHaveProperty(column);
+      expect(columnsAfterRefreshRotationDown).not.toHaveProperty(column);
     }
-    const [indexesAfterFirstDown] = await db.sequelize.query('SHOW INDEX FROM `RememberToken`');
-    const indexNamesAfterFirstDown = new Set(indexesAfterFirstDown.map((row) => row.Key_name));
+    const [indexesAfterRefreshRotationDown] = await db.sequelize.query('SHOW INDEX FROM `RememberToken`');
+    const indexNamesAfterRefreshRotationDown = new Set(indexesAfterRefreshRotationDown.map((row) => row.Key_name));
     for (const restoredIndex of [
       'token_hash',
       'token_hash_2',
@@ -244,21 +258,21 @@ describe('migrate CLI — real scratch DB', () => {
       'token_hash_4',
       'token_hash_5',
     ]) {
-      expect(indexNamesAfterFirstDown.has(restoredIndex)).toBe(true);
+      expect(indexNamesAfterRefreshRotationDown.has(restoredIndex)).toBe(true);
     }
     tables = await showTables();
     expect(tables).toEqual(expect.arrayContaining([...ALL_TABLES, ...ORDER_TABLES]));
 
-    const thirdDown = await run(['down']);
-    expect(thirdDown).toBe(true);
+    const fourthDown = await run(['down']);
+    expect(fourthDown).toBe(true);
     tables = await showTables();
     for (const table of ORDER_TABLES) {
       expect(tables).not.toContain(table);
     }
     expect(tables).toEqual(expect.arrayContaining(ALL_TABLES));
 
-    const fourthDown = await run(['down']);
-    expect(fourthDown).toBe(true);
+    const fifthDown = await run(['down']);
+    expect(fifthDown).toBe(true);
     tables = await showTables();
     for (const table of [...ALL_TABLES, ...ORDER_TABLES]) {
       expect(tables).not.toContain(table);
