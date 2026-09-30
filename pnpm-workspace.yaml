@@ -25,9 +25,7 @@ allowBuilds:
 #
 # express-rate-limit@8.6.2 still declares `ip-address: ^10.2.0`, and pnpm
 # does not auto-bump a transitive-only dependency to the range's latest on
-# install/update. 10.2.0 carries a HIGH advisory (leading-zero octets
-# decoded as decimal); fixed in 10.3.1. This is the version keying the
-# login/register rate limiters by client IP.
+# install/update. Pin the audited transitive package to patched 10.5.1.
 #
 # 2026-09-01 audit-drift cleanup — same "declared range already allows the
 # fix, pnpm just won't move there on its own" pattern as ip-address above:
@@ -70,7 +68,7 @@ allowBuilds:
 #   transitive-only dependency there on its own.
 overrides:
   chokidar: 3.6.0
-  ip-address: ^10.3.1
+  ip-address: ^10.5.1
   sharp: ^0.35.4
   svgo: ^4.0.2
   uuid: ^11.1.1
@@ -82,8 +80,9 @@ overrides:
   js-yaml@3: ^3.15.2
   js-yaml@4: ^4.3.2
   smol-toml: ^1.7.1
-  fast-uri: ^3.1.5
+  fast-uri: ^3.1.7
   browserslist: ^4.28.7
+  undici: ^8.10.2
   # 2 MODERATE advisories reaching production via express > body-parser;
   # 6.16.0 fixes both and is now old enough for the release-age policy.
   qs: ^6.16.0
