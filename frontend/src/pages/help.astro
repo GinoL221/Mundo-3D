@@ -15,26 +15,28 @@ import Layout from '../layouts/Layout.astro';
         <p class="commission-form__status" id="product-status" role="status" aria-live="polite">Cargando el catálogo para asociar una pieza (opcional)…</p>
         <form class="commission-form" id="commission-form">
           <p class="commission-form__status" id="product-unavailable" role="status" aria-live="polite" hidden>Ahora no podemos cargar el catálogo. Igual podés enviar tu idea sin asociarla a un producto.</p>
-          <div class="commission-form__field">
-            <label class="commission-form__label" for="commission-name">Nombre</label>
-            <input class="commission-form__control" id="commission-name" name="name" autocomplete="name" required maxlength="100" />
-          </div>
-          <div class="commission-form__field">
-            <label class="commission-form__label" for="commission-email">Correo electrónico</label>
-            <input class="commission-form__control" id="commission-email" name="email" type="email" autocomplete="email" required maxlength="254" />
-          </div>
-          <div class="commission-form__field">
-            <label class="commission-form__label" for="commission-idea">Tu idea</label>
-            <textarea class="commission-form__control commission-form__control--textarea" id="commission-idea" name="idea" required maxlength="5000" rows="6"></textarea>
-          </div>
-          <div class="commission-form__field">
-            <label class="commission-form__label" for="commission-product">Asociar una pieza (opcional)</label>
-            <select class="commission-form__control" id="commission-product" name="idProduct" disabled>
-              <option value="">Sin asociar</option>
-            </select>
-          </div>
-          <p class="commission-form__disclosure">La solicitud se guarda en esta demo local para revisión por personas con rol STAFF o ADMIN. Se oculta a los 30 días y se elimina físicamente cada hora mientras el backend está activo; si estuvo detenido, se elimina en el próximo inicio. <a href="/privacy">Leé la política de privacidad</a>.</p>
-          <button class="commission-form__submit" type="submit">Enviar idea</button>
+          <fieldset class="commission-form__fields" id="commission-fields" aria-labelledby="commission-form-title">
+            <div class="commission-form__field">
+              <label class="commission-form__label" for="commission-name">Nombre</label>
+              <input class="commission-form__control" id="commission-name" name="name" autocomplete="name" required maxlength="100" />
+            </div>
+            <div class="commission-form__field">
+              <label class="commission-form__label" for="commission-email">Correo electrónico</label>
+              <input class="commission-form__control" id="commission-email" name="email" type="email" autocomplete="email" required maxlength="254" />
+            </div>
+            <div class="commission-form__field">
+              <label class="commission-form__label" for="commission-idea">Tu idea</label>
+              <textarea class="commission-form__control commission-form__control--textarea" id="commission-idea" name="idea" required maxlength="5000" rows="6"></textarea>
+            </div>
+            <div class="commission-form__field">
+              <label class="commission-form__label" for="commission-product">Asociar una pieza (opcional)</label>
+              <select class="commission-form__control" id="commission-product" name="idProduct" disabled>
+                <option value="">Sin asociar</option>
+              </select>
+            </div>
+            <p class="commission-form__disclosure">La solicitud se guarda en esta demo local para revisión por personas con rol STAFF o ADMIN. Se oculta a los 30 días y se elimina físicamente cada hora mientras el backend está activo; si estuvo detenido, se elimina en el próximo inicio. <a href="/privacy">Leé la política de privacidad</a>.</p>
+            <button class="commission-form__submit" type="submit">Enviar idea</button>
+          </fieldset>
           <p class="commission-form__status" id="commission-feedback" role="status" aria-live="polite"></p>
         </form>
       </section>
@@ -47,6 +49,7 @@ import Layout from '../layouts/Layout.astro';
   import { submitCustomCommissionRequest } from '../domains/commissions/services/customCommissionRequest.service';
 
   const form = document.querySelector<HTMLFormElement>('#commission-form');
+  const fieldset = document.querySelector<HTMLFieldSetElement>('#commission-fields');
   const productSelect = document.querySelector<HTMLSelectElement>('#commission-product');
   const submitButton = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
   const productStatus = document.querySelector<HTMLElement>('#product-status');
@@ -79,9 +82,10 @@ import Layout from '../layouts/Layout.astro';
 
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (!form || !submitButton || !feedback || !form.reportValidity()) return;
+    if (!form || !fieldset || fieldset.disabled || !submitButton || !feedback || !form.reportValidity()) return;
     const data = new FormData(form);
     const idProduct = String(data.get('idProduct') ?? '');
+    fieldset.disabled = true;
     form.setAttribute('aria-busy', 'true');
     submitButton.disabled = true;
     submitButton.textContent = 'Enviando…';
@@ -97,6 +101,7 @@ import Layout from '../layouts/Layout.astro';
       });
     } finally {
       form.removeAttribute('aria-busy');
+      fieldset.disabled = false;
       submitButton.disabled = false;
       submitButton.textContent = submitLabel;
     }
@@ -122,6 +127,15 @@ import Layout from '../layouts/Layout.astro';
     display: grid;
     gap: var(--space-lg);
     max-width: 42rem;
+  }
+
+  .commission-form__fields {
+    display: grid;
+    gap: var(--space-lg);
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
   }
 
   .commission-form__field {
