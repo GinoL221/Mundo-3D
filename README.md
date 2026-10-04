@@ -88,7 +88,7 @@ Todos los comandos de esta tabla se ejecutan desde la raíz.
 
 | Objetivo                             | Comando                                                                        | Alcance y condiciones                                                                                                                                                                                                          |
 | ------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Backend en desarrollo                | `pnpm dev`                                                                     | Express con Nodemon; requiere MySQL, entorno backend y migraciones al día.                                                                                                                                                     |
+| Backend en desarrollo                | `pnpm dev`                                                                     | Express con el modo watch nativo de Node; requiere MySQL, entorno backend y migraciones al día.                                                                                                                                 |
 | Frontend en desarrollo               | `pnpm frontend:dev`                                                            | Astro en el puerto `4321`.                                                                                                                                                                                                     |
 | Lint                                 | `pnpm lint`                                                                    | Ejecuta los scripts disponibles en el workspace; actualmente ESLint sobre `backend/src/`.                                                                                                                                      |
 | Type-check                           | `pnpm type-check`                                                              | TypeScript estricto del backend. CI lo ejecuta como paso obligatorio del job `quality`.                                                                                                                                        |
@@ -116,6 +116,12 @@ Antes del primer E2E local, instale Chromium y sus dependencias:
 ```bash
 pnpm --filter e2e exec playwright install --with-deps chromium
 ```
+
+El modo watch nativo reinicia el backend cuando cambia un módulo cargado o
+importado. No ofrece el reinicio manual `rs` de Nodemon; reiniciá el proceso
+manualmente para cambios en módulos aún no importados o en configuración y
+variables de entorno. No se configura `--watch-path`: esa opción no está
+soportada en Linux.
 
 ## Arquitectura
 
