@@ -14,7 +14,7 @@ assert.equal(astroPackage.version, '7.3.1');
 const astroRequire = createRequire(path.join(astroDirectory, 'package.json'));
 const cacheSemanticsPath = astroRequire.resolve('http-cache-semantics');
 const cacheSemanticsPackage = require(path.join(path.dirname(cacheSemanticsPath), 'package.json'));
-assert.equal(cacheSemanticsPackage.version, '4.2.0');
+assert.equal(cacheSemanticsPackage.version, '4.3.0');
 const CachePolicy = astroRequire('http-cache-semantics');
 
 const now = 1_700_000_000_000;
