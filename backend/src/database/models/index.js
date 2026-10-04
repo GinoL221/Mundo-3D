@@ -22,7 +22,10 @@ function initializeModels() {
   );
   const OrderModel = require('./Order')(sequelize, Sequelize.DataTypes);
   const OrderItemModel = require('./OrderItem')(sequelize, Sequelize.DataTypes);
-  const CustomCommissionRequestModel = require('./CustomCommissionRequest')(sequelize, Sequelize.DataTypes);
+  const CustomCommissionRequestModel = require('./CustomCommissionRequest')(
+    sequelize,
+    Sequelize.DataTypes,
+  );
 
   db['User'] = UserModel;
   db['Product'] = ProductModel;
@@ -71,8 +74,16 @@ function initializeModels() {
   });
 
   // Asociación User -> Order -> OrderItem -> Product
-  UserModel.hasMany(OrderModel, { foreignKey: 'idUser' });
-  OrderModel.belongsTo(UserModel, { foreignKey: 'idUser' });
+  UserModel.hasMany(OrderModel, {
+    foreignKey: 'idUser',
+    onDelete: 'NO ACTION',
+    onUpdate: 'CASCADE',
+  });
+  OrderModel.belongsTo(UserModel, {
+    foreignKey: 'idUser',
+    onDelete: 'NO ACTION',
+    onUpdate: 'CASCADE',
+  });
   OrderModel.hasMany(OrderItemModel, { foreignKey: 'idOrder', as: 'items' });
   OrderItemModel.belongsTo(OrderModel, { foreignKey: 'idOrder' });
   ProductModel.hasMany(OrderItemModel, { foreignKey: 'idProduct', as: 'OrderItems' });
