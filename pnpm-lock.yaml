@@ -25,6 +25,9 @@ overrides:
   qs: ^6.16.0
   mysql2: ^3.23.1
 
+patchedDependencies:
+  http-cache-semantics@4.2.0: 59e77a6dfdf95b0f0201d9bb28ebad9fd9b7d51ad2df03ae96e912a2b086b111
+
 importers:
 
   .:
@@ -6435,7 +6438,7 @@ snapshots:
       get-tsconfig: 5.0.0-beta.4
       github-slugger: 2.0.0
       html-escaper: 3.0.3
-      http-cache-semantics: 4.2.0
+      http-cache-semantics: 4.2.0(patch_hash=59e77a6dfdf95b0f0201d9bb28ebad9fd9b7d51ad2df03ae96e912a2b086b111)
       js-yaml: 4.3.2
       jsonc-parser: 3.3.1
       magic-string: 1.2.2
@@ -7380,7 +7383,7 @@ snapshots:
 
   html-void-elements@3.0.0: {}
 
-  http-cache-semantics@4.2.0: {}
+  http-cache-semantics@4.2.0(patch_hash=59e77a6dfdf95b0f0201d9bb28ebad9fd9b7d51ad2df03ae96e912a2b086b111): {}
 
   http-errors@2.0.1:
     dependencies:

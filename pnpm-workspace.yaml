@@ -108,3 +108,6 @@ overrides:
 # above.
 publicHoistPattern:
   - typescript
+
+patchedDependencies:
+  http-cache-semantics@4.2.0: patches/http-cache-semantics@4.2.0.patch
