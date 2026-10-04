@@ -5,6 +5,8 @@ packages:
 
 # Security Hardening (npm/pnpm Security Hardening — Protocolo 2026)
 minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  - http-cache-semantics@4.3.0
 trustPolicy: no-downgrade
 trustPolicyExclude:
   - semver@6.3.1
@@ -110,4 +112,4 @@ publicHoistPattern:
   - typescript
 
 patchedDependencies:
-  http-cache-semantics@4.2.0: patches/http-cache-semantics@4.2.0.patch
+  http-cache-semantics@4.3.0: patches/http-cache-semantics@4.3.0.patch
