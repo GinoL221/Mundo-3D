@@ -90,6 +90,29 @@ describe('Database Model Initialization & Association', () => {
     );
   });
 
+  it('matches the migrated User-Order foreign key actions', () => {
+    const db = initializeModels();
+    const expectedActions = {
+      onDelete: 'NO ACTION',
+      onUpdate: 'CASCADE',
+    };
+
+    expect(db.User.hasMany).toHaveBeenCalledWith(
+      db.Order,
+      expect.objectContaining({
+        foreignKey: 'idUser',
+        ...expectedActions,
+      }),
+    );
+    expect(db.Order.belongsTo).toHaveBeenCalledWith(
+      db.User,
+      expect.objectContaining({
+        foreignKey: 'idUser',
+        ...expectedActions,
+      }),
+    );
+  });
+
   it('loads and associates ShoppingCart with User and Product', () => {
     const db = initializeModels();
     expect(db.ShoppingCart).toBeDefined();
