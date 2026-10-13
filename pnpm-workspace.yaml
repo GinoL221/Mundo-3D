@@ -73,7 +73,7 @@ allowBuilds:
 overrides:
   '@astrojs/check>chokidar': 5.0.0
   ip-address: ^10.5.1
-  sharp: ^0.35.4
+  sharp: 0.35.5
   svgo: ^4.0.2
   uuid: ^11.1.1
   body-parser: ^1.20.6
@@ -87,7 +87,14 @@ overrides:
   moment: ^2.31.0
   js-yaml@3: ^3.15.2
   js-yaml@4: ^4.3.2
-  smol-toml: ^1.7.1
+  smol-toml: 1.9.0
+  # 2026-10-13 partial audit remediation: select published, age-eligible
+  # releases only. sprintf-js remains unresolved and must still fail audit.
+  proxy-addr: 2.0.8
+  handlebars: 4.7.10
+  source-map-js: 1.2.2
+  postcss-selector-parser: 7.1.6
+  fast-copy: 4.1.0
   fast-uri: ^3.1.7
   browserslist: ^4.28.7
   undici: ^8.10.2
