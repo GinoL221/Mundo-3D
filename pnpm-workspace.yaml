@@ -5,6 +5,8 @@ packages:
 
 # Security Hardening (npm/pnpm Security Hardening — Protocolo 2026)
 minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  - http-cache-semantics@4.3.0
 trustPolicy: no-downgrade
 trustPolicyExclude:
   - semver@6.3.1
@@ -18,10 +20,12 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
 
-# Steer @astrojs/check's transitive chokidar@^4.0.3 to the already-trusted
-# 3.6.0 already used elsewhere in this lockfile, instead of weakening
-# trustPolicy — chokidar@4.0.3 lost provenance attestation (possible
-# takeover) and is blocked by the no-downgrade policy above.
+# @astrojs/check@0.9.10 declares chokidar@^4.0.3; that range rejects 5.0.0.
+# Version 4 lost provenance attestation and is blocked by no-downgrade; the
+# newly published 5.0.0 metadata meets the unchanged age/trust policies, so
+# this scoped override deliberately crosses the consumer's major range.
+# Chokidar 5 regression tests cover Astro Check and Unstorage watchers; do not
+# infer compatibility from bare/scoped override precedence.
 #
 # express-rate-limit@8.6.2 still declares `ip-address: ^10.2.0`, and pnpm
 # does not auto-bump a transitive-only dependency to the range's latest on
@@ -67,14 +71,15 @@ allowBuilds:
 #   `>= 4.21.0`, so the fix was already permitted; pnpm just would not move a
 #   transitive-only dependency there on its own.
 overrides:
-  chokidar: 3.6.0
+  '@astrojs/check>chokidar': 5.0.0
   ip-address: ^10.5.1
   sharp: ^0.35.4
   svgo: ^4.0.2
   uuid: ^11.1.1
   body-parser: ^1.20.6
-  devalue: ^5.9.1
-  # 2026-09-29 audit security floors; patch releases preserve the same CJS major APIs.
+  devalue: ^5.9.4
+  # 2026-09-29 audit security floors; patch releases preserve the same
+  # CJS major APIs.
   # No trust, release-age, or build-policy exceptions are introduced.
   brace-expansion@1: ^1.1.21
   brace-expansion@2: ^2.1.7
@@ -105,3 +110,6 @@ overrides:
 # above.
 publicHoistPattern:
   - typescript
+
+patchedDependencies:
+  http-cache-semantics@4.3.0: patches/http-cache-semantics@4.3.0.patch

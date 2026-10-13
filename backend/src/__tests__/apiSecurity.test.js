@@ -6,6 +6,7 @@ const mockListUsersExecute = jest.fn();
 const mockGetUserByIdExecute = jest.fn();
 const mockGetCartByUserIdExecute = jest.fn();
 const mockSyncCartExecute = jest.fn();
+const mockListCommissionRequestsExecute = jest.fn();
 
 jest.mock('../application/use-cases/ListUsersUseCase', () => ({
   ListUsersUseCase: jest.fn().mockImplementation(() => ({
@@ -31,6 +32,10 @@ jest.mock('../application/use-cases/SyncCartUseCase', () => ({
   })),
 }));
 
+jest.mock('../application/use-cases/ListCustomCommissionRequestsUseCase', () => ({
+  ListCustomCommissionRequestsUseCase: jest.fn().mockImplementation(() => ({ execute: mockListCommissionRequestsExecute })),
+}));
+
 const apiRouter = require('../infrastructure/routes/api/index').default;
 const errorHandler = require('../infrastructure/middlewares/errorHandler').default;
 const { authCookie, authAndCsrf } = require('./helpers/apiAuthTestHelpers');
@@ -48,10 +53,12 @@ describe('REST API Security & Role Gating', () => {
   let app;
   let adminAuth;
   let userAuth;
+  let staffAuth;
 
   beforeAll(() => {
     adminAuth = authAndCsrf({ userId: 1, email: 'admin@test.com', category: 'Admin', idRole: 1 });
     userAuth = authAndCsrf({ userId: 2, email: 'user@test.com', category: 'User', idRole: 2 });
+    staffAuth = authAndCsrf({ userId: 3, email: 'staff@test.com', category: 'Staff', idRole: 3 });
   });
 
   beforeEach(() => {
@@ -177,6 +184,28 @@ describe('REST API Security & Role Gating', () => {
       expect(res.status).toBe(400);
       expect(res.body.error).toBeDefined();
       expect(mockSyncCartExecute).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('GET /api/custom-commission-requests (ADMIN/STAFF restriction)', () => {
+    it('denies anonymous callers before reading private requests', async () => {
+      const res = await request(app).get('/api/custom-commission-requests');
+      expect(res.status).toBe(401);
+      expect(mockListCommissionRequestsExecute).not.toHaveBeenCalled();
+    });
+
+    it('denies USER callers before reading private requests', async () => {
+      const res = await request(app).get('/api/custom-commission-requests').set('Cookie', userAuth.cookie);
+      expect(res.status).toBe(403);
+      expect(mockListCommissionRequestsExecute).not.toHaveBeenCalled();
+    });
+
+    it.each([['ADMIN', () => adminAuth], ['STAFF', () => staffAuth]])('allows %s and disables caching of private records', async (_role, auth) => {
+      mockListCommissionRequestsExecute.mockResolvedValue([{ idCustomCommissionRequest: 2, email: 'private@example.com' }]);
+      const res = await request(app).get('/api/custom-commission-requests').set('Cookie', auth().cookie);
+      expect(res.status).toBe(200);
+      expect(res.headers['cache-control']).toBe('no-store');
+      expect(res.body).toHaveLength(1);
     });
   });
 

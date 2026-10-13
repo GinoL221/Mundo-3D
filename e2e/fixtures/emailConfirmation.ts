@@ -76,7 +76,7 @@ async function applyMailpitChaos(config: MailpitChaos): Promise<MailpitChaos> {
 }
 
 export async function startMailpit(): Promise<void> {
-  runCompose('up', '-d', 'mailpit');
+  runCompose('up', '-d', '--no-recreate', 'mailpit');
   await waitForMailpit();
   const defaults = await applyMailpitChaos({});
   const expectedDefaults = {
