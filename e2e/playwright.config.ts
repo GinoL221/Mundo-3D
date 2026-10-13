@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
+import { resolve } from 'node:path';
 
+const workspaceRoot = resolve(import.meta.dirname, '..');
 const isCi = Boolean(process.env.CI);
 
 const ciVisualUse = isCi
@@ -35,6 +37,7 @@ export default defineConfig({
   webServer: [
     {
       command: 'pnpm --filter backend start',
+      cwd: resolve(workspaceRoot, 'backend'),
       port: 3032,
       // This is a real server process, not a Jest worker, so it no longer
       // inherits the committed test secrets or the rate-limiter bypass — both
@@ -71,7 +74,8 @@ export default defineConfig({
       reuseExistingServer: false,
     },
     {
-      command: 'pnpm --filter frontend dev --port 4322 --ignore-lock',
+      command: 'pnpm --filter frontend dev --port 4322 --ignore-lock --mode development',
+      cwd: resolve(workspaceRoot, 'frontend'),
       port: 4322,
       env: {
         PUBLIC_API_URL: 'http://localhost:3032',
