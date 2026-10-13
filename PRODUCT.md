@@ -43,8 +43,10 @@ The shopping context the storefront depicts is ordinary consumer browsing: catal
 - Local cart with Nanostores, synchronised to the API for authenticated users.
 - Orders and order history.
 - Informational pages: about, FAQ, help, step-by-step, terms, privacy.
+- Public custom-commission request intake is implemented as a local-demo capability: visitors can submit name, email, idea, and an optional catalog product association; STAFF and ADMIN can review saved requests. It is not a production availability claim and does not create a quote, order, payment, or automated email.
+- Commission requests expire after 30 days, are hidden at expiry, and are physically purged hourly while the backend runs or on its next startup after downtime. An existing local database needs the commission migration applied before this capability can persist requests; that migration has not been applied in this work session.
 - Light/dark theme.
-- 17 frontend routes; four frontend domains (`auth`, `cart`, `orders`, `products`).
+- 17 frontend routes; five frontend domains (`auth`, `cart`, `commissions`, `orders`, `products`).
 
 **Technical constraints:**
 
@@ -56,7 +58,7 @@ The shopping context the storefront depicts is ordinary consumer browsing: catal
 
 **Open product decisions:**
 
-- **Custom commissions are confirmed as part of the product but do not exist in code.** The catalogue is entirely pre-made franchise pieces; there is no upload, quoting, or commission-tracking flow. Both paths must be served: buy from the catalogue, or commission a piece. The home page leads with the catalogue; commissions appear after that as a banner or featured section, not as the primary hero.
+- **Custom commissions are part of the product.** Public local-demo request intake and STAFF/ADMIN review code exist, but an existing local database requires the commission migration before requests can be persisted; production availability is not claimed. This is not quoting or order tracking. The catalogue is entirely pre-made franchise pieces. The home page leads with the catalogue; commissions appear after that as a banner or featured section, not as the primary hero.
 - Payment is not implemented. No real transaction occurs. Future work must not imply that one does.
 
 ## Brand Commitments
