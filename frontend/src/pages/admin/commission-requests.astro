@@ -1,0 +1,101 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Solicitudes de encargos - Mundo 3D">
+  <main class="products">
+    <h1 class="page-heading">SOLICITUDES DE ENCARGOS</h1>
+    <div id="admin-gate-denied" role="alert" style="display:none; text-align:center; padding:2rem;">
+      <p>No tenés permisos para acceder a esta sección.</p>
+      <a href="/">Volver al inicio</a>
+    </div>
+    <section id="admin-requests-content" style="display:none;" aria-label="Bandeja de solicitudes">
+      <p id="admin-requests-loading" role="status" aria-live="polite">Cargando solicitudes...</p>
+      <div id="admin-requests-error" role="alert" style="display:none; text-align:center;">
+        <p>No se pudieron cargar las solicitudes.</p>
+        <button id="admin-requests-retry" type="button" class="form-card__btn">Reintentar</button>
+      </div>
+      <p id="admin-requests-empty" role="status" aria-live="polite" style="display:none;">Todavía no hay solicitudes.</p>
+      <div id="admin-requests-list" class="users-list"></div>
+    </section>
+  </main>
+</Layout>
+
+<script>
+  import { clearSession, getSessionUser, hasAdminAccess } from '../../domains/auth';
+  import { CustomCommissionRequestAdminApiError, listCustomCommissionRequests } from '../../domains/commissions/services/customCommissionRequest.admin.service';
+  import { fetchProducts } from '../../domains/products/services/product.service';
+
+  const denied = document.getElementById('admin-gate-denied');
+  const content = document.getElementById('admin-requests-content');
+  if (!hasAdminAccess(getSessionUser())) {
+    if (denied) denied.style.display = 'block';
+  } else {
+    if (content) content.style.display = 'block';
+    void loadRequests();
+  }
+
+  document.getElementById('admin-requests-retry')?.addEventListener('click', () => void loadRequests());
+
+  async function loadRequests(): Promise<void> {
+    const loading = document.getElementById('admin-requests-loading');
+    const error = document.getElementById('admin-requests-error');
+    const empty = document.getElementById('admin-requests-empty');
+    const list = document.getElementById('admin-requests-list');
+    if (!loading || !error || !empty || !list) return;
+    loading.style.display = 'block';
+    error.style.display = 'none';
+    empty.style.display = 'none';
+    list.replaceChildren();
+
+    try {
+      const requests = await listCustomCommissionRequests();
+      loading.style.display = 'none';
+      if (!requests.length) {
+        empty.style.display = 'block';
+        return;
+      }
+      // Catalog is deliberately best-effort and independent: its latency must
+      // never hold the protected request list hostage.
+      const catalogPromise = fetchProducts().catch(() => ({ ok: false as const, reason: 'network' as const }));
+      const cards = requests.map((request) => {
+        const card = document.createElement('article');
+        card.className = 'users-list__card';
+        const heading = document.createElement('h2');
+        heading.textContent = request.name;
+        card.append(heading);
+        const email = document.createElement('p');
+        email.textContent = request.email;
+        card.append(email);
+        const idea = document.createElement('p');
+        idea.textContent = request.idea;
+        card.append(idea);
+        const date = document.createElement('p');
+        date.textContent = new Date(request.createdAt).toLocaleString('es-AR');
+        card.append(date);
+        const product = document.createElement('p');
+        product.className = 'request-product-context';
+        product.textContent = request.idProduct === null ? 'Sin producto asociado' : `Producto #${request.idProduct}`;
+        card.append(product);
+        list.append(card);
+        return { idProduct: request.idProduct, product };
+      });
+      void catalogPromise.then((catalog) => {
+        if (!catalog.ok) return;
+        for (const card of cards) {
+          if (card.idProduct === null) continue;
+          const match = catalog.products.find((item) => item.id === card.idProduct);
+          if (match) card.product.textContent = match.name;
+        }
+      });
+    } catch (cause) {
+      loading.style.display = 'none';
+      if (cause instanceof CustomCommissionRequestAdminApiError && cause.status === 401) {
+        void clearSession();
+        window.location.href = '/login';
+        return;
+      }
+      error.style.display = 'block';
+    }
+  }
+</script>

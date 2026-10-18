@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 import { resolve } from 'node:path';
 
 const workspaceRoot = resolve(import.meta.dirname, '..');
+const mailpitHost = process.env.MAILPIT_HOST || 'localhost';
 const isCi = Boolean(process.env.CI);
 
 const ciVisualUse = isCi
@@ -66,7 +67,7 @@ export default defineConfig({
         EMAIL_CONFIRMATION_ATTEMPT_LIMIT_MAX: '1000',
         RESEND_CONFIRMATION_IP_LIMIT_MAX: '1000',
         PUBLIC_APP_URL: 'http://localhost:4322',
-        SMTP_HOST: 'localhost',
+        SMTP_HOST: mailpitHost,
         SMTP_PORT: '1025',
         SMTP_SECURE: 'false',
         SMTP_FROM: 'noreply@example.test',

@@ -41,7 +41,7 @@ Add an honest, local-demo custom commission request flow: any visitor can submit
 - **Verification:** serial Jest 8 suites / 93 tests; backend type-check; OpenAPI drift check; `pnpm lint`; `pnpm frontend:quality-check`; `git diff --check` all passed. No migration or database-mutating command was run. LSP reported 22 AST warnings for extensionless relative imports (the established backend TypeScript convention); 3 files were inconclusive, not confirmed clean.
 - **Commit:** `f0310a2` (`feat(commissions): expose public and staff request APIs`).
 
-### 3. Build the visitor intake experience — READY TO COMMIT
+### 3. Build the visitor intake experience — DONE
 
 #### Direction contract (`/help` extension)
 
@@ -52,22 +52,31 @@ THESIS: A visitor can leave an idea without this demo pretending it is a sale. O
 - [x] Update privacy and product documentation with collected data, purpose, STAFF/ADMIN visibility, 30-day expiry, deferred local purge, and no automated contact/transaction claims.
 - [x] Focused frontend service tests, check/build, and frontend quality checks pass. The targeted form navigation check is tracked in Task 5.
 - **Verification:** `pnpm --dir frontend exec vitest run src/domains/commissions/services/customCommissionRequest.service.test.ts` passed (6/6); `pnpm --dir frontend check` passed (97 files, 0 errors/warnings/hints); local `pnpm --dir frontend build` passed with the user's transient `PUBLIC_API_URL=http://localhost:3031` (18 pages); `pnpm --dir frontend quality:check` and `git diff --check` passed. No migration was applied. LSP limitation: Astro files have no configured language server; the service reports the established extensionless-relative-import AST warning. No browser/E2E navigation test is claimed as passed.
-- **Commit:** pending.
+- **Commit:** `1223600` (`feat(commissions): add visitor intake form and disclosures`).
 
-### 4. Add the STAFF/ADMIN request inbox
+### 4. Add the STAFF/ADMIN request inbox — DONE
 
-- [ ] Add a responsive admin inbox using the existing admin visual and session conventions.
-- [ ] Display newest unexpired requests, contact and idea details, and optional product context; include loading/error/empty states.
-- [ ] Expose navigation only to STAFF/ADMIN while enforcing roles at the API.
-- [ ] Cover role visibility and inbox service/state behavior with tests; frontend check/build pass.
-- **Commit:** pending.
+#### Direction contract (`/admin/commission-requests` local extension)
 
-### 5. Verify the end-to-end local demo flow
+THESIS: Let authorized staff review real saved requests without implying fulfillment. OWN-WORLD: Extend the existing admin surface with paper/ink, IBM Plex Sans, restrained borders, and blue actions; no new identity or seed. STORY: Show the request details and optional catalog context while leaving the protected API response unchanged. FIRST VIEWPORT: Use the existing admin content layout for a clear inbox title, loading/error/empty states, and a readable newest-first request list. INTERACTION: Add no status or mutation controls; retain the existing `hasAdminAccess` page gate and `.admin-only` navigation visibility. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance.
 
-- [ ] Add an E2E scenario that follows the existing home CTA from `/` to `/help` before public submission, then verifies STAFF/ADMIN visibility and denial for anonymous/USER reads, without making external calls.
-- [ ] Run focused backend/frontend tests, relevant type-checks/OpenAPI checks, and the targeted Playwright scenario; run broader checks when practical.
-- [ ] Inspect final diff and preserve unrelated pre-existing untracked paths.
-- **Commit:** pending.
+- [x] Add `/admin/commission-requests` using the existing `hasAdminAccess` gate and admin visual conventions; unauthorized visitors do not request protected data.
+- [x] Add an authenticated commission inbox service using `authFetch`; test success, 401, server, and network failures.
+- [x] Add an `.admin-only` link in `HomeHeader.astro`.
+- [x] Display API-ordered active requests with name, email, idea, created date, and optional product name. Resolve names through `fetchProducts()` by `idProduct`; use `Producto #<id>` when unresolved and indicate no association for null IDs. Catalog delay/failure does not block the request list.
+- [x] Keep the backend API unchanged; add accessible loading, empty, error, and retry states, safe text rendering, and no mutation controls.
+- [x] Focused service tests and Astro check pass; independent verification confirmed role gate, 401 behavior, catalog fallback, and no mutations.
+- [x] Align the service response mapping with the backend's actual JSON-array contract; task 5 E2E exposed that the inbox rendered empty despite successful API reads.
+- **Verification:** `pnpm --dir frontend exec vitest run src/domains/commissions/services/customCommissionRequest.admin.service.test.ts` passed (4/4) for the array contract, malformed/non-array payloads, 401, other HTTP errors, and network behavior. `pnpm --dir frontend check` passed (100 files, 0 errors/warnings/hints). Independent review confirmed page behavior; the focused Playwright scenario subsequently passed and demonstrates the contract end-to-end. No migration was run.
+- **Commits:** `89b5271` (`feat(commissions): add staff request inbox`); `e05b922` (`fix(commissions): map inbox array response`).
+
+### 5. Verify the end-to-end local demo flow — DONE
+
+- [x] Add an E2E scenario that follows the existing home CTA from `/` to `/help` before public submission, then verifies STAFF/ADMIN visibility and denial for anonymous/USER reads, without making external calls.
+- [x] Run focused frontend tests, Astro check, quality check, local build, and the targeted Playwright scenario. Backend/API/OpenAPI were unchanged; no migration ran.
+- [x] Inspect final diff and preserve unrelated pre-existing untracked paths.
+- **Verification:** focused frontend services 10/10; `pnpm --dir frontend check` passed (100 files, 0 diagnostics); `pnpm --dir frontend quality:check` passed; transient `PUBLIC_API_URL=http://localhost:3031 pnpm --dir frontend build` passed (19 pages); targeted Playwright passed (1/1) with ADMIN/STAFF inbox visibility, anonymous 401 and USER 403/UI denial. E2E setup used only `mundo_3d_test`; no migrations. No push/PR/deploy.
+- **Commit:** `1c3b6f0` (`test(commissions): cover intake and staff inbox E2E`).
 
 ## Progress log
 
@@ -76,3 +85,8 @@ THESIS: A visitor can leave an idea without this demo pretending it is a sale. O
 - 2026-09-27: Task 1 implementation and independent verification passed; no database migration was applied.
 - 2026-09-27: Task 1 closed in three work-unit commits: `b712534`, `f2511ad`, `973b2f2`. The local pre-commit hook was repaired in this repository only and its lint/quality checks pass.
 - 2026-09-27: Task 2 API implementation and independent verification passed; commit `f0310a2` adds public submission and protected STAFF/ADMIN listing. No database migration was applied. Task 3 is now in progress.
+- 2026-09-27: Task 3 closed in commit `1223600` (`feat(commissions): add visitor intake form and disclosures`).
+- 2026-09-27: Task 4 closed in `89b5271` (`feat(commissions): add staff request inbox`) and follow-up `e05b922` (`fix(commissions): map inbox array response`). Task 5 E2E uncovered and fixed the frontend/backend response-shape mismatch without changing the API.
+- 2026-09-27: Task 5 E2E and final frontend verification passed. The E2E runner reset only `mundo_3d_test`; no migrations were run. Unrelated untracked paths were preserved.
+- 2026-09-27: Isolated native reviews completed per commit using detached worktrees and each commit's parent as the committed-only base; unrelated untracked files were excluded. `89b5271` approved/acknowledged (three informational reliability warnings); `e05b922` approved/acknowledged (one informational reliability warning); `1c3b6f0` approved/acknowledged (no findings). Temporary worktrees were removed. Reviews do not authorize delivery; no push/PR/deploy was performed.
+- 2026-09-27: Completed the remaining isolated reviews for tasks 1–3: `b712534` (approved/acknowledged, one informational migration warning), `f2511ad` (approved/acknowledged, one informational test warning), `973b2f2` (approved/acknowledged, one informational retention warning), `f0310a2` (approved/acknowledged, two informational test warnings), and `1223600` (approved/acknowledged, two informational form-copy warnings). Each used a detached worktree with its parent as base; all temporary worktrees were removed. No blocking findings, push, PR, deployment, or migration.

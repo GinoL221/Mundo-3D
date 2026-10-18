@@ -9,6 +9,7 @@ const catalogIsCurrent = currentPath === '/';
 const productsIsCurrent = currentPath === '/products';
 const helpIsCurrent = currentPath === '/help';
 const adminProductsIsCurrent = currentPath === '/admin/products';
+const adminRequestsIsCurrent = currentPath === '/admin/commission-requests';
 ---
 
 <header class="home-header">
@@ -98,6 +99,7 @@ const adminProductsIsCurrent = currentPath === '/admin/products';
         <li><a class:list={["home-header__link", { "home-header__link--active": productsIsCurrent }]} href="/products" aria-current={productsIsCurrent ? 'page' : undefined}>Productos</a></li>
         <li><a class:list={["home-header__link", { "home-header__link--active": helpIsCurrent }]} href="/help" aria-current={helpIsCurrent ? 'page' : undefined}>Guía de compra</a></li>
         <li class="admin-only" style="display: none;"><a class:list={["home-header__link", { "home-header__link--active": adminProductsIsCurrent }]} href="/admin/products" aria-current={adminProductsIsCurrent ? 'page' : undefined}>Administrar productos</a></li>
+        <li class="admin-only" style="display: none;"><a class:list={["home-header__link", { "home-header__link--active": adminRequestsIsCurrent }]} href="/admin/commission-requests" aria-current={adminRequestsIsCurrent ? 'page' : undefined}>Solicitudes de encargos</a></li>
       </ul>
     </nav>
   </div>

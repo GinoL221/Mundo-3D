@@ -11,6 +11,15 @@ test('Playwright web servers use workspace-derived working directories', () => {
   assert.match(playwrightConfig, /command: 'pnpm --filter frontend dev --port 4322 --ignore-lock --mode development',[\s\S]*?cwd: resolve\(workspaceRoot, 'frontend'\)/);
 });
 
+test('Mailpit control and SMTP endpoints honor MAILPIT_HOST while preserving localhost defaults', () => {
+  const mailpitHelper = readFileSync(new URL('./fixtures/emailConfirmation.ts', import.meta.url), 'utf8');
+  assert.match(mailpitHelper, /const mailpitHost = process\.env\.MAILPIT_HOST \|\| 'localhost'/);
+  assert.match(mailpitHelper, /const mailpitUrl = `http:\/\/\$\{mailpitHost\}:8025\/api\/v1`/);
+  assert.match(mailpitHelper, /const mailpitHealthUrl = `http:\/\/\$\{mailpitHost\}:8025`/);
+  assert.match(playwrightConfig, /const mailpitHost = process\.env\.MAILPIT_HOST \|\| 'localhost'/);
+  assert.match(playwrightConfig, /SMTP_HOST: mailpitHost/);
+});
+
 test('Astro resolves root and envDir from its config file URL', () => {
   assert.match(astroConfig, /const frontendRoot = fileURLToPath\(new URL\('\.', import\.meta\.url\)\)/);
   assert.match(astroConfig, /root: frontendRoot,[\s\S]*?vite: \{ envDir: frontendRoot \}/);

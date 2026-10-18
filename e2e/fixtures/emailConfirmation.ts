@@ -2,8 +2,9 @@ import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const mailpitUrl = 'http://localhost:8025/api/v1';
-const mailpitHealthUrl = 'http://localhost:8025';
+const mailpitHost = process.env.MAILPIT_HOST || 'localhost';
+const mailpitUrl = `http://${mailpitHost}:8025/api/v1`;
+const mailpitHealthUrl = `http://${mailpitHost}:8025`;
 const mailpitStartupTimeoutMs = 10_000;
 const mailpitPollIntervalMs = 100;
 
