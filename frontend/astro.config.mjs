@@ -1,5 +1,8 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import { fileURLToPath } from 'node:url';
+
+const frontendRoot = fileURLToPath(new URL('.', import.meta.url));
 
 // PUBLIC_API_URL is baked into the client bundle at build time
 // (import.meta.env is statically replaced) — by the time the browser would
@@ -17,6 +20,8 @@ if (process.argv.includes('build') && !process.env.PUBLIC_API_URL) {
 
 // https://astro.build/config
 export default defineConfig({
+  root: frontendRoot,
+  vite: { envDir: frontendRoot },
   devToolbar: {
     enabled: false,
   },
