@@ -1,0 +1,58 @@
+name: Bug report
+description: Report broken or unexpected behavior.
+title: '[Bug]: '
+labels:
+  - 'type:bug'
+body:
+  - type: checkboxes
+    id: duplicate-search
+    attributes:
+      label: Existing issues
+      description: Search open and closed issues before submitting.
+      options:
+        - label: I searched existing issues and did not find a duplicate.
+          required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the actual behavior and where you encountered it.
+      placeholder: What did you see?
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: Describe what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide the shortest reliable steps to reproduce the problem.
+      placeholder: |
+        1. Go to ...
+        2. Do ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include relevant app, browser, operating system, or runtime versions. Do not include secrets.
+      placeholder: |
+        - App/version:
+        - Browser/OS:
+        - Node.js/pnpm (if relevant):
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or additional context
+      description: Redact passwords, tokens, personal data, and private URLs before sharing.
+    validations:
+      required: false
