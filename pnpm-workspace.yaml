@@ -18,10 +18,11 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
 
-# Steer @astrojs/check's transitive chokidar@^4.0.3 to the already-trusted
-# 3.6.0 already used elsewhere in this lockfile, instead of weakening
-# trustPolicy — chokidar@4.0.3 lost provenance attestation (possible
-# takeover) and is blocked by the no-downgrade policy above.
+# @astrojs/check@0.9.10 declares chokidar@^4.0.3, whose 4.0.3 release pnpm
+# blocks under no-downgrade for weaker provenance evidence. Upstream 0.9.11
+# moves to ^5.0.0; backport only that range and scope the override below to
+# this consumer so it selects the older, attested 5.0.0. Keep release-age and
+# trust checks intact.
 #
 # express-rate-limit@8.6.2 still declares `ip-address: ^10.2.0`, and pnpm
 # does not auto-bump a transitive-only dependency to the range's latest on
@@ -69,7 +70,7 @@ allowBuilds:
 #   `>= 4.21.0`, so the fix was already permitted; pnpm just would not move a
 #   transitive-only dependency there on its own.
 overrides:
-  chokidar: 3.6.0
+  '@astrojs/check@0.9.10>chokidar': 5.0.0
   ip-address: ^10.3.1
   sharp: ^0.35.4
   svgo: ^4.0.2
@@ -107,6 +108,7 @@ publicHoistPattern:
   - typescript
 
 patchedDependencies:
+  '@astrojs/check@0.9.10': patches/@astrojs__check@0.9.10.patch
   '@rushstack/ts-command-line@4.19.1': patches/@rushstack__ts-command-line@4.19.1.patch
   argparse@2.0.1: patches/argparse@2.0.1.patch
   js-yaml@3.15.2: patches/js-yaml@3.15.2.patch
