@@ -1,0 +1,236 @@
+diff --git a/lib/providers/AliasCommandLineAction.js b/lib/providers/AliasCommandLineAction.js
+--- a/lib/providers/AliasCommandLineAction.js
++++ b/lib/providers/AliasCommandLineAction.js
+@@ -100,7 +100,7 @@
+         // key for this parameter is constant.
+         if (this.targetAction.remainder) {
+             this.defineCommandLineRemainder(this.targetAction.remainder);
+-            this._parameterKeyMap.set(argparse.Const.REMAINDER, argparse.Const.REMAINDER);
++            this._parameterKeyMap.set(argparse.REMAINDER, argparse.REMAINDER);
+         }
+         // Finally, register the parameters with the parser. We need to make sure that the target action
+         // is registered, since we need to re-use its parameters, and ambiguous parameters are discovered
+diff --git a/lib/providers/CommandLineAction.js b/lib/providers/CommandLineAction.js
+--- a/lib/providers/CommandLineAction.js
++++ b/lib/providers/CommandLineAction.js
+@@ -40,7 +40,7 @@
+      */
+     _buildParser(actionsSubParser) {
+         var _a;
+-        this._argumentParser = actionsSubParser.addParser(this.actionName, {
++        this._argumentParser = actionsSubParser.add_parser(this.actionName, {
+             help: this.summary,
+             description: this.documentation
+         });
+@@ -55,6 +55,16 @@
+                 throw err;
+             }
+             originalArgumentParserErrorFn(err);
++        };
++        // Reject child extras here, before argparse merges them with root extras.
++        // This keeps the selected subcommand's usage and diagnostic context.
++        const originalParseKnownArgs = this._argumentParser.parse_known_args.bind(this._argumentParser);
++        this._argumentParser.parse_known_args = (...args) => {
++            const [namespace, extras] = originalParseKnownArgs(...args);
++            if (extras.length) {
++                this._argumentParser.error(`unrecognized arguments: ${extras.join(' ')}`);
++            }
++            return [namespace, extras];
+         };
+         (_a = this.onDefineParameters) === null || _a === void 0 ? void 0 : _a.call(this);
+     }
+diff --git a/lib/providers/CommandLineParameterProvider.js b/lib/providers/CommandLineParameterProvider.js
+--- a/lib/providers/CommandLineParameterProvider.js
++++ b/lib/providers/CommandLineParameterProvider.js
+@@ -241,7 +241,7 @@
+             parentParameterNames: new Set()
+         };
+         this._registerDefinedParameters(initialState);
+-        return this._getArgumentParser().formatHelp();
++        return this._getArgumentParser().format_help();
+     }
+     /**
+      * Generates the command-line usage text.
+@@ -251,7 +251,7 @@
+             parentParameterNames: new Set()
+         };
+         this._registerDefinedParameters(initialState);
+-        return this._getArgumentParser().formatUsage();
++        return this._getArgumentParser().format_usage();
+     }
+     /**
+      * Returns a object which maps the long name of each parameter in this.parameters
+@@ -348,10 +348,10 @@
+         if (this._remainder) {
+             const argparseOptions = {
+                 help: this._remainder.description,
+-                nargs: argparse.Const.REMAINDER,
++                nargs: argparse.REMAINDER,
+                 metavar: '"..."'
+             };
+-            this._getArgumentParser().addArgument(argparse.Const.REMAINDER, argparseOptions);
++            this._getArgumentParser().add_argument(argparse.REMAINDER, argparseOptions);
+         }
+         this._parametersHaveBeenRegistered = true;
+     }
+@@ -452,7 +452,7 @@
+             (_a = parameter._validateValue) === null || _a === void 0 ? void 0 : _a.call(parameter);
+         }
+         if (this.remainder) {
+-            this.remainder._setValue(data[argparse.Const.REMAINDER]);
++            this.remainder._setValue(data[argparse.REMAINDER]);
+         }
+         this._parametersHaveBeenProcessed = true;
+     }
+@@ -537,7 +537,7 @@
+                 break;
+             }
+             case BaseClasses_1.CommandLineParameterKind.Flag:
+-                action = 'storeTrue';
++                action = 'store_true';
+                 break;
+             case BaseClasses_1.CommandLineParameterKind.Integer:
+                 type = 'int';
+@@ -557,12 +557,20 @@
+         const argparseOptions = {
+             help: finalDescription,
+             dest: parserKey,
+-            metavar: parameter.argumentName,
+-            required,
+-            choices,
+-            action,
+-            type
++            required
+         };
++        if (parameter.argumentName !== undefined) {
++            argparseOptions.metavar = parameter.argumentName;
++        }
++        if (choices !== undefined) {
++            argparseOptions.choices = choices;
++        }
++        if (action !== undefined) {
++            argparseOptions.action = action;
++        }
++        if (type !== undefined) {
++            argparseOptions.type = type;
++        }
+         const argumentParser = this._getArgumentParser();
+         let argumentGroup;
+         if (parameterGroup) {
+@@ -578,7 +586,7 @@
+                 else {
+                     throw new Error('Unexpected parameter group: ' + parameterGroup);
+                 }
+-                argumentGroup = argumentParser.addArgumentGroup({
++                argumentGroup = argumentParser.add_argument_group({
+                     title: `Optional ${parameterGroupName} arguments`
+                 });
+                 this._parameterGroupsByName.set(parameterGroup, argumentGroup);
+@@ -587,7 +595,10 @@
+         else {
+             argumentGroup = argumentParser;
+         }
+-        const argparseArgument = argumentGroup.addArgument(names, argparseOptions);
++        const synonymOptions = (undocumentedSynonyms === null || undocumentedSynonyms === void 0 ? void 0 : undocumentedSynonyms.length)
++            ? Object.assign({}, argparseOptions, { help: argparse.SUPPRESS })
++            : undefined;
++        const argparseArgument = argumentGroup.add_argument(...names, argparseOptions);
+         if (required && environmentVariable) {
+             // Add some special-cased logic to handle required parameters with environment variables
+             const originalPreParse = (_a = parameter._preParse) === null || _a === void 0 ? void 0 : _a.bind(parameter);
+@@ -632,8 +643,8 @@
+                     break;
+             }
+         }
+-        if (undocumentedSynonyms === null || undocumentedSynonyms === void 0 ? void 0 : undocumentedSynonyms.length) {
+-            argumentGroup.addArgument(undocumentedSynonyms, Object.assign(Object.assign({}, argparseOptions), { help: argparse.Const.SUPPRESS }));
++        if (synonymOptions) {
++            argumentGroup.add_argument(...undocumentedSynonyms, synonymOptions);
+         }
+         // Register the parameter names so that we can detect ambiguous parameters
+         for (const name of [...names, ...(undocumentedSynonyms || [])]) {
+@@ -641,13 +652,13 @@
+         }
+     }
+     _registerAmbiguousParameter(name, parserKey) {
+-        this._getArgumentParser().addArgument(name, {
++        this._getArgumentParser().add_argument(name, {
+             dest: parserKey,
+             // We don't know if this argument takes parameters or not, so we need to accept any number of args
+             nargs: '*',
+             // Ensure that the argument is not shown in the help text, since these parameters are only included
+             // to inform the user that ambiguous parameters are present
+-            help: argparse.Const.SUPPRESS
++            help: argparse.SUPPRESS
+         });
+     }
+     _generateKey() {
+diff --git a/lib/providers/CommandLineParser.js b/lib/providers/CommandLineParser.js
+--- a/lib/providers/CommandLineParser.js
++++ b/lib/providers/CommandLineParser.js
+@@ -27,7 +27,7 @@
+         this._actions = [];
+         this._actionsByName = new Map();
+         this._argumentParser = new CommandLineParserExitError_1.CustomArgumentParser({
+-            addHelp: true,
++            add_help: true,
+             prog: this._options.toolFilename,
+             description: this._options.toolDescription,
+             epilog: terminal_1.Colorize.bold((_a = this._options.toolEpilog) !== null && _a !== void 0 ? _a : `For detailed help about a specific command, use: ${this._options.toolFilename} <command> -h`)
+@@ -45,7 +45,7 @@
+      */
+     addAction(action) {
+         if (!this._actionsSubParser) {
+-            this._actionsSubParser = this._argumentParser.addSubparsers({
++            this._actionsSubParser = this._argumentParser.add_subparsers({
+                 metavar: '<command>',
+                 dest: 'action'
+             });
+@@ -155,7 +155,7 @@
+                 if (args.length === 0) {
+                     // Parsers that use actions should print help when 0 args are provided. Allow
+                     // actionless parsers to continue on zero args.
+-                    this._argumentParser.printHelp();
++                    this._argumentParser.print_help();
+                     return;
+                 }
+                 // Alias actions may provide a list of default params to add after the action name.
+@@ -181,8 +181,8 @@
+                 }
+             };
+             function patchFormatUsageForArgumentParser(argumentParser) {
+-                const originalFormatUsage = argumentParser.formatUsage.bind(argumentParser);
+-                argumentParser.formatUsage = () => {
++                const originalFormatUsage = argumentParser.format_usage.bind(argumentParser);
++                argumentParser.format_usage = () => {
+                     postParse();
+                     return originalFormatUsage();
+                 };
+@@ -193,7 +193,13 @@
+                 action._preParse();
+                 patchFormatUsageForArgumentParser(action._getArgumentParser());
+             }
+-            const data = this._argumentParser.parseArgs(args);
++            const [data, extras] = this._argumentParser.parse_known_args(args);
++            if (this.actions.length > 0 && !data.action) {
++                this._argumentParser.error('too few arguments');
++            }
++            if (extras.length) {
++                this._argumentParser.error(`unrecognized arguments: ${extras.join(' ')}`);
++            }
+             postParse();
+             this._processParsedData(this._options, data);
+             this.selectedAction = this.tryGetAction(data.action);
+diff --git a/lib/providers/CommandLineParserExitError.js b/lib/providers/CommandLineParserExitError.js
+--- a/lib/providers/CommandLineParserExitError.js
++++ b/lib/providers/CommandLineParserExitError.js
+@@ -40,6 +40,9 @@
+ }
+ exports.CommandLineParserExitError = CommandLineParserExitError;
+ class CustomArgumentParser extends argparse.ArgumentParser {
++    constructor(options) {
++        super(Object.assign({}, options, { legacy_output: true }));
++    }
+     exit(status, message) {
+         // override
+         throw new CommandLineParserExitError(status, message);
