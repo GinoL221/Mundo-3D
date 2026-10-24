@@ -43,8 +43,9 @@ The shopping context the storefront depicts is ordinary consumer browsing: catal
 - Local cart with Nanostores, synchronised to the API for authenticated users.
 - Orders and order history.
 - Informational pages: about, FAQ, help, step-by-step, terms, privacy.
+- Public custom commission request intake without an account, collecting name, email, and idea, with optional catalog-product association. Requests are available for STAFF/ADMIN review and expire after 30 days; physical purge runs hourly while the backend is active or at its next startup. No automated contact or transaction is implied.
 - Light/dark theme.
-- 17 frontend routes; four frontend domains (`auth`, `cart`, `orders`, `products`).
+- 17 frontend routes; five frontend domains (`auth`, `cart`, `commissions`, `orders`, `products`).
 
 **Technical constraints:**
 
@@ -54,9 +55,8 @@ The shopping context the storefront depicts is ordinary consumer browsing: catal
 - CSS has no build step; tokens live in `frontend/src/styles/tokens/` and are consumed by component stylesheets.
 - Helmet CSP is explicit and stricter than defaults; no inline scripts in backend-served HTML.
 
-**Open product decisions:**
+**Current limits:**
 
-- **Custom commissions are confirmed as part of the product but do not exist in code.** The catalogue is entirely pre-made franchise pieces; there is no upload, quoting, or commission-tracking flow. Both paths must be served: buy from the catalogue, or commission a piece. The home page leads with the catalogue; commissions appear after that as a banner or featured section, not as the primary hero.
 - Payment is not implemented. No real transaction occurs. Future work must not imply that one does.
 
 ## Brand Commitments
