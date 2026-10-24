@@ -52,6 +52,8 @@ const EXPECTED_ENDPOINTS: Array<[path: string, method: string]> = [
   ['/orders/{id}', 'get'],
   ['/orders/{id}/confirm-payment', 'post'],
   ['/orders/{id}/cancel', 'post'],
+  // customCommissionRequests.ts
+  ['/custom-commission-requests', 'get'],
   // products.ts
   ['/products', 'get'],
   ['/products', 'post'],
@@ -103,7 +105,18 @@ describe('buildOpenApiSpec', () => {
       expect(spec.paths[path]).toHaveProperty(method);
     });
 
-    it('covers exactly the endpoints mounted by the 6 route groups (no missing, no stale)', () => {
+    it('documents commission-request listing as authenticated and role-restricted', () => {
+      const operation = spec.paths['/custom-commission-requests'].get as {
+        security: Array<Record<string, string[]>>;
+        responses: Record<string, unknown>;
+      };
+
+      expect(operation.security).toEqual([{ cookieAuth: [] }]);
+      expect(operation.responses).toHaveProperty('401');
+      expect(operation.responses).toHaveProperty('403');
+    });
+
+    it('covers exactly the endpoints mounted by the 7 route groups (no missing, no stale)', () => {
       const actual = Object.entries(spec.paths)
         .flatMap(([path, methods]) => Object.keys(methods).map((method) => `${method.toUpperCase()} ${path}`))
         .sort();

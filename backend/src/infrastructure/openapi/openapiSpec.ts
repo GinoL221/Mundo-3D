@@ -12,7 +12,7 @@ import { openapiSchemas } from './openapiSchemas';
 const PACKAGE_JSON_PATH = path.join(__dirname, '..', '..', '..', 'package.json');
 const { version } = JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH, 'utf-8')) as { version: string };
 
-// Glob patterns for the 6 route groups' `@openapi` JSDoc annotations.
+// Glob patterns for the 7 route groups' `@openapi` JSDoc annotations.
 // swagger-jsdoc extracts comment blocks as raw text, so both the TypeScript
 // sources (dev/test, run via ts-node/ts-jest) and the compiled JS output
 // (RUN_COMPILED=true production, see index.js) resolve correctly — a

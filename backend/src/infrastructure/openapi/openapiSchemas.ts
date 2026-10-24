@@ -10,6 +10,7 @@
 // can embed them verbatim into `components.schemas`. Order-related schemas
 // live in `orderOpenapiSchemas.ts` (split out to stay under the 250-line cap).
 
+import { customCommissionRequestOpenapiSchemas } from './customCommissionRequestOpenapiSchemas';
 import { orderOpenapiSchemas } from './orderOpenapiSchemas';
 
 const errorSchema = {
@@ -212,5 +213,6 @@ export const openapiSchemas = {
   User: userSchema,
   AuthResponse: authResponseSchema,
   UsersIndexResponse: usersIndexResponseSchema,
+  ...customCommissionRequestOpenapiSchemas,
   ...orderOpenapiSchemas,
 };

@@ -38,7 +38,7 @@ export class SequelizeCustomCommissionRequestRepository
   async listActive(now: Date): Promise<CustomCommissionRequest[]> {
     const instances = await db.CustomCommissionRequest.findAll({
       where: { expiresAt: { [Op.gt]: now } },
-      order: [['createdAt', 'ASC']],
+      order: [['createdAt', 'DESC']],
     });
     return instances.map((instance) => this.toEntity(instance));
   }

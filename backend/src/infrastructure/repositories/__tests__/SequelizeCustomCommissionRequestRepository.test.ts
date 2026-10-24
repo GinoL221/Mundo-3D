@@ -31,7 +31,12 @@ describe('SequelizeCustomCommissionRequestRepository', () => {
     jest.mocked(db.CustomCommissionRequest.destroy).mockResolvedValue(3 as any);
     await repository.listActive(now);
     await expect(repository.purgeExpired(now)).resolves.toBe(3);
-    expect(db.CustomCommissionRequest.findAll).toHaveBeenCalledWith(expect.objectContaining({ where: { expiresAt: { [Op.gt]: now } } }));
+    expect(db.CustomCommissionRequest.findAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { expiresAt: { [Op.gt]: now } },
+        order: [['createdAt', 'DESC']],
+      })
+    );
     expect(db.CustomCommissionRequest.destroy).toHaveBeenCalledWith(expect.objectContaining({ where: { expiresAt: { [Op.lte]: now } } }));
   });
 });

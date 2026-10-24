@@ -410,6 +410,45 @@
           "users"
         ]
       },
+      "CustomCommissionRequest": {
+        "type": "object",
+        "properties": {
+          "idCustomCommissionRequest": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "idea": {
+            "type": "string"
+          },
+          "idProduct": {
+            "type": "integer",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "idCustomCommissionRequest",
+          "name",
+          "email",
+          "idea",
+          "idProduct",
+          "createdAt",
+          "expiresAt"
+        ]
+      },
       "OrderItem": {
         "type": "object",
         "properties": {
@@ -1936,6 +1975,50 @@
           },
           "409": {
             "description": "Franchise has associated products."
+          }
+        }
+      }
+    },
+    "/custom-commission-requests": {
+      "get": {
+        "summary": "List unexpired custom commission requests",
+        "tags": [
+          "Custom commission requests"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Newest unexpired requests; response is not cacheable.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomCommissionRequest"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated."
+          },
+          "403": {
+            "description": "Authenticated but not ADMIN or STAFF."
           }
         }
       }
