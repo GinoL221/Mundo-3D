@@ -1,0 +1,175 @@
+diff --git a/argparse.js b/argparse.js
+--- a/argparse.js
++++ b/argparse.js
+@@ -629,7 +629,7 @@
+                         line.push(part)
+                         line_len += part.length + 1
+                     }
+-                    if (line.length) {
++                    if (line.length || this._legacy_output) {
+                         lines.push(indent + line.join(' '))
+                     }
+                     if (prefix !== undefined) {
+@@ -975,11 +975,43 @@
+     }
+ 
+     _split_lines(text, width) {
+-        text = text.replace(this._whitespace_matcher, ' ').trim()
+-        // The textwrap module is used only for formatting help.
+-        // Delay its import for speeding up the common usage of argparse.
+-        let textwrap = require('./lib/textwrap')
+-        return textwrap.wrap(text, { width })
++        if (!this._legacy_output) {
++            text = text.replace(this._whitespace_matcher, ' ').trim()
++            let textwrap = require('./lib/textwrap')
++            return textwrap.wrap(text, { width })
++        }
++
++        let lines = []
++        let delimiter_pattern = /[ .,!?][^ .,!?]*$/
++
++        text = text.replace(/[\n|\t]/g, ' ')
++        text = text.trim().replace(this._whitespace_matcher, ' ')
++
++        for (let line of text.split('\n')) {
++            if (width >= line.length) {
++                lines.push(line)
++                continue
++            }
++
++            let wrap_start = 0
++            let wrap_end = width
++            while (wrap_end <= line.length) {
++                let end = wrap_end
++                if (wrap_end !== line.length) {
++                    let match = delimiter_pattern.exec(line.substring(wrap_start, wrap_end))
++                    if (match) end = wrap_start + match.index + 1
++                }
++                if (end <= wrap_start) end = wrap_end
++                lines.push(line.substring(wrap_start, end))
++                wrap_start = end
++                wrap_end = end + width
++            }
++            if (wrap_start < line.length) {
++                lines.push(line.substring(wrap_start))
++            }
++        }
++
++        return lines
+     }
+ 
+     _fill_text(text, width, indent) {
+@@ -2536,7 +2568,8 @@
+             allow_abbrev,
+             exit_on_error,
+             debug, // LEGACY (v1 compatibility), debug mode
+-            version // LEGACY (v1 compatibility), version
++            version, // LEGACY (v1 compatibility), version
++            legacy_output
+         ] = _parse_opts(arguments, {
+             prog: undefined,
+             usage: undefined,
+@@ -2552,7 +2585,8 @@
+             allow_abbrev: true,
+             exit_on_error: true,
+             debug: undefined, // LEGACY (v1 compatibility), debug mode
+-            version: undefined // LEGACY (v1 compatibility), version
++            version: undefined, // LEGACY (v1 compatibility), version
++            legacy_output: false
+         })
+ 
+         // LEGACY (v1 compatibility)
+@@ -2594,9 +2628,10 @@
+         // LEGACY (v1 compatibility), debug mode
+         this.debug = debug
+         // end
+-
+-        this._positionals = this.add_argument_group('positional arguments')
+-        this._optionals = this.add_argument_group('optional arguments')
++        this.legacy_output = legacy_output
++
++        this._positionals = this.add_argument_group(legacy_output ? 'Positional arguments' : 'positional arguments')
++        this._optionals = this.add_argument_group(legacy_output ? 'Optional arguments' : 'optional arguments')
+         this._subparsers = undefined
+ 
+         // register types
+@@ -2636,7 +2671,7 @@
+                 {
+                     action: 'help',
+                     default: SUPPRESS,
+-                    help: 'show this help message and exit'
++                    help: legacy_output ? 'Show this help message and exit.' : 'show this help message and exit'
+                 }
+             )
+         }
+@@ -2649,7 +2684,7 @@
+                     action: 'version',
+                     default: SUPPRESS,
+                     version: this.version,
+-                    help: "show program's version number and exit"
++                    help: legacy_output ? "Show program's version number and exit." : "show program's version number and exit"
+                 }
+             )
+         }
+@@ -3606,4 +3641,8 @@
+     _get_formatter() {
+         // eslint-disable-next-line new-cap
+-        return new this.formatter_class({ prog: this.prog })
++        let formatter = new this.formatter_class({ prog: this.prog })
++        if (formatter instanceof HelpFormatter) {
++            formatter._legacy_output = this.legacy_output
++        }
++        return formatter
+     }
+@@ -3639,20 +3678,37 @@
+     }
+ 
+     error(message) {
+-        /*
+-         *  error(message: string)
+-         *
+-         *  Prints a usage message incorporating the message to stderr and
+-         *  exits.
+-         *
+-         *  If you override this in a subclass, it should not return -- it
+-         *  should either exit or raise an exception.
+-         */
+-
+-        // LEGACY (v1 compatibility), debug mode
+-        if (this.debug === true) throw new Error(message)
+-        // end
+-        this.print_usage(process.stderr)
++        if (!this.legacy_output) {
++            if (this.debug === true) throw new Error(message)
++            this.print_usage(process.stderr)
++            let args = {prog: this.prog, message: message}
++            this.exit(2, sub('%(prog)s: error: %(message)s\n', args))
++        }
++
++        if (message instanceof Error) {
++            if (this.debug === true) throw message
++            message = message.message
++        } else if (this.debug === true) {
++            throw new Error(message)
++        }
++
++        message = String(message)
++        let match = /^argument ([^:]+): invalid choice: (.+) \(choose from (.+)\)$/.exec(message)
++        if (match) {
++            let unquote = value => value.replace(/^(['"])(.*)\1$/, '$2')
++            let choices = match[3].replace(/(['"])(.*?)\1/g, '$2')
++            message = `argument "${match[1]}": Invalid choice: ${unquote(match[2])} (choose from [${choices}])`
++        } else if ((match = /^argument ([^:]+): invalid '([^']+)' value: (.+)$/.exec(message))) {
++            let value = match[3].replace(/^(['"])(.*)\1$/, '$2')
++            message = `argument "${match[1]}": Invalid ${match[2]} value: ${value}`
++        } else if ((match = /^the following arguments are required: (.+)$/.exec(message))) {
++            message = match[1].split(', ').map(argument => `Argument "${argument}" is required`).join('\n')
++        } else if ((match = /^unrecognized arguments: (.+)$/.exec(message))) {
++            message = `Unrecognized arguments: ${match[1]}.`
++        }
++
++        // argparse v1's printUsage ignored the stream argument and wrote to stdout.
++        this.print_usage()
+         let args = {prog: this.prog, message: message}
+         this.exit(2, sub('%(prog)s: error: %(message)s\n', args))
+     }

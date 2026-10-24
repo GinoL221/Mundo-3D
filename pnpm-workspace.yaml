@@ -5,6 +5,13 @@ packages:
 
 # Security Hardening (npm/pnpm Security Hardening — Protocolo 2026)
 minimumReleaseAge: 10080
+# One-time exception for the current audit floors. These exact releases are
+# patched but younger than seven days; do not widen this list.
+minimumReleaseAgeExclude:
+  - nodemailer@10.1.4
+  - multer@2.5.0
+  - body-parser@1.20.9
+  - fast-uri@3.1.9
 trustPolicy: no-downgrade
 trustPolicyExclude:
   - semver@6.3.1
@@ -18,10 +25,11 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
 
-# Steer @astrojs/check's transitive chokidar@^4.0.3 to the already-trusted
-# 3.6.0 already used elsewhere in this lockfile, instead of weakening
-# trustPolicy — chokidar@4.0.3 lost provenance attestation (possible
-# takeover) and is blocked by the no-downgrade policy above.
+# @astrojs/check@0.9.10 declares chokidar@^4.0.3, whose 4.0.3 release pnpm
+# blocks under no-downgrade for weaker provenance evidence. Upstream 0.9.11
+# moves to ^5.0.0; backport only that range and scope the override below to
+# this consumer so it selects the older, attested 5.0.0. Keep release-age and
+# trust checks intact.
 #
 # express-rate-limit@8.6.2 still declares `ip-address: ^10.2.0`, and pnpm
 # does not auto-bump a transitive-only dependency to the range's latest on
@@ -69,20 +77,22 @@ allowBuilds:
 #   `>= 4.21.0`, so the fix was already permitted; pnpm just would not move a
 #   transitive-only dependency there on its own.
 overrides:
-  chokidar: 3.6.0
-  ip-address: ^10.3.1
-  sharp: ^0.35.4
+  '@astrojs/check@0.9.10>chokidar': 5.0.0
+  ip-address: ^10.7.1
+  sharp: ^0.35.5
   svgo: ^4.0.2
   uuid: ^11.1.1
-  body-parser: ^1.20.6
-  devalue: ^5.9.1
-  brace-expansion@1: ^1.1.18
-  brace-expansion@2: ^2.1.4
-  brace-expansion@5: ^5.0.9
+  body-parser: 1.20.9
+  devalue: ^5.9.3
+  brace-expansion@1: ^1.1.21
+  brace-expansion@2: ^2.1.7
+  brace-expansion@5: ^5.0.12
   js-yaml@3: ^3.15.2
   js-yaml@4: ^4.3.2
-  smol-toml: ^1.7.1
-  fast-uri: ^3.1.5
+  '@rushstack/ts-command-line@4.19.1>argparse': 2.0.1
+  'js-yaml@3.15.2>argparse': 2.0.1
+  smol-toml: ^1.8.1
+  fast-uri: 3.1.9
   browserslist: ^4.28.7
   # 2 MODERATE advisories reaching production via express > body-parser;
   # 6.16.0 fixes both and is now old enough for the release-age policy.
@@ -93,6 +103,18 @@ overrides:
   # 7-day floor, so no exception is needed here — backend pins `^3.9.7` and
   # pnpm simply had not moved within that range on its own.
   mysql2: ^3.23.1
+  proxy-addr: ^2.0.8
+  handlebars: ^4.7.10
+  source-map-js: ^1.2.2
+  fast-copy: ^4.1.0
+  postcss-selector-parser: ^7.1.6
+  undici: ^8.10.2
+  moment: ^2.31.0
+  http-cache-semantics: ^4.2.1
+  vite: ^8.2.4
+  zod: 4.6.6
+  '@vitest/mocker': 4.1.12
+  astro: 7.3.3
 
 # `astro check` dynamically `import()`s "typescript" from astro's own
 # module scope, not the caller's cwd; astro declares no peerDependency on
@@ -103,3 +125,9 @@ overrides:
 # above.
 publicHoistPattern:
   - typescript
+
+patchedDependencies:
+  '@astrojs/check@0.9.10': patches/@astrojs__check@0.9.10.patch
+  '@rushstack/ts-command-line@4.19.1': patches/@rushstack__ts-command-line@4.19.1.patch
+  argparse@2.0.1: patches/argparse@2.0.1.patch
+  js-yaml@3.15.2: patches/js-yaml@3.15.2.patch
