@@ -1,0 +1,13 @@
+diff --git a/package.json b/package.json
+index 13eecb7af766e9519d7a5b6c8c8c1e2384b306ca..429741479f443af4ca45b4b8114a91752a4e53ca 100644
+--- a/package.json
++++ b/package.json
+@@ -27,7 +27,7 @@
+   ],
+   "dependencies": {
+     "@astrojs/language-server": "^2.16.7",
+-    "chokidar": "^4.0.3",
++    "chokidar": "^5.0.0",
+     "kleur": "^4.1.5",
+     "yargs": "^18.0.0"
+   },
