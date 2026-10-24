@@ -54,6 +54,7 @@ const EXPECTED_ENDPOINTS: Array<[path: string, method: string]> = [
   ['/orders/{id}/cancel', 'post'],
   // customCommissionRequests.ts
   ['/custom-commission-requests', 'get'],
+  ['/custom-commission-requests', 'post'],
   // products.ts
   ['/products', 'get'],
   ['/products', 'post'],
@@ -114,6 +115,31 @@ describe('buildOpenApiSpec', () => {
       expect(operation.security).toEqual([{ cookieAuth: [] }]);
       expect(operation.responses).toHaveProperty('401');
       expect(operation.responses).toHaveProperty('403');
+    });
+
+    it('documents public commission submission with bounded fields and a receipt-only response', () => {
+      const operation = spec.paths['/custom-commission-requests'].post;
+      const schemas = spec.components.schemas;
+      expect(operation).toMatchObject({
+        security: [],
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CustomCommissionRequestInput' } } } },
+        responses: {
+          '201': { content: { 'application/json': { schema: { $ref: '#/components/schemas/CustomCommissionRequestReceipt' } } } },
+          '400': expect.any(Object), '429': expect.any(Object), '500': expect.any(Object),
+        },
+      });
+      expect(schemas.CustomCommissionRequestInput).toMatchObject({
+        type: 'object', additionalProperties: false, required: ['name', 'email', 'idea'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          email: { type: 'string', format: 'email', maxLength: 254 },
+          idea: { type: 'string', minLength: 1, maxLength: 5000 },
+          idProduct: { type: 'integer', minimum: 1, nullable: true },
+        },
+      });
+      const receipt = schemas.CustomCommissionRequestReceipt as { required: string[]; properties: Record<string, unknown> };
+      expect(receipt.required).toEqual(['idCustomCommissionRequest', 'createdAt', 'expiresAt']);
+      expect(Object.keys(receipt.properties).sort()).toEqual(['createdAt', 'expiresAt', 'idCustomCommissionRequest']);
     });
 
     it('covers exactly the endpoints mounted by the 7 route groups (no missing, no stale)', () => {

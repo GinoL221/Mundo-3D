@@ -1,5 +1,7 @@
 import { CustomCommissionRequest } from '../../domain/entities/CustomCommissionRequest';
+import { SelectedProductNotFoundException } from '../../domain/exceptions/SelectedProductNotFoundException';
 import { CustomCommissionRequestRepositoryPort } from '../../domain/ports/CustomCommissionRequestRepositoryPort';
+import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
 
 export interface CreateCustomCommissionRequestInput {
   name: string;
@@ -15,9 +17,14 @@ export class CreateCustomCommissionRequestUseCase {
   constructor(
     private readonly repository: CustomCommissionRequestRepositoryPort,
     private readonly clock: () => Date = () => new Date(),
+    private readonly productRepository?: ProductRepositoryPort,
   ) {}
 
   async execute(input: CreateCustomCommissionRequestInput): Promise<CustomCommissionRequest> {
+    if (input.idProduct != null && !(await this.productRepository?.findById(input.idProduct))) {
+      throw new SelectedProductNotFoundException();
+    }
+
     const createdAt = this.clock();
     return this.repository.create({
       name: input.name,
