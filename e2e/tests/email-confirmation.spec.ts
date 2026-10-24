@@ -3,9 +3,10 @@ import { expect, test, type Page } from '@playwright/test';
 import {
   clearMailpit,
   confirmationLinkAcceptedByLocalMailpit,
+  expectNoAcceptedMailpitMessage,
   readConfirmationState,
   readRegistrationConfirmationState,
-  withMailpitUnavailable,
+  withMailpitRejectingSmtp,
 } from '../fixtures/emailConfirmation.js';
 
 async function submitResend(page: Page, email: string) {
@@ -162,11 +163,13 @@ test.describe('email confirmation', () => {
     ]);
   });
 
-  test('retains registration, session, and active token when local SMTP is unavailable', async ({
+  test('retains registration, session, and active token when local SMTP rejects delivery', async ({
     page,
   }) => {
-    await withMailpitUnavailable(async () => {
+    let rejectedEmail = '';
+    await withMailpitRejectingSmtp(async () => {
       const { email } = await registerUnverifiedUser(page);
+      rejectedEmail = email;
       const cookies = await page.context().cookies();
       expect(cookies.some((cookie) => cookie.name === 'm3d_auth')).toBe(true);
       await expect(readRegistrationConfirmationState(email)).resolves.toEqual({
@@ -174,9 +177,14 @@ test.describe('email confirmation', () => {
         consumedAt: null,
         activeSlot: 1,
       });
+      await expectNoAcceptedMailpitMessage(email);
     });
 
     await clearMailpit();
+    expect(rejectedEmail).not.toBe('');
+    const { email } = await registerUnverifiedUser(page);
+    expect(email).not.toBe(rejectedEmail);
+    await confirmationLinkAcceptedByLocalMailpit(email);
   });
 
   test('keeps an unverified user able to log in, open the account menu, use cart, and checkout', async ({

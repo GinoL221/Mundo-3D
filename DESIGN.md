@@ -65,7 +65,7 @@ Theme state is set on `<html>` by `Layout.astro` and `themeToggle.ts`, using `lo
 - Scale: H1 `32px`, H2 `24px`, H3/heading `18px`, body `16px`, small `14px`, extra-small `12px`.
 - Line height: base `1.5`, headings `1.2`.
 
-`Layout.astro` loads IBM Plex Sans weights 400, 500, and 600 from Google Fonts with `display=swap`. The manual's 40px display role is a brand role; there is no `--text-display` token yet. Press Start 2P and VT323 are not active product tokens and must not be introduced into brand work.
+`Layout.astro` imports the locally hosted IBM Plex Sans v23 WOFF2 Latin and Latin-ext subsets; their shared variable binaries provide weights 400, 500, and 600 with `font-display: swap`. Source URLs, checksums, sizes, and license are recorded in `frontend/public/fonts/ibm-plex-sans/README.md`. The manual's 40px display role is a brand role; there is no `--text-display` token yet. Press Start 2P and VT323 are not active product tokens and must not be introduced into brand work.
 
 ### Spacing and breakpoints (`tokens/spacing.css`)
 

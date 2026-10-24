@@ -354,17 +354,37 @@ test.describe('Cart E2E Tests - Login Redirect Bounded Race', () => {
       }
     });
 
-    const start = Date.now();
     await page.fill('#email', email);
     await page.fill('#password', password);
-    await page.click('#login-btn');
-    await expect(page).toHaveURL('/', { timeout: 4000 });
-    const elapsedMs = Date.now() - start;
 
-    // Bounded between the 1500ms cap and a generous ceiling for CI jitter —
-    // proves the redirect actually waited for hydration (not near-zero) AND
-    // that the wait was capped (nowhere near "forever", the failure mode a
-    // stalled GET would otherwise cause).
+    const cartGetStarted = page.waitForRequest((request) => {
+      const url = new URL(request.url());
+      return (
+        request.method() === 'GET' &&
+        url.pathname === '/api/cart' &&
+        request.frame() === page.mainFrame()
+      );
+    }).then(() => performance.now());
+    const homeNavigationStarted = page.waitForRequest((request) => {
+      const url = new URL(request.url());
+      return (
+        request.isNavigationRequest() &&
+        request.frame() === page.mainFrame() &&
+        url.pathname === '/'
+      );
+    }).then(() => performance.now());
+
+    await page.click('#login-btn');
+    const [cartGetStartedAt, homeNavigationStartedAt] = await Promise.all([
+      cartGetStarted,
+      homeNavigationStarted,
+      page.waitForURL('/', { timeout: 4000 }),
+    ]).then(([cartStarted, homeStarted]) => [cartStarted, homeStarted]);
+    const elapsedMs = homeNavigationStartedAt - cartGetStartedAt;
+
+    // Measure only the interval from the actual hydration GET to the
+    // redirect navigation request; field entry, login, and document loading
+    // are outside this contract.
     expect(elapsedMs).toBeGreaterThanOrEqual(1400);
     expect(elapsedMs).toBeLessThan(3500);
   });
@@ -403,15 +423,37 @@ test.describe('Cart E2E Tests - Login Redirect Bounded Race', () => {
       })
       .toBe('Por favor completá todos los campos.');
 
-    const start = Date.now();
     await page.fill('#email', email);
     await page.fill('#password', password);
-    await page.click('#login-btn');
-    await expect(page).toHaveURL('/', { timeout: 4000 });
-    const elapsedMs = Date.now() - start;
 
-    // Well under the 1500ms cap — an immediate failure has no reason to
-    // burn the timeout the way an unresolved GET legitimately does.
+    const cartFailureObserved = page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return (
+        response.status() === 500 &&
+        response.request().method() === 'GET' &&
+        url.pathname === '/api/cart' &&
+        response.request().frame() === page.mainFrame()
+      );
+    }).then(() => performance.now());
+    const homeNavigationStarted = page.waitForRequest((request) => {
+      const url = new URL(request.url());
+      return (
+        request.isNavigationRequest() &&
+        request.frame() === page.mainFrame() &&
+        url.pathname === '/'
+      );
+    }).then(() => performance.now());
+
+    await page.click('#login-btn');
+    const [cartFailureObservedAt, homeNavigationStartedAt] = await Promise.all([
+      cartFailureObserved,
+      homeNavigationStarted,
+      page.waitForURL('/', { timeout: 4000 }),
+    ]).then(([failureAt, navigationAt]) => [failureAt, navigationAt]);
+    const elapsedMs = homeNavigationStartedAt - cartFailureObservedAt;
+
+    // Well under the unchanged 1500ms cap: measure only from observing the
+    // failed hydration response to the redirect navigation request.
     expect(elapsedMs).toBeLessThan(1000);
   });
 });

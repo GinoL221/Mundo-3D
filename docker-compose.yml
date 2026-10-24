@@ -1,6 +1,8 @@
 services:
   mailpit:
     image: axllent/mailpit:v1.28.2
+    environment:
+      MP_ENABLE_CHAOS: 'true'
     ports:
       - '1025:1025'
       - '8025:8025'
