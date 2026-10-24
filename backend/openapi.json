@@ -410,6 +410,37 @@
           "users"
         ]
       },
+      "CustomCommissionRequestInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "idea": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          },
+          "idProduct": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "idea"
+        ]
+      },
       "CustomCommissionRequest": {
         "type": "object",
         "properties": {
@@ -445,6 +476,27 @@
           "email",
           "idea",
           "idProduct",
+          "createdAt",
+          "expiresAt"
+        ]
+      },
+      "CustomCommissionRequestReceipt": {
+        "type": "object",
+        "properties": {
+          "idCustomCommissionRequest": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "idCustomCommissionRequest",
           "createdAt",
           "expiresAt"
         ]
@@ -1980,6 +2032,44 @@
       }
     },
     "/custom-commission-requests": {
+      "post": {
+        "summary": "Submit a custom commission request",
+        "tags": [
+          "Custom commission requests"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomCommissionRequestInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Receipt metadata only.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomCommissionRequestReceipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or selected product does not exist."
+          },
+          "429": {
+            "description": "Per-IP request limit exceeded."
+          },
+          "500": {
+            "description": "Request could not be saved."
+          }
+        }
+      },
       "get": {
         "summary": "List unexpired custom commission requests",
         "tags": [

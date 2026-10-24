@@ -1,19 +1,46 @@
-import { Router } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
+import { validationResult } from 'express-validator';
+import { CreateCustomCommissionRequestUseCase } from '../../../application/use-cases/CreateCustomCommissionRequestUseCase';
 import { ListCustomCommissionRequestsUseCase } from '../../../application/use-cases/ListCustomCommissionRequestsUseCase';
 import { Role } from '../../../domain/Role';
 import { CustomCommissionRequestApiController } from '../../controllers/CustomCommissionRequestApiController';
 import { apiAuthMiddleware, requireRoles } from '../../middlewares/auth';
+import customCommissionRequestLimiter from '../../middlewares/customCommissionRequestLimiter';
+import { customCommissionRequestValidators } from '../../middlewares/validators/customCommissionRequestValidators';
 import { SequelizeCustomCommissionRequestRepository } from '../../repositories/SequelizeCustomCommissionRequestRepository';
+import { SequelizeProductRepository } from '../../repositories/SequelizeProductRepository';
 
 const router = Router();
 const repository = new SequelizeCustomCommissionRequestRepository();
+const products = new SequelizeProductRepository();
 const controller = new CustomCommissionRequestApiController(
+  new CreateCustomCommissionRequestUseCase(repository, undefined, products),
   new ListCustomCommissionRequestsUseCase(repository),
 );
+
+const handleCommissionValidationErrors = (req: Request, res: Response, next: NextFunction): void => {
+  const errors = validationResult(req);
+  if (errors.isEmpty()) return next();
+  res.status(400).json({ errors: errors.array().map(({ msg }) => ({ msg })) });
+};
 
 /**
  * @openapi
  * /custom-commission-requests:
+ *   post:
+ *     summary: Submit a custom commission request
+ *     tags: [Custom commission requests]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content: { 'application/json': { schema: { $ref: '#/components/schemas/CustomCommissionRequestInput' } } }
+ *     responses:
+ *       '201':
+ *         description: Receipt metadata only.
+ *         content: { 'application/json': { schema: { $ref: '#/components/schemas/CustomCommissionRequestReceipt' } } }
+ *       '400': { description: Invalid input or selected product does not exist. }
+ *       '429': { description: Per-IP request limit exceeded. }
+ *       '500': { description: Request could not be saved. }
  *   get:
  *     summary: List unexpired custom commission requests
  *     tags: [Custom commission requests]
@@ -30,6 +57,13 @@ const controller = new CustomCommissionRequestApiController(
  *       '401': { description: Not authenticated. }
  *       '403': { description: Authenticated but not ADMIN or STAFF. }
  */
+router.post(
+  '/',
+  customCommissionRequestLimiter,
+  customCommissionRequestValidators,
+  handleCommissionValidationErrors,
+  controller.create,
+);
 router.get('/', apiAuthMiddleware, requireRoles(Role.ADMIN, Role.STAFF), controller.list);
 
 export default router;
