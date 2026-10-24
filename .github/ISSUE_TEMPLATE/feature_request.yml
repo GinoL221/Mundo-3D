@@ -1,0 +1,45 @@
+name: Feature request
+description: Propose a product or developer-experience improvement.
+title: '[Feature]: '
+labels:
+  - 'type:feature'
+body:
+  - type: checkboxes
+    id: duplicate-search
+    attributes:
+      label: Existing requests
+      description: Search open and closed issues before submitting.
+      options:
+        - label: I searched existing issues and did not find a duplicate.
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What problem would this solve, and who experiences it?
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed solution
+      description: Describe the behavior you would like to see.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: List observable outcomes that would demonstrate the request is complete.
+      placeholder: |
+        - ...
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and additional context
+      description: Note alternatives considered, constraints, or useful references.
+    validations:
+      required: false

@@ -1,0 +1,60 @@
+name: Dependency maintenance
+description: Propose or report a dependency or build-tooling maintenance change.
+title: '[Dependency]: '
+labels:
+  - 'type:chore'
+body:
+  - type: checkboxes
+    id: duplicate-search
+    attributes:
+      label: Existing requests
+      description: Search open and closed issues before submitting.
+      options:
+        - label: I searched existing issues and did not find a duplicate.
+          required: true
+  - type: input
+    id: package
+    attributes:
+      label: Package or tool
+      description: Identify the affected dependency or build tool.
+      placeholder: package-name
+    validations:
+      required: true
+  - type: input
+    id: current-version
+    attributes:
+      label: Current version
+      description: Provide the version currently resolved by the project, if known.
+      placeholder: 1.2.3
+    validations:
+      required: false
+  - type: input
+    id: proposed-version
+    attributes:
+      label: Proposed version
+      description: Provide the target version, if known.
+      placeholder: 2.0.0
+    validations:
+      required: false
+  - type: input
+    id: advisory-or-reference
+    attributes:
+      label: Advisory or reference
+      description: Link a relevant advisory, release note, or upstream issue, if applicable.
+      placeholder: https://...
+    validations:
+      required: false
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale and impact
+      description: Explain why this change is needed and any compatibility or operational impact.
+    validations:
+      required: true
+  - type: textarea
+    id: validation-plan
+    attributes:
+      label: Validation plan
+      description: Describe the checks needed to verify the change without weakening existing security or quality gates.
+    validations:
+      required: true
