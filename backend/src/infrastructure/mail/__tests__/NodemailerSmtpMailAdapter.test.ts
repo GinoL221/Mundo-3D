@@ -1,4 +1,11 @@
-const { NodemailerSmtpMailAdapter, SmtpTransportFailure } =
+const mockCreateTransport = jest.fn();
+
+jest.mock('nodemailer', () => ({
+  __esModule: true,
+  default: { createTransport: mockCreateTransport },
+}));
+
+const { NodemailerSmtpMailAdapter, SmtpTransportFailure, createNodemailerSmtpMailAdapter } =
   require('../NodemailerSmtpMailAdapter') as {
     NodemailerSmtpMailAdapter: new (input: {
       transport: { sendMail: (message: unknown) => Promise<void> };
@@ -12,6 +19,21 @@ const { NodemailerSmtpMailAdapter, SmtpTransportFailure } =
       }): Promise<void>;
     };
     SmtpTransportFailure: new (outcome: 'smtp_failed') => Error;
+    createNodemailerSmtpMailAdapter: (config: {
+      host: string;
+      port: number;
+      secure: boolean;
+      user: string | undefined;
+      password: string | undefined;
+      from: string;
+    }) => {
+      sendEmailConfirmation(intent: {
+        to: string;
+        confirmationUrl: string;
+        expiresAt: Date;
+        idempotencyKey: string;
+      }): Promise<void>;
+    };
   };
 
 const intent = {
@@ -54,6 +76,40 @@ describe('NodemailerSmtpMailAdapter', () => {
     );
     await expect(adapter.sendEmailConfirmation(intent)).rejects.not.toThrow(
       /ECONNREFUSED|secret|ana@example.com/,
+    );
+  });
+});
+
+describe('createNodemailerSmtpMailAdapter', () => {
+  beforeEach(() => {
+    mockCreateTransport.mockReset();
+  });
+
+  it('maps SMTP configuration to the Nodemailer transport without opening a network connection', async () => {
+    const transport = { sendMail: jest.fn().mockResolvedValue(undefined) };
+    mockCreateTransport.mockReturnValue(transport);
+    const config = {
+      host: 'smtp.example.com',
+      port: 587,
+      secure: false,
+      user: 'smtp-user',
+      password: 'smtp-password',
+      from: 'Mundo-3D <no-reply@example.com>',
+    };
+
+    const adapter = createNodemailerSmtpMailAdapter(config);
+
+    expect(mockCreateTransport).toHaveBeenCalledTimes(1);
+    expect(mockCreateTransport).toHaveBeenCalledWith({
+      host: 'smtp.example.com',
+      port: 587,
+      secure: false,
+      auth: { user: 'smtp-user', pass: 'smtp-password' },
+    });
+
+    await adapter.sendEmailConfirmation(intent);
+    expect(transport.sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({ from: config.from, to: intent.to }),
     );
   });
 });
