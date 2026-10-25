@@ -1,0 +1,23 @@
+# GitHub Actions Node 24 Runtime Maintenance
+
+Goal: update the four affected action pins to releases whose action metadata declares `node24`, keeping immutable full-SHA pins.
+Delivery: standalone `chore/github-actions-node24` PR to `main`, `Refs #156`; preserve #180–#182 and do not merge or manually rerun CI.
+
+## Specs
+1. **S1** — User confirmation of proposed standalone maintenance PR: “lo hacemos?” / “si”.
+2. **S2** — User delegated the related approved-issue selection: “revisaka vos, no puedo confirmarte”.
+
+## Tasks
+- **T1 (S1-S2; inline; commit: pending):** Update `actions/checkout`, `pnpm/action-setup`, `actions/setup-node`, and `actions/upload-artifact` to verified Node 24-compatible immutable full-SHA pins in `.github/workflows/ci.yml`; preserve workflow behavior and configured project runtimes; verify, commit, push, open the PR, and observe automatically triggered CI (no merge/manual rerun).
+
+## Log
+- **L1:** “lo hacemos?”
+- **L2:** “si”
+- **L3:** “revisaka vos, no puedo confirmarte”
+- **L4:** Issue selection: #156 is approved and concerns CI modernization; its acceptance requires action/image references remain immutable. Use non-closing `Refs #156`. #154 explicitly treats action/container pinning as a non-goal.
+- **L5:** Target: `GinoL221/Mundo-3D`, default branch `main`; local and remote main both resolve to `d6df8c6ea3c751f88567f970ca2288817965cdf9`.
+- **L6:** `.github/workflows/ci.yml` contains the four warned actions; official pinned-tag `action.yml` metadata confirms Node 24 for checkout v5.1.0, setup-node v5.0.0, upload-artifact v6.0.0, and pnpm/action-setup v6.1.0. Selected commits are checkout `fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09`, setup-node `a0853c24544627f65ddf259abe73b1d18a591444`, upload-artifact `b7c566a772e6b6bfb58ed0dc250532a479d7789f`, pnpm/action-setup `ea17c68df8912ef543352723c149a84f56e3d413`.
+- **L7:** Local static checks passed: `actionlint .github/workflows/ci.yml`; an explicit structural assertion confirmed 11 new full-SHA uses, no four old SHA values, `node-version: 22` ×3, pnpm `11.0.9` ×3, and 14-day artifact retention unchanged; `git diff --check` passed.
+- **L8:** Independent `gentle-ai-verify` verified each exact SHA against the upstream tag and pinned `action.yml` (`runs.using: node24`), confirmed only the four actions changed and all job topology, options, and inputs remain unchanged. PASS for S1/S2. It performed no mutations or delivery operations; repository CI has not run yet.
+- **L9:** To enable the normal commit hook in this isolated worktree, `pnpm install --offline --frozen-lockfile` completed in 3.8s using pnpm 11.0.9; the lockfile was current, all 890 packages were reused, and 0 were downloaded. The workspace's `minimumReleaseAge: 10080`, `trustPolicy: no-downgrade`, and `ignoreScripts: true` remained in effect. Follow-up `git status`/`git diff` confirmed `package.json`, `pnpm-workspace.yaml`, and `pnpm-lock.yaml` unchanged.
+- **L10:** Native Gentle ASSESS returned `risk: unassessable` because the task document was untracked and had no candidate (`RDD on`). Its plan required writer self-verification and an independent verifier; both were completed. No native review lineage was started.
