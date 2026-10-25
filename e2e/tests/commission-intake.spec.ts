@@ -1,7 +1,6 @@
 import { test, expect, type Page, type Route } from '@playwright/test';
 import { homeProducts } from '../fixtures/homeProducts.js';
 
-const APP_ORIGIN = 'http://127.0.0.1:4323';
 const COMMISSION_REQUEST_PATH = '/api/custom-commission-requests';
 const JSON_HEADERS = {
   'cache-control': 'no-store',
@@ -43,7 +42,7 @@ async function setSessionRole(page: Page, idRole: number | null): Promise<void> 
           idRole,
         }),
       ),
-      url: APP_ORIGIN,
+      url: new URL(page.url()).origin,
     },
   ]);
 }
@@ -54,6 +53,7 @@ test('visitor submits from the home CTA; STAFF/ADMIN can read while USER/guest a
   const protectedReadRoles: ActiveRole[] = [];
   const unexpectedApiRequests: string[] = [];
   const blockedExternalRequests: string[] = [];
+  let appOrigin: string | null = null;
   let activeRole: ActiveRole = 'VISITOR';
   let submissionCount = 0;
   let submissionPayload: unknown;
@@ -62,9 +62,15 @@ test('visitor submits from the home CTA; STAFF/ADMIN can read while USER/guest a
     const request = route.request();
     const url = new URL(request.url());
 
-    if (url.origin === APP_ORIGIN) {
-      await route.continue();
-      return;
+    if (
+      !appOrigin &&
+      request.isNavigationRequest() &&
+      request.frame() === page.mainFrame() &&
+      url.pathname === '/' &&
+      url.protocol === 'http:' &&
+      (url.hostname === 'localhost' || url.hostname === '127.0.0.1')
+    ) {
+      appOrigin = url.origin;
     }
 
     if (url.pathname.startsWith('/api/')) {
@@ -95,6 +101,11 @@ test('visitor submits from the home CTA; STAFF/ADMIN can read while USER/guest a
 
       unexpectedApiRequests.push(`${request.method()} ${url.pathname}`);
       await fulfillJson(route, 404, { error: 'Unexpected API request in isolated commission E2E' });
+      return;
+    }
+
+    if (url.origin === appOrigin) {
+      await route.continue();
       return;
     }
 
