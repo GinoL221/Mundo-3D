@@ -2,18 +2,20 @@
 
 This record is the review input for immutable CI dependencies. Renovate may propose updates, but it is configured never to merge them; a maintainer must verify the publisher, exact value, evidence, and platform intent in the PR.
 
-**Retrieved:** 2026-09-18 UTC
+**Retrieved:** Existing entries 2026-09-18 UTC; `actions/cache` v6.1.0 verified 2026-10-25 UTC.
 
 ## Approved GitHub Actions
 
-All values retain the workflow's existing v4 major behavior. GitHub's official tag-ref API maps each named release tag to the listed complete commit, and the corresponding official GitHub commit API reports `verification.verified: true` with `reason: valid` and a PGP signature.
+PR #183 migrated four other workflow actions to Node 24; this change refreshes only `actions/cache`. The remaining provenance entries still record their pre-#183 values and are deferred to a separate update.
+
+GitHub's official tag-ref API maps each named release tag to the listed complete commit, and the corresponding official GitHub commit API reports `verification.verified: true` with `reason: valid` and a PGP signature.
 
 | Action                    | Intended release | Immutable commit                           | Official source and evidence                                                                                                                                                                                                                                       |
 | ------------------------- | ---------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `actions/checkout`        | `v4.2.2`         | `11bd71901bbe5b1630ceea73d27597364c9af683` | [tag ref](https://api.github.com/repos/actions/checkout/git/ref/tags/v4.2.2), [verified commit](https://api.github.com/repos/actions/checkout/commits/11bd71901bbe5b1630ceea73d27597364c9af683)                                                                    |
 | `pnpm/action-setup`       | `v4.1.0`         | `a7487c7e89a18df4991f7f222e4898a00d66ddda` | [signed annotated tag](https://api.github.com/repos/pnpm/action-setup/git/tags/7088e561eb65bb68695d245aa206f005ef30921d) (valid PGP signature), [verified commit](https://api.github.com/repos/pnpm/action-setup/commits/a7487c7e89a18df4991f7f222e4898a00d66ddda) |
 | `actions/setup-node`      | `v4.4.0`         | `49933ea5288caeca8642d1e84afbd3f7d6820020` | [tag ref](https://api.github.com/repos/actions/setup-node/git/ref/tags/v4.4.0), [verified commit](https://api.github.com/repos/actions/setup-node/commits/49933ea5288caeca8642d1e84afbd3f7d6820020)                                                                |
-| `actions/cache`           | `v4.2.4`         | `0400d5f644dc74513175e3cd8d07132dd4860809` | [tag ref](https://api.github.com/repos/actions/cache/git/ref/tags/v4.2.4), [verified commit](https://api.github.com/repos/actions/cache/commits/0400d5f644dc74513175e3cd8d07132dd4860809)                                                                          |
+| `actions/cache`           | `v6.1.0`         | `55cc8345863c7cc4c66a329aec7e433d2d1c52a9` | [tag ref](https://api.github.com/repos/actions/cache/git/ref/tags/v6.1.0), [verified commit](https://api.github.com/repos/actions/cache/commits/55cc8345863c7cc4c66a329aec7e433d2d1c52a9)                                                                          |
 | `actions/upload-artifact` | `v4.6.2`         | `ea165f8d65b6e75b540449e92b4886f43607fa02` | [tag ref](https://api.github.com/repos/actions/upload-artifact/git/ref/tags/v4.6.2), [verified commit](https://api.github.com/repos/actions/upload-artifact/commits/ea165f8d65b6e75b540449e92b4886f43607fa02)                                                      |
 
 ## Approved MySQL image

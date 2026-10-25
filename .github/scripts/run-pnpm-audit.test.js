@@ -80,6 +80,27 @@ test('workflow uses immutable references and preserves the verification foundati
   validateWorkflow(workflow());
 });
 
+test('Playwright cache uses the Node 24 pin without changing its cache contract', () => {
+  const source = workflow();
+  const cacheStep = source.match(
+    /- name: Cache Playwright browsers\n([\s\S]*?)(?=\n\s*- name: Install Playwright Browsers)/,
+  );
+
+  assert.ok(cacheStep, 'expected the Playwright browser cache step');
+  assert.match(
+    cacheStep[0],
+    /^\s+uses: actions\/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6\.1\.0$/m,
+  );
+  assert.match(cacheStep[0], /id: playwright-cache/);
+  assert.match(cacheStep[0], /path: ~\/\.cache\/ms-playwright/);
+  assert.match(
+    cacheStep[0],
+    /key: \$\{\{ runner\.os \}\}-playwright-\$\{\{ steps\.pw\.outputs\.v \}\}-pw1228/,
+  );
+  assert.match(source, /steps\.playwright-cache\.outputs\.cache-hit != 'true'/);
+  assert.match(source, /steps\.playwright-cache\.outputs\.cache-hit == 'true'/);
+});
+
 test('mutable action references and invalid MySQL digests are rejected', () => {
   const source = workflow();
   assert.throws(() => validateWorkflow(source.replace(/@[a-f0-9]{40}/, '@v4')));
