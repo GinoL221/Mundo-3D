@@ -28,7 +28,7 @@ function workflow() {
 }
 
 function validateWorkflow(source) {
-  const actionReferences = [...source.matchAll(/^\s*-?\s*uses:\s+[^@\s]+@([^\s]+)$/gm)].map(
+  const actionReferences = [...source.matchAll(/^\s*-?\s*uses:\s+[^@\s]+@([^\s]+)(?:\s+#.*)?\s*$/gm)].map(
     (match) => match[1],
   );
   assert.ok(actionReferences.length >= 11, 'expected every current workflow action use');
@@ -83,5 +83,6 @@ test('workflow uses immutable references and preserves the verification foundati
 test('mutable action references and invalid MySQL digests are rejected', () => {
   const source = workflow();
   assert.throws(() => validateWorkflow(source.replace(/@[a-f0-9]{40}/, '@v4')));
+  assert.throws(() => validateWorkflow(source.replace(/@[a-f0-9]{40}/, '@v4#suffix')));
   assert.throws(() => validateWorkflow(source.replace(/[a-f0-9]{64}/, 'not-a-digest')));
 });
