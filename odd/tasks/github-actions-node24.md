@@ -8,7 +8,7 @@ Delivery: standalone `chore/github-actions-node24` PR to `main`, `Refs #156`; pr
 2. **S2** — User delegated the related approved-issue selection: “revisaka vos, no puedo confirmarte”.
 
 ## Tasks
-- **T1 (S1-S2; inline; commit: pending):** Update `actions/checkout`, `pnpm/action-setup`, `actions/setup-node`, and `actions/upload-artifact` to verified Node 24-compatible immutable full-SHA pins in `.github/workflows/ci.yml`; preserve workflow behavior and configured project runtimes; verify, commit, push, open the PR, and observe automatically triggered CI (no merge/manual rerun).
+- **T1 (S1-S2; inline; work-unit commit: `223c798f1bf127672aeb4b55cee5160f31d648a9`):** Update `actions/checkout`, `pnpm/action-setup`, `actions/setup-node`, and `actions/upload-artifact` to verified Node 24-compatible immutable full-SHA pins in `.github/workflows/ci.yml`; preserve workflow behavior and configured project runtimes; verify, commit, push, open the PR, and observe automatically triggered CI (no merge/manual rerun).
 
 ## Log
 - **L1:** “lo hacemos?”
@@ -21,3 +21,4 @@ Delivery: standalone `chore/github-actions-node24` PR to `main`, `Refs #156`; pr
 - **L8:** Independent `gentle-ai-verify` verified each exact SHA against the upstream tag and pinned `action.yml` (`runs.using: node24`), confirmed only the four actions changed and all job topology, options, and inputs remain unchanged. PASS for S1/S2. It performed no mutations or delivery operations; repository CI has not run yet.
 - **L9:** To enable the normal commit hook in this isolated worktree, `pnpm install --offline --frozen-lockfile` completed in 3.8s using pnpm 11.0.9; the lockfile was current, all 890 packages were reused, and 0 were downloaded. The workspace's `minimumReleaseAge: 10080`, `trustPolicy: no-downgrade`, and `ignoreScripts: true` remained in effect. Follow-up `git status`/`git diff` confirmed `package.json`, `pnpm-workspace.yaml`, and `pnpm-lock.yaml` unchanged.
 - **L10:** Native Gentle ASSESS returned `risk: unassessable` because the task document was untracked and had no candidate (`RDD on`). Its plan required writer self-verification and an independent verifier; both were completed. No native review lineage was started.
+- **L11:** Work-unit commit `223c798f1bf127672aeb4b55cee5160f31d648a9` (`ci(actions): migrate pinned actions to Node 24`) passed the normal pre-commit hook: `pnpm -r lint` and frontend `quality:check`.
