@@ -2,7 +2,7 @@
 
 Goal: remove the remaining GitHub Actions Node 20 warning by migrating only `actions/cache` to a verified Node 24-compatible immutable release.
 Delivery: separate `chore/actions-cache-node24` PR to `main`; no merge or manual CI reruns.
-Status: issue #184 is open and approved after the user's explicit authorization; local implementation is complete and natively reviewed, and PR publication is in progress.
+Status: issue #184 is open and approved after the user's explicit authorization; local implementation is complete and natively reviewed, and the user selected `Closes #184` for the PR.
 
 ## Specs
 1. **S1** — User request: “corregimos ahora el aviso de node 20?”
@@ -16,7 +16,7 @@ Status: issue #184 is open and approved after the user's explicit authorization;
 - **T2 (S3; wait; commit: n/a):** Wait until #184 carries `status:approved` before PR publication. The user explicitly authorized applying it through the current ADMIN account; target readback confirmed the label (L27). This wait is complete.
 - **T3 (S2; inline; commit: `7c6d9a5`):** Implement and verify the cache-only Node 24 change; the required native committed-range review is approved and acknowledged (L25-L26).
 - **T4 (S2-S3; inline; commit: `7d7f610`):** Finalize the PR candidate record and verify the designated worktree contains only the intended cache work; preserve unrelated task-log changes.
-- **T5 (S2-S3; inline; commit: n/a):** Push the authorized branch and publish a separate PR linked to approved issue #184 with exactly one matching `type:*` label; allow automatic CI only. Do not merge or manually rerun CI.
+- **T5 (S2-S3; inline; commit: n/a):** Push the authorized branch and publish a separate PR using the user-selected `Closes #184` reference and exactly one matching `type:*` label; allow automatic CI only. Do not merge or manually rerun CI.
 
 ## Log
 - **L1:** “corregimos ahora el aviso de node 20?”
@@ -48,3 +48,5 @@ Status: issue #184 is open and approved after the user's explicit authorization;
 - **L27:** User said “dale lo hacemos” in response to the explicit proposal to apply `status:approved` to #184. The current `GinoL221` account has ADMIN permission; applied the label and target-host readback confirmed #184 remains OPEN with `status:approved` and `type:chore`. No PR, push, merge, or manual CI rerun occurred.
 - **L28:** Reconciled the working tree using the explicit designated path `/home/ginopc/Desarrollo/Mundo-3D-worktrees/actions-node24-maintenance` on branch `chore/actions-cache-node24` at `7c6d9a5`. Only the cache task record and the separate pre-existing Node 24 task log are modified; `git diff --check` passes. Preserve the Node 24 task log and unrelated changes outside this worktree.
 - **L29:** Committed the finalized cache candidate record as `7d7f610` (`docs(odd): finalize cache PR candidate record`); the normal pre-commit backend/frontend lint and frontend quality check passed. Native ASSESS of this one-path, 14-line documentation commit returned `passive`, `reviewDue: false`, with structural readback as the complete check. The full task record was read back, and explicit worktree status confirms only the unrelated Node 24 task log remains modified. T4 is complete; T5 is now in progress. No push or PR has occurred yet.
+- **L30:** The repository's PR template requires a human-selected closing (`Closes #N`/`Fixes #N`/`Resolves #N`) or nonclosing (`Refs #N`) issue reference; S2 only authorizes linking #184. Before publication, asked the user to choose `Closes #184` or `Refs #184`. No push or PR has occurred.
+- **L31:** User selected “Closes #184” for the PR. This resolves the issue-reference decision; PR publication can proceed under the earlier authorization. No push or PR has occurred yet.
