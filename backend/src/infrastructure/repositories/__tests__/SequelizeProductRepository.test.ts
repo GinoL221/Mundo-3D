@@ -1,7 +1,7 @@
 import { QueryTypes, Op, WhereOptions } from 'sequelize';
 import { SequelizeProductRepository } from '../SequelizeProductRepository';
 import db, { ProductInstance } from '../../../database/models/db';
-import { TransactionContext } from '../../../domain/ports/UnitOfWorkPort';
+import { SequelizeUnitOfWork } from '../../persistence/SequelizeUnitOfWork';
 
 jest.mock('../../../database/models/db', () => ({
   Product: {
@@ -15,6 +15,7 @@ jest.mock('../../../database/models/db', () => ({
   Category: {},
   Franchise: {},
   sequelize: {
+    transaction: jest.fn(),
     query: jest.fn(),
   },
 }));
@@ -555,7 +556,10 @@ describe('SequelizeProductRepository', () => {
     // under MySQL's REPEATABLE READ isolation (design.md's explicit warning).
     describe('optional transaction parameter (orders-checkout)', () => {
       it('passes the transaction through to the atomic UPDATE and the tx-scoped follow-up read when provided', async () => {
-        const mockTx = { id: 'fake-tx' } as unknown as TransactionContext;
+        const mockTx = { id: 'fake-tx' };
+        (db.sequelize.transaction as jest.Mock).mockImplementation(
+          async (work: (tx: object) => Promise<unknown>) => work(mockTx)
+        );
         mockSequelizeQuery.mockResolvedValueOnce([undefined, 1]);
         const mockFetchedInstance = {
           idProduct: 1,
@@ -569,7 +573,9 @@ describe('SequelizeProductRepository', () => {
         };
         jest.mocked(db.Product.findByPk).mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
 
-        const result = await repository.adjustStock(1, 3, mockTx);
+        const result = await new SequelizeUnitOfWork().runInTransaction((tx) =>
+          repository.adjustStock(1, 3, tx)
+        );
 
         expect(mockSequelizeQuery).toHaveBeenCalledWith(
           expect.any(String),

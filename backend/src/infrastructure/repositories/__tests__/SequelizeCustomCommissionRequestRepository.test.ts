@@ -2,6 +2,15 @@ import { Op } from 'sequelize';
 import db from '../../../database/models/db';
 import { SequelizeCustomCommissionRequestRepository } from '../SequelizeCustomCommissionRequestRepository';
 
+jest.mock('dotenv', () => {
+  throw new Error('Commission repository tests must not load dotenv');
+});
+
+jest.mock('../../../database/models/db', () => ({
+  __esModule: true,
+  default: { CustomCommissionRequest: { create: jest.fn(), findAll: jest.fn(), destroy: jest.fn() } },
+}));
+
 describe('SequelizeCustomCommissionRequestRepository', () => {
   const repository = new SequelizeCustomCommissionRequestRepository();
 

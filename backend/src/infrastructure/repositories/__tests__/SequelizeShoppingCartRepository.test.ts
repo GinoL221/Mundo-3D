@@ -3,6 +3,7 @@ import { SequelizeShoppingCartRepository } from '../SequelizeShoppingCartReposit
 import db, { ShoppingCartInstance, ProductInstance } from '../../../database/models/db';
 import { CartStatus } from '../../../domain/entities/ShoppingCart';
 import { TransactionContext } from '../../../domain/ports/UnitOfWorkPort';
+import { withScopedTransaction } from '../../persistence/scopedTransactionContext';
 
 jest.mock('../../../database/models/db', () => ({
   ShoppingCart: {
@@ -50,7 +51,9 @@ describe('SequelizeShoppingCartRepository', () => {
         },
       ];
 
-      jest.mocked(db.ShoppingCart.findAll).mockResolvedValue(mockInstances as unknown as ShoppingCartInstance[]);
+      jest
+        .mocked(db.ShoppingCart.findAll)
+        .mockResolvedValue(mockInstances as unknown as ShoppingCartInstance[]);
 
       const result = await repository.findByUserId(5);
 
@@ -63,17 +66,17 @@ describe('SequelizeShoppingCartRepository', () => {
       expect(result[0].idUser).toBe(5);
       expect(result[0].idProduct).toBe(10);
       expect(result[0].quantity).toBe(3);
-      expect(result[0].unitPrice).toBe(15.50);
+      expect(result[0].unitPrice).toBe(15.5);
       expect(result[0].status).toBe(CartStatus.ACTIVE);
       expect(result[0].product).toBeDefined();
       expect(result[0].product?.idProduct).toBe(10);
       expect(result[0].product?.nameProduct).toBe('Awesome 3D Print');
-      expect(result[0].product?.price).toBe(15.50);
+      expect(result[0].product?.price).toBe(15.5);
 
       // Legacy compatibility assertions
       expect(result[0].product?.IDProduct).toBe(10);
       expect(result[0].product?.NameProduct).toBe('Awesome 3D Print');
-      expect(result[0].product?.Price).toBe(15.50);
+      expect(result[0].product?.Price).toBe(15.5);
     });
 
     it('should map to ShoppingCart entity without product details if product is undefined/null', async () => {
@@ -89,7 +92,9 @@ describe('SequelizeShoppingCartRepository', () => {
         },
       ];
 
-      jest.mocked(db.ShoppingCart.findAll).mockResolvedValue(mockInstances as unknown as ShoppingCartInstance[]);
+      jest
+        .mocked(db.ShoppingCart.findAll)
+        .mockResolvedValue(mockInstances as unknown as ShoppingCartInstance[]);
 
       const result = await repository.findByUserId(5);
 
@@ -164,7 +169,7 @@ describe('SequelizeShoppingCartRepository', () => {
           unitPrice: 15,
           cartStatus: 'ACTIVE',
         },
-        { transaction: mockTx }
+        { transaction: mockTx },
       );
       expect(db.ShoppingCart.create).toHaveBeenNthCalledWith(
         2,
@@ -175,7 +180,7 @@ describe('SequelizeShoppingCartRepository', () => {
           unitPrice: 30,
           cartStatus: 'ACTIVE',
         },
-        { transaction: mockTx }
+        { transaction: mockTx },
       );
       expect(mockTx.commit).toHaveBeenCalled();
       expect(mockTx.rollback).not.toHaveBeenCalled();
@@ -251,17 +256,55 @@ describe('SequelizeShoppingCartRepository', () => {
 
     it('locks only ShoppingCart rows (no include) then reads Product names/stock in a second, non-locking query', async () => {
       const mockCartInstances = [
-        { idCart: 1, idUser: 5, idProduct: 10, quantity: 2, unitPrice: '15.50', cartStatus: 'ACTIVE' },
-        { idCart: 2, idUser: 5, idProduct: 20, quantity: 1, unitPrice: '30.00', cartStatus: 'ACTIVE' },
+        {
+          idCart: 1,
+          idUser: 5,
+          idProduct: 10,
+          quantity: 2,
+          unitPrice: '15.50',
+          cartStatus: 'ACTIVE',
+        },
+        {
+          idCart: 2,
+          idUser: 5,
+          idProduct: 20,
+          quantity: 1,
+          unitPrice: '30.00',
+          cartStatus: 'ACTIVE',
+        },
       ];
       const mockProductInstances = [
-        { idProduct: 10, nameProduct: 'Figure A', price: '15.50', descriptionProduct: null, image: null, idCategory: 1, idFranchise: 1 },
-        { idProduct: 20, nameProduct: 'Figure B', price: '30.00', descriptionProduct: null, image: null, idCategory: 1, idFranchise: 1 },
+        {
+          idProduct: 10,
+          nameProduct: 'Figure A',
+          price: '15.50',
+          descriptionProduct: null,
+          image: null,
+          idCategory: 1,
+          idFranchise: 1,
+        },
+        {
+          idProduct: 20,
+          nameProduct: 'Figure B',
+          price: '30.00',
+          descriptionProduct: null,
+          image: null,
+          idCategory: 1,
+          idFranchise: 1,
+        },
       ];
-      jest.mocked(db.ShoppingCart.findAll).mockResolvedValueOnce(mockCartInstances as unknown as ShoppingCartInstance[]);
-      jest.mocked(db.Product.findAll).mockResolvedValueOnce(mockProductInstances as unknown as ProductInstance[]);
+      jest
+        .mocked(db.ShoppingCart.findAll)
+        .mockResolvedValueOnce(mockCartInstances as unknown as ShoppingCartInstance[]);
+      jest
+        .mocked(db.Product.findAll)
+        .mockResolvedValueOnce(mockProductInstances as unknown as ProductInstance[]);
 
-      const result = await repository.findActiveForUpdate(5, mockTx);
+      const result = await withScopedTransaction(
+        db.sequelize,
+        mockTx as unknown as Transaction,
+        (context) => repository.findActiveForUpdate(5, context),
+      );
 
       const cartCallArgs = jest.mocked(db.ShoppingCart.findAll).mock.calls[0][0];
       expect(cartCallArgs).toEqual(
@@ -269,7 +312,7 @@ describe('SequelizeShoppingCartRepository', () => {
           where: { idUser: 5, cartStatus: 'ACTIVE' },
           transaction: mockTx,
           lock: Transaction.LOCK.UPDATE,
-        })
+        }),
       );
       expect(cartCallArgs).not.toHaveProperty('include');
 
@@ -285,7 +328,11 @@ describe('SequelizeShoppingCartRepository', () => {
     it('returns an empty array and skips the product lookup entirely when the cart has no ACTIVE rows', async () => {
       jest.mocked(db.ShoppingCart.findAll).mockResolvedValueOnce([]);
 
-      const result = await repository.findActiveForUpdate(5, mockTx);
+      const result = await withScopedTransaction(
+        db.sequelize,
+        mockTx as unknown as Transaction,
+        (context) => repository.findActiveForUpdate(5, context),
+      );
 
       expect(result).toEqual([]);
       expect(db.Product.findAll).not.toHaveBeenCalled();
@@ -299,16 +346,22 @@ describe('SequelizeShoppingCartRepository', () => {
     it('issues a pure UPDATE (never DELETE/INSERT) scoped to the given cart ids, user, and ACTIVE status, returning the affected-row count', async () => {
       mockSequelizeQuery.mockResolvedValueOnce([undefined, 2]);
 
-      const affected = await repository.markOrdered(5, [1, 2], mockTx);
+      const affected = await withScopedTransaction(
+        db.sequelize,
+        mockTx as unknown as Transaction,
+        (context) => repository.markOrdered(5, [1, 2], context),
+      );
 
       expect(db.ShoppingCart.destroy).not.toHaveBeenCalled();
       expect(db.ShoppingCart.create).not.toHaveBeenCalled();
       expect(mockSequelizeQuery).toHaveBeenCalledWith(
-        expect.stringMatching(/UPDATE.*ShoppingCart.*SET.*cart_status.*ORDERED.*WHERE.*id_cart.*IN.*id_user.*cart_status.*ACTIVE/is),
+        expect.stringMatching(
+          /UPDATE.*ShoppingCart.*SET.*cart_status.*ORDERED.*WHERE.*id_cart.*IN.*id_user.*cart_status.*ACTIVE/is,
+        ),
         expect.objectContaining({
           replacements: expect.objectContaining({ cartIds: [1, 2], userId: 5 }),
           transaction: mockTx,
-        })
+        }),
       );
       expect(affected).toBe(2);
     });
