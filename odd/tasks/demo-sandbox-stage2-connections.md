@@ -91,6 +91,11 @@ Accepted recommendation: “un header dedicado para las llamadas API de la demo�
 
 Accepted proposal: “Definir cómo se emite y valida una sesión ligada al lease, no solo al `slotId`”, “Probar con mocks el rechazo entre leases distintos y tras la reutilización de un espacio” and “Mantener intacta la autenticación actual y no montar rutas todavía”. Bounded initial cut: access-token contract only; refresh binding remains unimplemented and cannot be claimed safe.
 
+### S17 — Isolated lease-bound refresh contract
+> “si”
+
+Accepted proposal: “un contrato aislado y tests con mocks que rechacen un refresh de otro lease antes de consultar o modificar tokens”, “sin MySQL real ni cambios en rutas”. Lease expiry/reset races remain a separate unresolved integration requirement.
+
 ## Tasks
 
 - [x] T1 — S1–S3: Add deterministic RED tests and implement the explicit per-slot connection factory; route: inline; commit: not authorized.
@@ -144,8 +149,11 @@ Accepted proposal: “Definir cómo se emite y valida una sesión ligada al leas
 - [x] T36 — S3/S15: Test-first isolated lease-header middleware with fail-closed validation; route: inline; commit: f8b0942.
 - [x] T37 — S3/S15: Run safe focused checks and independent verification; route: parent + verifier; commit: f8b0942.
 
-- [ ] T38 — S3/S16: Design and test isolated lease-bound access token; route: inline; commit: not authorized.
-- [ ] T39 — S3/S16: Independent security verification and safe checks; route: verifier; commit: not authorized.
+- [x] T38 — S3/S16: Design and test isolated lease-bound access token; route: inline; commit: 6a872a0.
+- [x] T39 — S3/S16: Independent security verification and safe checks; route: verifier; commit: 6a872a0.
+
+- [ ] T40 — S3/S17: Test-first isolated lease-bound refresh credential contract; route: inline; commit: not authorized.
+- [ ] T41 — S3/S17: Safe focused checks and independent security verification; route: verifier; commit: not authorized.
 
 ## Log
 
@@ -227,4 +235,9 @@ Accepted proposal: “Definir cómo se emite y valida una sesión ligada al leas
 - L70 — Native review `review-13b4a592807fbffa` approved the selected middleware candidate and acknowledgement burned authority; advisory R3-001 at the test is non-blocking and closure gave no further detail. User authorized commit `f8b0942` (`feat(sandbox): add isolated lease header middleware`); workspace lint and frontend quality hooks passed. Jest cache remains untracked and preserved. This post-commit task bookkeeping was not included in the reviewed commit.
 - L71 — User: “si”, approving isolated design and tests for session binding to lease. Explorer identified production access JWTs share audience/type, while refresh tokens have no lease binding. Initial cut is isolated access-token contract only; do not mount, modify production auth, access DB or claim refresh safety. T38–T39 planned; no commit authorization.
 - L72 — RED: isolated token module missing. GREEN: one focused suite/three tests passed with cryptographic JWT operations and test-only secret; TypeScript, targeted ESLint and diff-check passed after formatting. Sandbox audience and type are distinct from production; verification requires externally validated lease/slot context. No middleware/routes/cookies/refresh or DB changed.
-- L73 — Independent verifier `mvzlw5ld-a-t3ab` returned S3/S16 PASS for isolated access-token contract and ran one suite/three tests. Caller must provide freshly validated context; reuse prevention assumes unique lease IDs. Refresh remains unbound. Expired/tampered tokens and several malformed cases were source-reviewed rather than directly exercised. Non-string context can throw outside the verifier catch. Native assess unassessable due undeclared untracked; no native approval. No HTTP, database, actual reset or visitor isolation verified; no commit authorization.
+- L73 — Independent verifier `mvzlw5ld-a-t3ab` returned S3/S16 PASS for isolated access-token contract and ran one suite/three tests. Caller must provide freshly validated context; reuse prevention assumes unique lease IDs. Refresh remains unbound. Expired/tampered tokens and several malformed cases were source-reviewed rather than directly exercised. Non-string context can throw outside the verifier catch. Native assess was unassessable due undeclared untracked. No HTTP, database, actual reset or visitor isolation verified.
+- L74 — Native review `review-60fbfd2e95b2f4f3` approved and exact acknowledgement burned authority. Advisory R3-001 at the token test was non-blocking; the closure gave no further detail. User authorized commit `6a872a0` (`feat(sandbox): bind access tokens to leases`); workspace lint and frontend quality hooks passed. This post-commit task bookkeeping is uncommitted and was not in the reviewed candidate. The worktree-local Jest cache remains untracked and preserved.
+- L75 — User: “si”, approving isolated refresh credential binding and mock tests, without real MySQL or route changes. Existing refresh persists no lease ID; active lease/reset concurrency is not solved by a one-time validation and remains an explicit blocker to visitor routing. T40–T41 planned; no commit authorization.
+- L76 — RED: refresh credential module absent. GREEN: one isolated suite/three tests, TypeScript, targeted ESLint and diff-check passed. The initial signed envelope carried an existing opaque token in its readable JWT payload. The wrapper rejected lease mismatches before calling refresh. No wiring into issuance, rotation, routes or DB.
+- L77 — Independent verifier `mvzudksi-2-c5xj` found HIGH integration blocker: the raw bearer could be extracted from the signed payload and bypass envelope restrictions wherever the inner bearer was accepted. No current production exploit was established; prototype is unmounted. Correction RED reproduced payload exposure and callback receiving the inner token. Second RED covered replacing caller-provided token material with a freshly generated nonce. Corrected contract generates a nonce internally and passes the complete signed credential to the refresh callback. GREEN: one suite/four tests, TypeScript, targeted ESLint and diff-check passed. Caller-provided lease freshness, consistent full-token storage/rotation, and reset fencing remain unproven.
+- L78 — Targeted independent verifier `mvzulzp8-3-w8q7` returned S3/S17 PASS for the isolated contract; previous extractable-bearer blocker resolved. It ran one focused suite/four tests. Full-token hashing during issuance/rotation, freshness and reset fencing, replay/revocation, family deadlines and avoiding legacy bypass are prerequisites, not demonstrated. Native assessment unassessable because untracked files require declaration; no native approval. No HTTP, real DB, full suite or commit.
