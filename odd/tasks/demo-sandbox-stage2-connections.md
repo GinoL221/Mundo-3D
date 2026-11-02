@@ -81,6 +81,11 @@ Accepted bounded cut: “validar y renovar leases en el plano de control”, con
 
 Accepted recommendation: “corregir primero el problema de timestamps, sin conectar rutas ni usar MySQL”.
 
+### S15 — Isolated lease header middleware
+> “lo hacemos”
+
+Accepted recommendation: “un header dedicado para las llamadas API de la demo” and “middleware aislado y con mocks, sin conectarlo todavía a las rutas”. No MySQL or `.env` access; no visitor-isolation claim.
+
 ## Tasks
 
 - [x] T1 — S1–S3: Add deterministic RED tests and implement the explicit per-slot connection factory; route: inline; commit: not authorized.
@@ -123,13 +128,16 @@ Accepted recommendation: “corregir primero el problema de timestamps, sin cone
 - [x] T29 — S3/S12: Document and run safe mock-only checks; route: inline; commit: not authorized.
 - [x] T30 — S3/S12: Independent verification; route: verifier; commit: not authorized.
 
-- [ ] T31 — S3/S13: Test-first lease activity persistence and application validation; route: inline; commit: not authorized.
-- [ ] T32 — S3/S13: Run safe focused checks and independent verification; report limitations; route: parent + verifier; commit: not authorized.
+- [x] T31 — S3/S13: Test-first lease activity persistence and application validation; route: inline; commit: 83ebbc2.
+- [x] T32 — S3/S13: Run safe focused checks and independent verification; report limitations; route: parent + verifier; commit: 83ebbc2.
 
-- [ ] T33 — S3/S14: Reproduce and correct out-of-order activity timestamps; route: inline; commit: not authorized.
-- [ ] T34 — S3/S14: Run safe checks and independent verification of the corrected candidate; route: parent + verifier; commit: not authorized.
+- [x] T33 — S3/S14: Reproduce and correct out-of-order activity timestamps; route: inline; commit: 83ebbc2.
+- [x] T34 — S3/S14: Run safe checks and independent verification of the corrected candidate; route: parent + verifier; commit: 83ebbc2.
 
-- [ ] T35 — S3/S13: Correct stale authorization time after waiting for the row lock; route: inline; commit: not authorized.
+- [x] T35 — S3/S13: Correct stale authorization time after waiting for the row lock; route: inline; commit: 83ebbc2.
+
+- [ ] T36 — S3/S15: Test-first isolated lease-header middleware with fail-closed validation; route: inline; commit: not authorized.
+- [ ] T37 — S3/S15: Run safe focused checks and independent verification; route: parent + verifier; commit: not authorized.
 
 ## Log
 
@@ -203,4 +211,8 @@ Accepted recommendation: “corregir primero el problema de timestamps, sin cone
 - L62 — Domain regression RED reproduced lastActivityAt moving from 12:15 to 12:05 and idleExpiresAt from 12:35 to 12:25. The domain now leaves an older activity timestamp unchanged. GREEN: five focused mock-only suites/27 tests, TypeScript, directed ESLint, Prettier and diff-check passed. Jest created worktree-local `backend/.jest-lease-activity-cache/`; preserve it. This monotonicity change alone does not prove expiry is checked against current time after a lock wait.
 - L63 — Independent verifier `mvzkiloj-5-xr7t`: S3 PASS, S14 narrow PASS, S13 BLOCKED. New validation captures time before acquiring the lock and can renew an already expired lease after waiting. Correct by reading the clock after the lock; preserve mock-only boundaries. The five focused suites/27 tests passed but do not cover lock waiting.
 - L64 — The post-lock clock regression failed RED when the clock was called before the mocked lock. Changed the new repository contract to receive the injected clock and call it after locked lookup; GREEN: five focused suites/28 tests, TypeScript and targeted ESLint pass after formatting. Real DB concurrency and rollback remain unverified.
-- L65 — Targeted independent verifier `mvzko98t-6-6dqq` confirmed the stale-clock blocker resolved, with one focused suite/six tests passed under mocks; no new blocker. Native assessment remains unassessable because of undeclared untracked files, with conservative independent verification required; no native approval claimed. Full suite and real database concurrency/rollback remain unverified. No commit or external delivery.
+- L65 — Targeted independent verifier `mvzko98t-6-6dqq` confirmed the stale-clock blocker resolved, with one focused suite/six tests passed under mocks; no new blocker. Native assessment remains unassessable because of undeclared untracked files, with conservative independent verification required; no native approval claimed at that point. Full suite and real database concurrency/rollback remain unverified.
+- L66 — Native review `review-aa120c99a6605a4b` approved the selected workspace candidate via risk, resilience and reliability lenses; exact acknowledgement burned authority. User authorized the commit: `83ebbc2` (`feat(sandbox): validate and renew active leases`), including the reviewed code, tests and task document. Commit hooks passed workspace lint and frontend quality check. The worktree-local Jest cache remains untracked and was preserved. This subsequent task-log update is bookkeeping and was not part of the reviewed commit.
+- L67 — User: “lo hacemos”, accepting the recommended dedicated lease header and an isolated mocked middleware, not mounted in routes. T36–T37 planned; no live DB, `.env`, routing or commit authorization.
+- L68 — Focused Jest RED: middleware module absent. GREEN: one mock-only suite/eight tests passed; TypeScript, targeted ESLint, Prettier and diff-check passed. The middleware rejects missing or ambiguous headers, rejects invalid leases, attaches context only after validation, and forwards validator errors. It is not mounted; no auth scoping or real database isolation is claimed.
+- L69 — Independent verifier `mvzlcjej-8-sbaz` returned S3/S15 PASS, no blocker, and ran the focused suite once: 8 tests passed. Duplicate header handling was checked against installed Node and Express documentation, not live HTTP. Stale context clearing, malformed non-null validator results and concurrent request isolation were source-reviewed only. Native assessment was unassessable because untracked files require an explicit declaration; no native approval. Full suite, real DB, routing and visitor isolation not verified. No commit authorization.

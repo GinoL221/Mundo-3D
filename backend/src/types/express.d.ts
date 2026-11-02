@@ -4,6 +4,7 @@ declare global {
   namespace Express {
     interface Request {
       reqId?: string;
+      sandbox?: { slotId: string; leaseId: string; idleExpiresAt: Date };
       user?: {
         userId: number;
         email?: string;
