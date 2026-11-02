@@ -86,6 +86,11 @@ Accepted recommendation: “corregir primero el problema de timestamps, sin cone
 
 Accepted recommendation: “un header dedicado para las llamadas API de la demo” and “middleware aislado y con mocks, sin conectarlo todavía a las rutas”. No MySQL or `.env` access; no visitor-isolation claim.
 
+### S16 — Isolated lease-bound access session
+> “si”
+
+Accepted proposal: “Definir cómo se emite y valida una sesión ligada al lease, no solo al `slotId`”, “Probar con mocks el rechazo entre leases distintos y tras la reutilización de un espacio” and “Mantener intacta la autenticación actual y no montar rutas todavía”. Bounded initial cut: access-token contract only; refresh binding remains unimplemented and cannot be claimed safe.
+
 ## Tasks
 
 - [x] T1 — S1–S3: Add deterministic RED tests and implement the explicit per-slot connection factory; route: inline; commit: not authorized.
@@ -136,8 +141,11 @@ Accepted recommendation: “un header dedicado para las llamadas API de la demo�
 
 - [x] T35 — S3/S13: Correct stale authorization time after waiting for the row lock; route: inline; commit: 83ebbc2.
 
-- [ ] T36 — S3/S15: Test-first isolated lease-header middleware with fail-closed validation; route: inline; commit: not authorized.
-- [ ] T37 — S3/S15: Run safe focused checks and independent verification; route: parent + verifier; commit: not authorized.
+- [x] T36 — S3/S15: Test-first isolated lease-header middleware with fail-closed validation; route: inline; commit: f8b0942.
+- [x] T37 — S3/S15: Run safe focused checks and independent verification; route: parent + verifier; commit: f8b0942.
+
+- [ ] T38 — S3/S16: Design and test isolated lease-bound access token; route: inline; commit: not authorized.
+- [ ] T39 — S3/S16: Independent security verification and safe checks; route: verifier; commit: not authorized.
 
 ## Log
 
@@ -215,4 +223,8 @@ Accepted recommendation: “un header dedicado para las llamadas API de la demo�
 - L66 — Native review `review-aa120c99a6605a4b` approved the selected workspace candidate via risk, resilience and reliability lenses; exact acknowledgement burned authority. User authorized the commit: `83ebbc2` (`feat(sandbox): validate and renew active leases`), including the reviewed code, tests and task document. Commit hooks passed workspace lint and frontend quality check. The worktree-local Jest cache remains untracked and was preserved. This subsequent task-log update is bookkeeping and was not part of the reviewed commit.
 - L67 — User: “lo hacemos”, accepting the recommended dedicated lease header and an isolated mocked middleware, not mounted in routes. T36–T37 planned; no live DB, `.env`, routing or commit authorization.
 - L68 — Focused Jest RED: middleware module absent. GREEN: one mock-only suite/eight tests passed; TypeScript, targeted ESLint, Prettier and diff-check passed. The middleware rejects missing or ambiguous headers, rejects invalid leases, attaches context only after validation, and forwards validator errors. It is not mounted; no auth scoping or real database isolation is claimed.
-- L69 — Independent verifier `mvzlcjej-8-sbaz` returned S3/S15 PASS, no blocker, and ran the focused suite once: 8 tests passed. Duplicate header handling was checked against installed Node and Express documentation, not live HTTP. Stale context clearing, malformed non-null validator results and concurrent request isolation were source-reviewed only. Native assessment was unassessable because untracked files require an explicit declaration; no native approval. Full suite, real DB, routing and visitor isolation not verified. No commit authorization.
+- L69 — Independent verifier `mvzlcjej-8-sbaz` returned S3/S15 PASS, no blocker, and ran the focused suite once: 8 tests passed. Duplicate header handling was checked against installed Node and Express documentation, not live HTTP. Stale context clearing, malformed non-null validator results and concurrent request isolation were source-reviewed only. Native assessment was unassessable because untracked files require an explicit declaration; no native approval at that point. Full suite, real DB, routing and visitor isolation not verified.
+- L70 — Native review `review-13b4a592807fbffa` approved the selected middleware candidate and acknowledgement burned authority; advisory R3-001 at the test is non-blocking and closure gave no further detail. User authorized commit `f8b0942` (`feat(sandbox): add isolated lease header middleware`); workspace lint and frontend quality hooks passed. Jest cache remains untracked and preserved. This post-commit task bookkeeping was not included in the reviewed commit.
+- L71 — User: “si”, approving isolated design and tests for session binding to lease. Explorer identified production access JWTs share audience/type, while refresh tokens have no lease binding. Initial cut is isolated access-token contract only; do not mount, modify production auth, access DB or claim refresh safety. T38–T39 planned; no commit authorization.
+- L72 — RED: isolated token module missing. GREEN: one focused suite/three tests passed with cryptographic JWT operations and test-only secret; TypeScript, targeted ESLint and diff-check passed after formatting. Sandbox audience and type are distinct from production; verification requires externally validated lease/slot context. No middleware/routes/cookies/refresh or DB changed.
+- L73 — Independent verifier `mvzlw5ld-a-t3ab` returned S3/S16 PASS for isolated access-token contract and ran one suite/three tests. Caller must provide freshly validated context; reuse prevention assumes unique lease IDs. Refresh remains unbound. Expired/tampered tokens and several malformed cases were source-reviewed rather than directly exercised. Non-string context can throw outside the verifier catch. Native assess unassessable due undeclared untracked; no native approval. No HTTP, database, actual reset or visitor isolation verified; no commit authorization.
