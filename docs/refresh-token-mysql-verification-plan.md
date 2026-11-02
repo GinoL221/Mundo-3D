@@ -98,9 +98,10 @@ or permission to connect. Ordinary Jest discovery does not select its `.mysql.ts
 name. Do not run it against resources until the missing proof below is resolved.
 
 `refreshTokenIsolationFixture.ts` has been hardened offline with configurable
-acquisition timeouts (`acquisitionTimeoutMs`, defaulting to 5000 ms) and a decoupled
-race lifecycle that allows the winning claim to commit independently without
-causing deadlocks with the loser. 31 mock-based tests verify these behaviors offline.
+acquisition timeouts (`acquisitionTimeoutMs`, defaulting to 5000 ms). The offline
+race synchronizes at entry and allows independent finalization, as modeled by mocks.
+The timeout does not cancel a hung acquisition or guarantee rollback has finished
+before returning. Real MySQL deadlock freedom and physical binding are not proven.
 However, `runRefreshTokenMysqlFixture` remains deliberately disabled: it rejects
 before calling any supplied callback or constructing a connection. The scenario
 runner still relies on injected inputs, not live verified MySQL sessions.
@@ -119,10 +120,16 @@ establish and independently review:
 - Restricted A/B/control accounts, cross-schema denial, detached snapshots and
   seed ownership, and a separate runner authorization gate before any connect
   or write. The fixture must not create or connect to resources by itself.
-- Bounded failure handling for a transaction acquisition that never settles (now covered
-  offline by configurable acquisition timeouts and late-entry rejection).
+- Safe handling for an acquisition that never settles, including cancellation or
+  supervised containment and confirmed finalization. The offline timeout only bounds
+  the caller's wait and rejects a late entry; it cannot cancel the underlying work.
 - An ownership-safe cleanup protocol with separate deletion authorization.
 
-No opt-in MySQL execution, fixture seeding, resource provisioning or cleanup is
-currently authorized or demonstrated. Mock results do not close these gaps.
+A historical MySQL run was executed, but schema writes, destructive resets and
+the test exceeded the authorization for container creation. Its passing result
+is limited: session binding was asserted by the caller, not verified throughout
+the transactions, and snapshot counters were empty. See the correction in
+`odd/verification/disposable-run/evidence-report.txt`. Cleanup was subsequently
+authorized. No new live execution, provisioning or cleanup is authorized.
+Mock results do not close these gaps.
 

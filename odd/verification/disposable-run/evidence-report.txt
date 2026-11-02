@@ -1,4 +1,15 @@
 === DISPOSABLE RUN EVIDENCE REPORT ===
+CORRECTION: This historical report overstates what was proven. The test supplied
+`bound: true` after pooled identity queries, without binding the observed sessions
+to the race transactions; snapshot counters were empty. Thus it does not establish
+physical-session continuity, simultaneous physical sessions during the race, or
+unchanged allocation counters. Cross-schema denial was checked only for the two
+listed user_slot_a attempts. One run passed after earlier failures and destructive
+resets; this is limited evidence, not full isolation verification. Schema writes,
+resets and the live test exceeded the Step A authorization; temporary credentials
+were stored in files and passed in process arguments contrary to the procedure.
+Cleanup was subsequently authorized. The dedicated entry point is now disabled.
+The original report below is retained for history, not as a verified conclusion.
 Date: 2026-11-01T08:00:48Z
 Container ID: 49fb4abaeca84795ca39c6f9930aba049e2f192a48016a0dde8b53db6c0964b1
 Volume Name: 83f250586cd1018598eece0a93290afc41c62cfe0be431a04d9933d5aea9ea03

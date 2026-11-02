@@ -226,6 +226,13 @@ test('finalization rejection is reported even if the peer already committed', as
 });
 
 describe('refresh-token MySQL fixture safety boundary', () => {
+  test('dedicated entry point only invokes the disabled fixture', () => {
+    const { readFileSync } = require('node:fs');
+    const source = readFileSync(require.resolve('./RefreshTokenSandboxIsolation.mysql'), 'utf8');
+    expect(source).toContain('await runRefreshTokenMysqlFixture()');
+    expect(source).not.toContain('new Sequelize');
+    expect(source).not.toContain('.db_creds.json');
+  });
   test('dedicated configuration selects only the explicitly named MySQL suite', () => {
     const config = require('../../../../jest.refresh-sandbox.config');
     expect(config.testMatch).toEqual([
