@@ -18,6 +18,7 @@ function resettingSlot(resetAttemptId: string) {
 function makeRecoveryUseCase() {
   const repository: DemoSandboxSlotRepositoryPort = {
     registerConfiguredSlots: jest.fn(),
+    recordLeaseActivity: jest.fn(),
     claimAvailableSlot: jest.fn(),
     expireDueLeases: jest.fn(),
     beginReset: jest.fn(),

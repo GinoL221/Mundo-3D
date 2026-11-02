@@ -42,6 +42,16 @@ describe('DemoSandboxSlot', () => {
     });
   });
 
+  it('does not move activity or idle expiry backwards when activity arrives out of order', () => {
+    const slot = DemoSandboxSlot.create('slot-a');
+    slot.allocate('lease-a', origin, policy);
+    expect(slot.recordActivity('lease-a', at(15), policy)).toBe(true);
+    const snapshot = slot.snapshot();
+
+    expect(slot.recordActivity('lease-a', at(5), policy)).toBe(true);
+    expect(slot.snapshot()).toEqual(snapshot);
+  });
+
   it('fences activity at expiry and drains the slot instead of making it reusable', () => {
     const slot = DemoSandboxSlot.create('slot-a');
     slot.allocate('lease-a', origin, policy);

@@ -71,6 +71,16 @@ Accepted recommendation: separate users per slot, starting with an injected user
 
 Inject User, EmailConfirmationToken and connection for scoped confirmation persistence, caching its accessor per slot on the shared graph. Require active same-connection transactions before reads or writes in scoped transaction methods. Preserve token lookup, user-first lock ordering, replacement and verification outcomes, and raw-transaction legacy compatibility; keep auth, routes and refresh tokens unchanged. Use only mock tests; no dotenv, database, services, installation or delivery.
 
+### S13 — Validate and renew active leases
+> “si avanzamos”
+
+Accepted bounded cut: “validar y renovar leases en el plano de control”, connecting existing `recordActivity` to persistence and an application use case, with mock-only tests. No routes, middleware, real MySQL, `.env` or service changes. This does not prove visitor isolation.
+
+### S14 — Out-of-order lease activity
+> “si”
+
+Accepted recommendation: “corregir primero el problema de timestamps, sin conectar rutas ni usar MySQL”.
+
 ## Tasks
 
 - [x] T1 — S1–S3: Add deterministic RED tests and implement the explicit per-slot connection factory; route: inline; commit: not authorized.
@@ -112,6 +122,14 @@ Inject User, EmailConfirmationToken and connection for scoped confirmation persi
 - [x] T28 — S3/S12: RED/GREEN scoped email confirmation persistence and legacy compatibility; route: inline; commit: not authorized.
 - [x] T29 — S3/S12: Document and run safe mock-only checks; route: inline; commit: not authorized.
 - [x] T30 — S3/S12: Independent verification; route: verifier; commit: not authorized.
+
+- [ ] T31 — S3/S13: Test-first lease activity persistence and application validation; route: inline; commit: not authorized.
+- [ ] T32 — S3/S13: Run safe focused checks and independent verification; report limitations; route: parent + verifier; commit: not authorized.
+
+- [ ] T33 — S3/S14: Reproduce and correct out-of-order activity timestamps; route: inline; commit: not authorized.
+- [ ] T34 — S3/S14: Run safe checks and independent verification of the corrected candidate; route: parent + verifier; commit: not authorized.
+
+- [ ] T35 — S3/S13: Correct stale authorization time after waiting for the row lock; route: inline; commit: not authorized.
 
 ## Log
 
@@ -176,3 +194,13 @@ Inject User, EmailConfirmationToken and connection for scoped confirmation persi
 - L53 — User: “bien, seguimos entonces”. Next bounded token cut: email confirmation; no auth/routes/refresh changes. Explorer mvq246nw-9-1jz4 notes existing integration callers use raw Sequelize transactions, so legacy wrapper must preserve raw-context behavior while scoped adapter validates ownership. Existing DB integration tests are outside no-env/no-DB authorization.
 - L54 — T28 RED missing scoped module; implementation uses scoped resolver before any transaction operation and legacy wrapper preserves raw transaction compatibility. Focused mock-only 3 suites/11 tests pass, including success, replacement, foreign/expired/undefined context, cache/slot identity and legacy raw handle. T29 docs, TypeScript, ESLint, Prettier, architecture and diff-check pass. Full suite/MySQL not run, as no-env/no-DB cannot be guaranteed. T30 independent verification pending.
 - L55 — Independent verifier mvq2aese-a-lprs returned S3/S12 PASS: source comparison against HEAD found no defect and isolated focused execution passed 3 suites/11 tests. Several invalid/idempotent/expiry branches, error identity and legacy replacement were source-reviewed rather than directly asserted. The verifier created an initially absent worktree-local `.jest-confirmation-verification-cache` for the run and left it untouched; no cleanup authorized. Native assessment remains unassessable; no native approval, MySQL locking/rollback or visitor-isolation claim.
+- L56 — User authorized the auth-slice commit. `fae8ece` (`feat(sandbox): add per-slot auth use case composition`) adds slot-scoped remember-token access and auth use-case composition. Focused Jest passed 2 suites/13 tests; targeted ESLint, TypeScript and Prettier checks passed; commit hooks ran workspace lint and frontend quality checks. Native review `review-86e3a0247f13403f` approved and was acknowledged before Prettier reformatted three files, so that approval does not cover the exact committed tree. The preceding native assessment was unassessable and prescribed independent verification; no independent verifier outcome for this candidate was recorded at that point. Full suite and real-DB isolation were not verified for this slice. Stage 2 remains incomplete.
+- L57 — Independent verifier `mvzj88xa-1-u9ll` compared commit `fae8ece` with parent `5b2249a`, found no introduced blocker and inspected focused Jest safety before running the two auth/composition suites once with `--runInBand --no-cache`: 2 suites/13 tests passed, exit 0. Connections and transactions were mocked; no real database rollback or isolation, lease authorization, request routing, full-suite or exact-commit native-review approval is claimed.
+- L58 — User: “si avanzamos”, accepting the bounded lease validation and renewal recommendation. No live database, `.env`, routes, middleware or services. T31–T32 planned; no new commit authorization.
+- L59 — RED: the new focused suite failed because the use-case module was absent. After implementation the first focused run passed 5 tests; TypeScript exposed eight missing repository mock methods, which were added. A formatting attempt failed because Prettier was sought under backend rather than the workspace root; the correct existing binary formatted the files. Final focused no-cache Jest passed 4 suites/20 tests; targeted ESLint and TypeScript passed. Tests use mocks and do not establish real database isolation or concurrency. No commit.
+- L60 — Independent verifier `mvzk3tgj-4-fl8r` returned S3 and S13 PASS, no blocking defect, and independently passed the four focused suites/20 tests. User authorized this run's Jest cache at `/tmp/jest_rs`; no DB, services or `.env` were accessed. Out-of-order activity timestamps lack an existing domain monotonicity guard; real concurrency and rollback remain unverified. Native assessment is unassessable because untracked files require explicit declaration; no native approval is claimed. Full suite not run. Commit authorization remains separate.
+- L61 — User: “si”, accepting the recommendation to address out-of-order timestamps before routing or real MySQL work. T33–T34 planned; no new commit authorization.
+- L62 — Domain regression RED reproduced lastActivityAt moving from 12:15 to 12:05 and idleExpiresAt from 12:35 to 12:25. The domain now leaves an older activity timestamp unchanged. GREEN: five focused mock-only suites/27 tests, TypeScript, directed ESLint, Prettier and diff-check passed. Jest created worktree-local `backend/.jest-lease-activity-cache/`; preserve it. This monotonicity change alone does not prove expiry is checked against current time after a lock wait.
+- L63 — Independent verifier `mvzkiloj-5-xr7t`: S3 PASS, S14 narrow PASS, S13 BLOCKED. New validation captures time before acquiring the lock and can renew an already expired lease after waiting. Correct by reading the clock after the lock; preserve mock-only boundaries. The five focused suites/27 tests passed but do not cover lock waiting.
+- L64 — The post-lock clock regression failed RED when the clock was called before the mocked lock. Changed the new repository contract to receive the injected clock and call it after locked lookup; GREEN: five focused suites/28 tests, TypeScript and targeted ESLint pass after formatting. Real DB concurrency and rollback remain unverified.
+- L65 — Targeted independent verifier `mvzko98t-6-6dqq` confirmed the stale-clock blocker resolved, with one focused suite/six tests passed under mocks; no new blocker. Native assessment remains unassessable because of undeclared untracked files, with conservative independent verification required; no native approval claimed. Full suite and real database concurrency/rollback remain unverified. No commit or external delivery.

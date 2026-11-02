@@ -174,6 +174,10 @@ export class DemoSandboxSlot {
       return false;
     }
 
+    if (this.state.lastActivityAt && now.getTime() < this.state.lastActivityAt.getTime()) {
+      return true;
+    }
+
     this.state = {
       ...this.state,
       lastActivityAt: cloneDate(now),
