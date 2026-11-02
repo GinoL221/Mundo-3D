@@ -1,3 +1,5 @@
+import type { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
+import { ScopedSequelizeRememberTokenRepository } from '../repositories/ScopedSequelizeRememberTokenRepository';
 import type { EmailConfirmationTokenRepositoryPort } from '../../domain/ports/EmailConfirmationTokenRepositoryPort';
 import { ScopedSequelizeEmailConfirmationTokenRepository } from '../repositories/ScopedSequelizeEmailConfirmationTokenRepository';
 import type { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
@@ -20,6 +22,7 @@ import { ScopedSequelizeOrderRepository } from '../repositories/ScopedSequelizeO
 import { DemoSandboxConnections } from './DemoSandboxConnections';
 
 export interface DemoSandboxProductRepositories {
+  getRememberTokenRepository(slotId: string): RememberTokenRepositoryPort;
   getEmailConfirmationTokenRepository(slotId: string): EmailConfirmationTokenRepositoryPort;
   getUserRepository(slotId: string): UserRepositoryPort;
   getCustomCommissionRequestRepository(slotId: string): CustomCommissionRequestRepositoryPort;
@@ -41,6 +44,7 @@ export function createDemoSandboxProductRepositories(
   const shoppingCarts = new Map<string, ShoppingCartRepositoryPort>();
   const commissions = new Map<string, CustomCommissionRequestRepositoryPort>();
   const emailTokens = new Map<string, EmailConfirmationTokenRepositoryPort>();
+  const rememberTokens = new Map<string, RememberTokenRepositoryPort>();
   const users = new Map<string, UserRepositoryPort>();
   const orders = new Map<string, OrderRepositoryPort>();
   const unitsOfWork = new Map<string, UnitOfWorkPort>();
@@ -53,6 +57,13 @@ export function createDemoSandboxProductRepositories(
     return models;
   }
   return {
+    getRememberTokenRepository(slotId) {
+      const existing = rememberTokens.get(slotId);
+      if (existing) return existing;
+      const repository = new ScopedSequelizeRememberTokenRepository(getModels(slotId));
+      rememberTokens.set(slotId, repository);
+      return repository;
+    },
     getEmailConfirmationTokenRepository(slotId) {
       const existing = emailTokens.get(slotId);
       if (existing) return existing;
