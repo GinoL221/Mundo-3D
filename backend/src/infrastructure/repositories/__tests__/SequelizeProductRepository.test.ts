@@ -556,7 +556,7 @@ describe('SequelizeProductRepository', () => {
     // under MySQL's REPEATABLE READ isolation (design.md's explicit warning).
     describe('optional transaction parameter (orders-checkout)', () => {
       it('passes the transaction through to the atomic UPDATE and the tx-scoped follow-up read when provided', async () => {
-        const mockTx = { id: 'fake-tx' };
+        const mockTx = { id: 'fake-tx', sequelize: db.sequelize };
         (db.sequelize.transaction as jest.Mock).mockImplementation(
           async (work: (tx: object) => Promise<unknown>) => work(mockTx)
         );

@@ -111,7 +111,7 @@ describe('ScopedSequelizeShoppingCartRepository', () => {
   it('uses a live same-connection context for checkout reads and updates', async () => {
     const models = createPersistence();
     const repository = new ScopedSequelizeShoppingCartRepository(models.persistence);
-    const rawTransaction = {} as Transaction;
+    const rawTransaction = { sequelize: models.connection } as unknown as Transaction;
     models.cartFindAll.mockResolvedValueOnce([
       {
         idCart: 7,
@@ -163,6 +163,30 @@ describe('ScopedSequelizeShoppingCartRepository', () => {
     );
   });
 
+  it('rejects a missing checkout read context before querying', async () => {
+    const models = createPersistence();
+    const repository = new ScopedSequelizeShoppingCartRepository(models.persistence);
+    await expect(
+      repository.findActiveForUpdate(12, undefined as unknown as TransactionContext),
+    ).rejects.toThrow('Transaction context is not active for this connection');
+    expect(models.cartFindAll).not.toHaveBeenCalled();
+    expect(models.productFindAll).not.toHaveBeenCalled();
+    expect(models.query).not.toHaveBeenCalled();
+  });
+
+  it('rejects a missing context for nonempty updates but preserves the empty no-op', async () => {
+    const models = createPersistence();
+    const repository = new ScopedSequelizeShoppingCartRepository(models.persistence);
+    const missing = undefined as unknown as TransactionContext;
+    await expect(repository.markOrdered(12, [7], missing)).rejects.toThrow(
+      'Transaction context is not active for this connection',
+    );
+    await expect(repository.markOrdered(12, [], missing)).resolves.toBe(0);
+    expect(models.query).not.toHaveBeenCalled();
+    expect(models.cartFindAll).not.toHaveBeenCalled();
+    expect(models.productFindAll).not.toHaveBeenCalled();
+  });
+
   it('rejects unknown, expired, and foreign transaction contexts before persistence calls', async () => {
     const models = createPersistence();
     const repository = new ScopedSequelizeShoppingCartRepository(models.persistence);
@@ -172,7 +196,7 @@ describe('ScopedSequelizeShoppingCartRepository', () => {
 
     const expiredContext = await withScopedTransaction(
       models.connection,
-      {} as Transaction,
+      { sequelize: models.connection } as unknown as Transaction,
       async (context) => context,
     );
     await expect(repository.findActiveForUpdate(12, expiredContext)).rejects.toThrow(
@@ -180,11 +204,15 @@ describe('ScopedSequelizeShoppingCartRepository', () => {
     );
 
     const foreignConnection = { transaction: jest.fn() } as unknown as Sequelize;
-    await withScopedTransaction(foreignConnection, {} as Transaction, async (context) => {
-      await expect(repository.markOrdered(12, [7], context)).rejects.toThrow(
-        'Transaction context is not active for this connection',
-      );
-    });
+    await withScopedTransaction(
+      foreignConnection,
+      { sequelize: foreignConnection } as unknown as Transaction,
+      async (context) => {
+        await expect(repository.markOrdered(12, [7], context)).rejects.toThrow(
+          'Transaction context is not active for this connection',
+        );
+      },
+    );
 
     expect(models.cartFindAll).not.toHaveBeenCalled();
     expect(models.productFindAll).not.toHaveBeenCalled();

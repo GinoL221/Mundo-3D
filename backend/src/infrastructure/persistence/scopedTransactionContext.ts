@@ -13,6 +13,11 @@ export async function withScopedTransaction<T>(
   transaction: Transaction,
   work: (tx: TransactionContext) => Promise<T>,
 ): Promise<T> {
+  // Sequelize 6 stores the owning instance at runtime, but omits it from Transaction's types.
+  const owner = (transaction as unknown as { sequelize?: Sequelize }).sequelize;
+  if (owner !== connection) {
+    throw new Error('Transaction belongs to a different Sequelize instance');
+  }
   activeTransactions.set(transaction, { connection, transaction });
   try {
     // SAFETY: The infrastructure-issued raw handle is registered by identity above;

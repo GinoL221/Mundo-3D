@@ -75,7 +75,7 @@ describe('ScopedSequelizeOrderRepository', () => {
   it('creates items and re-reads through the injected graph on the active slot transaction', async () => {
     const models = createPersistence();
     const repository = new ScopedSequelizeOrderRepository(models.persistence);
-    const rawTransaction = {} as Transaction;
+    const rawTransaction = { sequelize: models.connection } as unknown as Transaction;
     models.orderCreate.mockResolvedValueOnce({ idOrder: 1 });
     models.orderItemBulkCreate.mockResolvedValueOnce([]);
     models.orderFindByPk.mockResolvedValueOnce(createOrderInstance());
@@ -129,8 +129,11 @@ describe('ScopedSequelizeOrderRepository', () => {
       new UniqueConstraintError({ message: 'Duplicate entry' }),
     );
     await expect(
-      withScopedTransaction(models.connection, {} as Transaction, (context) =>
-        repository.createWithItems({ idUser: 5, idempotencyKey: 'key-1', items: [] }, context),
+      withScopedTransaction(
+        models.connection,
+        { sequelize: models.connection } as unknown as Transaction,
+        (context) =>
+          repository.createWithItems({ idUser: 5, idempotencyKey: 'key-1', items: [] }, context),
       ),
     ).rejects.toThrow(DuplicateIdempotencyKeyException);
 
@@ -152,7 +155,7 @@ describe('ScopedSequelizeOrderRepository', () => {
     const models = createPersistence();
     const repository = new ScopedSequelizeOrderRepository(models.persistence);
     models.query.mockResolvedValueOnce([undefined, 1]);
-    const rawTransaction = {} as Transaction;
+    const rawTransaction = { sequelize: models.connection } as unknown as Transaction;
 
     const changed = await withScopedTransaction(models.connection, rawTransaction, (context) =>
       repository.transitionStatus(1, OrderStatus.AWAITING_PAYMENT, OrderStatus.PAID, context),
@@ -200,7 +203,7 @@ describe('ScopedSequelizeOrderRepository', () => {
 
     const expiredContext = await withScopedTransaction(
       models.connection,
-      {} as Transaction,
+      { sequelize: models.connection } as unknown as Transaction,
       async (context) => context,
     );
     await expect(
@@ -213,11 +216,15 @@ describe('ScopedSequelizeOrderRepository', () => {
     ).rejects.toThrow('Transaction context is not active for this connection');
 
     const foreignConnection = { query: jest.fn() } as unknown as Sequelize;
-    await withScopedTransaction(foreignConnection, {} as Transaction, async (context) => {
-      await expect(
-        repository.transitionStatus(1, OrderStatus.AWAITING_PAYMENT, OrderStatus.PAID, context),
-      ).rejects.toThrow('Transaction context is not active for this connection');
-    });
+    await withScopedTransaction(
+      foreignConnection,
+      { sequelize: foreignConnection } as unknown as Transaction,
+      async (context) => {
+        await expect(
+          repository.transitionStatus(1, OrderStatus.AWAITING_PAYMENT, OrderStatus.PAID, context),
+        ).rejects.toThrow('Transaction context is not active for this connection');
+      },
+    );
 
     expect(models.orderCreate).not.toHaveBeenCalled();
     expect(models.query).not.toHaveBeenCalled();
