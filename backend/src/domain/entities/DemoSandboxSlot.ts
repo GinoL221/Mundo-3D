@@ -241,6 +241,15 @@ export class DemoSandboxSlot {
       return false;
     }
 
+    if (this.state.generation >= 0xffff_ffff) {
+      this.state = {
+        ...this.clearLeaseState(),
+        status: 'quarantined',
+        quarantineReason: 'generation_exhausted',
+      };
+      return false;
+    }
+
     this.state = {
       ...this.clearLeaseState(),
       status: 'available',
