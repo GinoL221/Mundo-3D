@@ -7,16 +7,16 @@ import { ReleaseSessionAlreadyRecordedException } from '../../domain/exceptions/
 const SESSION_UNIQUE_INDEX = 'uq_release_session_attempt';
 
 /**
- * Only the attempt-session index proves this attempt already recorded a
- * release session. Any other violation or ordinary failure is rethrown
- * unchanged. Sequelize fills `fields` from attribute-level unique keys, so
- * both the index name and the individual columns are accepted and nothing
- * else.
+ * Only the attempt-session index or the attempt primary key proves this
+ * attempt already recorded a release session. Any other violation or ordinary
+ * failure is rethrown unchanged. Sequelize fills `fields` from attribute-level
+ * unique keys, so the index name, the individual columns and the attempt
+ * primary key are all accepted and nothing else.
  */
 function isSessionUniquenessRejection(error: unknown): error is UniqueConstraintError {
   if (!(error instanceof UniqueConstraintError)) return false;
   const rejected = Object.keys(error.fields ?? {});
-  if (rejected.length === 1 && rejected[0] === SESSION_UNIQUE_INDEX) return true;
+  if (rejected.length === 1 && (rejected[0] === SESSION_UNIQUE_INDEX || rejected[0] === 'PRIMARY')) return true;
   return rejected.length > 0 && ['slot_id', 'generation', 'attempt_id'].every((field) => rejected.includes(field));
 }
 
