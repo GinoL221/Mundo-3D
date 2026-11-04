@@ -9,6 +9,7 @@ const expectedSql = `CREATE TABLE \`DemoSandboxReleaseOperation\` (
   \`attempt_id\` CHAR(36) BINARY NOT NULL,
   \`seed_version\` VARCHAR(128) NOT NULL,
   \`lease_id\` CHAR(36) BINARY NOT NULL,
+  UNIQUE KEY \`uq_release_attempt\` (\`slot_id\`, \`generation\`, \`attempt_id\`),
   INDEX \`idx_release_slot_generation\` (\`slot_id\`, \`generation\`)
 ) ENGINE=InnoDB`;
 
@@ -21,9 +22,14 @@ describe('isolated slot release operation migration', () => {
     expect(expectedSql).not.toMatch(/IF NOT EXISTS/i);
   });
 
-  it('keeps release_id as the only unique key and does not forbid a retry', async () => {
+  it('lets storage reject a second committed release for one attempt', async () => {
+    const query = jest.fn().mockResolvedValue(undefined);
+    await migration.up({ context: { sequelize: { query } } });
+    expect(query).toHaveBeenCalledWith(expectedSql);
+    expect(expectedSql).toContain(
+      'UNIQUE KEY `uq_release_attempt` (`slot_id`, `generation`, `attempt_id`)',
+    );
     expect(expectedSql).toContain('`release_id` CHAR(36) BINARY NOT NULL PRIMARY KEY');
-    expect(expectedSql).not.toMatch(/UNIQUE/i);
   });
 
   it('propagates an existing-table error without issuing further statements', async () => {
