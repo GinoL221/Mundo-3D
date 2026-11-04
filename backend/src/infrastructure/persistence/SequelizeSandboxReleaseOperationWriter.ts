@@ -8,6 +8,19 @@ import { resolveScopedTransaction } from './scopedTransactionContext';
 
 type ReleaseOperationModel = ModelCtor<DemoSandboxReleaseOperationRecord>;
 
+const ATTEMPT_UNIQUE_FIELDS = ['slot_id', 'generation', 'attempt_id'] as const;
+
+/**
+ * Only `uq_release_attempt` proves that this attempt was already released. A
+ * `release_id` collision or an unidentifiable violation must not be reported as
+ * one, so anything else is left to the caller unchanged.
+ */
+function isAttemptUniquenessRejection(error: unknown): error is UniqueConstraintError {
+  if (!(error instanceof UniqueConstraintError)) return false;
+  const rejected = Object.keys(error.fields ?? {});
+  return ATTEMPT_UNIQUE_FIELDS.every((field) => rejected.includes(field));
+}
+
 /**
  * Unwired adapter for the durable release record. It requires an active
  * same-connection transaction and relies on `uq_release_attempt` existing in
@@ -42,7 +55,7 @@ export class SequelizeSandboxReleaseOperationWriter implements SandboxReleaseOpe
         { transaction },
       );
     } catch (error) {
-      if (error instanceof UniqueConstraintError) {
+      if (isAttemptUniquenessRejection(error)) {
         throw new ReleaseOperationAlreadyCommittedException(identity.slotId, identity.attemptId);
       }
       throw error;

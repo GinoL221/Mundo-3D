@@ -375,6 +375,15 @@ Bounded cut: the design section, one isolated slot migration source outside the 
 - [x] T83 — S38: Design the release record and add the isolated migration source and model with mock tests; route: inline.
 - [x] T84 — S38: Independent verification of the schema, DDL boundary and stated limits; route: verifier.
 - [x] T85 — S39: Isolated release record writer and read-back with mock tests; route: inline.
+- [x] T86 — S40: Discriminate the release uniqueness rejection and cover exists guards; route: inline.
+
+### S40 — Discriminate the release uniqueness rejection
+> “bien seguimos”
+
+Only the attempt uniqueness rule may be reported as an already committed release. The writer now inspects the rejected unique fields and translates exclusively a violation naming `slot_id`, `generation` and `attempt_id`; a `release_id` collision or a violation whose fields are unknown is rethrown unchanged instead of being guessed. Tests cover the identified rejection with its slot/attempt payload, the foreign constraint, the unidentifiable violation, and the `exists` guards directly.
+
+Mocks only. The real driver's `fields` payload is unverified, so an unidentifiable violation stays an ordinary error rather than a committed release.
+
 
 ### S39 — Isolated release record writer
 > “bien seguimos”
@@ -532,3 +541,4 @@ This cut does not resolve the release: nothing inserts the row inside the real r
 - L139 — Addressed the informational advisories of `review-ff21caf8af5e46f1`. The model now declares `uq_release_attempt` so a `sync()` keeps the uniqueness rule; the migration dropped the redundant `idx_release_slot_generation`, whose prefix the unique key already covers; and the two weak migration tests now observe the statement actually emitted instead of a local constant, with the overclaiming name removed. One test asserts the model index matches the migration. 8 tests with explicit exit codes, plus TypeScript, ESLint and architecture.
 - L140 — User decided the blocked acknowledgement of `fdcae3d` stays registered pending: the provider reports the documentation review approved and demands acknowledgement, while the facade resolves the acknowledgement to the empty workspace target and rejects it. No recovery route was forced and no authority is claimed consumed. Resolving it needs either a fixed `gentle-ai` or the maintainer, and this pending item does not block the isolated sandbox work.
 - L141 — Added the unwired producer for the release record: `SandboxReleaseOperationRecorderPort` (domain), `ReleaseOperationAlreadyCommittedException` and `SequelizeSandboxReleaseOperationWriter`, which writes the full identity inside an active same-connection transaction, answers whether a `releaseId` is recorded, rejects missing, foreign, expired and other-slot contexts before any query, and maps `UniqueConstraintError` to the domain exception. The tests were written after the adapter, so no behavioural RED was observed; a mutation removing the duplicate mapping produced exactly the one expected failure and was reverted. Checks with explicit exit codes: 6 tests, TypeScript, ESLint and architecture all 0. Nothing inserts the row inside a real release transaction and no authoritative reader exists, so no reconciliation outcome becomes authoritative. No MySQL, DDL execution, routes or commit yet.
+- L142 — Attended the two blocking-adjacent advisories of `review-84cb0afea1b91531`. Tests were written first: RED showed exactly the two discrimination cases failing. The writer now inspects the rejected unique fields and maps only a violation naming `slot_id`, `generation` and `attempt_id`, so a `release_id` collision or an unidentifiable violation is rethrown instead of being mislabelled as an already committed release. A pre-existing test whose fixture carried no fields then failed for the right reason and was removed as superseded by the stricter payload test. Final checks with explicit exit codes: 9 tests, TypeScript, ESLint and architecture all 0. The driver's real `fields` payload remains unverified; no MySQL, DDL execution, routes or commit yet.
