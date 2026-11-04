@@ -363,6 +363,18 @@ The seam is not a recovery mechanism: no durable producer of `releaseId` or the 
 - [x] T81 — S37: Test-first isolated reconciliation seam; route: inline.
 - [x] T82 — S37: Independent verification and correction of reported blockers; route: verifier.
 
+### S38 — Durable release operation record
+> “bien seguimos”
+
+Provide the durable identity the reconciliation contract depends on, without producing it yet. Define an append-only slot-scoped release record (`release_id`, slot, generation, attempt, seed version, lease) written in the same transaction as the control, fence and receipt changes, and state that existence is the only committed evidence while absence confirms a non-release only with an ended transaction, an authoritative read, no record and every untouched-state predicate.
+
+Bounded cut: the design section, one isolated slot migration source outside the control glob with static DDL, no `IF NOT EXISTS` and a refusing `down()`, and the matching model declaration. Mock tests only; no DDL execution, no MySQL, no writer or reader, no reconciliation wiring, no routes or services. This does not make any reconciliation outcome authoritative.
+
+## Tasks
+
+- [x] T83 — S38: Design the release record and add the isolated migration source and model with mock tests; route: inline.
+- [x] T84 — S38: Independent verification of the schema, DDL boundary and stated limits; route: verifier.
+
 ## Log
 
 - L1 — User request: “entonces si el siguiente paso es avanzar a la etapa 2 lo hacemos”.
@@ -507,3 +519,4 @@ The seam is not a recovery mechanism: no durable producer of `releaseId` or the 
 - L134 — User selected the isolated reconciliation seam: “vamos por la opcion 1”, then “corregilo” and “bien seguimos”. Added `AuthoritativeReleaseStateReaderPort` and `ReconcileUncertainRelease` with tests. Initial RED was a missing module, not a behavioral failure; parent GREEN 17 then 20 tests. First independent review flagged unsafe confirmations: outcomes were accepted without operation-bound evidence, so two behavioral RED tests were added; GREEN 20 tests, TypeScript and targeted ESLint passed. No routes, DB, services or commit.
 - L135 — Independent verifier `mw1gtapv-1-kitl` ran no commands and reported three blockers: control and fence rows carried no slot identity, so another slot's rows could confirm a release; the release evidence and its `releaseId` had no durable producer, no link to the existing release seam and no design coverage; and the mock synthesized evidence from the state under test, leaving the outcome checks, five identity comparisons and most sub-conditions untested. Non-blocking: generations are not checked as safe integers, empty identifiers pass when they match, and a legitimate re-lease after release reads as `indeterminate`.
 - L136 — Corrected only the first and third blockers. Control and fence now carry `slotId` and both predicates compare it; the tests inject evidence explicitly per case and cover each identity field, both evidence/state contradictions, unknown phases and every released or untouched field, 50 tests passing. A mutation check removed the retained-lease guard, produced exactly one failing test and was reverted. TypeScript, targeted ESLint and the architecture check pass. The missing durable producer is now stated in the design document as an unimplemented prerequisite; no MySQL, routes, services or delivery.
+- L137 — User continued: “bien seguimos”, accepting the recommendation to open the durable producer before touching the informational advisories of `review-12bdad6e943236dd`. Added the design section, the isolated slot migration source `20261104000000-demo-sandbox-release-operation.js` and the `DemoSandboxReleaseOperation` model with a per-connection cache. Mock-only parent checks: 2 suites/6 tests, no DDL executed, no MySQL, no writer or reader. The record deliberately has no outcome column and no unique key beyond `release_id`, so a confirmed non-release can be retried with a fresh identity. No integration or commit yet.

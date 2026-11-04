@@ -100,6 +100,21 @@ The ports and mocks do not enforce a real transaction, lock acquisition, model b
 
 This is a decision contract, not a recovery mechanism. **No durable producer of `releaseId` or of the release evidence exists**: the existing release seam defines its own identity without `releaseId`, receipts record no consuming release, and no table stores release history. The reader therefore asserts durability and provenance that the repository cannot yet prove, and the three fields that make a confirmation meaningful (transaction ended, authoritative snapshot, evidence outcome) are outside the checks this seam can perform. Enforcing them needs a durable release record, an authoritative-read protocol and a stop confirmation for the previous worker; those remain unimplemented prerequisites. No MySQL, failover or concurrency behavior is demonstrated, and a confirmed outcome never authorizes reusing the slot without the separate reset and allocation protocol.
 
+## Durable release operation record
+
+A reconciliation cannot be authoritative until the release itself is durably identified. The proposed record is a slot-scoped, append-only `DemoSandboxReleaseOperation` row holding `release_id`, `slot_id`, `generation`, `attempt_id`, `seed_version` and `lease_id`.
+
+Rules, none of which are implemented as a producer yet:
+
+- The caller supplies a pre-generated, non-reusable `release_id` **before** the transaction starts and never regenerates it while an outcome is uncertain. Retrying an indeterminate release with a new identity would make attributing the outcome impossible.
+- The row is inserted **in the same transaction** that updates control, updates the fence and consumes the receipt. Existence therefore means that transaction committed; a missing row means it did not, but only together with the requirements below.
+- `committed` evidence is the row itself, read after the previous transaction is known to have ended. `not_committed` evidence can only be produced when the transaction ended, the read is authoritative, the row is absent **and** control, fence and receipt still satisfy every untouched-state predicate. Absence alone, a timeout, a replica read or a failed query never yields a confirmation.
+- The table deliberately has no `outcome` column and no unique key beyond `release_id`. A row exists only on commit, so an outcome column would be redundant, and a unique key on slot, generation and attempt would forbid a legitimate retry after a confirmed non-release.
+- `release_id` is the durable identity, so it must never be reused, including after reset, backup restoration or slot reprovisioning; that is the same identity invariant lease history needs.
+- The record must live outside every resettable table and survive reset, and its durability is only as good as the single-transaction assumption above. If control and fence are not genuinely committed together with this row, the record proves nothing and the seam must not be used.
+
+`20261104000000-demo-sandbox-release-operation.js` provides the isolated slot migration source and `DemoSandboxReleaseOperation` declares the matching model. Neither is executable here: the file is outside the control migrator glob, is unexecuted, and no writer, reader, grant or reconciliation wiring exists. Mock tests assert the emitted statement and model declaration only.
+
 ## Proposed rules for the four remaining gaps
 
 These are proposed acceptance rules, not implemented mechanisms or a complete proof:
