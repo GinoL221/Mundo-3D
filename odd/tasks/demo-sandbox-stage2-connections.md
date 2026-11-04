@@ -96,7 +96,201 @@ Accepted proposal: “Definir cómo se emite y valida una sesión ligada al leas
 
 Accepted proposal: “un contrato aislado y tests con mocks que rechacen un refresh de otro lease antes de consultar o modificar tokens”, “sin MySQL real ni cambios en rutas”. Lease expiry/reset races remain a separate unresolved integration requirement.
 
+### S18 — Isolated transversal fencing design
+> “dale, lo hacemos”
+
+Accepted recommendation: “el diseño y las pruebas aisladas del protocolo transversal”, “sin acceder a bases reales ni conectar rutas”. Model assumptions explicitly; no claim of MySQL enforcement or visitor isolation.
+
+> “bueno, lo hacemos”
+
+Accepted continuation: “el modelo de activación y recuperación entre las dos bases”, “probar con el modelo una caída después de cada paso y la reconciliación posterior”, without routes, real MySQL or production authentication changes.
+
+> “bueno vamos con la opcion 2”
+
+Selected threat boundary: trusted backend processes; cover implementation errors, delayed requests, concurrency and failures. Compromised backend or stolen credentials are outside the lease-isolation guarantee. Visitor isolation under these assumptions remains required.
+
+### S19 — Isolated fenced transaction orchestration
+> “bien, avanzamos”
+
+Accepted next cut: an isolated transaction orchestration contract, with mock-only tests, which invokes a supplied fence check inside the transaction before business work; no routes, real database, grants or visitor-isolation claim.
+
+### S20 — Isolated storage fence adapter
+> “bien, avanzamos”
+
+Accepted next cut: a mock-tested isolated storage-fence reader using an active same-connection transaction and a shared row lock, rejecting mismatched lease/slot/generation/state. No actual database access, migration, route wiring or isolation claim.
+
+### S21 — Isolated fence model
+> “bien, continuamos
+corregi que no vuelva pasar eso con el verificador”
+> “no, que le expliques correctamente la instruccion la proxima
+seguimos”
+
+Define an isolated Sequelize model compatible with the fence reader and test it without any database connection. No migration, route wiring, runtime activation, real DB, secrets, service, or visitor-isolation claim. Future verifier instructions must explicitly forbid temporary files and unauthorized commands; this is not a runtime sandbox.
+
+### S22 — Isolated fence composition
+> “bien, seguimos”
+
+Compose the isolated fence model, transaction and adapter with the same supplied connection; mock-only verification, without schema creation, routing, real DB access or visitor-isolation claim.
+
+### S23 — Slot fence migration source only
+> “si autorizo”
+
+Accepted request: “el archivo de migración y sus tests con mocks”, “sin ejecutarlo ni conectarme a ninguna base”. Keep it outside the existing control-plane migration glob. No routes, real DB access or visitor-isolation claim.
+
+### S24 — Fail closed on generation exhaustion
+> “bien avanzamos”
+
+At the unsigned 32-bit storage limit, a verified reset must quarantine instead of releasing a slot with an unrepresentable next generation. Preserve normal reset behavior; mock-only tests and no database access or routing.
+
+### S25 — Verify exhaustion propagation
+> “bien avanzamos”
+
+Cover the generation exhaustion path through the reset use case and repository with mocked persistence; no live database or services.
+
+### S26 — Receipt replay reference model
+> “bien avanzamos”
+
+Model reset admission and release against exact receipt identity, rejecting duplicate successful attempts and mismatches. This is an atomic in-memory assumption, not a durable implementation or MySQL proof.
+
+### S27 — Receipt storage proposal and isolated implementation
+> “si”
+
+Accepted proposal: “prepare una propuesta de esquema y código aislado con pruebas por mocks, **sin conectarme a MySQL, ejecutar migraciones ni habilitar rutas**”. No commit. First slice: reset worker transaction orchestration and proposed receipt/history schema; no production wiring or claim of durable enforcement.
+
+### S28 — Isolated receipt storage adapter
+> “bien avanzamos”
+
+Add an unwired slot-scoped Sequelize receipt model and writer adapter, test transaction ownership and replay lookup with mocks. Model uniqueness is a schema declaration, not evidence that a real table exists or enforces it. No MySQL, migration execution, routes or commits.
+
+### S29 — Scoped transaction association
+> “si”
+
+User authorized investigation and correction of the shared helper with mock tests, preserving existing uses; no MySQL, services, routes or commits.
+
+### S30 — Required cart transaction
+> “bin, continuamos”
+
+Investigate and fail closed on missing runtime transaction context for cart checkout reads and nonempty updates; preserve the empty-ID no-op and existing valid-context behavior. Mocks only; no DB, services, routes or commits.
+
 ## Tasks
+
+- [x] T66 — S3/S30: Reproduce and correct missing checkout contexts; route: inline; commit: not authorized.
+### S31 — Address non-blocking review advisories
+> “bien, avanzamosbien, avanzamos”
+
+Address the actionable informational findings from native review `review-7c7e74cab6628418`:
+1. `DemoSandboxFenceComposition`: reuse/cache the defined `DemoSandboxFence` model on the Sequelize instance or model accessor rather than calling `sequelize.define` on each invocation.
+2. `RunFencedSandboxReset`: add test coverage for collaborator rejections/exceptions and missing context propagation.
+Mocks only; no DB, services, routes or commits.
+
+## Tasks
+
+- [x] T69 — S3/S31: Reuse fence model in composition and cover reset error branches; route: inline; commit: not authorized.
+### S32 — Reset receipt consumption gate
+> “si”
+
+Accepted proposal: “compuerta de liberación y consumo del recibo (`Release Gate`)”:
+1. Define isolated `SandboxResetReceiptConsumer` port with `consume(identity, context)` returning boolean or result.
+2. Under active transaction context, look up receipt for exact `(slotId, generation, attemptId, seedVersion)`, verify `consumed === false`, and mark `consumed: true` atomically (`UPDATE ... WHERE attemptId = ... AND consumed = false`).
+3. Reject missing receipt, already-consumed receipt, and identity mismatches before any slot release.
+Mocks only; no DB, services, routes or commits.
+
+## Tasks
+
+- [x] T71 — S3/S32: Implement isolated receipt consumer and mock tests; route: inline; commit: not authorized.
+### S33 — Guarded release coordinator
+> “si”
+
+Accepted proposal: “coordinador de liberación aislada (`ReleaseFencedSandboxSlot`)”:
+1. Accepts reset identity `(slotId, generation, attemptId, seedVersion)`, `leaseId`, and dependencies: `UnitOfWorkPort` (slot transaction), `SandboxResetReceiptConsumerPort`, `DemoSandboxSlotRepositoryPort` (control plane), and clock.
+2. In the slot transaction, consumes receipt via `SandboxResetReceiptConsumerPort.consume`.
+3. If consumption succeeds, calls `repository.completeReset(slotId, leaseId, attemptId, now, true)` on control plane.
+4. If consumption returns false or throws, fails closed: quarantines the slot in control plane with `unverified_receipt`.
+Mocks only; no DB, services, routes or commits.
+
+## Tasks
+
+- [x] T73 — S3/S33: Implement ReleaseFencedSandboxSlot seam and mock tests; route: inline; commit: not authorized.
+### S34 — Isolated reset receipt migration
+> “si”
+
+Accepted proposal: “migración aislada para la tabla de recibos (`DemoSandboxResetReceipt`)”:
+1. Located in `backend/src/database/slot-migrations/20261103000000-demo-sandbox-reset-receipt.js`, outside control migrator glob.
+2. Emits static MySQL `CREATE TABLE` without `IF NOT EXISTS`:
+   `attempt_id` CHAR(36) BINARY PK, `slot_id` VARCHAR(64), `generation` INTEGER UNSIGNED, `seed_version` VARCHAR(128), `consumed` TINYINT(1) DEFAULT 0, and composite index on `(slot_id, generation)`.
+3. `down()` rejects rollback with explicit safe plan required.
+4. Mock-only tests covering emitted SQL, duplicate table error propagation, and rollback refusal.
+Mocks only; no DB, services, routes or commits.
+
+## Tasks
+
+- [x] T75 — S3/S34: Create isolated receipt migration source and mock tests; route: inline; commit: not authorized.
+### S35 — Avoid false release and quarantine outcomes
+> “bien, lo hacemos”
+
+For the isolated release coordinator, report quarantine only when confirmed; on ambiguous transaction or control-plane errors report an uncertain outcome requiring reconciliation rather than assuming rollback. Preserve existing successful and stale outcomes. Mocks only; no MySQL, services, routes, migration execution or commits.
+
+## Tasks
+
+### S36 — Isolated single-transaction release seam
+> “bien, continuamos”
+
+Model control-then-fence lock ordering, exact receipt consumption and release in one supplied transaction, failing closed on mismatch or uncertain completion. The seam is not wired; actual database transaction, rollback and lock guarantees remain unverified. No MySQL, services, routes, executed migrations or commits.
+
+## Tasks
+
+- [x] T79 — S3/S36: Test-first isolated single-transaction release seam; route: inline; commit: not authorized.
+- [x] T80 — S3/S36: Independently verify ordering and limitations; route: verifier; commit: not authorized.
+
+- [x] T77 — S3/S35: Reproduce and correct false outcomes; route: inline; commit: not authorized.
+- [x] T78 — S3/S35: Independently verify behavior and limits; route: verifier; commit: not authorized.
+
+- [x] T76 — S3/S34: Independently verify migration source and limitations; route: verifier; commit: not authorized.
+
+- [x] T74 — S3/S33: Independently verify release coordinator and limitations; route: verifier; commit: not authorized.
+
+- [x] T72 — S3/S32: Independently verify consumer logic and limitations; route: verifier; commit: not authorized.
+
+- [x] T70 — S3/S31: Run focused checks and record verification evidence; route: verifier; commit: not authorized.
+
+- [x] T67 — S3/S30: Independently verify regressions; route: verifier; commit: not authorized.
+- [x] T68 — RDD: Native review of accumulated isolated fencing, reset receipts and transaction ownership; route: native; commit: not authorized.
+
+- [x] T64 — S3/S29: Reproduce and correct cross-instance transaction registration; route: inline; commit: not authorized.
+- [x] T65 — S3/S28/S29: Independently verify shared-helper regressions and receipt adapter; route: verifier; commit: not authorized.
+
+- [x] T62 — S3/S28: Implement isolated receipt model and writer with mock tests; route: inline; commit: not authorized.
+- [x] T63 — S3/S28: Independently verify adapter and limitations; route: verifier; commit: not authorized.
+
+- [x] T60 — S3/S27: Propose schema and implement isolated transactional reset worker with mock tests; route: inline; commit: not authorized.
+- [x] T61 — S3/S27: Independently verify checks and design boundaries; route: verifier; commit: not authorized.
+
+- [x] T58 — S3/S26: Reference model and isolated tests for receipt replay; route: inline; commit: not authorized.
+- [x] T59 — S3/S26: Verify model and limits independently; route: verifier; commit: not authorized.
+
+- [x] T56 — S3/S25: Cover exhaustion propagation with mock persistence; route: inline; commit: not authorized.
+- [x] T57 — S3/S25: Verify checks independently; route: verifier; commit: not authorized.
+
+- [x] T54 — S3/S24: Test-first generation exhaustion handling; route: inline; commit: not authorized.
+- [x] T55 — S3/S24: Safe checks and independent verification; route: verifier; commit: not authorized.
+
+- [x] T52 — S3/S23: Test-first isolated slot fence migration source and matching model; route: inline; commit: not authorized.
+- [ ] T53 — S3/S23: Safe mock checks and independent security verification; route: verifier; commit: not authorized.
+
+- [x] T50 — S3/S22: Test-first isolated same-connection fence composition; route: inline; commit: not authorized.
+- [x] T51 — S3/S22: Safe checks and independent verification; route: verifier; commit: not authorized.
+
+- [x] T48 — S3/S21: Test-first isolated Sequelize fence model; route: inline; commit: not authorized.
+- [x] T49 — S3/S21: Verify compatibility and isolated checks independently; route: verifier; commit: not authorized.
+
+- [x] T46 — S3/S20: Test-first isolated fence adapter; route: inline; commit: not authorized.
+- [x] T47 — S3/S20: Safe checks and independent verification; route: verifier; commit: not authorized.
+
+- [x] T44 — S3/S19: Test-first isolated fenced transaction orchestration; route: inline; commit: not authorized.
+- [x] T45 — S3/S19: Safe checks and independent verification; route: verifier; commit: not authorized.
+
+- [x] T42 — S3/S18: Design storage-enforced fencing and test an isolated reference model without runtime integration; route: inline; commit: not authorized.
+- [ ] T43 — S3/S18: Run safe checks and independent security/concurrency verification; route: verifier; commit: not authorized.
 
 - [x] T1 — S1–S3: Add deterministic RED tests and implement the explicit per-slot connection factory; route: inline; commit: not authorized.
 - [x] T2 — S1–S3: Document ownership and limits, run focused tests, backend suite, type-check and targeted lint/format; baseline architecture failure recorded below; route: inline; commit: not authorized.
@@ -152,8 +346,8 @@ Accepted proposal: “un contrato aislado y tests con mocks que rechacen un refr
 - [x] T38 — S3/S16: Design and test isolated lease-bound access token; route: inline; commit: 6a872a0.
 - [x] T39 — S3/S16: Independent security verification and safe checks; route: verifier; commit: 6a872a0.
 
-- [ ] T40 — S3/S17: Test-first isolated lease-bound refresh credential contract; route: inline; commit: not authorized.
-- [ ] T41 — S3/S17: Safe focused checks and independent security verification; route: verifier; commit: not authorized.
+- [x] T40 — S3/S17: Test-first isolated lease-bound refresh credential contract; route: inline; commit: 3bedd79.
+- [x] T41 — S3/S17: Safe focused checks and independent security verification; route: verifier; commit: 3bedd79.
 
 ## Log
 
@@ -240,4 +434,59 @@ Accepted proposal: “un contrato aislado y tests con mocks que rechacen un refr
 - L75 — User: “si”, approving isolated refresh credential binding and mock tests, without real MySQL or route changes. Existing refresh persists no lease ID; active lease/reset concurrency is not solved by a one-time validation and remains an explicit blocker to visitor routing. T40–T41 planned; no commit authorization.
 - L76 — RED: refresh credential module absent. GREEN: one isolated suite/three tests, TypeScript, targeted ESLint and diff-check passed. The initial signed envelope carried an existing opaque token in its readable JWT payload. The wrapper rejected lease mismatches before calling refresh. No wiring into issuance, rotation, routes or DB.
 - L77 — Independent verifier `mvzudksi-2-c5xj` found HIGH integration blocker: the raw bearer could be extracted from the signed payload and bypass envelope restrictions wherever the inner bearer was accepted. No current production exploit was established; prototype is unmounted. Correction RED reproduced payload exposure and callback receiving the inner token. Second RED covered replacing caller-provided token material with a freshly generated nonce. Corrected contract generates a nonce internally and passes the complete signed credential to the refresh callback. GREEN: one suite/four tests, TypeScript, targeted ESLint and diff-check passed. Caller-provided lease freshness, consistent full-token storage/rotation, and reset fencing remain unproven.
-- L78 — Targeted independent verifier `mvzulzp8-3-w8q7` returned S3/S17 PASS for the isolated contract; previous extractable-bearer blocker resolved. It ran one focused suite/four tests. Full-token hashing during issuance/rotation, freshness and reset fencing, replay/revocation, family deadlines and avoiding legacy bypass are prerequisites, not demonstrated. Native assessment unassessable because untracked files require declaration; no native approval. No HTTP, real DB, full suite or commit.
+- L78 — Targeted independent verifier `mvzulzp8-3-w8q7` returned S3/S17 PASS for the isolated contract; previous extractable-bearer blocker resolved. It ran one focused suite/four tests. Full-token hashing during issuance/rotation, freshness and reset fencing, replay/revocation, family deadlines and avoiding legacy bypass are prerequisites, not demonstrated. Native assessment was unassessable because untracked files required declaration; no native approval at that point. No HTTP, real DB or full suite.
+- L79 — Native review `review-187e2875a1435ee3` approved and exact acknowledgement burned authority. Advisory R3-001 at the refresh-token test was non-blocking; closure gave no further detail. User authorized commit `3bedd79` (`feat(sandbox): bind refresh credentials to leases`); workspace lint and frontend quality hooks passed. This post-commit task bookkeeping is uncommitted and was not in the reviewed candidate. Worktree-local Jest cache remains untracked and preserved.
+- L80 — User accepted expanded design and isolated tests for fencing all slot operations and reset: “dale, lo hacemos”. No database, routes, service access, commit, or visitor-isolation claim authorized.
+- L81 — T42 drafted `odd/tasks/demo-sandbox-fencing-design.md` and isolated reference model tests. RED: Jest could not find the reference model. GREEN: 1 suite/4 tests passed; backend type-check and targeted ESLint passed. Model assumes atomic storage transitions, is not a database adapter, and proves no MySQL behavior.
+- L82 — Independent verifier `mvzvjim9-6-9h19`: S3 PASS, S18 PARTIAL; found reset-attempt ABA and reused lease identity in the model, and explicitly noted that cross-plane activation and real storage guarantees remain unverified. Added a regression test, observed RED for ABA, corrected reference model to reject previously used attempt and lease identities, then GREEN 1 suite/5 tests, type-check and targeted ESLint. Durable uniqueness and cross-plane reconciliation are still design obligations.
+- L83 — Targeted verifier `mvzvlyvo-7-d3qx` confirmed both model corrections and reran 1 suite/5 tests PASS. Cross-plane partial commits, activation ordering and crash reconciliation remain unmodeled; no real storage or isolation guarantee. Native assessment was unassessable because intended untracked files require explicit declaration; no native review started. T43 remains open on incomplete design evidence; no commit authorized.
+- L84 — User accepted the cross-plane activation and recovery model: “bueno, lo hacemos”. Same restrictions: no routes, actual MySQL, production auth changes, services or commits.
+- L85 — Activation reference model RED: Jest could not find the model; GREEN: two suites/11 tests, backend type-check and targeted ESLint passed. Design labels the global interruption flag an oracle and cross-plane atomicity assumptions.
+- L86 — Independent verifier `mvzvwkau-8-lx9o`: S3 PASS, S18 PARTIAL; two suites/11 tests passed, but interruption tests omitted the current lease and delayed activation calls. Added assertions for the current lease and prepare/publish/open before and after reconciliation; two suites/11 tests, type-check and targeted lint pass. No new RED was expected or observed: existing guards already implemented this model behavior; no mutation test run.
+- L87 — Targeted verifier `mvzvzt9r-9-938i` confirmed the assertion gap resolved and independently ran two suites/11 tests successfully. Partial reconciliation commits, independently stale state and worker authority loss without the oracle remain unmodeled. Actual storage fencing and realizability are unproven; T43 remains open. Native assessment again unassessable due untracked files; no native review started. No database, services, routes or commits.
+- L88 — User: “bien, seguimos”. Researched a candidate single-connection cross-schema InnoDB transaction using official MySQL 8.0 references; actual server version and endpoint are unknown. Independent verifier `mvzw20um-a-telj` S3 PASS/S18 PARTIAL flagged the document's overstatement that co-location was configured; corrected it to an unverified topology assumption. Privilege isolation, reset DDL, stale workers, reconciliation and real concurrency remain unresolved. No tests run for this documentation-only change; no real DB, routes or services used.
+- L89 — User: “si avanzamos por ahi”. Drafted role boundaries and conditional DML-only reset sequence. Independent verifier `mvzw9m7j-b-twe5`: S3 respected, S18 PARTIAL; direct business-table access cannot enforce the fence, coordinator compromise can threaten confidentiality/integrity, and durable receipt provenance, stale workers, ambiguous commits and DML-only reset coverage remain blockers. Corrected the design's coordinator compromise statement and recorded those obligations; no safety approval. Documentation-only; no tests or real DB, services, grants or routes.
+- L90 — User selected the trusted-backend threat boundary: “bueno vamos con la opcion 2”. Implementation mistakes, delays, concurrency and process failures remain in scope; compromised backend and stolen credentials are outside the lease-isolation guarantee. This does not establish visitor isolation or authorize real database access.
+- L91 — Drafted candidate transactional reset receipt and ambiguous-commit reconciliation. Independent verifier `mvzwfw6v-c-617j`: S3 PASS, S18 PARTIAL. Found missing exact worker phase/replay checks, competing recovery CAS, transaction snapshot freshness and complete fence coverage; trusted backend does not exclude implementation mistakes. Corrected design to retain those as explicit unresolved requirements. No tests for documentary change, no real DB/services/routes/grants or commit.
+- L92 — User: “bien, avanzamos”. Drafted candidate rules for replay, recovery claims, snapshot freshness and access coverage. Independent verifier `mw061lvw-d-lfpb`: S3 PASS, S18 PARTIAL; no safety counterexample established under all rules, but release predicate, ambiguous recovery-claim commit, startup snapshots and wrapper escape needed clarification. Added clarifications. Rules are unimplemented and unverified; no tests for documentary change, no DB/services/routes/grants or commit.
+- L93 — User: “bien, avanzamos”. T44 isolated fenced transaction orchestration: RED missing module; GREEN 1 suite/3 tests, backend type-check and targeted ESLint pass. Injected fence and unit of work are assumptions, no storage adapter or production integration.
+- L94 — Independent verifier `mw06w52i-e-iygj`: S3/S19 PASS for isolated orchestration only; reran 1 suite/3 tests. Work-error propagation and UoW failures were source-reviewed, not directly tested. Native assess unassessable due intended untracked files; no native review started. Storage lock, transaction freshness, bypass prevention, reset and visitor isolation remain unverified. No DB/services/routes/grants or commit.
+- L95 — User: “bien, avanzamos”. Added isolated injectable-model Sequelize fence reader: RED missing module; GREEN two mock-only suites/10 tests, type-check and targeted ESLint pass. No model, schema, migration or wiring; real lock, freshness, validity of a lease, expiry/reset and isolation remain unverified.
+- L96 — Independent verifier `mw07apod-f-o3a4` failed with “assistant reported an error”; no verdict obtained. Native assess unassessable because untracked files require explicit declaration; no native review started.
+- L97 — User: “bien, avanzamos”, authorizing continuation of pending independent verification. Verifier `mw07m8lx-g-tt4o` S3/S20 PASS for mock-only isolated adapter; two suites/10 tests passed. It additionally reported reading dependency source, running git status and creating/deleting a comparison file under `/tmp`, outside the delegated command/write scope; before/after worktree status matched. No MySQL/services/routes/grants. Unverified: undefined/foreign/completed contexts and read failures in this test, model compatibility, SQL, lock/expiry/freshness, reset and isolation. No commit.
+- L98 — User: “bien, continuamos\ncorregi que no vuelva pasar eso con el verificador” and “no, que le expliques correctamente la instruccion la proxima\nseguimos”. No global agent config inspected or changed; future delegation instructions explicitly prohibit unauthorized commands and temporary-file create/delete, without claiming technical enforcement. Added isolated Sequelize model: RED missing module; GREEN two suites/8 tests, backend type-check and targeted ESLint pass. No schema creation, DB access or wiring.
+- L99 — Independent verifier `mw07u5uo-1-05uy`: S3 PASS static, S21 PARTIAL. Did not run Jest because its default cache might write outside the worktree, contrary to the explicit prohibition; type compatibility was source-reviewed only. Reported harness automatically saved two oversized tool outputs under `~/.claude/.../tool-results/`, outside its control, exact paths not supplied; no cleanup performed. Native assessment unassessable due untracked files.
+- L100 — User authorized a preserved worktree-local Jest cache: “si”. Targeted independent verifier `mw07zi0u-2-c3l0` reports S3/S21 PASS for isolated model and two suites/eight tests passed; it reports no explicit exit code from its tool. `backend/.jest-fence-model-verification-cache/` was created and preserved. Independent type-check was not run; parent's tsc previously passed. Real SQL/locking, model deployment, reset and isolation unverified. No DB/services/routes/grants or commit.
+- L101 — User: “bien, seguimos”. Added isolated model/fence/UoW same-connection composition: RED missing module; GREEN 3 suites/10 tests with mocks, backend type-check and targeted ESLint pass. Used preserved worktree Jest cache; no schema, DB, service, routing or auth changes.
+- L102 — Independent verifier `mw083yyu-3-un7v` reports S3/S22 PASS scoped to isolated mock composition; 3 suites/10 tests passed, no explicit exit code shown. Its harness reported saving two oversized startup outputs under `~/.claude/projects/.../tool-results/`; paths unavailable, no cleanup. Work-context identity at composition boundary, findOne failures, actual rollback, cache/redefinition and empty slot inputs remain untested or unresolved. No real DB, lock, reset or isolation proof. Native assess unassessable due untracked files; no review started; no commit.
+- L103 — User explicitly authorized migration source and mock tests only: “si autorizo”. Added slot-only migration outside the control-plane glob and matching nullable reset-attempt model field. RED: missing migration and model field; GREEN: 4 mock-only suites/11 tests, backend type-check and targeted ESLint. Migration was called only with mock createTable; no real DB, migration execution, schema change, services, routes or commit.
+- L104 — Verifier `mw08ff7k-4-ypzr` reported S3/S23 PASS for source/mock-only, 4 suites/11 tests, but identified missing down causing potential silent ledger rollback and `CREATE TABLE IF NOT EXISTS` masking drift. It ran unauthorized `wc -l`, and reported automatic oversized harness output outside worktree; no cleanup. Corrected down to reject explicitly: RED missing down; GREEN parent 4 suites/12 tests, type-check and directed lint. Targeted verifier `mw08jr0n-5-iv6s` PASS static on refusal; did not independently run new test.
+- L105 — User: “bien continuamos”. Replaced ORM createTable with static MySQL CREATE TABLE omitting IF NOT EXISTS: RED mock interface mismatch, GREEN parent 4 suites/13 tests, type-check and targeted lint. Independent verifier `mw08r93o-6-tsxm` S3/S23 PASS source/mock-only, reported 4 suites/13 tests passed (no explicit exit code); noted unverified sql_mode/generation overflow, identity history, charset, lost DDL acknowledgement and real DB behavior. Two oversized harness output files were reported outside worktree; no cleanup. Softened DDL comment after review; no source behavior change. Native assess unassessable due untracked files; no review started. No DB/services/routes/grants or commit.
+- L106 — User: “bien avanzamos”. At unsigned 32-bit maximum, verified reset now quarantines with `generation_exhausted` rather than incrementing/releasing. RED observed incorrect release, GREEN 5 suites/25 tests, backend type-check and targeted ESLint.
+- L107 — Independent verifier `mw093lrd-7-mp3x` S3/S24 PASS; reported 5 suites/25 tests passed. It appended `2>&1 | tail -n 40` to the authorized command without permission; that pipeline did not establish Jest's exit code. Parent's unpiped check exited 0. Repository/use-case propagation was source-reviewed, not directly tested for the exhaustion case. Native assess unassessable due untracked files, no review started; no live DB/services/routes or commit.
+- L108 — User: “bien avanzamos”. Added mock-persistence use-case/repository exhaustion propagation test; no meaningful RED because the behavior is already implemented. Parent: 5 suites/26 tests, TypeScript and ESLint passed; Prettier invocation at backend node_modules failed (module absent), then root node_modules/.bin/prettier check passed. No DB/services or commit.
+- L109 — Independent static verifier `mw09b7lk-8-2zug`: S3/S25 PASS for bounded mock coverage; no shell commands. Limitations: mock checks attempt but not other selection predicates, no assertions on exact call counts or cleared timestamps, and recovery path only; real DB and locks unverified.
+- L110 — User: “bien avanzamos”. Added isolated receipt reference model, exact-identity/replay tests. Initial RED: missing module, not a behavioral failure; GREEN: 3 suites/14 tests, TypeScript, targeted ESLint and Prettier. Model assumes atomic durable serialized storage; it does not implement persistence, worker recovery or MySQL.
+- L111 — Independent static verifier `mw09gvxf-9-9m6c`: S3/S26 PASS within reference-model scope; no commands. Reset identity mismatches other than attempt and reset after consumption are not tested. No DB, services or commit.
+- L112 — User: “si”, authorizing schema proposal and isolated mock-tested code with no MySQL, executed migrations, routes or commits. Added proposal and unwired reset orchestration. RED missing module, not behavioral RED; GREEN 3 suites/10 tests, TypeScript and targeted ESLint. Interfaces assume real exclusive lock, transaction-bound effects and uniqueness; none are implemented.
+- L113 — Independent verifier `mw09v5hs-b-b1oq` S3/S27 PASS within isolated scope; 3 suites/10 tests reported, numeric exit not displayed. Corrected a test title after verification to say context forwarding, not lock retention; no behavior changed and no post-title test run. Collaborator errors, insertion failure and concurrency not tested. Native assess unassessable due untracked files; no review. No DB/services/routes or commit.
+- L114 — User: “bien avanzamos”. Added unwired receipt model and scoped writer. RED missing modules, not behavioral RED. Initial focused 3 suites/9 tests passed, TypeScript failed due model interface incompatibility; a subsequent Pick-based type failed due Sequelize static `this`. Corrected to ModelCtor and verified 3 suites/9 tests, TypeScript and targeted ESLint. Model declaration has no migration; global identity history, actual SQL uniqueness and locks remain unproven. No DB/services/routes or commit.
+- L115 — Independent verifier `mw0a7vxu-c-b41g` reported 3 suites/9 tests pass, numeric exit not shown. Found pre-existing `withScopedTransaction` accepts arbitrary connection/transaction pairs without verifying real association; source-only counterexample, not reproduced. Actual Sequelize uses transaction connection. This undermines S28 transaction ownership; T62 reopened, no visitor isolation claim. Foreign active connection not tested. After verification renamed test title to avoid durable-uniqueness claim; no rerun. Native assess unassessable due untracked; no review.
+- L116 — User: “si”, authorized investigation and correction without MySQL, services, routes or commits. RED reproduced mismatched registration accepted. Added preliminary check of Sequelize 6 runtime `transaction.sequelize` (not present in declared TypeScript API); tests show 3 suites/14 passing after updating three local fixtures; initial run before fixture correction failed 11 tests. Numerous repository fixtures still pass bare transactions and must be adapted and checked; broader compatibility, underlying physical connection and Sequelize version contract remain unproven. No independent verification; correction is incomplete.
+- L117 — User: “si”, authorized adapting repository fixtures and regression checks. Updated nine fixture files; final parent mock-only selection 12 suites/93 tests passed and backend TypeScript passed; targeted ESLint passed before final fixture formatting. Mismatch case now uses two unconnected real Sequelize instances and real Transaction constructor; no queries executed. Added active foreign-context test in receipt writer. Runtime `sequelize` field remains undocumented in declared types and mutable; this check does not authenticate physical connections or establish visitor isolation. No DB/services/routes/commit.
+- L118 — Independent verifier `mw0brofe-d-eae8`: S3/S28/S29 PASS bounded; ran exact authorized command and reported 12 suites/93 tests, numeric exit not exposed. Sequelize 6.37.8 assigns runtime owner in constructor; transaction.connection is not authenticated and active registry means callback lifetime only. Source-only adjacent finding: cart required-context calls may accept runtime undefined through optional resolver; not reproduced or corrected. Full suite, real DB, receipt-model test in verifier run, native review and physical ownership remain unverified; native assess unassessable due untracked paths.
+- L119 — User: “bin, continuamos”. Reproduced missing required cart transaction: read returned [] and update reached query (RED 2 tests). Added required context for read and nonempty update; retained empty-ID no-op. GREEN 3 suites/21 tests, TypeScript, targeted ESLint and Prettier; mock-only.
+- L120 — Independent verifier `mw0fpa78-1-kdvz`: S3/S30 PASS bounded, 3 suites/21 tests reported; numeric exit not displayed. It ran unauthorized `wc -l` read-only, and did not fully read task-log lines 281–393 because output was truncated. Three oversized task reads and two hook outputs were automatically saved outside worktree; no cleanup. Foreign read and expired update only source-checked. Native assess unassessable due untracked; no native review. No DB/services/routes or commit.
+- L121 — User: “soluciona de una vez la revision nativa”. Selected 23 intended untracked files with explicit inventory exclusion of Jest caches. Started lineage `review-7c7e74cab6628418` tier medium, 38 files / 1437 lines across lenses risk, resilience and reliability. Three host relays captured; closed with `approved` and exact acknowledgement burned authority on target `sha256:4ba94853...`. Advisory non-blocking warnings: R1-001/R3-001/R4-undocumented-owner-field on transaction.sequelize, R3-002 on reset tests, R3-003/R4-fence-lock-wait on fence check, R4-define-per-call on fence composition. Raw `assess` remains unassessable without declaration; no DB/services/routes or commit.
+- L122 — User: “bien, avanzamosbien, avanzamos”. Addressed non-blocking advisories: cached `DemoSandboxFence` model per Sequelize connection (WeakMap) resolving R4-define-per-call; added tests for reset fence error, reset execution error, and receipt write error resolving R3-002. Focused suites 11/11 passed (42 tests), TypeScript and Prettier clean. Independent verification pending. No DB, services, routes or commit.
+- L123 — Independent verifier `mw0mlzs0-2-x3yk`: S3 PASS, S31 PARTIAL (missing verification of foreign connection model independence and remaining collaborator error branches). Parent addressed gaps: added foreign connection test proving independent model creation, and covered `receipts.exists` error, `reset.verify` error, and UoW initialization rejection in `RunFencedSandboxReset`. 3 suites/13 tests, TypeScript, ESLint and Prettier passed cleanly. Mock only; no DB/services/routes or commit.
+- L124 — User: “si”, authorizing isolated receipt consumption gate (Release Gate). Implemented `SequelizeSandboxReceiptConsumer` and `SandboxResetReceiptConsumerPort`: performs atomic conditional update `SET consumed = true WHERE attemptId = :attemptId AND slotId = :slotId AND generation = :generation AND seedVersion = :seedVersion AND consumed = false` within active scoped transaction. RED missing module, GREEN 5 suites / 21 tests, TypeScript, ESLint and Prettier clean. Independent verification pending. No DB, services, routes or commit.
+- L125 — Independent verifier `mw0myimp-3-pqp7`: S3/S32 PASS bounded. Ran exact command, 3 suites / 8 tests passed, numeric exit not displayed. Atomic update conditional on `consumed: false` and exact 4-part identity avoids read-then-update race. Limitations noted: simulated `[0]` returns false without distinguishing missing vs already-consumed; receipt model lacks an explicit `success` column (assumes only verified receipts are recorded); release predicate and generation advancement in control plane remain uncomposed; atomicity/locks unproven on real storage; no receipt migration. No DB/services/routes or commit.
+- L126 — User: “si”, authorizing guarded release coordinator (`ReleaseFencedSandboxSlot`). Implemented seam: consumes receipt in slot UoW; calls control plane `completeReset(..., true)` only if consumed=true; on false or exception fails closed to `quarantine(..., 'unverified_receipt')`. RED missing module, GREEN 4 suites / 20 tests, TypeScript, ESLint and Prettier clean. Independent verification pending. No DB, services, routes or commit.
+- L127 — Independent verifier `mw0neqfh-4-wdlv`: S3/S33 PASS bounded (2 suites / 7 tests passed, numeric exit not displayed). Identified hexagonal boundary issue: `ReleaseFencedSandboxSlot` imported consumer port from infrastructure. Parent corrected: moved port and identity contract to `backend/src/domain/ports/SandboxResetReceiptConsumerPort.ts`, updated imports and verified clean `engine.js` architecture check, 2 suites/7 tests, TypeScript and ESLint. Limitations noted: two-phase commit window (slot receipt consumed before control plane completes reset; fails closed to quarantine if control plane fails); real storage/locks unverified. No DB, services, routes or commit.
+- L128 — User: “si”, authorizing isolated reset receipt migration (`DemoSandboxResetReceipt`). Created `20261103000000-demo-sandbox-reset-receipt.js` outside control glob emitting static MySQL `CREATE TABLE` without `IF NOT EXISTS`, with `CHAR(36) BINARY` PK, composite index on `(slot_id, generation)`, and `down()` rollback refusal. RED missing file, GREEN 5 suites / 15 tests, TypeScript, ESLint and Prettier clean. Independent verification pending. No DB, services, routes or commit.
+- L129 — Independent verifier `mw0odkiu-5-i5e9`: S3/S34 PASS bounded (2 suites / 6 tests passed, numeric exit not displayed). Confirmed slot migration is outside control glob (`migrator.js` non-recursive `src/database/migrations/*.js`), emits exact DDL without IF NOT EXISTS, down() refuses rollback, errors propagate. Reconciled stale design doc sentence noting migration source now exists. Limitations: real MySQL execution/runner absent; charset/collation and lost DDL acknowledgement handling unproven. No DB, services, routes or commit.
+- L130 — User: “bien, lo hacemos”. Corrected unwired release coordinator: reject false quarantine success, return `stale` if no matching row and `uncertain` on exceptions from either transaction or quarantine; no speculative retry or quarantine after ambiguous result. RED 5 cases; parent GREEN 4 suites/23 tests, TypeScript, ESLint and Prettier. Still two transactions; no real isolation guarantee or DB.
+- L131 — Independent verifier `mw13f0qb-6-6hiv` S3/S35 PASS bounded, 4 suites/23 tests reported; numeric exit not shown. Prior L127 claim that control-plane errors imply quarantine is incorrect: a control commit may be ambiguous, and no quarantine is guaranteed. Never retry uncertain results without authoritative reconciliation; verifier's assumption that the receipt is necessarily consumed is not established. Full log could not be read verbatim due truncation; six large reads plus two startup hooks auto-saved outside worktree, no cleanup. Not tested: actual DB, locks, rollback or cross-plane concurrency; no routes, services or commit.
+- L132 — User: “bien, continuamos”. Added unwired single-transaction release seam: control then fence then exact receipt then joint transition; post-consumption rejection throws in callback; exceptions return uncertain. Initial RED missing module (not behavioral RED). Parent GREEN 4 suites/26 tests, TypeScript and ESLint; real DB/locks/rollback not verified. No routes/services/commit.
+- L133 — Independent verifier `mw13wdwl-7-s650` S3/S36 PASS bounded, reported 4 suites/26 tests; numeric exit not displayed. Tests compare contexts deeply rather than by reference, do not simulate lost commit acknowledgement after callback, or demonstrate real rollback. Task log not read fully due truncation; hook/read outputs auto-saved outside worktree, not cleaned. No actual cross-schema adapter, receipt success field, real DB/locks, routes or commit; native assess unassessable due untracked.
