@@ -81,20 +81,24 @@ test('shares the scoped graph and caches remember-token repositories per slot', 
 });
 
 test('remember-token accessor accepts its own transaction and rejects another slot before SQL', async () => {
-  const txA = {};
-  const txB = {};
   const queryA = jest.fn().mockResolvedValue([undefined, 1]);
   const queryB = jest.fn().mockResolvedValue([undefined, 1]);
   const a = {
     label: 'a',
     query: queryA,
-    transaction: jest.fn(async (work: (tx: object) => Promise<unknown>) => work(txA)),
   } as unknown as Sequelize;
   const b = {
     label: 'b',
     query: queryB,
-    transaction: jest.fn(async (work: (tx: object) => Promise<unknown>) => work(txB)),
   } as unknown as Sequelize;
+  const txA = { sequelize: a };
+  const txB = { sequelize: b };
+  (a as { transaction: unknown }).transaction = jest.fn(
+    async (work: (tx: object) => Promise<unknown>) => work(txA),
+  );
+  (b as { transaction: unknown }).transaction = jest.fn(
+    async (work: (tx: object) => Promise<unknown>) => work(txB),
+  );
   const repositories = createDemoSandboxProductRepositories({
     get: (slot) => {
       if (slot === 'a') return a;
@@ -121,12 +125,14 @@ test('remember-token accessor accepts its own transaction and rejects another sl
 });
 
 test('reuses repositories by slot and rejects unknown slots before registering models', async () => {
-  const transactionA = {};
-  const transactionB = {};
+  const a = { label: 'a' } as unknown as Sequelize;
+  const b = { label: 'b' } as unknown as Sequelize;
+  const transactionA = { sequelize: a };
+  const transactionB = { sequelize: b };
   const managed = (transaction: object) =>
     jest.fn(async (work: (tx: object) => Promise<unknown>) => work(transaction));
-  const a = { label: 'a', transaction: managed(transactionA) } as unknown as Sequelize;
-  const b = { label: 'b', transaction: managed(transactionB) } as unknown as Sequelize;
+  (a as { transaction: unknown }).transaction = managed(transactionA);
+  (b as { transaction: unknown }).transaction = managed(transactionB);
   const get = jest.fn((slotId: string) => {
     if (slotId === 'a') return a;
     if (slotId === 'b') return b;

@@ -4,21 +4,24 @@ import type { Sequelize } from 'sequelize';
 import type { UnitOfWorkPort } from '../../../domain/ports/UnitOfWorkPort';
 
 test('adapter construction is inert and binds repository transactions to the supplied connection', async () => {
-  const tx = {};
   const query = jest.fn(async () => [undefined, 1]);
-  const transaction = jest.fn(async (work: (handle: object) => Promise<unknown>) => work(tx));
-  const connection = { query, transaction };
+  const connection: { query: typeof query; transaction?: unknown } = { query };
+  const tx = { sequelize: connection };
+  connection.transaction = jest.fn(async (work: (handle: object) => Promise<unknown>) => work(tx));
   const model = { sequelize: connection, findOne: jest.fn() };
   const db = { sequelize: connection, RememberToken: model } as unknown as RememberTokenPersistence;
   const adapters = createScopedRefreshTokenAdapters(db);
-  expect(transaction).not.toHaveBeenCalled();
+  expect(connection.transaction).not.toHaveBeenCalled();
   expect(query).not.toHaveBeenCalled();
   expect(model.findOne).not.toHaveBeenCalled();
   await adapters.uow.runInTransaction(async (context) => {
     await expect(adapters.repository.claimRotation({ presentedHash: 'a', successorHash: 'b', tx: context })).resolves.toBe(true);
   });
   expect(query).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ transaction: tx }));
-  const foreignConnection = { transaction };
+  const foreignConnection: { transaction?: unknown } = {};
+  foreignConnection.transaction = jest.fn(async (work: (handle: object) => Promise<unknown>) =>
+    work({ sequelize: foreignConnection }),
+  );
   const foreign = createScopedRefreshTokenAdapters({
     sequelize: foreignConnection,
     RememberToken: { sequelize: foreignConnection },
@@ -40,7 +43,7 @@ test.each(['missing', 'mismatch'] as const)('rejects %s model connection without
   const db = { sequelize: connection, RememberToken: model } as unknown as RememberTokenPersistence;
   expect(() => createScopedRefreshTokenAdapters(db)).toThrow('RememberToken model must be bound to the supplied connection');
   expect(query).not.toHaveBeenCalled();
-  expect(transaction).not.toHaveBeenCalled();
+  expect(connection.transaction).not.toHaveBeenCalled();
   expect(foreignQuery).not.toHaveBeenCalled();
   expect(foreignTransaction).not.toHaveBeenCalled();
 });
