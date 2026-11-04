@@ -213,6 +213,12 @@ describe('SequelizeAuthoritativeReleaseStateReader', () => {
     await expect(reader.readState(identity, session)).resolves.toBeNull();
   });
 
+  it('refuses a session bound to another slot before any query', async () => {
+    const { reader, log } = connectionWith([]);
+    await expect(reader.readState(identity, { ...session, slotId: 'slot-b' })).resolves.toBeNull();
+    expect(log).toHaveLength(0);
+  });
+
   it('checks the fence row of its bound slot only', async () => {
     const { reader, log } = connectionWith([
       () => [[{ current: session.serverUuid }], []],

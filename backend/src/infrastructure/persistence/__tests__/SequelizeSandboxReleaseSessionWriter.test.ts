@@ -1,7 +1,7 @@
 import { UniqueConstraintError } from 'sequelize';
 import { SequelizeSandboxReleaseSessionWriter } from '../SequelizeSandboxReleaseSessionWriter';
 import type { SandboxReleaseIdentity } from '../../../domain/ports/AuthoritativeReleaseStateReaderPort';
-import { ReleaseOperationAlreadyCommittedException } from '../../../domain/exceptions/ReleaseOperationAlreadyCommittedException';
+import { ReleaseSessionAlreadyRecordedException } from '../../../domain/exceptions/ReleaseSessionAlreadyRecordedException';
 
 const identity: SandboxReleaseIdentity = {
   releaseId: '33333333-3333-3333-3333-333333333333',
@@ -96,7 +96,7 @@ describe('SequelizeSandboxReleaseSessionWriter', () => {
       },
     ]);
     await expect(writer.recordSession(identity)).rejects.toBeInstanceOf(
-      ReleaseOperationAlreadyCommittedException,
+      ReleaseSessionAlreadyRecordedException,
     );
   });
 

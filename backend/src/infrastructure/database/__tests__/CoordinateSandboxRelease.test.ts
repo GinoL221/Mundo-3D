@@ -2,7 +2,6 @@ import { CoordinateSandboxRelease } from '../CoordinateSandboxRelease';
 import type { UnitOfWorkPort, TransactionContext } from '../../../domain/ports/UnitOfWorkPort';
 import type { SandboxReleaseIdentity } from '../../../domain/ports/AuthoritativeReleaseStateReaderPort';
 import type { RecordedReleaseSession } from '../../../domain/ports/SandboxReleaseSessionRecorderPort';
-import { ReleaseSandboxInTransaction } from '../../../application/use-cases/ReleaseSandboxInTransaction';
 
 const identity: SandboxReleaseIdentity = {
   releaseId: '33333333-3333-3333-3333-333333333333',
@@ -27,7 +26,7 @@ const passThroughUow: UnitOfWorkPort = { runInTransaction: async (work) => work(
 interface Harness {
   order: string[];
   sessions: { recordSession: jest.Mock };
-  connectionId: { current: jest.Mock };
+  connectionId: { snapshot: jest.Mock };
   control: { lockAndCheck: jest.Mock; release: jest.Mock };
   fence: { lockAndCheck: jest.Mock };
   receipts: { consume: jest.Mock };
@@ -38,6 +37,7 @@ interface Harness {
 
 function setup(options?: {
   connectionIdInTransaction?: string;
+  serverUuidInTransaction?: string;
   recordSession?: () => Promise<RecordedReleaseSession>;
 }): Harness {
   const order: string[] = [];
@@ -48,7 +48,10 @@ function setup(options?: {
     })),
   };
   const connectionId = {
-    current: jest.fn(async () => options?.connectionIdInTransaction ?? recorded.connectionId),
+    snapshot: jest.fn(async () => ({
+      connectionId: options?.connectionIdInTransaction ?? recorded.connectionId,
+      serverUuid: options?.serverUuidInTransaction ?? recorded.serverUuid,
+    })),
   };
   const control = {
     lockAndCheck: jest.fn(async () => {
@@ -109,7 +112,7 @@ describe('CoordinateSandboxRelease', () => {
     expect(result).toMatchObject({ outcome: 'released', recorded });
     expect(order).toEqual(['record', 'control', 'fence', 'receipt', 'release', 'record-release']);
     expect(sessions.recordSession).toHaveBeenCalledWith(identity);
-    expect(connectionId.current).toHaveBeenCalledWith(tx);
+    expect(connectionId.snapshot).toHaveBeenCalledWith(tx);
   });
 
   it('reports uncertain and rolls back when the held connection identity drifted', async () => {
@@ -127,7 +130,7 @@ describe('CoordinateSandboxRelease', () => {
     const coordinator = new CoordinateSandboxRelease({
       uow: observing,
       sessions: { recordSession: async () => recorded },
-      connectionId: { current: async () => '99' },
+      connectionId: { snapshot: async () => ({ connectionId: '99', serverUuid: recorded.serverUuid }) },
       control: { lockAndCheck: jest.fn(), release: jest.fn() },
       fence: { lockAndCheck: jest.fn() },
       receipts: { consume: jest.fn() },
@@ -139,6 +142,40 @@ describe('CoordinateSandboxRelease', () => {
     expect(rollback.mock.calls[0][0]).toBeInstanceOf(Error);
     expect(String(rollback.mock.calls[0][0].message)).toMatch(/continuity/i);
     expect(coordinator['control'].lockAndCheck).not.toHaveBeenCalled();
+  });
+
+  it('reports uncertain when the server identity drifts even with the same connection id', async () => {
+    const rollback = jest.fn();
+    const observing: UnitOfWorkPort = {
+      runInTransaction: async (work) => {
+        try {
+          return await passThroughUow.runInTransaction(work);
+        } catch (error) {
+          rollback(error);
+          throw error;
+        }
+      },
+    };
+    const coordinator = new CoordinateSandboxRelease({
+      uow: observing,
+      sessions: { recordSession: async () => recorded },
+      connectionId: {
+        snapshot: async () => ({ connectionId: recorded.connectionId, serverUuid: 'uuid-after-restart' }),
+      },
+      control: { lockAndCheck: jest.fn(), release: jest.fn() },
+      fence: { lockAndCheck: jest.fn() },
+      receipts: { consume: jest.fn() },
+      releaseRecorder: { record: jest.fn(), exists: jest.fn(async () => false) },
+      reader: { readState: jest.fn() },
+    });
+    await expect(coordinator.execute(identity)).resolves.toMatchObject({ outcome: 'uncertain' });
+    expect(rollback).toHaveBeenCalledTimes(1);
+    expect(coordinator['control'].lockAndCheck).not.toHaveBeenCalled();
+  });
+
+  it('accepts a numeric connection id equal to the recorded one', async () => {
+    const { runCoordinator } = setup({ connectionIdInTransaction: ' 12 ' });
+    await expect(runCoordinator()).resolves.toMatchObject({ outcome: 'released' });
   });
 
   it('propagates a session-recording failure without starting the transaction', async () => {
@@ -159,7 +196,7 @@ describe('CoordinateSandboxRelease', () => {
       new CoordinateSandboxRelease({
         uow: passThroughUow,
         sessions: { recordSession: jest.fn() },
-        connectionId: { current: jest.fn() },
+        connectionId: { snapshot: jest.fn(async () => ({ connectionId: recorded.connectionId, serverUuid: recorded.serverUuid })) },
         control: { lockAndCheck: jest.fn(), release: jest.fn() },
         fence: { lockAndCheck: jest.fn() },
         receipts: { consume: jest.fn() },
@@ -168,16 +205,5 @@ describe('CoordinateSandboxRelease', () => {
       }).reconcile(identity, recorded),
     ).resolves.toBeNull();
     expect(reader.readState).toHaveBeenCalledWith(identity, recorded);
-  });
-
-  it('composes with the real seam type', () => {
-    const seam = new ReleaseSandboxInTransaction(
-      passThroughUow,
-      { lockAndCheck: jest.fn(), release: jest.fn() },
-      { lockAndCheck: jest.fn() },
-      { consume: jest.fn() },
-      { record: jest.fn(), exists: jest.fn(async () => false) },
-    );
-    expect(seam).toBeInstanceOf(ReleaseSandboxInTransaction);
   });
 });

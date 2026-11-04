@@ -16,9 +16,26 @@ import type {
   SandboxReleaseReceipt,
 } from '../../application/use-cases/ReleaseSandboxInTransaction';
 
-/** Reads the raw MySQL session id of the connection a transaction is running on. */
+/** The live identity of the raw connection a transaction is running on. */
+export interface LiveConnectionIdentity {
+  readonly connectionId: string;
+  readonly serverUuid: string;
+}
+
+/** Reads the live identity of the connection a transaction is running on. */
 export interface ReleaseConnectionIdentityReader {
-  current(context: TransactionContext): Promise<string>;
+  snapshot(context: TransactionContext): Promise<LiveConnectionIdentity>;
+}
+
+/**
+ * Strict numeric mapping for MySQL thread ids. The writer stores BIGINT as a
+ * decimal string; the guard compares parsed safe integers so whitespace or a
+ * numeric string never breaks equality, and anything non-numeric is invalid.
+ */
+function parseConnectionId(value: string): number | null {
+  if (!/^\s*[0-9]+\s*$/.test(value)) return null;
+  const parsed = Number(value.trim());
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
 export interface CoordinateSandboxReleaseOutcome {
@@ -64,10 +81,17 @@ export class CoordinateSandboxRelease {
     const guardedUow: UnitOfWorkPort = {
       runInTransaction: async <T>(work: (tx: TransactionContext) => Promise<T>): Promise<T> =>
         this.ports.uow.runInTransaction(async (tx) => {
-          const current = await this.ports.connectionId.current(tx);
-          if (current !== recorded.connectionId) {
+          const live = await this.ports.connectionId.snapshot(tx);
+          const recordedId = parseConnectionId(recorded.connectionId);
+          const liveId = parseConnectionId(live.connectionId);
+          if (
+            recordedId === null ||
+            liveId === null ||
+            recordedId !== liveId ||
+            live.serverUuid !== recorded.serverUuid
+          ) {
             throw new Error(
-              `Release connection continuity lost: recorded ${recorded.connectionId}, running ${current}`,
+              `Release connection continuity lost: recorded ${recorded.connectionId} on ${recorded.serverUuid}, running ${live.connectionId} on ${live.serverUuid}`,
             );
           }
           return work(tx);

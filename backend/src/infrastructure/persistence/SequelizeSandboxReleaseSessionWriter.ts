@@ -2,7 +2,7 @@ import type { Sequelize } from 'sequelize';
 import { UniqueConstraintError } from 'sequelize';
 import type { RecordedReleaseSession, SandboxReleaseSessionRecorderPort } from '../../domain/ports/SandboxReleaseSessionRecorderPort';
 import type { SandboxReleaseIdentity } from '../../domain/ports/AuthoritativeReleaseStateReaderPort';
-import { ReleaseOperationAlreadyCommittedException } from '../../domain/exceptions/ReleaseOperationAlreadyCommittedException';
+import { ReleaseSessionAlreadyRecordedException } from '../../domain/exceptions/ReleaseSessionAlreadyRecordedException';
 
 const SESSION_UNIQUE_INDEX = 'uq_release_session_attempt';
 
@@ -46,6 +46,9 @@ export class SequelizeSandboxReleaseSessionWriter implements SandboxReleaseSessi
       throw new Error('Connection identity is unavailable');
     }
     const connectionId = Number(identityRow.id);
+    if (!Number.isSafeInteger(connectionId) || connectionId <= 0) {
+      throw new Error('Connection identity is unavailable');
+    }
     try {
       await this.connection.query(
         'INSERT INTO `DemoSandboxReleaseSession` (attempt_id, slot_id, generation, server_uuid, connection_id) VALUES (:attemptId, :slotId, :generation, :serverUuid, :connectionId)',
@@ -61,7 +64,7 @@ export class SequelizeSandboxReleaseSessionWriter implements SandboxReleaseSessi
       );
     } catch (error) {
       if (isSessionUniquenessRejection(error)) {
-        throw new ReleaseOperationAlreadyCommittedException(identity.slotId, identity.attemptId);
+        throw new ReleaseSessionAlreadyRecordedException(identity.slotId, identity.attemptId);
       }
       throw error;
     }
