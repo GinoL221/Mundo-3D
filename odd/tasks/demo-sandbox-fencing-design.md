@@ -90,7 +90,7 @@ No retry or release follows an ambiguous commit until the original transaction i
 
 ## Isolated single-transaction release seam
 
-`ReleaseSandboxInTransaction` is unwired orchestration over abstract ports: it asks for the control lock and validation first, then the fence lock and validation, then consumes the exact receipt and finally requests a joint control/fence release in the same supplied context. A rejected final transition throws inside the unit-of-work callback, so a correctly implemented transactional unit of work can roll back the receipt consumption. Any exception, including a potentially ambiguous commit, yields `uncertain` and requires authoritative reconciliation; it must not trigger an automatic retry.
+`ReleaseSandboxInTransaction` is unwired orchestration over abstract ports: it asks for the control lock and validation first, then the fence lock and validation, then consumes the exact receipt, requests a joint control/fence release in the same supplied context and finally records the durable release operation **in that same context**. A rejected final transition throws inside the unit-of-work callback, so a correctly implemented transactional unit of work can roll back the receipt consumption. Any exception, including a potentially ambiguous commit, yields `uncertain` and requires authoritative reconciliation; it must not trigger an automatic retry. The release identity consumed by the ports now carries the same `releaseId` the reconciliation seam expects, supplied by the caller; no component generates it.
 
 The ports and mocks do not enforce a real transaction, lock acquisition, model binding, correct state predicates, jointly updated rows or rollback. No adapter implementing these new release ports exists. The earlier `ReleaseFencedSandboxSlot` uses two transactions and must not be wired to visitors. Real same-server topology, grants, engine, isolation, durable identity and receipt provenance remain prerequisites; no MySQL test is authorized by this design.
 
@@ -98,7 +98,17 @@ The ports and mocks do not enforce a real transaction, lock acquisition, model b
 
 `ReconcileUncertainRelease` is unwired and read-only: given an operation identity it returns `confirmed_released`, `confirmed_not_released` or `indeterminate`. It reads one supplied authoritative snapshot and confirms nothing unless the snapshot reports the previous transaction ended, a consistent authoritative view, operation-bound evidence whose `releaseId`, slot, lease, generation, attempt and seed version all match, and state rows that carry the same slot plus every released or untouched field. Anything else, including a reader failure, a missing row, an unknown phase, a split result or mismatched evidence, stays `indeterminate`.
 
-This is a decision contract, not a recovery mechanism. **No durable producer of `releaseId` or of the release evidence exists**: the existing release seam defines its own identity without `releaseId`, receipts record no consuming release, and no table stores release history. The reader therefore asserts durability and provenance that the repository cannot yet prove, and the three fields that make a confirmation meaningful (transaction ended, authoritative snapshot, evidence outcome) are outside the checks this seam can perform. Enforcing them needs a durable release record, an authoritative-read protocol and a stop confirmation for the previous worker; those remain unimplemented prerequisites. No MySQL, failover or concurrency behavior is demonstrated, and a confirmed outcome never authorizes reusing the slot without the separate reset and allocation protocol.
+For the current isolated reconciliation seam, the following matrix defines only which observations can be confirmed; it does not define all valid lifecycle states:
+
+| Control | Fence | Receipt | Evidence | Result |
+| --- | --- | --- | --- | --- |
+| `resetting`, matching slot, lease, generation and attempt | `fenced`, matching slot, generation and attempt, `leaseId = null` | Matching identity, unconsumed | `not_committed` | `confirmed_not_released` |
+| `available`, generation advanced, lease and attempt cleared | `open`, matching slot and advanced generation, lease and attempt cleared | Matching identity, consumed | `committed` | `confirmed_released` |
+| Any other, missing, inconsistent or unverified observation | Any | Any | Any | `indeterminate` |
+
+Both confirmations additionally require an ended transaction, an authoritative snapshot and matching operation evidence. The null fence lease requirement is a conservative provisional restriction, not a proven invariant: a valid implementation that retains the previous lease while fenced would remain `indeterminate`. No fence-transition producer establishes either representation. Revisit this matrix together with the actual coordinator and database tests before integration; never relax it merely to improve availability.
+
+This is a decision contract, not a recovery mechanism. The existing release seam defines its own identity without `releaseId`, receipts record no consuming release, and the isolated release-operation model, migration source and writer are not wired into the release transaction; the migration has not been executed here. The reader therefore asserts durability and provenance that the repository cannot yet prove, and the three fields that make a confirmation meaningful (transaction ended, authoritative snapshot, evidence outcome) are outside the checks this seam can perform. Enforcing them needs a durable release record, an authoritative-read protocol and a stop confirmation for the previous worker; those remain unimplemented prerequisites. No MySQL, failover or concurrency behavior is demonstrated, and a confirmed outcome never authorizes reusing the slot without the separate reset and allocation protocol.
 
 ## Durable release operation record
 
@@ -116,7 +126,7 @@ Rules, none of which are implemented as a producer yet:
 
 Reporting a duplicate depends on how the driver describes the failure. Sequelize fills `UniqueConstraintError.fields` from attribute-level unique keys, and for a composite index declared in `options.indexes` it reports the failing index name instead of the individual columns; with this model `uniqueKeys` is empty, so `uq_release_attempt` arrives as its own key. Only that index, or exactly `slot_id`, `generation` and `attempt_id`, is treated as an already committed release; a `release_id` collision or a violation that cannot be identified stays an ordinary error.
 
-`20261104000000-demo-sandbox-release-operation.js` provides the isolated slot migration source and `DemoSandboxReleaseOperation` declares the matching model. Neither is executable here: the file is outside the control migrator glob, is unexecuted, and no writer, reader, grant or reconciliation wiring exists. Mock tests assert the emitted statement and model declaration only.
+`20261104000000-demo-sandbox-release-operation.js` provides the isolated slot migration source and `DemoSandboxReleaseOperation` declares the matching model. The file is outside the control migrator glob and is unexecuted. An isolated writer exists, but no authoritative reader, grant or release-transaction wiring exists. Mock tests assert the emitted statement and model declaration only.
 
 ## Cross-schema coordinator and authoritative reader
 

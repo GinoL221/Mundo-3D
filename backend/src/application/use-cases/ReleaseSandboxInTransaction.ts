@@ -1,9 +1,6 @@
 import type { TransactionContext, UnitOfWorkPort } from '../../domain/ports/UnitOfWorkPort';
-import type { SandboxResetIdentity } from '../../domain/ports/SandboxResetReceiptConsumerPort';
-
-export interface SandboxReleaseIdentity extends SandboxResetIdentity {
-  readonly leaseId: string;
-}
+import type { SandboxReleaseOperationRecorderPort } from '../../domain/ports/SandboxReleaseOperationRecorderPort';
+import type { SandboxReleaseIdentity } from '../../domain/ports/AuthoritativeReleaseStateReaderPort';
 
 export interface SandboxReleaseControl {
   /** Lock control first and check slot, resetting phase, generation, lease and attempt. */
@@ -29,6 +26,7 @@ export class ReleaseSandboxInTransaction {
     private readonly control: SandboxReleaseControl,
     private readonly fence: SandboxReleaseFence,
     private readonly receipts: SandboxReleaseReceipt,
+    private readonly recorder: SandboxReleaseOperationRecorderPort,
   ) {}
 
   async execute(identity: SandboxReleaseIdentity): Promise<'released' | 'rejected' | 'uncertain'> {
@@ -41,6 +39,7 @@ export class ReleaseSandboxInTransaction {
         if (!(await this.control.release(current, tx))) {
           throw new Error('Sandbox release transition rejected after receipt consumption');
         }
+        await this.recorder.record(current, tx);
         return 'released';
       });
     } catch {
