@@ -286,6 +286,8 @@ describe('ReconcileUncertainRelease', () => {
         'a control retaining another attempt',
         { control: { ...resettingControl, resetAttemptId: 'attempt-600' } },
       ],
+      ['a barrier retaining the same lease', { fence: { ...fencedFence, leaseId: 'lease-100' } }],
+      ['a barrier retaining another lease', { fence: { ...fencedFence, leaseId: 'lease-200' } }],
       ['an open barrier', { fence: { ...fencedFence, state: 'open' as const } }],
       ['an unknown barrier state', { fence: { ...fencedFence, state: 'unknown' as const } }],
       ['a barrier generation that advanced', { fence: { ...fencedFence, generation: 6 } }],

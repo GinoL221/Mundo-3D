@@ -106,10 +106,12 @@ export class ReconcileUncertainRelease {
       control.leaseId === identity.leaseId &&
       control.resetAttemptId === identity.attemptId;
 
+    // Conservative until the fenced-state lease contract has a verified producer.
     const isFenceUnreleased =
       fence.slotId === identity.slotId &&
       fence.state === 'fenced' &&
       fence.generation === identity.generation &&
+      fence.leaseId === null &&
       fence.resetAttemptId === identity.attemptId;
 
     const isReceiptUnconsumed =
