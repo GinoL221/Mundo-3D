@@ -152,6 +152,16 @@ Nothing here is implemented or verified. It names the connection the release and
 
 **Verification this design still owes:** a disposable-server test of same-session cross-schema DML, the lock order under concurrency, deadlock and timeout behaviour, session-identity visibility, replica divergence, and the same checks for the reset worker. Until those run on a real server, no reconciliation outcome is authoritative and no visitor may be enabled.
 
+### Coordinator wiring candidate (unimplemented, verification-gated)
+
+Wiring the three reviewed components (session-record producer, release seam, authoritative reader) exposes the pooled-connection problem the session-writer review named: the captured `CONNECTION_ID()` only proves anything if the release transaction runs on the **same raw MySQL session** that was recorded. A Sequelize pool may hand out sibling raw connections, and a released raw connection can be reused or reconnected, which would make a recorded id disappear from the process list while a release transaction is still running — a false `transactionEnded`.
+
+Candidate contract, none of it implemented or verified:
+
+1. **Held dedicated connection.** The coordinator acquires one raw connection for the whole release attempt and keeps it checked out from the session-record insert through the release transaction and outcome resolution, releasing it only once the outcome is known. While the transaction runs, the recorded id is legitimately still present (reader answers `indeterminate`, which is correct); if the connection drops, the transaction died with it, so the vanished id is a true ended signal for that transaction, and the remaining ambiguity is exactly the post-commit acknowledgement case the matrix already handles through evidence. This also pre-empts the column-superset and misclassification advisories being load-bearing at runtime.
+2. **Same-connection sequence.** Record session → begin transaction on that connection → control lock, fence lock, receipt consumption, joint release, release-record insert (the existing seam order) → commit or rollback → resolve `released`/`rejected`/`uncertain`. The reconciliation reader then runs on its own fresh connection against the recorded session identity.
+3. **Explicit wiring prerequisites before any implementation is trusted:** a disposable-server test that (a) a pool with `max: 1` reuses the same MySQL thread id across sequential checkouts and that a held checkout cannot migrate, (b) a dropped connection mid-transaction rolls the transaction back, and (c) `replacements` interpolation versus true server binds for the writer's insert. Until those run, the wiring stays on paper and the components stay unwired; no caller exists.
+
 ### Authoritative reader refinement after the first disposable-server round
 
 The first authorized disposable-MySQL round (bitácora L147, MySQL 8.0.46, container removed afterwards) produced point-in-time evidence this refinement may cite; it does not convert any rule below into a production guarantee.
