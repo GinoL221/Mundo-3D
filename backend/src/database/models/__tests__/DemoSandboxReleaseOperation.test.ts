@@ -50,6 +50,23 @@ describe('DemoSandboxReleaseOperation model', () => {
     });
   });
 
+  it('declares the uniqueness as an index, which the dialect reports by name', () => {
+    const connection = new Sequelize('sandbox', 'dummy', 'dummy', {
+      dialect: 'mysql',
+      logging: false,
+    });
+    const model = createDemoSandboxReleaseOperationModel(connection);
+
+    // Sequelize only fills `uniqueKeys` from attribute-level `unique`, so a
+    // composite index stays there and the driver reports its name instead of
+    // the individual columns. The field exists at runtime but is not declared
+    // on ModelCtor in the public types.
+    // SAFETY: read-only inspection of a Sequelize 6 runtime field in a test.
+    const uniqueKeys = (model as unknown as { uniqueKeys: Record<string, unknown> }).uniqueKeys;
+    expect(Object.keys(uniqueKeys)).toHaveLength(0);
+    expect(model.options.indexes?.[0]).toMatchObject({ name: 'uq_release_attempt', unique: true });
+  });
+
   it('reuses the definition per connection and isolates distinct connections', () => {
     const first = new Sequelize('sandbox', 'dummy', 'dummy', { dialect: 'mysql', logging: false });
     const second = new Sequelize('sandbox', 'dummy', 'dummy', { dialect: 'mysql', logging: false });

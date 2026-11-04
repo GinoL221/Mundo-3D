@@ -65,6 +65,34 @@ describe('SequelizeSandboxReleaseOperationWriter', () => {
     });
   });
 
+  it('recognises the index-name payload the mysql dialect actually produces', async () => {
+    const duplicate = new UniqueConstraintError({
+      message: "Duplicate entry 'slot-a-2-attempt-a' for key 'uq_release_attempt'",
+      fields: { uq_release_attempt: 'slot-a-2-attempt-a' },
+      errors: [],
+    });
+    const model = { create: jest.fn().mockRejectedValue(duplicate), findOne: jest.fn() };
+
+    await withScopedTransaction(connection, tx, async (context) => {
+      await expect(writerFor(model).record(identity, context)).rejects.toBeInstanceOf(
+        ReleaseOperationAlreadyCommittedException,
+      );
+    });
+  });
+
+  it('does not treat a primary-key payload as the attempt rule', async () => {
+    const collision = new UniqueConstraintError({
+      message: "Duplicate entry 'release-a' for key 'PRIMARY'",
+      fields: { PRIMARY: 'release-a' },
+      errors: [],
+    });
+    const model = { create: jest.fn().mockRejectedValue(collision), findOne: jest.fn() };
+
+    await withScopedTransaction(connection, tx, async (context) => {
+      await expect(writerFor(model).record(identity, context)).rejects.toBe(collision);
+    });
+  });
+
   it('propagates other storage failures unchanged', async () => {
     const failure = new Error('connection lost');
     const model = { create: jest.fn().mockRejectedValue(failure), findOne: jest.fn() };

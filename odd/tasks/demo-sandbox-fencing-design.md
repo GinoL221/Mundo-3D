@@ -114,6 +114,8 @@ Rules, none of which are implemented as a producer yet:
 - `release_id` is the durable identity, so it must never be reused, including after reset, backup restoration or slot reprovisioning; that is the same identity invariant lease history needs.
 - The record must live outside every resettable table and survive reset. Because it lives in the slot schema while control lives in the control schema, every claim above inherits the unverified single-connection, cross-schema assumption and the unauthorized grants described earlier in this document. If control, fence and this row are not genuinely committed together, the record proves nothing and the seam must not be used.
 
+Reporting a duplicate depends on how the driver describes the failure. Sequelize fills `UniqueConstraintError.fields` from attribute-level unique keys, and for a composite index declared in `options.indexes` it reports the failing index name instead of the individual columns; with this model `uniqueKeys` is empty, so `uq_release_attempt` arrives as its own key. Only that index, or exactly `slot_id`, `generation` and `attempt_id`, is treated as an already committed release; a `release_id` collision or a violation that cannot be identified stays an ordinary error.
+
 `20261104000000-demo-sandbox-release-operation.js` provides the isolated slot migration source and `DemoSandboxReleaseOperation` declares the matching model. Neither is executable here: the file is outside the control migrator glob, is unexecuted, and no writer, reader, grant or reconciliation wiring exists. Mock tests assert the emitted statement and model declaration only.
 
 ## Proposed rules for the four remaining gaps

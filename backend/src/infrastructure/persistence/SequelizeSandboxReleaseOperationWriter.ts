@@ -9,16 +9,20 @@ import { resolveScopedTransaction } from './scopedTransactionContext';
 type ReleaseOperationModel = ModelCtor<DemoSandboxReleaseOperationRecord>;
 
 const ATTEMPT_UNIQUE_FIELDS = ['slot_id', 'generation', 'attempt_id'] as const;
+const ATTEMPT_UNIQUE_INDEX = 'uq_release_attempt';
 
 /**
  * Only `uq_release_attempt` proves that this attempt was already released. A
  * `release_id` collision or an unidentifiable violation must not be reported as
- * one, so anything else is left to the caller unchanged.
+ * one, so anything else is left to the caller unchanged. Sequelize fills
+ * `fields` from attribute-level unique keys, otherwise it reports the failing
+ * index name, so both shapes are accepted and nothing else.
  */
 function isAttemptUniquenessRejection(error: unknown): error is UniqueConstraintError {
   if (!(error instanceof UniqueConstraintError)) return false;
   const rejected = Object.keys(error.fields ?? {});
-  return ATTEMPT_UNIQUE_FIELDS.every((field) => rejected.includes(field));
+  if (rejected.length === 1 && rejected[0] === ATTEMPT_UNIQUE_INDEX) return true;
+  return rejected.length > 0 && ATTEMPT_UNIQUE_FIELDS.every((field) => rejected.includes(field));
 }
 
 /**
