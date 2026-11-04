@@ -1,6 +1,7 @@
 import type { Sequelize } from 'sequelize';
 import type {
   AuthoritativeReleaseState,
+  AuthoritativeReleaseSessionReaderPort,
   SandboxReleaseIdentity,
 } from '../../domain/ports/AuthoritativeReleaseStateReaderPort';
 
@@ -33,9 +34,7 @@ const qualified = (schema: string, table: string) => `\`${schema}\`.\`${table}\`
  * (`indeterminate`). Real grants, topology and multi-process behaviour remain
  * unverified.
  */
-export interface AuthoritativeReleaseSessionReaderPort {
-  readState(identity: SandboxReleaseIdentity, session: RecordedReleaseSession): Promise<AuthoritativeReleaseState | null>;
-}
+export type { AuthoritativeReleaseSessionReaderPort } from '../../domain/ports/AuthoritativeReleaseStateReaderPort';
 
 export class SequelizeAuthoritativeReleaseStateReader implements AuthoritativeReleaseSessionReaderPort {
   constructor(

@@ -1,4 +1,5 @@
 import type { SandboxResetIdentity } from './SandboxResetReceiptConsumerPort';
+import type { RecordedReleaseSession } from './SandboxReleaseSessionRecorderPort';
 
 export interface SandboxReleaseIdentity extends SandboxResetIdentity {
   readonly leaseId: string;
@@ -38,4 +39,14 @@ export interface AuthoritativeReleaseState {
 
 export interface AuthoritativeReleaseStateReaderPort {
   readState(identity: SandboxReleaseIdentity): Promise<AuthoritativeReleaseState | null>;
+}
+
+/**
+ * Session-aware read side of reconciliation: the caller supplies the recorded
+ * release session (server uuid + connection id) produced before the release
+ * transaction started. The adapter proves durability and provenance; this
+ * declaration alone does not.
+ */
+export interface AuthoritativeReleaseSessionReaderPort {
+  readState(identity: SandboxReleaseIdentity, session: RecordedReleaseSession): Promise<AuthoritativeReleaseState | null>;
 }
