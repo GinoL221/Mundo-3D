@@ -70,7 +70,7 @@ export class SequelizeSandboxReleaseControl implements SandboxReleaseControl {
     if (!controlResult || Number(controlResult.affectedRows) !== 1) return false;
 
     const [fenceResult] = (await this.connection.query(
-      `UPDATE \`${this.slotSchema}\`.\`DemoSandboxFence\` SET state = 'open', generation = generation + 1, lease_id = NULL, reset_attempt_id = NULL ${guard} AND state = 'fenced'`,
+      `UPDATE \`${this.slotSchema}\`.\`DemoSandboxFence\` SET state = 'open', generation = generation + 1, reset_attempt_id = NULL ${guard} AND state = 'fenced' AND lease_id IS NULL`,
       { replacements, transaction: transaction as unknown as never },
     )) as unknown as [{ affectedRows?: number }, unknown];
     return fenceResult !== undefined && Number(fenceResult.affectedRows) === 1;

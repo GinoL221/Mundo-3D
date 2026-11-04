@@ -82,9 +82,17 @@ describe('SequelizeSandboxReleaseControl', () => {
     ['another lease', { ...controlRow, lease_id: 'other' }],
     ['another attempt', { ...controlRow, reset_attempt_id: 'other' }],
     ['no row', null],
-  ])('rejects %s', async (_label, row) => {
-    const { port, run } = control([() => [[row === null ? [] : [row]], []]]);
-    await run(async (tx) => expect(port.lockAndCheck(identity, tx)).resolves.toBe(false));
+  ])('rejects %s and only that field decides', async (_label, row) => {
+    // Paired in one case: the unmutated row must pass, so a false result can
+    // only come from the field under test rather than from a broken guard.
+    const { port, run } = control([
+      () => [[controlRow], []],
+      () => [[row === null ? [] : [row]], []],
+    ]);
+    await run(async (tx) => {
+      await expect(port.lockAndCheck(identity, tx)).resolves.toBe(true);
+      await expect(port.lockAndCheck(identity, tx)).resolves.toBe(false);
+    });
   });
 
   it('rejects a foreign slot before any query', async () => {
@@ -110,6 +118,17 @@ describe('SequelizeSandboxReleaseControl', () => {
     expect(fenceUpdate.sql).toContain('UPDATE `slot`.`DemoSandboxFence`');
     expect(fenceUpdate.sql).toContain("state = 'open'");
     expect(fenceUpdate.sql).toContain('generation = generation + 1');
+    // The matrix treats a released fence as the untouched shape, so the joint
+    // update must refuse a fence that still carries a lease.
+    expect(fenceUpdate.sql).toContain('lease_id IS NULL');
+  });
+
+  it('reports a failed release when the fence refuses after control advanced', async () => {
+    const { port, run } = control([
+      () => [{ affectedRows: 1 }, []],
+      () => [{ affectedRows: 0 }, []],
+    ]);
+    await run(async (tx) => expect(port.release(identity, tx)).resolves.toBe(false));
   });
 
   it('reports a failed release when storage did not advance the control row', async () => {
@@ -143,8 +162,14 @@ describe('SequelizeSandboxReleaseFence', () => {
     ['another generation', { ...fencedRow, generation: 4 }],
     ['another attempt', { ...fencedRow, reset_attempt_id: 'other' }],
     ['no row', null],
-  ])('rejects %s', async (_label, row) => {
-    const { port, run } = fence([() => [[row === null ? [] : [row]], []]]);
-    await run(async (tx) => expect(port.lockAndCheck(identity, tx)).resolves.toBe(false));
+  ])('rejects %s and only that field decides', async (_label, row) => {
+    const { port, run } = fence([
+      () => [[fencedRow], []],
+      () => [[row === null ? [] : [row]], []],
+    ]);
+    await run(async (tx) => {
+      await expect(port.lockAndCheck(identity, tx)).resolves.toBe(true);
+      await expect(port.lockAndCheck(identity, tx)).resolves.toBe(false);
+    });
   });
 });
