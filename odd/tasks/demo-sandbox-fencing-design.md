@@ -118,6 +118,30 @@ Reporting a duplicate depends on how the driver describes the failure. Sequelize
 
 `20261104000000-demo-sandbox-release-operation.js` provides the isolated slot migration source and `DemoSandboxReleaseOperation` declares the matching model. Neither is executable here: the file is outside the control migrator glob, is unexecuted, and no writer, reader, grant or reconciliation wiring exists. Mock tests assert the emitted statement and model declaration only.
 
+## Cross-schema coordinator and authoritative reader
+
+Nothing here is implemented or verified. It names the connection the release and reconciliation paths would need, and what a reader would have to establish before any outcome stops being `indeterminate`.
+
+**Preconditions, all unverified:** control and slot schemas on one server, all affected tables InnoDB, and a coordinator account permitted to read and write the control lifecycle row and that slot's fence, receipt and release rows on one session. The coordinator is a distinct principal from the slot runtime; per-slot restriction, TLS and the actual grants remain unauthorized and unverified.
+
+**Coordinator rules**
+
+- Qualify every table with its schema and bind the schema names to operator configuration, never to a caller-supplied identifier.
+- Fixed lock order: control row, then slot fence row. Never acquire the control lock while holding a slot lock. Receipt consumption and the release-record insert happen only after both locks are held, immediately before the joint transition.
+- Revalidate slot, phase, lease, generation, attempt and seed version under the locks; any mismatch rejects before publishing anything.
+- A lock-wait timeout or deadlock rolls back and reports `uncertain`; it never retries on its own.
+- The commit is the only moment that publishes; a rejected final transition throws inside the transaction so everything rolls back.
+
+**Establishing that the previous transaction ended.** The abstract `transactionEnded` flag is not something a reader can currently justify. A candidate mechanism: the release runs on a dedicated connection and records `CONNECTION_ID()` durably before commit is attempted; reconciliation then requires that identifier to be absent from the server's process list, or an operator's confirmation that the worker stopped. An unreadable process list, a still-present identifier or an unknown worker state all keep the outcome `indeterminate`. The visibility rules and privileges of the process list on the target server are unverified, so this is a design hypothesis, not an available fact.
+
+**Reader rules**
+
+- One fresh transaction per reconciliation, with no transaction-start option that establishes an earlier snapshot, and the fence lock acquired as its first step before any consistent read.
+- Read control, fence, receipt and release record on the same authoritative server. A replica, an unknown read path or a snapshot that could predate the fencing invalidates the read.
+- A missing row, a mismatched identity, an unknown phase or a split state stays `indeterminate`. Only a present release record, or its absence together with an ended transaction and every untouched-state predicate, may confirm an outcome.
+
+**Verification this design still owes:** a disposable-server test of same-session cross-schema DML, the lock order under concurrency, deadlock and timeout behaviour, session-identity visibility, replica divergence, and the same checks for the reset worker. Until those run on a real server, no reconciliation outcome is authoritative and no visitor may be enabled.
+
 ## Proposed rules for the four remaining gaps
 
 These are proposed acceptance rules, not implemented mechanisms or a complete proof:
