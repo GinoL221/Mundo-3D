@@ -94,6 +94,12 @@ No retry or release follows an ambiguous commit until the original transaction i
 
 The ports and mocks do not enforce a real transaction, lock acquisition, model binding, correct state predicates, jointly updated rows or rollback. No adapter implementing these new release ports exists. The earlier `ReleaseFencedSandboxSlot` uses two transactions and must not be wired to visitors. Real same-server topology, grants, engine, isolation, durable identity and receipt provenance remain prerequisites; no MySQL test is authorized by this design.
 
+## Isolated uncertain-release reconciliation
+
+`ReconcileUncertainRelease` is unwired and read-only: given an operation identity it returns `confirmed_released`, `confirmed_not_released` or `indeterminate`. It reads one supplied authoritative snapshot and confirms nothing unless the snapshot reports the previous transaction ended, a consistent authoritative view, operation-bound evidence whose `releaseId`, slot, lease, generation, attempt and seed version all match, and state rows that carry the same slot plus every released or untouched field. Anything else, including a reader failure, a missing row, an unknown phase, a split result or mismatched evidence, stays `indeterminate`.
+
+This is a decision contract, not a recovery mechanism. **No durable producer of `releaseId` or of the release evidence exists**: the existing release seam defines its own identity without `releaseId`, receipts record no consuming release, and no table stores release history. The reader therefore asserts durability and provenance that the repository cannot yet prove, and the three fields that make a confirmation meaningful (transaction ended, authoritative snapshot, evidence outcome) are outside the checks this seam can perform. Enforcing them needs a durable release record, an authoritative-read protocol and a stop confirmation for the previous worker; those remain unimplemented prerequisites. No MySQL, failover or concurrency behavior is demonstrated, and a confirmed outcome never authorizes reusing the slot without the separate reset and allocation protocol.
+
 ## Proposed rules for the four remaining gaps
 
 These are proposed acceptance rules, not implemented mechanisms or a complete proof:

@@ -349,6 +349,20 @@ Model control-then-fence lock ordering, exact receipt consumption and release in
 - [x] T40 — S3/S17: Test-first isolated lease-bound refresh credential contract; route: inline; commit: 3bedd79.
 - [x] T41 — S3/S17: Safe focused checks and independent security verification; route: verifier; commit: 3bedd79.
 
+### S37 — Isolated uncertain-release reconciliation
+> “vamos por la opcion 1”
+> “corregilo”
+> “bien seguimos”
+
+Add an unwired read-only seam that classifies an uncertain release as `confirmed_released`, `confirmed_not_released` or `indeterminate`. A confirmation requires operation-bound evidence whose `releaseId`, slot, lease, generation, attempt and seed version all match the operation, plus control, fence and receipt rows carrying the same slot and every released or untouched field. Reader failure, missing rows, unknown phases, split results or evidence that contradicts the observed state stay `indeterminate`.
+
+The seam is not a recovery mechanism: no durable producer of `releaseId` or the evidence exists, receipts record no consuming release, and the reader asserts transaction end, snapshot authority and durability that the repository cannot prove. No MySQL, failover, locking or concurrency behavior is demonstrated. Mocks only; no routes, services, executed migrations or delivery.
+
+## Tasks
+
+- [x] T81 — S37: Test-first isolated reconciliation seam; route: inline.
+- [x] T82 — S37: Independent verification and correction of reported blockers; route: verifier.
+
 ## Log
 
 - L1 — User request: “entonces si el siguiente paso es avanzar a la etapa 2 lo hacemos”.
@@ -490,3 +504,6 @@ Model control-then-fence lock ordering, exact receipt consumption and release in
 - L131 — Independent verifier `mw13f0qb-6-6hiv` S3/S35 PASS bounded, 4 suites/23 tests reported; numeric exit not shown. Prior L127 claim that control-plane errors imply quarantine is incorrect: a control commit may be ambiguous, and no quarantine is guaranteed. Never retry uncertain results without authoritative reconciliation; verifier's assumption that the receipt is necessarily consumed is not established. Full log could not be read verbatim due truncation; six large reads plus two startup hooks auto-saved outside worktree, no cleanup. Not tested: actual DB, locks, rollback or cross-plane concurrency; no routes, services or commit.
 - L132 — User: “bien, continuamos”. Added unwired single-transaction release seam: control then fence then exact receipt then joint transition; post-consumption rejection throws in callback; exceptions return uncertain. Initial RED missing module (not behavioral RED). Parent GREEN 4 suites/26 tests, TypeScript and ESLint; real DB/locks/rollback not verified. No routes/services/commit.
 - L133 — Independent verifier `mw13wdwl-7-s650` S3/S36 PASS bounded, reported 4 suites/26 tests; numeric exit not displayed. Tests compare contexts deeply rather than by reference, do not simulate lost commit acknowledgement after callback, or demonstrate real rollback. Task log not read fully due truncation; hook/read outputs auto-saved outside worktree, not cleaned. No actual cross-schema adapter, receipt success field, real DB/locks, routes or commit; native assess unassessable due untracked.
+- L134 — User selected the isolated reconciliation seam: “vamos por la opcion 1”, then “corregilo” and “bien seguimos”. Added `AuthoritativeReleaseStateReaderPort` and `ReconcileUncertainRelease` with tests. Initial RED was a missing module, not a behavioral failure; parent GREEN 17 then 20 tests. First independent review flagged unsafe confirmations: outcomes were accepted without operation-bound evidence, so two behavioral RED tests were added; GREEN 20 tests, TypeScript and targeted ESLint passed. No routes, DB, services or commit.
+- L135 — Independent verifier `mw1gtapv-1-kitl` ran no commands and reported three blockers: control and fence rows carried no slot identity, so another slot's rows could confirm a release; the release evidence and its `releaseId` had no durable producer, no link to the existing release seam and no design coverage; and the mock synthesized evidence from the state under test, leaving the outcome checks, five identity comparisons and most sub-conditions untested. Non-blocking: generations are not checked as safe integers, empty identifiers pass when they match, and a legitimate re-lease after release reads as `indeterminate`.
+- L136 — Corrected only the first and third blockers. Control and fence now carry `slotId` and both predicates compare it; the tests inject evidence explicitly per case and cover each identity field, both evidence/state contradictions, unknown phases and every released or untouched field, 50 tests passing. A mutation check removed the retained-lease guard, produced exactly one failing test and was reverted. TypeScript, targeted ESLint and the architecture check pass. The missing durable producer is now stated in the design document as an unimplemented prerequisite; no MySQL, routes, services or delivery.
