@@ -10,8 +10,7 @@ const CREATE_RELEASE_OPERATION = `CREATE TABLE \`DemoSandboxReleaseOperation\` (
   \`attempt_id\` CHAR(36) BINARY NOT NULL,
   \`seed_version\` VARCHAR(128) NOT NULL,
   \`lease_id\` CHAR(36) BINARY NOT NULL,
-  UNIQUE KEY \`uq_release_attempt\` (\`slot_id\`, \`generation\`, \`attempt_id\`),
-  INDEX \`idx_release_slot_generation\` (\`slot_id\`, \`generation\`)
+  UNIQUE KEY \`uq_release_attempt\` (\`slot_id\`, \`generation\`, \`attempt_id\`)
 ) ENGINE=InnoDB`;
 
 module.exports = {

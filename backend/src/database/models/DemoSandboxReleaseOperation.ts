@@ -44,7 +44,18 @@ export function createDemoSandboxReleaseOperationModel(
       seedVersion: { field: 'seed_version', type: DataTypes.STRING(128), allowNull: false },
       leaseId: { field: 'lease_id', type: DataTypes.UUID, allowNull: false },
     },
-    { tableName: 'DemoSandboxReleaseOperation', timestamps: false, freezeTableName: true },
+    {
+      tableName: 'DemoSandboxReleaseOperation',
+      timestamps: false,
+      freezeTableName: true,
+      indexes: [
+        {
+          name: 'uq_release_attempt',
+          unique: true,
+          fields: ['slot_id', 'generation', 'attempt_id'],
+        },
+      ],
+    },
   );
   releaseOperationModelCache.set(sequelize, model);
   return model;

@@ -34,6 +34,22 @@ describe('DemoSandboxReleaseOperation model', () => {
     expect(query).not.toHaveBeenCalled();
   });
 
+  it('declares the same uniqueness rule as the migration', () => {
+    const connection = new Sequelize('sandbox', 'dummy', 'dummy', {
+      dialect: 'mysql',
+      logging: false,
+    });
+    const model = createDemoSandboxReleaseOperationModel(connection);
+    const indexes = model.options.indexes ?? [];
+
+    expect(indexes).toHaveLength(1);
+    expect(indexes[0]).toMatchObject({
+      name: 'uq_release_attempt',
+      unique: true,
+      fields: ['slot_id', 'generation', 'attempt_id'],
+    });
+  });
+
   it('reuses the definition per connection and isolates distinct connections', () => {
     const first = new Sequelize('sandbox', 'dummy', 'dummy', { dialect: 'mysql', logging: false });
     const second = new Sequelize('sandbox', 'dummy', 'dummy', { dialect: 'mysql', logging: false });

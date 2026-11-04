@@ -9,8 +9,7 @@ const expectedSql = `CREATE TABLE \`DemoSandboxReleaseOperation\` (
   \`attempt_id\` CHAR(36) BINARY NOT NULL,
   \`seed_version\` VARCHAR(128) NOT NULL,
   \`lease_id\` CHAR(36) BINARY NOT NULL,
-  UNIQUE KEY \`uq_release_attempt\` (\`slot_id\`, \`generation\`, \`attempt_id\`),
-  INDEX \`idx_release_slot_generation\` (\`slot_id\`, \`generation\`)
+  UNIQUE KEY \`uq_release_attempt\` (\`slot_id\`, \`generation\`, \`attempt_id\`)
 ) ENGINE=InnoDB`;
 
 describe('isolated slot release operation migration', () => {
@@ -19,17 +18,23 @@ describe('isolated slot release operation migration', () => {
     await migration.up({ context: { sequelize: { query } } });
     expect(query).toHaveBeenCalledTimes(1);
     expect(query).toHaveBeenCalledWith(expectedSql);
-    expect(expectedSql).not.toMatch(/IF NOT EXISTS/i);
   });
 
-  it('lets storage reject a second committed release for one attempt', async () => {
+  it('emits a statement without IF NOT EXISTS', async () => {
     const query = jest.fn().mockResolvedValue(undefined);
     await migration.up({ context: { sequelize: { query } } });
-    expect(query).toHaveBeenCalledWith(expectedSql);
-    expect(expectedSql).toContain(
+    expect(query.mock.calls[0][0]).not.toMatch(/IF NOT EXISTS/i);
+  });
+
+  it('emits the uniqueness clause and no redundant secondary index', async () => {
+    const query = jest.fn().mockResolvedValue(undefined);
+    await migration.up({ context: { sequelize: { query } } });
+    const emitted = query.mock.calls[0][0];
+    expect(emitted).toContain(
       'UNIQUE KEY `uq_release_attempt` (`slot_id`, `generation`, `attempt_id`)',
     );
-    expect(expectedSql).toContain('`release_id` CHAR(36) BINARY NOT NULL PRIMARY KEY');
+    expect(emitted).not.toContain('idx_release_slot_generation');
+    expect(emitted).toContain('`release_id` CHAR(36) BINARY NOT NULL PRIMARY KEY');
   });
 
   it('propagates an existing-table error without issuing further statements', async () => {
