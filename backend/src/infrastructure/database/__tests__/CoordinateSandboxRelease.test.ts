@@ -178,6 +178,68 @@ describe('CoordinateSandboxRelease', () => {
     await expect(runCoordinator()).resolves.toMatchObject({ outcome: 'released' });
   });
 
+  it.each([
+    ['a non-numeric recorded id', { connectionId: 'thread-12' }],
+    ['a zero recorded id', { connectionId: '0' }],
+    ['an unsafe recorded id', { connectionId: '99999999999999999999' }],
+  ])('refuses %s inside the transaction', async (_label, patch) => {
+    const rollback = jest.fn();
+    const observing: UnitOfWorkPort = {
+      runInTransaction: async (work) => {
+        try {
+          return await passThroughUow.runInTransaction(work);
+        } catch (error) {
+          rollback(error);
+          throw error;
+        }
+      },
+    };
+    const control = { lockAndCheck: jest.fn(), release: jest.fn() };
+    const coordinator = new CoordinateSandboxRelease({
+      uow: observing,
+      sessions: { recordSession: async () => ({ ...recorded, ...patch }) },
+      connectionId: {
+        snapshot: async () => ({ connectionId: recorded.connectionId, serverUuid: recorded.serverUuid }),
+      },
+      control,
+      fence: { lockAndCheck: jest.fn() },
+      receipts: { consume: jest.fn() },
+      releaseRecorder: { record: jest.fn(), exists: jest.fn(async () => false) },
+      reader: { readState: jest.fn() },
+    });
+    await expect(coordinator.execute(identity)).resolves.toMatchObject({ outcome: 'uncertain' });
+    expect(String(rollback.mock.calls[0][0]?.message)).toMatch(/continuity/i);
+    expect(control.lockAndCheck).not.toHaveBeenCalled();
+  });
+
+  it('records the guard error when the live id is unusable', async () => {
+    const rollback = jest.fn();
+    const observing: UnitOfWorkPort = {
+      runInTransaction: async (work) => {
+        try {
+          return await passThroughUow.runInTransaction(work);
+        } catch (error) {
+          rollback(error);
+          throw error;
+        }
+      },
+    };
+    const coordinator = new CoordinateSandboxRelease({
+      uow: observing,
+      sessions: { recordSession: async () => recorded },
+      connectionId: {
+        snapshot: async () => ({ connectionId: 'not-a-thread-id', serverUuid: recorded.serverUuid }),
+      },
+      control: { lockAndCheck: jest.fn(), release: jest.fn() },
+      fence: { lockAndCheck: jest.fn() },
+      receipts: { consume: jest.fn() },
+      releaseRecorder: { record: jest.fn(), exists: jest.fn(async () => false) },
+      reader: { readState: jest.fn() },
+    });
+    await expect(coordinator.execute(identity)).resolves.toMatchObject({ outcome: 'uncertain' });
+    expect(String(rollback.mock.calls[0][0]?.message)).toMatch(/continuity/i);
+  });
+
   it('propagates a session-recording failure without starting the transaction', async () => {
     const failure = new Error('recording refused');
     const { runCoordinator, control } = setup({

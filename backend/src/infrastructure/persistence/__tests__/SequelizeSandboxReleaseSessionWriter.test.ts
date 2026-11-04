@@ -88,6 +88,32 @@ describe('SequelizeSandboxReleaseSessionWriter', () => {
     });
   });
 
+  it.each([
+    ['a zero id', { id: 0, uuid: 'uuid-1' }],
+    ['a negative id', { id: -3, uuid: 'uuid-1' }],
+    ['an unsafe id', { id: 1e21, uuid: 'uuid-1' }],
+    ['a non-numeric id', { id: 'thread', uuid: 'uuid-1' }],
+    ['a missing server uuid', { id: 12, uuid: '' }],
+  ])('fails closed on %s without inserting', async (_label, row) => {
+    const { writer, log } = connectionWith([() => [[row], []]]);
+    await expect(writer.recordSession(identity)).rejects.toThrow(
+      'Connection identity is unavailable',
+    );
+    expect(log).toHaveLength(1);
+  });
+
+  it('maps an attempt primary-key collision to the domain exception', async () => {
+    const { writer } = connectionWith([
+      () => [[{ id: 12, uuid: 'uuid-1' }], []],
+      () => {
+        throw new UniqueConstraintError({ fields: { PRIMARY: identity.attemptId } });
+      },
+    ]);
+    await expect(writer.recordSession(identity)).rejects.toBeInstanceOf(
+      ReleaseSessionAlreadyRecordedException,
+    );
+  });
+
   it('maps an attempt-session uniqueness rejection to the domain exception', async () => {
     const { writer } = connectionWith([
       () => [[{ id: 12, uuid: 'uuid-1' }], []],

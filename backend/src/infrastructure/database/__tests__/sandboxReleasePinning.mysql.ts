@@ -144,17 +144,26 @@ describe('release pinning on a disposable MySQL server', () => {
     const recordedForeign = await writer.recordSession(foreignIdentity);
 
     const identityReader = new SequelizeReleaseConnectionIdentityReader(slot);
+    const control = { lockAndCheck: jest.fn(), release: jest.fn() };
+    const fence = { lockAndCheck: jest.fn() };
+    const receipts = { consume: jest.fn() };
+    const releaseRecorder = { record: jest.fn(), exists: jest.fn(async () => false) };
     const coordinator = new CoordinateSandboxRelease({
       uow: new ScopedSequelizeUnitOfWork(slot),
       sessions: { recordSession: jest.fn(async () => recordedForeign) },
       connectionId: identityReader,
-      control: { lockAndCheck: jest.fn(), release: jest.fn() },
-      fence: { lockAndCheck: jest.fn() },
-      receipts: { consume: jest.fn() },
-      releaseRecorder: { record: jest.fn(), exists: jest.fn(async () => false) },
+      control,
+      fence,
+      receipts,
+      releaseRecorder,
       reader: { readState: jest.fn() },
     });
     await expect(coordinator.execute(identity)).resolves.toMatchObject({ outcome: 'uncertain' });
+    // The continuity guard fired: no lifecycle port ran on the foreign session.
+    expect(control.lockAndCheck).not.toHaveBeenCalled();
+    expect(fence.lockAndCheck).not.toHaveBeenCalled();
+    expect(receipts.consume).not.toHaveBeenCalled();
+    expect(releaseRecorder.record).not.toHaveBeenCalled();
     const sessionRows = (await slot.query(
       'SELECT COUNT(*) AS n FROM DemoSandboxReleaseSession WHERE attempt_id = ?',
       { replacements: [foreignIdentity.attemptId], type: QueryTypes.SELECT },

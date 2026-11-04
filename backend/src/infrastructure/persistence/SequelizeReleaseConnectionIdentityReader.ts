@@ -17,11 +17,20 @@ export class SequelizeReleaseConnectionIdentityReader implements ReleaseConnecti
       { transaction: context as unknown as never },
     )) as unknown as [Array<{ id: number; uuid: string }>, unknown];
     const row = rows[0];
-    if (!row || !Number.isFinite(Number(row.id)) || !row.uuid) {
+    const connectionId = Number(row?.id);
+    // Same strict mapping the session writer uses, so both sides agree on what
+    // a comparable thread id is: a positive safe integer and nothing else.
+    if (
+      !row ||
+      !/^\s*[0-9]+\s*$/.test(String(row.id)) ||
+      !Number.isSafeInteger(connectionId) ||
+      connectionId <= 0 ||
+      !row.uuid
+    ) {
       throw new Error('Connection identity is unavailable');
     }
     return {
-      connectionId: String(Number(row.id)),
+      connectionId: String(connectionId),
       serverUuid: row.uuid,
     };
   }
