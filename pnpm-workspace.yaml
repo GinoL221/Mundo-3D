@@ -125,6 +125,25 @@ overrides:
 # workspace project. Hoisting it to the root node_modules keeps `astro
 # check` working. No effect on trustPolicy/audit/script-blocking hardening
 # above.
+
+# Recorded, still-open advisories outside the production tree.
+#
+# `run-pnpm-audit.sh` gates on `pnpm audit --prod` and only reports the full
+# tree. These entries explain what the report keeps showing, so the noise is
+# documented instead of silently tolerated. Revisit when the upstream fix
+# ships; none of them can be closed from here today.
+#
+# - glob (GHSA-3g3m-2fjr-6pw4, MODERATE): installed 7.2.3, 10.5.0 and 11.1.0
+#   through jest. The advisory is only fixed at >=14.0.2, which crosses
+#   several majors of glob's API. Forcing it would risk the test runner to
+#   clear findings that never reach shipped code.
+# - minimatch (GHSA via globparts amplification, MODERATE): installed 9.0.9
+#   and 10.2.5 through eslint and jest (3.1.5 is below the vulnerable
+#   range). Fixed only at >=11.0.1, another major jump with the same
+#   trade-off.
+# - deepmerge (MODERATE): installed 4.3.1 through jest-config. The advisory
+#   asks for >=4.3.2, which is not published: the registry's newest release
+#   is 4.3.1 (2023). Nothing in this repository can resolve it.
 publicHoistPattern:
   - typescript
 
