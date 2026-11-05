@@ -94,9 +94,11 @@ overrides:
   smol-toml: ^1.8.1
   fast-uri: 3.1.9
   browserslist: ^4.28.7
-  # 2 MODERATE advisories reaching production via express > body-parser;
-  # 6.16.0 fixes both and is now old enough for the release-age policy.
-  qs: ^6.16.0
+  # 2 MODERATE advisories reaching production via express > body-parser.
+  # The advisory was published after 6.16.0 shipped, which moved the floor:
+  # vulnerable >=6.7.0 <=6.16.0, patched >=6.16.1. Released 2026-10-14, so it
+  # clears the release-age policy without an exclusion entry.
+  qs: ^6.16.1
   # 2026-09-02 — MODERATE, production: unbounded zlib inflate in the
   # compressed-protocol handler. This is the database driver, so it sits on
   # every query path. 3.23.1 was published 2026-07-19, comfortably past the
