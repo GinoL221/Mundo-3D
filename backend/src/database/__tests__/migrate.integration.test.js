@@ -33,8 +33,10 @@ const ORDERS_MIGRATION_NAME = '20260828000000-orders.js';
 // migration". Alters RememberToken only; creates no new table.
 const REFRESH_ROTATION_MIGRATION_NAME = '20260901000000-refresh-token-rotation.js';
 const CUSTOM_COMMISSION_REQUEST_MIGRATION_NAME = '20260927000000-custom-commission-requests.js';
+const DEMO_SANDBOX_SLOTS_MIGRATION_NAME = '20261026000000-demo-sandbox-slots.js';
 const EMAIL_CONFIRMATION_TOKEN_TABLE = 'EmailConfirmationToken';
 const CUSTOM_COMMISSION_REQUEST_TABLE = 'CustomCommissionRequest';
+const DEMO_SANDBOX_SLOT_TABLE = 'DemoSandboxSlot';
 const ALL_TABLES = ['User', 'Category', 'Franchise', 'Product', 'ShoppingCart', 'RememberToken'];
 // Order/OrderItem come from a second migration (`20260828000000-orders.js`),
 // applied/reverted in addition to the baseline — kept separate from
@@ -62,6 +64,7 @@ describe('migrate CLI — real scratch DB', () => {
     await db.sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
     for (const table of [
       'SequelizeMeta',
+      DEMO_SANDBOX_SLOT_TABLE,
       EMAIL_CONFIRMATION_TOKEN_TABLE,
       CUSTOM_COMMISSION_REQUEST_TABLE,
       ...[...ALL_TABLES, ...ORDER_TABLES].reverse(),
@@ -114,6 +117,7 @@ describe('migrate CLI — real scratch DB', () => {
       REFRESH_ROTATION_MIGRATION_NAME,
       '20260902000000-email-confirmation.js',
       CUSTOM_COMMISSION_REQUEST_MIGRATION_NAME,
+      DEMO_SANDBOX_SLOTS_MIGRATION_NAME,
     ]);
   });
 
@@ -219,11 +223,17 @@ describe('migrate CLI — real scratch DB', () => {
     expect(tables.filter((t) => t === 'Product')).toHaveLength(1);
   });
 
-  it('down five times removes each migration in order and restores the baseline shape', async () => {
+  it('down six times removes each migration in order and restores the baseline shape', async () => {
     // Umzug's `down` with no args reverts only the most recently applied migration.
     const firstDown = await run(['down']);
     expect(firstDown).toBe(true);
     let tables = await showTables();
+    expect(tables).not.toContain(DEMO_SANDBOX_SLOT_TABLE);
+    expect(tables).toContain(CUSTOM_COMMISSION_REQUEST_TABLE);
+
+    const secondDown = await run(['down']);
+    expect(secondDown).toBe(true);
+    tables = await showTables();
     expect(tables).not.toContain(CUSTOM_COMMISSION_REQUEST_TABLE);
     expect(tables).toContain(EMAIL_CONFIRMATION_TOKEN_TABLE);
     const columnsAfterCommissionDown = await db.sequelize
@@ -231,8 +241,8 @@ describe('migrate CLI — real scratch DB', () => {
       .describeTable('User');
     expect(columnsAfterCommissionDown).toHaveProperty('email_verified_at');
 
-    const secondDown = await run(['down']);
-    expect(secondDown).toBe(true);
+    const thirdDown = await run(['down']);
+    expect(thirdDown).toBe(true);
     tables = await showTables();
     expect(tables).not.toContain(EMAIL_CONFIRMATION_TOKEN_TABLE);
     const columnsAfterEmailConfirmationDown = await db.sequelize
@@ -240,8 +250,8 @@ describe('migrate CLI — real scratch DB', () => {
       .describeTable('User');
     expect(columnsAfterEmailConfirmationDown).not.toHaveProperty('email_verified_at');
 
-    const thirdDown = await run(['down']);
-    expect(thirdDown).toBe(true);
+    const fourthDown = await run(['down']);
+    expect(fourthDown).toBe(true);
     // refresh-token-rotation's down() restores RememberToken byte-for-byte.
     const columnsAfterRefreshRotationDown = await db.sequelize
       .getQueryInterface()
@@ -263,16 +273,16 @@ describe('migrate CLI — real scratch DB', () => {
     tables = await showTables();
     expect(tables).toEqual(expect.arrayContaining([...ALL_TABLES, ...ORDER_TABLES]));
 
-    const fourthDown = await run(['down']);
-    expect(fourthDown).toBe(true);
+    const fifthDown = await run(['down']);
+    expect(fifthDown).toBe(true);
     tables = await showTables();
     for (const table of ORDER_TABLES) {
       expect(tables).not.toContain(table);
     }
     expect(tables).toEqual(expect.arrayContaining(ALL_TABLES));
 
-    const fifthDown = await run(['down']);
-    expect(fifthDown).toBe(true);
+    const sixthDown = await run(['down']);
+    expect(sixthDown).toBe(true);
     tables = await showTables();
     for (const table of [...ALL_TABLES, ...ORDER_TABLES]) {
       expect(tables).not.toContain(table);

@@ -9,10 +9,29 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const WORKFLOW = path.join(ROOT, '.github', 'workflows', 'ci.yml');
 const AUDIT_SCRIPT = path.join(__dirname, 'run-pnpm-audit.sh');
 
-function runAudit(exitCode, output) {
+/**
+ * Builds a fake `pnpm` whose answer depends on whether the invocation carries
+ * `--prod`. The gate runs both trees in one invocation of the script, so a
+ * double that answered identically to both would not prove which one blocked.
+ */
+function runAudit(production, development) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'mundo-audit-'));
   const pnpm = path.join(directory, 'pnpm');
-  fs.writeFileSync(pnpm, `#!/usr/bin/env bash\nprintf '%s\\n' '${output}'\nexit ${exitCode}\n`);
+  fs.writeFileSync(
+    pnpm,
+    [
+      '#!/usr/bin/env bash',
+      'for argument in "$@"; do',
+      '  if [ "$argument" = "--prod" ]; then',
+      `    printf '%s\\n' '${production.output}'`,
+      `    exit ${production.exitCode}`,
+      '  fi',
+      'done',
+      `printf '%s\\n' '${development.output}'`,
+      `exit ${development.exitCode}`,
+      '',
+    ].join('\n'),
+  );
   fs.chmodSync(pnpm, 0o755);
 
   const result = childProcess.spawnSync('bash', [AUDIT_SCRIPT], {
@@ -34,7 +53,7 @@ function validateWorkflow(source) {
   assert.ok(actionReferences.length >= 11, 'expected every current workflow action use');
   assert.ok(actionReferences.every((reference) => /^[a-f0-9]{40}$/.test(reference)));
 
-  const mysqlReferences = [...source.matchAll(/image:\s+>-\n\s*(mysql@sha256:[a-f0-9]{64})/g)].map(
+  const mysqlReferences = [...source.matchAll(/image:\s+>\-\n\s*(mysql@sha256:[a-f0-9]{64})/g)].map(
     (match) => match[1],
   );
   assert.equal(mysqlReferences.length, 2);
@@ -51,29 +70,64 @@ function validateWorkflow(source) {
   assert.match(source, /needs\.e2e\.result.*!= "success"/);
 }
 
-test('clean audit succeeds and records AUDIT_OK', () => {
-  const result = runAudit(0, 'No known vulnerabilities found');
+const CLEAN = { output: 'No known vulnerabilities found', exitCode: 0 };
+
+test('clean production and development trees succeed and record AUDIT_OK', () => {
+  const result = runAudit(CLEAN, CLEAN);
   assert.equal(result.status, 0);
   assert.match(result.stdout, /No known vulnerabilities found/);
   assert.match(result.stdout, /AUDIT_OK/);
 });
 
-test('advisory audit result remains nonzero and is visibly classified', () => {
-  const result = runAudit(1, '{"advisories":{"lodash":{"severity":"high"}}}');
+test('a production advisory blocks the gate and is visibly classified', () => {
+  const result = runAudit(
+    { output: '{"advisories":{"qs":{"severity":"moderate"}}}', exitCode: 1 },
+    { output: '{"advisories":{"qs":{"severity":"moderate"}}}', exitCode: 1 },
+  );
   assert.equal(result.status, 1);
   assert.match(result.stderr, /AUDIT_ADVISORY/);
 });
 
-test('registry or network audit failure remains nonzero and is visibly classified', () => {
-  const result = runAudit(1, 'ERR_PNPM_META_FETCH_FAIL request to registry failed: ENOTFOUND');
+test('development-only advisories are reported without blocking the gate', () => {
+  const development = {
+    output: '{"advisories":{"deepmerge":{"severity":"moderate"}}}',
+    exitCode: 1,
+  };
+  const result = runAudit(CLEAN, development);
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /No known vulnerabilities found/);
+  assert.match(result.stdout, /AUDIT_DEV_TREE_ADVISORY/);
+  assert.match(result.stdout, /deepmerge/);
+});
+
+test('a production registry failure blocks and is visibly classified', () => {
+  const result = runAudit(
+    { output: 'ERR_PNPM_META_FETCH_FAIL request to registry failed: ENOTFOUND', exitCode: 1 },
+    CLEAN,
+  );
   assert.equal(result.status, 1);
   assert.match(result.stderr, /AUDIT_AVAILABILITY_FAILURE/);
 });
 
-test('ambiguous audit failure remains nonzero and is visibly classified', () => {
-  const result = runAudit(1, 'pnpm exited unexpectedly');
+test('an ambiguous production failure blocks and is visibly classified', () => {
+  const result = runAudit({ output: 'pnpm exited unexpectedly', exitCode: 1 }, CLEAN);
   assert.equal(result.status, 1);
   assert.match(result.stderr, /AUDIT_EXECUTION_FAILURE/);
+});
+
+test('an unavailable development tree is reported instead of passing silently', () => {
+  const result = runAudit(CLEAN, {
+    output: 'ERR_PNPM_META_FETCH_FAIL request to registry failed: ENOTFOUND',
+    exitCode: 1,
+  });
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /AUDIT_DEV_TREE_UNAVAILABLE/);
+});
+
+test('the script runs the production gate and the development report separately', () => {
+  const source = fs.readFileSync(AUDIT_SCRIPT, 'utf8');
+  assert.match(source, /pnpm audit --prod/);
+  assert.match(source, /pnpm audit(?! --prod)/);
 });
 
 test('workflow uses immutable references and preserves the verification foundations', () => {
