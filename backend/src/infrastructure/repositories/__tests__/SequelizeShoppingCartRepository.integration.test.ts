@@ -16,7 +16,7 @@
  * (`DB_HOST`/`DB_USER`/`DB_PASS` env vars, see `database/config/config.js`).
  */
 import { SequelizeShoppingCartRepository } from '../SequelizeShoppingCartRepository';
-import { TransactionContext } from '../../../domain/ports/UnitOfWorkPort';
+import { withScopedTransaction } from '../../persistence/scopedTransactionContext';
 import {
   bootstrapTestDatabase,
   closeTestDatabase,
@@ -184,7 +184,9 @@ describe('SequelizeShoppingCartRepository.syncCart — real DB concurrency', () 
 
       const cartLockTx = await db.sequelize.transaction();
       try {
-        await repository.findActiveForUpdate(fixture.userId, cartLockTx as unknown as TransactionContext);
+        await withScopedTransaction(db.sequelize, cartLockTx, async (tx) => {
+          await repository.findActiveForUpdate(fixture.userId, tx);
+        });
 
         const productLockTx = await db.sequelize.transaction();
         try {
