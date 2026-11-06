@@ -80,13 +80,13 @@ describe('SequelizeCategoryRepository', () => {
 
     it('translates a duplicate name into the stable category conflict error', async () => {
       const { UniqueConstraintError } = jest.requireActual('sequelize');
-      jest
-        .mocked(db.Category.create)
-        .mockRejectedValue(new UniqueConstraintError({ message: 'duplicate name', errors: [] }));
+      const duplicate = new UniqueConstraintError({ message: 'duplicate name', errors: [] });
+      jest.mocked(db.Category.create).mockRejectedValue(duplicate);
 
-      await expect(repository.create({ nameCategory: 'Existing Category' })).rejects.toThrow(
-        'DUPLICATE_CATEGORY_NAME',
-      );
+      await expect(repository.create({ nameCategory: 'Existing Category' })).rejects.toMatchObject({
+        message: 'DUPLICATE_CATEGORY_NAME',
+        cause: duplicate,
+      });
     });
   });
 

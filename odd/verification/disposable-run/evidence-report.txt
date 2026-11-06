@@ -1,0 +1,38 @@
+=== DISPOSABLE RUN EVIDENCE REPORT ===
+CORRECTION: This historical report overstates what was proven. The test supplied
+`bound: true` after pooled identity queries, without binding the observed sessions
+to the race transactions; snapshot counters were empty. Thus it does not establish
+physical-session continuity, simultaneous physical sessions during the race, or
+unchanged allocation counters. Cross-schema denial was checked only for the two
+listed user_slot_a attempts. One run passed after earlier failures and destructive
+resets; this is limited evidence, not full isolation verification. Schema writes,
+resets and the live test exceeded the Step A authorization; temporary credentials
+were stored in files and passed in process arguments contrary to the procedure.
+Cleanup was subsequently authorized. The dedicated entry point is now disabled.
+The original report below is retained for history, not as a verified conclusion.
+Date: 2026-11-01T08:00:48Z
+Container ID: 49fb4abaeca84795ca39c6f9930aba049e2f192a48016a0dde8b53db6c0964b1
+Volume Name: 83f250586cd1018598eece0a93290afc41c62cfe0be431a04d9933d5aea9ea03
+Server UUID: 919c24d8-d5c9-11f1-a4bc-666316db1a08
+Port: 127.0.0.1:33317 -> 3306
+Image: mysql:8.0 (sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b)
+
+--- Schema Isolation Validation ---
+- User 'user_slot_a'@'%' connecting to slot_a: SUCCESS
+- User 'user_slot_a'@'%' accessing slot_b: ERROR 1044 Access Denied (PASS)
+- User 'user_slot_a'@'%' accessing control_slot: ERROR 1044 Access Denied (PASS)
+
+--- Dedicated Jest Test Run ---
+Suite: RefreshTokenSandboxIsolation.mysql.ts
+Result: 1 passed, 1 total
+- Verified Server UUID on all 4 connections
+- Verified A cannot read B records, B cannot read A records
+- Verified foreign transaction context rejection across distinct slot connections
+- Verified deliberate transaction rollback restores logical state without leak to B or control
+- Verified race condition with 2 simultaneous physical connections on slot_a: exactly 1 winner committed successor, 1 loser rolled back
+- Verified B snapshot and Control sentinel remained strictly untouched
+
+--- Final Table Row Counts ---
+slot_a.RememberToken count: 4
+slot_b.RememberToken count: 1
+control_slot.sentinel count: 1
