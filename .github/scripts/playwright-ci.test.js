@@ -37,6 +37,22 @@ test('Playwright uses one CI-only retry and explicit Linux visual inputs', () =>
   assert.match(read(GLOBAL_SETUP), /db:test:prepare/);
 });
 
+test('cached Playwright system dependencies are limited to Chromium', () => {
+  const workflow = read(WORKFLOW);
+  assert.match(
+    workflow,
+    /name: Install Playwright System Dependencies \(if cached\)\s+if: steps\.playwright-cache\.outputs\.cache-hit == 'true'\s+run: pnpm --filter e2e exec playwright install-deps chromium\s*\n/,
+  );
+});
+
+test('uncached Playwright browsers retain Chromium installation with system dependencies', () => {
+  const workflow = read(WORKFLOW);
+  assert.match(
+    workflow,
+    /name: Install Playwright Browsers\s+if: steps\.playwright-cache\.outputs\.cache-hit != 'true'\s+run: pnpm --filter e2e exec playwright install --with-deps chromium\s*\n/,
+  );
+});
+
 test('the E2E workflow reports recovered passes and uploads diagnostics only after test failure', () => {
   const workflow = read(WORKFLOW);
   assert.match(workflow, /id:\s*e2e-tests/);
