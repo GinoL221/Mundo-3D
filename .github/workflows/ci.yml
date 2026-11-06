@@ -55,6 +55,9 @@ jobs:
       - name: Validate CI supply-chain controls
         run: node --test .github/scripts/run-pnpm-audit.test.js
 
+      - name: Validate Playwright CI configuration
+        run: node --test .github/scripts/playwright-ci.test.js
+
       - name: Check architecture boundaries
         run: pnpm --filter backend architecture:check
 

@@ -37,6 +37,14 @@ test('Playwright uses one CI-only retry and explicit Linux visual inputs', () =>
   assert.match(read(GLOBAL_SETUP), /db:test:prepare/);
 });
 
+test('quality runs Playwright CI regression tests', () => {
+  const workflow = read(WORKFLOW);
+  assert.match(
+    workflow,
+    /quality:[\s\S]*?run: node --test \.github\/scripts\/playwright-ci\.test\.js[\s\S]*?\n  integration:/,
+  );
+});
+
 test('cached Playwright system dependencies are limited to Chromium', () => {
   const workflow = read(WORKFLOW);
   assert.match(
