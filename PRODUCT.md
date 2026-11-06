@@ -16,9 +16,11 @@ The two audiences are not in conflict, but the primary one decides ties.
 
 ## Product Purpose
 
-Mundo-3D is a portfolio piece in the form of a working e-commerce for 3D-printed products: pre-made collectibles from known franchises, and custom commissions.
+Mundo-3D is a portfolio project in the form of a working e-commerce for 3D-printed products: pre-made collectibles from known franchises, and custom commissions. Its target deliverable is a public, interactive web demo that a recruiter can explore through a link without installing tools or configuring an environment.
 
-It exists to demonstrate engineering and design judgement through something complete rather than described. Success is an evaluator concluding that the author builds carefully — not a sales figure. That makes the interface itself part of the deliverable rather than packaging around it: a well-argued architecture behind a careless surface reads as an unfinished project, because the surface is the only part most evaluators will ever run.
+It exists to demonstrate engineering and design judgement through something complete rather than described. Success is an evaluator concluding that the author builds carefully — not a sales figure or the number of features. The interface is part of the deliverable: a well-argued architecture behind a careless surface reads as an unfinished project.
+
+Public availability and safe demo access are product goals, not claims that deployment or visitor isolation already exists.
 
 ## Positioning
 
@@ -28,13 +30,36 @@ The product's claim is therefore not "an online store" but **a storefront whose 
 
 ## Operating Context
 
-Evaluation happens on a laptop, in minutes, often with several tabs of other candidates open. It usually starts at the home page or a repository README, rarely follows a guided path, and frequently includes logging in to see what the authenticated and administrative surfaces look like. Mobile viewing is plausible but secondary to that first desktop pass.
+Evaluation happens on a laptop, in minutes, often with several tabs of other candidates open. It starts from a public demo link or the repository README and must not require a local setup. Mobile viewing is plausible but secondary to that first desktop pass.
 
-The shopping context the storefront depicts is ordinary consumer browsing: catalogue, product detail, cart, checkout intent, and order history.
+The shopping context the storefront depicts is ordinary consumer browsing: catalogue, product detail, cart, simulated checkout, and order history. An optional short guide should explain what to try and what each flow demonstrates, without forcing visitors through a tutorial or turning the storefront into a technical presentation.
+
+## Target Demo Experience
+
+This section defines the intended experience, not the current implementation status.
+
+- **Immediate entry:** browse the catalogue, product details, and cart without registration.
+- **Interactive buyer access:** use a safe demo session to create a clearly simulated order and inspect its history, without registration friction or real payment.
+- **Interactive STAFF access:** inspect custom-commission requests and exercise permitted staff actions. ADMIN access is not publicly available.
+- **Safe exploration:** use fictitious data, backend-enforced permissions and usage limits, isolation between visitors, and a recoverable demo state. Shared credentials that let visitors interfere with one another are not an acceptable shortcut.
+- **Visible engineering evidence:** provide discoverable links to the repository, architecture, and verification records while keeping shopping flows focused on the shopper.
+
+### Demo Acceptance Criteria
+
+The target demo is ready when an evaluator can:
+
+1. Open a public URL and browse without installing tools, configuring services, or registering.
+2. Complete a simulated buyer flow from catalogue to cart, order creation, and order history, with no real charge.
+3. Try the STAFF role and observe its permission boundaries without obtaining ADMIN access or affecting another visitor's session or data.
+4. Submit a fictitious custom-commission request and inspect it through the intended STAFF demo flow, without sending real email or implying a quote or order was created.
+5. Explore a usable, recoverable dataset with clear loading, empty, validation, and failure states, without exposing real personal data or secrets.
+6. Find the repository and supporting engineering evidence without following a mandatory guided tour.
+
+Buyer interaction is the first delivery priority; public STAFF interaction follows only when its isolation and backend restrictions are verified. These criteria do not authorize deployment or database changes.
 
 ## Capabilities and Constraints
 
-**Working today** (verified in the repository, not aspirational):
+**Implemented capabilities** (repository functionality, not a claim that a public deployment or its operational configuration has been verified):
 
 - Catalogue with categories and franchises; product detail pages.
 - Registration and login with JWT in an `httpOnly` cookie, signed double-submit CSRF, refresh-token rotation with family-wide reuse detection, and per-IP plus per-account login throttling.
@@ -45,7 +70,8 @@ The shopping context the storefront depicts is ordinary consumer browsing: catal
 - Informational pages: about, FAQ, help, step-by-step, terms, privacy.
 - Public custom commission request intake without an account, collecting name, email, and idea, with optional catalog-product association. Requests are available for STAFF/ADMIN review and expire after 30 days; physical purge runs hourly while the backend is active or at its next startup. No automated contact or transaction is implied.
 - Light/dark theme.
-- 17 frontend routes; five frontend domains (`auth`, `cart`, `commissions`, `orders`, `products`).
+
+The target demo's public access, safe buyer/STAFF sessions, visitor isolation, usage limits, and state recovery must be assessed separately. Existing authentication and roles alone do not establish that these demo requirements are satisfied.
 
 **Technical constraints:**
 
@@ -55,9 +81,13 @@ The shopping context the storefront depicts is ordinary consumer browsing: catal
 - CSS has no build step; tokens live in `frontend/src/styles/tokens/` and are consumed by component stylesheets.
 - Helmet CSP is explicit and stricter than defaults; no inline scripts in backend-served HTML.
 
-**Current limits:**
+**Scope boundaries and exclusions:**
 
-- Payment is not implemented. No real transaction occurs. Future work must not imply that one does.
+- **Custom commissions are part of the product.** The supported slice is request submission and staff review, not quoting, commission-order tracking, or payment. The catalogue contains pre-made franchise pieces and leads the home page; commissions follow as a secondary banner or featured section.
+- Orders demonstrate a simulated purchase flow. Payment processing is not implemented, and no real transaction occurs. Demo copy must make this explicit.
+- The public demo must not send real email, collect real customer data, or expose ADMIN access. This is a target constraint, not a claim that current application behavior already enforces it.
+- Real commercial operations, payment processing, automated commission email, and new quoting or tracking workflows are outside the agreed demo scope. They require separate product decisions.
+- Hosting, demo-session mechanics, isolation, reset strategy, and operational configuration need a separate implementation and deployment plan; this document does not prescribe their technical design.
 
 ## Brand Commitments
 
@@ -72,7 +102,7 @@ The shopping context the storefront depicts is ordinary consumer browsing: catal
 ## Evidence on Hand
 
 - Real product imagery for the nine seeded catalogue items, under `frontend/public/img/`.
-- A verifiable engineering trail: `openspec/specs/` (capability specifications), `openspec/changes/archive/` (closed change cycles with their exploration, research, design, and verification records), and a test suite of ~1,300 tests across unit, real-database, and Playwright tiers.
+- A verifiable engineering trail: `openspec/specs/` (capability specifications), `openspec/changes/archive/` (closed change cycles with their exploration, research, design, and verification records), and tests across unit, real-database, and Playwright tiers. Current execution results belong in verification records, not in a fixed test-count claim here.
 - `README.md` documents setup, architecture, and testing strategy.
 
 **Absences that must not be fabricated:** no customers, no testimonials, no sales figures, no press, no case studies, no pricing tiers, no delivery guarantees, no payment processing. Prices exist on catalogue items as seed data only.

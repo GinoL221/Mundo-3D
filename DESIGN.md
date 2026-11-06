@@ -1,12 +1,13 @@
 # Visual Design System — Mundo 3D
 
-This document translates the current Mundo 3D brand manual into technical rules and records implementation status. It does not define or override brand identity.
+This document translates the product experience defined in [PRODUCT.md](PRODUCT.md) and the current Mundo 3D brand manual into UX and technical visual rules. It records implementation status separately from target behavior and does not override product scope or brand identity.
 
 ## Quick path
 
-1. Read `docs/diseno/manual-identidad.md` for brand decisions.
-2. Check the status and debt notes here before treating a rule as shipped.
-3. Verify claims against the current frontend source.
+1. Read [PRODUCT.md](PRODUCT.md) for audience, scope, and target demo acceptance criteria.
+2. Read `docs/diseno/manual-identidad.md` for brand decisions.
+3. Check the status and debt notes here before treating a rule as shipped.
+4. Verify implementation claims against the current source; public availability and runtime safety need separate operational evidence.
 
 ## Authority and status
 
@@ -17,7 +18,30 @@ This document translates the current Mundo 3D brand manual into technical rules 
 |        3 | `docs/diseno/identidad-visual.html` | Visual summary of the approved identity.                          |
 |        4 | Production repository               | What the product currently serves.                                |
 
+The table above orders visual authority only. `PRODUCT.md` governs audience, product scope, and target experience; the brand manual governs identity. Neither a product goal nor a visual rule proves that a capability is implemented or publicly deployed.
+
 The product direction is a workshop vitrine: catalogue first, paper and ink surfaces, IBM Plex Sans, and blue `#2F6BFF`. The five PNG identity assets in `docs/diseno/imagenes/` are approved and materialize the manual's logo variants. PICO-8 colors, pixel-art selectors, and CRT/JRPG effects that still ship are legacy implementation surfaces, not brand authority.
+
+## Recruiter demo experience — target
+
+These guidelines translate the target in `PRODUCT.md`; they do not describe shipped demo controls or verified public availability. Keep the storefront useful to a shopper while making engineering depth discoverable to a technical evaluator.
+
+| Surface | Target UX rule |
+| --- | --- |
+| Public entry | Lead with the catalogue, not a login wall, portfolio pitch, or mandatory tutorial. Browsing catalogue, product details, and cart must not require registration. |
+| Optional orientation | Offer a short, skippable explanation of what to try and what each flow demonstrates. Keep repository and engineering-evidence links discoverable without interrupting shopping. |
+| Buyer demo | Provide a clearly labelled demo entry without registration friction. Identify simulated purchases before confirmation and in the resulting order state; never imply a real charge or fulfilment. |
+| STAFF demo | Identify the active role and permitted actions. Public demo access must not offer ADMIN. Hiding controls is presentation, not backend authorization or visitor isolation. |
+| Commission intake | Ask visitors to use fictitious data. Explain that submitting a request does not create a quote, order, payment, or automated email. Demo STAFF review must not expose another visitor's requests. |
+| Session and recovery | Make session expiry, unavailable demo access, and any implemented reset understandable, including what data was lost or retained and the next available action. Do not promise recovery behavior that has not been built. |
+
+### States and safety boundaries
+
+- Distinguish loading, empty, validation, rate-limit, permission, expired-session, and service-unavailable states; an API failure must not masquerade as an empty dataset or a successful operation.
+- Preserve keyboard access, visible focus, labelled controls, readable feedback, responsive layouts, and reduced-motion behavior for every demo entry and role change.
+- Do not publish shared credentials or suggest that existing role checks alone make public STAFF access safe. Backend-enforced isolation, usage limits, fictitious data, and recoverability need implementation and verification.
+- Buyer interaction is the first demo delivery priority. Public STAFF interaction follows only after its safety boundaries are verified.
+- Existing application sessions, orders, and role-based screens are not evidence that a demo-session mechanism, visitor-isolated stock, or automatic reset exists. The specific mechanics and placement of new controls require a separate design; no new visual identity is introduced here.
 
 ## Visual theme and atmosphere
 
@@ -161,12 +185,15 @@ These effects remain shipped but are not brand guidance:
 
 ## Agent prompt guide
 
-When generating or changing UI, use this document as the technical visual system and `docs/diseno/manual-identidad.md` as the authoritative brand source. Preserve the existing architecture, semantic tokens, supplied image assets, accessibility conventions, and responsive boundaries.
+When generating or changing UI, use `PRODUCT.md` for audience, scope, and demo acceptance criteria, this document for UX and the technical visual system, and `docs/diseno/manual-identidad.md` as the authoritative brand source. Keep target demo behavior separate from implemented and operationally verified capabilities. Preserve the existing architecture, semantic tokens, supplied image assets, accessibility conventions, and responsive boundaries.
 
 Before proposing a new visual rule, check whether it is already defined here or in the manual. If the production code disagrees with an approved rule, report the drift and do not silently redefine the brand. Treat dark-theme values and CRT/JRPG behavior as implementation status or legacy debt, not as approved brand guidance.
 
 ## Review checklist
 
+- [ ] Changes respect `PRODUCT.md` audience, scope, and target/current distinction.
+- [ ] Demo copy identifies simulated actions and does not claim unverified access, isolation, recovery, or deployment.
+- [ ] Role controls and disclosures complement backend enforcement rather than replacing it.
 - [ ] New visual decisions agree with the identity manual.
 - [ ] New components use semantic tokens, IBM Plex Sans, and the existing spacing/breakpoint conventions.
 - [ ] Approved logo assets are consumed as files rather than reconstructed in HTML/CSS.

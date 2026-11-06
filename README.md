@@ -1,10 +1,27 @@
-# Mundo-3D
+# Mundo 3D
 
-Mundo-3D es un e-commerce de productos impresos en 3D. El repositorio contiene una API REST de catálogo, autenticación, administración y carrito, junto con un frontend Astro de estética pixel art. Es un monorepo `pnpm` con persistencia MySQL y una arquitectura hexagonal pragmática en el backend.
+Mundo 3D es un proyecto de portfolio con forma de e-commerce de productos impresos en 3D: piezas de catálogo y solicitudes de encargos personalizados. Su objetivo es que un reclutador pueda evaluar el producto y su ingeniería mediante una demo web pública e interactiva, sin instalar herramientas ni configurar el entorno.
 
-La intención del producto, su público principal y sus límites están documentados en [`PRODUCT.md`](PRODUCT.md).
+El repositorio contiene una API REST de catálogo, autenticación, administración, carrito, pedidos y solicitudes de encargos, junto con un frontend Astro. Es un monorepo `pnpm` con persistencia MySQL y una arquitectura hexagonal pragmática en el backend. La dirección visual es un taller-vitrina: catálogo primero, superficies de papel y tinta e IBM Plex Sans; las superficies retro restantes son deuda, no la identidad objetivo.
 
-## Inicio rápido
+La intención, el público y los criterios de aceptación están en [`PRODUCT.md`](PRODUCT.md). Su traducción a experiencia y reglas visuales está en [`DESIGN.md`](DESIGN.md), subordinada al [manual de identidad](docs/diseno/manual-identidad.md).
+
+## Explorar la demo — objetivo
+
+La experiencia prevista permite navegar el catálogo sin registro, probar una compra simulada como comprador y explorar acciones STAFF con datos ficticios y aislados. No incluye cobros reales ni acceso público a ADMIN. Un recorrido breve será opcional; la tienda debe poder explorarse directamente.
+
+**Estado:** este README no publica una URL de demo verificada. El código de la tienda y sus roles no prueba que existan acceso demo sin registro, aislamiento entre visitantes o restauración del estado. Esas capacidades y la disponibilidad pública requieren implementación y verificación separadas; el objetivo no se presenta como desplegado.
+
+### Revisar la ingeniería
+
+- [Arquitectura del backend y frontend](#arquitectura).
+- [Estrategia de pruebas](#estrategia-de-pruebas) e [integración continua](#integración-continua).
+- [Especificaciones de capacidades](openspec/specs/) y [registros históricos de cambios](openspec/changes/archive/); un registro no sustituye la evidencia de ejecución actual.
+- [Límites actuales](#limitaciones-actuales) y [procedimientos de operación](docs/RUNBOOKS.md).
+
+## Inicio rápido local
+
+Esta sección es para ejecutar y desarrollar el proyecto, no un requisito del recorrido previsto para reclutadores.
 
 ### Requisitos
 
@@ -134,7 +151,7 @@ HTTP /api
 ```
 
 - `domain/` contiene entidades, excepciones y contratos de repositorio o seguridad.
-- `application/` contiene DTOs y casos de uso para usuarios, productos, categorías, franquicias y carrito.
+- `application/` contiene DTOs y casos de uso para usuarios, productos, categorías, franquicias, carrito, pedidos y solicitudes de encargos.
 - `infrastructure/` adapta Express, Sequelize, JWT/bcrypt, logging, validación y uploads.
 - `database/` contiene modelos Sequelize, seed, configuración y migraciones Umzug.
 
@@ -147,17 +164,24 @@ Astro organiza las rutas en `frontend/src/pages/` y el comportamiento por domini
 - `auth/`: login, registro, sesión y adaptadores de API.
 - `cart/`: estado Nanostores, persistencia local, sincronización y componentes.
 - `products/`: catálogo, detalle y administración de productos.
-- `components/`, `layouts/` y `styles/`: interfaz compartida y sistema visual pixel art.
+- `orders/`: detalle e historial de pedidos.
+- `commissions/`: servicios para solicitudes de encargos y consulta STAFF/ADMIN.
+- `components/`, `layouts/` y `styles/`: interfaz compartida y sistema visual; [`DESIGN.md`](DESIGN.md) distingue las reglas vigentes de la deuda PICO/CRT.
 
 El frontend consume `PUBLIC_API_URL`; en desarrollo usa `http://localhost:3031` como fallback. En un build de producción (`astro build`) es obligatoria: si falta, el build falla en vez de arriesgarse a servir esa URL de fallback en producción.
 
 ## Capacidades actuales
 
+Estas capacidades describen la implementación del repositorio; no certifican un despliegue público ni que una base concreta esté preparada.
+
 - Catálogo y detalle de productos, categorías y franquicias.
 - Registro y login con sesión JWT en una cookie `httpOnly` (`m3d_auth`), protección CSRF de doble envío firmado (`m3d_csrf`) en cada escritura autenticada, y roles para operaciones administrativas.
 - Administración de productos con stock e imágenes, categorías, franquicias y usuarios.
 - Carrito local con Nanostores y sincronización por API para usuarios autenticados.
-- Páginas informativas, tema claro/oscuro y diseño responsive de estética PICO-8.
+- Creación de pedidos desde el carrito e historial por usuario. El checkout descuenta stock y registra el pedido; el gateway manual genera una referencia sin cobrar dinero ni contactar un procesador externo.
+- Solicitud pública de encargos y consulta de solicitudes guardadas por STAFF/ADMIN, con retención de 30 días. Es recepción y revisión, no cotización, seguimiento de un encargo, pago ni correo automático. Requiere las migraciones aplicadas a la base de destino.
+- Roles ADMIN, USER y STAFF; STAFF puede crear y actualizar productos, pero no eliminarlos. No son, por sí solos, un mecanismo de acceso demo aislado.
+- Páginas informativas, tema claro/oscuro y layouts responsive. La identidad vigente está en el manual y `DESIGN.md`; las superficies PICO/CRT restantes se registran como deuda.
 - Seguridad HTTP con Helmet (política CSP explícita, no los defaults genéricos), CORS, rate limiting, validación y logging estructurado con identificadores de request.
 - Endpoints de liveness/readiness (`GET /health/live`, `GET /health/ready`) para orquestadores externos.
 
@@ -231,7 +255,7 @@ Mundo-3D/
 |-- frontend/
 |   |-- public/                 # Assets estáticos
 |   `-- src/
-|       |-- domains/            # auth, cart y products
+|       |-- domains/            # auth, cart, commissions, orders y products
 |       |-- pages/              # Rutas Astro
 |       |-- components/         # UI compartida
 |       |-- layouts/            # Layout base
@@ -253,7 +277,9 @@ Procedimientos ante incidentes (backend que no arranca, `/health/ready` trabado,
 Estas son restricciones del comportamiento implementado, no una promesa de roadmap:
 
 - El frontend no persiste el JWT ni lee `Authorization: Bearer`; toda petición autenticada depende de la cookie `httpOnly` `m3d_auth` (`credentials: 'include'`) más el token CSRF de `m3d_csrf`. Solo el carrito sigue en `localStorage` (ver limitación de reconciliación más abajo). `SameSite=Lax` asume que producción sirve el frontend y la API desde el mismo dominio registrable (p. ej. `mundo3d.com` y `api.mundo3d.com`); dos dominios no relacionados invalidarían esa decisión.
-- El checkout actual vacía y sincroniza el carrito. No crea órdenes ni integra pagos o logística.
-- Los uploads se escriben en el filesystem local bajo `backend/public/img/`; no hay almacenamiento de objetos externo ni persistencia compartida entre instancias.
+- Los pedidos no representan cobros reales ni garantizan entrega o logística. El checkout modifica stock compartido; el historial por usuario no garantiza aislamiento de demo entre visitantes.
+- No se ha establecido aquí un modo demo con acceso sin registro, sesiones comprador/STAFF aisladas, límites específicos y recuperación del dataset. No se deben publicar credenciales compartidas como sustituto de esas garantías ni exponer ADMIN mediante el futuro acceso demo.
+- El flujo de encargos almacena nombre y email; no debe exponerse a STAFF de demo sin proteger los datos de otros visitantes. El objetivo público usa datos ficticios y no envía correos reales, pero esa restricción no demuestra que toda la aplicación ya bloquee envíos de email.
+- Los uploads de desarrollo/test usan disco local bajo `backend/public/img/`; en producción el middleware selecciona el adaptador Cloudflare R2. El código del adaptador no demuestra que el bucket, las credenciales o la disponibilidad del servicio estén configurados y verificados.
 - El carrito aplica cambios optimistas y sincroniza en segundo plano, pero no dispone de una lectura de reconciliación desde el backend. Un fallo de red sin respuesta puede dejar el estado local y remoto divergentes hasta otra mutación.
 - La preparación E2E recrea `mundo_3d_test`; nunca debe apuntarse esa ejecución a una base con datos que deban conservarse.
