@@ -1,4 +1,4 @@
-import type { ModelCtor, Sequelize } from 'sequelize';
+import { Op, Sequelize, type ModelCtor } from 'sequelize';
 import type { DemoSandboxResetReceiptRecord } from '../../database/models/DemoSandboxResetReceipt';
 import type {
   SandboxResetIdentity,
@@ -34,6 +34,12 @@ export class SequelizeSandboxReceiptConsumer implements SandboxResetReceiptConsu
           generation: identity.generation,
           seedVersion: identity.seedVersion,
           consumed: false,
+          // Byte-exact even when the schema uses a case-insensitive collation.
+          // Keep the ordinary predicate for indexing; the binary predicate is authoritative.
+          [Op.and]: [Sequelize.where(
+            Sequelize.cast(Sequelize.col('seed_version'), 'BINARY'),
+            identity.seedVersion,
+          )],
         },
         transaction,
       },
