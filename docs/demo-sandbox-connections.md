@@ -207,6 +207,12 @@ Supply these variables explicitly through a trusted operator process:
 | `M3D_SANDBOX_TEST_ADMIN_PASSWORD`                             | Fresh setup-only root password                               |
 | `M3D_SANDBOX_TEST_PASSWORD_A` / `M3D_SANDBOX_TEST_PASSWORD_B` | Distinct fresh passwords for `m3d_verify_a` / `m3d_verify_b` |
 
+The pinning suite also requires `M3D_SANDBOX_TEST_PINNING_DATABASE` to equal
+`m3d_sandbox_verify_pinning`. It checks the live server UUID before inspecting or
+creating that schema. An existing schema is preserved and rejected, never dropped
+or reused; after an interrupted run, use a newly authorized disposable server
+rather than deleting the old schema to bypass this guard.
+
 Each password must be a distinct 64-character lowercase hexadecimal value. Never
 commit or print these values. The authorization marker is a local safety opt-in,
 not authentication or permission to access an existing server. The suite verifies
