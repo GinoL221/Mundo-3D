@@ -1,4 +1,4 @@
-import type { Sequelize, Transaction } from 'sequelize';
+import { Op, Sequelize, type Transaction } from 'sequelize';
 import type { SandboxResetIdentity } from '../../../domain/ports/SandboxResetReceiptConsumerPort';
 import type { TransactionContext } from '../../../domain/ports/UnitOfWorkPort';
 import { withScopedTransaction } from '../scopedTransactionContext';
@@ -32,6 +32,10 @@ describe('SequelizeSandboxReceiptConsumer', () => {
           generation: 3,
           seedVersion: 'seed-v1',
           consumed: false,
+          [Op.and]: [Sequelize.where(
+            Sequelize.cast(Sequelize.col('seed_version'), 'BINARY'),
+            identity.seedVersion,
+          )],
         },
         transaction: tx,
       },
