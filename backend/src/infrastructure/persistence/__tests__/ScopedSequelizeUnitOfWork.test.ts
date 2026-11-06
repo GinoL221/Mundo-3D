@@ -1,19 +1,41 @@
-import type { Sequelize, Transaction } from 'sequelize';
+import { Sequelize, Transaction } from 'sequelize';
 import type { TransactionContext } from '../../../domain/ports/UnitOfWorkPort';
 import { ScopedSequelizeUnitOfWork } from '../ScopedSequelizeUnitOfWork';
-import { resolveScopedTransaction } from '../scopedTransactionContext';
+import { resolveScopedTransaction, withScopedTransaction } from '../scopedTransactionContext';
 
 jest.mock('../../../database/models/db', () => {
   throw new Error('Explicit UoW must not import the default database');
 });
 
 function connection() {
-  const transaction = { commit: jest.fn(), rollback: jest.fn() } as unknown as Transaction;
   const database = {
     transaction: jest.fn(async (work: (tx: Transaction) => Promise<unknown>) => work(transaction)),
   };
+  const transaction = {
+    sequelize: database,
+    commit: jest.fn(),
+    rollback: jest.fn(),
+  } as unknown as Transaction;
   return { transaction, database, sequelize: database as unknown as Sequelize };
 }
+
+test('rejects registration of a transaction belonging to another Sequelize instance', async () => {
+  const owner = new Sequelize('sandbox_a', 'dummy', 'dummy', { dialect: 'mysql', logging: false });
+  const foreign = new Sequelize('sandbox_b', 'dummy', 'dummy', {
+    dialect: 'mysql',
+    logging: false,
+  });
+  const transaction = new Transaction(foreign, {});
+  const work = jest.fn();
+  const ownerQuery = jest.spyOn(owner, 'query');
+  const foreignQuery = jest.spyOn(foreign, 'query');
+  await expect(withScopedTransaction(owner, transaction, work)).rejects.toThrow(
+    'Transaction belongs to a different Sequelize instance',
+  );
+  expect(work).not.toHaveBeenCalled();
+  expect(ownerQuery).not.toHaveBeenCalled();
+  expect(foreignQuery).not.toHaveBeenCalled();
+});
 
 test('delegates managed work to the injected connection and revokes the context after success', async () => {
   const a = connection();

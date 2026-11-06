@@ -212,7 +212,7 @@ jobs:
 
       - name: Install Playwright System Dependencies (if cached)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: pnpm --filter e2e exec playwright install-deps
+        run: pnpm --filter e2e exec playwright install-deps chromium
 
       - name: Run E2E tests
         id: e2e-tests

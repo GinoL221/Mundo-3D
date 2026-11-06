@@ -1,10 +1,16 @@
 import { DemoSandboxLeasePolicy, DemoSandboxSlotSnapshot } from '../entities/DemoSandboxSlot';
+import { DemoSandboxClockPort } from './DemoSandboxRuntimePorts';
 
 export interface DemoSandboxSlotRepositoryPort {
   registerConfiguredSlots(slotIds: readonly string[], maxSlots: number): Promise<void>;
   claimAvailableSlot(
     leaseId: string,
     now: Date,
+    policy: DemoSandboxLeasePolicy,
+  ): Promise<DemoSandboxSlotSnapshot | null>;
+  recordLeaseActivity(
+    leaseId: string,
+    clock: DemoSandboxClockPort,
     policy: DemoSandboxLeasePolicy,
   ): Promise<DemoSandboxSlotSnapshot | null>;
   expireDueLeases(now: Date): Promise<DemoSandboxSlotSnapshot[]>;

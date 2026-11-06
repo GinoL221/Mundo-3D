@@ -23,6 +23,7 @@ jest.mock('../../../database/models/registerModels', () => ({
       destroy: jest.fn().mockResolvedValue(0),
     },
     EmailConfirmationToken: { findOne: jest.fn().mockResolvedValue(null) },
+    RememberToken: { findOne: jest.fn().mockResolvedValue(null) },
     User: { findAll: jest.fn().mockResolvedValue([]) },
     OrderItem: { bulkCreate: jest.fn() },
     ShoppingCart: {
@@ -46,13 +47,92 @@ jest.mock('../../../database/models/registerModels', () => ({
 
 beforeEach(() => jest.clearAllMocks());
 
+test('shares the scoped graph and caches remember-token repositories per slot', async () => {
+  const a = { label: 'a' } as unknown as Sequelize;
+  const b = { label: 'b' } as unknown as Sequelize;
+  const get = jest.fn((slot: string) => {
+    if (slot === 'a') return a;
+    if (slot === 'b') return b;
+    throw new Error('Demo sandbox connection is not configured');
+  });
+  const repositories = createDemoSandboxProductRepositories({ get });
+  expect(() => repositories.getRememberTokenRepository('unknown')).toThrow(
+    'Demo sandbox connection is not configured',
+  );
+  expect(initializeModelsForConnection).not.toHaveBeenCalled();
+  const tokenA = repositories.getRememberTokenRepository('a');
+  const productA = repositories.get('a');
+  const productB = repositories.get('b');
+  const tokenB = repositories.getRememberTokenRepository('b');
+  expect(repositories.getRememberTokenRepository('a')).toBe(tokenA);
+  expect(repositories.getRememberTokenRepository('b')).toBe(tokenB);
+  expect(tokenA).not.toBe(tokenB);
+  expect(repositories.get('a')).toBe(productA);
+  expect(repositories.get('b')).toBe(productB);
+  expect(initializeModelsForConnection).toHaveBeenCalledTimes(2);
+  const [graphA, graphB] = jest
+    .mocked(initializeModelsForConnection)
+    .mock.results.map((result) => result.value);
+  expect(await tokenA.findByHash('hash-a')).toBeNull();
+  expect(graphA.RememberToken.findOne).toHaveBeenCalledWith({ where: { tokenHash: 'hash-a' } });
+  expect(graphB.RememberToken.findOne).not.toHaveBeenCalled();
+  expect(await tokenB.findByHash('hash-b')).toBeNull();
+  expect(graphB.RememberToken.findOne).toHaveBeenCalledWith({ where: { tokenHash: 'hash-b' } });
+});
+
+test('remember-token accessor accepts its own transaction and rejects another slot before SQL', async () => {
+  const queryA = jest.fn().mockResolvedValue([undefined, 1]);
+  const queryB = jest.fn().mockResolvedValue([undefined, 1]);
+  const a = {
+    label: 'a',
+    query: queryA,
+  } as unknown as Sequelize;
+  const b = {
+    label: 'b',
+    query: queryB,
+  } as unknown as Sequelize;
+  const txA = { sequelize: a };
+  const txB = { sequelize: b };
+  (a as { transaction: unknown }).transaction = jest.fn(
+    async (work: (tx: object) => Promise<unknown>) => work(txA),
+  );
+  (b as { transaction: unknown }).transaction = jest.fn(
+    async (work: (tx: object) => Promise<unknown>) => work(txB),
+  );
+  const repositories = createDemoSandboxProductRepositories({
+    get: (slot) => {
+      if (slot === 'a') return a;
+      if (slot === 'b') return b;
+      throw new Error('Demo sandbox connection is not configured');
+    },
+  });
+  const tokenA = repositories.getRememberTokenRepository('a');
+  await repositories.getUnitOfWork('b').runInTransaction(async (tx) => {
+    await expect(
+      tokenA.claimRotation({ presentedHash: 'old', successorHash: 'new', tx }),
+    ).rejects.toThrow('Transaction context is not active for this connection');
+  });
+  expect(queryA).not.toHaveBeenCalled();
+  expect(queryB).not.toHaveBeenCalled();
+  await repositories.getUnitOfWork('a').runInTransaction(async (tx) => {
+    await expect(
+      tokenA.claimRotation({ presentedHash: 'old', successorHash: 'new', tx }),
+    ).resolves.toBe(true);
+  });
+  expect(queryA).toHaveBeenCalledTimes(1);
+  expect(queryA.mock.calls[0][1].transaction).toBe(txA);
+  expect(queryB).not.toHaveBeenCalled();
+});
+
 test('reuses repositories by slot and rejects unknown slots before registering models', async () => {
-  const transactionA = {};
-  const transactionB = {};
+  const a = { label: 'a' } as unknown as Sequelize;
+  const b = { label: 'b' } as unknown as Sequelize;
+  const transactionA = { sequelize: a };
+  const transactionB = { sequelize: b };
   const managed = (transaction: object) =>
     jest.fn(async (work: (tx: object) => Promise<unknown>) => work(transaction));
-  const a = { label: 'a', transaction: managed(transactionA) } as unknown as Sequelize;
-  const b = { label: 'b', transaction: managed(transactionB) } as unknown as Sequelize;
+  (a as { transaction: unknown }).transaction = managed(transactionA);
+  (b as { transaction: unknown }).transaction = managed(transactionB);
   const get = jest.fn((slotId: string) => {
     if (slotId === 'a') return a;
     if (slotId === 'b') return b;

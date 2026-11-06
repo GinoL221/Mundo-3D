@@ -5,6 +5,7 @@ import {
   DemoSandboxSlotSnapshot,
 } from '../../domain/entities/DemoSandboxSlot';
 import { DemoSandboxSlotRepositoryPort } from '../../domain/ports/DemoSandboxSlotRepositoryPort';
+import { DemoSandboxClockPort } from '../../domain/ports/DemoSandboxRuntimePorts';
 import {
   createDemoSandboxSlotModel,
   DemoSandboxSlotRecord,
@@ -76,6 +77,29 @@ export class SequelizeDemoSandboxSlotRepository implements DemoSandboxSlotReposi
       const snapshot = slot.snapshot();
       await this.persist(record, snapshot, transaction);
       return snapshot;
+    });
+  }
+
+  async recordLeaseActivity(
+    leaseId: string,
+    clock: DemoSandboxClockPort,
+    policy: DemoSandboxLeasePolicy,
+  ): Promise<DemoSandboxSlotSnapshot | null> {
+    if (!leaseId.trim() || this.configuredSlotIds.length === 0) return null;
+    return this.sequelize.transaction(async (transaction) => {
+      const record = await this.model.findOne({
+        where: { leaseId, status: 'leased', id: { [Op.in]: this.configuredSlotIds } },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+      if (!record) return null;
+      const slot = DemoSandboxSlot.restore(this.toSnapshot(record));
+      const active = slot.recordActivity(leaseId, clock.now(), policy);
+      const snapshot = slot.snapshot();
+      if (active || snapshot.status === 'draining') {
+        await this.persist(record, snapshot, transaction);
+      }
+      return active ? snapshot : null;
     });
   }
 

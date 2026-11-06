@@ -191,3 +191,7 @@ e2e/**/.test-results/
 **/.claude/agent-memory-local
 **/.claude/first-run
 **/.claude/assistant-daemon-state.json
+
+# Generated Jest transform caches for isolated sandbox verification suites
+backend/.jest-fence-model-verification-cache/
+backend/.jest-lease-activity-cache/

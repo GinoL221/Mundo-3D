@@ -103,7 +103,7 @@ test('uses only injected models for all public product operations, including ass
 test('accepts only an active same-connection context and rejects other contexts before SQL or reads', async () => {
   const a = persistence('A');
   const b = persistence('B');
-  const raw = {} as Transaction;
+  const raw = { sequelize: a.database.sequelize } as unknown as Transaction;
   const transaction = jest.fn(async (work: (tx: Transaction) => Promise<unknown>) => work(raw));
   const owner = Object.assign(a.database.sequelize, { transaction });
   const uow = new ScopedSequelizeUnitOfWork(owner as unknown as Sequelize);

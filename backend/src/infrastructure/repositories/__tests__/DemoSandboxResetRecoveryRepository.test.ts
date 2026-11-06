@@ -2,6 +2,7 @@ import { ModelCtor, Sequelize } from 'sequelize';
 import { DemoSandboxSlot } from '../../../domain/entities/DemoSandboxSlot';
 import { DemoSandboxSlotRecord } from '../../../database/models/DemoSandboxSlot';
 import { SequelizeDemoSandboxSlotRepository } from '../SequelizeDemoSandboxSlotRepository';
+import { ResetDemoSandboxSlotUseCase } from '../../../application/use-cases/ResetDemoSandboxSlotUseCase';
 
 const now = new Date('2026-10-26T12:00:00.000Z');
 type ResettingRecord = ReturnType<DemoSandboxSlot['snapshot']> & {
@@ -44,6 +45,38 @@ function makeRepository() {
 }
 
 describe('operator-mediated reset recovery repository fencing', () => {
+  it('persists and returns quarantine when a verified reset exhausts generation', async () => {
+    const { repository, record, transaction } = makeRepository();
+    record.generation = 0xffff_ffff;
+    const resetter = {
+      reset: jest.fn().mockResolvedValue(undefined),
+      verify: jest.fn().mockResolvedValue(true),
+    };
+    const useCase = new ResetDemoSandboxSlotUseCase(
+      repository,
+      resetter,
+      { now: () => now },
+      { next: () => 'attempt-new' },
+    );
+
+    await expect(
+      useCase.recoverInterrupted('slot-a', 'lease-a', 'attempt-old', true),
+    ).resolves.toBe('quarantined');
+    expect(resetter.reset).toHaveBeenCalledWith('slot-a', 0xffff_ffff, 'attempt-new');
+    expect(resetter.verify).toHaveBeenCalledWith('slot-a', 0xffff_ffff, 'attempt-new');
+    expect(record.update).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        status: 'quarantined',
+        generation: 0xffff_ffff,
+        leaseId: null,
+        resetAttemptId: null,
+        quarantineReason: 'generation_exhausted',
+      }),
+      { transaction },
+    );
+    expect(record.status).toBe('quarantined');
+  });
+
   it('rotates a resetting attempt once and rejects stale completion after recovery', async () => {
     const { repository, record, findOne, transaction } = makeRepository();
 
