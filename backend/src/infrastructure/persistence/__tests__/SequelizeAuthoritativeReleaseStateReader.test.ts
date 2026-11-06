@@ -54,14 +54,23 @@ function connectionWith(handlers: Array<(sql: string) => unknown>): Harness {
 
 const isSelect = (fragment: string) => (sql: string) => sql.includes(fragment);
 
+const releaseRow = {
+  release_id: identity.releaseId,
+  slot_id: identity.slotId,
+  generation: identity.generation,
+  attempt_id: identity.attemptId,
+  seed_version: identity.seedVersion,
+  lease_id: identity.leaseId,
+};
+
 describe('SequelizeAuthoritativeReleaseStateReader', () => {
   it('indeterminate when the recorded session belongs to a different server identity', async () => {
     const { reader } = connectionWith([
       () => [[{ current: 'uuid-after-restart' }], []],
       () => [[], []],
-      () => [null, []],
-      () => [null, []],
-      () => [null, []],
+      () => [[], []],
+      () => [[], []],
+      () => [[], []],
     ]);
     await expect(reader.readState(identity, session)).resolves.toBeNull();
   });
@@ -118,19 +127,7 @@ describe('SequelizeAuthoritativeReleaseStateReader', () => {
         }],
         [],
       ],
-      () => [
-        [[
-          {
-            release_id: identity.releaseId,
-            slot_id: identity.slotId,
-            generation: identity.generation,
-            attempt_id: identity.attemptId,
-            seed_version: identity.seedVersion,
-            lease_id: identity.leaseId,
-          }],
-        ],
-        [],
-      ],
+      () => [[releaseRow], []],
     ]);
     const state = await reader.readState(identity, session);
     expect(state).not.toBeNull();
@@ -188,6 +185,37 @@ describe('SequelizeAuthoritativeReleaseStateReader', () => {
     expect(state?.releaseEvidence).toEqual({ identity, outcome: 'not_committed' });
   });
 
+  it.each([
+    ['release_id', 'another-release'],
+    ['slot_id', 'another-slot'],
+    ['generation', 4],
+    ['attempt_id', 'another-attempt'],
+    ['seed_version', 'V1'],
+    ['lease_id', 'another-lease'],
+  ])('refuses durable evidence with mismatched %s', async (field, value) => {
+    const { reader } = connectionWith([
+      () => [[{ current: session.serverUuid }], []],
+      () => [[], []],
+      () => [[], []],
+      () => [[], []],
+      () => [[], []],
+      () => [[{ ...releaseRow, [field]: value }], []],
+    ]);
+    await expect(reader.readState(identity, session)).resolves.toBeNull();
+  });
+
+  it('refuses malformed nested durable evidence rather than treating presence as proof', async () => {
+    const { reader } = connectionWith([
+      () => [[{ current: session.serverUuid }], []],
+      () => [[], []],
+      () => [[], []],
+      () => [[], []],
+      () => [[], []],
+      () => [[[releaseRow]], []],
+    ]);
+    await expect(reader.readState(identity, session)).resolves.toBeNull();
+  });
+
   it('rejects a foreign session record before any query', async () => {
     const { reader, log } = connectionWith([]);
     await expect(
@@ -223,9 +251,9 @@ describe('SequelizeAuthoritativeReleaseStateReader', () => {
     const { reader, log } = connectionWith([
       () => [[{ current: session.serverUuid }], []],
       () => [[], []],
-      () => [null, []],
-      () => [null, []],
-      () => [null, []],
+      () => [[], []],
+      () => [[], []],
+      () => [[], []],
       () => [[], []],
     ]);
     await reader.readState(identity, session);
