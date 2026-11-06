@@ -28,7 +28,8 @@ const qualified = (schema: string, table: string) => `\`${schema}\`.\`${table}\`
  * caller-supplied recorded session, checks the recorded server identity and the
  * recorded connection id against the live server (round-2 evidence: a restart
  * changes the server uuid and recycles low connection ids), then reads the
- * fence under FOR UPDATE as the first statement of one fresh transaction and
+ * control then fence under FOR UPDATE in one fresh transaction (the same order
+ * as release, avoiding a control/fence lock cycle) and
  * evaluates the evidence per the reconciliation matrix. It never writes and
  * never retries; every unestablishable condition resolves to null
  * (`indeterminate`). Real grants, topology and multi-process behaviour remain
@@ -71,12 +72,12 @@ export class SequelizeAuthoritativeReleaseStateReader implements AuthoritativeRe
         return null;
       }
       return await this.connection.transaction(async (transaction) => {
-        const fence = await this.lifecycleRow(
-          `SELECT slot_id, state, generation, lease_id, reset_attempt_id FROM ${qualified(this.slotSchema, 'DemoSandboxFence')} WHERE slot_id = '${escapeQuote(identity.slotId)}' FOR UPDATE`,
-          transaction,
-        );
         const control = await this.lifecycleRow(
           `SELECT slot_id, status, generation, lease_id, reset_attempt_id FROM ${qualified(this.controlSchema, 'DemoSandboxSlot')} WHERE slot_id = '${escapeQuote(identity.slotId)}' FOR UPDATE`,
+          transaction,
+        );
+        const fence = await this.lifecycleRow(
+          `SELECT slot_id, state, generation, lease_id, reset_attempt_id FROM ${qualified(this.slotSchema, 'DemoSandboxFence')} WHERE slot_id = '${escapeQuote(identity.slotId)}' FOR UPDATE`,
           transaction,
         );
         const receipt = await this.lifecycleRow(

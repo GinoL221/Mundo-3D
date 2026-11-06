@@ -93,14 +93,14 @@ describe('SequelizeAuthoritativeReleaseStateReader', () => {
     await expect(reader.readState(identity, session)).resolves.toBeNull();
   });
 
-  it('reads the authoritative rows under the fence lock as the first statement', async () => {
+  it('locks control before fence, matching the release transaction order', async () => {
     const { reader, log } = connectionWith([
       () => [[{ current: session.serverUuid }], []],
       () => [[], []],
       () => [
         [{
           slot_id: identity.slotId,
-          state: 'open',
+          status: 'available',
           generation: identity.generation + 1,
           lease_id: null,
           reset_attempt_id: null,
@@ -110,7 +110,7 @@ describe('SequelizeAuthoritativeReleaseStateReader', () => {
       () => [
         [{
           slot_id: identity.slotId,
-          status: 'available',
+          state: 'open',
           generation: identity.generation + 1,
           lease_id: null,
           reset_attempt_id: null,
@@ -141,7 +141,9 @@ describe('SequelizeAuthoritativeReleaseStateReader', () => {
     expect(log[1].sql).toContain('PROCESSLIST');
     expect(log[0].options).toBeUndefined();
     expect(log[2].sql).toContain('FOR UPDATE');
-    expect(log[2].sql).toContain('DemoSandboxFence');
+    expect(log[2].sql).toContain('DemoSandboxSlot');
+    expect(log[3].sql).toContain('DemoSandboxFence');
+    expect(log[3].sql).toContain('FOR UPDATE');
     expect(log[2].options).toMatchObject({ transaction: { marker: 'tx' } });
   });
 
@@ -152,9 +154,9 @@ describe('SequelizeAuthoritativeReleaseStateReader', () => {
       () => [
         [{
           slot_id: identity.slotId,
-          state: 'fenced',
+          status: 'resetting',
           generation: identity.generation,
-          lease_id: null,
+          lease_id: identity.leaseId,
           reset_attempt_id: identity.attemptId,
         }],
         [],
@@ -162,9 +164,9 @@ describe('SequelizeAuthoritativeReleaseStateReader', () => {
       () => [
         [{
           slot_id: identity.slotId,
-          status: 'resetting',
+          state: 'fenced',
           generation: identity.generation,
-          lease_id: identity.leaseId,
+          lease_id: null,
           reset_attempt_id: identity.attemptId,
         }],
         [],
