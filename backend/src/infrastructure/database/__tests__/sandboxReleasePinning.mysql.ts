@@ -1,4 +1,5 @@
 import { QueryTypes, Sequelize } from 'sequelize';
+import { bootstrapPinningDatabase } from './support/sandboxPinningBootstrap';
 import { createDemoSandboxReleaseSessionModel } from '../../../database/models/DemoSandboxReleaseSession';
 import { ScopedSequelizeUnitOfWork } from '../../persistence/ScopedSequelizeUnitOfWork';
 import { SequelizeSandboxReleaseSessionWriter } from '../../persistence/SequelizeSandboxReleaseSessionWriter';
@@ -80,8 +81,7 @@ let serverUuid: string;
 beforeAll(async () => {
   ({ adminPassword, uuid: serverUuid } = configuration());
   const bootstrap = connection(adminPassword);
-  await bootstrap.query(`DROP DATABASE IF EXISTS \`${database}\``);
-  await bootstrap.query(`CREATE DATABASE \`${database}\``);
+  await bootstrapPinningDatabase(bootstrap, database, serverUuid);
   await bootstrap.close();
   opened.length = 0;
   const schema = connection(adminPassword, database);
