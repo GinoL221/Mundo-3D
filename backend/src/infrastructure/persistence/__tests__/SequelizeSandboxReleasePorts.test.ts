@@ -115,6 +115,9 @@ describe('SequelizeSandboxReleaseControl', () => {
     expect(controlUpdate.sql).toContain("status = 'available'");
     expect(controlUpdate.sql).toContain('lease_id = NULL');
     expect(controlUpdate.sql).toContain('reset_attempt_id = NULL');
+    for (const column of ['allocated_at', 'last_activity_at', 'idle_expires_at', 'absolute_expires_at']) {
+      expect(controlUpdate.sql).toContain(`${column} = NULL`);
+    }
     expect(fenceUpdate.sql).toContain('UPDATE `slot`.`DemoSandboxFence`');
     expect(fenceUpdate.sql).toContain("state = 'open'");
     expect(fenceUpdate.sql).toContain('generation = generation + 1');

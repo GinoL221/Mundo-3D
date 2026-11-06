@@ -61,7 +61,7 @@ export class SequelizeSandboxReleaseControl implements SandboxReleaseControl {
     const replacements = [identity.slotId, identity.generation, identity.attemptId];
 
     const [controlResult] = (await this.connection.query(
-      `UPDATE \`${this.controlSchema}\`.\`DemoSandboxSlot\` SET status = 'available', generation = generation + 1, lease_id = NULL, reset_attempt_id = NULL ${guard} AND status = 'resetting' AND lease_id = ?`,
+      `UPDATE \`${this.controlSchema}\`.\`DemoSandboxSlot\` SET status = 'available', generation = generation + 1, lease_id = NULL, reset_attempt_id = NULL, allocated_at = NULL, last_activity_at = NULL, idle_expires_at = NULL, absolute_expires_at = NULL ${guard} AND status = 'resetting' AND lease_id = ?`,
       {
         replacements: [...replacements, identity.leaseId],
         transaction: transaction as unknown as never,
