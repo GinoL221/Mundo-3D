@@ -12,6 +12,7 @@
     "test": "jest",
     "test:fast": "jest",
     "test:integration": "jest --config jest.integration.config.js --detectOpenHandles",
+    "test:sandbox:mysql": "jest --config jest.sandbox.config.js --runInBand --detectOpenHandles",
     "test:coverage": "jest --coverage && node scripts/generate-coverage-risk-map.js",
     "generate:openapi": "node scripts/generate-openapi-spec.js",
     "check:openapi": "node scripts/generate-openapi-spec.js --check",

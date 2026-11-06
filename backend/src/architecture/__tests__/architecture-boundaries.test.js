@@ -136,6 +136,34 @@ describe('rules, allowlists, and diagnostics', () => {
 });
 
 describe('architecture check CLI', () => {
+  test('allows commission composition without authorizing sibling routes', () => withTree((root) => {
+    const route = 'backend/src/infrastructure/routes/api/customCommissionRequests.ts';
+    const sibling = 'backend/src/infrastructure/routes/api/reports.ts';
+    const targets = [
+      'backend/src/application/use-cases/CreateCustomCommissionRequestUseCase.ts',
+      'backend/src/application/use-cases/ListCustomCommissionRequestsUseCase.ts',
+      'backend/src/infrastructure/repositories/SequelizeCustomCommissionRequestRepository.ts',
+      'backend/src/infrastructure/repositories/SequelizeProductRepository.ts',
+      'backend/src/infrastructure/controllers/CustomCommissionRequestApiController.ts',
+      'backend/src/infrastructure/middlewares/auth.ts',
+      'backend/src/domain/Role.ts',
+      'backend/src/infrastructure/middlewares/validators/customCommissionRequestValidators.ts',
+      'backend/src/infrastructure/middlewares/customCommissionRequestLimiter.ts',
+    ];
+    const imports = targets.map((target) => {
+      write(root, target, 'export {};');
+      return `import '${path.posix.relative(path.posix.dirname(route), target).replace(/\.ts$/, '')}';`;
+    }).join('\n');
+    write(root, route, imports);
+    expect(run(root)).toEqual({ code: 0, output: [] });
+
+    write(root, sibling, imports);
+    expect(run(root)).toEqual({
+      code: 1,
+      output: targets.map((target) => `composition.allowlist: ${path.join(root, sibling)} -> ${path.join(root, target)}`),
+    });
+  }));
+
   test('S22 exits zero when discovered edges are valid', () => withTree((root) => {
     write(root, 'backend/src/domain/a.ts', "import './ports/p';");
     write(root, 'backend/src/domain/ports/p.ts', 'export {};');

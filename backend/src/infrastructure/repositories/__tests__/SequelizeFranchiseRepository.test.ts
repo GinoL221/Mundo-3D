@@ -80,13 +80,15 @@ describe('SequelizeFranchiseRepository', () => {
 
     it('translates a duplicate name into the stable franchise conflict error', async () => {
       const { UniqueConstraintError } = jest.requireActual('sequelize');
-      jest
-        .mocked(db.Franchise.create)
-        .mockRejectedValue(new UniqueConstraintError({ message: 'duplicate name', errors: [] }));
+      const duplicate = new UniqueConstraintError({ message: 'duplicate name', errors: [] });
+      jest.mocked(db.Franchise.create).mockRejectedValue(duplicate);
 
-      await expect(repository.create({ nameFranchise: 'Existing Franchise' })).rejects.toThrow(
-        'DUPLICATE_FRANCHISE_NAME',
-      );
+      await expect(
+        repository.create({ nameFranchise: 'Existing Franchise' }),
+      ).rejects.toMatchObject({
+        message: 'DUPLICATE_FRANCHISE_NAME',
+        cause: duplicate,
+      });
     });
   });
 

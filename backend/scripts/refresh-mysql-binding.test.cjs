@@ -1,0 +1,38 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { bindIdentity } = require('./refresh-mysql-binding.cjs');
+
+test('checks captured container before endpoint UUID and before guarded work', async () => {
+  const events = [];
+  const expected = { id: 'a'.repeat(64), image: `sha256:${'b'.repeat(64)}`, run: 'c'.repeat(32), volume: 'm3d-refresh-test-c', port: '33317' };
+  const container = { Id: expected.id, Image: expected.image, State: { Running: true }, HostConfig: { NetworkMode: 'bridge' }, Config: { Labels: { 'm3d.refresh.run': expected.run } }, Mounts: [{ Type: 'volume', Name: expected.volume, Destination: '/var/lib/mysql' }], NetworkSettings: { Ports: { '3306/tcp': [{ HostIp: '127.0.0.1', HostPort: expected.port }] } } };
+  const uuid = '12345678-1234-1234-1234-123456789abc';
+  const connection = Object.freeze({ name: 'same-connection' });
+  const ops = { inspect: async id => { events.push(['inspect', id]); return container; }, containerUuid: async id => { events.push(['containerUuid', id]); return uuid; }, endpointUuid: async received => { assert.equal(received, connection); events.push(['endpointUuid']); return uuid; }, work: async received => { assert.equal(received, connection); events.push(['work']); return 'ok'; } };
+  assert.equal(await bindIdentity(expected, ops, connection), 'ok');
+  assert.deepEqual(events, [['inspect', expected.id], ['containerUuid', expected.id], ['endpointUuid'], ['inspect', expected.id], ['work']]);
+  events.length = 0;
+  container.Id = 'd'.repeat(64);
+  await assert.rejects(bindIdentity(expected, ops, connection), /Identity verification failed/);
+  assert.deepEqual(events, [['inspect', expected.id]]);
+  events.length = 0;
+  container.Id = expected.id;
+  ops.endpointUuid = async () => { events.push(['endpointUuid']); return '87654321-1234-1234-1234-123456789abc'; };
+  await assert.rejects(bindIdentity(expected, ops, connection), /Identity verification failed/);
+  assert.deepEqual(events, [['inspect', expected.id], ['containerUuid', expected.id], ['endpointUuid']]);
+  events.length = 0;
+  await assert.rejects(bindIdentity({}, ops), /Identity verification failed/);
+  assert.deepEqual(events, []);
+  events.length = 0;
+  ops.containerUuid = async () => { events.push(['containerUuid', expected.id]); return 'invalid'; };
+  await assert.rejects(bindIdentity(expected, ops, connection), /Identity verification failed/);
+  assert.deepEqual(events, [['inspect', expected.id], ['containerUuid', expected.id]]);
+  events.length = 0;
+  ops.containerUuid = async () => { events.push(['containerUuid', expected.id]); return uuid; };
+  ops.endpointUuid = async () => { events.push(['endpointUuid']); return uuid; };
+  let count = 0;
+  ops.inspect = async id => { events.push(['inspect', id]); count++; return count === 1 ? container : { ...container, Id: 'd'.repeat(64) }; };
+  await assert.rejects(bindIdentity(expected, ops, connection), /Identity verification failed/);
+  assert.deepEqual(events, [['inspect', expected.id], ['containerUuid', expected.id], ['endpointUuid'], ['inspect', expected.id]]);
+});
