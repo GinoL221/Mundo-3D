@@ -8,6 +8,7 @@ const identity = {
   attemptId: 'attempt-a',
   seedVersion: 'v1',
   leaseId: 'lease-a',
+  releaseId: 'release-a',
 };
 
 function setup() {
@@ -35,26 +36,34 @@ function setup() {
       return true;
     }),
   };
+  const recorder = {
+    record: jest.fn(async () => {
+      order.push('record');
+    }),
+    exists: jest.fn(async () => false),
+  };
   return {
     order,
     uow,
     control,
     fence,
     receipts,
-    runner: new ReleaseSandboxInTransaction(uow, control, fence, receipts),
+    recorder,
+    runner: new ReleaseSandboxInTransaction(uow, control, fence, receipts, recorder),
   };
 }
 
 describe('ReleaseSandboxInTransaction', () => {
-  it('uses one context in control-fence-receipt-release order', async () => {
-    const { runner, order, control, fence, receipts } = setup();
+  it('uses one context in control-fence-receipt-release-record order', async () => {
+    const { runner, order, control, fence, receipts, recorder } = setup();
     await expect(runner.execute(identity)).resolves.toBe('released');
-    expect(order).toEqual(['control', 'fence', 'receipt', 'release']);
+    expect(order).toEqual(['control', 'fence', 'receipt', 'release', 'record']);
     for (const mock of [
       control.lockAndCheck,
       fence.lockAndCheck,
       receipts.consume,
       control.release,
+      recorder.record,
     ]) {
       expect(mock).toHaveBeenCalledWith(identity, tx);
       const calls = mock.mock.calls as unknown as Array<[unknown, TransactionContext]>;
@@ -91,7 +100,7 @@ describe('ReleaseSandboxInTransaction', () => {
         }
       },
     };
-    const observed = new ReleaseSandboxInTransaction(observingUow, control, fence, receipts);
+    const observed = new ReleaseSandboxInTransaction(observingUow, control, fence, receipts, { record: async () => {}, exists: async () => false });
     await expect(observed.execute(identity)).resolves.toBe('uncertain');
     expect(rollbackObserver).toHaveBeenCalledTimes(1);
   });
@@ -105,7 +114,7 @@ describe('ReleaseSandboxInTransaction', () => {
         throw new Error('commit acknowledgement lost');
       }),
     };
-    const runner = new ReleaseSandboxInTransaction(uow, control, fence, receipts);
+    const runner = new ReleaseSandboxInTransaction(uow, control, fence, receipts, { record: async () => {}, exists: async () => false });
     await expect(runner.execute(identity)).resolves.toBe('uncertain');
     expect(callbackResult).toBe('released');
     expect(uow.runInTransaction).toHaveBeenCalledTimes(1);
@@ -120,7 +129,7 @@ describe('ReleaseSandboxInTransaction', () => {
     const uow: UnitOfWorkPort = {
       runInTransaction: jest.fn().mockRejectedValue(new Error('commit acknowledgement lost')),
     };
-    const runner = new ReleaseSandboxInTransaction(uow, control, fence, receipts);
+    const runner = new ReleaseSandboxInTransaction(uow, control, fence, receipts, { record: async () => {}, exists: async () => false });
     await expect(runner.execute(identity)).resolves.toBe('uncertain');
     expect(uow.runInTransaction).toHaveBeenCalledTimes(1);
     expect(control.release).not.toHaveBeenCalled();
