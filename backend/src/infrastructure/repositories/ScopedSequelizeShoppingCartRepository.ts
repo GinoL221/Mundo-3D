@@ -20,6 +20,12 @@ export type ShoppingCartPersistence = Pick<
 export class ScopedSequelizeShoppingCartRepository implements ShoppingCartRepositoryPort {
   constructor(private readonly db: ShoppingCartPersistence) {}
 
+  private requiredTransaction(context: TransactionContext): Transaction {
+    const transaction = resolveScopedTransaction(context, this.db.sequelize);
+    if (!transaction) throw new Error('Transaction context is not active for this connection');
+    return transaction;
+  }
+
   private toProductEntity(instance: ProductInstance): Product {
     return new Product(
       instance.idProduct,
@@ -101,7 +107,7 @@ export class ScopedSequelizeShoppingCartRepository implements ShoppingCartReposi
 
   // Keep the lock limited to ShoppingCart rows, then read Product details separately.
   async findActiveForUpdate(userId: number, context: TransactionContext): Promise<ShoppingCart[]> {
-    const transaction = resolveScopedTransaction(context, this.db.sequelize);
+    const transaction = this.requiredTransaction(context);
     const cartInstances = await this.db.ShoppingCart.findAll({
       where: { idUser: userId, cartStatus: 'ACTIVE' },
       transaction,
@@ -143,7 +149,7 @@ export class ScopedSequelizeShoppingCartRepository implements ShoppingCartReposi
       return 0;
     }
 
-    const transaction = resolveScopedTransaction(context, this.db.sequelize);
+    const transaction = this.requiredTransaction(context);
     const [, affectedRows] = await this.db.sequelize.query(
       `UPDATE ${CART_TABLE} SET ${CART_STATUS_COLUMN} = 'ORDERED' ` +
         `WHERE ${CART_ID_COLUMN} IN (:cartIds) AND ${CART_USER_COLUMN} = :userId AND ${CART_STATUS_COLUMN} = 'ACTIVE'`,

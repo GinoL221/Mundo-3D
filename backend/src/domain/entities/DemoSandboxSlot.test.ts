@@ -42,6 +42,16 @@ describe('DemoSandboxSlot', () => {
     });
   });
 
+  it('does not move activity or idle expiry backwards when activity arrives out of order', () => {
+    const slot = DemoSandboxSlot.create('slot-a');
+    slot.allocate('lease-a', origin, policy);
+    expect(slot.recordActivity('lease-a', at(15), policy)).toBe(true);
+    const snapshot = slot.snapshot();
+
+    expect(slot.recordActivity('lease-a', at(5), policy)).toBe(true);
+    expect(slot.snapshot()).toEqual(snapshot);
+  });
+
   it('fences activity at expiry and drains the slot instead of making it reusable', () => {
     const slot = DemoSandboxSlot.create('slot-a');
     slot.allocate('lease-a', origin, policy);
@@ -72,6 +82,34 @@ describe('DemoSandboxSlot', () => {
 
     expect(slot.allocate('lease-b', at(22), policy)).toBe(true);
     expect(slot.snapshot()).toMatchObject({ generation: 1, leaseId: 'lease-b' });
+  });
+
+  it('quarantines at the unsigned 32-bit generation limit without reallocation', () => {
+    const original = DemoSandboxSlot.create('slot-a');
+    original.allocate('lease-a', origin, policy);
+    original.expireIfDue(at(20));
+    original.beginReset('attempt-a');
+    const slot = DemoSandboxSlot.restore({ ...original.snapshot(), generation: 0xffff_ffff });
+
+    expect(slot.completeReset('attempt-a', at(21), true)).toBe(false);
+    expect(slot.snapshot()).toMatchObject({
+      status: 'quarantined',
+      generation: 0xffff_ffff,
+      leaseId: null,
+      resetAttemptId: null,
+      quarantineReason: 'generation_exhausted',
+    });
+    expect(slot.allocate('lease-b', at(22), policy)).toBe(false);
+  });
+
+  it('releases normally when the next generation equals the storage limit', () => {
+    const original = DemoSandboxSlot.create('slot-a');
+    original.allocate('lease-a', origin, policy);
+    original.expireIfDue(at(20));
+    original.beginReset('attempt-a');
+    const slot = DemoSandboxSlot.restore({ ...original.snapshot(), generation: 0xffff_fffe });
+    expect(slot.completeReset('attempt-a', at(21), true)).toBe(true);
+    expect(slot.snapshot()).toMatchObject({ status: 'available', generation: 0xffff_ffff });
   });
 
   it('quarantines a slot when reset verification fails', () => {

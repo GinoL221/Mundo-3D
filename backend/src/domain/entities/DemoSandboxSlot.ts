@@ -174,6 +174,10 @@ export class DemoSandboxSlot {
       return false;
     }
 
+    if (this.state.lastActivityAt && now.getTime() < this.state.lastActivityAt.getTime()) {
+      return true;
+    }
+
     this.state = {
       ...this.state,
       lastActivityAt: cloneDate(now),
@@ -233,6 +237,15 @@ export class DemoSandboxSlot {
         ...this.clearLeaseState(),
         status: 'quarantined',
         quarantineReason: 'reset_verification_failed',
+      };
+      return false;
+    }
+
+    if (this.state.generation >= 0xffff_ffff) {
+      this.state = {
+        ...this.clearLeaseState(),
+        status: 'quarantined',
+        quarantineReason: 'generation_exhausted',
       };
       return false;
     }

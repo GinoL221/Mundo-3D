@@ -28,6 +28,7 @@ describe('demo sandbox lease use cases', () => {
     const snapshot = leasedSlot();
     const repository: DemoSandboxSlotRepositoryPort = {
       registerConfiguredSlots: jest.fn(),
+      recordLeaseActivity: jest.fn(),
       claimAvailableSlot: jest.fn().mockResolvedValue(snapshot),
       expireDueLeases: jest.fn(),
       beginReset: jest.fn(),
@@ -51,6 +52,7 @@ describe('demo sandbox lease use cases', () => {
     const drainingSnapshot = slot.snapshot();
     const repository: DemoSandboxSlotRepositoryPort = {
       registerConfiguredSlots: jest.fn(),
+      recordLeaseActivity: jest.fn(),
       claimAvailableSlot: jest.fn(),
       expireDueLeases: jest.fn().mockResolvedValue([drainingSnapshot]),
       beginReset: jest.fn(),
@@ -68,6 +70,7 @@ describe('demo sandbox lease use cases', () => {
   it('returns no lease when the configured pool has no available slot', async () => {
     const repository: DemoSandboxSlotRepositoryPort = {
       registerConfiguredSlots: jest.fn(),
+      recordLeaseActivity: jest.fn(),
       claimAvailableSlot: jest.fn().mockResolvedValue(null),
       expireDueLeases: jest.fn(),
       beginReset: jest.fn(),
@@ -90,6 +93,7 @@ describe('demo sandbox lease use cases', () => {
     const snapshot = resettableSlot();
     const repository: DemoSandboxSlotRepositoryPort = {
       registerConfiguredSlots: jest.fn(),
+      recordLeaseActivity: jest.fn(),
       claimAvailableSlot: jest.fn(),
       expireDueLeases: jest.fn(),
       beginReset: jest.fn().mockResolvedValue(snapshot),
@@ -122,6 +126,7 @@ describe('demo sandbox lease use cases', () => {
   it('quarantines a slot when reset verification fails', async () => {
     const repository: DemoSandboxSlotRepositoryPort = {
       registerConfiguredSlots: jest.fn(),
+      recordLeaseActivity: jest.fn(),
       claimAvailableSlot: jest.fn(),
       expireDueLeases: jest.fn(),
       beginReset: jest.fn().mockResolvedValue(resettableSlot()),
@@ -155,6 +160,7 @@ describe('demo sandbox lease use cases', () => {
   it('quarantines instead of releasing a slot when reset fails', async () => {
     const repository: DemoSandboxSlotRepositoryPort = {
       registerConfiguredSlots: jest.fn(),
+      recordLeaseActivity: jest.fn(),
       claimAvailableSlot: jest.fn(),
       expireDueLeases: jest.fn(),
       beginReset: jest.fn().mockResolvedValue(resettableSlot()),
@@ -188,6 +194,7 @@ describe('demo sandbox lease use cases', () => {
   it('does not reset a slot whose lease is no longer eligible', async () => {
     const repository: DemoSandboxSlotRepositoryPort = {
       registerConfiguredSlots: jest.fn(),
+      recordLeaseActivity: jest.fn(),
       claimAvailableSlot: jest.fn(),
       expireDueLeases: jest.fn(),
       beginReset: jest.fn().mockResolvedValue(null),

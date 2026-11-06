@@ -36,13 +36,18 @@ test('requires a live same-connection transaction before rotation persistence', 
     'Transaction context is not active for this connection',
   );
   expect(model.create).not.toHaveBeenCalled();
-  await withScopedTransaction({} as Sequelize, {} as Transaction, async (tx) => {
-    await expect(repo.claimRotation({ ...input, tx })).rejects.toThrow(
-      'Transaction context is not active for this connection',
-    );
-  });
+  const foreign = {} as Sequelize;
+  await withScopedTransaction(
+    foreign,
+    { sequelize: foreign } as unknown as Transaction,
+    async (tx) => {
+      await expect(repo.claimRotation({ ...input, tx })).rejects.toThrow(
+        'Transaction context is not active for this connection',
+      );
+    },
+  );
   expect(sequelize.query).not.toHaveBeenCalled();
-  const transaction = {} as Transaction;
+  const transaction = { sequelize } as unknown as Transaction;
   await withScopedTransaction(sequelize, transaction, async (tx) => {
     await expect(repo.claimRotation({ ...input, tx })).resolves.toBe(true);
     expect(sequelize.query).toHaveBeenCalledWith(
@@ -58,7 +63,7 @@ test('requires a live same-connection transaction before rotation persistence', 
 
 test('inserts and reaps only with an active transaction on the injected connection', async () => {
   const sequelize = {} as Sequelize;
-  const transaction = {} as Transaction;
+  const transaction = { sequelize } as unknown as Transaction;
   const expiry = new Date('2030-01-01T00:00:00Z');
   const createdAt = new Date('2026-01-01T00:00:00Z');
   const row = new RememberToken(0, 'successor', 7, expiry, createdAt, 'family');
@@ -81,7 +86,12 @@ test('inserts and reaps only with an active transaction on the injected connecti
     expect(model.destroy).not.toHaveBeenCalled();
   };
   await rejectContext(undefined as unknown as TransactionContext);
-  await withScopedTransaction({} as Sequelize, {} as Transaction, rejectContext);
+  const foreign = {} as Sequelize;
+  await withScopedTransaction(
+    foreign,
+    { sequelize: foreign } as unknown as Transaction,
+    rejectContext,
+  );
   const expired = await withScopedTransaction(sequelize, transaction, async (tx) => tx);
   await rejectContext(expired);
   await withScopedTransaction(sequelize, transaction, async (tx) => {

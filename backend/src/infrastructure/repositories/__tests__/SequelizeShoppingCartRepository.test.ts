@@ -252,7 +252,7 @@ describe('SequelizeShoppingCartRepository', () => {
   // would emit `SELECT ... FOR UPDATE` across the join, locking `Product`
   // rows as an unintended side effect (design.md's explicit rejection).
   describe('findActiveForUpdate', () => {
-    const mockTx = {} as unknown as TransactionContext;
+    const mockTx = { sequelize: db.sequelize } as unknown as TransactionContext;
 
     it('locks only ShoppingCart rows (no include) then reads Product names/stock in a second, non-locking query', async () => {
       const mockCartInstances = [
@@ -341,7 +341,7 @@ describe('SequelizeShoppingCartRepository', () => {
 
   describe('markOrdered', () => {
     const mockSequelizeQuery = db.sequelize.query as unknown as jest.Mock;
-    const mockTx = {} as unknown as TransactionContext;
+    const mockTx = { sequelize: db.sequelize } as unknown as TransactionContext;
 
     it('issues a pure UPDATE (never DELETE/INSERT) scoped to the given cart ids, user, and ACTIVE status, returning the affected-row count', async () => {
       mockSequelizeQuery.mockResolvedValueOnce([undefined, 2]);

@@ -23,7 +23,7 @@ jest.mock('../../../database/models/db', () => ({
   },
 }));
 
-const mockTx = {} as unknown as TransactionContext;
+const mockTx = { sequelize: db.sequelize } as unknown as TransactionContext;
 
 function mockOrderInstance(overrides: Partial<OrderInstance> = {}): OrderInstance {
   return {
