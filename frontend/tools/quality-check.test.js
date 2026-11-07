@@ -1,8 +1,7 @@
-import assert from 'node:assert/strict';
+import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import test from 'node:test';
 import { runCheck } from './quality-check.js';
 
 function withSource(source, callback) {
@@ -18,17 +17,19 @@ function withSource(source, callback) {
   }
 }
 
-test('accepts source files longer than the withdrawn size threshold', () => {
-  const longSource = `${'const value = 1;\n'.repeat(300)}`;
-  withSource(longSource, (root) => {
-    assert.equal(runCheck(root, () => {}), 0);
+describe('quality-check', () => {
+  it('accepts source files longer than the withdrawn size threshold', () => {
+    const longSource = `${'const value = 1;\n'.repeat(300)}`;
+    withSource(longSource, (root) => {
+      expect(runCheck(root, () => {})).toBe(0);
+    });
   });
-});
 
-test('continues rejecting console.log in production source', () => {
-  withSource('console.log("not allowed");\n', (root) => {
-    const diagnostics = [];
-    assert.equal(runCheck(root, (message) => diagnostics.push(message)), 1);
-    assert.match(diagnostics[0], /console\.log found/);
+  it('continues rejecting console.log in production source', () => {
+    withSource('console.log("not allowed");\n', (root) => {
+      const diagnostics = [];
+      expect(runCheck(root, (message) => diagnostics.push(message))).toBe(1);
+      expect(diagnostics[0]).toMatch(/console\.log found/);
+    });
   });
 });
