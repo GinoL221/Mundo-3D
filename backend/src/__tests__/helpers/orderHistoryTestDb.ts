@@ -1,9 +1,9 @@
 /**
  * Order-history-specific real-DB test fixtures, layered on top of
  * `testDb.ts`'s generic Category/Franchise/Product/User primitives. Kept in
- * its own file (not folded into `orderTestDb.ts` or `testDb.ts`) to respect
- * the 250-line file cap — these helpers seed orders directly (via the real
- * `SequelizeOrderRepository.createWithItems`, inside a real transaction),
+ * its own file (not folded into `orderTestDb.ts` or `testDb.ts`): these helpers
+ * seed orders directly (via the real `SequelizeOrderRepository.createWithItems`,
+ * inside a real transaction),
  * independent of the checkout flow's cart-based fixtures.
  */
 import { SequelizeUnitOfWork } from '../../infrastructure/persistence/SequelizeUnitOfWork';

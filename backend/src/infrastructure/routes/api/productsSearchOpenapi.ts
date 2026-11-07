@@ -1,7 +1,5 @@
 // `@openapi` annotation for `GET /products/search` (product-catalog-search
-// spec), split out of `products.ts` purely to keep that file under
-// AGENTS.md's 250-line-per-source-file cap — mirrors the `productSearchWhere.ts`
-// extraction precedent from Work Unit 1. `swagger-jsdoc`'s glob
+// spec). `swagger-jsdoc`'s glob
 // (`routes/api/*.ts`, see `openapi/openapiSpec.ts`) scans every file directly
 // in this folder for `@openapi` comment blocks regardless of whether it is
 // imported anywhere, so this file needs no runtime wiring — the empty export

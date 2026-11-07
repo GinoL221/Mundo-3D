@@ -8,10 +8,10 @@
 // envelope used by domain-error mapping), against the actual controller code
 // — never guessed. Kept as plain objects (not TS interfaces) so swagger-jsdoc
 // can embed them verbatim into `components.schemas`. Order-related schemas
-// live in `orderOpenapiSchemas.ts` (split out to stay under the 250-line cap).
+// live in `orderOpenapiSchemas.ts`.
 
-import { customCommissionRequestOpenapiSchemas } from './customCommissionRequestOpenapiSchemas';
 import { orderOpenapiSchemas } from './orderOpenapiSchemas';
+import { customCommissionRequestOpenapiSchemas } from './customCommissionRequestOpenapiSchemas';
 
 const errorSchema = {
   type: 'object',
@@ -195,6 +195,8 @@ const usersIndexResponseSchema = {
   },
   required: ['count', 'users'],
 };
+
+
 
 export const openapiSchemas = {
   Error: errorSchema,

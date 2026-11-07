@@ -1,7 +1,5 @@
-// Order-related component schemas, split out of openapiSchemas.ts to keep
-// that file under the repo's 250-line cap. Mirrors OrderDTO.ts /
-// OrderItemDTO / OrderSummaryDTO (application/dtos/OrderDTO.ts) — never
-// guessed.
+// Order-related component schemas mirror OrderDTO.ts / OrderItemDTO /
+// OrderSummaryDTO (application/dtos/OrderDTO.ts) — never guessed.
 
 const orderItemSchema = {
   type: 'object',

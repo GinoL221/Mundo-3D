@@ -18,8 +18,7 @@ import {
 } from '../security/cookieOptions';
 
 // Moved verbatim from UserApiController.ts (refresh-token-reuse-detection
-// design.md D4) — the controller was at 247/250 lines and the reuse-detection
-// branch adds 4 more. UserAuthDto shape is whatever
+// design.md D4). UserAuthDto shape is whatever
 // AuthenticateUserUseCase/RegisterUserUseCase return.
 export interface UserAuthDto {
   idUser: number;
@@ -31,8 +30,8 @@ export interface UserAuthDto {
   category?: string | null;
 }
 
-// Extracted from UserApiController.ts (task 2.2) — the controller was at
-// 204/250 lines and PR2 adds a refresh handler on top (design.md D4).
+// Extracted from UserApiController.ts (task 2.2); PR2 adds a refresh handler
+// on top (design.md D4).
 export interface UserDisplayData {
   firstName: string;
   image: string | null;

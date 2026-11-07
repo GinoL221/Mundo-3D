@@ -1,9 +1,9 @@
 /**
  * Order-checkout-specific real-DB test fixtures, layered on top of
  * `testDb.ts`'s generic Category/Franchise/Product/User primitives. Kept in
- * its own file (not folded into `testDb.ts`) to respect the 250-line file
- * cap — these helpers are checkout-specific, not generic reusable
- * primitives like the rest of `testDb.ts`.
+ * its own file (not folded into `testDb.ts`) because these helpers are
+ * checkout-specific, not generic reusable primitives like the rest of
+ * `testDb.ts`.
  */
 import { CartStatus } from '../../domain/entities/ShoppingCart';
 import {

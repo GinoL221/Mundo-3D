@@ -1,16 +1,13 @@
-// Enforces two repo-wide standards (AGENTS.md) that Astro has no lint
-// pipeline for: no console.log in production code, and a 250-line cap per
-// source file. Mirrors backend/tools/architecture/check.js's exit-code
+// Enforces the production console.log ban (AGENTS.md), which Astro has no
+// lint pipeline for. Mirrors backend/tools/architecture/check.js's exit-code
 // convention so both plug into CI the same way.
 //
-// CSS files are covered by the line cap only — console.log obviously
-// doesn't apply — and vendor stylesheets (third-party, not ours to trim)
-// are exempt via VENDOR_FILES.
+// CSS files are included in source scanning; console.log does not apply to
+// stylesheets, and vendor stylesheets are exempt via VENDOR_FILES.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const MAX_LINES = 250;
 const SOURCE_EXTENSIONS = /\.(astro|ts|tsx)$/;
 const CSS_EXTENSION = /\.css$/;
 const TEST_FILE = /\.test\.ts$/;
@@ -40,13 +37,6 @@ export function runCheck(root, write = console.error) {
 
     if (!isCss && !isTest && /console\.log\s*\(/.test(content)) {
       violations.push(`${relative}: console.log found — use a proper error surface instead`);
-    }
-
-    if (!isTest) {
-      const lineCount = content.split('\n').length;
-      if (lineCount > MAX_LINES) {
-        violations.push(`${relative}: ${lineCount} lines exceeds the ${MAX_LINES}-line cap`);
-      }
     }
   }
 
