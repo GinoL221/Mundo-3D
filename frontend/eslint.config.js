@@ -1,8 +1,8 @@
 // ESLint for the Astro workspace. Deliberately complementary to
-// tools/quality-check.js, which keeps sole ownership of the 250-line cap and
-// the console.log ban (it also covers .css, which ESLint cannot parse). This
-// config owns what only a real linter can see: unused bindings, floating
-// promises, loose equality and unsafe `any` flow.
+// tools/quality-check.js, which enforces the production console.log ban
+// (including .css files, which ESLint cannot parse). This config owns what
+// only a real linter can see: unused bindings, floating promises, loose
+// equality and unsafe `any` flow.
 import { defineConfig } from 'eslint/config';
 import js from '@eslint/js';
 import globals from 'globals';

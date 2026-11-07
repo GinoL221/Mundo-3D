@@ -10,9 +10,7 @@ export const escapeLikePattern = (term: string): string => term.replace(/[\\%_]/
 
 // Builds the `WHERE` clause for `SequelizeProductRepository.searchPaged`:
 // search (Op.or across name_product/description_product) AND idCategory
-// AND idFranchise, each present only when supplied. Extracted out of the
-// repository into its own module to keep that file under the project's
-// 250-line-per-file cap (see AGENTS.md).
+// AND idFranchise, each present only when supplied.
 export function buildProductSearchWhere({
   search,
   idCategory,
