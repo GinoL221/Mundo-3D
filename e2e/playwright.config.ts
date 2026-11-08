@@ -67,6 +67,12 @@ export default defineConfig({
         SMTP_PORT: '1025',
         SMTP_SECURE: 'false',
         SMTP_FROM: 'noreply@example.test',
+        ...(process.env.DB_HOST ? { DB_HOST: process.env.DB_HOST } : {}),
+        ...(process.env.DB_PORT ? { DB_PORT: process.env.DB_PORT } : {}),
+        ...(process.env.M3D_E2E_RUN_ID ? { M3D_E2E_RUN_ID: process.env.M3D_E2E_RUN_ID } : {}),
+        ...(process.env.M3D_E2E_EXPECTED_SERVER_UUID
+          ? { M3D_E2E_EXPECTED_SERVER_UUID: process.env.M3D_E2E_EXPECTED_SERVER_UUID }
+          : {}),
       },
       reuseExistingServer: false,
     },

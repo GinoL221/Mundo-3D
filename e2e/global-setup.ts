@@ -5,7 +5,17 @@ async function globalSetup() {
   console.log('\n[Global Setup] Starting local Mailpit and preparing test database...');
   try {
     await startMailpit();
-    execSync('pnpm --filter backend db:test:prepare', { stdio: 'inherit' });
+
+    const env = {
+      ...process.env,
+      NODE_ENV: 'test',
+    };
+
+    execSync('pnpm --filter backend db:test:prepare', {
+      stdio: 'inherit',
+      env,
+    });
+
     await clearMailpit();
     console.log('[Global Setup] Test database prepared and Mailpit cleared successfully.\n');
   } catch (error) {
