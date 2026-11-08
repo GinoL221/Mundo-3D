@@ -22,7 +22,7 @@ test('nonzero child exit remains nonzero, and spawn errors reject', async () => 
 });
 test('a second grace period escalates a child that ignores SIGINT to SIGKILL', async () => {
   const controller = new AbortController(); const kills = [];
-  const promise = runCommand('runner', [], { signal: controller.signal, graceMs: 5,
+  const promise = runCommand('runner', [], { signal: controller.signal, graceMs: 5, listDescendantsImpl: () => [],
     killImpl(pid, name) { kills.push([pid, name]); },
     spawnImpl() { const c = new EventEmitter(); c.pid = 21; process.nextTick(() => controller.abort(new Error('cancelled')));
       setTimeout(() => c.emit('close', null, 'SIGKILL'), 20); return c; } });
@@ -33,9 +33,50 @@ test('a second grace period escalates a child that ignores SIGINT to SIGKILL', a
 test('cancellation sends Playwright the SIGINT it handles, then escalates to SIGKILL', async () => {
   const controller = new AbortController(); const events = [];
   const child = new EventEmitter(); child.pid = 17;
-  await assert.rejects(runCommand('runner', [], { signal: controller.signal,
+  await assert.rejects(runCommand('runner', [], { signal: controller.signal, listDescendantsImpl: () => [],
     killImpl(pid, signal) { events.push([pid, signal]); process.nextTick(() => { events.push('close'); child.emit('close', null, 'SIGTERM'); }); },
     spawnImpl() { process.nextTick(() => controller.abort(new Error('cancelled'))); return child; },
   }), /cancelled/);
   assert.deepEqual(events, [[process.platform === 'win32' ? 17 : -17, 'SIGINT'], 'close']);
+});
+
+test('cancellation reaps webServer-like descendants that detach into their own group', { skip: process.platform === 'win32' }, async () => {
+  const fs = require('node:fs'); const os = require('node:os'); const path = require('node:path');
+  const pidFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'e2e-reap-')), 'grandchild.pid');
+  const controller = new AbortController();
+  const script = `const { spawn } = require('node:child_process'); const fs = require('node:fs');
+process.on('SIGINT', () => {}); process.on('SIGTERM', () => {});
+const grandchild = spawn(process.execPath, ['-e', 'process.on("SIGINT", () => {}); process.on("SIGTERM", () => {}); setInterval(() => {}, 1000)'], { detached: true, stdio: 'ignore' });
+grandchild.unref(); fs.writeFileSync(process.env.E2E_REAP_PIDFILE, String(grandchild.pid));
+setInterval(() => {}, 1000);`;
+  const running = runCommand(process.execPath, ['-e', script], {
+    env: { ...process.env, E2E_REAP_PIDFILE: pidFile }, signal: controller.signal, graceMs: 200 });
+  await new Promise((resolve) => { const poll = setInterval(() => { if (fs.existsSync(pidFile) && fs.readFileSync(pidFile, 'utf8')) { clearInterval(poll); resolve(); } }, 20); });
+  const grandchildPid = Number(fs.readFileSync(pidFile, 'utf8'));
+  controller.abort(new Error('cancelled'));
+  await assert.rejects(running, /cancelled/);
+  const deadline = Date.now() + 3000;
+  let alive = true;
+  while (Date.now() < deadline) {
+    try { process.kill(grandchildPid, 0); await new Promise((done) => setTimeout(done, 50)); } catch { alive = false; break; }
+  }
+  assert.equal(alive, false, `detached grandchild ${grandchildPid} survived cancellation`);
+});
+
+test('cancellation stays alive long enough to finish reaping and reject', { skip: process.platform === 'win32' }, async () => {
+  const { spawn } = require('node:child_process'); const fs = require('node:fs'); const os = require('node:os'); const path = require('node:path');
+  const marker = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'e2e-reap-alive-')), 'rejected.txt');
+  const modulePath = path.resolve(__dirname, 'e2e-child-process.cjs');
+  const script = `const { runCommand } = require(${JSON.stringify(modulePath)});
+const { EventEmitter } = require('node:events'); const fs = require('node:fs');
+const controller = new AbortController();
+runCommand('runner', [], { signal: controller.signal, listDescendantsImpl: () => [2], killImpl: () => {},
+  reapGraceMs: 300, spawnImpl() { const child = new EventEmitter(); child.pid = 999999;
+    setTimeout(() => controller.abort(new Error('cancelled')), 10);
+    setTimeout(() => child.emit('close', null, 'SIGINT'), 20); return child; } })
+  .catch(error => { fs.writeFileSync(process.env.E2E_REAP_MARKER, error.message); });`;
+  const child = spawn(process.execPath, ['-e', script], { env: { ...process.env, E2E_REAP_MARKER: marker }, stdio: 'inherit' });
+  const exited = await new Promise((resolve) => child.once('exit', (code) => resolve(code)));
+  assert.equal(exited, 0);
+  assert.equal(fs.existsSync(marker), true, 'the cancellation rejection was abandoned when the event loop drained');
 });
