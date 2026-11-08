@@ -56,8 +56,9 @@ function validateWorkflow(source) {
   const mysqlReferences = [...source.matchAll(/image:\s+>\-\n\s*(mysql@sha256:[a-f0-9]{64})/g)].map(
     (match) => match[1],
   );
-  assert.equal(mysqlReferences.length, 2);
-  assert.equal(mysqlReferences[0], mysqlReferences[1]);
+  // The E2E job provisions its own MySQL container per run, so the workflow keeps
+  // a single service definition; every remaining MySQL image must still be pinned.
+  assert.equal(mysqlReferences.length, 1);
   assert.match(source, /run:\s+bash \.github\/scripts\/run-pnpm-audit\.sh/);
   assert.match(source, /node --test \.github\/scripts\/run-pnpm-audit\.test\.js/);
   assert.match(source, /contents: read/);
