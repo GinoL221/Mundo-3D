@@ -13,6 +13,7 @@ module.exports = {
     password: process.env.DB_PASS || '',
     database: 'mundo_3d_test',
     host: process.env.DB_HOST || 'localhost',
+    ...(process.env.DB_PORT ? { port: Number(process.env.DB_PORT) } : {}),
     dialect: 'mysql',
   },
   production: {

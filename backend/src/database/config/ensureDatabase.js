@@ -23,10 +23,12 @@ async function ensureDatabaseExists(env = 'development') {
   const dbUser = dbConfig.username;
   const dbPass = dbConfig.password;
   const dbHost = dbConfig.host;
+  const dbPort = dbConfig.port;
 
   // Conexión sin base de datos
   const connection = await mysql.createConnection({
     host: dbHost,
+    ...(dbPort ? { port: dbPort } : {}),
     user: dbUser,
     password: dbPass,
   });
