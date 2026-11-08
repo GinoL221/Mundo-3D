@@ -1,10 +1,12 @@
 const mysql = require('mysql2/promise');
 const config = require('./config');
+const { readE2EDatabaseContext, verifyE2EConnection } = require('../e2e/context');
 
 /**
  * Crea la base de datos si no existe antes de inicializar Sequelize
  */
 async function ensureDatabaseExists(env = 'development') {
+  const e2eContext = readE2EDatabaseContext(process.env);
   const dbConfig = config[env];
   if (!dbConfig) {
     const supportedEnvs = Object.keys(config).join(', ');
@@ -32,8 +34,12 @@ async function ensureDatabaseExists(env = 'development') {
     user: dbUser,
     password: dbPass,
   });
-  await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\`;`);
-  await connection.end();
+  try {
+    if (e2eContext) await verifyE2EConnection(connection, e2eContext);
+    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\`;`);
+  } finally {
+    await connection.end();
+  }
 }
 
 module.exports = { ensureDatabaseExists };
