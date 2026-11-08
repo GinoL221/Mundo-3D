@@ -55,4 +55,8 @@ test('cleanup inspection permits stopped resources but never mismatched anonymou
   f.record.volumeName = 'd'.repeat(64);
   assert.throws(() => assertResourceBinding(f.record, f.inspected), /E2E resource binding rejected/);
 });
+test('both service images are immutable digest references', () => {
+  assert.match(MYSQL_IMAGE, /@sha256:[a-f0-9]{64}$/);
+  assert.match(MAILPIT_IMAGE, /^axllent\/mailpit@sha256:[a-f0-9]{64}$/);
+});
 module.exports = { fixture };

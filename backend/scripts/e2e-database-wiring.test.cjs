@@ -181,3 +181,17 @@ test('direct preparation rejects missing context without opening, syncing or see
   assert.deepEqual(effects, []);
   assert.deepEqual(events, [['stderr', 'Error preparing test database:', 'E2E database context rejected'], ['exit', 1]]);
 });
+
+test('unexpected preparation failures keep the full error for diagnosis', async () => {
+  const failure = new Error('database exploded');
+  const { exports, events } = load('../src/database/test-prepare.js', env(), {
+    bcryptjs: {},
+    './config/ensureDatabase': { ensureDatabaseExists: async () => { throw failure; } },
+    './models/db': { sequelize: {} }, './seed': { seedInitialData: async () => {} },
+  });
+  await exports.prepare();
+  const stderr = events.find(event => event[0] === 'stderr');
+  assert.deepEqual(stderr.slice(0, 2), ['stderr', 'Error preparing test database:']);
+  assert.equal(stderr[2], failure);
+  assert.deepEqual(events.at(-1), ['exit', 1]);
+});

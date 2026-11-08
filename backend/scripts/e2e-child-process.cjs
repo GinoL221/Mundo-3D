@@ -24,8 +24,9 @@ async function runCommand(command, args, { env, signal, spawnImpl = spawn, killI
       timer = setTimeout(() => group('SIGKILL'), graceMs);
       timer.unref();
     };
-    // Keep the escalation timer alive after the top-level child closes: the
-    // detached webServer groups may still be shutting down.
+    // The escalation timer targets only the Playwright process group and is
+    // cleared once that child closes. Playwright's detached webServer groups are
+    // NOT covered by it: their teardown relies on Playwright handling SIGINT.
     const dispose = () => {
       signal?.removeEventListener('abort', cancel);
       if (timer) clearTimeout(timer);

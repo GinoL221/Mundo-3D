@@ -49,3 +49,15 @@ test('manual runner command remains supported; signal handlers are removed on fa
   assert.equal(signals.listenerCount('SIGINT') + signals.listenerCount('SIGTERM'), 0);
 });
 
+
+test('forwarded Playwright help never provisions resources and carries no run context', async () => {
+  for (const flag of ['--help', '-h']) {
+    const calls = [];
+    await runE2EIsolated(['--playwright', flag], { signals: new EventEmitter(),
+      supervisor: { run: () => { throw new Error('must not provision'); } },
+      runCommand: async (cmd, args, options) => { calls.push([cmd, args, options.env]); } });
+    assert.equal(calls.length, 1);
+    assert.deepEqual(calls[0][1], ['--dir', root, '--filter', 'e2e', 'exec', 'playwright', 'test', flag]);
+    assert.equal(Object.keys(calls[0][2]).some(key => key.startsWith('M3D_E2E_')), false);
+  }
+});

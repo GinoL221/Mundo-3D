@@ -22,6 +22,7 @@ async function runE2EIsolated(args = process.argv.slice(2), dependencies = {}) {
     (dependencies.printHelp || printHelp)();
     return;
   }
+  const helpOnly = args[0] === '--playwright' && args.slice(1).some(arg => arg === '--help' || arg === '-h');
   const supervisor = dependencies.supervisor || createE2ESupervisor({
     dockerProvider: createDockerProvider(), portFinder: getFreePort,
   });
@@ -42,6 +43,10 @@ async function runE2EIsolated(args = process.argv.slice(2), dependencies = {}) {
     const commandArgs = automatic
       ? ['--dir', ROOT, '--filter', 'e2e', 'exec', 'playwright', 'test', ...args.slice(args[0] === '--playwright' ? 1 : 0)]
       : args.slice(1);
+    if (helpOnly) {
+      // Help reads no configuration state and needs no per-run resources.
+      return await execute(command, commandArgs, { env: { ...process.env }, signal: controller.signal });
+    }
     return await supervisor.run(async ({ env }) => execute(command, commandArgs, {
       env: { ...process.env, ...env }, signal: controller.signal,
     }), { signal: controller.signal });

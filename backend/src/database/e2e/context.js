@@ -15,7 +15,7 @@ function readE2EDatabaseContext(env, { required = false } = {}) {
       !UUID.test(env.M3D_E2E_EXPECTED_SERVER_UUID || '') ||
       env.DB_HOST !== '127.0.0.1' || !PORT.test(env.DB_PORT || '') ||
       Number(env.DB_PORT) > 65535) {
-    throw new Error('E2E database context rejected');
+    throw Object.assign(new Error('E2E database context rejected'), { code: 'E2E_CONTEXT_REJECTED' });
   }
   return Object.freeze({
     NODE_ENV: 'test', M3D_E2E_RUN_ID: env.M3D_E2E_RUN_ID,

@@ -58,7 +58,8 @@ async function prepare() {
     console.log('Test database preparation complete.');
     process.exit(0);
   } catch (err) {
-    console.error('Error preparing test database:', err.message);
+    // The known context rejection is a clean message; anything else keeps its full detail.
+    console.error('Error preparing test database:', err.code === 'E2E_CONTEXT_REJECTED' ? err.message : err);
     process.exit(1);
   }
 }

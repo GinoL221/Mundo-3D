@@ -1,7 +1,9 @@
 'use strict';
 const { reconcileCreationEvidence } = require('./refresh-mysql-creation-evidence.cjs');
 const MYSQL_IMAGE = 'mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b';
-const MAILPIT_IMAGE = 'axllent/mailpit:v1.28.2';
+// Digest of the v1.28.2 image already used by docker-compose.yml, pinned so the
+// bound container cannot silently run a retagged image.
+const MAILPIT_IMAGE = 'axllent/mailpit@sha256:28a161f4a39c70671d0fb771a6e7a3abe6d2144c0e2a595ff72767ab63cd14f6';
 const ID = /^[a-f0-9]{64}(?![\s\S])/;
 const RUN = /^[a-f0-9]{32}(?![\s\S])/;
 const PORT = /^[1-9][0-9]{0,4}(?![\s\S])/;

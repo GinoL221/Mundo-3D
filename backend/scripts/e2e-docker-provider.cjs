@@ -25,15 +25,30 @@ async function probeTcpIdentity(port, signal, expectedUuid) {
   }
 }
 
-async function execDocker(args, signal) {
+// Image pulls are network-bound; every other command keeps the short budget.
+function timeoutFor(args) {
+  return args[0] === 'pull' ? 600_000 : 30_000;
+}
+
+// One bounded line of the daemon's own message is enough to diagnose a failure;
+// the original error is kept as `cause`, never printed wholesale.
+function describeFailure(args, error) {
+  const line = String(error?.stderr || '').split(/\r?\n/).find(item => item.trim());
+  const code = Number.isInteger(error?.code) ? ` (exit ${error.code})` : '';
+  const detail = line ? `: ${line.trim().slice(0, 200)}` : '';
+  return `E2E Docker ${args[0]} failed${code}${detail}`;
+}
+
+async function execDocker(args, signal, runner = execFileAsync) {
+  let result;
   try {
-    const result = await execFileAsync('docker', args, { encoding: 'utf8', timeout: 30_000,
+    result = await runner('docker', args, { encoding: 'utf8', timeout: timeoutFor(args),
       maxBuffer: 1024 * 1024, signal });
-    if (args[0] === 'exec' && result.stderr) throw new Error('Ambiguous MySQL identity transcript');
-    return result.stdout;
-  } catch {
-    throw new Error(`E2E Docker ${args[0]} failed`);
+  } catch (error) {
+    throw new Error(describeFailure(args, error), { cause: error });
   }
+  if (args[0] === 'exec' && result.stderr) throw new Error('Ambiguous MySQL identity transcript');
+  return result.stdout;
 }
 async function inspectContainer(id, exec = execDocker) {
   const result = JSON.parse(await exec(['inspect', id]));
@@ -56,6 +71,7 @@ function createDockerProvider({ exec = execDocker, fetchImpl = globalThis.fetch,
         throw new Error('E2E create input rejected');
       }
       const name = `m3d-e2e-${kind}-${runId}`;
+      const image = kind === 'mysql' ? MYSQL_IMAGE : MAILPIT_IMAGE;
       const ports = kind === 'mysql' ? ['3306'] : ['8025', '1025'];
       const args = ['create', '--name', name, '--label', `m3d.e2e.run=${runId}`,
         '--label', `m3d.e2e.kind=${kind}`, '--network', 'bridge',
@@ -64,6 +80,10 @@ function createDockerProvider({ exec = execDocker, fetchImpl = globalThis.fetch,
           : ['--env', 'MP_ENABLE_CHAOS=true', MAILPIT_IMAGE])];
       try {
         signal?.throwIfAborted();
+        // Pull outside the create budget: a cold image must not look like an
+        // uncertain creation.
+        try { await exec(['image', 'inspect', image], signal); }
+        catch { signal?.throwIfAborted(); await exec(['pull', image], signal); }
         const containerId = (await exec(args, signal)).trim();
         const record = { containerId, kind, runId };
         const binding = assertResourceBinding(record, await inspectContainer(containerId, exec));
@@ -129,4 +149,4 @@ function createDockerProvider({ exec = execDocker, fetchImpl = globalThis.fetch,
     },
   });
 }
-module.exports = { createDockerProvider, inspectContainer, execDocker };
+module.exports = { createDockerProvider, inspectContainer, execDocker, timeoutFor };

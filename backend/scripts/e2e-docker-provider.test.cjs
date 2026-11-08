@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createDockerProvider } = require('./e2e-docker-provider.cjs');
+const { createDockerProvider, execDocker, timeoutFor } = require('./e2e-docker-provider.cjs');
 const { MYSQL_IMAGE } = require('./e2e-resource-binding.cjs');
 const ID = 'a'.repeat(64), RUN = 'b'.repeat(32), VOLUME = 'c'.repeat(64);
 function harness() {
@@ -27,7 +27,7 @@ test('creates exact labelled anonymous-volume container; cleanup rechecks owners
   const record = await h.provider.create({ kind: 'mysql', runId: RUN });
   assert.equal(record.containerId, ID);
   assert.equal(record.volumeName, VOLUME);
-  const create = h.calls[0];
+  const create = h.calls.find(call => call[0] === 'create');
   assert.ok(create.includes('127.0.0.1::3306'));
   assert.ok(create.includes('type=volume,dst=/var/lib/mysql'));
   assert.ok(create.includes(`m3d.e2e.run=${RUN}`));
@@ -76,4 +76,41 @@ test('failed stop is observable and cannot silently become successful cleanup', 
   h.faults.stop = true; h.calls.length = 0;
   await assert.rejects(h.provider.cleanup(record), /synthetic failure/);
   assert.deepEqual(h.calls.map(call => call[0]), ['inspect', 'stop']);
+});
+
+test('image pulls get their own long timeout instead of the 30s create budget', () => {
+  assert.equal(timeoutFor(['create']), 30_000);
+  assert.equal(timeoutFor(['stop', ID]), 30_000);
+  assert.ok(timeoutFor(['pull', 'image']) >= 300_000);
+});
+
+test('a missing image is pulled before create; a present image is never pulled', async () => {
+  const h = harness();
+  const missing = createDockerProvider({ readinessAttempts: 1, exec: async (args) => {
+    h.calls.push(args);
+    if (args[0] === 'image' && args[1] === 'inspect') throw new Error('absent');
+    if (args[0] === 'create') return `${ID}\n`;
+    if (args[0] === 'inspect') return JSON.stringify([h.inspected]);
+    return '';
+  } });
+  await missing.create({ kind: 'mysql', runId: RUN });
+  assert.deepEqual(h.calls.map(call => call[0] === 'image' ? 'image-inspect' : call[0]), ['image-inspect', 'pull', 'create', 'inspect']);
+  assert.equal(h.calls[1][1], MYSQL_IMAGE);
+  const present = harness();
+  await present.provider.create({ kind: 'mysql', runId: RUN });
+  assert.equal(present.calls.some(call => call[0] === 'pull'), false);
+});
+
+test('Docker failures keep a bounded, single-line diagnosis and the original cause', async () => {
+  const failure = Object.assign(new Error('Command failed'), { code: 125,
+    stderr: `Error response from daemon: no such container: ${ID}\n${'x'.repeat(500)}` });
+  await assert.rejects(execDocker(['stop', ID], undefined, async () => { throw failure; }), error => {
+    assert.match(error.message, /^E2E Docker stop failed \(exit 125\): Error response from daemon: no such container/);
+    assert.ok(error.message.length <= 320);
+    assert.equal(error.message.includes('\n'), false);
+    assert.equal(error.cause, failure);
+    return true;
+  });
+  await assert.rejects(execDocker(['stop', ID], undefined, async () => { throw new Error('timeout'); }),
+    /^Error: E2E Docker stop failed$/);
 });
