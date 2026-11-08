@@ -1,15 +1,15 @@
 'use strict';
 
 // Behaviour under test (spec: managed-database-connectivity —
-// "Production Database Port and TLS"):
+// "Production Database Port and TLS", plus E2E isolated runner):
 //   * the `production` block must expose a numeric `port` sourced from
 //     `DB_PORT`, and MUST NOT expose `port` at all when `DB_PORT` is unset
 //     (a `Number(undefined)` NaN must never reach the driver);
 //   * the `production` block must enforce verified TLS via
 //     `dialectOptions.ssl.ca` = `DB_CA_CERT` and `rejectUnauthorized: true`;
 //   * `rejectUnauthorized: false` must not appear anywhere;
-//   * the `development` / `test` blocks must be byte-unchanged — no `port`,
-//     no `dialectOptions`.
+//   * the `development` block must be byte-unchanged — no `port`, no `dialectOptions`;
+//   * the `test` block optionally consumes numeric `port` from `DB_PORT` for isolated E2E runs.
 
 const ORIGINAL_ENV = process.env;
 
@@ -72,10 +72,13 @@ describe('database config — dev/test blocks unchanged', () => {
     expect(Object.prototype.hasOwnProperty.call(config.development, 'dialectOptions')).toBe(false);
   });
 
-  it('test block has no port and no dialectOptions', () => {
-    const config = loadConfig({ DB_PORT: '24063', DB_CA_CERT: 'PEM' });
-    expect(Object.prototype.hasOwnProperty.call(config.test, 'port')).toBe(false);
-    expect(Object.prototype.hasOwnProperty.call(config.test, 'dialectOptions')).toBe(false);
+  it('test block consumes DB_PORT when present and has no dialectOptions', () => {
+    const configWithPort = loadConfig({ DB_PORT: '24063', DB_CA_CERT: 'PEM' });
+    expect(configWithPort.test.port).toBe(24063);
+    expect(Object.prototype.hasOwnProperty.call(configWithPort.test, 'dialectOptions')).toBe(false);
+
+    const configWithoutPort = loadConfig({ DB_PORT: undefined, DB_CA_CERT: 'PEM' });
+    expect(Object.prototype.hasOwnProperty.call(configWithoutPort.test, 'port')).toBe(false);
   });
 
   it('development block keeps exactly its five original keys', () => {
@@ -90,16 +93,26 @@ describe('database config — dev/test blocks unchanged', () => {
     expect(config.development.dialect).toBe('mysql');
   });
 
-  it('test block keeps exactly its five original keys', () => {
-    const config = loadConfig({ DB_PORT: '24063', DB_CA_CERT: 'PEM' });
-    expect(Object.keys(config.test).sort()).toEqual([
+  it('test block keeps its expected keys depending on DB_PORT presence', () => {
+    const configWithPort = loadConfig({ DB_PORT: '24063', DB_CA_CERT: 'PEM' });
+    expect(Object.keys(configWithPort.test).sort()).toEqual([
+      'database',
+      'dialect',
+      'host',
+      'password',
+      'port',
+      'username',
+    ]);
+    expect(configWithPort.test.dialect).toBe('mysql');
+    expect(configWithPort.test.database).toBe('mundo_3d_test');
+
+    const configWithoutPort = loadConfig({ DB_PORT: undefined });
+    expect(Object.keys(configWithoutPort.test).sort()).toEqual([
       'database',
       'dialect',
       'host',
       'password',
       'username',
     ]);
-    expect(config.test.dialect).toBe('mysql');
-    expect(config.test.database).toBe('mundo_3d_test');
   });
 });
