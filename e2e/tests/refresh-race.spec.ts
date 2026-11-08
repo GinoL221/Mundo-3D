@@ -21,7 +21,7 @@ import crypto from 'node:crypto';
 // Must match playwright.config.ts's webServer env for the backend — an
 // e2e-only secret, never used in production.
 const E2E_JWT_SECRET = 'e2e-only-jwt-secret-not-for-production';
-const FRONTEND_URL = 'http://localhost:4322';
+const FRONTEND_URL = `http://localhost:${process.env.M3D_E2E_FRONTEND_PORT}`;
 
 function base64url(input: string): string {
   return Buffer.from(input).toString('base64url');

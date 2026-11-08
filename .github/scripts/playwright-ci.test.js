@@ -32,9 +32,22 @@ test('Playwright uses one CI-only retry and explicit Linux visual inputs', () =>
   }
   assert.match(config, /workers:\s*1/);
   assert.match(config, /name:\s*'chromium'/);
-  assert.match(config, /port:\s*3032/);
-  assert.match(config, /port:\s*4322/);
+  assert.match(config, /port:\s*backendPort/);
+  assert.match(config, /port:\s*frontendPort/);
+  assert.match(config, /requiredPort\('M3D_E2E_BACKEND_PORT'\)/);
+  assert.match(config, /requiredPort\('M3D_E2E_FRONTEND_PORT'\)/);
+  assert.match(config, /reuseExistingServer:\s*false/);
   assert.match(read(GLOBAL_SETUP), /db:test:prepare/);
+});
+
+test('E2E uses supervisor-owned services and quality checks the emitting backend build contract', () => {
+  const workflow = read(WORKFLOW);
+  const e2e = workflow.split('\n  e2e:')[1].split('\n  verification-gate:')[0];
+  assert.doesNotMatch(e2e, /services:/);
+  assert.match(e2e, /run: pnpm run test:e2e/);
+  assert.match(workflow, /run: pnpm --filter backend exec tsc -p tsconfig.build.json --noEmit/);
+  const scripts = JSON.parse(read(path.join(ROOT, 'package.json'))).scripts;
+  assert.ok(scripts['test:deploy-scripts'].includes('backend/scripts/**/*.test.cjs'));
 });
 
 test('quality runs Playwright CI regression tests', () => {

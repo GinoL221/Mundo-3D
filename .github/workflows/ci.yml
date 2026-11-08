@@ -70,6 +70,9 @@ jobs:
       - name: Run backend strict type-check
         run: pnpm run type-check
 
+      - name: Check backend build imports without emitting files
+        run: pnpm --filter backend exec tsc -p tsconfig.build.json --noEmit
+
       - name: Run fast tests (DB-independent)
         run: pnpm run test:fast
 
@@ -164,18 +167,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
-    services:
-      mysql:
-        image: >-
-          mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
-        env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: yes
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s --health-timeout=5s --health-retries=3
-
+    # The public E2E command provisions both services with per-run ownership;
+    # the separate integration job deliberately keeps its existing DB contract.
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 

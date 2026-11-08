@@ -25,7 +25,7 @@ test('preserves HomeHeader navigation and keyboard dropdown access', async ({
       value: encodeURIComponent(
         JSON.stringify({ firstName: 'Header', idRole: 2, image: 'usuarioSinImagen.jpg' }),
       ),
-      url: 'http://localhost:4322',
+      url: `http://localhost:${process.env.M3D_E2E_FRONTEND_PORT}`,
     },
   ]);
 
