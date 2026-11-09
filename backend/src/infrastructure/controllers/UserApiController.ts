@@ -84,7 +84,13 @@ export class UserApiController {
   revokeRefresh = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const plainToken = req.cookies?.[REFRESH_COOKIE];
-      if (typeof plainToken === 'string' && plainToken.length > 0 && this.revokeRefreshTokenUseCase) {
+      if (typeof plainToken === 'string' && plainToken.length > 0) {
+        // Fail closed. Answering 204 without revoking would report a closed
+        // session that is still open, which is the exact defect this route
+        // exists to fix, so a missing dependency must not read as success.
+        if (!this.revokeRefreshTokenUseCase) {
+          throw new Error('RevokeRefreshTokenUseCase not injected');
+        }
         await this.revokeRefreshTokenUseCase.revokeByToken(plainToken);
       }
       clearSessionCookies(res);

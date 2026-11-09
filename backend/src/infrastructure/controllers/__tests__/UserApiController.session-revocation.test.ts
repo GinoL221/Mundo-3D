@@ -354,4 +354,18 @@ describe('Session revocation on logout — public HTTP interface', () => {
     expect(res.status).not.toBe(204);
     expect(res.status).toBe(500);
   });
+
+  it('fails closed instead of reporting success when the revoke use case is not injected', async () => {
+    const controllerWithoutRevoke = new UserApiController(jest.fn() as any, jest.fn() as any, jest.fn() as any);
+    const isolatedApp = express();
+    isolatedApp.use(express.json());
+    isolatedApp.use(cookieParser());
+    isolatedApp.post('/api/users/refresh/revoke', controllerWithoutRevoke.revokeRefresh);
+
+    const response = await request(isolatedApp)
+      .post('/api/users/refresh/revoke')
+      .set('Cookie', `${REFRESH_COOKIE}=any-token`);
+
+    expect(response.status).toBe(500);
+  });
 });
