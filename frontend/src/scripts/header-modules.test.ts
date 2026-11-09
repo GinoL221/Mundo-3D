@@ -373,8 +373,9 @@ describe('Header browser modules', () => {
     expect(window.location.href).toBe('/login');
     await Promise.resolve();
     await Promise.resolve();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toContain('/api/users/logout');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls.some((call) => typeof call[0] === 'string' && call[0].includes('/api/users/logout'))).toBe(true);
+    expect(fetchMock.mock.calls.some((call) => typeof call[0] === 'string' && call[0].includes('/api/users/refresh/revoke'))).toBe(true);
   });
 
   it('closes the BroadcastChannel and removes all listeners on cleanup', () => {

@@ -58,6 +58,7 @@ export default defineConfig({
         LOGIN_LIMIT_MAX: '1000',
         REGISTER_LIMIT_MAX: '1000',
         ACCOUNT_LOGIN_LIMIT_MAX: '1000',
+        REVOKE_REFRESH_LIMIT_MAX: '1000',
         // Confirmation limits remain enabled in E2E; these raised test values
         // document the intended isolated-run configuration for the RED contracts.
         EMAIL_CONFIRMATION_ATTEMPT_LIMIT_MAX: '1000',

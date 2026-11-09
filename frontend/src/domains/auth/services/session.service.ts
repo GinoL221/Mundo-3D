@@ -112,11 +112,22 @@ export async function clearSession(): Promise<void> {
     // Unlike cartSync.ts's PUT, this carries no custom headers and no body,
     // so it stays a CORS "simple request" and keepalive is not defeated by
     // an unsent preflight.
-    await fetch(`${API_URL}/api/users/logout`, {
-      method: 'POST',
-      credentials: 'include',
-      keepalive: true,
-    });
+    // Calls both /api/users/logout (general session teardown) and the scoped
+    // /api/users/refresh/revoke endpoint (odd/tasks/logout-refresh-revocation.md
+    // S2) so the refresh family is revoked even when no access token cookie
+    // is present.
+    await Promise.allSettled([
+      fetch(`${API_URL}/api/users/logout`, {
+        method: 'POST',
+        credentials: 'include',
+        keepalive: true,
+      }),
+      fetch(`${API_URL}/api/users/refresh/revoke`, {
+        method: 'POST',
+        credentials: 'include',
+        keepalive: true,
+      }),
+    ]);
   } catch {
     // Best-effort: the session is already gone from this browser's point of
     // view, and every open tab has been told. Nothing left to undo.

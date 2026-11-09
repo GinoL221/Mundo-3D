@@ -69,6 +69,7 @@ const EXPECTED_ENDPOINTS: Array<[path: string, method: string]> = [
   ['/users/register', 'post'],
   ['/users/logout', 'post'],
   ['/users/refresh', 'post'],
+  ['/users/refresh/revoke', 'post'],
   ['/users/email-confirmation/confirm', 'post'],
   ['/users/email-confirmation/resend', 'post'],
   ['/users', 'get'],

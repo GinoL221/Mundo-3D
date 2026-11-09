@@ -81,6 +81,19 @@ export class UserApiController {
     }
   };
 
+  revokeRefresh = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const plainToken = req.cookies?.[REFRESH_COOKIE];
+      if (typeof plainToken === 'string' && plainToken.length > 0 && this.revokeRefreshTokenUseCase) {
+        await this.revokeRefreshTokenUseCase.revokeByToken(plainToken);
+      }
+      clearSessionCookies(res);
+      res.sendStatus(204);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   refresh = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!this.refreshSessionUseCase) {

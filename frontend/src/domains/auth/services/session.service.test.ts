@@ -160,14 +160,20 @@ describe('session.service', () => {
       stubCookie('');
     });
 
-    it('calls POST /users/logout with credentials included', async () => {
+    it('calls POST /users/logout and POST /users/refresh/revoke with credentials included', async () => {
       await clearSession();
 
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      const [url, options] = fetchMock.mock.calls[0];
-      expect(url).toContain('/api/users/logout');
-      expect(options.method).toBe('POST');
-      expect(options.credentials).toBe('include');
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      const urls = fetchMock.mock.calls.map(([url]) => url);
+      expect(urls.some((u) => u.includes('/api/users/logout'))).toBe(true);
+      expect(urls.some((u) => u.includes('/api/users/refresh/revoke'))).toBe(true);
+      for (const [, options] of fetchMock.mock.calls) {
+        expect(options.method).toBe('POST');
+        expect(options.credentials).toBe('include');
+        expect(options.keepalive).toBe(true);
+        expect(options.headers).toBeUndefined();
+        expect(options.body).toBeUndefined();
+      }
     });
 
     it('broadcasts a session-changed message on the m3d-session channel', async () => {
@@ -202,17 +208,22 @@ describe('session.service', () => {
     it('sends the logout request with keepalive so it survives the navigation that follows', async () => {
       await clearSession();
 
-      const [, options] = fetchMock.mock.calls[0];
-      expect(options.keepalive).toBe(true);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      for (const [, options] of fetchMock.mock.calls) {
+        expect(options.method).toBe('POST');
+        expect(options.keepalive).toBe(true);
+        expect(options.headers).toBeUndefined();
+        expect(options.body).toBeUndefined();
+      }
     });
 
     // The three assertions below all run while the logout request is still
     // in flight: the UI-gating state must not depend on the response, because
     // the tab that triggered logout is usually gone before it arrives.
     it('expires the client-readable session cookies before the logout response settles', async () => {
-      let settle: () => void = () => {};
+      const settles: Array<() => void> = [];
       fetchMock.mockImplementation(
-        () => new Promise((resolve) => { settle = () => resolve({ ok: true, status: 204 }); }),
+        () => new Promise((resolve) => { settles.push(() => resolve({ ok: true, status: 204 })); }),
       );
       const writes = stubCookieJar('m3d_user=%7B%7D; m3d_csrf=abc.hmac');
 
@@ -221,7 +232,7 @@ describe('session.service', () => {
       expect(writes.some((w) => w.startsWith('m3d_user=') && /max-age=0/i.test(w))).toBe(true);
       expect(writes.some((w) => w.startsWith('m3d_csrf=') && /max-age=0/i.test(w))).toBe(true);
 
-      settle();
+      settles.forEach((s) => s());
       await pending;
     });
 
@@ -287,14 +298,16 @@ describe('session.service', () => {
 
       await expect(clearSession()).resolves.toBeUndefined();
 
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock.mock.calls[0][0]).toContain('/api/users/logout');
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      const urls = fetchMock.mock.calls.map(([url]) => url);
+      expect(urls.some((u) => u.includes('/api/users/logout'))).toBe(true);
+      expect(urls.some((u) => u.includes('/api/users/refresh/revoke'))).toBe(true);
     });
 
     it('broadcasts before the logout response settles, so other tabs never wait on the network', async () => {
-      let settle: () => void = () => {};
+      const settles: Array<() => void> = [];
       fetchMock.mockImplementation(
-        () => new Promise((resolve) => { settle = () => resolve({ ok: true, status: 204 }); }),
+        () => new Promise((resolve) => { settles.push(() => resolve({ ok: true, status: 204 })); }),
       );
 
       const pending = clearSession();
@@ -304,7 +317,7 @@ describe('session.service', () => {
         state: 'logged-out',
       });
 
-      settle();
+      settles.forEach((s) => s());
       await pending;
     });
   });
