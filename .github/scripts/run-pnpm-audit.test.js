@@ -8,6 +8,9 @@ const path = require('node:path');
 const ROOT = path.resolve(__dirname, '..', '..');
 const WORKFLOW = path.join(ROOT, '.github', 'workflows', 'ci.yml');
 const AUDIT_SCRIPT = path.join(__dirname, 'run-pnpm-audit.sh');
+const EXPECTED_MYSQL_DIGEST =
+  '7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b';
+const EXPECTED_MYSQL_IMAGE = `mysql@sha256:${EXPECTED_MYSQL_DIGEST}`;
 
 /**
  * Builds a fake `pnpm` whose answer depends on whether the invocation carries
@@ -59,6 +62,10 @@ function validateWorkflow(source) {
   // The E2E job provisions its own MySQL container per run, so the workflow keeps
   // a single service definition; every remaining MySQL image must still be pinned.
   assert.equal(mysqlReferences.length, 1);
+  assert.ok(
+    mysqlReferences.every((reference) => reference === EXPECTED_MYSQL_IMAGE),
+    `expected every MySQL image reference to match ${EXPECTED_MYSQL_IMAGE}`,
+  );
   assert.match(source, /run:\s+bash \.github\/scripts\/run-pnpm-audit\.sh/);
   assert.match(source, /node --test \.github\/scripts\/run-pnpm-audit\.test\.js/);
   assert.match(source, /contents: read/);
@@ -161,4 +168,12 @@ test('mutable action references and invalid MySQL digests are rejected', () => {
   assert.throws(() => validateWorkflow(source.replace(/@[a-f0-9]{40}/, '@v4')));
   assert.throws(() => validateWorkflow(source.replace(/@[a-f0-9]{40}/, '@v4#suffix')));
   assert.throws(() => validateWorkflow(source.replace(/[a-f0-9]{64}/, 'not-a-digest')));
+  assert.throws(() =>
+    validateWorkflow(
+      source.replace(
+        EXPECTED_MYSQL_DIGEST,
+        '0'.repeat(64),
+      ),
+    ),
+  );
 });
