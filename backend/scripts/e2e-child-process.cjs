@@ -1,31 +1,70 @@
 'use strict';
 const { spawn, execFileSync } = require('node:child_process');
 
-// Playwright starts its webServers as detached groups, so a group signal sent to
-// the Playwright process never reaches them. Cancellation therefore records the
-// descendant tree first and reaps whatever survived Playwright's own teardown.
-function listDescendants(rootPid) {
-  if (process.platform === 'win32' || !Number.isInteger(rootPid)) return [];
-  let table;
+function parseProcessTable(table) {
+  if (typeof table !== 'string') return Array.isArray(table) ? table : [];
+  const entries = [];
+  for (const line of table.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const parts = trimmed.split(/\s+/);
+    const pid = Number(parts[0]);
+    const ppid = Number(parts[1]);
+    const identity = parts.slice(2).join(' ');
+    if (Number.isInteger(pid) && Number.isInteger(ppid) && identity) {
+      entries.push({ pid, ppid, identity });
+    }
+  }
+  return entries;
+}
+
+function readProcessTable() {
+  if (process.platform === 'win32') return [];
   try {
-    table = execFileSync('ps', ['-eo', 'pid=,ppid='], { encoding: 'utf8' });
+    return parseProcessTable(execFileSync('ps', ['-eo', 'pid=,ppid=,lstart='], { encoding: 'utf8' }));
   } catch {
     return [];
   }
-  const byParent = new Map();
-  for (const line of table.split('\n')) {
-    const [pidText, parentText] = line.trim().split(/\s+/);
-    const pid = Number(pidText);
-    const parent = Number(parentText);
-    if (!Number.isInteger(pid) || !Number.isInteger(parent)) continue;
-    if (!byParent.has(parent)) byParent.set(parent, []);
-    byParent.get(parent).push(pid);
+}
+
+function toIdentityMap(entries) {
+  const map = new Map();
+  for (const entry of entries) {
+    if (entry && Number.isInteger(entry.pid)) {
+      const id = entry.identity ?? entry.start ?? entry.lstart;
+      if (id !== undefined && id !== null && String(id).trim()) {
+        map.set(entry.pid, String(id).trim());
+      }
+    }
   }
-  const descendants = [];
+  return map;
+}
+
+// Playwright starts its webServers as detached groups, so a group signal sent to
+// the Playwright process never reaches them. Cancellation therefore records the
+// descendant tree first and reaps whatever survived Playwright's own teardown.
+function listDescendants(rootPid, tableEntries) {
+  if (process.platform === 'win32' || !Number.isInteger(rootPid)) return new Map();
+  const byParent = new Map();
+  const byPid = new Map();
+  for (const entry of tableEntries) {
+    if (!entry || !Number.isInteger(entry.pid)) continue;
+    const id = entry.identity ?? entry.start ?? entry.lstart;
+    if (id !== undefined && id !== null && String(id).trim()) {
+      byPid.set(entry.pid, String(id).trim());
+    }
+    const ppid = Number(entry.ppid);
+    if (Number.isInteger(ppid)) {
+      if (!byParent.has(ppid)) byParent.set(ppid, []);
+      byParent.get(ppid).push(entry.pid);
+    }
+  }
+  const descendants = new Map();
   const queue = [rootPid];
   while (queue.length > 0) {
     for (const pid of byParent.get(queue.shift()) ?? []) {
-      descendants.push(pid);
+      const identity = byPid.get(pid);
+      if (identity) descendants.set(pid, identity);
       queue.push(pid);
     }
   }
@@ -35,7 +74,7 @@ function listDescendants(rootPid) {
 // Playwright's CLI handles SIGINT (and tears down its own detached webServer
 // groups from that handler); SIGTERM would kill it before teardown.
 async function runCommand(command, args, { env, signal, spawnImpl = spawn, killImpl = process.kill,
-  graceMs = 5000, reapGraceMs = 500, listDescendantsImpl = listDescendants } = {}) {
+  graceMs = 5000, reapGraceMs = 500, readProcessTableImpl = readProcessTable } = {}) {
   signal?.throwIfAborted();
   return new Promise((resolve, reject) => {
     const child = spawnImpl(command, args, { env, stdio: 'inherit', detached: process.platform !== 'win32' });
@@ -48,9 +87,18 @@ async function runCommand(command, args, { env, signal, spawnImpl = spawn, killI
         if (error.code !== 'ESRCH') killFailure = new Error('E2E child group termination failed');
       }
     };
-    let escaped = [];
+    let escaped = new Map();
     const cancel = () => {
-      escaped = listDescendantsImpl(child.pid);
+      let entries = [];
+      try {
+        const raw = readProcessTableImpl();
+        entries = typeof raw === 'string' ? parseProcessTable(raw) : (Array.isArray(raw) ? raw : []);
+      } catch {
+        // No process table means no identities to confirm, so nothing is reaped
+        // and behaviour degrades to the group signal alone.
+        entries = [];
+      }
+      escaped = listDescendants(child.pid, entries);
       group('SIGINT');
       // Escalation is not cancelled by graceful progress inside the child: its
       // detached webServers are separate groups that may ignore the first signal.
@@ -67,20 +115,31 @@ async function runCommand(command, args, { env, signal, spawnImpl = spawn, killI
     };
     child.once('error', () => { dispose(); reject(new Error('E2E child could not start')); });
     const reap = async () => {
-      if (escaped.length === 0) return;
-      const signalPid = (pid, name) => {
+      if (escaped.size === 0) return;
+      const getIdentities = () => {
+        try {
+          const raw = readProcessTableImpl();
+          return toIdentityMap(typeof raw === 'string' ? parseProcessTable(raw) : (Array.isArray(raw) ? raw : []));
+        } catch {
+          return new Map();
+        }
+      };
+      const signalPid = (pid, expected, currentIdentities, name) => {
+        if (!expected || currentIdentities.get(pid) !== expected) return;
         try {
           killImpl(pid, name);
         } catch (error) {
           if (error.code !== 'ESRCH') killFailure = new Error('E2E descendant termination failed');
         }
       };
-      for (const pid of escaped) signalPid(pid, 'SIGTERM');
+      const termIdentities = getIdentities();
+      for (const [pid, expected] of escaped) signalPid(pid, expected, termIdentities, 'SIGTERM');
       // The reap timer must keep the process alive: an unref'd timer lets the
       // parent exit mid-cleanup, which skips both the rejection and the
       // supervisor's Docker cleanup.
       await new Promise((done) => setTimeout(done, reapGraceMs));
-      for (const pid of escaped) signalPid(pid, 'SIGKILL');
+      const killIdentities = getIdentities();
+      for (const [pid, expected] of escaped) signalPid(pid, expected, killIdentities, 'SIGKILL');
     };
     child.once('close', async (code, childSignal) => {
       dispose();

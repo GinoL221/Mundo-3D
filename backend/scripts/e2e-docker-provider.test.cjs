@@ -114,3 +114,18 @@ test('Docker failures keep a bounded, single-line diagnosis and the original cau
   await assert.rejects(execDocker(['stop', ID], undefined, async () => { throw new Error('timeout'); }),
     /^Error: E2E Docker stop failed$/);
 });
+
+test('pull failure produces the pull diagnostic, not the container creation diagnostic', async () => {
+  const provider = createDockerProvider({
+    exec: async (args) => {
+      if (args[0] === 'image' && args[1] === 'inspect') throw new Error('absent');
+      if (args[0] === 'pull') throw new Error('E2E Docker pull failed (exit 1): network timeout');
+      return '';
+    },
+  });
+  await assert.rejects(
+    provider.create({ kind: 'mysql', runId: RUN }),
+    /^Error: E2E Docker pull failed \(exit 1\): network timeout$/,
+  );
+});
+
