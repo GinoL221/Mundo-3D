@@ -1,5 +1,22 @@
 import { defineConfig, devices } from '@playwright/test';
+import { createRequire } from 'node:module';
 
+const require = createRequire(import.meta.url);
+const { readE2EDatabaseContext } = require('../backend/src/database/e2e/context.js');
+readE2EDatabaseContext(process.env, { required: true });
+function requiredPort(name: string): number {
+  const value = process.env[name] ?? '';
+  if (!/^[1-9][0-9]{0,4}$/.test(value) || String(Number(value)) !== value || Number(value) > 65535) {
+    throw new Error('E2E requires supervised endpoints; use pnpm test:e2e or pnpm --filter e2e test:ui/test:debug');
+  }
+  return Number(value);
+}
+const backendPort = requiredPort('M3D_E2E_BACKEND_PORT');
+const frontendPort = requiredPort('M3D_E2E_FRONTEND_PORT');
+const smtpPort = requiredPort('SMTP_PORT');
+requiredPort('M3D_E2E_MAILPIT_HTTP_PORT');
+const frontendOrigin = `http://localhost:${frontendPort}`;
+const backendOrigin = `http://localhost:${backendPort}`;
 const isCi = Boolean(process.env.CI);
 
 const ciVisualUse = isCi
@@ -27,7 +44,7 @@ export default defineConfig({
   ],
   globalSetup: './global-setup',
   use: {
-    baseURL: 'http://localhost:4322',
+    baseURL: frontendOrigin,
     trace: isCi ? 'retain-on-failure' : 'on-first-retry',
     screenshot: isCi ? 'only-on-failure' : 'off',
     video: isCi ? 'retain-on-failure' : 'off',
@@ -35,7 +52,7 @@ export default defineConfig({
   webServer: [
     {
       command: 'pnpm --filter backend start',
-      port: 3032,
+      port: backendPort,
       // This is a real server process, not a Jest worker, so it no longer
       // inherits the committed test secrets or the rate-limiter bypass — both
       // are now gated on JEST_WORKER_ID so a misconfigured deploy can never
@@ -51,8 +68,8 @@ export default defineConfig({
       // path instead of a stale rate-limit response.
       env: {
         NODE_ENV: 'test',
-        PORT: '3032',
-        CORS_ORIGIN: 'http://localhost:4322',
+        PORT: String(backendPort),
+        CORS_ORIGIN: frontendOrigin,
         JWT_SECRET: 'e2e-only-jwt-secret-not-for-production',
         COOKIE_SECRET: 'e2e-only-cookie-secret-not-for-production',
         LOGIN_LIMIT_MAX: '1000',
@@ -62,9 +79,12 @@ export default defineConfig({
         // document the intended isolated-run configuration for the RED contracts.
         EMAIL_CONFIRMATION_ATTEMPT_LIMIT_MAX: '1000',
         RESEND_CONFIRMATION_IP_LIMIT_MAX: '1000',
-        PUBLIC_APP_URL: 'http://localhost:4322',
-        SMTP_HOST: 'localhost',
-        SMTP_PORT: '1025',
+        PUBLIC_APP_URL: frontendOrigin,
+        SMTP_HOST: '127.0.0.1',
+        SMTP_PORT: String(smtpPort),
+        // Neutralize operator SMTP credentials: this Mailpit instance has no auth.
+        SMTP_USER: '',
+        SMTP_PASS: '',
         SMTP_SECURE: 'false',
         SMTP_FROM: 'noreply@example.test',
         ...(process.env.DB_HOST ? { DB_HOST: process.env.DB_HOST } : {}),
@@ -77,10 +97,10 @@ export default defineConfig({
       reuseExistingServer: false,
     },
     {
-      command: 'pnpm --filter frontend dev --port 4322 --ignore-lock',
-      port: 4322,
+      command: `pnpm --filter frontend dev --port ${frontendPort} --ignore-lock`,
+      port: frontendPort,
       env: {
-        PUBLIC_API_URL: 'http://localhost:3032',
+        PUBLIC_API_URL: backendOrigin,
         ASTRO_DEV_BACKGROUND: '0',
       },
       reuseExistingServer: false,

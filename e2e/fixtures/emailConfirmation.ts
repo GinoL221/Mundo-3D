@@ -1,11 +1,8 @@
-import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const mailpitUrl = 'http://localhost:8025/api/v1';
-const mailpitHealthUrl = 'http://localhost:8025';
-const mailpitStartupTimeoutMs = 10_000;
-const mailpitPollIntervalMs = 100;
+const { createOwnedMailpitClient } = require('../../backend/scripts/e2e-owned-mailpit-client.cjs');
+const mailpit = createOwnedMailpitClient({ env: process.env, fetchImpl: fetch });
 
 type MessageSummary = { ID: string; To?: Array<{ Address?: string }> };
 type MailpitList = { messages?: MessageSummary[] };
@@ -26,34 +23,14 @@ function testDb() {
   return initializeModels();
 }
 
-function runCompose(...args: string[]): void {
-  execFileSync('docker', ['compose', ...args], { stdio: 'inherit' });
-}
-
-async function waitForMailpit(): Promise<void> {
-  const deadline = Date.now() + mailpitStartupTimeoutMs;
-
-  while (Date.now() < deadline) {
-    try {
-      const response = await fetch(mailpitHealthUrl);
-      if (response.ok) return;
-    } catch {
-      // Mailpit may still be binding its HTTP API after Docker reports it started.
-    }
-    await new Promise((resolve) => setTimeout(resolve, mailpitPollIntervalMs));
-  }
-
-  throw new Error('Mailpit did not become ready before the E2E startup timeout');
-}
-
 async function getMailpitChaos(): Promise<MailpitChaos> {
-  const response = await fetch(`${mailpitUrl}/chaos`);
+  const response = await mailpit.request('chaos');
   if (!response.ok) throw new Error(`Mailpit chaos read failed: ${response.status}`);
   return (await response.json()) as MailpitChaos;
 }
 
 async function putMailpitChaos(config: MailpitChaos): Promise<void> {
-  const response = await fetch(`${mailpitUrl}/chaos`, {
+  const response = await mailpit.request('chaos', {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(config),
@@ -76,8 +53,8 @@ async function applyMailpitChaos(config: MailpitChaos): Promise<MailpitChaos> {
 }
 
 export async function startMailpit(): Promise<void> {
-  runCompose('up', '-d', 'mailpit');
-  await waitForMailpit();
+  // The supervisor owns startup. Never start or reset a shared Compose service.
+  await mailpit.request('info');
   const defaults = await applyMailpitChaos({});
   const expectedDefaults = {
     Sender: { ErrorCode: 451, Probability: 0 },
@@ -96,7 +73,7 @@ export async function startMailpit(): Promise<void> {
 }
 
 export async function clearMailpit(): Promise<void> {
-  const response = await fetch(`${mailpitUrl}/messages`, { method: 'DELETE' });
+  const response = await mailpit.request('messages', { method: 'DELETE' });
   if (!response.ok) throw new Error(`Mailpit reset failed: ${response.status}`);
 }
 
@@ -117,7 +94,7 @@ export async function withMailpitRejectingSmtp<T>(action: () => Promise<T>): Pro
 }
 
 export async function expectNoAcceptedMailpitMessage(email: string): Promise<void> {
-  const response = await fetch(`${mailpitUrl}/messages`);
+  const response = await mailpit.request('messages');
   if (!response.ok) throw new Error(`Mailpit message list failed: ${response.status}`);
   const messages = ((await response.json()) as MailpitList).messages ?? [];
   if (messages.some((candidate) => candidate.To?.some((recipient) => recipient.Address === email))) {
@@ -126,18 +103,18 @@ export async function expectNoAcceptedMailpitMessage(email: string): Promise<voi
 }
 
 export async function confirmationLinkAcceptedByLocalMailpit(email: string): Promise<string> {
-  const response = await fetch(`${mailpitUrl}/messages`);
+  const response = await mailpit.request('messages');
   if (!response.ok) throw new Error(`Mailpit message list failed: ${response.status}`);
   const message = ((await response.json()) as MailpitList).messages?.find((candidate) =>
     candidate.To?.some((recipient) => recipient.Address === email),
   );
   if (!message) throw new Error('Mailpit has no accepted local SMTP message for this registration');
 
-  const content = await fetch(`${mailpitUrl}/message/${message.ID}`);
+  const content = await mailpit.request(`message/${encodeURIComponent(message.ID)}`);
   if (!content.ok) throw new Error(`Mailpit message read failed: ${content.status}`);
   const body = (await content.json()) as MailpitMessage;
   const link = `${body.Text ?? ''}\n${body.HTML ?? ''}`.match(
-    /http:\/\/localhost:4322\/confirm-email\?token=[^\s"<]+/i,
+    new RegExp(`http://localhost:${process.env.M3D_E2E_FRONTEND_PORT}/confirm-email\\?token=[^\\s"<]+`, 'i'),
   )?.[0];
   if (!link) throw new Error('Mailpit message does not contain a local confirmation link');
   return link;

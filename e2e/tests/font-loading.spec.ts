@@ -13,6 +13,7 @@ const fontAssets = [
 ] as const;
 
 const spanishSample = 'Mundo 3D: comisión, diseño, niño, €';
+const frontendOrigin = `http://localhost:${process.env.M3D_E2E_FRONTEND_PORT}`;
 
 async function blockGoogleFonts(browser: Browser) {
   const context = await browser.newContext();
@@ -29,7 +30,7 @@ test.describe('self-hosted IBM Plex Sans', () => {
     const { context, attemptedFonts } = await blockGoogleFonts(browser);
     const page = await context.newPage();
     try {
-      await page.goto('http://localhost:4322/', { waitUntil: 'domcontentloaded' });
+      await page.goto(`${frontendOrigin}/`, { waitUntil: 'domcontentloaded' });
       const loaded = await page.evaluate(async (sample) => {
         await document.fonts.ready;
         const results = await Promise.all([400, 500, 600].map(async (weight) => {
@@ -46,7 +47,7 @@ test.describe('self-hosted IBM Plex Sans', () => {
       }
 
       for (const asset of fontAssets) {
-        const response = await page.request.get(`http://localhost:4322${asset.path}`);
+        const response = await page.request.get(`${frontendOrigin}${asset.path}`);
         expect(response.ok()).toBe(true);
         expect(response.headers()['content-type']).toMatch(/font\/woff2/i);
         const bytes = await response.body();
@@ -63,7 +64,7 @@ test.describe('self-hosted IBM Plex Sans', () => {
     await context.route('**/fonts/ibm-plex-sans/*.woff2', (route) => route.abort());
     const page = await context.newPage();
     try {
-      await page.goto('http://localhost:4322/', { waitUntil: 'domcontentloaded' });
+      await page.goto(`${frontendOrigin}/`, { waitUntil: 'domcontentloaded' });
       const result = await page.evaluate(async (sample) => {
         const outcomes = await Promise.all([400, 500, 600].map(async (weight) => {
           try {

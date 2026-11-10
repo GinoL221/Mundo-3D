@@ -1,13 +1,15 @@
-// Force environment to 'test'
-process.env.NODE_ENV = 'test';
-
-const bcrypt = require('bcryptjs');
-const { ensureDatabaseExists } = require('./config/ensureDatabase');
-const db = require('./models/db');
-const { seedInitialData } = require('./seed');
+const { readE2EDatabaseContext } = require('./e2e/context');
 
 async function prepare() {
   try {
+    // Reject before loading models, opening a connection, or emitting success
+    // output. Real endpoint verification also runs on the DDL connection and
+    // every Sequelize physical connection, including replacements.
+    readE2EDatabaseContext(process.env, { required: true });
+    const bcrypt = require('bcryptjs');
+    const { ensureDatabaseExists } = require('./config/ensureDatabase');
+    const db = require('./models/db');
+    const { seedInitialData } = require('./seed');
     console.log('Preparing test database...');
     // 1. Ensure test database exists
     await ensureDatabaseExists('test');
@@ -56,9 +58,12 @@ async function prepare() {
     console.log('Test database preparation complete.');
     process.exit(0);
   } catch (err) {
-    console.error('Error preparing test database:', err);
+    // The known context rejection is a clean message; anything else keeps its full detail.
+    console.error('Error preparing test database:', err.code === 'E2E_CONTEXT_REJECTED' ? err.message : err);
     process.exit(1);
   }
 }
 
-prepare();
+if (require.main === module) prepare();
+
+module.exports = { prepare };

@@ -1,105 +1,74 @@
 'use strict';
 const { createE2ESupervisor } = require('./e2e-run-supervisor.cjs');
-const { spawnSync } = require('node:child_process');
+const { createDockerProvider } = require('./e2e-docker-provider.cjs');
+const { runCommand } = require('./e2e-child-process.cjs');
+const path = require('node:path');
 const net = require('node:net');
+const ROOT = path.resolve(__dirname, '../..');
 
 function getFreePort() {
   return new Promise((resolve, reject) => {
-    const srv = net.createServer();
-    srv.listen(0, '127.0.0.1', () => {
-      const port = srv.address().port;
-      srv.close(() => resolve(port));
+    const server = net.createServer();
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      const port = server.address().port;
+      server.close(error => error ? reject(error) : resolve(port));
     });
-    srv.on('error', reject);
   });
 }
 
-function createRealDockerProvider() {
-  const { execFileSync } = require('node:child_process');
-  const IMAGE = 'mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b';
-
-  return {
-    async create({ runId, port }) {
-      const containerName = `m3d-refresh-test-${runId}`;
-      const containerId = execFileSync('docker', [
-        'create',
-        '--name', containerName,
-        '--label', `m3d.refresh.run=${runId}`,
-        '--network', 'bridge',
-        '--publish', `127.0.0.1:${port}:3306`,
-        '--env', 'MYSQL_ALLOW_EMPTY_PASSWORD=yes',
-        '--mount', 'type=volume,dst=/var/lib/mysql',
-        IMAGE,
-      ], { encoding: 'utf8' }).trim();
-
-      return { containerId };
-    },
-    async start(containerId) {
-      execFileSync('docker', ['start', containerId]);
-      // Wait for mysqld ready
-      for (let i = 0; i < 30; i++) {
-        try {
-          execFileSync('docker', ['exec', containerId, 'mysqladmin', 'ping', '-h', 'localhost', '--silent']);
-          return;
-        } catch {
-          await new Promise(r => setTimeout(r, 1000));
-        }
-      }
-      throw new Error('MySQL container did not become ready');
-    },
-    async readInternalUuid(containerId) {
-      const { parseInternalUuid } = require('./refresh-mysql-internal-uuid.cjs');
-      const stdout = execFileSync('docker', ['exec', containerId, 'mysql', '-NBe', 'SELECT @@server_uuid;'], { encoding: 'utf8' });
-      return parseInternalUuid(containerId, { containerId, code: 0, stdout, stderr: '' });
-    },
-    async stop(containerId) {
-      try {
-        execFileSync('docker', ['stop', containerId]);
-      } catch (err) {
-        console.error(`Warning: failed to stop container ${containerId}:`, err.message);
-      }
-    },
-    async remove(containerId) {
-      try {
-        execFileSync('docker', ['rm', '-v', containerId]);
-      } catch (err) {
-        console.error(`Warning: failed to remove container ${containerId}:`, err.message);
-      }
-    },
+async function runE2EIsolated(args = process.argv.slice(2), dependencies = {}) {
+  if (args.length === 1 && args[0] === '--help') {
+    (dependencies.printHelp || printHelp)();
+    return;
+  }
+  const helpOnly = args[0] === '--playwright' && args.slice(1).some(arg => arg === '--help' || arg === '-h');
+  const supervisor = dependencies.supervisor || createE2ESupervisor({
+    dockerProvider: createDockerProvider(), portFinder: getFreePort,
+  });
+  const execute = dependencies.runCommand || runCommand;
+  const signals = dependencies.signals || process;
+  const controller = new AbortController();
+  const cancel = name => {
+    const error = new Error(`E2E cancelled by ${name}`);
+    error.exitCode = name === 'SIGINT' ? 130 : 143;
+    controller.abort(error);
   };
-}
-
-async function runE2EIsolated(args = process.argv.slice(2)) {
-  const supervisor = createE2ESupervisor({
-    dockerProvider: createRealDockerProvider(),
-    portFinder: getFreePort,
-  });
-
-  return supervisor.run(async ({ env }) => {
-    console.log(`[E2E Runner] Ephemeral MySQL ready on port ${env.DB_PORT} (runId: ${env.M3D_E2E_RUN_ID})`);
-    const cmd = args.length > 0 ? args[0] : 'pnpm';
-    const cmdArgs = args.length > 0 ? args.slice(1) : ['test:e2e'];
-
-    const result = spawnSync(cmd, cmdArgs, {
-      stdio: 'inherit',
-      env: {
-        ...process.env,
-        ...env,
-      },
-    });
-
-    if (result.status !== 0) {
-      process.exitCode = result.status ?? 1;
-      throw new Error(`E2E command exited with code ${process.exitCode}`);
+  const onInt = () => cancel('SIGINT');
+  const onTerm = () => cancel('SIGTERM');
+  signals.on('SIGINT', onInt); signals.on('SIGTERM', onTerm);
+  try {
+    const automatic = args.length === 0 || args[0] === '--playwright';
+    const command = automatic ? 'pnpm' : args[0];
+    const commandArgs = automatic
+      ? ['--dir', ROOT, '--filter', 'e2e', 'exec', 'playwright', 'test', ...args.slice(args[0] === '--playwright' ? 1 : 0)]
+      : args.slice(1);
+    if (helpOnly) {
+      // Help reads no configuration state and needs no per-run resources.
+      return await execute(command, commandArgs, { env: { ...process.env }, signal: controller.signal });
     }
-  });
+    return await supervisor.run(async ({ env }) => execute(command, commandArgs, {
+      env: { ...process.env, ...env }, signal: controller.signal,
+    }), { signal: controller.signal });
+  } finally {
+    signals.removeListener('SIGINT', onInt); signals.removeListener('SIGTERM', onTerm);
+  }
 }
 
+function printHelp() {
+  console.log('Usage: node backend/scripts/run-e2e-isolated.cjs [--playwright <Playwright arguments> | <command> <arguments>]');
+  console.log('Creates per-run MySQL/Mailpit; validates ownership; reports cancellation and cleanup failures. Requires Docker.');
+}
+
+function reportFailure(error) {
+  console.error('[E2E Runner]', error.message);
+  if (error instanceof AggregateError) for (const cause of error.errors) reportFailure(cause);
+}
 if (require.main === module) {
-  runE2EIsolated().catch(err => {
-    console.error('[E2E Runner] Execution failed:', err.message);
-    process.exit(process.exitCode || 1);
+  runE2EIsolated().catch(error => {
+    reportFailure(error);
+    const failures = error instanceof AggregateError ? error.errors : [error];
+    process.exitCode = failures.find(item => item.exitCode)?.exitCode || 1;
   });
 }
-
-module.exports = { runE2EIsolated, getFreePort };
+module.exports = { runE2EIsolated, getFreePort, printHelp };
