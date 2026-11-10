@@ -78,12 +78,26 @@ function createDockerProvider({ exec = execDocker, fetchImpl = globalThis.fetch,
         ...ports.flatMap(port => ['--publish', `127.0.0.1::${port}`]),
         ...(kind === 'mysql' ? ['--env', 'MYSQL_ALLOW_EMPTY_PASSWORD=yes', '--mount', 'type=volume,dst=/var/lib/mysql', MYSQL_IMAGE]
           : ['--env', 'MP_ENABLE_CHAOS=true', MAILPIT_IMAGE])];
+      const cancelError = () => new AggregateError(
+        [signal.reason, new Error(`E2E creation interrupted; preserve candidate ${name} for run ${runId}`)],
+        'E2E creation cancelled',
+      );
+      if (signal?.aborted) throw cancelError();
+      // Pull outside the create budget: a cold image must not look like an
+      // uncertain creation.
       try {
-        signal?.throwIfAborted();
-        // Pull outside the create budget: a cold image must not look like an
-        // uncertain creation.
-        try { await exec(['image', 'inspect', image], signal); }
-        catch { signal?.throwIfAborted(); await exec(['pull', image], signal); }
+        await exec(['image', 'inspect', image], signal);
+      } catch {
+        if (signal?.aborted) throw cancelError();
+        try {
+          await exec(['pull', image], signal);
+        } catch (pullError) {
+          if (signal?.aborted) throw cancelError();
+          throw pullError;
+        }
+      }
+      try {
+        if (signal?.aborted) throw cancelError();
         const containerId = (await exec(args, signal)).trim();
         const record = { containerId, kind, runId };
         const binding = assertResourceBinding(record, await inspectContainer(containerId, exec));
@@ -91,11 +105,7 @@ function createDockerProvider({ exec = execDocker, fetchImpl = globalThis.fetch,
         owned.add(confirmed);
         return confirmed;
       } catch (error) {
-        if (signal?.aborted) {
-          // The daemon may have created the container before the client abort.
-          throw new AggregateError([signal.reason, new Error(`E2E creation interrupted; preserve candidate ${name} for run ${runId}`)],
-            'E2E creation cancelled');
-        }
+        if (signal?.aborted) throw cancelError();
         throw new Error(`E2E creation uncertain for run ${runId}; preserve candidate ${name}`);
       }
     },

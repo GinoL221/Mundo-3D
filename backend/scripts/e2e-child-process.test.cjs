@@ -22,7 +22,7 @@ test('nonzero child exit remains nonzero, and spawn errors reject', async () => 
 });
 test('a second grace period escalates a child that ignores SIGINT to SIGKILL', async () => {
   const controller = new AbortController(); const kills = [];
-  const promise = runCommand('runner', [], { signal: controller.signal, graceMs: 5, listDescendantsImpl: () => [],
+  const promise = runCommand('runner', [], { signal: controller.signal, graceMs: 5, readProcessTableImpl: () => '',
     killImpl(pid, name) { kills.push([pid, name]); },
     spawnImpl() { const c = new EventEmitter(); c.pid = 21; process.nextTick(() => controller.abort(new Error('cancelled')));
       setTimeout(() => c.emit('close', null, 'SIGKILL'), 20); return c; } });
@@ -33,7 +33,7 @@ test('a second grace period escalates a child that ignores SIGINT to SIGKILL', a
 test('cancellation sends Playwright the SIGINT it handles, then escalates to SIGKILL', async () => {
   const controller = new AbortController(); const events = [];
   const child = new EventEmitter(); child.pid = 17;
-  await assert.rejects(runCommand('runner', [], { signal: controller.signal, listDescendantsImpl: () => [],
+  await assert.rejects(runCommand('runner', [], { signal: controller.signal, readProcessTableImpl: () => '',
     killImpl(pid, signal) { events.push([pid, signal]); process.nextTick(() => { events.push('close'); child.emit('close', null, 'SIGTERM'); }); },
     spawnImpl() { process.nextTick(() => controller.abort(new Error('cancelled'))); return child; },
   }), /cancelled/);
@@ -70,7 +70,8 @@ test('cancellation stays alive long enough to finish reaping and reject', { skip
   const script = `const { runCommand } = require(${JSON.stringify(modulePath)});
 const { EventEmitter } = require('node:events'); const fs = require('node:fs');
 const controller = new AbortController();
-runCommand('runner', [], { signal: controller.signal, listDescendantsImpl: () => [2], killImpl: () => {},
+runCommand('runner', [], { signal: controller.signal, killImpl: () => {},
+  readProcessTableImpl: () => [{ pid: 2, ppid: 999999, identity: 'T0' }],
   reapGraceMs: 300, spawnImpl() { const child = new EventEmitter(); child.pid = 999999;
     setTimeout(() => controller.abort(new Error('cancelled')), 10);
     setTimeout(() => child.emit('close', null, 'SIGINT'), 20); return child; } })
@@ -80,3 +81,39 @@ runCommand('runner', [], { signal: controller.signal, listDescendantsImpl: () =>
   assert.equal(exited, 0);
   assert.equal(fs.existsSync(marker), true, 'the cancellation rejection was abandoned when the event loop drained');
 });
+
+test('reap verifies descendant identity before signalling and skips reused PIDs', async () => {
+  const controller = new AbortController();
+  const kills = [];
+  let tablePhase = 1;
+  const readProcessTableImpl = () => {
+    if (tablePhase === 1) {
+      return [
+        { pid: 10, ppid: 1, identity: 'T0' },
+        { pid: 20, ppid: 10, identity: 'T1' },
+      ];
+    }
+    return [
+      { pid: 20, ppid: 1, identity: 'T2' },
+    ];
+  };
+  const promise = runCommand('runner', [], {
+    signal: controller.signal,
+    reapGraceMs: 5,
+    readProcessTableImpl,
+    killImpl(pid, name) { kills.push([pid, name]); },
+    spawnImpl() {
+      const child = new EventEmitter();
+      child.pid = 10;
+      process.nextTick(() => {
+        controller.abort(new Error('cancelled'));
+        tablePhase = 2;
+        child.emit('close', null, 'SIGINT');
+      });
+      return child;
+    },
+  });
+  await assert.rejects(promise, /cancelled/);
+  assert.equal(kills.some(([pid]) => pid === 20), false, 'reused PID 20 should not be signalled');
+});
+
