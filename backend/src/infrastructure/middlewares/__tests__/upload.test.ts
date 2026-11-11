@@ -144,6 +144,32 @@ describe('createUpload factory', () => {
     expect(callback).toHaveBeenCalledWith(null, true);
   });
 
+  it('rejects composite or unanchored extensions like .htmlpng or .phppng', () => {
+    createUpload('products');
+    const multerOptions = (multer as unknown as jest.Mock).mock.calls[0][0];
+    const callback = jest.fn();
+
+    multerOptions.fileFilter({}, { originalname: 'avatar.htmlpng', mimetype: 'image/png' }, callback);
+
+    expect(callback).toHaveBeenCalledWith(expect.any(Error), false);
+    expect(callback.mock.calls[0][0].message).toBe('Invalid file format or size limit exceeded');
+  });
+
+  it('rejects spoofed non-image MIME types containing image keywords as parameters', () => {
+    createUpload('products');
+    const multerOptions = (multer as unknown as jest.Mock).mock.calls[0][0];
+    const callback = jest.fn();
+
+    multerOptions.fileFilter(
+      {},
+      { originalname: 'avatar.png', mimetype: 'text/html; charset=utf-8; x=png' },
+      callback
+    );
+
+    expect(callback).toHaveBeenCalledWith(expect.any(Error), false);
+    expect(callback.mock.calls[0][0].message).toBe('Invalid file format or size limit exceeded');
+  });
+
   it('respects UPLOAD_DIR environment override for local storage destination', () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'upload-test-'));
     process.env.NODE_ENV = 'test';

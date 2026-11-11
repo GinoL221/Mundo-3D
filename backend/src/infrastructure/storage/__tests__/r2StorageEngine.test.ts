@@ -84,6 +84,20 @@ describe('r2StorageEngine._handleFile', () => {
     expect(command.input.ContentType).toBe('image/png');
   });
 
+  it('sanitizes ContentType to canonical image MIME when client sends unexpected MIME', async () => {
+    const engine = createR2StorageEngine('products');
+    const file: EngineFile = {
+      originalname: 'photo.png',
+      mimetype: 'text/html; charset=utf-8; x=png',
+      stream: Readable.from([Buffer.from('fake-bytes')]),
+    };
+
+    await handle(engine, file);
+
+    const command = sendMock.mock.calls[0][0];
+    expect(command.input.ContentType).toBe('image/png');
+  });
+
   it('composes location from R2_PUBLIC_URL_BASE + "/" + key', async () => {
     const engine = createR2StorageEngine('products');
     const file: EngineFile = {
