@@ -83,11 +83,11 @@ describe('authFetch', () => {
     const win = { location: { href: '' } };
     vi.stubGlobal('window', win);
     const unauthorized = new Response(null, { status: 401 });
-    let resolveLogout!: (value: Response) => void;
-    const fetchMock = vi.fn().mockImplementationOnce(() => Promise.resolve(unauthorized)).mockImplementationOnce(
+    const settles: Array<() => void> = [];
+    const fetchMock = vi.fn().mockImplementationOnce(() => Promise.resolve(unauthorized)).mockImplementation(
       () =>
         new Promise<Response>((resolve) => {
-          resolveLogout = resolve;
+          settles.push(() => resolve(new Response(null, { status: 204 })));
         })
     );
     vi.stubGlobal('fetch', fetchMock);
@@ -101,9 +101,19 @@ describe('authFetch', () => {
     // sessionUI.ts's own logout handler).
     expect(win.location.href).toBe('/login');
     expect(result).toBe(unauthorized);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls[1][0]).toContain('/api/users/logout');
-    resolveLogout(new Response(null, { status: 204 }));
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    const teardownUrls = fetchMock.mock.calls.slice(1).map(([url]) => String(url));
+    expect(teardownUrls.some((u) => u.includes('/api/users/logout'))).toBe(true);
+    expect(teardownUrls.some((u) => u.includes('/api/users/refresh/revoke'))).toBe(true);
+    for (const [, options] of fetchMock.mock.calls.slice(1)) {
+      const init = options as RequestInit;
+      expect(init.method).toBe('POST');
+      expect(init.credentials).toBe('include');
+      expect(init.keepalive).toBe(true);
+      expect(init.headers).toBeUndefined();
+      expect(init.body).toBeUndefined();
+    }
+    settles.forEach((s) => s());
   });
 
   // Regression found by the cart e2e, not by any unit test: CartList.astro
@@ -142,6 +152,31 @@ describe('authFetch', () => {
 
     for (const call of fetchMock.mock.calls) {
       expect(String(call[0])).not.toContain('/api/users/refresh');
+    }
+  });
+
+  it('calls both /api/users/logout and /api/users/refresh/revoke on failed refresh when session exists', async () => {
+    stubCookie('m3d_user=%7B%22idRole%22%3A2%7D');
+    vi.stubGlobal('window', { location: { href: '' } });
+    const unauthorized = new Response(null, { status: 401 });
+    const fetchMock = vi.fn().mockResolvedValue(unauthorized);
+    vi.stubGlobal('fetch', fetchMock);
+    ensureRefreshedMock.mockResolvedValue(false);
+
+    const { authFetch } = await import('./authFetch');
+    await authFetch('/api/orders/mine', { method: 'GET' });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    const urls = fetchMock.mock.calls.map(([url]) => String(url));
+    expect(urls.some((u) => u.includes('/api/users/logout'))).toBe(true);
+    expect(urls.some((u) => u.includes('/api/users/refresh/revoke'))).toBe(true);
+    for (const [, options] of fetchMock.mock.calls.slice(1)) {
+      const init = options as RequestInit;
+      expect(init.method).toBe('POST');
+      expect(init.credentials).toBe('include');
+      expect(init.keepalive).toBe(true);
+      expect(init.headers).toBeUndefined();
+      expect(init.body).toBeUndefined();
     }
   });
 });

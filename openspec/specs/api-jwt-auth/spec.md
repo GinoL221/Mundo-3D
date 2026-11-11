@@ -105,7 +105,7 @@ The Express `Request` object MUST be augmented with an optional `user` property 
 
 ### Requirement: Logout Endpoint
 
-The application MUST expose `POST /api/users/logout` that clears the session cookies and revokes the associated refresh token family (every row sharing its `family_id` marked `revoked_at`), ending the session server-side, not only client-side.
+The application MUST expose `POST /api/users/logout` that clears the session cookies and revokes the associated refresh token family (every row sharing its `family_id` marked `revoked_at`) when it can identify the family from the access cookie, ending the session server-side. Revocation without that cookie is performed via the client's explicit call to `POST /api/users/refresh/revoke`.
 (Previously: only cleared cookies; the JWT itself remained valid until its own `exp`.)
 
 #### Scenario: Logout clears the session cookies
@@ -114,7 +114,7 @@ The application MUST expose `POST /api/users/logout` that clears the session coo
 - THEN the response MUST clear the auth, CSRF, display, and refresh cookies
 
 #### Scenario: Logout revokes the refresh family
-- GIVEN an authenticated client whose refresh token belongs to family `F`
+- GIVEN an authenticated client presenting an auth cookie carrying family `F`
 - WHEN it sends `POST /api/users/logout`
 - THEN every row in family `F` MUST be marked revoked
 - AND a subsequent `POST /api/users/refresh` using any token from family `F` MUST be rejected 401

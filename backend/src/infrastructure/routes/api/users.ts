@@ -24,6 +24,7 @@ import loginLimiter from '../../middlewares/loginLimiter';
 import accountLoginLimiter from '../../middlewares/accountLoginLimiter';
 import registerLimiter from '../../middlewares/registerLimiter';
 import refreshLimiter from '../../middlewares/refreshLimiter';
+import revokeRefreshLimiter from '../../middlewares/revokeRefreshLimiter';
 import emailConfirmationAttemptLimiter from '../../middlewares/emailConfirmationAttemptLimiter';
 import { apiAuthMiddleware, adminGuard } from '../../middlewares/auth';
 import { loginValidation, validationsUsers } from '../../middlewares/validators/userValidators';
@@ -121,7 +122,7 @@ const refreshSessionUseCase = new RefreshSessionUseCase(
   rotateRefreshTokenUseCase,
   new PinoLogger(),
 );
-const revokeRefreshTokenUseCase = new RevokeRefreshTokenUseCase(rememberTokenRepo);
+const revokeRefreshTokenUseCase = new RevokeRefreshTokenUseCase(rememberTokenRepo, tokenHasher);
 const confirmEmailUseCase = new ConfirmEmailUseCase(
   emailConfirmationTokenRepo,
   uow,
@@ -271,6 +272,14 @@ const normalizeLoginBody = (req: Request, _res: Response, next: NextFunction) =>
  *             schema: { $ref: '#/components/schemas/AuthResponse' }
  *       '401': { description: Refresh cookie absent, expired, revoked, or replayed past its grace window. }
  *       '429': { description: Rate-limited (refreshLimiter). }
+ * /users/refresh/revoke:
+ *   post:
+ *     summary: Revoke the refresh token family identified by the refresh cookie
+ *     description: Authenticates solely via the httpOnly, path-scoped m3d_refresh cookie — does NOT require a valid/unexpired m3d_auth. Not behind apiAuthMiddleware, exempt from csrfGuard, rate-limited (revokeRefreshLimiter). Revokes the entire refresh token family associated with the presented refresh token. Answers 204 unconditionally to prevent oracle attacks whether the cookie is missing, invalid, or already revoked.
+ *     tags: [Users]
+ *     responses:
+ *       '204': { description: Revocation processed (always 204 regardless of cookie presence or token validity). }
+ *       '429': { description: Rate-limited (revokeRefreshLimiter). }
  * /users:
  *   get:
  *     summary: List all users (admin only)
@@ -335,13 +344,20 @@ router.post(
 router.post('/users/logout', controller.logout);
 
 // No apiAuthMiddleware (the access token is expired by definition here) and
-// no csrfGuard (never mounted globally — design.md D5's defenses are the
-// httpOnly+sameSite=lax+path-scoped refresh cookie, rotation, and rate
-// limiting instead). A refresh token replayed past its grace window revokes
-// the whole family and is logged server-side, but the 401 response stays
-// byte-identical to an ordinary rejection (refresh-token-reuse-detection
-// design.md D2/D3).
+// no csrfGuard (never mounted globally — the real CSRF defense is explicit
+// SameSite=lax on the refresh cookie preventing cross-site POSTs; Path scoping
+// is not a CSRF control, while rotation and rate limiting provide defense in
+// depth). A refresh token replayed past its grace window revokes the whole
+// family and is logged server-side, but the 401 response stays byte-identical
+// to an ordinary rejection (refresh-token-reuse-detection design.md D2/D3).
 router.post('/users/refresh', refreshLimiter, controller.refresh);
+// Scoped under /users/refresh so the refresh cookie arrives without widening
+// its Path attribute (odd/tasks/logout-refresh-revocation.md S2/S3). Uses
+// revokeRefreshLimiter to apply a per-IP rate limit counting every request
+// (unlike /users/logout which has no limiter despite also performing database
+// writes, this dedicated path retains an explicit throttle) and the same
+// SameSite=lax CSRF protection as /users/refresh.
+router.post('/users/refresh/revoke', revokeRefreshLimiter, controller.revokeRefresh);
 
 // Confirmation authority is the POST body token, never the caller session.
 // The limiter deliberately precedes token validation so invalid attempts spend

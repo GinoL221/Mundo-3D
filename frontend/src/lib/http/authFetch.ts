@@ -19,10 +19,25 @@ import { ensureRefreshed } from './refreshSingleFlight';
  * apply-progress, since that tab is about to hard-navigate away anyway.
  */
 function endSessionAndRedirect(): void {
-  // Wrapped in `Promise.resolve` (rather than relying on `fetch` always
+  // Wrapped in `Promise.allSettled` (rather than relying on `fetch` always
   // returning a thenable) purely so a misconfigured test double can never
   // make this throw synchronously and skip the redirect below.
-  Promise.resolve(fetch(`${API_URL}/api/users/logout`, { method: 'POST', credentials: 'include' })).catch(() => {
+  // Calls both /api/users/logout (general teardown) and the scoped
+  // /api/users/refresh/revoke endpoint (odd/tasks/logout-refresh-revocation.md
+  // S2) so the refresh family is revoked even when no access token cookie
+  // is present. keepalive ensures the requests outlive the navigation.
+  Promise.allSettled([
+    fetch(`${API_URL}/api/users/logout`, {
+      method: 'POST',
+      credentials: 'include',
+      keepalive: true,
+    }),
+    fetch(`${API_URL}/api/users/refresh/revoke`, {
+      method: 'POST',
+      credentials: 'include',
+      keepalive: true,
+    }),
+  ]).catch(() => {
     // Best-effort — the redirect below happens regardless.
   });
 

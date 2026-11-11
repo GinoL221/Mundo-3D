@@ -883,6 +883,23 @@
         }
       }
     },
+    "/users/refresh/revoke": {
+      "post": {
+        "summary": "Revoke the refresh token family identified by the refresh cookie",
+        "description": "Authenticates solely via the httpOnly, path-scoped m3d_refresh cookie — does NOT require a valid/unexpired m3d_auth. Not behind apiAuthMiddleware, exempt from csrfGuard, rate-limited (revokeRefreshLimiter). Revokes the entire refresh token family associated with the presented refresh token. Answers 204 unconditionally to prevent oracle attacks whether the cookie is missing, invalid, or already revoked.",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "204": {
+            "description": "Revocation processed (always 204 regardless of cookie presence or token validity)."
+          },
+          "429": {
+            "description": "Rate-limited (revokeRefreshLimiter)."
+          }
+        }
+      }
+    },
     "/users": {
       "get": {
         "summary": "List all users (admin only)",

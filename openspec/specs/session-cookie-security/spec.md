@@ -164,7 +164,7 @@ A stale `m3d_auth` therefore authenticates nothing. Its only remaining capabilit
 
 ### Requirement: Refresh Cookie Path Scoping
 
-The refresh cookie MUST be issued with `path: '/api/users/refresh'`, distinct from the default `path: '/'` used by `m3d_auth`, `m3d_csrf`, and `m3d_user`, so it is never sent on any other request.
+The refresh cookie MUST be issued with `path: '/api/users/refresh'`, distinct from the default `path: '/'` used by `m3d_auth`, `m3d_csrf`, and `m3d_user`, so it is sent only under the `/api/users/refresh` path prefix (including its revocation sub-path `/api/users/refresh/revoke`) and never to unrelated endpoints.
 
 #### Scenario: Refresh cookie is scoped to the refresh route
 - GIVEN a successful login
@@ -173,6 +173,6 @@ The refresh cookie MUST be issued with `path: '/api/users/refresh'`, distinct fr
 
 #### Scenario: Refresh cookie is not sent to other endpoints
 - GIVEN a client holds the refresh cookie
-- WHEN it requests any endpoint other than `/api/users/refresh`
+- WHEN it requests any endpoint outside the `/api/users/refresh` prefix
 - THEN the browser MUST NOT attach the refresh cookie to that request
 
