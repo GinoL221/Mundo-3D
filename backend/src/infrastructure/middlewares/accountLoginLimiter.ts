@@ -1,5 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import { Request, Response, NextFunction } from 'express';
+import { readPositiveInt } from '../utils/readPositiveInt';
 
 // Per-account companion to loginLimiter.ts. Keying only on the client IP
 // fails in both directions at once: a distributed attacker gets a fresh
@@ -7,13 +8,8 @@ import { Request, Response, NextFunction } from 'express';
 // one NAT/CGNAT address shares a single budget. This limiter closes the
 // first half by counting failures per submitted account; the second half is
 // closed by `skipSuccessfulRequests` on both limiters.
-const windowMs = process.env.ACCOUNT_LOGIN_LIMIT_WINDOW
-  ? parseInt(process.env.ACCOUNT_LOGIN_LIMIT_WINDOW, 10)
-  : 15 * 60 * 1000; // 15 minutes
-
-const max = process.env.ACCOUNT_LOGIN_LIMIT_MAX
-  ? parseInt(process.env.ACCOUNT_LOGIN_LIMIT_MAX, 10)
-  : 5;
+const windowMs = readPositiveInt(process.env.ACCOUNT_LOGIN_LIMIT_WINDOW, 15 * 60 * 1000);
+const max = readPositiveInt(process.env.ACCOUNT_LOGIN_LIMIT_MAX, 5);
 
 // The route runs this ahead of loginValidation, which is where the address
 // is lowercased, so the body value arrives with whatever casing and padding

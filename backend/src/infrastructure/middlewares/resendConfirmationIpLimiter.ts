@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import { readPositiveInt } from '../utils/readPositiveInt';
 
 const acceptedResponse = (res: Response): void => {
   res.status(202).json({
@@ -7,9 +8,7 @@ const acceptedResponse = (res: Response): void => {
   });
 };
 
-const max = process.env.RESEND_CONFIRMATION_IP_LIMIT_MAX
-  ? parseInt(process.env.RESEND_CONFIRMATION_IP_LIMIT_MAX, 10)
-  : 5;
+const max = readPositiveInt(process.env.RESEND_CONFIRMATION_IP_LIMIT_MAX, 5);
 
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000,
