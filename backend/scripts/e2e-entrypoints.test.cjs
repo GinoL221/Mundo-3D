@@ -46,7 +46,42 @@ test('manual runner command remains supported; signal handlers are removed on fa
       assert.equal(command, 'node'); assert.deepEqual(args, ['-e', 'example']); throw new Error('child failed');
     },
   }), /child failed/);
-  assert.equal(signals.listenerCount('SIGINT') + signals.listenerCount('SIGTERM'), 0);
+  assert.equal(signals.listenerCount('SIGINT') + signals.listenerCount('SIGTERM') + signals.listenerCount('SIGHUP'), 0);
+});
+
+test('SIGHUP triggers cancellation with code 129 and cleans up signal listeners', async () => {
+  const signals = new EventEmitter();
+  const promise = runE2EIsolated(['node', '-e', 'example'], {
+    signals,
+    supervisor: { run: async (work) => work({ env: {} }) },
+    runCommand: async (_cmd, _args, options) => {
+      signals.emit('SIGHUP');
+      assert.equal(options.signal.aborted, true);
+      assert.equal(options.signal.reason.exitCode, 129);
+      assert.match(options.signal.reason.message, /SIGHUP/);
+      throw options.signal.reason;
+    },
+  });
+  await assert.rejects(promise, (err) => err.exitCode === 129);
+  assert.equal(signals.listenerCount('SIGINT') + signals.listenerCount('SIGTERM') + signals.listenerCount('SIGHUP'), 0);
+});
+
+test('a second signal dispatches escalate event on controller signal', async () => {
+  const signals = new EventEmitter();
+  let escalated = false;
+  const promise = runE2EIsolated(['node', '-e', 'example'], {
+    signals,
+    supervisor: { run: async (work) => work({ env: {} }) },
+    runCommand: async (_cmd, _args, options) => {
+      options.signal.addEventListener('escalate', () => { escalated = true; });
+      signals.emit('SIGINT');
+      assert.equal(escalated, false);
+      signals.emit('SIGINT');
+      assert.equal(escalated, true);
+      throw options.signal.reason;
+    },
+  });
+  await assert.rejects(promise, (err) => err.exitCode === 130);
 });
 
 

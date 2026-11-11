@@ -29,14 +29,23 @@ async function runE2EIsolated(args = process.argv.slice(2), dependencies = {}) {
   const execute = dependencies.runCommand || runCommand;
   const signals = dependencies.signals || process;
   const controller = new AbortController();
+  let cancelled = false;
   const cancel = name => {
+    if (cancelled) {
+      if (typeof controller.signal.dispatchEvent === 'function') {
+        controller.signal.dispatchEvent(new Event('escalate'));
+      }
+      return;
+    }
+    cancelled = true;
     const error = new Error(`E2E cancelled by ${name}`);
-    error.exitCode = name === 'SIGINT' ? 130 : 143;
+    error.exitCode = name === 'SIGHUP' ? 129 : (name === 'SIGINT' ? 130 : 143);
     controller.abort(error);
   };
   const onInt = () => cancel('SIGINT');
   const onTerm = () => cancel('SIGTERM');
-  signals.on('SIGINT', onInt); signals.on('SIGTERM', onTerm);
+  const onHup = () => cancel('SIGHUP');
+  signals.on('SIGINT', onInt); signals.on('SIGTERM', onTerm); signals.on('SIGHUP', onHup);
   try {
     const automatic = args.length === 0 || args[0] === '--playwright';
     const command = automatic ? 'pnpm' : args[0];
@@ -51,7 +60,9 @@ async function runE2EIsolated(args = process.argv.slice(2), dependencies = {}) {
       env: { ...process.env, ...env }, signal: controller.signal,
     }), { signal: controller.signal });
   } finally {
-    signals.removeListener('SIGINT', onInt); signals.removeListener('SIGTERM', onTerm);
+    signals.removeListener('SIGINT', onInt);
+    signals.removeListener('SIGTERM', onTerm);
+    signals.removeListener('SIGHUP', onHup);
   }
 }
 

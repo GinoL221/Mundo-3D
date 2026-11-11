@@ -105,12 +105,18 @@ async function runCommand(command, args, { env, signal, spawnImpl = spawn, killI
       timer = setTimeout(() => group('SIGKILL'), graceMs);
       timer.unref();
     };
+    const escalate = () => {
+      if (timer) clearTimeout(timer);
+      group('SIGKILL');
+    };
+    signal?.addEventListener('escalate', escalate);
     // The escalation timer targets only the Playwright process group and is
     // cleared once that child closes. Playwright's detached webServer groups are
     // outside that group, so cancellation reaps the recorded descendants itself:
     // a graceful SIGTERM first, SIGKILL for the survivors.
     const dispose = () => {
       signal?.removeEventListener('abort', cancel);
+      signal?.removeEventListener('escalate', escalate);
       if (timer) clearTimeout(timer);
     };
     child.once('error', () => { dispose(); reject(new Error('E2E child could not start')); });
