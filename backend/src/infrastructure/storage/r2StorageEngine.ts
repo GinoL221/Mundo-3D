@@ -4,6 +4,26 @@ import { v4 as uuidv4 } from 'uuid';
 import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getR2Client, getBucket, publicUrlFor } from './r2Client';
 
+const EXT_TO_MIME: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+};
+
+export function resolveSafeImageMime(filename: string, candidateMime?: string): string {
+  const ext = path.extname(filename).toLowerCase();
+  const canonical = EXT_TO_MIME[ext];
+  if (canonical) {
+    return canonical;
+  }
+  if (candidateMime && /^image\/(jpeg|png|gif|webp)$/i.test(candidateMime)) {
+    return candidateMime.toLowerCase();
+  }
+  return 'application/octet-stream';
+}
+
 // Minimal shape of the multer file object this engine touches. multer fills
 // `originalname`/`mimetype` from the request and `stream` from busboy before
 // calling `_handleFile`; `key` is written back by this engine and read later
@@ -70,10 +90,10 @@ export class R2StorageEngine {
             Bucket: bucket,
             Key: key,
             Body: body,
-            // Always the validated mimetype, never inferred from the key
-            // suffix — the public host must serve `image/*` even for an
-            // adversarial `evil.png.exe` original name.
-            ContentType: file.mimetype,
+            // Ensure ContentType is strictly an image MIME, mapping canonical extension
+            // to prevent client-spoofed Content-Type parameters from storing scriptable
+            // payloads in the public media bucket.
+            ContentType: resolveSafeImageMime(file.originalname, file.mimetype),
             ContentLength: body.length,
           })
         )

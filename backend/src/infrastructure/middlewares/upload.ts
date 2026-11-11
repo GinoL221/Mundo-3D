@@ -85,9 +85,11 @@ export default function createUpload(dest: string): MulterInstance {
     file: MulterFile,
     callback: (error: Error | null, acceptFile?: boolean) => void
   ): void => {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
+    const allowedExts = /^\.(jpe?g|png|gif|webp)$/i;
+    const allowedMimes = /^image\/(jpeg|png|gif|webp)$/i;
+    const ext = path.extname(file.originalname).toLowerCase();
+    const extname = allowedExts.test(ext);
+    const mimetype = allowedMimes.test(file.mimetype);
 
     if (extname && mimetype) {
       callback(null, true);
