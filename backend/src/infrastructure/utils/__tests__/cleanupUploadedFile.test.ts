@@ -123,5 +123,19 @@ describe('cleanupUploadedFile', () => {
       );
       unlinkSpy.mockRestore();
     });
+
+    it('respects UPLOAD_DIR environment override when unlinking local disk files', async () => {
+      process.env.UPLOAD_DIR = '/custom/isolated/uploads';
+      const unlinkSpy = jest
+        .spyOn(fs.promises, 'unlink')
+        .mockResolvedValue(undefined as never);
+
+      cleanupUploadedFile('products/sample.png');
+      await flush();
+
+      expect(unlinkSpy).toHaveBeenCalledWith('/custom/isolated/uploads/products/sample.png');
+      unlinkSpy.mockRestore();
+      delete process.env.UPLOAD_DIR;
+    });
   });
 });

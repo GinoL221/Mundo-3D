@@ -26,8 +26,12 @@ interface MulterInstance {
 // the pre-R2 disk path stored in the `image` column, which the frontend's
 // `resolveImageUrl` maps to `/img/<kind>/<filename>`. Storing a `/img/...` path
 // here instead would double-prefix through that same fallback.
+function getUploadBaseDir(): string {
+  return process.env.UPLOAD_DIR || path.join(process.cwd(), 'public', 'img');
+}
+
 function createLocalStorageEngine(dest: string): unknown {
-  const uploadPath = path.join(process.cwd(), 'public', 'img', dest);
+  const uploadPath = path.join(getUploadBaseDir(), dest);
   const disk = multer.diskStorage({
     destination: (_req: Request, _file: unknown, cb: (e: Error | null, d: string) => void) => {
       fs.mkdirSync(uploadPath, { recursive: true });

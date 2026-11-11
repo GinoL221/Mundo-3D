@@ -1,4 +1,7 @@
 import multer from 'multer';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import createUpload from '../upload';
 import { createR2StorageEngine } from '../../storage/r2StorageEngine';
 
@@ -139,5 +142,24 @@ describe('createUpload factory', () => {
     multerOptions.fileFilter({}, { originalname: 'avatar.png', mimetype: 'image/png' }, callback);
 
     expect(callback).toHaveBeenCalledWith(null, true);
+  });
+
+  it('respects UPLOAD_DIR environment override for local storage destination', () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'upload-test-'));
+    process.env.NODE_ENV = 'test';
+    process.env.UPLOAD_DIR = tempDir;
+    createUpload('products');
+
+    const diskStorageCalls = (multer.diskStorage as unknown as jest.Mock).mock.calls;
+    const diskConfig = diskStorageCalls[diskStorageCalls.length - 1][0];
+
+    const cb = jest.fn();
+    diskConfig.destination({}, {}, cb);
+
+    expect(cb).toHaveBeenCalledWith(null, path.join(tempDir, 'products'));
+    expect(fs.existsSync(path.join(tempDir, 'products'))).toBe(true);
+
+    delete process.env.UPLOAD_DIR;
+    fs.rmSync(tempDir, { recursive: true, force: true });
   });
 });

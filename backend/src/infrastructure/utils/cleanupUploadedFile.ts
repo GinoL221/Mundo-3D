@@ -32,7 +32,8 @@ export function cleanupUploadedFile(key: string | undefined | null): void {
     return;
   }
 
-  const filePath = path.join(process.cwd(), 'public', 'img', key);
+  const baseDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'public', 'img');
+  const filePath = path.join(baseDir, key);
   fs.promises.unlink(filePath).catch((error) => {
     logger.warn(
       { event: 'upload_cleanup_failed', key, filePath, error },
