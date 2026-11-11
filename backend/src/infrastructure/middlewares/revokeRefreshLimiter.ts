@@ -13,13 +13,18 @@ import { Request, Response, NextFunction } from 'express';
 // frontend swallows 429s. 100 requests / 15 min makes accidental exhaustion
 // implausible for legitimate users while keeping the database-lookup throttle
 // meaningful against abusive flooding.
-const windowMs = process.env.REVOKE_REFRESH_LIMIT_WINDOW
-  ? parseInt(process.env.REVOKE_REFRESH_LIMIT_WINDOW, 10)
-  : 15 * 60 * 1000;
+// A malformed override must not silently remove the throttle: `parseInt` on
+// garbage yields NaN, and a NaN ceiling lets every request through, which is the
+// opposite of what this limiter is for. Anything that is not a positive integer
+// falls back to the default.
+function readPositiveInt(raw: string | undefined, fallback: number): number {
+  if (!raw) return fallback;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
 
-const max = process.env.REVOKE_REFRESH_LIMIT_MAX
-  ? parseInt(process.env.REVOKE_REFRESH_LIMIT_MAX, 10)
-  : 100;
+const windowMs = readPositiveInt(process.env.REVOKE_REFRESH_LIMIT_WINDOW, 15 * 60 * 1000);
+const max = readPositiveInt(process.env.REVOKE_REFRESH_LIMIT_MAX, 100);
 
 const limiter = rateLimit({
   windowMs,

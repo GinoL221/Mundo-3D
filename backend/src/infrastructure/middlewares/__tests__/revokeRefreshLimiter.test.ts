@@ -44,4 +44,27 @@ describe('revokeRefreshLimiter middleware', () => {
       error: 'Demasiados intentos de revocación de sesión. Intente nuevamente en 15 minutos.',
     });
   });
+
+  it('keeps the budget bounded instead of disabling it when the configured limit is not a number', async () => {
+    process.env.REVOKE_REFRESH_LIMIT_MAX = 'not-a-number';
+    process.env.REVOKE_REFRESH_LIMIT_WINDOW = '60000';
+
+    let revokeRefreshLimiter: any;
+    jest.isolateModules(() => {
+      revokeRefreshLimiter = require('../revokeRefreshLimiter').default;
+    });
+
+    const app = express();
+    app.use(revokeRefreshLimiter);
+    app.post('/api/users/refresh/revoke', (_req: Request, res: Response) => {
+      res.status(204).end();
+    });
+
+    const statuses: number[] = [];
+    for (let attempt = 0; attempt < 101; attempt += 1) {
+      statuses.push((await request(app).post('/api/users/refresh/revoke')).status);
+    }
+
+    expect(statuses.at(-1)).toBe(429);
+  });
 });
