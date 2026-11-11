@@ -117,3 +117,28 @@ test('reap verifies descendant identity before signalling and skips reused PIDs'
   assert.equal(kills.some(([pid]) => pid === 20), false, 'reused PID 20 should not be signalled');
 });
 
+test('an escalate event immediately escalates to SIGKILL without waiting out graceMs', async () => {
+  const controller = new AbortController();
+  const kills = [];
+  const child = new EventEmitter();
+  child.pid = 42;
+  const promise = runCommand('runner', [], {
+    signal: controller.signal,
+    graceMs: 10000,
+    killImpl(pid, name) { kills.push([pid, name]); },
+    spawnImpl() {
+      process.nextTick(() => {
+        controller.abort(new Error('cancelled'));
+        controller.signal.dispatchEvent(new Event('escalate'));
+        child.emit('close', null, 'SIGKILL');
+      });
+      return child;
+    },
+  });
+  await assert.rejects(promise, /cancelled/);
+  assert.deepEqual(kills, [
+    [process.platform === 'win32' ? 42 : -42, 'SIGINT'],
+    [process.platform === 'win32' ? 42 : -42, 'SIGKILL'],
+  ]);
+});
+
