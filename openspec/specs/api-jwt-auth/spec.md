@@ -130,6 +130,32 @@ The application MUST expose `POST /api/users/logout` that clears the session coo
 - WHEN it sends `POST /api/users/logout`
 - THEN the response MUST NOT error and MUST leave the client unauthenticated
 
+### Requirement: Explicit Refresh-Token Revocation Endpoint
+
+The application MUST expose `POST /api/users/refresh/revoke` that reads the path-scoped `m3d_refresh` cookie and revokes the associated refresh token family, ending the session server-side even when no access-token cookie is presented.
+
+The endpoint MUST return `204 No Content` with an empty body uniformly when a valid token is revoked, when the token was already revoked, when the token is unknown, or when no refresh cookie is presented, without disclosing token or family existence metadata.
+
+The endpoint MUST be rate-limited per IP (`REVOKE_REFRESH_LIMIT_MAX` / `REVOKE_REFRESH_LIMIT_WINDOW`) with all requests counting against the quota (`skipSuccessfulRequests: false`) to protect the database lookup while failing closed if the use case dependency is not injected.
+
+#### Scenario: Explicit revocation invalidates the refresh family
+- GIVEN a client holding a valid refresh token belonging to family `F`
+- WHEN it sends `POST /api/users/refresh/revoke` carrying that refresh cookie
+- THEN every row in family `F` MUST be marked revoked
+- AND the response MUST be 204 No Content
+- AND a subsequent `POST /api/users/refresh` using any token from family `F` MUST be rejected 401
+
+#### Scenario: Uniform non-enumerating response
+- GIVEN a client presenting an unknown, malformed, or already-revoked refresh token, or omitting the cookie
+- WHEN it sends `POST /api/users/refresh/revoke`
+- THEN the response MUST be 204 No Content with an empty body
+- AND the response MUST clear the session cookies
+
+#### Scenario: Rate limiting protects database lookups
+- GIVEN an IP that has exhausted the revocation request ceiling
+- WHEN it sends another `POST /api/users/refresh/revoke`
+- THEN the response MUST be 429 Too Many Requests
+
 ### Requirement: Remember-Me Extended Session
 
 When the client's login request indicates "remember me", the system MUST extend the refresh **token's** lifetime (see `refresh-token-rotation`), NOT the access token's. The access token's own `exp` MUST always equal the fixed access-token TTL regardless of "remember me".
