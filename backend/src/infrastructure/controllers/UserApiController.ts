@@ -77,6 +77,7 @@ export class UserApiController {
       clearSessionCookies(res);
       res.sendStatus(204);
     } catch (error) {
+      clearSessionCookies(res);
       next(error);
     }
   };
@@ -96,6 +97,7 @@ export class UserApiController {
       clearSessionCookies(res);
       res.sendStatus(204);
     } catch (error) {
+      clearSessionCookies(res);
       next(error);
     }
   };
