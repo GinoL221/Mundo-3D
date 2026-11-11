@@ -1,6 +1,9 @@
 import request from 'supertest';
 import express, { Express } from 'express';
 import cookieParser from 'cookie-parser';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import { Role } from '../../../../domain/Role';
 import { authCookie, authAndCsrf } from '../../../../__tests__/helpers/apiAuthTestHelpers';
 
@@ -79,6 +82,19 @@ const validProductFields = {
 
 describe('api/products mutation routes — guard matrix', () => {
   let app: Express;
+  let tempUploadDir: string;
+
+  beforeAll(() => {
+    tempUploadDir = fs.mkdtempSync(path.join(os.tmpdir(), 'm3d-products-test-'));
+    process.env.UPLOAD_DIR = tempUploadDir;
+  });
+
+  afterAll(() => {
+    delete process.env.UPLOAD_DIR;
+    if (tempUploadDir && fs.existsSync(tempUploadDir)) {
+      fs.rmSync(tempUploadDir, { recursive: true, force: true });
+    }
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
