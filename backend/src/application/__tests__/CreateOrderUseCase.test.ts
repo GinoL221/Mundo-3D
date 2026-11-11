@@ -400,4 +400,14 @@ describe('CreateOrderUseCase', () => {
     expect(logger.warnCalls).toHaveLength(1);
     expect(orderRepo.attachPaymentReferenceCalls).toHaveLength(0);
   });
+
+  it('propagates unexpected repository failures instead of misclassifying them as stock shortages', async () => {
+    const productA = makeProduct(10, 'Figure A', 5);
+    const cartRows = [makeCartRow(1, userId, productA, 1)];
+    const { useCase, productRepo } = build(cartRows, [productA]);
+
+    jest.spyOn(productRepo, 'adjustStock').mockRejectedValueOnce(new Error('Connection lost to MySQL server'));
+
+    await expect(useCase.execute(userId, 'key-db-error')).rejects.toThrow('Connection lost to MySQL server');
+  });
 });

@@ -7,6 +7,7 @@ import { LoggerPort } from '../../domain/ports/LoggerPort';
 import { Order } from '../../domain/entities/Order';
 import { EmptyCartException } from '../../domain/exceptions/EmptyCartException';
 import { InsufficientStockException, StockShortage } from '../../domain/exceptions/InsufficientStockException';
+import { ProductInsufficientStockException } from '../../domain/exceptions/ProductInsufficientStockException';
 import { DuplicateIdempotencyKeyException } from '../../domain/exceptions/DuplicateIdempotencyKeyException';
 import { OrderDTO, mapToOrderDTO } from '../dtos/OrderDTO';
 
@@ -65,7 +66,13 @@ export class CreateOrderUseCase {
     for (const row of cartRows) {
       try {
         await this.productRepo.adjustStock(row.idProduct, -row.quantity, tx);
-      } catch {
+      } catch (error) {
+        const isStockError =
+          error instanceof ProductInsufficientStockException ||
+          (error instanceof Error && error.message === 'Insufficient stock');
+        if (!isStockError) {
+          throw error;
+        }
         const current = await this.productRepo.findById(row.idProduct);
         shortages.push({
           idProduct: row.idProduct,

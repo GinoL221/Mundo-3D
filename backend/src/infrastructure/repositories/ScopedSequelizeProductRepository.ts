@@ -2,6 +2,7 @@ import { QueryTypes, Transaction } from 'sequelize';
 import { Product } from '../../domain/entities/Product';
 import { Category } from '../../domain/entities/Category';
 import { Franchise } from '../../domain/entities/Franchise';
+import { ProductInsufficientStockException } from '../../domain/exceptions/ProductInsufficientStockException';
 import {
   ProductRepositoryPort,
   ProductSearchOptions,
@@ -256,7 +257,7 @@ export class ScopedSequelizeProductRepository implements ProductRepositoryPort {
     if (affectedRows === 0) {
       const existing = await this.db.Product.findByPk(id, { transaction });
       if (!existing) return null;
-      throw new Error('Insufficient stock');
+      throw new ProductInsufficientStockException('Insufficient stock');
     }
 
     return this.findByIdInternal(id, transaction);
