@@ -113,6 +113,8 @@ describe('Session revocation on logout — public HTTP interface', () => {
   let app: Express;
   let repo: InMemoryRememberTokenRepository;
   let tokenHasher: Sha256TokenHasher;
+  let refreshSessionUseCase: RefreshSessionUseCase;
+  let revokeRefreshTokenUseCase: RevokeRefreshTokenUseCase;
 
   beforeEach(() => {
     repo = new InMemoryRememberTokenRepository();
@@ -140,14 +142,14 @@ describe('Session revocation on logout — public HTTP interface', () => {
     const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
     const rotateRefreshTokenUseCase = new RotateRefreshTokenUseCase(uow, repo, tokenHasher, 86400);
-    const refreshSessionUseCase = new RefreshSessionUseCase(
+    refreshSessionUseCase = new RefreshSessionUseCase(
       repo,
       mockUserRepo,
       tokenHasher,
       rotateRefreshTokenUseCase,
       logger
     );
-    const revokeRefreshTokenUseCase = new RevokeRefreshTokenUseCase(repo, tokenHasher);
+    revokeRefreshTokenUseCase = new RevokeRefreshTokenUseCase(repo, tokenHasher);
 
     const controller = new UserApiController(
       jest.fn() as any,
@@ -367,5 +369,24 @@ describe('Session revocation on logout — public HTTP interface', () => {
       .set('Cookie', `${REFRESH_COOKIE}=any-token`);
 
     expect(response.status).toBe(500);
+  });
+
+  it('clears session cookies even when revocation encounters a database error on logout', async () => {
+    jest.spyOn(revokeRefreshTokenUseCase, 'execute').mockRejectedValueOnce(new Error('DB connection dropped'));
+
+    const activeToken = jwt.sign(
+      { userId: 1, email: 'test@example.com', familyId: 'family-error', typ: 'access' },
+      getJwtSecret(),
+      accessTokenSignOptions('30m')
+    );
+
+    const res = await request(app)
+      .post('/api/users/logout')
+      .set('Cookie', `${AUTH_COOKIE}=${activeToken}`);
+
+    expect(res.status).toBe(500);
+    const setCookies: string[] = Array.isArray(res.headers['set-cookie']) ? res.headers['set-cookie'] : [];
+    expect(setCookies.some((c: string) => c.startsWith(`${AUTH_COOKIE}=;`))).toBe(true);
+    expect(setCookies.some((c: string) => c.startsWith(`${REFRESH_COOKIE}=;`))).toBe(true);
   });
 });
