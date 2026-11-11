@@ -1,5 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import { Request, Response, NextFunction } from 'express';
+import { readPositiveInt } from '../utils/readPositiveInt';
 
 // The refresh-token revocation endpoint always returns 204 while performing
 // a database lookup and update per request when a token is present. Unlike
@@ -17,12 +18,6 @@ import { Request, Response, NextFunction } from 'express';
 // garbage yields NaN, and a NaN ceiling lets every request through, which is the
 // opposite of what this limiter is for. Anything that is not a positive integer
 // falls back to the default.
-function readPositiveInt(raw: string | undefined, fallback: number): number {
-  if (!raw) return fallback;
-  const parsed = Number(raw);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
-}
-
 const windowMs = readPositiveInt(process.env.REVOKE_REFRESH_LIMIT_WINDOW, 15 * 60 * 1000);
 const max = readPositiveInt(process.env.REVOKE_REFRESH_LIMIT_MAX, 100);
 

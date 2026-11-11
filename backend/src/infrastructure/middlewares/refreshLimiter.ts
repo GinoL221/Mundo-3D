@@ -1,16 +1,12 @@
 import rateLimit from 'express-rate-limit';
 import { Request, Response, NextFunction } from 'express';
+import { readPositiveInt } from '../utils/readPositiveInt';
 
 // Mirrors loginLimiter.ts (design.md D5) — the refresh route has no
 // apiAuthMiddleware ahead of it, so this is the only throttle standing
 // between a leaked/replayed refresh token and brute-force probing.
-const windowMs = process.env.REFRESH_LIMIT_WINDOW
-  ? parseInt(process.env.REFRESH_LIMIT_WINDOW, 10)
-  : 15 * 60 * 1000; // 15 minutes
-
-const max = process.env.REFRESH_LIMIT_MAX
-  ? parseInt(process.env.REFRESH_LIMIT_MAX, 10)
-  : 10;
+const windowMs = readPositiveInt(process.env.REFRESH_LIMIT_WINDOW, 15 * 60 * 1000);
+const max = readPositiveInt(process.env.REFRESH_LIMIT_MAX, 10);
 
 const limiter = rateLimit({
   windowMs,

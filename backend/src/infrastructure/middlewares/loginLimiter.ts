@@ -1,9 +1,8 @@
 import rateLimit from 'express-rate-limit';
 import { Request, Response, NextFunction } from 'express';
+import { readPositiveInt } from '../utils/readPositiveInt';
 
-const windowMs = process.env.LOGIN_LIMIT_WINDOW
-  ? parseInt(process.env.LOGIN_LIMIT_WINDOW, 10)
-  : 15 * 60 * 1000; // 15 minutes
+const windowMs = readPositiveInt(process.env.LOGIN_LIMIT_WINDOW, 15 * 60 * 1000);
 
 // The per-IP gate is what stops password spraying: spraying tries one
 // password across many accounts, so it never trips the per-account counter
@@ -13,9 +12,7 @@ const windowMs = process.env.LOGIN_LIMIT_WINDOW
 // only failures are counted now — so 10 failures per address per window
 // caps spraying just as hard while leaving a shared-NAT office of typing
 // humans well clear of it.
-const max = process.env.LOGIN_LIMIT_MAX
-  ? parseInt(process.env.LOGIN_LIMIT_MAX, 10)
-  : 10;
+const max = readPositiveInt(process.env.LOGIN_LIMIT_MAX, 10);
 
 const limiter = rateLimit({
   windowMs,
