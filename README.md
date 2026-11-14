@@ -107,15 +107,20 @@ Todos los comandos de esta tabla se ejecutan desde la raíz.
 | ------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Backend en desarrollo                | `pnpm dev`                                                                     | Express con Node.js `--watch` (Node >=22); requiere MySQL, entorno backend y migraciones al día.                                                                                                                               |
 | Frontend en desarrollo               | `pnpm frontend:dev`                                                            | Astro en el puerto `4321`.                                                                                                                                                                                                     |
-| Lint                                 | `pnpm lint`                                                                    | Ejecuta los scripts disponibles en el workspace; actualmente ESLint sobre `backend/src/`.                                                                                                                                      |
+| Lint                                 | `pnpm lint`                                                                    | Ejecuta `pnpm -r lint`: ESLint `--max-warnings 0` sobre `backend/src/` y `frontend/` (`.ts`, `.astro`, `tools/**/*.js` y archivos de configuración `*.config.{js,mjs}`), aplicando `@typescript-eslint/no-deprecated: "error"` en archivos `**/*.ts`. |
+| Verificación de arquitectura         | `pnpm --filter backend architecture:check`                                     | Verifica los límites hexagonales del backend (`backend/tools/architecture/check.js`).                                                                                                                                          |
+| Contrato OpenAPI (verificación)      | `pnpm check:openapi`                                                           | Verifica que el artefacto versionado [`backend/openapi.json`](backend/openapi.json) coincida con los JSDoc `@openapi` de las rutas.                                                                                            |
+| Contrato OpenAPI (regeneración)      | `pnpm --filter backend generate:openapi`                                       | Regenera [`backend/openapi.json`](backend/openapi.json) a partir de la especificación de rutas y esquemas.                                                                                                                     |
 | Type-check                           | `pnpm type-check`                                                              | TypeScript estricto del backend. CI lo ejecuta como paso obligatorio del job `quality`.                                                                                                                                        |
 | Pruebas por defecto                  | `pnpm test`                                                                    | Jest backend y Vitest frontend; excluye E2E e integración real, independiente de MySQL.                                                                                                                                        |
 | Pruebas rápidas (contrato CI)        | `pnpm test:fast`                                                               | Equivalente explícito al job `quality`: Jest backend (`test:fast`) + Vitest frontend, sin MySQL.                                                                                                                               |
+| Scripts de deploy y CI               | `pnpm test:deploy-scripts`                                                     | Ejecuta los tests unitarios (`node --test`) de `scripts/deploy/`, `backend/scripts/` y `.github/scripts/`.                                                                                                                     |
 | Jest backend                         | `pnpm --filter backend test` (alias: `pnpm --filter backend test:fast`)        | Excluye `*.integration.test.(ts\|js)`; independiente de MySQL.                                                                                                                                                                 |
 | Vitest frontend                      | `pnpm --filter frontend test` (alias: `pnpm frontend:test`)                    | Servicios, adaptadores y scripts del frontend.                                                                                                                                                                                 |
 | Cobertura backend + mapa de riesgo   | `pnpm test:coverage`                                                           | Jest con cobertura JS+TS (`backend/src/**/*.{js,ts}`) y mínimos globales de cobertura: 80% ramas, 85% funciones y 90% líneas/sentencias; genera `backend/coverage/{lcov.info,coverage-summary.json,risk-map.json}` clasificando gaps Tier 0 (seguridad, migraciones, carrito, stock). |
 | Astro check                          | `pnpm frontend:check`                                                          | `astro check` (diagnóstico TypeScript/Astro real); falla con código distinto de cero ante errores.                                                                                                                             |
 | Integración MySQL                    | `pnpm --filter backend test:integration` (alias raíz: `pnpm test:integration`) | Requiere MySQL local; usa bases de prueba desechables, incluida `mundo_3d_migrate_scratch`.                                                                                                                                    |
+| Sandbox MySQL                        | `pnpm --filter backend test:sandbox:mysql`                                     | Ejecuta la suite de aislamiento/liberación de sandbox contra MySQL (`jest.sandbox.config.js`).                                                                                                                                  |
 | Preparar base E2E                    | `pnpm --filter backend db:test:prepare`                                        | **Recrea `mundo_3d_test` solo con contexto E2E y UUID verificado en cada conexión.** Sin contexto falla con salida 1; ver [estado y límites](docs/e2e-isolation-architecture.md).                                                                                                                                                    |
 | E2E Chromium                         | `pnpm test:e2e`                                                                | Requiere Docker: el supervisor crea MySQL/Mailpit por corrida y asigna puertos dinámicos para servicios y aplicaciones. [Contrato, estado de validación y límites](docs/e2e-isolation-architecture.md).                                                                                                                                                   |
 | Todos los proyectos E2E configurados | `pnpm test:e2e:all`                                                            | Actualmente solo declara Chromium; también usa el supervisor. UI/debug: `pnpm --filter e2e test:ui` y `test:debug`.                                                                                                                                                                            |
@@ -125,7 +130,7 @@ Todos los comandos de esta tabla se ejecutan desde la raíz.
 | Adoptar baseline heredada            | `pnpm --filter backend db:migrate:adopt-baseline`                              | Solo para un esquema preexistente compatible; no ejecuta DDL.                                                                                                                                                                  |
 | Build frontend                       | `pnpm frontend:build`                                                          | Genera la salida Astro. Falla si falta `PUBLIC_API_URL` (evita un build de producción que caiga en `localhost` en silencio).                                                                                                   |
 | Build backend                        | `pnpm --filter backend build`                                                  | Compila `src/` a `dist/` con `tsc` (excluye tests). En desarrollo el backend sigue corriendo sin compilar, vía `ts-node/register`.                                                                                             |
-| Quality check frontend               | `pnpm frontend:quality-check`                                                  | Astro no tiene pipeline de ESLint; este script propio prohíbe `console.log` en las fuentes de producción bajo `frontend/src/`.                                                                                        |
+| Quality check frontend               | `pnpm frontend:quality-check`                                                  | Complementario a ESLint (`pnpm lint`): ejecuta `frontend/tools/quality-check.js` para prohibir `console.log` en las fuentes de producción bajo `frontend/src/` (`.astro`, `.ts`, `.tsx`; omite `.test.ts`, `.css` y `src/styles/normalize.css`). |
 | Formatear                            | `pnpm format`                                                                  | Modifica fuentes backend y frontend con Prettier.                                                                                                                                                                              |
 
 Antes del primer E2E local, instale Chromium y sus dependencias:
@@ -183,7 +188,8 @@ Estas capacidades describen la implementación del repositorio; no certifican un
 - Roles ADMIN, USER y STAFF; STAFF puede crear y actualizar productos, pero no eliminarlos. No son, por sí solos, un mecanismo de acceso demo aislado.
 - Páginas informativas, tema claro/oscuro y layouts responsive. La identidad vigente está en el manual y `DESIGN.md`; las superficies PICO/CRT restantes se registran como deuda.
 - Seguridad HTTP con Helmet (política CSP explícita, no los defaults genéricos), CORS, rate limiting, validación y logging estructurado con identificadores de request.
-- Endpoints de liveness/readiness (`GET /health/live`, `GET /health/ready`) para orquestadores externos.
+- Contrato OpenAPI 3.0 versionado en [`backend/openapi.json`](backend/openapi.json), servido en `GET /api/openapi.json` (solo lectura, sin autenticación ni UI `/docs`) y verificado con `pnpm check:openapi`.
+- Endpoints de liveness/readiness (`GET /health/live`, `GET /health/ready`, con `Cache-Control: no-store`) para orquestadores externos.
 
 ## Estrategia de pruebas
 
@@ -200,6 +206,10 @@ El patrón de exclusión de Jest (`*.integration.test.(ts|js)`) separa la suite 
 
 ## Configuración
 
+Nunca versionar `backend/.env` ni `frontend/.env`. Las normas de contribución y secretos están en [AGENTS.md](AGENTS.md), y los procedimientos operativos en [`docs/RUNBOOKS.md`](docs/RUNBOOKS.md) y [`docs/demo-sandbox-connections.md`](docs/demo-sandbox-connections.md).
+
+### Variables base (desarrollo local y frontend)
+
 | Variable         | Consumidor | Uso actual                                                                                                                                                       |
 | ---------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PORT`           | Backend    | Puerto HTTP; el ejemplo usa `3031`.                                                                                                                              |
@@ -208,11 +218,55 @@ El patrón de exclusión de Jest (`*.integration.test.(ts|js)`) separa la suite 
 | `DB_NAME`        | Backend    | Base de desarrollo y producción; el ejemplo usa `mundo_3d_db`.                                                                                                   |
 | `DB_HOST`        | Backend    | Host MySQL; el ejemplo usa `localhost`.                                                                                                                          |
 | `COOKIE_SECRET`  | Backend    | Firma HMAC del token CSRF de doble envío firmado (`m3d_csrf`); obligatoria fuera de tests.                                                                       |
-| `COOKIE_DOMAIN`  | Backend    | Opcional; atributo `Domain` de las cookies de sesión (`m3d_auth`/`m3d_csrf`/`m3d_user`). Vacío en desarrollo/CI (mismo `localhost`); dominio raíz en producción. |
+| `COOKIE_DOMAIN`  | Backend    | Opcional (`WARN_ONLY` en preflight); atributo `Domain` de las cookies de sesión (`m3d_auth`/`m3d_csrf`/`m3d_user`). Vacío en desarrollo/CI; dominio raíz en producción. |
 | `JWT_SECRET`     | Backend    | Firma y verificación de JWT; obligatoria fuera de tests.                                                                                                         |
-| `PUBLIC_API_URL` | Frontend   | URL pública de la API; el ejemplo usa `http://localhost:3031`.                                                                                                   |
+| `PUBLIC_API_URL` | Frontend   | URL pública de la API en tiempo de build (`WARN_ONLY` en preflight del backend); obligatoria en `astro build`.                                                   |
 
-Nunca versionar `backend/.env` ni `frontend/.env`. Las normas de contribución y secretos están en [AGENTS.md](AGENTS.md).
+### Variables obligatorias de producción (`scripts/deploy/env-preflight.js`)
+
+El preflight de despliegue exige `NODE_ENV=production` y, además de las variables base de base de datos y secretos (`JWT_SECRET`, `COOKIE_SECRET`, `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_HOST`), requiere:
+
+| Variable               | Uso en producción                                                                                  |
+| ---------------------- | -------------------------------------------------------------------------------------------------- |
+| `CORS_ORIGIN`          | Origen permitido para CORS (obligatorio cuando `NODE_ENV=production`).                             |
+| `DB_PORT`              | Puerto de la base MySQL gestionada.                                                                |
+| `DB_CA_CERT`           | Certificado CA para verificar TLS (`rejectUnauthorized: true`) en la conexión MySQL de producción. |
+| `R2_ENDPOINT`          | Endpoint S3 explícito del bucket Cloudflare R2 (u otro proveedor S3 compatible).                   |
+| `R2_ACCESS_KEY_ID`     | Clave de acceso S3 para uploads de imágenes.                                                       |
+| `R2_SECRET_ACCESS_KEY` | Clave secreta S3 para uploads de imágenes.                                                         |
+| `R2_BUCKET_NAME`       | Nombre del bucket de almacenamiento de imágenes.                                                   |
+| `R2_PUBLIC_URL_BASE`   | URL pública base desde la que se sirven las imágenes subidas.                                      |
+
+### Confirmación de correo (`emailConfirmationConfig.ts` y `backend/src/infrastructure/routes/api/users.ts`)
+
+En entornos no productivos sin ninguna de estas variables definidas, `backend/src/infrastructure/routes/api/users.ts` compone valores locales seguros (`http://localhost:4321`, `localhost:1025`, `SMTP_SECURE=false`, `noreply@example.test`) antes de pasarlos a `emailConfirmationConfig.ts`. Si se define al menos una o si `NODE_ENV=production`, `emailConfirmationConfig.ts` aplica validación estricta:
+
+| Variable         | Uso                                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| `PUBLIC_APP_URL` | Origen público HTTPS (o `http://localhost` en demo local) para enlaces `/confirm-email`. |
+| `SMTP_HOST`      | Host del servidor SMTP.                                                              |
+| `SMTP_PORT`      | Puerto SMTP (entero entre `1` y `65535`).                                            |
+| `SMTP_SECURE`    | `'true'` o `'false'` (TLS implícito vs STARTTLS/plano).                              |
+| `SMTP_FROM`      | Dirección remitente (`From`) de los correos de confirmación.                         |
+| `SMTP_USER`      | Usuario SMTP opcional (autenticación).                                               |
+| `SMTP_PASS`      | Contraseña SMTP opcional (autenticación).                                            |
+
+### Variables opcionales de runtime y rate limiting (`backend/src/` y `backend/index.js`)
+
+| Variable                           | Default                                         | Uso                                                                                 |
+| ---------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `LOG_LEVEL`                        | `'silent'` en `test`, `'info'` en otros         | Nivel de log de Pino.                                                               |
+| `SHUTDOWN_TIMEOUT_MS`              | `10000` (10 s)                                  | Plazo máximo (ms) de cierre ordenado ante `SIGTERM`/`SIGINT`.                       |
+| `RUN_COMPILED`                     | unset (`'true'` para ejecutar `dist/`)          | Carga el build compilado sin `ts-node/register`.                                    |
+| `UPLOAD_DIR`                       | `<cwd>/public/img`                              | Directorio local de uploads cuando no se usa R2 (entornos no productivos).          |
+| `ACCESS_TOKEN_TTL_SECONDS`         | `1800` (30 min)                                 | Tiempo de vida del JWT de acceso (`m3d_auth`).                                      |
+| `REFRESH_TOKEN_REAP_SECONDS`       | `86400` (24 h)                                  | Ventana de retención antes de purgar refresh tokens expirados/revocados.            |
+| `LOGIN_LIMIT_WINDOW` / `LOGIN_LIMIT_MAX` | `900000` ms (15 min) / `10`               | Límite de `POST /api/users/login` por IP.                                           |
+| `ACCOUNT_LOGIN_LIMIT_WINDOW` / `ACCOUNT_LOGIN_LIMIT_MAX` | `900000` ms (15 min) / `5` | Límite de `POST /api/users/login` por cuenta normalizada.                           |
+| `REGISTER_LIMIT_WINDOW` / `REGISTER_LIMIT_MAX` | `900000` ms (15 min) / `3`          | Límite de `POST /api/users/register` por IP.                                        |
+| `REFRESH_LIMIT_WINDOW` / `REFRESH_LIMIT_MAX` | `900000` ms (15 min) / `10`           | Límite de `POST /api/users/refresh` por IP.                                         |
+| `REVOKE_REFRESH_LIMIT_WINDOW` / `REVOKE_REFRESH_LIMIT_MAX` | `900000` ms (15 min) / `100` | Límite de `POST /api/users/refresh/revoke` por IP.                                  |
+| `RESEND_CONFIRMATION_IP_LIMIT_MAX` | `5` (ventana fija de 1 h)                       | Límite de `POST /api/users/email-confirmation/resend` por IP.                       |
 
 ## Integración continua
 

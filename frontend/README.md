@@ -10,8 +10,9 @@ Ejecutados desde `frontend/`:
 pnpm dev             # Astro dev server, puerto 4321
 pnpm build           # Build de producción (requiere PUBLIC_API_URL)
 pnpm check           # astro check (TypeScript/Astro)
+pnpm lint            # ESLint --max-warnings 0 (.ts, .astro, tools/**/*.js y *.config.{js,mjs}; @typescript-eslint/no-deprecated: "error" en **/*.ts)
 pnpm test            # Vitest
-pnpm quality:check   # console.log en fuentes de producción
+pnpm quality:check   # prohíbe console.log en fuentes de producción bajo src/ (.astro, .ts, .tsx; excluye *.test.ts y .css)
 ```
 
 Ver la sección "Comandos" del README de la raíz para el resto del monorepo (backend, E2E, migraciones).
