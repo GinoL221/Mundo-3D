@@ -116,7 +116,9 @@ overrides:
   vite: ^8.2.4
   zod: 4.6.6
   '@vitest/mocker': 4.1.12
-  astro: 7.3.3
+  # Patched floor for GHSA-r3h5-4585-7x3w (moderate) and GHSA-mh32-jxcr-mh9f
+  # (low); 7.4.7 was published 2026-11-05, clearing minimumReleaseAge (7d).
+  astro: 7.4.7
 
 # `astro check` dynamically `import()`s "typescript" from astro's own
 # module scope, not the caller's cwd; astro declares no peerDependency on
