@@ -1,4 +1,4 @@
-import type { ModelCtor, Sequelize, Transaction } from 'sequelize';
+import type { ModelStatic, Sequelize, Transaction } from 'sequelize';
 import type { DemoSandboxResetReceiptRecord } from '../../../database/models/DemoSandboxResetReceipt';
 import type { TransactionContext } from '../../../domain/ports/UnitOfWorkPort';
 import { withScopedTransaction } from '../scopedTransactionContext';
@@ -17,7 +17,7 @@ describe('SequelizeSandboxReceiptWriter', () => {
     const writer = new SequelizeSandboxReceiptWriter(
       connection,
       'slot-a',
-      model as unknown as ModelCtor<DemoSandboxResetReceiptRecord>,
+      model as unknown as ModelStatic<DemoSandboxResetReceiptRecord>,
     );
     await withScopedTransaction(connection, tx, async (context) => {
       await expect(writer.exists(identity, context)).resolves.toBe(true);
@@ -34,7 +34,7 @@ describe('SequelizeSandboxReceiptWriter', () => {
     const writer = new SequelizeSandboxReceiptWriter(
       connection,
       'slot-a',
-      model as unknown as ModelCtor<DemoSandboxResetReceiptRecord>,
+      model as unknown as ModelStatic<DemoSandboxResetReceiptRecord>,
     );
     await withScopedTransaction(connection, tx, async (context) =>
       writer.insert(identity, context),
@@ -50,7 +50,7 @@ describe('SequelizeSandboxReceiptWriter', () => {
     const writer = new SequelizeSandboxReceiptWriter(
       connection,
       'slot-a',
-      model as unknown as ModelCtor<DemoSandboxResetReceiptRecord>,
+      model as unknown as ModelStatic<DemoSandboxResetReceiptRecord>,
     );
     await expect(writer.exists(identity, {} as TransactionContext)).rejects.toThrow();
     const foreign = {} as Sequelize;
@@ -76,7 +76,7 @@ describe('SequelizeSandboxReceiptWriter', () => {
     const writer = new SequelizeSandboxReceiptWriter(
       connection,
       'slot-a',
-      model as unknown as ModelCtor<DemoSandboxResetReceiptRecord>,
+      model as unknown as ModelStatic<DemoSandboxResetReceiptRecord>,
     );
     await withScopedTransaction(connection, tx, async (context) => {
       await expect(writer.insert(identity, context)).rejects.toBe(failure);

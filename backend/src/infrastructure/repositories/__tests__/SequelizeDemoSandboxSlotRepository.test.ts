@@ -1,4 +1,4 @@
-import { ModelCtor, Op, Sequelize } from 'sequelize';
+import { ModelStatic, Op, Sequelize } from 'sequelize';
 import {
   DemoSandboxLeasePolicy,
   DemoSandboxSlot,
@@ -29,7 +29,7 @@ function makeRepository(modelOverrides: Record<string, unknown> = {}) {
     findOne: jest.fn().mockResolvedValue(null),
     findAll: jest.fn().mockResolvedValue([]),
     ...modelOverrides,
-  } as unknown as ModelCtor<DemoSandboxSlotRecord>;
+  } as unknown as ModelStatic<DemoSandboxSlotRecord>;
   return {
     repository: new SequelizeDemoSandboxSlotRepository(sequelize, model),
     model,

@@ -1,4 +1,4 @@
-import { DataTypes, Model, ModelCtor, Sequelize } from 'sequelize';
+import { DataTypes, Model, ModelStatic, Sequelize } from 'sequelize';
 
 export interface DemoSandboxReleaseSessionAttributes {
   attemptId: string;
@@ -11,7 +11,7 @@ export interface DemoSandboxReleaseSessionAttributes {
 export interface DemoSandboxReleaseSessionRecord
   extends Model<DemoSandboxReleaseSessionAttributes>, DemoSandboxReleaseSessionAttributes {}
 
-const releaseSessionModelCache = new WeakMap<Sequelize, ModelCtor<DemoSandboxReleaseSessionRecord>>();
+const releaseSessionModelCache = new WeakMap<Sequelize, ModelStatic<DemoSandboxReleaseSessionRecord>>();
 
 /**
  * Isolated model definition; no table is created or connected here. The record
@@ -22,7 +22,7 @@ const releaseSessionModelCache = new WeakMap<Sequelize, ModelCtor<DemoSandboxRel
  */
 export function createDemoSandboxReleaseSessionModel(
   sequelize: Sequelize,
-): ModelCtor<DemoSandboxReleaseSessionRecord> {
+): ModelStatic<DemoSandboxReleaseSessionRecord> {
   const cached = releaseSessionModelCache.get(sequelize);
   if (cached) {
     return cached;

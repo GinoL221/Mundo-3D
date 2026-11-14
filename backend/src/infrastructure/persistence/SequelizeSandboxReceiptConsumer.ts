@@ -1,4 +1,4 @@
-import { Op, Sequelize, type ModelCtor } from 'sequelize';
+import { Op, Sequelize, type ModelStatic } from 'sequelize';
 import type { DemoSandboxResetReceiptRecord } from '../../database/models/DemoSandboxResetReceipt';
 import type {
   SandboxResetIdentity,
@@ -7,7 +7,7 @@ import type {
 import type { TransactionContext } from '../../domain/ports/UnitOfWorkPort';
 import { resolveScopedTransaction } from './scopedTransactionContext';
 
-type ReceiptModel = ModelCtor<DemoSandboxResetReceiptRecord>;
+type ReceiptModel = ModelStatic<DemoSandboxResetReceiptRecord>;
 
 /**
  * Isolated receipt consumption gate.

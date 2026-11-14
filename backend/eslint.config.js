@@ -1,9 +1,10 @@
+const { defineConfig } = require("eslint/config");
 const js = require("@eslint/js");
 const globals = require("globals");
 const tseslint = require("typescript-eslint");
 const eslintConfigPrettier = require("eslint-config-prettier");
 
-module.exports = tseslint.config(
+module.exports = defineConfig([
   js.configs.recommended,
   ...tseslint.configs.recommended.map(config => ({
     ...config,
@@ -42,6 +43,7 @@ module.exports = tseslint.config(
     },
     rules: {
       "no-unused-vars": "off",
+      "@typescript-eslint/no-deprecated": "error",
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unused-vars": [
         "error",
@@ -74,5 +76,5 @@ module.exports = tseslint.config(
       "no-unused-vars": "off",
     },
   },
-  eslintConfigPrettier
-);
+  eslintConfigPrettier,
+]);

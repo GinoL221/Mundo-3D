@@ -13,11 +13,12 @@ describe('DemoSandboxResetReceipt model', () => {
     const model = createDemoSandboxResetReceiptModel(connection);
     expect(model.sequelize).toBe(connection);
     expect(model.getTableName()).toBe('DemoSandboxResetReceipt');
-    expect(model.rawAttributes.attemptId.primaryKey).toBe(true);
-    expect(model.rawAttributes.slotId.allowNull).toBe(false);
-    expect(model.rawAttributes.generation.allowNull).toBe(false);
-    expect(model.rawAttributes.seedVersion.allowNull).toBe(false);
-    expect(model.rawAttributes.consumed.defaultValue).toBe(false);
+    const attributes = model.getAttributes();
+    expect(attributes.attemptId.primaryKey).toBe(true);
+    expect(attributes.slotId.allowNull).toBe(false);
+    expect(attributes.generation.allowNull).toBe(false);
+    expect(attributes.seedVersion.allowNull).toBe(false);
+    expect(attributes.consumed.defaultValue).toBe(false);
     expect(() => new SequelizeSandboxReceiptWriter(connection, 'slot-a', model)).not.toThrow();
     expect(authenticate).not.toHaveBeenCalled();
     expect(query).not.toHaveBeenCalled();

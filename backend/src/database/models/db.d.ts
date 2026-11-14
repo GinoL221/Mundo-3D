@@ -1,4 +1,4 @@
-import { Model, ModelCtor, Sequelize } from 'sequelize';
+import { Model, ModelStatic, Sequelize } from 'sequelize';
 
 export interface ProductAttributes {
   idProduct: number;
@@ -155,14 +155,14 @@ export interface OrderItemInstance
   product?: ProductInstance;
 }
 
-export const Product: ModelCtor<ProductInstance>;
-export const Category: ModelCtor<CategoryInstance>;
-export const Franchise: ModelCtor<FranchiseInstance>;
-export const User: ModelCtor<UserInstance>;
-export const EmailConfirmationToken: ModelCtor<EmailConfirmationTokenInstance>;
-export const RememberToken: ModelCtor<RememberTokenInstance>;
-export const ShoppingCart: ModelCtor<ShoppingCartInstance>;
-export const CustomCommissionRequest: ModelCtor<CustomCommissionRequestInstance>;
-export const Order: ModelCtor<OrderInstance>;
-export const OrderItem: ModelCtor<OrderItemInstance>;
+export const Product: ModelStatic<ProductInstance>;
+export const Category: ModelStatic<CategoryInstance>;
+export const Franchise: ModelStatic<FranchiseInstance>;
+export const User: ModelStatic<UserInstance>;
+export const EmailConfirmationToken: ModelStatic<EmailConfirmationTokenInstance>;
+export const RememberToken: ModelStatic<RememberTokenInstance>;
+export const ShoppingCart: ModelStatic<ShoppingCartInstance>;
+export const CustomCommissionRequest: ModelStatic<CustomCommissionRequestInstance>;
+export const Order: ModelStatic<OrderInstance>;
+export const OrderItem: ModelStatic<OrderItemInstance>;
 export const sequelize: Sequelize;

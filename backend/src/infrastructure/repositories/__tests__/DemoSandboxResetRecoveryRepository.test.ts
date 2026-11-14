@@ -1,4 +1,4 @@
-import { ModelCtor, Sequelize } from 'sequelize';
+import { ModelStatic, Sequelize } from 'sequelize';
 import { DemoSandboxSlot } from '../../../domain/entities/DemoSandboxSlot';
 import { DemoSandboxSlotRecord } from '../../../database/models/DemoSandboxSlot';
 import { SequelizeDemoSandboxSlotRepository } from '../SequelizeDemoSandboxSlotRepository';
@@ -39,7 +39,7 @@ function makeRepository() {
     findOne,
     findAll: jest.fn(),
     findOrCreate: jest.fn(),
-  } as unknown as ModelCtor<DemoSandboxSlotRecord>;
+  } as unknown as ModelStatic<DemoSandboxSlotRecord>;
   const repository = new SequelizeDemoSandboxSlotRepository(sequelize, model);
   return { repository, record, findOne, transaction };
 }

@@ -1,4 +1,4 @@
-import { DataTypes, Model, ModelCtor, Sequelize } from 'sequelize';
+import { DataTypes, Model, ModelStatic, Sequelize } from 'sequelize';
 
 export interface DemoSandboxResetReceiptAttributes {
   attemptId: string;
@@ -14,7 +14,7 @@ export interface DemoSandboxResetReceiptRecord
 /** Model declaration only; no schema, migration or connection is created. */
 export function createDemoSandboxResetReceiptModel(
   sequelize: Sequelize,
-): ModelCtor<DemoSandboxResetReceiptRecord> {
+): ModelStatic<DemoSandboxResetReceiptRecord> {
   return sequelize.define<DemoSandboxResetReceiptRecord>(
     'DemoSandboxResetReceipt',
     {
