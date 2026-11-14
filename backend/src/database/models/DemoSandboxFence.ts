@@ -1,4 +1,4 @@
-import { DataTypes, Model, ModelCtor, Sequelize } from 'sequelize';
+import { DataTypes, Model, ModelStatic, Sequelize } from 'sequelize';
 
 export interface DemoSandboxFenceAttributes {
   slotId: string;
@@ -11,12 +11,12 @@ export interface DemoSandboxFenceAttributes {
 export interface DemoSandboxFenceRecord
   extends Model<DemoSandboxFenceAttributes>, DemoSandboxFenceAttributes {}
 
-const fenceModelCache = new WeakMap<Sequelize, ModelCtor<DemoSandboxFenceRecord>>();
+const fenceModelCache = new WeakMap<Sequelize, ModelStatic<DemoSandboxFenceRecord>>();
 
 /** Isolated model definition; no table is created or connected here. Cached per connection. */
 export function createDemoSandboxFenceModel(
   sequelize: Sequelize,
-): ModelCtor<DemoSandboxFenceRecord> {
+): ModelStatic<DemoSandboxFenceRecord> {
   const cached = fenceModelCache.get(sequelize);
   if (cached) {
     return cached;

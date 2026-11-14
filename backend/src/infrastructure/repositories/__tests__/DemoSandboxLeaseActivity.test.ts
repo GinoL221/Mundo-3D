@@ -1,4 +1,4 @@
-import { Sequelize, ModelCtor, Op } from 'sequelize';
+import { Sequelize, ModelStatic, Op } from 'sequelize';
 import { DemoSandboxSlot } from '../../../domain/entities/DemoSandboxSlot';
 import { DemoSandboxSlotRecord } from '../../../database/models/DemoSandboxSlot';
 import { SequelizeDemoSandboxSlotRepository } from '../SequelizeDemoSandboxSlotRepository';
@@ -18,7 +18,7 @@ function setup() {
   const model = {
     findOrCreate: jest.fn().mockResolvedValue([record, true]),
     findOne: jest.fn().mockResolvedValue(record),
-  } as unknown as ModelCtor<DemoSandboxSlotRecord>;
+  } as unknown as ModelStatic<DemoSandboxSlotRecord>;
   const repository = new SequelizeDemoSandboxSlotRepository(sequelize, model);
   return { record, transaction, model, sequelize, repository };
 }

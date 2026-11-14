@@ -1,4 +1,4 @@
-import { DataTypes, Model, ModelCtor, Sequelize } from 'sequelize';
+import { DataTypes, Model, ModelStatic, Sequelize } from 'sequelize';
 
 export type DemoSandboxSlotRecordStatus =
   | 'available'
@@ -34,7 +34,7 @@ const statuses: DemoSandboxSlotRecordStatus[] = [
   'quarantined',
 ];
 
-export function createDemoSandboxSlotModel(sequelize: Sequelize): ModelCtor<DemoSandboxSlotRecord> {
+export function createDemoSandboxSlotModel(sequelize: Sequelize): ModelStatic<DemoSandboxSlotRecord> {
   return sequelize.define<DemoSandboxSlotRecord>(
     'DemoSandboxSlot',
     {

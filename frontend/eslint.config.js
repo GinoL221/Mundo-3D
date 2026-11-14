@@ -51,6 +51,7 @@ export default defineConfig([
     files: ['**/*.ts'],
     rules: {
       'no-unused-vars': 'off',
+      '@typescript-eslint/no-deprecated': 'error',
       '@typescript-eslint/no-unused-vars': [
         'error',
         {

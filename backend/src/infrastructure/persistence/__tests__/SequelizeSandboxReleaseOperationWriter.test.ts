@@ -1,4 +1,4 @@
-import { UniqueConstraintError, type ModelCtor, type Sequelize, type Transaction } from 'sequelize';
+import { UniqueConstraintError, type ModelStatic, type Sequelize, type Transaction } from 'sequelize';
 import type { DemoSandboxReleaseOperationRecord } from '../../../database/models/DemoSandboxReleaseOperation';
 import type { SandboxReleaseIdentity } from '../../../domain/ports/AuthoritativeReleaseStateReaderPort';
 import type { TransactionContext } from '../../../domain/ports/UnitOfWorkPort';
@@ -21,7 +21,7 @@ function writerFor(model: Record<string, unknown>) {
   return new SequelizeSandboxReleaseOperationWriter(
     connection,
     'slot-a',
-    model as unknown as ModelCtor<DemoSandboxReleaseOperationRecord>,
+    model as unknown as ModelStatic<DemoSandboxReleaseOperationRecord>,
   );
 }
 

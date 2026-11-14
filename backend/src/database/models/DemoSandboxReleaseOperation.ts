@@ -1,4 +1,4 @@
-import { DataTypes, Model, ModelCtor, Sequelize } from 'sequelize';
+import { DataTypes, Model, ModelStatic, Sequelize } from 'sequelize';
 
 export interface DemoSandboxReleaseOperationAttributes {
   releaseId: string;
@@ -14,7 +14,7 @@ export interface DemoSandboxReleaseOperationRecord
 
 const releaseOperationModelCache = new WeakMap<
   Sequelize,
-  ModelCtor<DemoSandboxReleaseOperationRecord>
+  ModelStatic<DemoSandboxReleaseOperationRecord>
 >();
 
 /**
@@ -24,7 +24,7 @@ const releaseOperationModelCache = new WeakMap<
  */
 export function createDemoSandboxReleaseOperationModel(
   sequelize: Sequelize,
-): ModelCtor<DemoSandboxReleaseOperationRecord> {
+): ModelStatic<DemoSandboxReleaseOperationRecord> {
   const cached = releaseOperationModelCache.get(sequelize);
   if (cached) {
     return cached;

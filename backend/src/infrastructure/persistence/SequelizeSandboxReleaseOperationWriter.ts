@@ -1,4 +1,4 @@
-import { UniqueConstraintError, type ModelCtor, type Sequelize, type Transaction } from 'sequelize';
+import { UniqueConstraintError, type ModelStatic, type Sequelize, type Transaction } from 'sequelize';
 import type { DemoSandboxReleaseOperationRecord } from '../../database/models/DemoSandboxReleaseOperation';
 import type { SandboxReleaseIdentity } from '../../domain/ports/AuthoritativeReleaseStateReaderPort';
 import type { SandboxReleaseOperationRecorderPort } from '../../domain/ports/SandboxReleaseOperationRecorderPort';
@@ -6,7 +6,7 @@ import type { TransactionContext } from '../../domain/ports/UnitOfWorkPort';
 import { ReleaseOperationAlreadyCommittedException } from '../../domain/exceptions/ReleaseOperationAlreadyCommittedException';
 import { resolveScopedTransaction } from './scopedTransactionContext';
 
-type ReleaseOperationModel = ModelCtor<DemoSandboxReleaseOperationRecord>;
+type ReleaseOperationModel = ModelStatic<DemoSandboxReleaseOperationRecord>;
 
 const ATTEMPT_UNIQUE_FIELDS = ['slot_id', 'generation', 'attempt_id'] as const;
 const ATTEMPT_UNIQUE_INDEX = 'uq_release_attempt';

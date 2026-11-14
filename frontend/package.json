@@ -12,7 +12,7 @@
     "astro": "astro",
     "check": "astro check",
     "test": "vitest run",
-    "lint": "eslint .",
+    "lint": "eslint --max-warnings 0 .",
     "quality:check": "node tools/quality-check.js"
   },
   "dependencies": {

@@ -1,4 +1,4 @@
-import type { ModelCtor, Sequelize, Transaction } from 'sequelize';
+import type { ModelStatic, Sequelize, Transaction } from 'sequelize';
 import type { DemoSandboxResetReceiptRecord } from '../../database/models/DemoSandboxResetReceipt';
 import type {
   SandboxResetIdentity,
@@ -7,7 +7,7 @@ import type {
 import type { TransactionContext } from '../../domain/ports/UnitOfWorkPort';
 import { resolveScopedTransaction } from './scopedTransactionContext';
 
-type ReceiptModel = ModelCtor<DemoSandboxResetReceiptRecord>;
+type ReceiptModel = ModelStatic<DemoSandboxResetReceiptRecord>;
 
 /** Requires a transaction-held reset fence and a real uniqueness constraint; neither is established here. */
 export class SequelizeSandboxReceiptWriter implements SandboxResetReceiptWriter {

@@ -19,3 +19,8 @@ Este archivo define las reglas locales del proyecto basadas en el libro de Gentl
 4. **Separación de Responsabilidades (ESLint + Prettier)**:
    - ESLint se encarga exclusivamente de la calidad del código, tipos y lógica.
    - Prettier se encarga del formateo visual de forma independiente. No se deben mezclar reglas de espaciado o formato visual dentro de ESLint.
+
+5. **Código Deprecado y Supresiones**:
+   - No introducir usos nuevos de APIs o símbolos `@deprecated` (`@typescript-eslint/no-deprecated` en ESLint).
+   - Prohibido usar `@ts-ignore` o `eslint-disable` genéricos para ocultar advertencias o errores. Si una excepción es estrictamente inevitable, usar `@ts-expect-error` o `eslint-disable-next-line <regla-puntual>` con un motivo explícito.
+   - Cualquier supresión de configuración del compilador (como `ignoreDeprecations` en `tsconfig.json`) debe documentar por qué existe y qué condición permite retirarla.

@@ -12,6 +12,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "types": ["jest", "node", "supertest"],
+    // Required while module is "commonjs" and ts-jest falls back to moduleResolution=node10 (TS5107).
+    // Remove once the backend migrates to ESM/nodenext or moduleResolution="bundler" with TS 6+ across editor and CI.
     "ignoreDeprecations": "6.0"
   },
   "include": ["src/**/*"],
