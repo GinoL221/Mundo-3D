@@ -1,4 +1,4 @@
-const REQUIRED = [
+const BASE_REQUIRED = [
   'JWT_SECRET',
   'CORS_ORIGIN',
   'COOKIE_SECRET',
@@ -8,16 +8,34 @@ const REQUIRED = [
   'DB_HOST',
   'DB_PORT',
   'DB_CA_CERT',
-  // Cloudflare R2 (S3-compatible object storage) for admin-uploaded product/user
-  // images. R2_ENDPOINT is the explicit S3 API endpoint shown on R2's token
-  // screen, not derived from an account id, so switching to another
-  // S3-compatible provider is a value change, not a code change.
+];
+
+// Cloudflare R2 (S3-compatible object storage) for admin-uploaded product/user
+// images. R2_ENDPOINT is the explicit S3 API endpoint shown on R2's token
+// screen, not derived from an account id, so switching to another
+// S3-compatible provider is a value change, not a code change.
+const R2_REQUIRED = [
   'R2_ENDPOINT',
   'R2_ACCESS_KEY_ID',
   'R2_SECRET_ACCESS_KEY',
   'R2_BUCKET_NAME',
   'R2_PUBLIC_URL_BASE',
 ];
+
+const CLOUDINARY_REQUIRED = [
+  'CLOUDINARY_CLOUD_NAME',
+  'CLOUDINARY_API_KEY',
+  'CLOUDINARY_API_SECRET',
+];
+
+const STORAGE_REQUIRED_BY_DRIVER = {
+  r2: R2_REQUIRED,
+  cloudinary: CLOUDINARY_REQUIRED,
+  disabled: [],
+};
+
+// Default required list (backward-compatible export for R2).
+const REQUIRED = [...BASE_REQUIRED, ...R2_REQUIRED];
 
 // Checked but warn-only — a missing value produces a warning, never a non-zero
 // exit:
@@ -40,21 +58,43 @@ function checkNodeEnv(env) {
   return `NODE_ENV must be "production" for a deploy, but it is ${actual}.`;
 }
 
+function resolveStorageDriver(env) {
+  const raw = (env.STORAGE_DRIVER ?? '').trim().toLowerCase();
+  const driver = raw || 'r2';
+  if (!Object.prototype.hasOwnProperty.call(STORAGE_REQUIRED_BY_DRIVER, driver)) {
+    return {
+      driver: null,
+      error: `Invalid STORAGE_DRIVER "${env.STORAGE_DRIVER.trim()}". Expected one of: r2, cloudinary, disabled.`,
+    };
+  }
+  return { driver, error: null };
+}
+
 function checkEnv(env = process.env) {
+  const { driver, error: storageDriver } = resolveStorageDriver(env);
+  const storageRequired = driver ? STORAGE_REQUIRED_BY_DRIVER[driver] : [];
+  const required = [...BASE_REQUIRED, ...storageRequired];
+
   return {
-    missing: REQUIRED.filter((key) => !env[key]),
+    missing: required.filter((key) => !env[key]),
     warnings: WARN_ONLY.filter((key) => !env[key]),
     nodeEnv: checkNodeEnv(env),
+    storageDriver,
   };
 }
 
 if (require.main === module) {
-  const { missing, warnings, nodeEnv } = checkEnv();
+  const { missing, warnings, nodeEnv, storageDriver } = checkEnv();
 
   if (nodeEnv) {
     console.log(
       `[env-preflight] FAIL: ${nodeEnv} Running a deploy with NODE_ENV=test falls back to secrets committed in this repository and disables the login/register rate limiters.`
     );
+    process.exitCode = 1;
+  }
+
+  if (storageDriver) {
+    console.log(`[env-preflight] FAIL: ${storageDriver}`);
     process.exitCode = 1;
   }
 
@@ -72,4 +112,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { checkEnv, REQUIRED, WARN_ONLY };
+module.exports = { checkEnv, BASE_REQUIRED, REQUIRED, WARN_ONLY };

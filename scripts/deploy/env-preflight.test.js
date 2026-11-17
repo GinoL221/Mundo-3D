@@ -27,7 +27,7 @@ function runPreflight(env) {
 
 test('all required vars and every warn-only var present -> no missing, no warnings', () => {
   const result = checkEnv(buildFullEnv());
-  assert.deepEqual(result, { missing: [], warnings: [], nodeEnv: null });
+  assert.deepEqual(result, { missing: [], warnings: [], nodeEnv: null, storageDriver: null });
 });
 
 test('the hard-required list matches the deploy-pipeline spec contract, in order', () => {
@@ -112,14 +112,24 @@ test('all required present, COOKIE_DOMAIN absent -> warns, does not fail', () =>
   const env = buildFullEnv();
   delete env.COOKIE_DOMAIN;
   const result = checkEnv(env);
-  assert.deepEqual(result, { missing: [], warnings: ['COOKIE_DOMAIN'], nodeEnv: null });
+  assert.deepEqual(result, {
+    missing: [],
+    warnings: ['COOKIE_DOMAIN'],
+    nodeEnv: null,
+    storageDriver: null,
+  });
 });
 
 test('all required present, PUBLIC_API_URL absent -> warns, does not fail', () => {
   const env = buildFullEnv();
   delete env.PUBLIC_API_URL;
   const result = checkEnv(env);
-  assert.deepEqual(result, { missing: [], warnings: ['PUBLIC_API_URL'], nodeEnv: null });
+  assert.deepEqual(result, {
+    missing: [],
+    warnings: ['PUBLIC_API_URL'],
+    nodeEnv: null,
+    storageDriver: null,
+  });
 });
 
 test('script exits non-zero and names DB_PORT when it is unset', () => {
@@ -180,4 +190,89 @@ test('script exits non-zero and explains the risk when NODE_ENV is test', () => 
 test('script exits 0 when every hard-required var is set', () => {
   const result = runPreflight(buildFullEnv());
   assert.equal(result.status, 0);
+});
+
+test('STORAGE_DRIVER=r2 explicit requires R2 vars and passes when set', () => {
+  const env = { ...buildFullEnv(), STORAGE_DRIVER: 'r2' };
+  assert.deepEqual(checkEnv(env), { missing: [], warnings: [], nodeEnv: null, storageDriver: null });
+  assert.equal(runPreflight(env).status, 0);
+});
+
+test('STORAGE_DRIVER=cloudinary requires CLOUDINARY_* vars and does not require R2_* vars', () => {
+  const env = {
+    NODE_ENV: 'production',
+    STORAGE_DRIVER: '  CLOUDINARY ',
+    JWT_SECRET: 'value',
+    CORS_ORIGIN: 'value',
+    COOKIE_SECRET: 'value',
+    DB_USER: 'value',
+    DB_PASS: 'value',
+    DB_NAME: 'value',
+    DB_HOST: 'value',
+    DB_PORT: 'value',
+    DB_CA_CERT: 'value',
+    COOKIE_DOMAIN: 'value',
+    PUBLIC_API_URL: 'value',
+    CLOUDINARY_CLOUD_NAME: 'cloud',
+    CLOUDINARY_API_KEY: 'key',
+    CLOUDINARY_API_SECRET: 'secret',
+  };
+  assert.deepEqual(checkEnv(env), { missing: [], warnings: [], nodeEnv: null, storageDriver: null });
+  assert.equal(runPreflight(env).status, 0);
+});
+
+for (const cloudVar of ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET']) {
+  test(`STORAGE_DRIVER=cloudinary reports missing ${cloudVar} and exits non-zero`, () => {
+    const env = {
+      NODE_ENV: 'production',
+      STORAGE_DRIVER: 'cloudinary',
+      JWT_SECRET: 'value',
+      CORS_ORIGIN: 'value',
+      COOKIE_SECRET: 'value',
+      DB_USER: 'value',
+      DB_PASS: 'value',
+      DB_NAME: 'value',
+      DB_HOST: 'value',
+      DB_PORT: 'value',
+      DB_CA_CERT: 'value',
+      CLOUDINARY_CLOUD_NAME: 'cloud',
+      CLOUDINARY_API_KEY: 'key',
+      CLOUDINARY_API_SECRET: 'secret',
+    };
+    delete env[cloudVar];
+    assert.deepEqual(checkEnv(env).missing, [cloudVar]);
+    const res = runPreflight(env);
+    assert.notEqual(res.status, 0);
+    assert.match(res.stdout, new RegExp(cloudVar));
+  });
+}
+
+test('STORAGE_DRIVER=disabled requires no storage provider vars and exits 0', () => {
+  const env = {
+    NODE_ENV: 'production',
+    STORAGE_DRIVER: 'disabled',
+    JWT_SECRET: 'value',
+    CORS_ORIGIN: 'value',
+    COOKIE_SECRET: 'value',
+    DB_USER: 'value',
+    DB_PASS: 'value',
+    DB_NAME: 'value',
+    DB_HOST: 'value',
+    DB_PORT: 'value',
+    DB_CA_CERT: 'value',
+    COOKIE_DOMAIN: 'value',
+    PUBLIC_API_URL: 'value',
+  };
+  assert.deepEqual(checkEnv(env), { missing: [], warnings: [], nodeEnv: null, storageDriver: null });
+  assert.equal(runPreflight(env).status, 0);
+});
+
+test('invalid STORAGE_DRIVER fails closed with explicit STORAGE_DRIVER error and exits non-zero', () => {
+  const env = { ...buildFullEnv(), STORAGE_DRIVER: 's3-typo' };
+  const result = checkEnv(env);
+  assert.ok(result.storageDriver);
+  assert.match(result.storageDriver, /STORAGE_DRIVER/);
+  const res = runPreflight(env);
+  assert.notEqual(res.status, 0);
+  assert.match(res.stdout, /STORAGE_DRIVER/);
 });
