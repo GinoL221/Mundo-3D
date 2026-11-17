@@ -8,7 +8,19 @@ const app = require('../app');
 // then resolves to the real client address carried in X-Forwarded-For,
 // and one abusive client can never lock every other client out.
 describe('trust proxy — proxy-aware runtime and rate limiting', () => {
-  const ENV_KEYS = ['NODE_ENV', 'LOGIN_LIMIT_MAX', 'LOGIN_LIMIT_WINDOW'];
+  const ENV_KEYS = [
+    'NODE_ENV',
+    'LOGIN_LIMIT_MAX',
+    'LOGIN_LIMIT_WINDOW',
+    'CORS_ORIGIN',
+    'PUBLIC_APP_URL',
+    'SMTP_HOST',
+    'SMTP_PORT',
+    'SMTP_SECURE',
+    'SMTP_FROM',
+    'JWT_SECRET',
+    'PROXY_SHARED_SECRET',
+  ];
   const original = {};
 
   beforeEach(() => {
@@ -91,5 +103,91 @@ describe('trust proxy — proxy-aware runtime and rate limiting', () => {
     // the limiter key really is the forwarded IP, not a shared/proxy value).
     const b1 = await request(proxyApp).post('/login').set('X-Forwarded-For', clientB);
     expect(b1.status).toBe(401);
+  });
+
+  describe('app.js trustedProxyIp + express-rate-limit integration', () => {
+    function loadAppWithProxySecret({ max, proxySecret }) {
+      process.env.NODE_ENV = 'production';
+      process.env.CORS_ORIGIN = 'https://example.pages.dev';
+      process.env.PUBLIC_APP_URL = 'https://example.pages.dev';
+      process.env.SMTP_HOST = 'smtp.example.com';
+      process.env.SMTP_PORT = '587';
+      process.env.SMTP_SECURE = 'false';
+      process.env.SMTP_FROM = 'no-reply@example.com';
+      process.env.JWT_SECRET = 'test-jwt-secret';
+      process.env.PROXY_SHARED_SECRET = proxySecret;
+      process.env.LOGIN_LIMIT_MAX = String(max);
+      process.env.LOGIN_LIMIT_WINDOW = '60000';
+      let isolatedApp;
+      jest.isolateModules(() => {
+        isolatedApp = require('../app');
+      });
+      return isolatedApp;
+    }
+
+    it('isolates rate-limit buckets per X-Forwarded-Client-IP when X-Proxy-Secret is valid', async () => {
+      const isolatedApp = loadAppWithProxySecret({
+        max: 2,
+        proxySecret: 'valid-proxy-secret',
+      });
+
+      const a1 = await request(isolatedApp)
+        .post('/api/users/login')
+        .set('X-Forwarded-For', '10.0.0.1')
+        .set('X-Proxy-Secret', 'valid-proxy-secret')
+        .set('X-Forwarded-Client-IP', '203.0.113.10')
+        .send({});
+      const a2 = await request(isolatedApp)
+        .post('/api/users/login')
+        .set('X-Forwarded-For', '10.0.0.1')
+        .set('X-Proxy-Secret', 'valid-proxy-secret')
+        .set('X-Forwarded-Client-IP', '203.0.113.10')
+        .send({});
+      const a3 = await request(isolatedApp)
+        .post('/api/users/login')
+        .set('X-Forwarded-For', '10.0.0.1')
+        .set('X-Proxy-Secret', 'valid-proxy-secret')
+        .set('X-Forwarded-Client-IP', '203.0.113.10')
+        .send({});
+
+      expect([a1.status, a2.status, a3.status]).toEqual([400, 400, 429]);
+
+      // Different authenticated client IP behind the same proxy edge gets its own bucket.
+      const b1 = await request(isolatedApp)
+        .post('/api/users/login')
+        .set('X-Forwarded-For', '10.0.0.1')
+        .set('X-Proxy-Secret', 'valid-proxy-secret')
+        .set('X-Forwarded-Client-IP', '203.0.113.20')
+        .send({});
+      expect(b1.status).toBe(400);
+    }, 15000);
+
+    it('prevents unauthenticated spoofed X-Forwarded-Client-IP headers from bypassing rate limits', async () => {
+      const isolatedApp = loadAppWithProxySecret({
+        max: 2,
+        proxySecret: 'valid-proxy-secret',
+      });
+
+      const s1 = await request(isolatedApp)
+        .post('/api/users/login')
+        .set('X-Forwarded-For', '198.51.100.99')
+        .set('X-Proxy-Secret', 'wrong-secret')
+        .set('X-Forwarded-Client-IP', '203.0.113.31')
+        .send({});
+      const s2 = await request(isolatedApp)
+        .post('/api/users/login')
+        .set('X-Forwarded-For', '198.51.100.99')
+        .set('X-Forwarded-Client-IP', '203.0.113.32')
+        .send({});
+      const s3 = await request(isolatedApp)
+        .post('/api/users/login')
+        .set('X-Forwarded-For', '198.51.100.99')
+        .set('X-Proxy-Secret', 'wrong-secret')
+        .set('X-Forwarded-Client-IP', '203.0.113.33')
+        .send({});
+
+      // All three share the real X-Forwarded-For bucket (198.51.100.99), so 3rd is 429.
+      expect([s1.status, s2.status, s3.status]).toEqual([400, 400, 429]);
+    }, 15000);
   });
 });
