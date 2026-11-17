@@ -1,6 +1,7 @@
 # Render Blueprint — Mundo-3D backend (free-tier web service).
-# One service only: apex/www + the frontend live on Vercel, the database on
-# Aiven. See docs/RUNBOOKS.md "Platform bring-up" for the full procedure.
+# Cardless free-tier topology: Cloudflare Pages (frontend + /api/* proxy) +
+# Render Free (backend) + TiDB Cloud Starter (DB) + Brevo (SMTP) +
+# Cloudinary/R2 (storage). See docs/RUNBOOKS.md "Platform bring-up".
 #
 # Secrets are declared here as keys with `sync: false` so the manifest is a
 # complete, reviewable inventory of what production needs while no secret
@@ -48,7 +49,11 @@ services:
         sync: false
       - key: PUBLIC_APP_URL
         sync: false
+      # Optional when using the Cloudflare Pages same-origin /api/* proxy.
       - key: COOKIE_DOMAIN
+        sync: false
+      # Shared secret authenticating CF-Connecting-IP from the Pages proxy.
+      - key: PROXY_SHARED_SECRET
         sync: false
       # Brevo SMTP — credentials stay in the Render dashboard.
       - key: SMTP_HOST
@@ -63,7 +68,17 @@ services:
         sync: false
       - key: SMTP_FROM
         sync: false
-      # Cloudflare R2 — object storage for admin-uploaded product/user images.
+      # Object storage driver: selects `r2`, `cloudinary`, or `disabled`.
+      - key: STORAGE_DRIVER
+        sync: false
+      # Cloudinary Free — used when STORAGE_DRIVER=cloudinary.
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      # Cloudflare R2 — used when STORAGE_DRIVER=r2.
       # See docs/RUNBOOKS.md "Platform bring-up" section 5.
       - key: R2_ENDPOINT
         sync: false

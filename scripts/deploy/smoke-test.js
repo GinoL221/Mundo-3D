@@ -2,7 +2,7 @@ const http = require('node:http');
 const https = require('node:https');
 
 const POLL_INTERVAL_MS = 1000;
-const DEFAULT_TIMEOUT_MS = 60000;
+const DEFAULT_TIMEOUT_MS = 120000;
 
 function get(url) {
   const client = url.startsWith('https:') ? https : http;
@@ -76,4 +76,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { run };
+module.exports = { run, DEFAULT_TIMEOUT_MS };

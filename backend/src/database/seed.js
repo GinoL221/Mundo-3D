@@ -43,28 +43,30 @@ async function seedInitialData(db) {
       await db.Franchise.bulkCreate(franchises);
       console.log('✔ Franquicias insertadas');
     }
-    // Usuarios
-    const userCount = await db.User.count();
-    if (userCount === 0) {
-      const usersPath = path.join(__dirname, 'data/users.json');
-      if (fs.existsSync(usersPath)) {
-        const usersData = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
-        const usersHashed = usersData.map((u) => {
-          const rawPassword = u.PasswordUser || u.Password || u.password || '';
-          return {
-            firstName: u.FirstName || u.firstName,
-            lastName: u.LastName || u.lastName,
-            email: u.Email || u.email,
-            image: u.Image || u.image,
-            passwordUser: rawPassword.startsWith('$2a$')
-              ? rawPassword
-              : bcrypt.hashSync(rawPassword, 10),
-            idRole: u.IDRole || u.idRole,
-            category: u.Category || u.category,
-          };
-        });
-        await db.User.bulkCreate(usersHashed);
-        console.log('✔ Usuarios insertados desde JSON (con contraseña hasheada)');
+    // Usuarios (never seed fixture accounts in production)
+    if (process.env.NODE_ENV !== 'production') {
+      const userCount = await db.User.count();
+      if (userCount === 0) {
+        const usersPath = path.join(__dirname, 'data/users.json');
+        if (fs.existsSync(usersPath)) {
+          const usersData = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
+          const usersHashed = usersData.map((u) => {
+            const rawPassword = u.PasswordUser || u.Password || u.password || '';
+            return {
+              firstName: u.FirstName || u.firstName,
+              lastName: u.LastName || u.lastName,
+              email: u.Email || u.email,
+              image: u.Image || u.image,
+              passwordUser: rawPassword.startsWith('$2a$')
+                ? rawPassword
+                : bcrypt.hashSync(rawPassword, 10),
+              idRole: u.IDRole || u.idRole,
+              category: u.Category || u.category,
+            };
+          });
+          await db.User.bulkCreate(usersHashed);
+          console.log('✔ Usuarios insertados desde JSON (con contraseña hasheada)');
+        }
       }
     }
     // Productos
