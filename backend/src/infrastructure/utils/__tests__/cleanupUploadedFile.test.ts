@@ -4,6 +4,11 @@ import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { logger } from '../../logging/logger';
 import { cleanupUploadedFile } from '../cleanupUploadedFile';
 import { resetR2Client } from '../../storage/r2Client';
+import { destroyCloudinaryImage } from '../../storage/cloudinaryClient';
+
+jest.mock('../../storage/cloudinaryClient', () => ({
+  destroyCloudinaryImage: jest.fn(),
+}));
 
 jest.mock('@aws-sdk/client-s3', () => {
   const actual = jest.requireActual('@aws-sdk/client-s3');
@@ -13,12 +18,14 @@ jest.mock('@aws-sdk/client-s3', () => {
 const sendMock = jest.fn();
 const flush = (): Promise<void> => new Promise((resolve) => setImmediate(resolve));
 const ORIGINAL_NODE_ENV = process.env.NODE_ENV;
+const ORIGINAL_STORAGE_DRIVER = process.env.STORAGE_DRIVER;
 
 describe('cleanupUploadedFile', () => {
   let loggerWarnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    delete process.env.STORAGE_DRIVER;
     process.env.R2_ENDPOINT = 'https://acct.r2.cloudflarestorage.com';
     process.env.R2_ACCESS_KEY_ID = 'test-access-key';
     process.env.R2_SECRET_ACCESS_KEY = 'test-secret-key';
@@ -26,6 +33,8 @@ describe('cleanupUploadedFile', () => {
     (S3Client as unknown as jest.Mock).mockImplementation(() => ({ send: sendMock }));
     sendMock.mockReset();
     sendMock.mockResolvedValue({});
+    (destroyCloudinaryImage as jest.Mock).mockReset();
+    (destroyCloudinaryImage as jest.Mock).mockResolvedValue(undefined);
     resetR2Client();
     loggerWarnSpy = jest.spyOn(logger, 'warn').mockImplementation(() => undefined as never);
   });
@@ -33,6 +42,11 @@ describe('cleanupUploadedFile', () => {
   afterEach(() => {
     loggerWarnSpy.mockRestore();
     process.env.NODE_ENV = ORIGINAL_NODE_ENV;
+    if (ORIGINAL_STORAGE_DRIVER === undefined) {
+      delete process.env.STORAGE_DRIVER;
+    } else {
+      process.env.STORAGE_DRIVER = ORIGINAL_STORAGE_DRIVER;
+    }
   });
 
   it('does nothing when the key is falsy (legitimately no uploaded object)', () => {
@@ -136,6 +150,65 @@ describe('cleanupUploadedFile', () => {
       expect(unlinkSpy).toHaveBeenCalledWith('/custom/isolated/uploads/products/sample.png');
       unlinkSpy.mockRestore();
       delete process.env.UPLOAD_DIR;
+    });
+  });
+
+  describe('when STORAGE_DRIVER=cloudinary', () => {
+    beforeEach(() => {
+      process.env.STORAGE_DRIVER = 'cloudinary';
+    });
+
+    it('calls destroyCloudinaryImage with the given key', async () => {
+      cleanupUploadedFile('products/cld-123');
+      await flush();
+
+      expect(destroyCloudinaryImage).toHaveBeenCalledWith('products/cld-123');
+      expect(sendMock).not.toHaveBeenCalled();
+    });
+
+    it('logs upload_cleanup_failed and never throws when destroyCloudinaryImage rejects', async () => {
+      (destroyCloudinaryImage as jest.Mock).mockRejectedValueOnce(new Error('Cloudinary down'));
+
+      expect(() => cleanupUploadedFile('products/cld-fail')).not.toThrow();
+      await flush();
+
+      expect(loggerWarnSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: 'upload_cleanup_failed',
+          key: 'products/cld-fail',
+        }),
+        expect.stringContaining('cld-fail')
+      );
+    });
+  });
+
+  describe('when STORAGE_DRIVER=disabled', () => {
+    it('is a safe no-op without calling R2, Cloudinary, or fs.unlink', async () => {
+      process.env.STORAGE_DRIVER = 'disabled';
+      const unlinkSpy = jest.spyOn(fs.promises, 'unlink');
+
+      expect(() => cleanupUploadedFile('products/anything.png')).not.toThrow();
+      await flush();
+
+      expect(sendMock).not.toHaveBeenCalled();
+      expect(destroyCloudinaryImage).not.toHaveBeenCalled();
+      expect(unlinkSpy).not.toHaveBeenCalled();
+      unlinkSpy.mockRestore();
+    });
+  });
+
+  describe('when STORAGE_DRIVER is invalid', () => {
+    it('logs upload_cleanup_failed and never throws', () => {
+      process.env.STORAGE_DRIVER = 'unknown-driver';
+
+      expect(() => cleanupUploadedFile('products/anything.png')).not.toThrow();
+      expect(loggerWarnSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: 'upload_cleanup_failed',
+          key: 'products/anything.png',
+        }),
+        expect.stringContaining('anything.png')
+      );
     });
   });
 });

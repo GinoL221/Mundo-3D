@@ -2,6 +2,8 @@ import path from 'path';
 import fs from 'fs';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getR2Client, getBucket } from '../storage/r2Client';
+import { destroyCloudinaryImage } from '../storage/cloudinaryClient';
+import { resolveStorageDriver, StorageDriver } from '../storage/storageDriver';
 import { logger } from '../logging/logger';
 
 // Best-effort removal of an image the upload engine already wrote before a
@@ -19,7 +21,22 @@ export function cleanupUploadedFile(key: string | undefined | null): void {
     return;
   }
 
-  if (process.env.NODE_ENV === 'production') {
+  let driver: StorageDriver;
+  try {
+    driver = resolveStorageDriver();
+  } catch (error) {
+    logger.warn(
+      { event: 'upload_cleanup_failed', key, error },
+      `Failed to remove orphaned upload: ${key}`
+    );
+    return;
+  }
+
+  if (driver === 'disabled') {
+    return;
+  }
+
+  if (driver === 'r2') {
     const bucket = getBucket();
     getR2Client()
       .send(new DeleteObjectCommand({ Bucket: bucket, Key: key }))
@@ -29,6 +46,16 @@ export function cleanupUploadedFile(key: string | undefined | null): void {
           `Failed to remove orphaned upload: ${key}`
         );
       });
+    return;
+  }
+
+  if (driver === 'cloudinary') {
+    destroyCloudinaryImage(key).catch((error) => {
+      logger.warn(
+        { event: 'upload_cleanup_failed', key, error },
+        `Failed to remove orphaned upload: ${key}`
+      );
+    });
     return;
   }
 

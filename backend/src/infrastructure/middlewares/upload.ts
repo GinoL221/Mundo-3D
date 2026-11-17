@@ -4,6 +4,8 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { createR2StorageEngine } from '../storage/r2StorageEngine';
+import { createCloudinaryStorageEngine } from '../storage/cloudinaryStorageEngine';
+import { resolveStorageDriver } from '../storage/storageDriver';
 
 interface MulterFile {
   originalname: string;
@@ -30,7 +32,24 @@ function getUploadBaseDir(): string {
   return process.env.UPLOAD_DIR || path.join(process.cwd(), 'public', 'img');
 }
 
-function createLocalStorageEngine(dest: string): unknown {
+interface UploadEngineFile {
+  originalname: string;
+  mimetype: string;
+  stream: NodeJS.ReadableStream;
+  key?: string;
+  path?: string;
+}
+
+interface DynamicStorageEngine {
+  _handleFile(
+    req: Request,
+    file: UploadEngineFile,
+    cb: (e: unknown, info?: Record<string, unknown>) => void
+  ): void;
+  _removeFile(req: Request, file: UploadEngineFile, cb: (e: unknown) => void): void;
+}
+
+function createLocalStorageEngine(dest: string): DynamicStorageEngine {
   const uploadPath = path.join(getUploadBaseDir(), dest);
   const disk = multer.diskStorage({
     destination: (_req: Request, _file: unknown, cb: (e: Error | null, d: string) => void) => {
@@ -47,7 +66,7 @@ function createLocalStorageEngine(dest: string): unknown {
   return {
     _handleFile(
       req: Request,
-      file: { key?: string; path?: string },
+      file: UploadEngineFile,
       cb: (e: unknown, info?: Record<string, unknown>) => void
     ): void {
       disk._handleFile(
@@ -65,20 +84,68 @@ function createLocalStorageEngine(dest: string): unknown {
         }
       );
     },
-    _removeFile(req: Request, file: unknown, cb: (e: unknown) => void): void {
+    _removeFile(req: Request, file: UploadEngineFile, cb: (e: unknown) => void): void {
       disk._removeFile(req, file, cb);
     },
   };
 }
 
+function createDisabledStorageEngine(): DynamicStorageEngine {
+  return {
+    _handleFile(
+      _req: Request,
+      _file: UploadEngineFile,
+      cb: (e: unknown, info?: Record<string, unknown>) => void
+    ): void {
+      const error = Object.assign(new Error('Image uploads are disabled in this environment'), {
+        statusCode: 503,
+      });
+      cb(error);
+    },
+    _removeFile(_req: Request, _file: UploadEngineFile, cb: (e: unknown) => void): void {
+      cb(null);
+    },
+  };
+}
+
+function resolveEngineForRequest(dest: string): DynamicStorageEngine {
+  const driver = resolveStorageDriver();
+  switch (driver) {
+    case 'r2':
+      return createR2StorageEngine(dest);
+    case 'cloudinary':
+      return createCloudinaryStorageEngine(dest);
+    case 'disabled':
+      return createDisabledStorageEngine();
+    case 'local':
+      return createLocalStorageEngine(dest);
+  }
+}
+
 export default function createUpload(dest: string): MulterInstance {
-  // Production streams straight to the R2 bucket under a `${dest}/<uuid><ext>`
-  // key; dev/test write to local disk. Both engines expose `key` + `location`
-  // on `req.file`, so nothing downstream branches on the environment.
-  const storage =
-    process.env.NODE_ENV === 'production'
-      ? createR2StorageEngine(dest)
-      : createLocalStorageEngine(dest);
+  // Keep `createUpload(dest)` lazy so router imports in tests never fail even
+  // when storage credentials are absent or STORAGE_DRIVER is overridden per test.
+  // The active driver is resolved per request.
+  const storage: DynamicStorageEngine = {
+    _handleFile(
+      req: Request,
+      file: UploadEngineFile,
+      cb: (e: unknown, info?: Record<string, unknown>) => void
+    ): void {
+      try {
+        resolveEngineForRequest(dest)._handleFile(req, file, cb);
+      } catch (error) {
+        cb(error);
+      }
+    },
+    _removeFile(req: Request, file: UploadEngineFile, cb: (e: unknown) => void): void {
+      try {
+        resolveEngineForRequest(dest)._removeFile(req, file, cb);
+      } catch (error) {
+        cb(error);
+      }
+    },
+  };
 
   const fileFilter = (
     _req: Request,
@@ -98,6 +165,7 @@ export default function createUpload(dest: string): MulterInstance {
     callback(new Error('Invalid file format or size limit exceeded'), false);
   };
 
+  // SAFETY: `@types/multer` is intentionally omitted; multer returns an instance matching `MulterInstance`.
   return multer({
     storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
