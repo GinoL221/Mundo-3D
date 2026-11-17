@@ -30,13 +30,55 @@ classify() {
   fi
 }
 
-if pnpm audit --prod >"$production_file" 2>&1; then
+# Temporary exception: GHSA-fc5q-39xc-vjpf (picomatch <= 4.0.7, first_patched_version null;
+# 4.0.8 is not yet published on npm). Run the real production audit in JSON mode and allow
+# exit non-zero ONLY when every reported production advisory is GHSA-fc5q-39xc-vjpf.
+only_ignored_prod_advisories() {
+  local output_file="$1"
+  node -e '
+    const fs = require("node:fs");
+    const ALLOWED = new Set(["GHSA-fc5q-39xc-vjpf"]);
+    try {
+      const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+      if (!data || typeof data !== "object" || !data.advisories || typeof data.advisories !== "object") {
+        process.exit(1);
+      }
+      const entries = Object.values(data.advisories);
+      if (entries.length === 0) {
+        process.exit(1);
+      }
+      const allAllowed = entries.every(
+        (entry) => entry && typeof entry.github_advisory_id === "string" && ALLOWED.has(entry.github_advisory_id)
+      );
+      if (!allAllowed) {
+        process.exit(1);
+      }
+      const counts = data.metadata && data.metadata.vulnerabilities;
+      if (counts && typeof counts === "object") {
+        const total = Object.values(counts).reduce((sum, n) => sum + (typeof n === "number" ? n : 0), 0);
+        if (total > entries.length) {
+          process.exit(1);
+        }
+      }
+      process.exit(0);
+    } catch {
+      process.exit(1);
+    }
+  ' "$output_file"
+}
+
+if pnpm audit --prod --json >"$production_file" 2>&1; then
   production_status=0
 else
   production_status=$?
 fi
 
 cat "$production_file"
+
+if [ "$production_status" -ne 0 ] && only_ignored_prod_advisories "$production_file"; then
+  echo 'AUDIT_PROD_EXCEPTION: ignoring unpatched advisory GHSA-fc5q-39xc-vjpf in production tree (see pnpm-workspace.yaml).'
+  production_status=0
+fi
 
 if pnpm audit >"$development_file" 2>&1; then
   development_status=0

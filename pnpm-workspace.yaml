@@ -146,6 +146,16 @@ overrides:
 # - deepmerge (MODERATE): installed 4.3.1 through jest-config. The advisory
 #   asks for >=4.3.2, which is not published: the registry's newest release
 #   is 4.3.1 (2023). Nothing in this repository can resolve it.
+#
+# Recorded, still-open unpatched advisory in the production tree (filtered
+# only for `GHSA-fc5q-39xc-vjpf` in `.github/scripts/run-pnpm-audit.sh`):
+#
+# - picomatch (GHSA-fc5q-39xc-vjpf, HIGH): installed 2.3.2, 4.0.4, and 4.0.7
+#   via umzug (local migration discovery) and astro (build-time SSG). Upstream
+#   has `first_patched_version: null` (`4.0.7` is the latest release on npm;
+#   4.0.8 does not exist yet). Neither consumer passes user-supplied globs in
+#   runtime. Remove `GHSA-fc5q-39xc-vjpf` from `run-pnpm-audit.sh` once
+#   picomatch >= 4.0.8 ships and clears minimumReleaseAge.
 publicHoistPattern:
   - typescript
 
