@@ -138,6 +138,63 @@ test('the script runs the production gate and the development report separately'
   assert.match(source, /pnpm audit(?! --prod)/);
 });
 
+test('the production gate ignores only the unpatched picomatch advisory GHSA-fc5q-39xc-vjpf', () => {
+  const source = fs.readFileSync(AUDIT_SCRIPT, 'utf8');
+  assert.doesNotMatch(source, /--ignore-unfixable/);
+  assert.doesNotMatch(source, /pnpm audit[^\n]*--ignore\b/);
+
+  const onlyPicomatch = {
+    output: JSON.stringify({
+      advisories: {
+        1247710: {
+          module_name: 'picomatch',
+          severity: 'high',
+          github_advisory_id: 'GHSA-fc5q-39xc-vjpf',
+        },
+      },
+      metadata: { vulnerabilities: { info: 0, low: 0, moderate: 0, high: 1, critical: 0 } },
+    }),
+    exitCode: 1,
+  };
+  const picomatchPlusOther = {
+    output: JSON.stringify({
+      advisories: {
+        1247710: {
+          module_name: 'picomatch',
+          severity: 'high',
+          github_advisory_id: 'GHSA-fc5q-39xc-vjpf',
+        },
+        9999999: {
+          module_name: 'qs',
+          severity: 'moderate',
+          github_advisory_id: 'GHSA-6rw7-vpxm-498p',
+        },
+      },
+      metadata: { vulnerabilities: { info: 0, low: 0, moderate: 1, high: 1, critical: 0 } },
+    }),
+    exitCode: 1,
+  };
+  const emptyAdvisoriesWithCount = {
+    output: JSON.stringify({
+      advisories: {},
+      metadata: { vulnerabilities: { info: 0, low: 0, moderate: 0, high: 1, critical: 0 } },
+    }),
+    exitCode: 1,
+  };
+
+  const allowed = runAudit(onlyPicomatch, CLEAN);
+  assert.equal(allowed.status, 0);
+  assert.match(allowed.stdout, /AUDIT_PROD_EXCEPTION:.*GHSA-fc5q-39xc-vjpf/);
+
+  const blockedMixed = runAudit(picomatchPlusOther, CLEAN);
+  assert.equal(blockedMixed.status, 1);
+  assert.match(blockedMixed.stderr, /AUDIT_ADVISORY/);
+
+  const blockedEmpty = runAudit(emptyAdvisoriesWithCount, CLEAN);
+  assert.equal(blockedEmpty.status, 1);
+  assert.match(blockedEmpty.stderr, /AUDIT_ADVISORY/);
+});
+
 test('workflow uses immutable references and preserves the verification foundations', () => {
   validateWorkflow(workflow());
 });
