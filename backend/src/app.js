@@ -28,6 +28,7 @@ if (!process.env.JEST_WORKER_ID && process.env.RUN_COMPILED !== 'true') {
 }
 
 const requestIdMiddleware = require('./infrastructure/middlewares/requestId').default;
+const trustedProxyIpMiddleware = require('./infrastructure/middlewares/trustedProxyIp').default;
 const requestLoggerMiddleware = require('./infrastructure/middlewares/requestLogger').default;
 const apiRouter = require('./infrastructure/routes/api/index').default;
 const healthRouter = require('./infrastructure/routes/health').default;
@@ -103,6 +104,9 @@ server.use(
     credentials: true,
   }),
 );
+
+// 2.5 Trusted proxy client IP (after corsMiddleware, before requestLoggerMiddleware and /api)
+server.use(trustedProxyIpMiddleware);
 
 // 3. Static files
 server.use(express.static(path.join(__dirname, '../public')));
