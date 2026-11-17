@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
-const { run } = require('./smoke-test');
+const { run, DEFAULT_TIMEOUT_MS } = require('./smoke-test');
 
 // Builds a fixture server whose response for a given path is driven by a
 // per-path queue of status codes (each request pops one; once exhausted, the
@@ -77,4 +77,8 @@ test('waits for liveness before ever checking readiness', async () => {
 test('base URL refuses connections -> fails without throwing', async () => {
   const result = await run({ baseUrl: 'http://127.0.0.1:1', timeoutMs: 1000 });
   assert.equal(result.ok, false);
+});
+
+test('DEFAULT_TIMEOUT_MS is 120000ms for Render Free cold-start wake-up', () => {
+  assert.equal(DEFAULT_TIMEOUT_MS, 120000);
 });

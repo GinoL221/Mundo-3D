@@ -18,13 +18,22 @@ function makeDb(overrides = {}) {
 
 describe('seedInitialData', () => {
   let errorSpy;
+  let logSpy;
+  const originalNodeEnv = process.env.NODE_ENV;
 
   beforeEach(() => {
     errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
     errorSpy.mockRestore();
+    logSpy.mockRestore();
+    if (originalNodeEnv === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = originalNodeEnv;
+    }
   });
 
   it('rejects when a model call fails, instead of silently resolving', async () => {
@@ -44,5 +53,35 @@ describe('seedInitialData', () => {
 
     await expect(seedInitialData(db)).resolves.toBeUndefined();
     expect(db.Category.bulkCreate).not.toHaveBeenCalled();
+  });
+
+  it('skips User seeding in production while still seeding Category, Franchise, and Product', async () => {
+    process.env.NODE_ENV = 'production';
+    const db = makeDb();
+
+    await expect(seedInitialData(db)).resolves.toBeUndefined();
+
+    expect(db.User.count).not.toHaveBeenCalled();
+    expect(db.User.bulkCreate).not.toHaveBeenCalled();
+    expect(db.Category.bulkCreate).toHaveBeenCalledTimes(1);
+    expect(db.Franchise.bulkCreate).toHaveBeenCalledTimes(1);
+    expect(db.Product.bulkCreate).toHaveBeenCalledTimes(1);
+  });
+
+  it('seeds User in development when User.count() is 0 and skips when User.count() > 0', async () => {
+    process.env.NODE_ENV = 'development';
+    const emptyDb = makeDb();
+
+    await expect(seedInitialData(emptyDb)).resolves.toBeUndefined();
+    expect(emptyDb.User.count).toHaveBeenCalledTimes(1);
+    expect(emptyDb.User.bulkCreate).toHaveBeenCalledTimes(1);
+
+    const populatedDb = makeDb({
+      User: { count: jest.fn().mockResolvedValue(2), bulkCreate: jest.fn() },
+    });
+
+    await expect(seedInitialData(populatedDb)).resolves.toBeUndefined();
+    expect(populatedDb.User.count).toHaveBeenCalledTimes(1);
+    expect(populatedDb.User.bulkCreate).not.toHaveBeenCalled();
   });
 });
