@@ -163,13 +163,20 @@ e2e/test-results/
 
 # Local agent integrations installed by development tools
 /.agents/skills/impeccable/
-/.claude/skills/impeccable/
-/.codex/hooks.json
+/.claude/
+/.codex/
 /.github/agents/impeccable-*.agent.md
 /.github/hooks/impeccable.json
 /.github/skills/impeccable/
 /.impeccable/config.json
-/.opencode/skills/impeccable/
+/.impeccable/critique/
+/frontend/.impeccable/questions/
+/.opencode/
+/.tools/
+/.gentle-ai-default-agent.json
+**/.gentle-ai-instance
+/.ruff_cache/
+/.tmp/
 
 # Local development tool configuration and state
 .codegraph/
