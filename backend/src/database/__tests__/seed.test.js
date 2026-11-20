@@ -4,7 +4,8 @@
 // error (e.g. a missing/incompatible table) must reject the returned
 // promise instead of being silently swallowed, since `backend/index.js`'s
 // boot chain relies on that rejection to fail fast.
-const { seedInitialData } = require('../seed');
+const path = require('node:path');
+const { seedInitialData, resolveSeedDataPath } = require('../seed');
 
 function makeDb(overrides = {}) {
   return {
@@ -83,5 +84,12 @@ describe('seedInitialData', () => {
     await expect(seedInitialData(populatedDb)).resolves.toBeUndefined();
     expect(populatedDb.User.count).toHaveBeenCalledTimes(1);
     expect(populatedDb.User.bulkCreate).not.toHaveBeenCalled();
+  });
+
+  it('resolves products.json from src/database/data when invoked from compiled dist/database without local copy', () => {
+    const fakeDistDbDir = path.resolve(__dirname, '../../../dist/database');
+    const resolved = resolveSeedDataPath('products.json', fakeDistDbDir);
+    expect(resolved).toBeTruthy();
+    expect(resolved.endsWith(path.join('database', 'data', 'products.json'))).toBe(true);
   });
 });

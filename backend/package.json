@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node -e \"const fs=require('node:fs'); fs.mkdirSync('dist/database/data',{recursive:true}); fs.copyFileSync('src/database/data/products.json','dist/database/data/products.json');\"",
     "architecture:check": "node tools/architecture/check.js",
     "test": "jest",
     "test:fast": "jest",
