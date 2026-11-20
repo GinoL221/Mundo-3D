@@ -9,6 +9,15 @@ export interface SmtpConfig {
   from: string;
 }
 
+export interface BrevoHttpConfig {
+  apiKey: string;
+  from: string;
+}
+
+type MailDriver = 'smtp' | 'brevo-http';
+
+const EMAIL_ADDRESS_PATTERN = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
+
 class ValidatedPublicOrigin implements PublicOriginPort {
   constructor(private readonly origin: string) {}
 
@@ -78,10 +87,55 @@ function parseSmtpConfig(environment: NodeJS.ProcessEnv): SmtpConfig {
   };
 }
 
+function isValidSender(value: string): boolean {
+  const trimmed = value.trim();
+  const angleMatch = /^.*<([^<>]+)>$/.exec(trimmed);
+  const email = angleMatch ? angleMatch[1].trim() : trimmed;
+  return EMAIL_ADDRESS_PATTERN.test(email);
+}
+
+function parseMailDriver(value: string | undefined): MailDriver | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  if (trimmed === 'smtp' || trimmed === 'brevo-http') {
+    return trimmed;
+  }
+  throw new Error('MAIL_DRIVER must be smtp or brevo-http');
+}
+
+function parseBrevoConfig(environment: NodeJS.ProcessEnv): BrevoHttpConfig {
+  const apiKey = environment.BREVO_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error('BREVO_API_KEY is required when using brevo-http mail driver');
+  }
+
+  const from = environment.MAIL_FROM?.trim() || environment.SMTP_FROM?.trim();
+  if (!from || !isValidSender(from)) {
+    throw new Error('MAIL_FROM or SMTP_FROM must be a valid sender email address');
+  }
+
+  return { apiKey, from };
+}
+
 export function loadEmailConfirmationConfig(environment: NodeJS.ProcessEnv): {
   publicOrigin: PublicOriginPort;
   smtp: SmtpConfig | undefined;
+  brevo: BrevoHttpConfig | undefined;
 } {
+  const publicOrigin = parsePublicOrigin(environment.PUBLIC_APP_URL);
+  const driver = parseMailDriver(environment.MAIL_DRIVER);
+  const hasBrevoApiKey = Boolean(environment.BREVO_API_KEY?.trim());
+
+  if (driver === 'brevo-http' || (!driver && hasBrevoApiKey)) {
+    return {
+      publicOrigin,
+      brevo: parseBrevoConfig(environment),
+      smtp: undefined,
+    };
+  }
+
   const hasSmtpConfiguration = [
     environment.SMTP_HOST,
     environment.SMTP_PORT,
@@ -92,7 +146,8 @@ export function loadEmailConfirmationConfig(environment: NodeJS.ProcessEnv): {
   ].some((value) => value !== undefined);
 
   return {
-    publicOrigin: parsePublicOrigin(environment.PUBLIC_APP_URL),
-    smtp: hasSmtpConfiguration ? parseSmtpConfig(environment) : undefined,
+    publicOrigin,
+    smtp: driver === 'smtp' || hasSmtpConfiguration ? parseSmtpConfig(environment) : undefined,
+    brevo: undefined,
   };
 }

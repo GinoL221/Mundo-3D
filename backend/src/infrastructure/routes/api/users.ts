@@ -33,6 +33,7 @@ import handleValidationErrors from '../../middlewares/handleValidationErrors';
 import { SequelizeEmailConfirmationTokenRepository } from '../../repositories/SequelizeEmailConfirmationTokenRepository';
 import { CryptoConfirmationTokenGenerator } from '../../security/CryptoConfirmationTokenGenerator';
 import { loadEmailConfirmationConfig } from '../../config/emailConfirmationConfig';
+import { createBrevoHttpMailAdapter } from '../../mail/BrevoHttpMailAdapter';
 import { createNodemailerSmtpMailAdapter } from '../../mail/NodemailerSmtpMailAdapter';
 import { EmailConfirmationAccountLimiter } from '../../rate-limit/emailConfirmationAccountLimiter';
 import resendConfirmationIpLimiter from '../../middlewares/resendConfirmationIpLimiter';
@@ -48,6 +49,9 @@ const idGenerator = new CryptoRandomIdGenerator();
 const uow = new SequelizeUnitOfWork();
 const emailConfirmationEnvironmentKeys = [
   'PUBLIC_APP_URL',
+  'MAIL_DRIVER',
+  'MAIL_FROM',
+  'BREVO_API_KEY',
   'SMTP_HOST',
   'SMTP_PORT',
   'SMTP_SECURE',
@@ -75,8 +79,14 @@ const emailConfirmationEnvironment =
     : process.env;
 const emailConfirmationConfig = loadEmailConfirmationConfig(emailConfirmationEnvironment);
 
-if (!emailConfirmationConfig.smtp) {
-  throw new Error('Email confirmation SMTP configuration is required');
+function createConfiguredMailAdapter(config: ReturnType<typeof loadEmailConfirmationConfig>) {
+  if (config.brevo) {
+    return createBrevoHttpMailAdapter(config.brevo);
+  }
+  if (config.smtp) {
+    return createNodemailerSmtpMailAdapter(config.smtp);
+  }
+  throw new Error('Email confirmation mail configuration is required');
 }
 
 const emailConfirmationClock = { now: () => new Date() };
@@ -86,7 +96,7 @@ const emailConfirmationIssuer = new IssueEmailConfirmationUseCase(
   new CryptoConfirmationTokenGenerator(),
   tokenHasher,
   emailConfirmationConfig.publicOrigin,
-  createNodemailerSmtpMailAdapter(emailConfirmationConfig.smtp),
+  createConfiguredMailAdapter(emailConfirmationConfig),
   emailConfirmationClock,
   new PinoLogger(),
 );
