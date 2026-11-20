@@ -138,4 +138,67 @@ describe('email confirmation API contract', () => {
       expect(serializedBodies).not.toContain(forbidden);
     }
   });
+
+  it('composes the users router with BrevoHttpMailAdapter when BREVO_API_KEY is configured without SMTP_HOST', () => {
+    const savedEnv = { ...process.env };
+    const createBrevoSpy = jest.fn(() => ({ sendEmailConfirmation: jest.fn() }));
+    const createSmtpSpy = jest.fn(() => ({ sendEmailConfirmation: jest.fn() }));
+
+    try {
+      delete process.env.SMTP_HOST;
+      delete process.env.SMTP_PORT;
+      delete process.env.SMTP_SECURE;
+      delete process.env.SMTP_USER;
+      delete process.env.SMTP_PASS;
+      delete process.env.SMTP_FROM;
+      process.env.PUBLIC_APP_URL = 'https://shop.example.com';
+      process.env.BREVO_API_KEY = 'xkeysib-test-key';
+      process.env.MAIL_FROM = 'Mundo-3D <no-reply@example.com>';
+
+      jest.isolateModules(() => {
+        jest.doMock('../../../mail/BrevoHttpMailAdapter', () => ({
+          createBrevoHttpMailAdapter: createBrevoSpy,
+        }));
+        jest.doMock('../../../mail/NodemailerSmtpMailAdapter', () => ({
+          createNodemailerSmtpMailAdapter: createSmtpSpy,
+        }));
+
+        const usersRouter = require('../users').default;
+        expect(usersRouter).toBeDefined();
+      });
+
+      expect(createBrevoSpy).toHaveBeenCalledWith({
+        apiKey: 'xkeysib-test-key',
+        from: 'Mundo-3D <no-reply@example.com>',
+      });
+      expect(createSmtpSpy).not.toHaveBeenCalled();
+    } finally {
+      process.env = savedEnv;
+    }
+  });
+
+  it('throws when PUBLIC_APP_URL is supplied without SMTP or Brevo configuration', () => {
+    const savedEnv = { ...process.env };
+
+    try {
+      delete process.env.SMTP_HOST;
+      delete process.env.SMTP_PORT;
+      delete process.env.SMTP_SECURE;
+      delete process.env.SMTP_USER;
+      delete process.env.SMTP_PASS;
+      delete process.env.SMTP_FROM;
+      delete process.env.BREVO_API_KEY;
+      delete process.env.MAIL_DRIVER;
+      delete process.env.MAIL_FROM;
+      process.env.PUBLIC_APP_URL = 'https://shop.example.com';
+
+      expect(() => {
+        jest.isolateModules(() => {
+          require('../users');
+        });
+      }).toThrow('Email confirmation mail configuration is required');
+    } finally {
+      process.env = savedEnv;
+    }
+  });
 });
