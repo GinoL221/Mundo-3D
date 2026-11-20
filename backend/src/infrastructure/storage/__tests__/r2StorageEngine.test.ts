@@ -41,9 +41,18 @@ beforeEach(() => {
   process.env.R2_SECRET_ACCESS_KEY = 'test-secret-key';
   process.env.R2_BUCKET_NAME = 'test-bucket';
   process.env.R2_PUBLIC_URL_BASE = 'https://pub-test.r2.dev';
+  delete process.env.R2_REGION;
+  delete process.env.R2_FORCE_PATH_STYLE;
+  (S3Client as unknown as jest.Mock).mockClear();
   (S3Client as unknown as jest.Mock).mockImplementation(() => ({ send: sendMock }));
   sendMock.mockReset();
   sendMock.mockResolvedValue({});
+  resetR2Client();
+});
+
+afterEach(() => {
+  delete process.env.R2_REGION;
+  delete process.env.R2_FORCE_PATH_STYLE;
   resetR2Client();
 });
 
@@ -176,5 +185,46 @@ describe('r2StorageEngine._removeFile', () => {
     const command = sendMock.mock.calls[0][0];
     expect(command).toBeInstanceOf(DeleteObjectCommand);
     expect(command.input).toEqual({ Bucket: 'test-bucket', Key: 'products/abc-123.png' });
+  });
+});
+
+describe('r2Client S3 compatibility options', () => {
+  it('defaults region to auto and forcePathStyle to false when optional vars are unset', async () => {
+    const engine = createR2StorageEngine('users');
+    await handle(engine, {
+      originalname: 'avatar.png',
+      mimetype: 'image/png',
+      stream: Readable.from([Buffer.from('bytes')]),
+    });
+
+    expect(S3Client).toHaveBeenCalledWith(
+      expect.objectContaining({
+        region: 'auto',
+        forcePathStyle: false,
+        endpoint: 'https://acct.r2.cloudflarestorage.com',
+      })
+    );
+  });
+
+  it('honors R2_REGION and R2_FORCE_PATH_STYLE=true for S3-compatible providers such as Supabase Storage', async () => {
+    process.env.R2_ENDPOINT = 'https://proj.storage.supabase.co/storage/v1/s3';
+    process.env.R2_REGION = 'us-east-1';
+    process.env.R2_FORCE_PATH_STYLE = 'true';
+    resetR2Client();
+
+    const engine = createR2StorageEngine('users');
+    await handle(engine, {
+      originalname: 'avatar.jpg',
+      mimetype: 'image/jpeg',
+      stream: Readable.from([Buffer.from('bytes')]),
+    });
+
+    expect(S3Client).toHaveBeenCalledWith(
+      expect.objectContaining({
+        region: 'us-east-1',
+        forcePathStyle: true,
+        endpoint: 'https://proj.storage.supabase.co/storage/v1/s3',
+      })
+    );
   });
 });
