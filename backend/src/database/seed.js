@@ -2,6 +2,18 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 
+function resolveSeedDataPath(filename, baseDir = __dirname) {
+  const localPath = path.join(baseDir, 'data', filename);
+  if (fs.existsSync(localPath)) {
+    return localPath;
+  }
+  const sourceFallback = path.resolve(baseDir, '../../src/database/data', filename);
+  if (fs.existsSync(sourceFallback)) {
+    return sourceFallback;
+  }
+  return null;
+}
+
 // Función para insertar datos iniciales en Category, Franchise, User y Product
 async function seedInitialData(db) {
   // Categorías
@@ -47,8 +59,8 @@ async function seedInitialData(db) {
     if (process.env.NODE_ENV !== 'production') {
       const userCount = await db.User.count();
       if (userCount === 0) {
-        const usersPath = path.join(__dirname, 'data/users.json');
-        if (fs.existsSync(usersPath)) {
+        const usersPath = resolveSeedDataPath('users.json');
+        if (usersPath) {
           const usersData = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
           const usersHashed = usersData.map((u) => {
             const rawPassword = u.PasswordUser || u.Password || u.password || '';
@@ -72,8 +84,8 @@ async function seedInitialData(db) {
     // Productos
     const prodCount = await db.Product.count();
     if (prodCount === 0) {
-      const productsPath = path.join(__dirname, 'data/products.json');
-      if (fs.existsSync(productsPath)) {
+      const productsPath = resolveSeedDataPath('products.json');
+      if (productsPath) {
         const productsData = JSON.parse(fs.readFileSync(productsPath, 'utf8'));
         const productsMapped = productsData.map((p) => ({
           nameProduct: p.NameProduct || p.nameProduct,
@@ -106,4 +118,4 @@ async function seedInitialData(db) {
   }
 }
 
-module.exports = { seedInitialData };
+module.exports = { seedInitialData, resolveSeedDataPath };
