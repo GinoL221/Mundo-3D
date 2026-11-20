@@ -140,6 +140,53 @@ export function readApiErrorMessage(body: unknown, fallback: string): string {
   return error || message || fallback;
 }
 
+const COLD_START_STATUSES = new Set([502, 503, 504]);
+const COLD_START_ERROR_MESSAGE =
+  'El servidor se está iniciando. Esperá unos segundos y volvé a intentarlo.';
+
+type ParsedJsonResult = { ok: true; value: unknown } | { ok: false };
+
+function tryParseJson(rawText: string): ParsedJsonResult {
+  if (!rawText.trim()) {
+    return { ok: false };
+  }
+  try {
+    const value: unknown = JSON.parse(rawText);
+    return { ok: true, value };
+  } catch {
+    return { ok: false };
+  }
+}
+
+/**
+ * Safely reads and parses an API `Response` without letting raw HTML/text
+ * responses (such as Render Free cold-start 502/503/504 pages) trigger an
+ * unhandled `SyntaxError` from `response.json()`.
+ */
+export async function parseApiResponse<T>(response: Response, fallbackMessage: string): Promise<T> {
+  const rawText = await response.text();
+  const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
+  const parsed: ParsedJsonResult = contentType.includes('text/html')
+    ? { ok: false }
+    : tryParseJson(rawText);
+
+  if (!response.ok) {
+    if (parsed.ok) {
+      throw new Error(readApiErrorMessage(parsed.value, fallbackMessage));
+    }
+    if (COLD_START_STATUSES.has(response.status)) {
+      throw new Error(COLD_START_ERROR_MESSAGE);
+    }
+    throw new Error(fallbackMessage);
+  }
+
+  if (parsed.ok) {
+    return parsed.value as T;
+  }
+
+  throw new Error(fallbackMessage);
+}
+
 /**
  * Minimal shape read from the non-httpOnly `m3d_user` display cookie.
  * Centralized here so admin pages/components share one source of truth
