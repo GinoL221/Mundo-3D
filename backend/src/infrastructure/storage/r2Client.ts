@@ -8,9 +8,12 @@ let client: S3Client | null = null;
 
 export function getR2Client(): S3Client {
   if (!client) {
+    const region = (process.env.R2_REGION ?? '').trim() || 'auto';
+    const forcePathStyle = (process.env.R2_FORCE_PATH_STYLE ?? '').trim() === 'true';
     client = new S3Client({
-      region: 'auto',
+      region,
       endpoint: process.env.R2_ENDPOINT,
+      forcePathStyle,
       credentials: {
         accessKeyId: process.env.R2_ACCESS_KEY_ID as string,
         secretAccessKey: process.env.R2_SECRET_ACCESS_KEY as string,
