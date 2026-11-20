@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getSessionUser, readApiErrorMessage, readCsrfToken, withCredentials } from './credentials';
+import {
+  getSessionUser,
+  parseApiResponse,
+  readApiErrorMessage,
+  readCsrfToken,
+  withCredentials,
+} from './credentials';
 
 function stubCookie(cookie: string) {
   vi.stubGlobal('document', { cookie });
@@ -131,5 +137,105 @@ describe('readApiErrorMessage', () => {
 
   it('falls back to the caller default when nothing is usable', () => {
     expect(readApiErrorMessage({}, 'fallback')).toBe('fallback');
+  });
+});
+
+describe('parseApiResponse', () => {
+  it('returns parsed JSON payload for ok 200/201 JSON responses', async () => {
+    const ok200 = new Response(JSON.stringify({ user: { id: 1 } }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const ok201 = new Response(JSON.stringify({ created: true }), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    });
+
+    await expect(parseApiResponse<{ user: { id: number } }>(ok200, 'fallback')).resolves.toEqual({
+      user: { id: 1 },
+    });
+    await expect(parseApiResponse<{ created: boolean }>(ok201, 'fallback')).resolves.toEqual({
+      created: true,
+    });
+  });
+
+  it('throws fallbackMessage when an ok 200 response has non-JSON or empty body', async () => {
+    const html200 = new Response('<html><body>SPA fallback</body></html>', {
+      status: 200,
+      headers: { 'Content-Type': 'text/html' },
+    });
+    const empty200 = new Response('', {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    await expect(parseApiResponse(html200, 'Error al iniciar sesión.')).rejects.toThrow(
+      'Error al iniciar sesión.'
+    );
+    await expect(parseApiResponse(empty200, 'Error al iniciar sesión.')).rejects.toThrow(
+      'Error al iniciar sesión.'
+    );
+  });
+
+  it('throws extracted API error message for JSON 400/401/500 error responses', async () => {
+    const res400 = new Response(JSON.stringify({ errors: [{ msg: 'Email inválido' }] }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res401 = new Response(JSON.stringify({ error: 'Credenciales inválidas' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res500 = new Response(JSON.stringify({ message: 'Fallo interno' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    await expect(parseApiResponse(res400, 'fallback')).rejects.toThrow('Email inválido');
+    await expect(parseApiResponse(res401, 'fallback')).rejects.toThrow('Credenciales inválidas');
+    await expect(parseApiResponse(res500, 'fallback')).rejects.toThrow('Fallo interno');
+  });
+
+  it('throws the cold-start message for non-JSON 502/503/504 responses instead of SyntaxError', async () => {
+    const res502 = new Response('<html><body>Bad Gateway</body></html>', {
+      status: 502,
+      headers: { 'Content-Type': 'text/html' },
+    });
+    const res503 = new Response('Service Unavailable', {
+      status: 503,
+      headers: { 'Content-Type': 'text/plain' },
+    });
+    const res504 = new Response('', {
+      status: 504,
+    });
+
+    const expectedMsg = 'El servidor se está iniciando. Esperá unos segundos y volvé a intentarlo.';
+    await expect(parseApiResponse(res502, 'fallback')).rejects.toThrow(expectedMsg);
+    await expect(parseApiResponse(res503, 'fallback')).rejects.toThrow(expectedMsg);
+    await expect(parseApiResponse(res504, 'fallback')).rejects.toThrow(expectedMsg);
+  });
+
+  it('uses JSON error body even on 503 when the response is valid JSON', async () => {
+    const json503 = new Response(JSON.stringify({ error: 'Image uploads disabled' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    await expect(parseApiResponse(json503, 'fallback')).rejects.toThrow('Image uploads disabled');
+  });
+
+  it('throws fallbackMessage for non-JSON 500 or empty 400 responses', async () => {
+    const html500 = new Response('<html>Internal Error</html>', {
+      status: 500,
+      headers: { 'Content-Type': 'text/html' },
+    });
+    const empty400 = new Response('', { status: 400 });
+
+    await expect(parseApiResponse(html500, 'Error al iniciar sesión.')).rejects.toThrow(
+      'Error al iniciar sesión.'
+    );
+    await expect(parseApiResponse(empty400, 'Error al registrarse.')).rejects.toThrow(
+      'Error al registrarse.'
+    );
   });
 });

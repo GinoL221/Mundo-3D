@@ -253,4 +253,149 @@ describe('Cloudflare Pages /api/* reverse proxy', () => {
       error: expect.any(String),
     });
   });
+
+  describe('cold-start non-JSON 502/503/504 normalization', () => {
+    it('normalizes an upstream 502 text/html response (e.g. Render cold-start) into a 503 JSON response', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response('<html><body>Application starting up</body></html>', {
+          status: 502,
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+            'x-render-routing': 'no-deploy',
+          },
+        }),
+      );
+
+      const req = new Request('https://mundo3d.pages.dev/api/users/login', {
+        method: 'POST',
+        body: '{}',
+      });
+      const res = await onRequest(
+        createContext(req, { BACKEND_API_URL: 'https://mundo3d-api.onrender.com' }),
+      );
+
+      expect(res.status).toBe(503);
+      expect(res.headers.get('content-type')).toBe('application/json');
+      expect(res.headers.get('cache-control')).toBe('no-store');
+      expect(res.headers.get('retry-after')).toBe('10');
+      expect(await res.json()).toEqual({
+        error: 'El servidor se está iniciando. Esperá unos segundos y volvé a intentarlo.',
+      });
+    });
+
+    it('normalizes an upstream 503 text/html response into a 503 JSON response', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response('<html><body>503 Service Temporarily Unavailable</body></html>', {
+          status: 503,
+          headers: { 'Content-Type': 'text/html' },
+        }),
+      );
+
+      const req = new Request('https://mundo3d.pages.dev/api/products');
+      const res = await onRequest(
+        createContext(req, { BACKEND_API_URL: 'https://mundo3d-api.onrender.com' }),
+      );
+
+      expect(res.status).toBe(503);
+      expect(res.headers.get('content-type')).toBe('application/json');
+      expect(res.headers.get('cache-control')).toBe('no-store');
+      expect(res.headers.get('retry-after')).toBe('10');
+      expect(await res.json()).toEqual({
+        error: 'El servidor se está iniciando. Esperá unos segundos y volvé a intentarlo.',
+      });
+    });
+
+    it('normalizes an upstream 504 non-JSON response without content-type into a 503 JSON response', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(null, {
+          status: 504,
+        }),
+      );
+
+      const req = new Request('https://mundo3d.pages.dev/api/products');
+      const res = await onRequest(
+        createContext(req, { BACKEND_API_URL: 'https://mundo3d-api.onrender.com' }),
+      );
+
+      expect(res.status).toBe(503);
+      expect(res.headers.get('content-type')).toBe('application/json');
+      expect(res.headers.get('cache-control')).toBe('no-store');
+      expect(res.headers.get('retry-after')).toBe('10');
+      expect(await res.json()).toEqual({
+        error: 'El servidor se está iniciando. Esperá unos segundos y volvé a intentarlo.',
+      });
+    });
+
+    it('preserves upstream 502 application/json responses untouched including Set-Cookie', async () => {
+      const upstreamHeaders = new Headers({
+        'Content-Type': 'application/json',
+        'X-Custom-Error': 'upstream-gateway',
+      });
+      upstreamHeaders.append('Set-Cookie', 'm3d_diag=1; Path=/; HttpOnly');
+
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: 'Upstream JSON gateway error' }), {
+          status: 502,
+          headers: upstreamHeaders,
+        }),
+      );
+
+      const req = new Request('https://mundo3d.pages.dev/api/orders', { method: 'POST', body: '{}' });
+      const res = await onRequest(
+        createContext(req, { BACKEND_API_URL: 'https://mundo3d-api.onrender.com' }),
+      );
+
+      expect(res.status).toBe(502);
+      expect(res.headers.get('content-type')).toBe('application/json');
+      expect(res.headers.get('x-custom-error')).toBe('upstream-gateway');
+      expect(res.headers.get('retry-after')).toBeNull();
+      expect(res.headers.getSetCookie()).toEqual(['m3d_diag=1; Path=/; HttpOnly']);
+      expect(await res.json()).toEqual({ error: 'Upstream JSON gateway error' });
+    });
+
+    it('preserves upstream 503 APPLICATION/JSON (case-insensitive) responses untouched', async () => {
+      const upstreamHeaders = new Headers({
+        'Content-Type': 'APPLICATION/JSON; charset=utf-8',
+      });
+      upstreamHeaders.append('Set-Cookie', 'm3d_csrf=keep; Path=/; SameSite=Lax');
+
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: 'Image uploads are disabled in this environment' }), {
+          status: 503,
+          headers: upstreamHeaders,
+        }),
+      );
+
+      const req = new Request('https://mundo3d.pages.dev/api/users/register', {
+        method: 'POST',
+        body: '{}',
+      });
+      const res = await onRequest(
+        createContext(req, { BACKEND_API_URL: 'https://mundo3d-api.onrender.com' }),
+      );
+
+      expect(res.status).toBe(503);
+      expect(res.headers.get('content-type')).toBe('APPLICATION/JSON; charset=utf-8');
+      expect(res.headers.get('retry-after')).toBeNull();
+      expect(res.headers.getSetCookie()).toEqual(['m3d_csrf=keep; Path=/; SameSite=Lax']);
+      expect(await res.json()).toEqual({ error: 'Image uploads are disabled in this environment' });
+    });
+
+    it('preserves upstream 500 application/json responses untouched', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: 'Internal server error' }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+      const req = new Request('https://mundo3d.pages.dev/api/products');
+      const res = await onRequest(
+        createContext(req, { BACKEND_API_URL: 'https://mundo3d-api.onrender.com' }),
+      );
+
+      expect(res.status).toBe(500);
+      expect(await res.json()).toEqual({ error: 'Internal server error' });
+    });
+  });
 });

@@ -12,11 +12,17 @@ function buildAPIUser() {
 }
 
 function jsonResponse(status: number, body: unknown) {
-  return {
-    ok: status >= 200 && status < 300,
+  return new Response(JSON.stringify(body), {
     status,
-    json: () => Promise.resolve(body),
-  };
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+function htmlResponse(status: number, html: string) {
+  return new Response(html, {
+    status,
+    headers: { 'Content-Type': 'text/html' },
+  });
 }
 
 describe('AuthService', () => {
@@ -104,6 +110,27 @@ describe('AuthService', () => {
         'Error al iniciar sesión.'
       );
     });
+
+    it('throws cold-start retry message on HTML 502/503/504 responses instead of JSON SyntaxError', async () => {
+      const expected = 'El servidor se está iniciando. Esperá unos segundos y volvé a intentarlo.';
+
+      fetchMock.mockResolvedValueOnce(htmlResponse(502, '<html><body>502 Bad Gateway</body></html>'));
+      await expect(AuthService.login('ada@test.com', 'password123')).rejects.toThrow(expected);
+
+      fetchMock.mockResolvedValueOnce(htmlResponse(503, '<html><body>503 Service Unavailable</body></html>'));
+      await expect(AuthService.login('ada@test.com', 'password123')).rejects.toThrow(expected);
+
+      fetchMock.mockResolvedValueOnce(new Response('', { status: 504 }));
+      await expect(AuthService.login('ada@test.com', 'password123')).rejects.toThrow(expected);
+    });
+
+    it('throws fallback message when a 200 response returns non-JSON HTML', async () => {
+      fetchMock.mockResolvedValue(htmlResponse(200, '<html><body>Not JSON</body></html>'));
+
+      await expect(AuthService.login('ada@test.com', 'password123')).rejects.toThrow(
+        'Error al iniciar sesión.'
+      );
+    });
   });
 
   describe('register', () => {
@@ -175,6 +202,27 @@ describe('AuthService', () => {
 
     it('falls back to the default message when no error information is present', async () => {
       fetchMock.mockResolvedValue(jsonResponse(500, {}));
+
+      await expect(AuthService.register(buildFormData())).rejects.toThrow(
+        'Error al registrarse.'
+      );
+    });
+
+    it('throws cold-start retry message on HTML 502/503/504 responses instead of JSON SyntaxError', async () => {
+      const expected = 'El servidor se está iniciando. Esperá unos segundos y volvé a intentarlo.';
+
+      fetchMock.mockResolvedValueOnce(htmlResponse(502, '<html><body>502 Bad Gateway</body></html>'));
+      await expect(AuthService.register(buildFormData())).rejects.toThrow(expected);
+
+      fetchMock.mockResolvedValueOnce(htmlResponse(503, '<html><body>503 Service Unavailable</body></html>'));
+      await expect(AuthService.register(buildFormData())).rejects.toThrow(expected);
+
+      fetchMock.mockResolvedValueOnce(new Response('', { status: 504 }));
+      await expect(AuthService.register(buildFormData())).rejects.toThrow(expected);
+    });
+
+    it('throws fallback message when a 201 response returns non-JSON HTML', async () => {
+      fetchMock.mockResolvedValue(htmlResponse(201, '<html><body>Not JSON</body></html>'));
 
       await expect(AuthService.register(buildFormData())).rejects.toThrow(
         'Error al registrarse.'

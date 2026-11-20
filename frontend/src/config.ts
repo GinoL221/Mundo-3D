@@ -10,6 +10,7 @@ export { API_URL } from './lib/http/apiBase';
 export {
   expireClientReadableSessionCookies,
   getSessionUser,
+  parseApiResponse,
   readApiErrorMessage,
   readCsrfToken,
   withCredentials,

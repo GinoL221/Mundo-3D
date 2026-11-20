@@ -20,11 +20,21 @@ function extractSetCookieHeaders(headers: Headers): string[] {
   return singleCookie ? [singleCookie] : [];
 }
 
-function jsonError(status: number, error: string): Response {
+const COLD_START_STATUSES = new Set([502, 503, 504]);
+const COLD_START_ERROR_MESSAGE =
+  'El servidor se está iniciando. Esperá unos segundos y volvé a intentarlo.';
+
+function isJsonContentType(headers: Headers): boolean {
+  const contentType = headers.get('content-type')?.toLowerCase() ?? '';
+  return contentType.includes('application/json');
+}
+
+function jsonError(status: number, error: string, extraHeaders?: Record<string, string>): Response {
   return new Response(JSON.stringify({ error }), {
     status,
     headers: {
       'Content-Type': 'application/json',
+      ...extraHeaders,
     },
   });
 }
@@ -92,6 +102,17 @@ export async function onRequest(context: PagesFunctionContext): Promise<Response
     upstreamResponse = await fetch(targetUrl, init);
   } catch {
     return jsonError(502, 'Upstream service unavailable.');
+  }
+
+  if (
+    COLD_START_STATUSES.has(upstreamResponse.status) &&
+    !isJsonContentType(upstreamResponse.headers)
+  ) {
+    await upstreamResponse.body?.cancel().catch(() => undefined);
+    return jsonError(503, COLD_START_ERROR_MESSAGE, {
+      'Cache-Control': 'no-store',
+      'Retry-After': '10',
+    });
   }
 
   const responseHeaders = new Headers();

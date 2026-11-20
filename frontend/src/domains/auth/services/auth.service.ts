@@ -1,4 +1,4 @@
-import { API_URL, readApiErrorMessage } from '../../../config';
+import { API_URL, parseApiResponse } from '../../../config';
 import { createAuthAdapter } from '../adapters/auth.adapter';
 import type { AuthData, APILoginResponse } from '../adapters/auth.adapter';
 
@@ -19,13 +19,8 @@ export class AuthService {
       body: JSON.stringify({ email, password, remember }),
     });
 
-    const data: unknown = await res.json();
-
-    if (!res.ok) {
-      throw new Error(readApiErrorMessage(data, 'Error al iniciar sesión.'));
-    }
-
-    return createAuthAdapter(data as APILoginResponse);
+    const data = await parseApiResponse<APILoginResponse>(res, 'Error al iniciar sesión.');
+    return createAuthAdapter(data);
   }
 
   // Deliberately plain `fetch`, not `authFetch` (design.md D6, task 3.10) —
@@ -37,12 +32,7 @@ export class AuthService {
       body: formData,
     });
 
-    const data: unknown = await res.json();
-
-    if (!res.ok) {
-      throw new Error(readApiErrorMessage(data, 'Error al registrarse.'));
-    }
-
-    return createAuthAdapter(data as APILoginResponse);
+    const data = await parseApiResponse<APILoginResponse>(res, 'Error al registrarse.');
+    return createAuthAdapter(data);
   }
 }
