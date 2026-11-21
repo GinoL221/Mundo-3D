@@ -29,6 +29,9 @@ const SYNC_FALSE_SECRETS = [
   'CLOUDINARY_CLOUD_NAME',
   'CLOUDINARY_API_KEY',
   'CLOUDINARY_API_SECRET',
+  'MAIL_DRIVER',
+  'BREVO_API_KEY',
+  'MAIL_FROM',
   'SMTP_HOST',
   'SMTP_PORT',
   'SMTP_SECURE',
@@ -36,6 +39,8 @@ const SYNC_FALSE_SECRETS = [
   'SMTP_PASS',
   'SMTP_FROM',
   'R2_ENDPOINT',
+  'R2_REGION',
+  'R2_FORCE_PATH_STYLE',
   'R2_ACCESS_KEY_ID',
   'R2_SECRET_ACCESS_KEY',
   'R2_BUCKET_NAME',
@@ -84,15 +89,15 @@ test('render.yaml contains no secret material or sync:true entries', () => {
   assert.doesNotMatch(text, /sync:\s*true/);
 });
 
-test('RUNBOOKS.md has a platform bring-up section covering Render, Aiven, and Vercel', () => {
+test('RUNBOOKS.md has a platform bring-up section covering the cardless free-tier stack', () => {
   const text = read(RUNBOOKS);
   assert.match(text, /^##\s+.*(Platform bring-up|Platform Bring-Up)/m);
-  for (const provider of ['Aiven', 'Render', 'Vercel']) {
+  for (const provider of ['TiDB Cloud', 'Render', 'Cloudflare Pages', 'Supabase', 'Brevo']) {
     assert.ok(text.includes(provider), `runbook platform section must mention ${provider}`);
   }
 });
 
-test('RUNBOOKS.md platform section documents the domain, cookie, TLS, and cold-start wiring', () => {
+test('RUNBOOKS.md platform section documents the proxy, cookie, TLS, storage, mail, and cold-start wiring', () => {
   const text = read(RUNBOOKS);
   for (const token of [
     'DB_CA_CERT',
@@ -100,7 +105,11 @@ test('RUNBOOKS.md platform section documents the domain, cookie, TLS, and cold-s
     'COOKIE_DOMAIN',
     'CORS_ORIGIN',
     'PUBLIC_API_URL',
+    'PROXY_SHARED_SECRET',
+    'STORAGE_DRIVER',
+    'BREVO_API_KEY',
     'SMOKE_TEST_TIMEOUT_MS',
+    '/api/',
     'api.',
   ]) {
     assert.ok(text.includes(token), `runbook platform section must mention ${token}`);

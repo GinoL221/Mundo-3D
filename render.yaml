@@ -1,7 +1,8 @@
 # Render Blueprint — Mundo-3D backend (free-tier web service).
 # Cardless free-tier topology: Cloudflare Pages (frontend + /api/* proxy) +
-# Render Free (backend) + TiDB Cloud Starter (DB) + Brevo (SMTP) +
-# Cloudinary/R2 (storage). See docs/RUNBOOKS.md "Platform bring-up".
+# Render Free (backend) + TiDB Cloud Starter (DB) + Brevo (HTTPS/SMTP) +
+# Supabase Storage S3 / R2 / Cloudinary (STORAGE_DRIVER).
+# See docs/RUNBOOKS.md "Platform bring-up".
 #
 # Secrets are declared here as keys with `sync: false` so the manifest is a
 # complete, reviewable inventory of what production needs while no secret
@@ -55,7 +56,15 @@ services:
       # Shared secret authenticating CF-Connecting-IP from the Pages proxy.
       - key: PROXY_SHARED_SECRET
         sync: false
-      # Brevo SMTP — credentials stay in the Render dashboard.
+      # Brevo — HTTPS API v3 on port 443 (`MAIL_DRIVER=brevo-http` +
+      # `BREVO_API_KEY` + `MAIL_FROM`) works on Render Free, which blocks
+      # outbound SMTP port 587. Keep `SMTP_*` for hosts allowing port 587.
+      - key: MAIL_DRIVER
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
@@ -78,9 +87,14 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
-      # Cloudflare R2 — used when STORAGE_DRIVER=r2.
-      # See docs/RUNBOOKS.md "Platform bring-up" section 5.
+      # S3-compatible object storage — used when STORAGE_DRIVER=r2.
+      # Supports Cloudflare R2 and Supabase Storage S3 (`R2_REGION` +
+      # `R2_FORCE_PATH_STYLE=true`). See docs/RUNBOOKS.md "Platform bring-up".
       - key: R2_ENDPOINT
+        sync: false
+      - key: R2_REGION
+        sync: false
+      - key: R2_FORCE_PATH_STYLE
         sync: false
       - key: R2_ACCESS_KEY_ID
         sync: false
