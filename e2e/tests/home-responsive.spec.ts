@@ -77,9 +77,11 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
         const header = document.querySelector<HTMLElement>('.home-header__inner');
         const main = document.querySelector<HTMLElement>('.home-hero__inner');
         const footer = document.querySelector<HTMLElement>('.home-footer__inner');
+        const footerTop = document.querySelector<HTMLElement>('.home-footer__top');
         const footerBrand = document.querySelector<HTMLElement>('.home-footer__brand');
-        const footerLinks = document.querySelector<HTMLElement>('.home-footer__links');
-        const footerEnd = document.querySelector<HTMLElement>('.home-footer__end');
+        const footerColumns = [...document.querySelectorAll<HTMLElement>('.home-footer__column')];
+        const footerBottom = document.querySelector<HTMLElement>('.home-footer__bottom');
+        const footerCopyright = document.querySelector<HTMLElement>('.home-footer__copyright');
         const heroCopy = document.querySelector<HTMLElement>('.home-hero__copy');
         const featured = document.querySelector<HTMLElement>('.home-featured-card');
         const body = document.querySelector<HTMLElement>('.home-hero__description');
@@ -98,9 +100,11 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
           !header ||
           !main ||
           !footer ||
+          !footerTop ||
           !footerBrand ||
-          !footerLinks ||
-          !footerEnd ||
+          footerColumns.length !== 3 ||
+          !footerBottom ||
+          !footerCopyright ||
           !heroCopy ||
           !featured ||
           !body ||
@@ -114,7 +118,7 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
           throw new Error('Home responsive contract elements are missing.');
         }
 
-        const footerStyle = getComputedStyle(footer);
+        const footerTopStyle = getComputedStyle(footerTop);
         return {
           columns: getComputedStyle(grid).gridTemplateColumns.trim().split(/\s+/).length,
           cardWidth: card.getBoundingClientRect().width,
@@ -128,29 +132,17 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
           headingSize: Number.parseFloat(getComputedStyle(heading).fontSize),
           logo: logo.getBoundingClientRect(),
           logoFit: getComputedStyle(logo).objectFit,
-          footerDisplay: footerStyle.display,
-          footerGridTemplateAreas: footerStyle.gridTemplateAreas,
-          footerGridAreas: {
-            brand: getComputedStyle(footerBrand).gridArea,
-            links: getComputedStyle(footerLinks).gridArea,
-            end: getComputedStyle(footerEnd).gridArea,
-          },
-          footerFlex: {
-            brand: getComputedStyle(footerBrand).flex,
-            links: getComputedStyle(footerLinks).flex,
-            end: getComputedStyle(footerEnd).flex,
-          },
-          footerEndDirection: getComputedStyle(footerEnd).flexDirection,
-          footerEndAlignItems: getComputedStyle(footerEnd).alignItems,
-          footerLinksTop: [...footerLinks.querySelectorAll('a')].map(
-            (link) => link.getBoundingClientRect().top,
+          footerTopDisplay: footerTopStyle.display,
+          footerTopColumns: footerTopStyle.gridTemplateColumns.trim().split(/\s+/).length,
+          footerColumnCount: footerColumns.length,
+          footerLinkTargets: [...footer.querySelectorAll('.home-footer__links a')].map((link) =>
+            link.getBoundingClientRect(),
           ),
           footerSocialTargets: [...footer.querySelectorAll('.home-footer__social-link')].map(
             (link) => link.getBoundingClientRect(),
           ),
-          footerSocialTop: [...footer.querySelectorAll('.home-footer__social-link')].map(
-            (link) => link.getBoundingClientRect().top,
-          ),
+          footerCopyrightRect: footerCopyright.getBoundingClientRect(),
+          footerCopyrightLineHeight: Number.parseFloat(getComputedStyle(footerCopyright).lineHeight),
           menuButton: menuToggle.getBoundingClientRect(),
           menuIcon: menuIcon.getBoundingClientRect(),
           cart: cart.getBoundingClientRect(),
@@ -183,35 +175,31 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
         expect(metrics.heroCopy.top).toBeLessThan(metrics.featured.bottom);
       }
 
+      expect(metrics.footerTopDisplay).toBe('grid');
+      expect(metrics.footerColumnCount).toBe(3);
+
       if (viewport.width < 640) {
-        expect(metrics.footerFlex).toEqual({
-          brand: '0 1 auto',
-          links: '0 1 auto',
-          end: '0 1 auto',
-        });
+        expect(metrics.footerTopColumns).toBe(1);
+      } else if (viewport.width < 1024) {
+        expect(metrics.footerTopColumns).toBe(2);
+      } else {
+        expect(metrics.footerTopColumns).toBe(4);
       }
 
-      if (viewport.width >= 640 && viewport.width < 768) {
-        expect(metrics.footerDisplay).toBe('grid');
-        expect(metrics.footerGridTemplateAreas).toBe('"brand end" "links links"');
-        expect(metrics.footerGridAreas).toEqual({ brand: 'brand', links: 'links', end: 'end' });
+      expect(metrics.footerLinkTargets).toHaveLength(8);
+      for (const target of metrics.footerLinkTargets) {
+        expect(target.width).toBeGreaterThanOrEqual(44);
+        expect(target.height).toBeGreaterThanOrEqual(44);
       }
-
-      if (viewport.width >= 768 && viewport.width < 1024) {
-        expect(metrics.footerDisplay).toBe('grid');
-        expect(metrics.footerGridTemplateAreas).toBe('"brand links end"');
-        expect(metrics.footerGridAreas).toEqual({ brand: 'brand', links: 'links', end: 'end' });
-        expect(metrics.footerEndDirection).toBe('row');
-        expect(metrics.footerEndAlignItems).toBe('center');
+      expect(metrics.footerSocialTargets).toHaveLength(1);
+      for (const target of metrics.footerSocialTargets) {
+        expect(target.width).toBeGreaterThanOrEqual(44);
+        expect(target.height).toBeGreaterThanOrEqual(44);
       }
-
-      if (viewport.width >= 640 && viewport.width < 1024) {
-        expect(new Set(metrics.footerLinksTop.map((top) => Math.round(top))).size).toBe(1);
-        expect(new Set(metrics.footerSocialTop.map((top) => Math.round(top))).size).toBe(1);
-        for (const target of metrics.footerSocialTargets) {
-          expect(target.width).toBeGreaterThanOrEqual(44);
-          expect(target.height).toBeGreaterThanOrEqual(44);
-        }
+      if (viewport.width >= 640) {
+        expect(metrics.footerCopyrightRect.height).toBeLessThanOrEqual(
+          metrics.footerCopyrightLineHeight + 2,
+        );
       }
 
       if (viewport.compactNavigation) {

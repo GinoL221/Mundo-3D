@@ -1,7 +1,6 @@
 ---
 import HomeHeader from '../components/HomeHeader.astro';
 import HomeFooter from '../components/HomeFooter.astro';
-import WhatsAppFloating from '../components/WhatsAppFloating.astro';
 
 // Global styling imports
 import '../styles/normalize.css';
@@ -23,7 +22,6 @@ import '../styles/components/home.css';
 import '../styles/components/home-products.css';
 import '../styles/components/home-footer.css';
 import '../styles/components/home-responsive.css';
-import '../styles/components/whatsapp-floating.css';
 import '../styles/components/product-grid.css';
 import '../styles/components/product-card.css';
 import '../styles/components/price.css';
@@ -47,10 +45,9 @@ import '../styles/components/about.css';
 
 interface Props {
 	title?: string;
-	variant?: 'default' | 'home';
 }
 
-const { title = "Mundo 3D", variant = 'default' } = Astro.props;
+const { title = "Mundo 3D" } = Astro.props;
 ---
 <!doctype html>
 <html lang="es">
@@ -59,13 +56,33 @@ const { title = "Mundo 3D", variant = 'default' } = Astro.props;
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="icon" type="image/png" href="/img/brand/Mundo3D_Isotipo.png" />
 		<meta name="generator" content={Astro.generator} />
+		<meta name="color-scheme" content="light dark" />
 		<title>{title}</title>
-		
+
 		<!-- Theme initialization script (runs immediately to prevent flash of wrong theme) -->
 		<script is:inline>
 			(function () {
-				const theme = localStorage.getItem('theme') === 'dark' ? 'dark' : 'light';
-				document.documentElement.setAttribute('data-theme', theme);
+				let stored = null;
+				try {
+					stored = localStorage.getItem('theme');
+				} catch {
+					stored = null;
+				}
+				const preference =
+					stored === 'dark' || stored === 'system' || stored === 'light' ? stored : 'system';
+				const resolved =
+					preference === 'system'
+						? window.matchMedia?.('(prefers-color-scheme: dark)')?.matches
+							? 'dark'
+							: 'light'
+						: preference;
+				const root = document.documentElement;
+				root.setAttribute('data-theme', resolved);
+				root.setAttribute('data-theme-preference', preference);
+				const meta = document.querySelector('meta[name="color-scheme"]');
+				if (meta) {
+					meta.setAttribute('content', preference === 'system' ? 'light dark' : resolved);
+				}
 			})();
 		</script>
 	</head>
@@ -73,6 +90,5 @@ const { title = "Mundo 3D", variant = 'default' } = Astro.props;
 		<HomeHeader pathname={Astro.url.pathname} />
 		<slot />
 			<HomeFooter />
-			{variant === 'home' && <WhatsAppFloating />}
 	</body>
 </html>

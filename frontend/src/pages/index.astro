@@ -3,14 +3,13 @@ import Layout from '../layouts/Layout.astro';
 import HomeProductCard from '../domains/products/components/HomeProductCard.astro';
 ---
 
-<Layout title="Mundo 3D - Inicio" variant="home">
+<Layout title="Mundo 3D - Inicio">
   <main class="home-page">
     <section class="home-hero" aria-labelledby="home-hero-title">
       <div class="home-hero__inner">
         <div class="home-hero__copy">
-          <p class="home-eyebrow">TALLER / CATÁLOGO</p>
-          <h1 class="home-hero__title" id="home-hero-title">Piezas impresas para tener cerca.</h1>
-          <p class="home-hero__description">Figuras, bustos y accesorios nacidos en el taller de Mundo 3D. Elegí una pieza lista o imaginá la próxima con nosotros.</p>
+          <h1 class="home-hero__title" id="home-hero-title">Piezas impresas para tener cerca</h1>
+          <p class="home-hero__description">Explorá figuras, bustos y accesorios del taller de Mundo 3D sin registrarte. Es una demo interactiva: podés simular un pedido sin cobro real o dejarnos tu idea para un encargo.</p>
           <div class="home-hero__actions">
             <a class="home-button" href="#catalogo">Ver catálogo →</a>
             <a class="home-text-action" href="#encargos">Pedir un encargo</a>
@@ -27,24 +26,15 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
       </div>
     </section>
 
-    <section class="home-catalogue-intro" id="catalogo" aria-labelledby="catalogue-title">
-      <div class="home-catalogue-intro__inner">
-        <div class="home-catalogue-intro__copy">
-          <p class="home-eyebrow">CATÁLOGO</p>
-          <h2 class="home-section-title" id="catalogue-title">Piezas listas para salir del taller</h2>
-          <p class="home-section-description">Una selección de figuras, bustos y accesorios impresos para sumar algo único a tu espacio.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="home-products" id="productos" aria-labelledby="home-products-title">
+    <section class="home-products" id="catalogo" aria-labelledby="home-products-title">
       <div class="home-products__inner">
         <div class="home-products__meta">
-          <h2 class="home-products__title" id="home-products-title">Piezas del catálogo</h2>
+          <h2 class="home-products__title" id="home-products-title">Piezas listas para salir del taller</h2>
           <a class="home-products__link" href="/products">Ver catálogo completo →</a>
         </div>
         <div class="home-products__body" id="home-products-container">
           <p class="home-products__loading" id="home-loading-msg" role="status">Cargando productos...</p>
+          <div class="home-products__state" id="home-products-state" hidden></div>
           <div id="home-products-content" hidden>
             <div class="home-products__grid" id="home-product-grid"></div>
           </div>
@@ -55,7 +45,6 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
     <section class="home-commission" id="encargos" aria-labelledby="home-commission-title">
       <div class="home-commission__inner">
         <div class="home-commission__copy">
-          <p class="home-eyebrow">ENCARGOS</p>
           <h2 class="home-commission__title" id="home-commission-title">¿Tenés una idea para una pieza?</h2>
           <p class="home-commission__description">Podés dejarnos una solicitud para que el equipo la revise. No implica un presupuesto, pedido ni respuesta garantizada.</p>
         </div>
@@ -69,6 +58,8 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
   <template id="home-empty-state-template">
     <div class="home-state" role="status">
       <h2>Todavía no hay piezas en el catálogo</h2>
+      <p>Podés contarnos qué pieza buscás para revisarla como encargo a medida.</p>
+      <a class="home-text-action" href="/help">Pedir un encargo a medida</a>
     </div>
   </template>
 
@@ -76,6 +67,7 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
     <div class="home-state" role="alert">
       <h2>No se pudo cargar</h2>
       <p>Verificá tu conexión e intentá de nuevo.</p>
+      <button type="button" class="home-state__retry">Reintentar</button>
     </div>
   </template>
 
@@ -84,7 +76,6 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
           <img class="home-featured-card__image" src="/img/products/cubo_compania_portal.jpg" alt="Cubo de Compañía de Portal" width="420" height="420" loading="eager" decoding="async" />
       <div class="home-featured-card__caption">
         <div>
-          <p class="home-featured-card__label">PIEZA DESTACADA</p>
           <h2 class="home-featured-card__name"></h2>
         </div>
         <p class="home-featured-card__price"></p>
@@ -102,146 +93,14 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
   <template id="home-featured-error-state-template">
     <div class="home-featured-card__state" role="alert">
       <p>No se pudo cargar la pieza destacada. Verificá tu conexión e intentá de nuevo.</p>
+      <button type="button" class="home-state__retry">Reintentar</button>
       <a class="home-text-action" href="/products">Ver catálogo</a>
     </div>
   </template>
 </Layout>
 
 <script>
-  import { getCategoryImg, isPlaceholderImage } from '../domains/products';
-  import { resolveImageUrl } from '../lib/imageUrl';
-  import { fetchFeaturedProduct, fetchProducts } from '../domains/products/services/product.service';
+  import { initializeHomeCatalog } from '../scripts/homeCatalogLoader';
 
-  const formatPrice = (price: number): string => `$ ${new Intl.NumberFormat('es-AR').format(price)}`;
-  const productsResultPromise = fetchProducts();
-
-  async function loadFeaturedProduct(): Promise<void> {
-    const content = document.getElementById('home-featured-content');
-    const template = document.getElementById('home-featured-product-template') as HTMLTemplateElement | null;
-    if (!content || !template) return;
-
-    const showState = (id: string): void => {
-      const stateTemplate = document.getElementById(id) as HTMLTemplateElement | null;
-      if (stateTemplate) content.replaceChildren(stateTemplate.content.cloneNode(true));
-    };
-
-    let result: Awaited<ReturnType<typeof fetchFeaturedProduct>>;
-    try {
-      result = await fetchFeaturedProduct(productsResultPromise);
-    } catch {
-      showState('home-featured-error-state-template');
-      return;
-    }
-
-    if (!result.ok) {
-      showState(result.reason === 'not-found' ? 'home-featured-empty-state-template' : 'home-featured-error-state-template');
-      return;
-    }
-
-    const clone = template.content.cloneNode(true) as DocumentFragment;
-    const link = clone.querySelector('.home-featured-card__link') as HTMLAnchorElement | null;
-    const image = clone.querySelector('.home-featured-card__image') as HTMLImageElement | null;
-    const name = clone.querySelector('.home-featured-card__name') as HTMLElement | null;
-    const price = clone.querySelector('.home-featured-card__price') as HTMLElement | null;
-    const product = result.product;
-
-    if (link) link.href = `/product?id=${product.id}`;
-    if (image) {
-      if (isPlaceholderImage(product.image)) {
-        image.src = `/images/illustrations/${getCategoryImg(product.category)}.svg`;
-        image.alt = `${product.category} — imagen no disponible`;
-        image.classList.add('home-featured-card__image--placeholder');
-      } else {
-        image.src = resolveImageUrl(product.image, 'products');
-        image.alt = product.name;
-      }
-      image.addEventListener('error', () => {
-        if (image.dataset.fallback) return;
-        image.dataset.fallback = 'true';
-        image.src = `/images/illustrations/${getCategoryImg(product.category)}.svg`;
-        image.alt = `${product.category} — imagen no disponible`;
-        image.classList.add('home-featured-card__image--placeholder');
-      });
-    }
-    if (name) name.textContent = product.name;
-    if (price) price.textContent = formatPrice(product.price);
-    content.replaceChildren(clone);
-  }
-
-  async function loadProducts(): Promise<void> {
-    const container = document.getElementById('home-products-container');
-    const loadingMsg = document.getElementById('home-loading-msg');
-    const contentEl = document.getElementById('home-products-content');
-    const gridContainer = document.getElementById('home-product-grid');
-    if (!container) return;
-
-    const showState = (id: string): void => {
-      loadingMsg?.remove();
-      contentEl?.remove();
-      const template = document.getElementById(id) as HTMLTemplateElement | null;
-      if (template) container.appendChild(template.content.cloneNode(true));
-    };
-
-    let result: Awaited<ReturnType<typeof fetchProducts>>;
-    try {
-      result = await productsResultPromise;
-    } catch {
-      showState('home-error-state-template');
-      return;
-    }
-
-    if (!result.ok) {
-      showState('home-error-state-template');
-      return;
-    }
-
-    if (result.products.length === 0) {
-      showState('home-empty-state-template');
-      return;
-    }
-
-    const cardTemp = document.getElementById('home-product-card-template') as HTMLTemplateElement | null;
-    if (!cardTemp || !gridContainer || !contentEl) return;
-
-    const products = result.products.slice(0, 6);
-
-    const fragment = document.createDocumentFragment();
-    for (const product of products) {
-      const clone = cardTemp.content.cloneNode(true) as DocumentFragment;
-      const catImg = getCategoryImg(product.category);
-      const link = clone.querySelector('.home-product-card__link') as HTMLAnchorElement | null;
-      const img = clone.querySelector('.home-product-card__image') as HTMLImageElement | null;
-      const name = clone.querySelector('.home-product-card__name') as HTMLElement | null;
-      const price = clone.querySelector('.home-product-card__price') as HTMLElement | null;
-
-      if (link) link.href = `/product?id=${product.id}`;
-      if (img) {
-        if (isPlaceholderImage(product.image)) {
-          img.src = `/images/illustrations/${catImg}.svg`;
-          img.alt = `${product.category} — imagen no disponible`;
-          img.classList.add('home-product-card__image--placeholder');
-        } else {
-          img.src = resolveImageUrl(product.image, 'products');
-          img.alt = product.name;
-        }
-        img.addEventListener('error', () => {
-          if (img.dataset.fallback) return;
-          img.dataset.fallback = 'true';
-          img.src = '/images/illustrations/Otras.svg';
-          img.alt = 'Imagen de producto no disponible';
-          img.classList.add('home-product-card__image--placeholder');
-        });
-      }
-      if (name) name.textContent = product.name;
-      if (price) price.textContent = formatPrice(product.price);
-      fragment.appendChild(clone);
-    }
-
-    loadingMsg?.remove();
-    gridContainer.appendChild(fragment);
-    contentEl.hidden = false;
-  }
-
-  void loadFeaturedProduct();
-  void loadProducts();
+  void initializeHomeCatalog(document);
 </script>

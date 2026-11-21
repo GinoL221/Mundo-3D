@@ -81,6 +81,7 @@ class FakeDocument {
     const ids: Record<string, string> = {
       '.theme-toggle-btn__icon': 'theme-icon',
       '.crt-toggle-btn__icon': 'crt-icon',
+      'meta[name="color-scheme"]': 'color-scheme-meta',
     };
     return this.elements.get(ids[selector]) ?? null;
   }
@@ -127,6 +128,7 @@ function createFixture() {
     'navbar-logout',
     'theme-toggle',
     'theme-icon',
+    'color-scheme-meta',
     'crt-toggle',
     'crt-icon',
     'navbar-cart-badge',
@@ -163,6 +165,10 @@ describe('Shared route shell', () => {
     const header = source('../components/HomeHeader.astro');
     const footer = source('../components/HomeFooter.astro');
     const headerStyles = source('../styles/components/home-shell.css');
+    const homeStyles = source('../styles/components/home.css');
+    const productsStyles = source('../styles/components/home-products.css');
+    const baseLayoutStyles = source('../styles/base/layout.css');
+    const productCardTemplate = source('../domains/products/components/HomeProductCard.astro');
     const footerStyles = source('../styles/components/home-footer.css');
     const routeSources = [
       '../pages/index.astro',
@@ -170,13 +176,20 @@ describe('Shared route shell', () => {
       '../pages/product.astro',
       '../pages/cart.astro',
     ].map(source);
+    const baseStyles = source('../styles/components/home-responsive-base.css');
     const responsiveStyles = source('../styles/components/home-responsive.css');
     const desktopStyles = source('../styles/components/home-responsive-desktop.css');
     const tabletStyles = source('../styles/components/home-responsive-tablet.css');
     const motionStyles = source('../styles/components/home-responsive-motion.css');
 
+    const navTogglesStyles = source('../styles/components/nav-toggles.css');
+    const homeCatalogLoaderSource = source('./homeCatalogLoader.ts');
+
     expect(layout).not.toContain("import Header from '../components/Header.astro'");
     expect(layout).not.toContain("import Footer from '../components/Footer.astro'");
+    expect(layout).not.toContain('WhatsAppFloating');
+    expect(layout).not.toContain('whatsapp-floating.css');
+    expect(layout).not.toContain('variant?:');
     expect(layout).toContain('<body class="home-shell">');
     expect(layout).toContain('<HomeHeader pathname={Astro.url.pathname} />');
     expect(layout).not.toContain('showUnavailableSearch');
@@ -184,6 +197,50 @@ describe('Shared route shell', () => {
     expect(layout).not.toContain('retro-theme-preference');
     expect(layout).not.toContain('crt-theme-active');
     expect(layout).not.toContain('class="crt-overlay"');
+    expect(layout).toContain('<meta name="color-scheme" content="light dark" />');
+    expect(layout).toContain('data-theme-preference');
+    expect(layout).toContain("? stored : 'system'");
+    const homePage = source('../pages/index.astro');
+    expect(homePage).not.toContain('variant="home"');
+    expect(homePage).not.toContain('home-eyebrow');
+    expect(homePage).not.toContain('home-featured-card__label');
+    expect(homePage).not.toContain('home-catalogue-intro');
+    expect(homePage).toContain('id="catalogo"');
+    expect(homePage).toContain(
+      '<h1 class="home-hero__title" id="home-hero-title">Piezas impresas para tener cerca</h1>',
+    );
+    expect(homePage).not.toContain('Piezas impresas para tener cerca.');
+
+    const homeErrorTemplate = homePage.match(
+      /<template id="home-error-state-template">[\s\S]*?<\/template>/,
+    )?.[0];
+    expect(homeErrorTemplate).toContain('<button type="button" class="home-state__retry">Reintentar</button>');
+
+    const homeFeaturedErrorTemplate = homePage.match(
+      /<template id="home-featured-error-state-template">[\s\S]*?<\/template>/,
+    )?.[0];
+    expect(homeFeaturedErrorTemplate).toContain(
+      '<button type="button" class="home-state__retry">Reintentar</button>',
+    );
+    expect(homeFeaturedErrorTemplate).toContain('href="/products"');
+
+    const homeEmptyTemplate = homePage.match(
+      /<template id="home-empty-state-template">[\s\S]*?<\/template>/,
+    )?.[0];
+    expect(homeEmptyTemplate).toContain('href="/help"');
+
+    expect(homePage).toContain("import { initializeHomeCatalog } from '../scripts/homeCatalogLoader';");
+    expect(homePage).toContain('initializeHomeCatalog(document);');
+    expect(homePage).toContain('id="home-products-content"');
+    expect(homePage).toContain('id="home-product-grid"');
+    expect(homeCatalogLoaderSource).toContain('export function createHomeCatalogLoader');
+    expect(homeCatalogLoaderSource).not.toMatch(/contentEl\??\.remove\(\)/);
+    expect(homeCatalogLoaderSource).not.toMatch(/loadingMsg\??\.remove\(\)/);
+
+    expect(homeStyles).toMatch(/\.home-featured-card__state \{[\s\S]*?min-height: 224px;/);
+    expect(productsStyles).toMatch(/\.home-products__loading \{[\s\S]*?min-height: 260px;/);
+    expect(productsStyles).toMatch(/\.home-state__retry \{[\s\S]*?min-height: 44px;/);
+    expect(productsStyles).toMatch(/\.home-state__retry:focus-visible \{[\s\S]*?outline: 3px solid var\(--home-blue\);/);
     for (const route of routeSources) {
       expect(route).toContain("import Layout from '../layouts/Layout.astro'");
       expect(route).toMatch(/<Layout(?:\s|>)/);
@@ -204,11 +261,12 @@ describe('Shared route shell', () => {
     );
 
     expect(header).not.toContain('href="/profile"');
+    expect(header).not.toContain('href="/#catalogo"');
+    expect(header).not.toContain('href="/#encargos"');
     for (const href of [
-      '/#catalogo',
-      '/#encargos',
       '/products',
       '/help',
+      '/step-by-step',
       '/login',
       '/register',
       '/orders',
@@ -219,14 +277,37 @@ describe('Shared route shell', () => {
     }
     expect(header).toContain('pathname: string;');
     expect(header).toContain('const { pathname } = Astro.props;');
+    expect(header).not.toContain('theme-toggle-label');
+    expect(header).not.toContain('theme-toggle-btn__label');
+    expect(header).not.toContain('<span>Carrito</span>');
+    expect(header).toContain('aria-label="Carrito de compras"');
+    expect(header).toContain('title="Carrito"');
+    expect(header).toContain('aria-label="Tema: sistema. Cambiar a tema claro"');
+    expect(header).toContain('title="Tema: sistema"');
+    expect(navTogglesStyles).not.toContain('theme-toggle-btn__label');
+    expect(navTogglesStyles).not.toMatch(/\.theme-toggle-btn__icon svg \{[^}]*display:\s*block;/);
+    expect(navTogglesStyles).toContain('.theme-toggle-btn__icon--system {\n  display: block;\n}');
+    expect(navTogglesStyles).toContain(
+      "html[data-theme-preference='light'] .theme-toggle-btn__icon--sun",
+    );
+    expect(navTogglesStyles).toContain(
+      "html[data-theme-preference='dark'] .theme-toggle-btn__icon--moon",
+    );
+    expect(headerStyles).not.toContain('theme-toggle-btn__label');
+    expect(headerStyles).not.toMatch(/@media \(min-width: 1024px\) \{[\s\S]*?\.home-header__theme/);
     expect(header).not.toContain('showUnavailableSearch');
     expect(header).not.toContain('home-header__search');
     expect(header).not.toContain('Búsqueda próximamente');
     expect(header).not.toContain('home-search-availability');
     expect(header).not.toContain('La búsqueda todavía no está disponible');
-    expect(header).toContain("aria-current={catalogIsCurrent ? 'page' : undefined}");
     expect(header).toContain("aria-current={productsIsCurrent ? 'page' : undefined}");
     expect(header).toContain("aria-current={helpIsCurrent ? 'page' : undefined}");
+    expect(header).toContain("aria-current={stepByStepIsCurrent ? 'page' : undefined}");
+    expect(header).toContain('>Productos</a>');
+    expect(header).toContain('>Encargos</a>');
+    expect(header).toContain('>Paso a paso</a>');
+    expect(header).not.toContain('>Encargos y ayuda</a>');
+    expect(header).not.toContain('Guía de compra');
 
     expect(responsiveStyles).toMatch(
       /^@import '.\/home-responsive-base\.css';\n@import '.\/home-responsive-desktop\.css';\n@import '.\/home-responsive-tablet\.css';\n@import '.\/home-responsive-motion\.css';/,
@@ -234,10 +315,25 @@ describe('Shared route shell', () => {
     expect(responsiveStyles).not.toContain('.home-header__search');
     expect(responsiveStyles).toContain('@media (min-width: 1024px)');
     expect(responsiveStyles).toContain('@media (min-width: 1200px)');
+    expect(responsiveStyles).not.toContain('.home-header__cart > span:not(.cart-link__badge)');
+    expect(productCardTemplate).not.toContain('src=""');
+    expect(homeStyles).not.toContain('image-rendering: pixelated');
+    expect(productsStyles).not.toContain('image-rendering: pixelated');
+    expect(productsStyles).toMatch(/\.home-product-card__copy \{[\s\S]*?align-items: baseline;/);
+    expect(productsStyles).toMatch(
+      /\.home-product-card__price \{[\s\S]*?font-variant-numeric: tabular-nums;/,
+    );
+    expect(homeStyles).toMatch(
+      /\.home-featured-card__price \{[\s\S]*?font-variant-numeric: tabular-nums;/,
+    );
+    expect(baseLayoutStyles).toContain('::selection');
+    expect(baseLayoutStyles).toContain('accent-color: var(--accent);');
+    expect(baseLayoutStyles).toContain('scrollbar-color: var(--border) var(--bg);');
+    expect(baseLayoutStyles).toContain('text-underline-offset: 0.2em;');
+    expect(baseLayoutStyles).not.toContain('scrollbar-width: thin');
     expect(desktopStyles).toContain('@media (min-width: 1024px)');
     expect(desktopStyles).not.toContain('@media (min-width: 640px)');
     expect(desktopStyles).not.toContain('prefers-reduced-motion');
-    expect(tabletStyles).toContain('@media (min-width: 640px) and (max-width: 767px)');
     expect(tabletStyles).toContain('@media (min-width: 768px) and (max-width: 1023px)');
     expect(tabletStyles).toContain('@media (max-width: 360px)');
     expect(tabletStyles).not.toContain('@media (min-width: 1024px)');
@@ -248,7 +344,9 @@ describe('Shared route shell', () => {
 
     const footerLinks = [
       ['Productos', '/products'],
-      ['Ayuda', '/help'],
+      ['Encargos', '/help'],
+      ['Paso a paso', '/step-by-step'],
+      ['Preguntas frecuentes', '/faq'],
       ['Nosotros', '/aboutUs'],
       ['Términos', '/terms'],
       ['Privacidad', '/privacy'],
@@ -256,24 +354,89 @@ describe('Shared route shell', () => {
     for (const [label, href] of footerLinks) {
       expect(footer).toContain(`<a href="${href}">${label}</a>`);
     }
+    for (const heading of ['Tienda', 'Información', 'Proyecto']) {
+      expect(footer).toContain(`<h2 class="home-footer__col-title">${heading}</h2>`);
+    }
+    expect(footer).toContain('<nav class="home-footer__columns" aria-label="Navegación del pie">');
     expect(
-      footer.match(/<nav class="home-footer__links"[\s\S]*?<\/nav>/)?.[0].match(/<a /g),
-    ).toHaveLength(5);
-    expect(footer).not.toContain('Preguntas frecuentes');
-    expect(footer).not.toContain('Paso a paso');
+      footer.match(/<nav class="home-footer__columns"[\s\S]*?<\/nav>/)?.[0].match(/<a[\s\S]*?href="/g),
+    ).toHaveLength(8);
+    expect(footer).not.toContain('instagram.com');
+    expect(footer).not.toContain('x.com');
+    expect(footer).not.toContain('tiktok.com');
+    expect(footer).toContain('href="https://github.com/GinoL221/Mundo-3D"');
+    expect(footer).toContain('<SocialIcon name="github"');
     expect(footer).not.toContain('home-footer__tagline');
     expect(footer).not.toContain('home-footer__heading');
     expect(footer).toContain('id="ayuda"');
+    expect(footer).toContain('<div class="home-footer__bottom">');
     expect(footer).toContain('© 2026 Mundo 3D. Todos los derechos reservados.');
 
-    expect(footerStyles).toContain('@media (max-width: 639px)');
+    expect(homeStyles).toMatch(/\.home-button \{[^}]*?background: var\(--sys-action-bg\);/);
+    expect(headerStyles).toMatch(
+      /\.home-header \.cart-link__badge \{[^}]*?background: var\(--sys-action-bg\);/,
+    );
+    expect(productsStyles).toMatch(
+      /\.home-button--commission \{[^}]*?background: #ffffff;[^}]*?color: #1e1b18;/,
+    );
+    expect(productsStyles).toMatch(
+      /\.home-button--commission:focus-visible \{[^}]*?outline: 3px solid #ffffff;/,
+    );
+    expect(baseLayoutStyles).toMatch(
+      /\[data-theme='dark'\] ::selection \{[^}]*?background: var\(--sys-action-bg\);/,
+    );
+    for (const styles of [homeStyles, headerStyles, productsStyles, baseLayoutStyles]) {
+      expect(styles).not.toContain('var(--sys-action-bg,');
+    }
+    expect(productsStyles).toMatch(/\.home-commission \{[^}]*?background: var\(--sys-action-bg\);/);
+    expect(productsStyles).not.toMatch(/\.home-commission \{[^}]*?border-top:/);
+    expect(productsStyles).toMatch(/\.home-commission__title \{[^}]*?color: #ffffff;/);
+    expect(productsStyles).toMatch(
+      /\.home-commission__description \{[^}]*?max-width: 65ch;[^}]*?color: #ffffff;/,
+    );
+    expect(header).toContain('<div class="home-header__primary" id="home-primary-navigation" hidden>');
+    expect(header).toContain('<nav class="home-header__nav" aria-label="Navegación principal">');
+    expect(header).toContain('class="home-header__link home-header__register" href="/register"');
+    expect(baseStyles).toContain('.home-header__nav > ul');
+    expect(baseStyles).toContain('+ .home-header__nav');
+    expect(baseStyles).not.toContain('border-inline-start: 1px solid var(--home-brand-line)');
+    expect(desktopStyles).toMatch(
+      /\.home-header__nav > ul > li > \.home-header__link--active \{[^}]*?text-decoration: underline;/,
+    );
+    expect(desktopStyles).toMatch(
+      /\.home-header__top,\s*\.home-header__primary,\s*\.home-header__primary\.is-open,\s*\.home-header__utility,\s*\.home-header__actions \{[^}]*?display: contents;/,
+    );
+    expect(desktopStyles).toMatch(
+      /\.home-header__nav \{[^}]*?position: absolute;[^}]*?left: 50%;[^}]*?transform: translateX\(-50%\);/,
+    );
+    expect(desktopStyles).toMatch(
+      /\.home-header__inner:has\(\.admin-only\[style\*='display: block'\]\) \.home-header__nav \{[^}]*?position: static;[^}]*?left: auto;[^}]*?transform: none;[^}]*?flex: 1 1 auto;/,
+    );
+    expect(desktopStyles).toMatch(
+      /\.home-header__inner:has\(\.user-only\[style\*='display: block'\]\) \.home-header__account-section \{[^}]*?display: none;/,
+    );
+    expect(desktopStyles).toMatch(
+      /\.home-header__inner:not\(:has\(\.user-only\[style\*='display: block'\]\)\) \.home-header__account \{[^}]*?display: none;/,
+    );
+    expect(desktopStyles).toMatch(
+      /\.home-header__cart \{[^}]*?order: 3;[^}]*?margin-inline-start: auto;/,
+    );
+    expect(desktopStyles).toMatch(
+      /\.home-header__account-section,\s*\.home-header__account \{[^}]*?order: 4;[^}]*?margin-inline-start: 14px;[^}]*?padding-inline-start: 14px;[^}]*?border-inline-start: 1px solid var\(--home-brand-line\);/,
+    );
+    expect(desktopStyles).toMatch(/\.home-header__theme \{[^}]*?order: 5;/);
+    expect(desktopStyles).toMatch(
+      /\.home-header__account-section \.home-header__register \{[^}]*?border: 1px solid var\(--home-brand-line\);[^}]*?border-radius: 4px;/,
+    );
+
+    expect(footerStyles).toContain('@media (min-width: 640px)');
+    expect(footerStyles).toContain('@media (min-width: 1024px)');
     expect(footerStyles).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))');
-    expect(footerStyles).toContain('width: min(100%, 280px)');
-    expect(footerStyles).toMatch(
-      /\.home-footer__links a \{[\s\S]*?min-width: 44px;[\s\S]*?min-height: 44px;[\s\S]*?box-sizing: border-box;[\s\S]*?\}/,
+    expect(footerStyles).toContain(
+      'grid-template-columns: minmax(220px, 1.4fr) repeat(3, minmax(0, 1fr))',
     );
     expect(footerStyles).toMatch(
-      /\.home-footer__links a:last-child \{\s*grid-column: 1 \/ -1;\s*\}/,
+      /\.home-footer__links a \{[\s\S]*?min-width: 44px;[\s\S]*?min-height: 44px;[\s\S]*?box-sizing: border-box;[\s\S]*?\}/,
     );
   });
 });
@@ -401,64 +564,208 @@ describe('Header browser modules', () => {
     expect(document.listeners.has('visibilitychange')).toBe(false);
   });
 
-  it('falls back to light for an invalid persisted theme', () => {
+  it('falls back to system for an invalid persisted theme and supports safe matchMedia absence', () => {
     const fixture = createFixture();
     fixture.storage.setItem('theme', 'invalid');
-    initializeThemeToggle(
-      fixture.document as unknown as Document,
-      fixture.storage as unknown as Storage,
-    );
-    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('light');
-    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
-      'Cambiar a tema oscuro',
-    );
-    expect(fixture.document.elements.get('theme-icon')!.textContent).toBe('');
-
     const cleanup = initializeThemeToggle(
       fixture.document as unknown as Document,
       fixture.storage as unknown as Storage,
     );
     expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(fixture.document.documentElement.getAttribute('data-theme-preference')).toBe('system');
+    expect(fixture.document.elements.get('color-scheme-meta')!.getAttribute('content')).toBe(
+      'light dark',
+    );
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Tema: sistema (actualmente claro). Cambiar a tema claro',
+    );
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe(
+      'Tema: sistema (claro)',
+    );
+    expect(fixture.document.elements.get('theme-icon')!.textContent).toBe('');
+
+    expect(
+      initializeThemeToggle(
+        fixture.document as unknown as Document,
+        fixture.storage as unknown as Storage,
+      ),
+    ).toBe(cleanup);
+
+    fixture.document.elements.get('theme-toggle')!.click();
+    expect(fixture.storage.setItem).toHaveBeenCalledWith('theme', 'light');
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(fixture.document.documentElement.getAttribute('data-theme-preference')).toBe('light');
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe('Tema: claro');
+
     fixture.document.elements.get('theme-toggle')!.click();
     expect(fixture.storage.setItem).toHaveBeenCalledWith('theme', 'dark');
-    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
-      'Cambiar a tema claro',
-    );
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(fixture.document.documentElement.getAttribute('data-theme-preference')).toBe('dark');
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe('Tema: oscuro');
+
     cleanup();
     cleanup();
   });
 
-  it('hydrates an absent theme as light and persists the toggle to dark', () => {
-    const absentFixture = createFixture();
-    initializeThemeToggle(
-      absentFixture.document as unknown as Document,
-      absentFixture.storage as unknown as Storage,
-    );
-    expect(absentFixture.document.documentElement.getAttribute('data-theme')).toBe('light');
-    expect(absentFixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
-      'Cambiar a tema oscuro',
-    );
-    expect(absentFixture.document.elements.get('theme-icon')!.textContent).toBe('');
+  it('cycles system -> light -> dark -> system, reacts to matchMedia in system mode, and cleans up listeners', () => {
+    const mediaListeners = new Set<(event: MediaQueryListEvent) => void>();
+    const mediaQueryList = {
+      matches: true,
+      addEventListener: vi.fn((type: string, listener: (event: MediaQueryListEvent) => void) => {
+        if (type === 'change') mediaListeners.add(listener);
+      }),
+      removeEventListener: vi.fn((type: string, listener: (event: MediaQueryListEvent) => void) => {
+        if (type === 'change') mediaListeners.delete(listener);
+      }),
+    };
 
-    const lightFixture = createFixture();
-    lightFixture.storage.setItem('theme', 'light');
-    initializeThemeToggle(
-      lightFixture.document as unknown as Document,
-      lightFixture.storage as unknown as Storage,
-    );
-    expect(lightFixture.document.documentElement.getAttribute('data-theme')).toBe('light');
-    expect(lightFixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
-      'Cambiar a tema oscuro',
-    );
-    expect(lightFixture.document.elements.get('theme-icon')!.textContent).toBe('');
+    const fixture = createFixture();
+    Object.assign(fixture.window, {
+      matchMedia: vi.fn(() => mediaQueryList),
+    });
 
-    lightFixture.document.elements.get('theme-toggle')!.click();
-    expect(lightFixture.storage.getItem('theme')).toBe('dark');
-    expect(lightFixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
-    expect(lightFixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
-      'Cambiar a tema claro',
+    const cleanup = initializeThemeToggle(
+      fixture.document as unknown as Document,
+      fixture.storage as unknown as Storage,
     );
-    expect(lightFixture.document.elements.get('theme-icon')!.textContent).toBe('');
+
+    // Absent theme starts at system (currently dark via matchMedia.matches = true)
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(fixture.document.documentElement.getAttribute('data-theme-preference')).toBe('system');
+    expect(fixture.document.elements.get('color-scheme-meta')!.getAttribute('content')).toBe(
+      'light dark',
+    );
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Tema: sistema (actualmente oscuro). Cambiar a tema claro',
+    );
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe(
+      'Tema: sistema (oscuro)',
+    );
+    expect(fixture.document.elements.get('theme-icon')!.textContent).toBe('');
+
+    // Live matchMedia change while in system mode -> light
+    mediaQueryList.matches = false;
+    for (const listener of mediaListeners) {
+      listener({ matches: false } as MediaQueryListEvent);
+    }
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(fixture.document.documentElement.getAttribute('data-theme-preference')).toBe('system');
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Tema: sistema (actualmente claro). Cambiar a tema claro',
+    );
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe(
+      'Tema: sistema (claro)',
+    );
+
+    // Click 1: system -> light
+    fixture.document.elements.get('theme-toggle')!.click();
+    expect(fixture.storage.getItem('theme')).toBe('light');
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(fixture.document.documentElement.getAttribute('data-theme-preference')).toBe('light');
+    expect(fixture.document.elements.get('color-scheme-meta')!.getAttribute('content')).toBe(
+      'light',
+    );
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Tema: claro. Cambiar a tema oscuro',
+    );
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe('Tema: claro');
+    expect(fixture.document.elements.get('theme-icon')!.textContent).toBe('');
+
+    // System media change does not override explicit light preference
+    mediaQueryList.matches = true;
+    for (const listener of mediaListeners) {
+      listener({ matches: true } as MediaQueryListEvent);
+    }
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(fixture.document.documentElement.getAttribute('data-theme-preference')).toBe('light');
+
+    // Click 2: light -> dark
+    fixture.document.elements.get('theme-toggle')!.click();
+    expect(fixture.storage.getItem('theme')).toBe('dark');
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(fixture.document.documentElement.getAttribute('data-theme-preference')).toBe('dark');
+    expect(fixture.document.elements.get('color-scheme-meta')!.getAttribute('content')).toBe(
+      'dark',
+    );
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Tema: oscuro. Cambiar a tema del sistema',
+    );
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe(
+      'Tema: oscuro',
+    );
+    expect(fixture.document.elements.get('theme-icon')!.textContent).toBe('');
+
+    // Click 3: dark -> system (currently dark via matchMedia.matches = true)
+    fixture.document.elements.get('theme-toggle')!.click();
+    expect(fixture.storage.getItem('theme')).toBe('system');
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(fixture.document.documentElement.getAttribute('data-theme-preference')).toBe('system');
+    expect(fixture.document.elements.get('color-scheme-meta')!.getAttribute('content')).toBe(
+      'light dark',
+    );
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Tema: sistema (actualmente oscuro). Cambiar a tema claro',
+    );
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe(
+      'Tema: sistema (oscuro)',
+    );
+
+    // Cleanup removes both button click and matchMedia change listeners
+    expect(mediaListeners.size).toBe(1);
+    cleanup();
+    expect(mediaQueryList.removeEventListener).toHaveBeenCalledTimes(1);
+    expect(mediaListeners.size).toBe(0);
+    expect(fixture.document.elements.get('theme-toggle')!.listeners.has('click')).toBe(false);
+  });
+
+  it('handles blocked or failing storage getItem and setItem without throwing', () => {
+    const fixture = createFixture();
+    const throwingStorage = {
+      getItem: vi.fn(() => {
+        throw new Error('SecurityError');
+      }),
+      setItem: vi.fn(() => {
+        throw new Error('QuotaExceededError');
+      }),
+      removeItem: vi.fn(),
+    };
+
+    let cleanup: (() => void) | undefined;
+    expect(() => {
+      cleanup = initializeThemeToggle(
+        fixture.document as unknown as Document,
+        throwingStorage as unknown as Storage,
+      );
+    }).not.toThrow();
+
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(fixture.document.documentElement.getAttribute('data-theme-preference')).toBe('system');
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe(
+      'Tema: sistema (claro)',
+    );
+
+    expect(() => fixture.document.elements.get('theme-toggle')!.click()).not.toThrow();
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(fixture.document.documentElement.getAttribute('data-theme-preference')).toBe('light');
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Tema: claro. Cambiar a tema oscuro',
+    );
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe('Tema: claro');
+
+    expect(() => fixture.document.elements.get('theme-toggle')!.click()).not.toThrow();
+    expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(fixture.document.documentElement.getAttribute('data-theme-preference')).toBe('dark');
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
+      'Tema: oscuro. Cambiar a tema del sistema',
+    );
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe(
+      'Tema: oscuro',
+    );
+
+    expect(() => fixture.document.elements.get('theme-toggle')!.click()).not.toThrow();
+    expect(fixture.document.documentElement.getAttribute('data-theme-preference')).toBe('system');
+
+    cleanup?.();
   });
 
   it('persists CRT toggles and cleans up duplicate initialization', () => {

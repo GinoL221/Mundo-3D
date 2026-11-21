@@ -81,7 +81,7 @@ The default `:root` values and the explicit `data-theme="light"` values are the 
 
 The `--pico-*` variables remain only as compatibility aliases for legacy selectors in product detail, alerts, profile, admin, and other older surfaces. They are explicitly implementation debt: do not use them for new brand work, and do not reintroduce PICO crimson or orange as brand tokens.
 
-Theme state is set on `<html>` by `Layout.astro` and `themeToggle.ts`, using `localStorage.theme` with light as the initial value.
+Theme state is set on `<html>` by `Layout.astro` and `themeToggle.ts`, using `localStorage.theme` with `system` as the initial value (following `prefers-color-scheme` and cycling `system -> light -> dark`).
 
 ### Typography (`tokens/typography.css`)
 

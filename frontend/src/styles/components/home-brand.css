@@ -8,8 +8,6 @@ html[data-theme='dark'] .home-shell {
   --home-brand-surface: var(--surface);
   --home-brand-ink: var(--fg);
   --home-brand-muted: var(--home-muted);
-  --home-commission-button-bg: var(--accent-soft);
-  --home-commission-button-fg: #1e1b18;
 }
 
 .home-header__logo-full img,

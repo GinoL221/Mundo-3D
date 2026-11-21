@@ -4,35 +4,57 @@ import SocialIcon from './SocialIcon.astro';
 
 <footer class="home-footer" id="ayuda">
   <div class="home-footer__inner">
-    <div class="home-footer__brand">
-      <picture class="home-footer__brand-full">
-        <img src="/img/brand/Mundo3D_Isologotipo.png" alt="Mundo 3D" width="140" height="55" />
-      </picture>
-      <picture class="home-footer__brand-dark">
-        <img src="/img/brand/Mundo3D_Isologotipo_Inverso.png" alt="Mundo 3D" width="140" height="55" />
-      </picture>
+    <div class="home-footer__top">
+      <div class="home-footer__brand">
+        <picture class="home-footer__brand-full">
+          <img src="/img/brand/Mundo3D_Isologotipo.png" alt="Mundo 3D" width="140" height="55" />
+        </picture>
+        <picture class="home-footer__brand-dark">
+          <img src="/img/brand/Mundo3D_Isologotipo_Inverso.png" alt="Mundo 3D" width="140" height="55" />
+        </picture>
+        <p class="home-footer__note">Piezas impresas en 3D y encargos a medida. Demo interactiva sin cobros reales.</p>
+      </div>
+
+      <nav class="home-footer__columns" aria-label="Navegación del pie">
+        <div class="home-footer__column">
+          <h2 class="home-footer__col-title">Tienda</h2>
+          <ul class="home-footer__links">
+            <li><a href="/products">Productos</a></li>
+            <li><a href="/help">Encargos</a></li>
+            <li><a href="/step-by-step">Paso a paso</a></li>
+          </ul>
+        </div>
+
+        <div class="home-footer__column">
+          <h2 class="home-footer__col-title">Información</h2>
+          <ul class="home-footer__links">
+            <li><a href="/faq">Preguntas frecuentes</a></li>
+            <li><a href="/aboutUs">Nosotros</a></li>
+            <li><a href="/terms">Términos</a></li>
+            <li><a href="/privacy">Privacidad</a></li>
+          </ul>
+        </div>
+
+        <div class="home-footer__column">
+          <h2 class="home-footer__col-title">Proyecto</h2>
+          <ul class="home-footer__links">
+            <li>
+              <a
+                class="home-footer__social-link"
+                href="https://github.com/GinoL221/Mundo-3D"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <SocialIcon name="github" size={20} />
+                <span>Código en GitHub</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
     </div>
 
-    <nav class="home-footer__links" aria-label="Navegación del pie">
-      <a href="/products">Productos</a>
-      <a href="/help">Ayuda</a>
-      <a href="/aboutUs">Nosotros</a>
-      <a href="/terms">Términos</a>
-      <a href="/privacy">Privacidad</a>
-    </nav>
-
-    <div class="home-footer__end">
-      <nav class="home-footer__social" aria-label="Redes sociales">
-        <a class="home-footer__social-link" href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-          <SocialIcon name="instagram" />
-        </a>
-        <a class="home-footer__social-link" href="https://x.com/" target="_blank" rel="noopener noreferrer" aria-label="X">
-          <SocialIcon name="x" />
-        </a>
-        <a class="home-footer__social-link" href="https://www.tiktok.com/" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
-          <SocialIcon name="tiktok" />
-        </a>
-      </nav>
+    <div class="home-footer__bottom">
       <p class="home-footer__copyright">© 2026 Mundo 3D. Todos los derechos reservados.</p>
     </div>
   </div>

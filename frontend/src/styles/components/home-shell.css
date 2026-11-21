@@ -16,10 +16,6 @@
   --home-line: var(--sys-border, #ded7cd);
   --home-night: var(--sys-text, #1e1b18);
   --home-on-dark: #ffffff;
-  --home-commission-button-bg: var(--home-blue);
-  --home-commission-button-fg: var(--home-on-dark);
-  --home-commission-muted: #c9c4bc;
-  --home-commission-eyebrow: #ffffff;
   --home-brand-surface: var(--sys-surface, #fffdf9);
   --home-brand-paper: var(--sys-page-bg, #f6f2ea);
   --home-brand-ink: var(--sys-text, #1e1b18);
@@ -63,7 +59,7 @@
   min-width: 0;
 }
 
-.home-header__primary ul,
+.home-header__nav ul,
 .home-header__account,
 .home-header__auth-links {
   display: flex;
@@ -73,7 +69,7 @@
   padding: 0;
 }
 
-.home-header__primary ul {
+.home-header__nav > ul {
   justify-content: space-between;
   gap: 16px;
 }
@@ -127,7 +123,7 @@
 
 .home-header .cart-link__badge {
   margin-left: 2px;
-  background: var(--home-blue);
+  background: var(--sys-action-bg);
   color: var(--home-on-dark);
   font-family: var(--font-body);
   font-size: 10px;
