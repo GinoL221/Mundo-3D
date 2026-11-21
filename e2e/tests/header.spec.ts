@@ -35,12 +35,17 @@ test('preserves HomeHeader navigation and keyboard dropdown access', async ({
   await expect(page).toHaveURL(/\/products$/);
 
   await page.goto('/aboutUs');
+  const header = page.locator('.home-header');
+  const headerHeightBefore = (await header.boundingBox())!.height;
   await page.locator('#navbar-user-menu-trigger').click();
   const userMenu = page.locator('#navbar-user-menu');
   await expect(userMenu).toBeVisible();
-  const profileLink = userMenu.locator('a[href="/profile"]');
-  await profileLink.focus();
-  await expect(profileLink).toBeFocused();
-  await profileLink.click();
-  await expect(page).toHaveURL(/\/profile$/);
+  const headerHeightAfter = (await header.boundingBox())!.height;
+  expect(Math.abs(headerHeightAfter - headerHeightBefore)).toBeLessThanOrEqual(1);
+  await expect(userMenu.locator('a[href="/profile"]')).toHaveCount(0);
+  const ordersLink = userMenu.locator('a[href="/orders"]');
+  await ordersLink.focus();
+  await expect(ordersLink).toBeFocused();
+  await ordersLink.click();
+  await expect(page).toHaveURL(/\/orders$/);
 });

@@ -20,7 +20,7 @@ Mundo-3D is a portfolio project in the form of a working e-commerce for 3D-print
 
 It exists to demonstrate engineering and design judgement through something complete rather than described. Success is an evaluator concluding that the author builds carefully — not a sales figure or the number of features. The interface is part of the deliverable: a well-argued architecture behind a careless surface reads as an unfinished project.
 
-Public availability and safe demo access are product goals, not claims that deployment or visitor isolation already exists.
+Public availability of a visitor-isolated demo is a product goal. Hosting manifests and deployment runbooks exist in the repository, but verified public demo isolation and automated state recovery are assessed separately from basic deployment.
 
 ## Positioning
 
@@ -59,19 +59,20 @@ Buyer interaction is the first delivery priority; public STAFF interaction follo
 
 ## Capabilities and Constraints
 
-**Implemented capabilities** (repository functionality, not a claim that a public deployment or its operational configuration has been verified):
+**Implemented capabilities** (repository functionality; deploying the stack alone does not verify public demo visitor isolation or automatic reset):
 
-- Catalogue with categories and franchises; product detail pages.
-- Registration and login with JWT in an `httpOnly` cookie, signed double-submit CSRF, refresh-token rotation with family-wide reuse detection, and per-IP plus per-account login throttling.
+- Catalogue with categories and franchises (17 seeded products in `backend/src/database/data/products.json`), plus product detail pages with Web Share / link copy.
+- Registration and login with email confirmation (`confirm-email.astro`, Brevo HTTPS / SMTP via `MAIL_DRIVER`), JWT in an `httpOnly` cookie, signed double-submit CSRF, refresh-token rotation with family-wide reuse detection, and per-IP plus per-account login throttling.
 - Three-role model: `ADMIN` (1), `USER` (2), `STAFF` (3). STAFF can create and update products but not delete them.
-- Product administration with stock and images; category, franchise, and user administration.
+- Product administration with stock and images (`frontend/src/pages/admin/products/`) and custom-commission request review (`frontend/src/pages/admin/commission-requests.astro`). Category and franchise CRUD endpoints plus user read endpoints (`GET /users`, `GET /users/:id`) exist on the backend API without dedicated admin frontend screens yet.
 - Local cart with Nanostores, synchronised to the API for authenticated users.
-- Orders and order history.
+- Orders and order history (simulated checkout; no payment processing).
 - Informational pages: about, FAQ, help, step-by-step, terms, privacy.
 - Public custom commission request intake without an account, collecting name, email, and idea, with optional catalog-product association. Requests are available for STAFF/ADMIN review and expire after 30 days; physical purge runs hourly while the backend is active or at its next startup. No automated contact or transaction is implied.
+- Deployment stack and container configuration: `render.yaml`, `Dockerfile`, Cloudflare Pages `/api/*` reverse proxy (`frontend/functions/api/[[path]].ts`), R2/Cloudinary storage drivers (`STORAGE_DRIVER`), and operational runbooks (`docs/RUNBOOKS.md`).
 - Light/dark theme.
 
-The target demo's public access, safe buyer/STAFF sessions, visitor isolation, usage limits, and state recovery must be assessed separately. Existing authentication and roles alone do not establish that these demo requirements are satisfied.
+Partial visitor-isolation persistence and lease primitives (`backend/src/.../DemoSandbox*`) exist in the repository but are not yet wired into runtime HTTP routes or frontend controls. Public demo access, safe buyer/STAFF demo sessions, visitor isolation, usage limits, and automatic state recovery remain unmounted and must be wired and verified before claiming the Target Demo Experience is complete.
 
 **Technical constraints:**
 
@@ -84,9 +85,13 @@ The target demo's public access, safe buyer/STAFF sessions, visitor isolation, u
 
 - **Custom commissions are part of the product.** The supported slice is request submission and staff review, not quoting, commission-order tracking, or payment. The catalogue contains pre-made franchise pieces and leads the home page; commissions follow as a secondary banner or featured section.
 - Orders demonstrate a simulated purchase flow. Payment processing is not implemented, and no real transaction occurs. Demo copy must make this explicit.
-- The public demo must not send real email, collect real customer data, or expose ADMIN access. This is a target constraint, not a claim that current application behavior already enforces it.
-- Real commercial operations, payment processing, automated commission email, and new quoting or tracking workflows are outside the agreed demo scope. They require separate product decisions.
-- Hosting, demo-session mechanics, isolation, reset strategy, and operational configuration need a separate implementation and deployment plan; this document does not prescribe their technical design.
+- Standard account registration currently supports email confirmation when `MAIL_DRIVER` is configured. The target public demo (once visitor-isolated demo sessions are wired) must not require real registration, send real email to visitors, collect real personal data, or expose ADMIN access.
+- Real commercial operations, live payment capture, automated commission email, and new quoting or tracking workflows are outside the agreed demo scope. They require separate product decisions.
+- Visitor-isolated demo-session wiring, reset automation, and operational verification for the target demo require finishing and mounting the sandbox design separately from basic hosting.
+
+**Pending future initiatives (not implemented yet):**
+
+- **Sandbox/test payment gateway integration (engineering depth):** Planned for a later phase, not part of current shipped behavior. The goal is to integrate a payment gateway strictly in sandbox/test mode (for example Mercado Pago Sandbox or Stripe Test Mode) to demonstrate real-world payment engineering — idempotent payment initiation, webhook signature verification, asynchronous payment state transitions, and failure/retry handling — without processing real money. Until built and verified, storefront copy must continue stating clearly that checkout is simulated and no payment occurs.
 
 ## Brand Commitments
 
@@ -100,9 +105,9 @@ The target demo's public access, safe buyer/STAFF sessions, visitor isolation, u
 
 ## Evidence on Hand
 
-- Real product imagery for the nine seeded catalogue items, under `frontend/public/img/`.
+- Real product imagery for the 17 seeded catalogue items, under `frontend/public/img/products/`.
 - A verifiable engineering trail: `openspec/specs/` (capability specifications), `openspec/changes/archive/` (closed change cycles with their exploration, research, design, and verification records), and tests across unit, real-database, and Playwright tiers. Current execution results belong in verification records, not in a fixed test-count claim here.
-- `README.md` documents setup, architecture, and testing strategy.
+- `README.md` documents setup, architecture, and testing strategy; `docs/RUNBOOKS.md` documents the free-tier deployment stack and operational checks.
 
 **Absences that must not be fabricated:** no customers, no testimonials, no sales figures, no press, no case studies, no pricing tiers, no delivery guarantees, no payment processing. Prices exist on catalogue items as seed data only.
 

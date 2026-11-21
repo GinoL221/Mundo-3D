@@ -3,9 +3,13 @@ import Layout from '../layouts/Layout.astro';
 import { OrderList } from '../domains/orders';
 ---
 
-<Layout title="Mis Órdenes - Mundo 3D">
-  <h1 class="sr-only">Mundo 3D — Mis órdenes</h1>
-  <main class="order-list">
+<Layout title="Mis pedidos - Mundo 3D">
+  <main class="orders-page system-frame system-section">
+    <header class="orders-page__header">
+      <p class="orders-page__eyebrow">Tu cuenta</p>
+      <h1>Mis pedidos</h1>
+      <p>Consultá el historial de tus pedidos simulados y entrá al detalle de cada uno.</p>
+    </header>
     <OrderList />
   </main>
 </Layout>
