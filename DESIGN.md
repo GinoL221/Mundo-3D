@@ -59,20 +59,20 @@ The default `:root` values and the explicit `data-theme="light"` values are the 
 
 | Token               | Light/default | Dark      |
 | ------------------- | ------------- | --------- |
-| `--bg`              | `#f6f2ea`     | `#1e1b18` |
-| `--fg`              | `#1e1b18`     | `#f6f2ea` |
+| `--bg`              | `#f6f2ea`     | `#11100f` |
+| `--fg`              | `#1e1b18`     | `#f5f1ea` |
 | `--accent`          | `#2f6bff`     | `#2f6bff` |
 | `--link-text`       | `#174ea6`     | `#8eb4ff` |
 | `--accent-soft`     | `#dce7ff`     | `#dce7ff` |
 | `--danger`          | `#8a0032`     | `#8a0032` |
 | `--warning`         | `#2f6bff`     | `#2f6bff` |
-| `--surface`         | `#fffdf9`     | `#292524` |
-| `--border`          | `#ded7cd`     | `#44403c` |
-| `--input-bg`        | `#fffdf9`     | `#292524` |
-| `--input-fg`        | `#1e1b18`     | `#f6f2ea` |
+| `--surface`         | `#fffdf9`     | `#1b1917` |
+| `--border`          | `#ded7cd`     | `#2e2a26` |
+| `--input-bg`        | `#fffdf9`     | `#1b1917` |
+| `--input-fg`        | `#1e1b18`     | `#f5f1ea` |
 | `--danger-text`     | `#b91c1c`     | `#fca5a5` |
-| `--title-highlight` | `#1e1b18`     | `#f6f2ea` |
-| `--lcd-bg`          | `#fffdf9`     | `#292524` |
+| `--title-highlight` | `#1e1b18`     | `#f5f1ea` |
+| `--lcd-bg`          | `#fffdf9`     | `#1b1917` |
 | `--lcd-fg`          | `#2f6bff`     | `#2f6bff` |
 
 `--danger` is for filled danger backgrounds with light text. `--danger-text` is for danger text and borders directly on surfaces; keep the roles separate. `--warning` currently maps to the blue accent because no separate warning color is prescribed.
