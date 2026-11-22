@@ -2,7 +2,7 @@ html[data-theme='dark'] .home-shell {
   --home-paper: var(--bg);
   --home-surface: var(--surface);
   --home-ink: var(--fg);
-  --home-muted: #b5aea4;
+  --home-muted: var(--sys-text-muted);
   --home-line: var(--border);
   --home-line-hover: #4c4640;
   --home-card-shadow-hover: 0 12px 28px rgba(0, 0, 0, 0.52);

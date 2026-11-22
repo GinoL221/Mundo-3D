@@ -93,12 +93,11 @@ import Layout from '../layouts/Layout.astro';
               </p>
               <button class="commission-form__submit" type="submit" disabled>Enviar idea</button>
               <p
-                class="commission-form__status"
+                class="commission-form__status commission-form__status--feedback"
                 id="commission-feedback"
                 role="status"
                 aria-live="polite"
-              >
-              </p>
+              ></p>
             </form>
           </div>
         </section>
@@ -152,6 +151,7 @@ import Layout from '../layouts/Layout.astro';
     submitButton.disabled = true;
     submitButton.textContent = 'Enviando…';
     feedback.setAttribute('role', 'status');
+    feedback.dataset.state = 'pending';
     feedback.textContent = 'Enviando…';
     let result: Awaited<ReturnType<typeof submitCustomCommissionRequest>>;
     try {
@@ -168,11 +168,14 @@ import Layout from '../layouts/Layout.astro';
     }
     if (result.ok) {
       form.reset();
+      feedback.setAttribute('role', 'status');
+      feedback.dataset.state = 'success';
       feedback.textContent =
         'Listo: tu solicitud quedó guardada en esta demo para revisión. No es un pedido, presupuesto ni pago; no enviamos un correo ni prometemos una respuesta. Se oculta a los 30 días y se purga cada hora mientras el backend está activo o al próximo inicio si estuvo detenido.';
       return;
     }
     feedback.setAttribute('role', 'alert');
+    feedback.dataset.state = 'error';
     feedback.textContent = {
       validation: `No pudimos aceptar esos datos. Revisalos y volvé a intentar.${idProduct ? ' Si elegiste una pieza, puede que ya no esté disponible: elegí “Sin asociar” y volvé a enviar.' : ''}`,
       'rate-limit': 'Se recibieron demasiados intentos. Esperá un rato antes de volver a probar.',
@@ -200,26 +203,46 @@ import Layout from '../layouts/Layout.astro';
   .commission-form__label {
     color: var(--fg);
     font-family: var(--font-body);
-    font-size: 1rem;
-    font-weight: 500;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.35;
   }
 
   .commission-form__control {
     box-sizing: border-box;
     width: 100%;
     min-block-size: var(--sys-target-min, 44px);
-    padding: var(--space-sm) var(--space-md);
+    padding: 10px 12px;
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-control);
     background: var(--input-bg);
     color: var(--input-fg);
-    font: inherit;
+    font: 400 0.9375rem / 1.4 var(--font-body);
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease;
   }
 
-  .commission-form__control:focus-visible,
-  .commission-form__submit:focus-visible {
+  select.commission-form__control {
+    cursor: pointer;
+  }
+
+  .commission-form__control::placeholder {
+    color: var(--sys-text-muted);
+    opacity: 1;
+  }
+
+  .commission-form__control:focus {
+    outline: none;
+    border-color: var(--accent-strong);
+    box-shadow: 0 0 0 3px var(--accent-tint);
+  }
+
+  .commission-form__control:focus-visible {
     outline: 3px solid var(--accent);
     outline-offset: 2px;
+    border-color: var(--accent-strong);
+    box-shadow: 0 0 0 3px var(--accent-tint);
   }
 
   .commission-form__control--textarea {
@@ -234,29 +257,51 @@ import Layout from '../layouts/Layout.astro';
 
   .commission-form__submit {
     justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-width: 44px;
     min-block-size: var(--sys-target-min, 44px);
-    padding: var(--space-sm) var(--space-lg);
-    border: 1px solid var(--sys-action-bg, #2d66f0);
-    border-radius: 4px;
-    background: var(--sys-action-bg, #2d66f0);
+    padding: 10px 18px;
+    border: 1px solid var(--accent-strong);
+    border-radius: var(--radius-control);
+    background: var(--accent-strong);
     color: #ffffff;
+    box-shadow: var(--shadow-button-primary);
     cursor: pointer;
-    font: inherit;
-    font-weight: 600;
+    touch-action: manipulation;
+    font: 600 0.9375rem / 1.2 var(--font-body);
     transition:
       background-color 150ms ease,
-      border-color 150ms ease;
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      transform 150ms ease;
   }
 
   .commission-form__submit:hover:not(:disabled) {
-    background: var(--home-blue-hover, #2459d8);
-    border-color: var(--home-blue-hover, #2459d8);
+    background: var(--accent-strong-hover);
+    border-color: var(--accent-strong-hover);
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+
+  .commission-form__submit:active:not(:disabled) {
+    background: var(--accent-strong-active);
+    border-color: var(--accent-strong-active);
+    color: #ffffff;
+    transform: translateY(0);
+  }
+
+  .commission-form__submit:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
   }
 
   .commission-form__submit:disabled {
     cursor: not-allowed;
     opacity: 0.55;
+    box-shadow: none;
+    transform: none;
   }
 
   .commission-form__status {
@@ -265,6 +310,33 @@ import Layout from '../layouts/Layout.astro';
   }
 
   .commission-form__status[role='alert'] {
+    color: var(--danger-text);
+  }
+
+  .commission-form__status--feedback {
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--surface-subtle);
+    color: var(--fg);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .commission-form__status--feedback:empty {
+    display: none;
+  }
+
+  .commission-form__status--feedback[data-state='success'] {
+    background: var(--success-bg);
+    border-color: var(--success-border);
+    color: var(--success-text);
+  }
+
+  .commission-form__status--feedback[role='alert'] {
+    background: var(--danger-bg);
+    border-color: var(--danger-border);
     color: var(--danger-text);
   }
 
@@ -281,6 +353,18 @@ import Layout from '../layouts/Layout.astro';
 
     .commission-form__submit {
       width: 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .commission-form__control,
+    .commission-form__submit {
+      transition: none;
+    }
+
+    .commission-form__submit:hover:not(:disabled),
+    .commission-form__submit:active:not(:disabled) {
+      transform: none;
     }
   }
 </style>

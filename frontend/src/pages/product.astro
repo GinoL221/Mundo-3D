@@ -26,36 +26,40 @@ import SocialIcon from '../components/SocialIcon.astro';
           </button>
         </div>
 
-        <section id="share-panel" class="product-share-panel" role="dialog" aria-labelledby="share-panel-title" hidden>
-          <div class="product-share-panel__header">
+        <section id="share-panel" class="ui-panel product-share-panel" role="dialog" aria-labelledby="share-panel-title" hidden>
+          <div class="ui-panel__header product-share-panel__header">
             <div class="product-share-panel__heading">
-              <h2 id="share-panel-title" class="product-share-panel__title">Compartir pieza</h2>
-              <p id="share-panel-summary" class="product-share-panel__summary"></p>
+              <h2 id="share-panel-title" class="ui-panel__title product-share-panel__title">Compartir pieza</h2>
+              <p id="share-panel-summary" class="ui-panel__subtitle product-share-panel__summary"></p>
             </div>
-            <button type="button" id="share-panel-close" class="product-share-panel__close" aria-label="Cerrar panel de compartir">
+            <button type="button" id="share-panel-close" class="ui-btn ui-btn--ghost ui-btn--icon product-share-panel__close" aria-label="Cerrar panel de compartir">
               <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
             </button>
           </div>
-          <div class="product-share-panel__copy-group">
-            <label class="sr-only" for="share-url-input">Enlace de la pieza</label>
-            <input id="share-url-input" class="product-share-panel__url-input" type="url" readonly />
-            <button type="button" id="share-copy-btn" class="product-share-panel__copy-btn">Copiar</button>
+          <div class="ui-panel__body product-share-panel__body">
+            <div class="ui-field product-share-panel__field">
+              <label class="sr-only" for="share-url-input">Enlace de la pieza</label>
+              <div class="ui-input-group product-share-panel__copy-group">
+                <input id="share-url-input" class="ui-input product-share-panel__url-input" type="url" readonly />
+                <button type="button" id="share-copy-btn" class="ui-btn ui-btn--soft ui-btn--sm product-share-panel__copy-btn">Copiar</button>
+              </div>
+              <p id="share-status" class="ui-help product-share-panel__status" role="status" aria-live="polite"></p>
+            </div>
+            <div class="product-share-panel__channels">
+              <a id="share-whatsapp-link" class="ui-btn ui-btn--whatsapp product-share-panel__channel" target="_blank" rel="noopener noreferrer">
+                <SocialIcon name="whatsapp" size={16} />
+                <span>WhatsApp</span>
+              </a>
+              <a id="share-email-link" class="ui-btn ui-btn--mail product-share-panel__channel">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
+                <span>Correo</span>
+              </a>
+              <button type="button" id="share-native-btn" class="ui-btn ui-btn--secondary product-share-panel__channel product-share-panel__channel--full" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98" /></svg>
+                <span>Más opciones…</span>
+              </button>
+            </div>
           </div>
-          <div class="product-share-panel__channels">
-            <a id="share-whatsapp-link" class="product-share-panel__channel" target="_blank" rel="noopener noreferrer">
-              <SocialIcon name="whatsapp" size={16} />
-              WhatsApp
-            </a>
-            <a id="share-email-link" class="product-share-panel__channel">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
-              Correo
-            </a>
-            <button type="button" id="share-native-btn" class="product-share-panel__channel product-share-panel__channel--full" hidden>
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg>
-              Más opciones…
-            </button>
-          </div>
-          <p id="share-status" class="product-share-panel__status" role="status" aria-live="polite"></p>
         </section>
       </div>
 
