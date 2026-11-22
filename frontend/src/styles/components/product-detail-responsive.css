@@ -2,6 +2,14 @@
   .product-detail__main {
     padding-inline: var(--space-lg);
   }
+  .product-share-panel {
+    position: absolute;
+    top: calc(100% + var(--space-sm));
+    right: 0;
+    z-index: 15;
+    width: min(100%, 420px);
+    margin-top: 0;
+  }
   .product-detail__skeleton {
     grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
   }
@@ -25,9 +33,6 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--space-lg);
   }
-  .product-detail__image {
-    height: 360px;
-  }
   .product-detail__actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -40,8 +45,5 @@
   #product-content {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--space-2xl);
-  }
-  .product-detail__image {
-    height: 420px;
   }
 }
