@@ -1,25 +1,64 @@
 ---
+import EditorialSidebar from '../components/EditorialSidebar.astro';
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="Política de privacidad — Mundo 3D">
-  <main class="form-layout">
-    <article class="about-content">
-      <section>
-        <h1>Política de privacidad</h1>
-      </section>
+<Layout title="Privacidad — Mundo 3D">
+  <main class="editorial-page">
+    <div class="editorial-shell">
+      <EditorialSidebar currentPath={Astro.url.pathname} />
 
-      <section>
-        <h2>Solicitudes de encargo</h2>
-        <p>Podés enviar una solicitud sin crear una cuenta. Recopilamos tu nombre, correo electrónico, descripción de la idea y, si elegís una pieza del catálogo, el identificador de ese producto. Usamos estos datos para registrar la solicitud y permitir que personas con rol STAFF o ADMIN la revisen.</p>
-        <p>Es una función de demostración local: la solicitud no genera un presupuesto, pedido ni pago. No enviamos correos ni prometemos una respuesta.</p>
-        <p>Las solicitudes se ocultan a los 30 días. El backend las elimina físicamente cada hora mientras está activo; si estuvo detenido, las elimina en el próximo inicio.</p>
-      </section>
+      <article class="editorial-article">
+        <header class="editorial-header">
+          <h1>Privacidad</h1>
+          <p class="editorial-lead">
+            Qué datos se guardan cuando probás Mundo 3D, para qué se usan y cuándo se eliminan.
+          </p>
+        </header>
 
-      <section>
-        <h2>Protección de datos</h2>
-        <p>En Mundo 3D, nos tomamos en serio la privacidad. La información se utiliza para el funcionamiento de esta demostración y la revisión indicada; no se comparte con terceros salvo que sea necesario para prestar el servicio o por obligación legal.</p>
-      </section>
-    </article>
+        <section class="editorial-section" aria-labelledby="solicitudes-encargo">
+          <h2 id="solicitudes-encargo">Solicitudes de encargo</h2>
+          <p>
+            Podés enviar una solicitud sin crear una cuenta. Guardamos tu nombre, correo
+            electrónico, descripción de la idea y, si elegís una pieza del catálogo, el
+            identificador de ese producto para que personas con rol <code>STAFF</code> o{' '}
+            <code>ADMIN</code> puedan revisarla.
+          </p>
+          <p>
+            La solicitud no genera presupuesto, pedido, pago ni correo automático, por lo que te
+            recomendamos usar datos ficticios al probar. Las solicitudes se ocultan a los 30 días y
+            el backend las elimina físicamente cada hora mientras está activo o en el próximo inicio
+            si estuvo detenido.
+          </p>
+        </section>
+
+        <section class="editorial-section" aria-labelledby="cuentas-y-navegador">
+          <h2 id="cuentas-y-navegador">Cuentas, sesiones y navegador</h2>
+          <p>
+            Si te registrás o iniciás sesión, la autenticación utiliza cookies{' '}
+            <code>httpOnly</code> de sesión y refresh tokens con rotación para validar permisos en
+            el servidor.
+          </p>
+          <p>
+            Además, el navegador guarda de forma local el estado de tu carrito y tu preferencia de
+            tema visual (<code>system</code>, <code>light</code> o <code>dark</code>) para conservar
+            tu vista entre páginas.
+          </p>
+        </section>
+
+        <section class="editorial-section" aria-labelledby="uso-informacion">
+          <h2 id="uso-informacion">Uso de la información</h2>
+          <p>
+            La información registrada se utiliza únicamente para hacer funcionar esta demo
+            interactiva y su revisión interna; no se vende ni se comparte con terceros con fines
+            comerciales o publicitarios.
+          </p>
+          <p>
+            Si querés probar el envío de una propuesta podés ir a <a href="/help">Encargos</a>, y en{' '}
+            <a href="/terms">Términos</a> encontrás el alcance general de uso.
+          </p>
+        </section>
+      </article>
+    </div>
   </main>
 </Layout>

@@ -59,29 +59,29 @@ The default `:root` values and the explicit `data-theme="light"` values are the 
 
 | Token               | Light/default | Dark      |
 | ------------------- | ------------- | --------- |
-| `--bg`              | `#f6f2ea`     | `#1e1b18` |
-| `--fg`              | `#1e1b18`     | `#f6f2ea` |
+| `--bg`              | `#f8fafc`     | `#11100f` |
+| `--fg`              | `#0f172a`     | `#f5f1ea` |
 | `--accent`          | `#2f6bff`     | `#2f6bff` |
 | `--link-text`       | `#174ea6`     | `#8eb4ff` |
 | `--accent-soft`     | `#dce7ff`     | `#dce7ff` |
 | `--danger`          | `#8a0032`     | `#8a0032` |
 | `--warning`         | `#2f6bff`     | `#2f6bff` |
-| `--surface`         | `#fffdf9`     | `#292524` |
-| `--border`          | `#ded7cd`     | `#44403c` |
-| `--input-bg`        | `#fffdf9`     | `#292524` |
-| `--input-fg`        | `#1e1b18`     | `#f6f2ea` |
+| `--surface`         | `#ffffff`     | `#1b1917` |
+| `--border`          | `#e2e8f0`     | `#2e2a26` |
+| `--input-bg`        | `#ffffff`     | `#1b1917` |
+| `--input-fg`        | `#0f172a`     | `#f5f1ea` |
 | `--danger-text`     | `#b91c1c`     | `#fca5a5` |
-| `--title-highlight` | `#1e1b18`     | `#f6f2ea` |
-| `--lcd-bg`          | `#fffdf9`     | `#292524` |
+| `--title-highlight` | `#0f172a`     | `#f5f1ea` |
+| `--lcd-bg`          | `#ffffff`     | `#1b1917` |
 | `--lcd-fg`          | `#2f6bff`     | `#2f6bff` |
 
 `--danger` is for filled danger backgrounds with light text. `--danger-text` is for danger text and borders directly on surfaces; keep the roles separate. `--warning` currently maps to the blue accent because no separate warning color is prescribed.
 
-`--link-text` is an implementation-derived accessible text-link role, measured at 7.03:1 against the light `--bg` and 7.72:1 against the light `--surface`, then 8.26:1 against the dark `--bg` and 7.31:1 against the dark `--surface`. It is not a replacement for the official brand blue `--accent` (`#2f6bff`), which remains available for filled brand buttons, graphical emphasis, borders, and focus indicators where appropriate. These implementation values do not loosen or replace the manual's contrast rule.
+`--link-text` is an implementation-derived accessible text-link role, measured at 7.75:1 against the light `--bg` (`#f8fafc`) and 8.10:1 against the light `--surface` (`#ffffff`), then 8.26:1 against the dark `--bg` and 7.31:1 against the dark `--surface`. It is not a replacement for the official brand blue `--accent` (`#2f6bff`), which remains available for filled brand buttons, graphical emphasis, borders, and focus indicators where appropriate. These implementation values do not loosen or replace the manual's contrast rule.
 
 The `--pico-*` variables remain only as compatibility aliases for legacy selectors in product detail, alerts, profile, admin, and other older surfaces. They are explicitly implementation debt: do not use them for new brand work, and do not reintroduce PICO crimson or orange as brand tokens.
 
-Theme state is set on `<html>` by `Layout.astro` and `themeToggle.ts`, using `localStorage.theme` with light as the initial value.
+Theme state is set on `<html>` by `Layout.astro` and `themeToggle.ts`, using `localStorage.theme` with `system` as the initial value (following `prefers-color-scheme` and cycling `system -> light -> dark`).
 
 ### Typography (`tokens/typography.css`)
 
@@ -115,7 +115,7 @@ The accepted breakpoint names are `--bp-mobile 640px`, `--bp-tablet 1024px`, and
 
 ## Depth and elevation
 
-The brand is intentionally flat and tactile. Establish hierarchy with paper/surface contrast, ink typography, borders, spacing, and real photography. Do not introduce gradients, drop shadows, bevels, stickers, glow, or artificial elevation into new brand components. The existing LCD glow and dark workshop surfaces are documented legacy/debt, not defaults for new work.
+The brand is intentionally flat and tactile at rest. Establish hierarchy with paper/surface contrast, ink typography, borders, spacing, and real photography. Do not introduce gradients, resting drop shadows, bevels, stickers, glow, or artificial elevation into new brand components; interactive product cards may use a restrained soft-blur hover shadow (`--home-card-shadow-hover`) to signal clickability. The existing LCD glow and dark workshop surfaces are documented legacy/debt, not defaults for new work.
 
 ## Logo assets
 

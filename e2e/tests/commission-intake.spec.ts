@@ -114,7 +114,7 @@ test('visitor submits from the home CTA; STAFF/ADMIN can read while USER/guest a
   });
 
   await page.goto('/');
-  const commissionCta = page.getByRole('link', { name: /Contanos tu idea/ });
+  const commissionCta = page.locator('#encargos').getByRole('link', { name: /Enviar solicitud de encargo/ });
   await expect(commissionCta).toBeVisible();
   await commissionCta.click();
   await expect(page).toHaveURL('/help');

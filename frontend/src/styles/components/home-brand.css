@@ -2,14 +2,14 @@ html[data-theme='dark'] .home-shell {
   --home-paper: var(--bg);
   --home-surface: var(--surface);
   --home-ink: var(--fg);
-  --home-muted: #c9c4bc;
-  --home-line: #7e756c;
+  --home-muted: #b5aea4;
+  --home-line: var(--border);
+  --home-line-hover: #4c4640;
+  --home-card-shadow-hover: 0 12px 28px rgba(0, 0, 0, 0.52);
   --home-night: #142b66;
   --home-brand-surface: var(--surface);
   --home-brand-ink: var(--fg);
   --home-brand-muted: var(--home-muted);
-  --home-commission-button-bg: var(--accent-soft);
-  --home-commission-button-fg: #1e1b18;
 }
 
 .home-header__logo-full img,

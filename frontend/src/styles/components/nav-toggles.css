@@ -38,11 +38,24 @@
   margin-left: var(--space-xs);
 }
 
+:root {
+  color-scheme: light dark;
+}
+
+:root:has(> head > meta[name='color-scheme'][content='light']) {
+  color-scheme: light;
+}
+
+:root:has(> head > meta[name='color-scheme'][content='dark']) {
+  color-scheme: dark;
+}
+
 /* ── Theme Toggle Button (standalone BEM block) ────────────── */
 .theme-toggle-btn {
   background-color: var(--surface);
   color: var(--fg);
   border: 2px solid var(--fg);
+  border-radius: 4px;
   padding: var(--space-xs) var(--space-sm);
   min-width: 44px;
   min-height: 44px;
@@ -53,6 +66,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   transition:
     background-color 0.15s,
     color 0.15s,
@@ -73,26 +87,34 @@
 }
 
 .theme-toggle-btn__icon svg {
-  display: block;
   width: 24px;
   height: 24px;
-  stroke-width: 2;
 }
 
+.theme-toggle-btn__icon--system {
+  display: block;
+}
+
+.theme-toggle-btn__icon--sun,
 .theme-toggle-btn__icon--moon {
   display: none;
 }
 
-html[data-theme='light'] .theme-toggle-btn__icon--moon,
-html:not([data-theme]) .theme-toggle-btn__icon--moon {
+html[data-theme-preference='light'] .theme-toggle-btn__icon--system {
   display: none;
 }
 
-html[data-theme='dark'] .theme-toggle-btn__icon--sun {
+html[data-theme-preference='light'] .theme-toggle-btn__icon--sun {
+  display: block;
+}
+
+html[data-theme='dark']:not([data-theme-preference]) .theme-toggle-btn__icon--system,
+html[data-theme-preference='dark'] .theme-toggle-btn__icon--system {
   display: none;
 }
 
-html[data-theme='dark'] .theme-toggle-btn__icon--moon {
+html[data-theme='dark']:not([data-theme-preference]) .theme-toggle-btn__icon--moon,
+html[data-theme-preference='dark'] .theme-toggle-btn__icon--moon {
   display: block;
 }
 

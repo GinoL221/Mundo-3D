@@ -3,7 +3,7 @@
   --sys-page-bg: var(--bg);
   --sys-surface: var(--surface);
   --sys-text: var(--fg);
-  --sys-text-muted: var(--pico-muted);
+  --sys-text-muted: #475569;
   --sys-border: var(--border);
   /* Opt-in action blue preserves AA contrast without changing Home's accent. */
   --sys-action-bg: #2d66f0;

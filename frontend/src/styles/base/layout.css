@@ -3,9 +3,24 @@
    ============================================================ */
 
 /* ── Root ──────────────────────────────────────────────────── */
+:root {
+  accent-color: var(--accent);
+  scrollbar-color: var(--border) var(--bg);
+}
+
 html {
   font-size: 16px;
   scroll-behavior: smooth;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: #0f172a;
+}
+
+[data-theme='dark'] ::selection {
+  background: var(--sys-action-bg);
+  color: #ffffff;
 }
 
 /* ── Body ──────────────────────────────────────────────────── */
@@ -55,6 +70,7 @@ p {
 a {
   color: var(--link-text);
   text-decoration: none;
+  text-underline-offset: 0.2em;
   transition: color 0.15s;
 }
 

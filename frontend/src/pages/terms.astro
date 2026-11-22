@@ -1,19 +1,54 @@
 ---
+import EditorialSidebar from '../components/EditorialSidebar.astro';
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="Términos y condiciones — Mundo 3D">
-  <main class="form-layout">
-    <article class="about-content">
-      <section>
-        <h1>Términos y condiciones</h1>
-      </section>
+<Layout title="Términos — Mundo 3D">
+  <main class="editorial-page">
+    <div class="editorial-shell">
+      <EditorialSidebar currentPath={Astro.url.pathname} />
 
-      <section>
-        <h2>Condiciones de Uso</h2>
-        <p>Bienvenido a Mundo 3D. Al acceder y utilizar este sitio web, usted acepta cumplir y estar sujeto a los siguientes términos y condiciones de uso.</p>
-        <p>El contenido de las páginas de este sitio web es para su información general y uso exclusivo. Está sujeto a cambios sin previo aviso.</p>
-      </section>
-    </article>
+      <article class="editorial-article">
+        <header class="editorial-header">
+          <h1>Términos</h1>
+          <p class="editorial-lead">
+            Condiciones de uso de Mundo 3D como demo técnica interactiva.
+          </p>
+        </header>
+
+        <section class="editorial-section" aria-labelledby="naturaleza-demo">
+          <h2 id="naturaleza-demo">Naturaleza de la demo</h2>
+          <p>
+            Mundo 3D es un proyecto de portfolio pensado para mostrar cómo funciona la tienda tanto
+            en el navegador como en el servidor. Recorrer el sitio o probar sus flujos no establece
+            un contrato comercial, una oferta de venta, un compromiso de fabricación ni una garantía
+            de entrega.
+          </p>
+        </section>
+
+        <section class="editorial-section" aria-labelledby="pedidos-simulados">
+          <h2 id="pedidos-simulados">Pedidos simulados y precios</h2>
+          <p>
+            Los valores publicados en el catálogo son datos de prueba cargados para la demo. El
+            proceso de confirmación crea pedidos simulados y nunca realiza cobros, emite
+            comprobantes fiscales ni dispara envíos reales.
+          </p>
+        </section>
+
+        <section class="editorial-section" aria-labelledby="uso-responsable">
+          <h2 id="uso-responsable">Solicitudes de encargo y uso responsable</h2>
+          <p>
+            La sección <a href="/help">Encargos</a> recibe propuestas de prueba para revisión interna
+            de cuentas con rol <code>STAFF</code> o <code>ADMIN</code> y las purga automáticamente a
+            los 30 días. Al probar cualquiera de los formularios, usá datos ficticios y evitá
+            ingresar información personal real o confidencial.
+          </p>
+          <p>
+            Podés consultar el detalle de retención en <a href="/privacy">Privacidad</a> o repasar
+            el alcance completo del proyecto en <a href="/step-by-step">Cómo funciona</a>.
+          </p>
+        </section>
+      </article>
+    </div>
   </main>
 </Layout>
