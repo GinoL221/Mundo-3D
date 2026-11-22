@@ -7,40 +7,54 @@
 // script convention.
 ---
 
-<div id="order-loading" style="text-align:center; padding:2rem;">Cargando orden...</div>
-
-<div id="order-error" style="display:none;">
-  <p id="order-error-message">No se pudo cargar la orden.</p>
-  <p><a href="/">Volver al inicio</a></p>
+<div id="order-loading" class="orders-state" role="status" aria-live="polite">
+  <p>Cargando pedido...</p>
 </div>
 
-<div id="order-content" class="order-detail__container" style="display:none;">
-  <h2>Orden #<span id="order-id"></span></h2>
-  <p id="order-status"></p>
-  <p id="order-created-at"></p>
-  <p id="order-payment-reference"></p>
+<div id="order-error" class="orders-state orders-state--error" role="alert" style="display: none;">
+  <p id="order-error-message">No se pudo cargar el pedido.</p>
+  <p><a class="orders-action" href="/orders">Volver a mis pedidos</a></p>
+</div>
 
-  <table class="order-detail__items">
-    <thead>
-      <tr>
-        <th>Producto</th>
-        <th>Cantidad</th>
-        <th>Precio unitario</th>
-        <th>Subtotal</th>
-      </tr>
-    </thead>
-    <tbody id="order-items-body"></tbody>
-  </table>
+<div id="order-content" class="order-detail__container" style="display: none;">
+  <section class="order-detail__summary" aria-label="Resumen del pedido">
+    <div>
+      <p class="order-detail__label">Pedido</p>
+      <h2>Pedido #<span id="order-id"></span></h2>
+    </div>
+    <div class="order-detail__meta">
+      <p id="order-status"></p>
+      <p id="order-created-at"></p>
+      <p id="order-payment-reference"></p>
+    </div>
+  </section>
 
-  <h3>Total: $<span id="order-total"></span></h3>
+  <div class="order-detail__table-frame">
+    <table class="order-detail__items">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Cantidad</th>
+          <th>Precio unitario</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody id="order-items-body"></tbody>
+    </table>
+  </div>
+
+  <div class="order-detail__total">
+    <span>Total</span>
+    <strong>$<span id="order-total"></span></strong>
+  </div>
 </div>
 
 <template id="order-item-row-template">
   <tr>
-    <td class="order-item-name"></td>
-    <td class="order-item-qty"></td>
-    <td class="order-item-price"></td>
-    <td class="order-item-subtotal"></td>
+    <td class="order-item-name" data-label="Producto"></td>
+    <td class="order-item-qty" data-label="Cantidad"></td>
+    <td class="order-item-price" data-label="Precio unitario"></td>
+    <td class="order-item-subtotal" data-label="Subtotal"></td>
   </tr>
 </template>
 
@@ -62,7 +76,7 @@
     const messageEl = document.getElementById('order-error-message');
     if (loadingEl) loadingEl.style.display = 'none';
     if (messageEl) messageEl.textContent = message;
-    if (errorEl) errorEl.style.display = 'block';
+    if (errorEl) errorEl.style.display = 'grid';
   }
 
   function renderOrder(order: OrderViewModel): void {
@@ -101,7 +115,7 @@
       });
     }
 
-    if (contentEl) contentEl.style.display = 'block';
+    if (contentEl) contentEl.style.display = 'grid';
   }
 
   async function loadOrder(): Promise<void> {

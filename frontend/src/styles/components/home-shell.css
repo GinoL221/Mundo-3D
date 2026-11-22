@@ -30,6 +30,8 @@
 }
 
 .home-header {
+  position: relative;
+  z-index: 20;
   flex: 0 0 auto;
   padding: 16px 0;
   background: var(--home-brand-surface);
@@ -189,11 +191,15 @@
 }
 
 .home-header .nav-item__dropdown {
+  position: absolute;
   top: calc(100% + 4px);
   right: 0;
   z-index: 20;
   min-width: 160px;
+  max-width: calc(100vw - (var(--home-gutter) * 2));
+  margin: 0;
   padding: 8px;
+  list-style: none;
   border: 1px solid var(--home-brand-line);
   border-radius: 4px;
   background: var(--home-brand-surface);
@@ -214,6 +220,8 @@
   padding: 10px 12px;
   color: var(--home-brand-ink);
   font-size: 14px;
+  white-space: nowrap;
+  text-decoration: none;
 }
 
 .home-header .nav-item__dropdown a:hover,

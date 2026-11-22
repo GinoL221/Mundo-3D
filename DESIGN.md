@@ -128,25 +128,25 @@ Use the supplied files; do not reconstruct, recolor, filter, stretch, or separat
 | Imagotype   | `docs/diseno/imagenes/Mundo3D_Imagotipo.png`   | `frontend/public/img/brand/Mundo3D_Imagotipo.png`   |
 | Isotype     | `docs/diseno/imagenes/Mundo3D_Isotipo.png`     | `frontend/public/img/brand/Mundo3D_Isotipo.png`     |
 
-The header uses the horizontal isologotype as one responsive image in the labelled home link. Its image has an empty `alt`, intrinsic dimensions, and the `.navbar__logo-image` class. The frontend favicon uses the standalone isotype in PNG and ICO form. The five documented PNG identity assets are approved brand assets.
+The header (`HomeHeader.astro`) uses the horizontal isologotype as one responsive image in the labelled home link (`.home-header__logo`, with light and dark variants). Its image has an empty `alt` and intrinsic dimensions. The frontend favicon uses the standalone isotype in PNG and ICO form. The five documented PNG identity assets are approved brand assets.
 
 ## CSS and component conventions
 
-- Styles are plain CSS files imported by `frontend/src/layouts/Layout.astro` in this order: normalize, tokens, base reset, base layout, base utilities, then components.
-- Component styles generally use BEM names such as `.navbar__link`, `.navbar__list--left`, `.product-card__action`, and `.carousel--lcd`. Older standalone blocks such as `.cart-link` and `.empty-state` remain in use.
+- Styles are plain CSS files imported by `frontend/src/layouts/Layout.astro` in this order: normalize, tokens, base reset, base layout, base utilities, base system primitives, then components.
+- The shared layout shell uses `HomeHeader.astro` and `HomeFooter.astro` with BEM classes such as `.home-header__link`, `.home-header__utility`, `.home-footer__links`, `.product-card__action`, and `.orders-page`. Account dropdown selectors (`.nav-item__trigger`, `.nav-item__dropdown`, `.navbar__greeting`) and older standalone blocks (`.cart-link`, `.empty-state`) remain in use.
 - `--bp-*` is the only breakpoint token naming convention. Use the existing 640px and 1024px boundaries rather than adding aliases.
-- `reset.css` applies `image-rendering: pixelated` and `border-radius: 0` globally for the legacy visual surface. The product card overrides its radius to 4px, and the brand logo opts back into `image-rendering: auto`.
-- Keep disabled controls visibly disabled (`opacity: 0.5; cursor: not-allowed`) and remove their hover accent state, as done for the unavailable search controls.
+- `reset.css` keeps `image-rendering: auto` by default (`img:where(:not([data-image-rendering='pixel-art']))`) while `border-radius: 0` remains on legacy rules; explicit `[data-image-rendering='pixel-art']` and `--pixelart`/`--placeholder` classes still opt into `pixelated` as legacy implementation debt.
+- Keep disabled controls visibly disabled (`opacity: 0.5; cursor: not-allowed`) and remove their hover accent state.
 - Header controls use 24px outline SVG icons; CRT emoji/pixel-art icon code remains unused legacy, not new brand guidance.
 
 ## CRT/JRPG legacy surface
 
-These effects remain shipped but are not brand guidance:
+These legacy artifacts remain in the repository as cleanup debt and are not brand guidance:
 
-- `Layout.astro` reads `localStorage['retro-theme-preference']`, defaulting to `disabled`, and toggles `html.crt-theme-active` before paint. `.crt-overlay` is a fixed, pointer-transparent viewport overlay with scanlines and vignette; the flicker is disabled under `prefers-reduced-motion: reduce`.
-- `nav-toggles.css` and `product-card.css` add the `▶` hover cursor and `jrpg-blink` animation only while the CRT class is active. Both cursor animations have reduced-motion overrides. Navbar links reserve cursor space before hover; product-card actions still transition padding and can reflow, which is known legacy debt.
-- `carousel--lcd .glow` keeps its always-on `lcd-glow` animation independently of the CRT class. It currently has no reduced-motion override and should not be copied into new components without fixing that debt.
-- `crtToggle.ts` remains as a tested legacy module, but the current `Header.astro` no longer renders or wires a CRT toggle control.
+- `Layout.astro` and `HomeHeader.astro` no longer read `localStorage['retro-theme-preference']`, toggle `html.crt-theme-active`, or render `.crt-overlay` or a CRT toggle button.
+- `crtToggle.ts` remains in `frontend/src/scripts/` only as an orphaned, unit-tested legacy module.
+- `carousel.css` (including `.carousel--lcd` and `@keyframes lcd-glow`, which lacks a `prefers-reduced-motion` override), `feature-strip.css`, `profile.css`, and `error-pages.css` are still imported globally by `Layout.astro` despite being unused on active pages; do not copy them into new work.
+- Legacy `--pico-*` token references remain in `semantic.css`, `alerts.css`, `users-list.css`, `nav-toggles.css`, and inline admin styles; migrate them to official semantic tokens as each sector is refined.
 
 ## Do's and don'ts
 

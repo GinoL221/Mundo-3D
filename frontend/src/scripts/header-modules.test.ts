@@ -131,13 +131,13 @@ function createFixture() {
     'crt-icon',
     'navbar-cart-badge',
     'product-link',
-    'profile-link',
+    'orders-link',
     'search-button',
   ]) {
     document.elements.set(id, new FakeElement());
   }
   document.elements.get('product-link')!.href = '/products';
-  document.elements.get('profile-link')!.href = '/profile';
+  document.elements.get('orders-link')!.href = '/orders';
   const storage = createStorage();
   const window = {
     listeners: new Map<string, (event: Event) => void>(),
@@ -197,9 +197,13 @@ describe('Shared route shell', () => {
     expect(header).not.toContain('role="menu"');
     expect(header).not.toContain('role="menuitem"');
     expect(headerStyles).toMatch(
+      /\.home-header \.nav-item__dropdown \{[\s\S]*?position: absolute;[\s\S]*?list-style: none;/,
+    );
+    expect(headerStyles).toMatch(
       /\.home-header \.nav-item__dropdown a \{[\s\S]*?min-height: 44px;/,
     );
 
+    expect(header).not.toContain('href="/profile"');
     for (const href of [
       '/#catalogo',
       '/#encargos',
@@ -207,7 +211,6 @@ describe('Shared route shell', () => {
       '/help',
       '/login',
       '/register',
-      '/profile',
       '/orders',
       '/admin/products',
       '/cart',
@@ -336,7 +339,7 @@ describe('Header browser modules', () => {
     initializeSessionUI(document as unknown as Document, window as unknown as Window);
 
     expect(document.elements.get('product-link')!.href).toBe('/products');
-    expect(document.elements.get('profile-link')!.href).toBe('/profile');
+    expect(document.elements.get('orders-link')!.href).toBe('/orders');
 
     const search = document.elements.get('search-button')!;
     search.click();
