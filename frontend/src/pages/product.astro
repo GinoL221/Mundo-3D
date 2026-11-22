@@ -121,14 +121,16 @@ import Layout from '../layouts/Layout.astro';
       ...product,
       image: placeholder ? categoryImage : resolveImageUrl(product.image, 'products'),
     };
+    let fallbackCartImage: string | null = placeholder ? resolvedProduct.image : null;
 
     if (image) {
       image.src = resolvedProduct.image;
       image.classList.toggle('product-detail__image--pixelart', placeholder);
       image.alt = placeholder ? `Ilustración de ${product.category} para ${product.name}` : product.name;
       image.addEventListener('error', () => {
-        resolvedProduct.image = '/images/illustrations/Otras.svg';
-        image.src = resolvedProduct.image;
+        fallbackCartImage = '/images/illustrations/Otras.svg';
+        resolvedProduct.image = fallbackCartImage;
+        image.src = fallbackCartImage;
         image.alt = `Ilustración genérica para ${product.name}`;
         image.classList.add('product-detail__image--pixelart');
       }, { once: true });
@@ -161,7 +163,7 @@ import Layout from '../layouts/Layout.astro';
       if (CartService.hasToken()) {
         window.addEventListener('cart-sync-error', onSyncError, { once: true });
       }
-      CartService.addToCart(product);
+      CartService.addToCart(fallbackCartImage ? { ...product, image: fallbackCartImage } : product);
       addButton.disabled = true;
       addButton.textContent = 'Agregado al carrito';
       setText('cart-status', `${product.name} se agregó al carrito.`);
