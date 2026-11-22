@@ -326,16 +326,16 @@
   min-height: 48px;
   border: 1px solid transparent;
   background: #ffffff;
-  color: #1e1b18;
+  color: #0f172a;
 }
 
 .home-button--commission:hover {
-  background: #f6f2ea;
-  color: #1e1b18;
+  background: #f8fafc;
+  color: #0f172a;
 }
 
 .home-button--commission:focus-visible {
-  color: #1e1b18;
+  color: #0f172a;
   outline: 3px solid #ffffff;
   outline-offset: 2px;
 }

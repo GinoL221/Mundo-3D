@@ -389,7 +389,7 @@ describe('Shared route shell', () => {
       /\.home-header \.cart-link__badge \{[^}]*?background: var\(--sys-action-bg\);/,
     );
     expect(productsStyles).toMatch(
-      /\.home-button--commission \{[^}]*?background: #ffffff;[^}]*?color: #1e1b18;/,
+      /\.home-button--commission \{[^}]*?background: #ffffff;[^}]*?color: #0f172a;/,
     );
     expect(productsStyles).toMatch(
       /\.home-button--commission:focus-visible \{[^}]*?outline: 3px solid #ffffff;/,

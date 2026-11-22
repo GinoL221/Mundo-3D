@@ -15,7 +15,7 @@ html {
 
 ::selection {
   background: var(--accent-soft);
-  color: #1e1b18;
+  color: #0f172a;
 }
 
 [data-theme='dark'] ::selection {

@@ -193,8 +193,8 @@ for (const theme of themes) {
     });
 
     expect(metrics.tokens).toEqual({
-      page: theme === 'light' ? '#f6f2ea' : '#1e1b18',
-      text: theme === 'light' ? '#1e1b18' : '#f6f2ea',
+      page: theme === 'light' ? '#f8fafc' : '#11100f',
+      text: theme === 'light' ? '#0f172a' : '#f5f1ea',
       frame: '1104px',
       prose: '75ch',
       target: '44px',
