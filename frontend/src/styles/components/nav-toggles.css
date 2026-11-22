@@ -28,8 +28,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--danger);
-  color: var(--pico-white);
+  background-color: var(--sys-action-bg);
+  color: var(--sys-action-text);
   font-family: var(--font-heading);
   font-size: 10px;
   min-width: 18px;
@@ -75,7 +75,7 @@
 
 .theme-toggle-btn:hover {
   background-color: var(--accent);
-  color: var(--pico-white);
+  color: var(--sys-action-text);
 }
 
 .theme-toggle-btn__icon {

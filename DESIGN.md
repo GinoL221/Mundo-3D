@@ -11,12 +11,12 @@ This document translates the product experience defined in [PRODUCT.md](PRODUCT.
 
 ## Authority and status
 
-| Priority | Source                              | Role                                                              |
-| -------: | ----------------------------------- | ----------------------------------------------------------------- |
-|        1 | `docs/diseno/manual-identidad.md`   | Brand identity, logo system, color, type, photography, and voice. |
-|        2 | `DESIGN.md`                         | Technical translation, conventions, and implementation debt.      |
-|        3 | `docs/diseno/identidad-visual.html` | Visual summary of the approved identity.                          |
-|        4 | Production repository               | What the product currently serves.                                |
+| Priority | Source                                | Role                                                                 |
+| -------: | ------------------------------------- | -------------------------------------------------------------------- |
+|        1 | `docs/diseno/manual-identidad.md`     | Brand identity, logo system, color, type, photography, and voice.    |
+|        2 | `DESIGN.md`                           | Technical translation, conventions, and implementation debt.         |
+|        3 | `design/taller-maker-styleguide.html` | Live UI kit specimen: tokens and `.ui-*` components, light and dark. |
+|        4 | Production repository                 | What the product currently serves.                                   |
 
 The table above orders visual authority only. `PRODUCT.md` governs audience, product scope, and target experience; the brand manual governs identity. Neither a product goal nor a visual rule proves that a capability is implemented or publicly deployed.
 
@@ -26,13 +26,13 @@ The product direction is a workshop vitrine: catalogue first, paper and ink surf
 
 These guidelines translate the target in `PRODUCT.md`; they do not describe shipped demo controls or verified public availability. Keep the storefront useful to a shopper while making engineering depth discoverable to a technical evaluator.
 
-| Surface | Target UX rule |
-| --- | --- |
-| Public entry | Lead with the catalogue, not a login wall, portfolio pitch, or mandatory tutorial. Browsing catalogue, product details, and cart must not require registration. |
-| Optional orientation | Offer a short, skippable explanation of what to try and what each flow demonstrates. Keep repository and engineering-evidence links discoverable without interrupting shopping. |
-| Buyer demo | Provide a clearly labelled demo entry without registration friction. Identify simulated purchases before confirmation and in the resulting order state; never imply a real charge or fulfilment. |
-| STAFF demo | Identify the active role and permitted actions. Public demo access must not offer ADMIN. Hiding controls is presentation, not backend authorization or visitor isolation. |
-| Commission intake | Ask visitors to use fictitious data. Explain that submitting a request does not create a quote, order, payment, or automated email. Demo STAFF review must not expose another visitor's requests. |
+| Surface              | Target UX rule                                                                                                                                                                                                            |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public entry         | Lead with the catalogue, not a login wall, portfolio pitch, or mandatory tutorial. Browsing catalogue, product details, and cart must not require registration.                                                           |
+| Optional orientation | Offer a short, skippable explanation of what to try and what each flow demonstrates. Keep repository and engineering-evidence links discoverable without interrupting shopping.                                           |
+| Buyer demo           | Provide a clearly labelled demo entry without registration friction. Identify simulated purchases before confirmation and in the resulting order state; never imply a real charge or fulfilment.                          |
+| STAFF demo           | Identify the active role and permitted actions. Public demo access must not offer ADMIN. Hiding controls is presentation, not backend authorization or visitor isolation.                                                 |
+| Commission intake    | Ask visitors to use fictitious data. Explain that submitting a request does not create a quote, order, payment, or automated email. Demo STAFF review must not expose another visitor's requests.                         |
 | Session and recovery | Make session expiry, unavailable demo access, and any implemented reset understandable, including what data was lost or retained and the next available action. Do not promise recovery behavior that has not been built. |
 
 ### States and safety boundaries

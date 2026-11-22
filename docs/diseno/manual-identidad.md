@@ -202,7 +202,7 @@ Prohibido: “Calidad premium garantizada”, “Envío en tiempo récord”, �
 
 1. Este manual define la identidad.
 2. `DESIGN.md` traduce estas normas a criterios técnicos y registra deuda.
-3. `docs/diseno/identidad-visual.html` resume visualmente la identidad aprobada.
+3. `design/taller-maker-styleguide.html` muestra en vivo los tokens y componentes `.ui-*` aprobados, en modo claro y oscuro.
 4. Los cinco activos PNG de `docs/diseno/imagenes/` materializan los logos y variantes aprobados.
 5. El código prueba qué está implementado; no redefine la marca.
 

@@ -56,8 +56,8 @@
 
 .carousel__prev:hover,
 .carousel__next:hover {
-  background-color: var(--accent);
-  color: var(--pico-white);
+  background-color: var(--accent-strong);
+  color: #ffffff;
 }
 
 /* ── Indicators ────────────────────────────────────────────── */
@@ -91,7 +91,7 @@
   width: 12px;
   height: 12px;
   background-color: var(--border);
-  border: 2px solid var(--pico-black);
+  border: 2px solid var(--fg);
 }
 
 .carousel__indicator.active::before {

@@ -101,7 +101,7 @@ Partial visitor-isolation persistence and lease primitives (`backend/src/.../Dem
 - **The home page leads with the catalogue.** Custom commissions follow as a secondary banner or featured section. Binding.
 - **The three-role model is non-negotiable**, including STAFF's deliberate inability to delete products. It reflects how the product is meant to be operated.
 
-**Visual identity:** brand authority is `docs/diseno/manual-identidad.md` (v0.1). Its five PNG identity assets are approved. Workshop vitrine, monochrome paper/ink, IBM Plex Sans. The home page leads with the catalogue and a commission banner. `DESIGN.md` is the technical translation and records leftover PICO-8 surfaces; `docs/diseno/identidad-visual.html` is a visual summary.
+**Visual identity:** brand authority is `docs/diseno/manual-identidad.md` (v0.1). Its five PNG identity assets are approved. Workshop vitrine, monochrome paper/ink, IBM Plex Sans. The home page leads with the catalogue and a commission banner. `DESIGN.md` is the technical translation and records leftover PICO-8 surfaces; `design/taller-maker-styleguide.html` is the live UI kit specimen.
 
 ## Evidence on Hand
 

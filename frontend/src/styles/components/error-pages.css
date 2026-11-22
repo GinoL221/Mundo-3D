@@ -36,16 +36,17 @@
   font-family: var(--font-body);
   font-size: 18px;
   padding: var(--space-sm) var(--space-md);
-  background-color: var(--accent);
-  color: var(--pico-white);
-  border: 2px solid var(--accent);
+  background-color: var(--accent-strong);
+  color: #ffffff;
+  border: 2px solid var(--accent-strong);
 }
 
 .error-page a:focus-visible {
-  color: var(--pico-white);
+  color: #ffffff;
 }
 
 .error-page a:hover {
-  background-color: var(--pico-black);
-  color: var(--accent);
+  background-color: var(--accent-strong-hover);
+  border-color: var(--accent-strong-hover);
+  color: #ffffff;
 }

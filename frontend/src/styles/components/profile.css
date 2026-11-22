@@ -9,14 +9,14 @@
   margin: var(--space-lg) auto;
   padding: var(--space-lg);
   background-color: var(--surface);
-  border: 2px solid var(--pico-muted);
+  border: 1px solid var(--border);
 }
 
 /* ── Profile Image ─────────────────────────────────────────── */
 .profile__image {
   max-width: 70%;
   height: auto;
-  border: 2px solid var(--pico-muted);
+  border: 1px solid var(--border);
 }
 
 /* ── Profile Email ─────────────────────────────────────────── */

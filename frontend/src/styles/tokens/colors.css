@@ -1,25 +1,13 @@
-/* Brand tokens from docs/diseno/manual-identidad.md. PICO aliases remain for leftover surfaces. */
+/* Brand tokens from docs/diseno/manual-identidad.md. */
 
 :root {
   color-scheme: light;
-  --pico-black: #000000;
-  --pico-dark-blue: #1d2b53;
-  --pico-purple: #7e2553;
-  --pico-dark-green: #008351;
-  --pico-red: #ff004d;
-  --pico-yellow: #ffec27;
-  --pico-orange: #ffa300;
-  --pico-white: #ffffff;
-  --pico-light: #c2c3c7;
-  --pico-muted: #5f574f;
-  --pico-sky: #29adff;
 
   --bg: #f8fafc;
   --fg: #0f172a;
   --accent: #2f6bff;
   --link-text: #174ea6;
   --accent-soft: #dce7ff;
-  --danger: #8a0032;
   --warning: #2f6bff;
   --surface: #ffffff;
   --border: #e2e8f0;
@@ -72,7 +60,6 @@
   --accent: #2f6bff;
   --link-text: #8eb4ff;
   --accent-soft: #dce7ff;
-  --danger: #8a0032;
   --warning: #2f6bff;
   --surface: #1b1917;
   --border: #2e2a26;
@@ -125,7 +112,6 @@
   --accent: #2f6bff;
   --link-text: #174ea6;
   --accent-soft: #dce7ff;
-  --danger: #8a0032;
   --warning: #2f6bff;
   --surface: #ffffff;
   --border: #e2e8f0;
