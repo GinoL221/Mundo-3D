@@ -25,5 +25,5 @@
 }
 
 [data-theme='dark'] {
-  --sys-text-muted: var(--pico-light);
+  --sys-text-muted: #b5aea4;
 }

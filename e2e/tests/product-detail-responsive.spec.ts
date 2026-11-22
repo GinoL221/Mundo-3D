@@ -41,7 +41,7 @@ test('keeps share in the responsive top utility row and cart actions focused', a
     const share = utilityRow.locator('#share-product-btn');
     await expect(utilityRow).toBeVisible();
     await expect(utilityRow.locator(':scope > *')).toHaveCount(2);
-    await expect(back).toHaveText(/Volver a productos/);
+    await expect(back).toHaveText(/Volver al catálogo/);
     await expect(share).toContainText('Compartir');
 
     const layout = await utilityRow.evaluate((row) => {
