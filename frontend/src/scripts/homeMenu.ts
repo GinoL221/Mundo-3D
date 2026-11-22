@@ -13,7 +13,25 @@ export function initializeHomeMenu(document: Document): Cleanup {
 
   const compactViewport = document.defaultView?.matchMedia?.('(max-width: 1023px)');
   const isCompactViewport = () => compactViewport?.matches ?? true;
+  const accountSection = document.querySelector?.<HTMLElement>('.home-header__account-section') ?? null;
+  const utility = document.querySelector?.<HTMLElement>('.home-header__utility') ?? null;
+  const cartWrap = document.querySelector?.<HTMLElement>('.home-header__cart-wrap') ?? null;
   let menuOpen = false;
+
+  const syncAccountPlacement = () => {
+    if (!accountSection) return;
+    if (isCompactViewport()) {
+      if (accountSection.parentElement !== menu) {
+        menu.appendChild(accountSection);
+      }
+    } else if (utility && accountSection.parentElement !== utility) {
+      if (cartWrap && cartWrap.parentElement === utility) {
+        utility.insertBefore(accountSection, cartWrap.nextSibling);
+      } else {
+        utility.prepend(accountSection);
+      }
+    }
+  };
 
   const syncHiddenState = () => {
     menu.hidden = !menuOpen && isCompactViewport();
@@ -55,6 +73,7 @@ export function initializeHomeMenu(document: Document): Cleanup {
     }
   };
   const handleViewportChange = () => {
+    syncAccountPlacement();
     if (!isCompactViewport() && menuOpen) setMenuOpen(false);
     else syncHiddenState();
   };
@@ -64,6 +83,7 @@ export function initializeHomeMenu(document: Document): Cleanup {
   document.addEventListener('click', handleDocumentClick);
   document.addEventListener('focusin', handleDocumentFocus);
   compactViewport?.addEventListener('change', handleViewportChange);
+  syncAccountPlacement();
   setMenuOpen(false);
 
   let active = true;

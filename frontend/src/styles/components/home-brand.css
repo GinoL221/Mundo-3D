@@ -9,6 +9,7 @@ html[data-theme='dark'] .home-shell {
   --home-brand-surface: var(--surface);
   --home-brand-ink: var(--fg);
   --home-brand-muted: var(--home-muted);
+  --home-brand-line: var(--border);
 }
 
 .home-header__logo-full img,

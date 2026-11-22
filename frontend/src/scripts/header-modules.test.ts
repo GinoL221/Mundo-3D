@@ -193,6 +193,8 @@ describe('Shared route shell', () => {
     expect(layout).not.toContain('whatsapp-floating.css');
     expect(layout).not.toContain('variant?:');
     expect(layout).toContain('<body class="home-shell">');
+    expect(layout).toContain('<a class="skip-link" href="#main-content">Saltar al contenido</a>');
+    expect(layout).toContain('<span id="main-content" class="skip-target" tabindex="-1"></span>');
     expect(layout).toContain('<HomeHeader pathname={Astro.url.pathname} />');
     expect(layout).not.toContain('showUnavailableSearch');
     expect(layout).toContain('<HomeFooter />');
@@ -346,6 +348,7 @@ describe('Shared route shell', () => {
       /\.hero-specimen__price \{[\s\S]*?font-variant-numeric: tabular-nums;/,
     );
     expect(baseLayoutStyles).toContain('::selection');
+    expect(baseLayoutStyles).toContain('.skip-link');
     expect(baseLayoutStyles).toContain('accent-color: var(--accent);');
     expect(baseLayoutStyles).toContain('scrollbar-color: var(--border) var(--bg);');
     expect(baseLayoutStyles).toContain('text-underline-offset: 0.2em;');
@@ -413,22 +416,40 @@ describe('Shared route shell', () => {
     expect(header).toContain('<div class="home-header__primary" id="home-primary-navigation" hidden>');
     expect(header).toContain('<nav class="home-header__nav" aria-label="Navegación principal">');
     expect(header).toContain('class="home-header__link home-header__register" href="/register"');
-    expect(baseStyles).toContain('.home-header__nav > ul');
-    expect(baseStyles).toContain('+ .home-header__account-section');
-    expect(header).toContain('<p class="home-header__account-heading guest-only">Cuenta</p>');
-    expect(header).not.toContain('<h2 class="home-header__account-heading');
+    expect(header).not.toContain('home-header__account-heading');
+    expect(header).not.toContain('>Cuenta<');
+    expect(header.indexOf('class="home-header__logo"')).toBeLessThan(
+      header.indexOf('id="home-primary-navigation"'),
+    );
+    expect(header.indexOf('id="home-primary-navigation"')).toBeLessThan(
+      header.indexOf('id="navbar-cart-trigger"'),
+    );
+    expect(header.indexOf('id="navbar-cart-trigger"')).toBeLessThan(
+      header.indexOf('href="/login"'),
+    );
+    expect(header.indexOf('href="/register"')).toBeLessThan(
+      header.indexOf('id="theme-toggle"'),
+    );
+    expect(headerStyles).toMatch(
+      /\.home-header \{[^}]*?border-bottom: 1px solid var\(--home-brand-line\);/,
+    );
+    expect(headerStyles).toContain('.home-header__logo:focus-visible');
+    expect(baseStyles).toContain('.home-header__nav + .home-header__account-section');
     expect(baseStyles).not.toContain('border-inline-start: 1px solid var(--home-brand-line)');
+    expect(baseStyles).not.toContain('border-inline-start: 3px solid');
+    expect(baseStyles).toMatch(
+      /\.home-header__nav > ul > li > \.home-header__link--active \{[^}]*?background: var\(--accent-tint\);[^}]*?color: var\(--accent-tint-text\);/,
+    );
     expect(desktopStyles).toMatch(
       /\.home-header__nav > ul > li > \.home-header__link--active \{[^}]*?text-decoration: underline;/,
     );
+    expect(desktopStyles).not.toContain('position: absolute');
+    expect(desktopStyles).not.toMatch(/\border:\s*\d+/);
     expect(desktopStyles).toMatch(
-      /\.home-header__top,\s*\.home-header__primary,\s*\.home-header__primary\.is-open,\s*\.home-header__utility,\s*\.home-header__actions \{[^}]*?display: contents;/,
+      /\.home-header__inner \{[^}]*?display: grid;[^}]*?grid-template-columns: minmax\(140px, 1fr\) auto minmax\(max-content, 1fr\);/,
     );
     expect(desktopStyles).toMatch(
-      /\.home-header__nav \{[^}]*?position: absolute;[^}]*?left: 50%;[^}]*?transform: translateX\(-50%\);/,
-    );
-    expect(desktopStyles).toMatch(
-      /\.home-header__inner:has\(\.admin-only\[style\*='display: block'\]\) \.home-header__nav \{[^}]*?position: static;[^}]*?left: auto;[^}]*?transform: none;[^}]*?flex: 1 1 auto;/,
+      /\.home-header__inner:has\(\.admin-only\[style\*='display: block'\]\) \.home-header__nav > ul \{[^}]*?gap: 14px;/,
     );
     expect(desktopStyles).toMatch(
       /\.home-header__inner:has\(\.user-only\[style\*='display: block'\]\) \.home-header__account-section \{[^}]*?display: none;/,
@@ -442,14 +463,11 @@ describe('Shared route shell', () => {
     expect(headerStyles).toMatch(/\.mini-cart \{/);
     expect(headerStyles).toMatch(/\.home-header \.cart-link__badge \{[\s\S]*?font-size: var\(--text-xs\);/);
     expect(desktopStyles).toMatch(
-      /\.home-header__cart-wrap \{[^}]*?position: relative;[^}]*?order: 3;[^}]*?margin-inline-start: auto;/,
+      /\.home-header__account-section,\s*\.home-header__account \{[^}]*?margin-inline-start: 14px;[^}]*?padding-inline-start: 14px;[^}]*?border-inline-start: 1px solid var\(--home-brand-line\);/,
     );
+    expect(desktopStyles).toMatch(/\.home-header__theme \{[^}]*?margin-inline-start: 10px;/);
     expect(desktopStyles).toMatch(
-      /\.home-header__account-section,\s*\.home-header__account \{[^}]*?order: 4;[^}]*?margin-inline-start: 14px;[^}]*?padding-inline-start: 14px;[^}]*?border-inline-start: 1px solid var\(--home-brand-line\);/,
-    );
-    expect(desktopStyles).toMatch(/\.home-header__theme \{[^}]*?order: 5;/);
-    expect(desktopStyles).toMatch(
-      /\.home-header__account-section \.home-header__register \{[^}]*?border-radius: 4px;[^}]*?background: var\(--sys-action-bg\);[^}]*?color: var\(--home-on-dark\);/,
+      /\.home-header__account-section \.home-header__register \{[^}]*?border: 1px solid var\(--border\);[^}]*?border-radius: var\(--radius-control\);[^}]*?background: var\(--surface\);[^}]*?color: var\(--fg\);/,
     );
 
     expect(footerStyles).toContain('@media (min-width: 640px)');

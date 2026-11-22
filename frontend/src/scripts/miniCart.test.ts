@@ -153,6 +153,11 @@ class FakeElement {
       listener({ target: this } as unknown as Event);
     }
   }
+
+  dispatchFocusIn(document: FakeDocument) {
+    document.activeElement = this;
+    document.dispatchEvent('focusin', { target: this } as unknown as Event);
+  }
 }
 
 class FakeDocument {
@@ -417,6 +422,41 @@ describe('initializeMiniCart', () => {
     expect(rows[1].querySelector('.mini-cart__thumb--placeholder')).not.toBeNull();
 
     cleanup();
+  });
+
+  it('closes when focus moves outside the mini-cart without stealing focus and keeps open when focus stays inside', () => {
+    cartItems.set([
+      {
+        productId: 5,
+        name: 'Soporte Auriculares',
+        image: '',
+        unitPrice: 4200,
+        quantity: 1,
+      },
+    ]);
+
+    const fixture = createMiniCartFixture();
+    const cleanup = initializeMiniCart(fixture.document as unknown as Document);
+
+    fixture.trigger.dispatchClick(fixture.document);
+    expect(fixture.menu.hidden).toBe(false);
+    expect(fixture.trigger.getAttribute('aria-expanded')).toBe('true');
+
+    // Focusing an element inside the mini-cart or its trigger keeps it open
+    fixture.trigger.dispatchFocusIn(fixture.document);
+    expect(fixture.menu.hidden).toBe(false);
+    fixture.cta.dispatchFocusIn(fixture.document);
+    expect(fixture.menu.hidden).toBe(false);
+    expect(fixture.trigger.getAttribute('aria-expanded')).toBe('true');
+
+    // Focusing an element outside the mini-cart closes it without calling trigger.focus()
+    fixture.document.outside.dispatchFocusIn(fixture.document);
+    expect(fixture.menu.hidden).toBe(true);
+    expect(fixture.trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(fixture.trigger.focusCount).toBe(0);
+
+    cleanup();
+    expect(fixture.document.listeners.get('focusin') ?? []).toHaveLength(0);
   });
 
   it('unsubscribes from cartItems and removes all listeners on cleanup', () => {
