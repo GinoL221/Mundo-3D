@@ -14,7 +14,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
-    <title>Plantilla de estilo · Taller Maker — Mundo 3D</title>
+    <title>Plantilla de estilo · Taller Maker · Mundo 3D</title>
     <style>
       /* ── Fonts (relative to design/, graceful fallback to system-ui) ── */
       @font-face {
@@ -38,29 +38,18 @@
       /* ── tokens/colors.css (exact production copy) ── */
       :root {
         color-scheme: light;
-        --pico-black: #000000;
-        --pico-dark-blue: #1d2b53;
-        --pico-purple: #7e2553;
-        --pico-dark-green: #008351;
-        --pico-red: #ff004d;
-        --pico-yellow: #ffec27;
-        --pico-orange: #ffa300;
-        --pico-white: #ffffff;
-        --pico-light: #c2c3c7;
-        --pico-muted: #5f574f;
-        --pico-sky: #29adff;
-
         --bg: #f8fafc;
         --fg: #0f172a;
         --accent: #2f6bff;
         --link-text: #174ea6;
         --accent-soft: #dce7ff;
-        --danger: #8a0032;
         --warning: #2f6bff;
         --surface: #ffffff;
         --border: #e2e8f0;
+        --border-hover: #cbd5e1;
         --input-bg: #ffffff;
         --input-fg: #0f172a;
+        --input-border: #7c8ba1;
         --danger-text: #b91c1c;
         --title-highlight: #0f172a;
         --lcd-bg: #ffffff;
@@ -85,9 +74,6 @@
         --danger-border: #fecaca;
         --danger-solid: #be123c;
         --danger-solid-hover: #9f1239;
-        --role-staff-bg: #f5f3ff;
-        --role-staff-border: #ddd6fe;
-        --role-staff-text: #6d28d9;
         --channel-whatsapp: #15803d;
         --channel-whatsapp-bg: #f0fdf4;
         --channel-whatsapp-border: #bbf7d0;
@@ -97,7 +83,7 @@
         --channel-mail-border: #bfd5ff;
         --channel-mail-hover: #dce9ff;
         --shadow-button: 0 1px 2px rgba(15, 23, 42, 0.08);
-        --shadow-button-primary: 0 2px 6px rgba(45, 102, 240, 0.24);
+        --shadow-button-primary: none;
         --shadow-panel: 0 14px 34px rgba(15, 23, 42, 0.14);
       }
 
@@ -108,12 +94,13 @@
         --accent: #2f6bff;
         --link-text: #8eb4ff;
         --accent-soft: #dce7ff;
-        --danger: #8a0032;
         --warning: #2f6bff;
         --surface: #1b1917;
         --border: #2e2a26;
+        --border-hover: #46403a;
         --input-bg: #1b1917;
         --input-fg: #f5f1ea;
+        --input-border: #787168;
         --danger-text: #fca5a5;
         --title-highlight: #f5f1ea;
         --lcd-bg: #1b1917;
@@ -138,9 +125,6 @@
         --danger-border: #6b252e;
         --danger-solid: #be123c;
         --danger-solid-hover: #9f1239;
-        --role-staff-bg: #231a33;
-        --role-staff-border: #4a3570;
-        --role-staff-text: #c4b5fd;
         --channel-whatsapp: #4ade80;
         --channel-whatsapp-bg: #10261a;
         --channel-whatsapp-border: #1f5136;
@@ -150,7 +134,7 @@
         --channel-mail-border: #28406e;
         --channel-mail-hover: #1f2e4f;
         --shadow-button: 0 1px 2px rgba(0, 0, 0, 0.35);
-        --shadow-button-primary: 0 2px 8px rgba(45, 102, 240, 0.32);
+        --shadow-button-primary: none;
         --shadow-panel: 0 18px 42px rgba(0, 0, 0, 0.68);
       }
 
@@ -161,12 +145,13 @@
         --accent: #2f6bff;
         --link-text: #174ea6;
         --accent-soft: #dce7ff;
-        --danger: #8a0032;
         --warning: #2f6bff;
         --surface: #ffffff;
         --border: #e2e8f0;
+        --border-hover: #cbd5e1;
         --input-bg: #ffffff;
         --input-fg: #0f172a;
+        --input-border: #7c8ba1;
         --danger-text: #b91c1c;
         --title-highlight: #0f172a;
         --lcd-bg: #ffffff;
@@ -191,9 +176,6 @@
         --danger-border: #fecaca;
         --danger-solid: #be123c;
         --danger-solid-hover: #9f1239;
-        --role-staff-bg: #f5f3ff;
-        --role-staff-border: #ddd6fe;
-        --role-staff-text: #6d28d9;
         --channel-whatsapp: #15803d;
         --channel-whatsapp-bg: #f0fdf4;
         --channel-whatsapp-border: #bbf7d0;
@@ -203,7 +185,7 @@
         --channel-mail-border: #bfd5ff;
         --channel-mail-hover: #dce9ff;
         --shadow-button: 0 1px 2px rgba(15, 23, 42, 0.08);
-        --shadow-button-primary: 0 2px 6px rgba(45, 102, 240, 0.24);
+        --shadow-button-primary: none;
         --shadow-panel: 0 14px 34px rgba(15, 23, 42, 0.14);
       }
 
@@ -247,7 +229,7 @@
         --sys-text-muted: #475569;
         --sys-border: var(--border);
         --sys-action-bg: #2d66f0;
-        --sys-action-text: var(--pico-white);
+        --sys-action-text: #ffffff;
         --sys-action-text-link: var(--link-text);
         --sys-danger-text: var(--danger-text);
         --sys-focus: var(--fg);
@@ -367,13 +349,13 @@
         background: var(--accent-strong);
         border-color: var(--accent-strong);
         color: #ffffff;
-        box-shadow: var(--shadow-button-primary);
       }
 
       .ui-btn--primary:hover:not(:disabled):not([aria-disabled='true']) {
         background: var(--accent-strong-hover);
         border-color: var(--accent-strong-hover);
         color: #ffffff;
+        box-shadow: var(--shadow-button);
         transform: translateY(-1px);
       }
 
@@ -381,6 +363,7 @@
         background: var(--accent-strong-active);
         border-color: var(--accent-strong-active);
         color: #ffffff;
+        box-shadow: none;
         transform: translateY(0);
       }
 
@@ -420,13 +403,9 @@
 
       .ui-btn--secondary:hover:not(:disabled):not([aria-disabled='true']) {
         background: var(--surface-subtle);
-        border-color: var(--home-line-hover, #cbd5e1);
+        border-color: var(--border-hover);
         color: var(--fg);
         transform: translateY(-1px);
-      }
-
-      [data-theme='dark'] .ui-btn--secondary:hover:not(:disabled):not([aria-disabled='true']) {
-        border-color: #46403a;
       }
 
       .ui-btn--secondary:active:not(:disabled):not([aria-disabled='true']) {
@@ -553,15 +532,9 @@
 
       /* Sizes & Icon-only */
       .ui-btn--sm {
-        min-block-size: 40px;
+        min-block-size: var(--sys-target-min, 44px);
         padding: 8px 14px;
         font-size: 0.875rem;
-      }
-
-      @media (max-width: 639px) {
-        .ui-btn--sm {
-          min-block-size: 44px;
-        }
       }
 
       .ui-btn--icon {
@@ -603,7 +576,8 @@
         color: var(--fg);
       }
 
-      .ui-badge--neutral {
+      .ui-badge--neutral,
+      .ui-badge--user {
         background: transparent;
         border-color: var(--border);
         color: var(--sys-text-muted);
@@ -758,7 +732,7 @@
         min-width: 0;
         min-block-size: var(--sys-target-min, 44px);
         padding: 10px 12px;
-        border: 1px solid var(--border);
+        border: 1px solid var(--input-border);
         border-radius: var(--radius-control);
         background: var(--input-bg);
         color: var(--input-fg);
@@ -775,6 +749,10 @@
       .ui-input::placeholder {
         color: var(--sys-text-muted);
         opacity: 1;
+      }
+
+      .ui-input:hover:not(:disabled):not(:focus):not([aria-invalid='true']) {
+        border-color: var(--sys-text-muted);
       }
 
       .ui-input:focus {
@@ -826,15 +804,26 @@
         gap: 6px;
         min-width: 0;
         padding: 4px;
-        border: 1px solid var(--border);
+        border: 1px solid var(--input-border);
         border-radius: var(--radius-control);
         background: var(--surface-subtle);
+        transition:
+          border-color 150ms ease,
+          box-shadow 150ms ease;
+      }
+
+      .ui-input-group:hover {
+        border-color: var(--sys-text-muted);
+      }
+
+      .ui-input-group:focus-within {
+        border-color: var(--accent-strong);
       }
 
       .ui-input-group .ui-input {
         flex: 1 1 auto;
         min-width: 0;
-        min-block-size: 40px;
+        min-block-size: var(--sys-target-min, 44px);
         padding: 8px 10px;
         border: 0;
         background: transparent;
@@ -849,14 +838,7 @@
 
       .ui-input-group .ui-btn {
         flex: 0 0 auto;
-        min-block-size: 40px;
-      }
-
-      @media (max-width: 639px) {
-        .ui-input-group .ui-input,
-        .ui-input-group .ui-btn {
-          min-block-size: 44px;
-        }
+        min-block-size: var(--sys-target-min, 44px);
       }
 
       /* ── Data Table ────────────────────────────────────────────── */
@@ -915,16 +897,480 @@
         flex-wrap: nowrap;
       }
 
+      /* ── Admin Page Header ───────────────────────────────────── */
+      .ui-page-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--space-md);
+        padding-bottom: var(--space-lg);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .ui-page-head__main {
+        min-width: 0;
+        display: grid;
+        gap: var(--space-xs);
+      }
+
+      .ui-page-head__title-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .ui-page-head__title {
+        margin: 0;
+        font-family: var(--font-heading);
+        font-size: clamp(1.5rem, 2.5vw, 2rem);
+        font-weight: 600;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+        text-wrap: balance;
+        color: var(--fg);
+      }
+
+      .ui-page-head__scope {
+        margin: 0;
+        max-width: 62ch;
+        font-size: 0.9375rem;
+        line-height: 1.5;
+        color: var(--sys-text-muted);
+        text-wrap: pretty;
+      }
+
+      .ui-page-head__actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-sm);
+        flex: 0 0 auto;
+      }
+
+      /* ── Stock Stepper ─────────────────────────────────────────── */
+      .ui-stepper-field {
+        display: grid;
+        gap: 6px;
+        justify-items: start;
+      }
+
+      .ui-stepper {
+        display: inline-flex;
+        align-items: stretch;
+        border: 1px solid var(--input-border);
+        border-radius: var(--radius-control);
+        background: var(--surface);
+        overflow: hidden;
+      }
+
+      .ui-stepper__btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-inline-size: var(--sys-target-min, 44px);
+        min-block-size: var(--sys-target-min, 44px);
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--fg);
+        font: 600 1.125rem / 1 var(--font-body);
+        cursor: pointer;
+        touch-action: manipulation;
+        transition:
+          background-color 150ms ease,
+          color 150ms ease;
+      }
+
+      .ui-stepper__btn:first-child {
+        border-right: 1px solid var(--border);
+      }
+
+      .ui-stepper__btn:last-child {
+        border-left: 1px solid var(--border);
+      }
+
+      .ui-stepper__btn:hover:not(:disabled) {
+        background: var(--surface-subtle);
+      }
+
+      .ui-stepper__btn:active:not(:disabled) {
+        background: var(--accent-tint);
+        color: var(--accent-tint-text);
+      }
+
+      .ui-stepper__btn:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: -3px;
+      }
+
+      .ui-stepper__btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .ui-stepper__value {
+        min-inline-size: 52px;
+        min-block-size: var(--sys-target-min, 44px);
+        padding: 0 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font: 600 0.9375rem / 1 var(--font-body);
+        font-variant-numeric: tabular-nums;
+        color: var(--fg);
+        background: var(--input-bg);
+      }
+
+      /* ── Grouped Forms & Media Picker ──────────────────────────── */
+      .ui-form {
+        display: grid;
+        gap: var(--space-lg);
+        max-width: 720px;
+      }
+
+      .ui-fieldset {
+        margin: 0;
+        padding: var(--space-lg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-surface);
+        background: var(--surface);
+        display: grid;
+        gap: var(--space-md);
+        min-width: 0;
+      }
+
+      .ui-fieldset__legend {
+        padding: 0 6px;
+        font-family: var(--font-heading);
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.3;
+        color: var(--fg);
+      }
+
+      .ui-form-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-md);
+      }
+
+      @media (min-width: 640px) {
+        .ui-form-row--2 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .ui-form-row--3 {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+
+      .ui-textarea {
+        min-block-size: 96px;
+        resize: vertical;
+      }
+
+      .ui-file {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 12px;
+        padding: 4px;
+        border: 1px solid var(--input-border);
+        border-radius: var(--radius-control);
+        background: var(--input-bg);
+        min-width: 0;
+        transition: border-color 150ms ease;
+      }
+
+      .ui-file:hover {
+        border-color: var(--sys-text-muted);
+      }
+
+      .ui-file .ui-btn {
+        border-color: transparent;
+        box-shadow: none;
+      }
+
+      .ui-file__input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .ui-file__input:focus-visible + .ui-btn {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .ui-file__name {
+        min-width: 0;
+        padding-inline: 4px 8px;
+        font-size: 0.875rem;
+        color: var(--sys-text-muted);
+        overflow-wrap: anywhere;
+      }
+
+      .ui-media-preview {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        padding: var(--space-md) 0 0 0;
+        border-top: 1px solid var(--border);
+        border-radius: 0;
+        background: transparent;
+      }
+
+      .ui-media-preview__thumb {
+        width: 64px;
+        height: 64px;
+        flex: 0 0 auto;
+        border-radius: var(--radius-control);
+        border: 1px solid var(--border);
+        object-fit: cover;
+        background: var(--surface);
+      }
+
+      .ui-media-preview__meta {
+        min-width: 0;
+        display: grid;
+        gap: 2px;
+      }
+
+      .ui-media-preview__title {
+        margin: 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--fg);
+      }
+
+      .ui-media-preview__caption {
+        margin: 0;
+        font-size: 0.8125rem;
+        color: var(--sys-text-muted);
+      }
+
+      .ui-form-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+      }
+
+      @media (max-width: 639px) {
+        .ui-form-actions {
+          justify-content: stretch;
+        }
+
+        .ui-form-actions .ui-btn {
+          flex: 1 1 100%;
+        }
+      }
+
+      /* ── Callout Actions & Operational States ──────────────────── */
+      .ui-callout__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+        margin-top: var(--space-xs);
+      }
+
+      .ui-state {
+        padding: var(--space-lg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-surface);
+        background: var(--surface);
+        display: grid;
+        gap: var(--space-md);
+        justify-items: start;
+      }
+
+      .ui-state--empty {
+        justify-items: center;
+        text-align: center;
+        padding-block: var(--space-xl);
+      }
+
+      .ui-state__icon {
+        width: 24px;
+        height: 24px;
+        color: var(--sys-text-muted);
+      }
+
+      .ui-state__title {
+        margin: 0;
+        font-family: var(--font-heading);
+        font-size: 1.0625rem;
+        font-weight: 600;
+        line-height: 1.3;
+        text-wrap: balance;
+        color: var(--fg);
+      }
+
+      .ui-state__text {
+        margin: 0;
+        max-width: 52ch;
+        font-size: 0.9375rem;
+        line-height: 1.5;
+        color: var(--sys-text-muted);
+        text-wrap: pretty;
+      }
+
+      .ui-skeleton-list {
+        width: 100%;
+        display: grid;
+        gap: 10px;
+      }
+
+      .ui-skeleton {
+        display: block;
+        width: 100%;
+        height: 16px;
+        border-radius: 4px;
+        background: var(--border);
+        opacity: 0.85;
+        animation: ui-skeleton-pulse 1.5s ease-in-out infinite;
+      }
+
+      .ui-skeleton--short {
+        width: 45%;
+      }
+
+      .ui-skeleton--medium {
+        width: 72%;
+      }
+
+      @keyframes ui-skeleton-pulse {
+        0%,
+        100% {
+          opacity: 0.85;
+        }
+
+        50% {
+          opacity: 0.4;
+        }
+      }
+
+      /* ── Commission Requests Inbox ─────────────────────────────── */
+      .ui-inbox {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-surface);
+        background: var(--surface);
+      }
+
+      .ui-inbox__item {
+        display: grid;
+        gap: var(--space-xs);
+        padding: var(--space-md);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .ui-inbox__item:last-child {
+        border-bottom: 0;
+      }
+
+      .ui-inbox__head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--space-xs) var(--space-md);
+      }
+
+      .ui-inbox__requester {
+        margin: 0;
+        font-family: var(--font-heading);
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.35;
+        color: var(--fg);
+      }
+
+      .ui-inbox__dates {
+        margin: 0;
+        font-size: 0.8125rem;
+        line-height: 1.4;
+        color: var(--sys-text-muted);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .ui-inbox__meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0 var(--space-md);
+      }
+
+      .ui-inbox__link {
+        display: inline-flex;
+        align-items: center;
+        min-block-size: var(--sys-target-min, 44px);
+        padding-block: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--link-text);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        overflow-wrap: anywhere;
+      }
+
+      .ui-inbox__link:hover {
+        color: var(--accent-strong-hover);
+      }
+
+      .ui-inbox__link:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: 2px;
+      }
+
+      .ui-inbox__muted {
+        display: inline-flex;
+        align-items: center;
+        min-block-size: var(--sys-target-min, 44px);
+        font-size: 0.875rem;
+        color: var(--sys-text-muted);
+      }
+
+      .ui-inbox__idea {
+        margin: 0;
+        max-width: 65ch;
+        text-align: left;
+        font-size: 0.9375rem;
+        line-height: 1.55;
+        color: var(--fg);
+        text-wrap: pretty;
+      }
+
       /* ── Reduced Motion ────────────────────────────────────────── */
       @media (prefers-reduced-motion: reduce) {
         .ui-btn,
-        .ui-input {
+        .ui-input,
+        .ui-input-group,
+        .ui-file,
+        .ui-stepper__btn {
           transition: none;
         }
 
         .ui-btn:hover:not(:disabled):not([aria-disabled='true']),
         .ui-btn:active:not(:disabled):not([aria-disabled='true']) {
           transform: none;
+        }
+
+        .ui-skeleton {
+          animation: none;
         }
       }
 
@@ -942,10 +1388,10 @@
         margin-inline: auto;
         padding-block: 10px;
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
+        gap: 8px 12px;
       }
 
       .sg-topbar__brand {
@@ -959,7 +1405,7 @@
       .sg-topbar__logo-dark {
         display: block;
         width: auto;
-        height: 44px;
+        height: 36px;
         object-fit: contain;
       }
 
@@ -976,9 +1422,16 @@
       }
 
       .sg-topbar__meta {
+        display: none;
         font-size: 0.875rem;
         font-weight: 600;
         color: var(--sys-text-muted);
+        white-space: nowrap;
+      }
+
+      #sg-theme-toggle {
+        flex: 0 0 auto;
+        white-space: nowrap;
       }
 
       /* ── Styleguide Layout Styles (from styleguide.astro) ──────── */
@@ -996,6 +1449,7 @@
       .sg-header {
         display: grid;
         gap: var(--space-md);
+        min-width: 0;
       }
 
       .sg-title {
@@ -1020,23 +1474,32 @@
 
       .sg-nav {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         gap: var(--space-xs);
-        padding-top: var(--space-xs);
+        max-width: 100%;
+        min-width: 0;
+        padding-block: var(--space-xs);
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
       }
 
       .sg-nav__link {
-        min-block-size: 44px;
-        padding: 8px 14px;
+        flex: 0 0 auto;
+        min-block-size: var(--sys-target-min, 44px);
+        padding: 8px 12px;
         font-size: 0.875rem;
+        white-space: nowrap;
         border-color: var(--border);
       }
 
       .sg-section {
+        scroll-margin-top: 88px;
         padding-top: var(--space-xl);
         border-top: 1px solid var(--border);
         display: grid;
         gap: 0;
+        min-width: 0;
       }
 
       .sg-section__title {
@@ -1168,10 +1631,63 @@
         color: var(--sys-text-muted);
       }
 
+      .sg-admin-heads {
+        display: grid;
+        gap: var(--space-xl);
+      }
+
+      .sg-stock-list {
+        display: grid;
+        gap: 0;
+      }
+
+      .sg-stock-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-md);
+        padding: var(--space-md) 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .sg-stock-row:first-child {
+        border-top: 1px solid var(--border);
+      }
+
+      .sg-stock-meta {
+        min-width: 0;
+        display: grid;
+        gap: 4px;
+      }
+
+      .sg-table-hint {
+        margin-bottom: var(--space-xs);
+      }
+
+      .sg-states-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-md);
+      }
+
       @media (min-width: 640px) {
         .sg-topbar__logo-light,
         .sg-topbar__logo-dark {
           height: 50px;
+        }
+
+        .sg-topbar__meta {
+          display: inline;
+        }
+
+        .sg-nav {
+          flex-wrap: wrap;
+          overflow-x: visible;
+        }
+
+        .sg-table-hint {
+          display: none;
         }
 
         .sg-callouts {
@@ -1180,6 +1696,11 @@
 
         .sg-form-grid {
           grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .sg-states-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          align-items: start;
         }
       }
 
@@ -1230,10 +1751,15 @@
         <nav class="sg-nav" aria-label="Secciones de la plantilla de estilo">
           <a class="ui-btn ui-btn--ghost sg-nav__link" href="#paleta">Paleta</a>
           <a class="ui-btn ui-btn--ghost sg-nav__link" href="#botones">Botones</a>
-          <a class="ui-btn ui-btn--ghost sg-nav__link" href="#badges-avisos">Badges y avisos</a>
+          <a class="ui-btn ui-btn--ghost sg-nav__link" href="#badges-avisos">Etiquetas y avisos</a>
           <a class="ui-btn ui-btn--ghost sg-nav__link" href="#campos">Campos y enlace</a>
           <a class="ui-btn ui-btn--ghost sg-nav__link" href="#panel-compartir">Panel de Compartir</a>
           <a class="ui-btn ui-btn--ghost sg-nav__link" href="#tabla-admin">Tabla de Catálogo</a>
+          <a class="ui-btn ui-btn--ghost sg-nav__link" href="#admin-encabezado">Encabezado admin</a>
+          <a class="ui-btn ui-btn--ghost sg-nav__link" href="#admin-stock">Ajuste de stock</a>
+          <a class="ui-btn ui-btn--ghost sg-nav__link" href="#admin-formulario">Formulario de pieza</a>
+          <a class="ui-btn ui-btn--ghost sg-nav__link" href="#admin-estados">Estados</a>
+          <a class="ui-btn ui-btn--ghost sg-nav__link" href="#admin-encargos">Solicitudes de encargo</a>
         </nav>
       </header>
 
@@ -1336,7 +1862,7 @@
               <span class="sg-swatch__sample">Aa</span>
             </div>
             <div class="sg-swatch__meta">
-              <span class="sg-swatch__label">Peligro suave</span>
+              <span class="sg-swatch__label">Fondo de error</span>
               <code class="sg-swatch__token">--danger-bg</code>
               <span class="sg-swatch__hex" data-swatch-token="--danger-bg" data-light-hex="#FEF2F2" data-dark-hex="#2E1518">#FEF2F2</span>
             </div>
@@ -1354,13 +1880,13 @@
           </div>
 
           <div class="sg-swatch">
-            <div class="sg-swatch__chip" style="background: var(--role-staff-bg); border-color: var(--role-staff-border); color: var(--role-staff-text);">
+            <div class="sg-swatch__chip" style="background: var(--input-bg); border: 2px solid var(--input-border); color: var(--fg);">
               <span class="sg-swatch__sample">Aa</span>
             </div>
             <div class="sg-swatch__meta">
-              <span class="sg-swatch__label">Rol Staff</span>
-              <code class="sg-swatch__token">--role-staff-bg</code>
-              <span class="sg-swatch__hex" data-swatch-token="--role-staff-bg" data-light-hex="#F5F3FF" data-dark-hex="#231A33">#F5F3FF</span>
+              <span class="sg-swatch__label">Borde de campo</span>
+              <code class="sg-swatch__token">--input-border</code>
+              <span class="sg-swatch__hex" data-swatch-token="--input-border" data-light-hex="#7C8BA1" data-dark-hex="#787168">#7C8BA1</span>
             </div>
           </div>
 
@@ -1400,9 +1926,12 @@
             <button type="button" class="ui-btn ui-btn--secondary">Secundario</button>
             <button type="button" class="ui-btn ui-btn--ghost">Fantasma</button>
             <button type="button" class="ui-btn ui-btn--danger">Peligro</button>
-            <button type="button" class="ui-btn ui-btn--danger-soft">Peligro suave</button>
+            <button type="button" class="ui-btn ui-btn--danger-soft">Peligro neutro</button>
             <button type="button" class="ui-btn ui-btn--primary" disabled>Deshabilitado</button>
           </div>
+          <p class="ui-help">
+            <strong>Peligro neutro</strong> (<code>.ui-btn--danger-soft</code>) se mantiene neutral en reposo y pasa a carmesí sólido al pasar el cursor.
+          </p>
 
           <div class="sg-row">
             <button type="button" class="ui-btn ui-btn--whatsapp">
@@ -1436,10 +1965,10 @@
         </p>
 
         <div class="sg-stack">
-          <div class="sg-row" aria-label="Ejemplos de etiquetas y estados">
+          <div class="sg-row" role="group" aria-label="Ejemplos de etiquetas y estados">
             <span class="ui-badge ui-badge--admin">ADMIN</span>
             <span class="ui-badge ui-badge--staff">STAFF</span>
-            <span class="ui-badge ui-badge--neutral">USER</span>
+            <span class="ui-badge ui-badge--user">USER</span>
             <span class="ui-badge ui-badge--brand">Pedido simulado</span>
             <span class="ui-badge ui-badge--success">En stock</span>
             <span class="ui-badge ui-badge--warning">Stock bajo</span>
@@ -1459,7 +1988,7 @@
               </div>
             </div>
 
-            <div class="ui-callout ui-callout--success" role="status">
+            <div class="ui-callout ui-callout--success">
               <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="10" />
                 <path d="m9 12 2 2 4-4" />
@@ -1482,7 +2011,7 @@
               </div>
             </div>
 
-            <div class="ui-callout ui-callout--danger" role="alert">
+            <div class="ui-callout ui-callout--danger">
               <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="10" />
                 <path d="m15 9-6 6" />
@@ -1511,18 +2040,19 @@
               type="text"
               placeholder="Ej. Soporte articulado para auriculares"
               value="Mario Bros Coleccionable"
+              aria-describedby="sg-piece-name-help"
             />
-            <p class="ui-help">Usá un título descriptivo para identificar la pieza en el Catálogo.</p>
+            <p id="sg-piece-name-help" class="ui-help">Usá un título descriptivo para identificar la pieza en el Catálogo.</p>
           </div>
 
           <div class="ui-field">
             <label class="ui-label" for="sg-piece-material">Material de impresión</label>
-            <select id="sg-piece-material" class="ui-input">
+            <select id="sg-piece-material" class="ui-input" aria-describedby="sg-piece-material-help">
               <option value="pla-seda" selected>PLA seda (acabado brillante)</option>
               <option value="pla-mate">PLA mate (taller arquitectónico)</option>
               <option value="petg">PETG resistente</option>
             </select>
-            <p class="ui-help">Seleccioná el filamento disponible para esta serie de piezas.</p>
+            <p id="sg-piece-material-help" class="ui-help">Seleccioná el filamento disponible para esta serie de piezas.</p>
           </div>
 
           <div class="ui-field">
@@ -1549,6 +2079,7 @@
                 type="url"
                 readonly
                 value="https://mundo-3d.pages.dev/product?id=1"
+                aria-describedby="sg-share-url-status"
               />
               <button
                 type="button"
@@ -1591,6 +2122,7 @@
                     type="url"
                     readonly
                     value="https://mundo-3d.pages.dev/product?id=1"
+                    aria-describedby="sg-panel-copy-status"
                   />
                   <button
                     type="button"
@@ -1639,10 +2171,11 @@
       <section id="tabla-admin" class="sg-section">
         <h2 class="sg-section__title">Muestra: Tabla de administración para Catálogo</h2>
         <p class="sg-section__lead">
-          Tabla responsiva con cifras tabulares, badges de estado/rol y acciones diferenciadas de edición y borrado.
+          Tabla responsiva con cifras tabulares, sellos de rol y estado de stock tipográfico. Solo ADMIN ve Eliminar (neutro en reposo y carmesí sólido al pasar el cursor); STAFF edita piezas y stock sin borrar.
         </p>
 
-        <div class="ui-table-wrap">
+        <p class="ui-help sg-table-hint">Deslizá la tabla horizontalmente para ver stock, precio y acciones.</p>
+        <div class="ui-table-wrap" role="region" aria-label="Catálogo del taller" tabindex="0">
           <table class="ui-table">
             <thead>
               <tr>
@@ -1719,6 +2252,443 @@
               </tr>
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <section id="admin-encabezado" class="sg-section">
+        <h2 class="sg-section__title">Encabezado de administración</h2>
+        <p class="sg-section__lead">
+          Cabecera de vista administrativa en formato oración (renderizada como <code>h1</code> en cada página del panel), con sello técnico de rol, una línea honesta de alcance y acción primaria para sumar piezas.
+        </p>
+
+        <div class="sg-admin-heads">
+          <div class="ui-page-head">
+            <div class="ui-page-head__main">
+              <div class="ui-page-head__title-row">
+                <h3 class="ui-page-head__title">Catálogo del taller</h3>
+                <span class="ui-badge ui-badge--admin">ADMIN</span>
+              </div>
+              <p class="ui-page-head__scope">
+                En este entorno de demostración podés crear, editar, ajustar stock y eliminar piezas del Catálogo, además de revisar encargos a medida (se purgan a los 30 días).
+              </p>
+            </div>
+            <div class="ui-page-head__actions">
+              <button type="button" class="ui-btn ui-btn--primary">+ Nueva pieza</button>
+            </div>
+          </div>
+
+          <div class="ui-page-head">
+            <div class="ui-page-head__main">
+              <div class="ui-page-head__title-row">
+                <h3 class="ui-page-head__title">Catálogo del taller</h3>
+                <span class="ui-badge ui-badge--staff">STAFF</span>
+              </div>
+              <p class="ui-page-head__scope">
+                Podés crear y editar piezas, ajustar stock y revisar encargos a medida (se purgan a los 30 días). El rol STAFF nunca puede eliminar piezas.
+              </p>
+            </div>
+            <div class="ui-page-head__actions">
+              <button type="button" class="ui-btn ui-btn--primary">+ Nueva pieza</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="admin-stock" class="sg-section">
+        <h2 class="sg-section__title">Ajuste de stock</h2>
+        <p class="sg-section__lead">
+          Selector compacto con botones táctiles de 44 px, cifras tabulares, tope inferior deshabilitado en cero y aviso en vivo para lectores de pantalla.
+        </p>
+
+        <div class="sg-stock-list">
+          <div class="sg-stock-row" data-stepper data-piece-name="Mario Bros Coleccionable" data-stock="6">
+            <div class="sg-stock-meta">
+              <span class="sg-piece-cell__name">Mario Bros Coleccionable</span>
+              <span class="ui-badge ui-badge--success" data-stepper-badge>En stock (6)</span>
+            </div>
+            <div class="ui-stepper-field">
+              <div class="ui-stepper" role="group" aria-label="Ajustar stock de Mario Bros Coleccionable">
+                <button
+                  type="button"
+                  class="ui-stepper__btn"
+                  data-stepper-dec
+                  aria-label="Restar 1 unidad a Mario Bros Coleccionable"
+                >
+                  &#x2212;
+                </button>
+                <span class="ui-stepper__value" data-stepper-value>6</span>
+                <button
+                  type="button"
+                  class="ui-stepper__btn"
+                  data-stepper-inc
+                  aria-label="Sumar 1 unidad a Mario Bros Coleccionable"
+                >
+                  +
+                </button>
+              </div>
+              <p class="ui-help" role="status" aria-live="polite" data-stepper-status>
+                Stock actual: 6
+              </p>
+            </div>
+          </div>
+
+          <div class="sg-stock-row" data-stepper data-piece-name="Llavero Escudo Capitán América" data-stock="0">
+            <div class="sg-stock-meta">
+              <span class="sg-piece-cell__name">Llavero Escudo Capitán América</span>
+              <span class="ui-badge ui-badge--danger" data-stepper-badge>Sin stock (0)</span>
+            </div>
+            <div class="ui-stepper-field">
+              <div class="ui-stepper" role="group" aria-label="Ajustar stock de Llavero Escudo Capitán América">
+                <button
+                  type="button"
+                  class="ui-stepper__btn"
+                  data-stepper-dec
+                  aria-label="Restar 1 unidad a Llavero Escudo Capitán América"
+                  disabled
+                >
+                  &#x2212;
+                </button>
+                <span class="ui-stepper__value" data-stepper-value>0</span>
+                <button
+                  type="button"
+                  class="ui-stepper__btn"
+                  data-stepper-inc
+                  aria-label="Sumar 1 unidad a Llavero Escudo Capitán América"
+                >
+                  +
+                </button>
+              </div>
+              <p class="ui-help" role="status" aria-live="polite" data-stepper-status>
+                Stock actual: 0
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="admin-formulario" class="sg-section">
+        <h2 class="sg-section__title">Formulario de pieza</h2>
+        <p class="sg-section__lead">
+          Formulario agrupado en bloques semánticos con selectores de clasificación, dimensiones opcionales, carga de imagen con vista previa y validación en línea.
+        </p>
+
+        <form class="ui-form" novalidate onsubmit="return false;">
+          <fieldset class="ui-fieldset">
+            <legend class="ui-fieldset__legend">Datos básicos</legend>
+
+            <div class="ui-form-row ui-form-row--2">
+              <div class="ui-field">
+                <label class="ui-label" for="sg-admin-name">Nombre de la pieza</label>
+                <input
+                  id="sg-admin-name"
+                  class="ui-input"
+                  type="text"
+                  value="Mario Bros Coleccionable"
+                  aria-describedby="sg-admin-name-help"
+                />
+                <p id="sg-admin-name-help" class="ui-help">Entre 5 y 40 caracteres visibles en la tarjeta del Catálogo.</p>
+              </div>
+
+              <div class="ui-field">
+                <label class="ui-label" for="sg-admin-price">Precio unitario ($)</label>
+                <input
+                  id="sg-admin-price"
+                  class="ui-input"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value="0"
+                  aria-invalid="true"
+                  aria-describedby="sg-admin-price-error"
+                />
+                <p id="sg-admin-price-error" class="ui-error">
+                  Ingresá un monto mayor a 0 para habilitar la publicación de la pieza.
+                </p>
+              </div>
+            </div>
+
+            <div class="ui-field">
+              <label class="ui-label" for="sg-admin-description">Descripción breve</label>
+              <textarea
+                id="sg-admin-description"
+                class="ui-input ui-textarea"
+                aria-describedby="sg-admin-description-help"
+              >Figura impresa en 3D con acabado artesanal para repisa o escritorio.</textarea>
+              <p id="sg-admin-description-help" class="ui-help">Contá qué incluye la pieza, su escala aproximada y el uso pensado.</p>
+            </div>
+          </fieldset>
+
+          <fieldset class="ui-fieldset">
+            <legend class="ui-fieldset__legend">Clasificación</legend>
+
+            <div class="ui-form-row ui-form-row--3">
+              <div class="ui-field">
+                <label class="ui-label" for="sg-admin-category">Categoría</label>
+                <select id="sg-admin-category" class="ui-input">
+                  <option value="busto">Busto</option>
+                  <option value="figura" selected>Figura</option>
+                  <option value="llavero">Llavero</option>
+                  <option value="mascara">Máscara</option>
+                  <option value="otras">Otras</option>
+                </select>
+              </div>
+
+              <div class="ui-field">
+                <label class="ui-label" for="sg-admin-franchise">Franquicia</label>
+                <select id="sg-admin-franchise" class="ui-input">
+                  <option value="dc">DC</option>
+                  <option value="disney">Disney</option>
+                  <option value="marvel">Marvel</option>
+                  <option value="otra" selected>Otra</option>
+                </select>
+              </div>
+
+              <div class="ui-field">
+                <label class="ui-label" for="sg-admin-material">Material</label>
+                <select id="sg-admin-material" class="ui-input">
+                  <option value="pla" selected>PLA</option>
+                  <option value="resina">Resina</option>
+                  <option value="petg">PETG</option>
+                  <option value="flex">Flex</option>
+                  <option value="otros">Otros</option>
+                </select>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="ui-fieldset">
+            <legend class="ui-fieldset__legend">Especificaciones 3D (opcionales)</legend>
+
+            <div class="ui-form-row ui-form-row--3">
+              <div class="ui-field">
+                <label class="ui-label" for="sg-admin-height">Alto (cm)</label>
+                <input id="sg-admin-height" class="ui-input" type="number" min="0" step="0.1" value="15" />
+              </div>
+
+              <div class="ui-field">
+                <label class="ui-label" for="sg-admin-width">Ancho (cm)</label>
+                <input id="sg-admin-width" class="ui-input" type="number" min="0" step="0.1" value="10" />
+              </div>
+
+              <div class="ui-field">
+                <label class="ui-label" for="sg-admin-depth">Profundidad (cm)</label>
+                <input id="sg-admin-depth" class="ui-input" type="number" min="0" step="0.1" value="10" />
+              </div>
+            </div>
+
+            <div class="ui-form-row ui-form-row--2">
+              <div class="ui-field">
+                <label class="ui-label" for="sg-admin-finish">Acabado</label>
+                <input id="sg-admin-finish" class="ui-input" type="text" value="Pintado a mano" placeholder="Ej. Mate, lijado o pintado" />
+              </div>
+
+              <div class="ui-field">
+                <label class="ui-label" for="sg-admin-prodtime">Tiempo de producción (días)</label>
+                <input id="sg-admin-prodtime" class="ui-input" type="number" min="1" max="30" step="1" value="3" />
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="ui-fieldset">
+            <legend class="ui-fieldset__legend">Imagen y stock</legend>
+
+            <div class="ui-form-row ui-form-row--2">
+              <div class="ui-field">
+                <label class="ui-label" for="sg-admin-stock">Stock inicial</label>
+                <input
+                  id="sg-admin-stock"
+                  class="ui-input"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value="6"
+                  aria-describedby="sg-admin-stock-help"
+                />
+                <p id="sg-admin-stock-help" class="ui-help">
+                  Al crear la pieza podés definir unidades disponibles; luego se ajustan desde el selector de stock.
+                </p>
+              </div>
+
+              <div class="ui-field">
+                <span id="sg-admin-image-label" class="ui-label">Fotografía de la pieza</span>
+                <div class="ui-file">
+                  <input
+                    id="sg-admin-image"
+                    class="ui-file__input"
+                    type="file"
+                    accept=".jpg,.jpeg,.png"
+                    data-file-input="sg-admin-image-name"
+                    aria-labelledby="sg-admin-image-label"
+                    aria-describedby="sg-admin-image-help sg-admin-image-name"
+                  />
+                  <label class="ui-btn ui-btn--soft ui-btn--sm" for="sg-admin-image">Elegir imagen</label>
+                  <span id="sg-admin-image-name" class="ui-file__name">figura_mario.jpg</span>
+                </div>
+                <p id="sg-admin-image-help" class="ui-help">Formatos aceptados: JPG o PNG, hasta 2 MB.</p>
+              </div>
+            </div>
+
+            <div class="ui-media-preview">
+              <img
+                class="ui-media-preview__thumb"
+                src="../frontend/public/img/products/figura_mario.jpg"
+                alt="Vista previa actual de Mario Bros Coleccionable"
+                width="64"
+                height="64"
+              />
+              <div class="ui-media-preview__meta">
+                <p class="ui-media-preview__title">Imagen actual en el Catálogo</p>
+                <p class="ui-media-preview__caption">figura_mario.jpg (se conserva si no subís un archivo nuevo)</p>
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="ui-form-actions">
+            <button type="button" class="ui-btn ui-btn--secondary">Cancelar</button>
+            <button type="submit" class="ui-btn ui-btn--primary">Guardar pieza</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="admin-estados" class="sg-section">
+        <h2 class="sg-section__title">Estados operativos</h2>
+        <p class="sg-section__lead">
+          Cada estado distingue entre espera, ausencia real de datos, falla recuperable y restricción de permisos. Ningún error se disfraza de lista vacía. En producción, los bloques dinámicos agregan <code>role="status"</code>, <code>role="alert"</code> o <code>aria-busy</code> al activarse.
+        </p>
+
+        <div class="sg-states-grid">
+          <div class="ui-state">
+            <p class="ui-state__title">Cargando piezas del Catálogo</p>
+            <p class="ui-state__text">Consultando el inventario del taller y los permisos de tu sesión.</p>
+            <div class="ui-skeleton-list" aria-hidden="true">
+              <span class="ui-skeleton"></span>
+              <span class="ui-skeleton ui-skeleton--medium"></span>
+              <span class="ui-skeleton ui-skeleton--short"></span>
+            </div>
+          </div>
+
+          <div class="ui-state ui-state--empty">
+            <svg class="ui-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+              <path d="m3.3 7 8.7 5 8.7-5" />
+              <path d="M12 22V12" />
+            </svg>
+            <p class="ui-state__title">Todavía no hay piezas cargadas</p>
+            <p class="ui-state__text">
+              Cuando publiques la primera pieza va a aparecer en este listado y en la vitrina pública del Catálogo.
+            </p>
+            <button type="button" class="ui-btn ui-btn--primary">+ Nueva pieza</button>
+          </div>
+
+          <div class="ui-callout ui-callout--danger">
+            <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <path d="m15 9-6 6" />
+              <path d="m9 9 6 6" />
+            </svg>
+            <div class="ui-callout__content">
+              <p class="ui-callout__title">No pudimos cargar el Catálogo del taller</p>
+              <p class="ui-callout__text">
+                El servicio no respondió a tiempo. Tus cambios locales no se perdieron; volvé a intentar en unos segundos.
+              </p>
+              <div class="ui-callout__actions">
+                <button type="button" class="ui-btn ui-btn--secondary ui-btn--sm">Reintentar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ui-callout" role="region" aria-labelledby="sg-denied-title">
+            <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <div class="ui-callout__content">
+              <p id="sg-denied-title" class="ui-callout__title">Acceso restringido al panel del taller</p>
+              <p class="ui-callout__text">
+                Tu sesión actual tiene rol USER. Para administrar piezas o revisar encargos a medida necesitás permisos de STAFF o ADMIN validados por el servidor.
+              </p>
+              <div class="ui-callout__actions">
+                <a href="/products" class="ui-btn ui-btn--secondary ui-btn--sm">Volver al Catálogo</a>
+              </div>
+              <p class="ui-help">Muestra estática: en producción este botón navega a <code>/products</code>.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="admin-encargos" class="sg-section">
+        <h2 class="sg-section__title">Muestra: Bandeja de encargos</h2>
+        <p class="sg-section__lead">
+          Bandeja plana para consultas enviadas desde Encargos a medida. Separa cada solicitud con divisores de 1 px dentro de una sola superficie, sin tarjetas anidadas ni acciones destructivas.
+        </p>
+
+        <div class="sg-stack">
+          <div class="ui-page-head">
+            <div class="ui-page-head__main">
+              <div class="ui-page-head__title-row">
+                <h3 class="ui-page-head__title">Solicitudes de encargo</h3>
+                <span class="ui-badge ui-badge--staff">STAFF</span>
+              </div>
+              <p class="ui-page-head__scope">
+                Revisión manual del taller: no envía correos automáticos ni genera presupuestos o pedidos. Cada solicitud se purga automáticamente a los 30 días.
+              </p>
+            </div>
+          </div>
+
+          <ul class="ui-inbox" aria-label="Solicitudes de encargo recibidas">
+            <li class="ui-inbox__item">
+              <div class="ui-inbox__head">
+                <h4 class="ui-inbox__requester">Lucía Fernández</h4>
+                <p class="ui-inbox__dates">Recibida el 12/04/2026 · Vence el 12/05/2026</p>
+              </div>
+              <div class="ui-inbox__meta">
+                <a class="ui-inbox__link" href="mailto:lucia.fernandez@ejemplo.com">lucia.fernandez@ejemplo.com</a>
+                <a class="ui-inbox__link" href="/product?id=1">Pieza: Mario Bros Coleccionable</a>
+              </div>
+              <p class="ui-inbox__idea">
+                Necesito dos unidades en escala de 18 cm con base lisa para regalar en un cumpleaños. ¿Se puede imprimir en PLA mate sin pintar?
+              </p>
+            </li>
+
+            <li class="ui-inbox__item">
+              <div class="ui-inbox__head">
+                <h4 class="ui-inbox__requester">Tomás Roldán</h4>
+                <p class="ui-inbox__dates">Recibida el 08/04/2026 · Vence el 08/05/2026</p>
+              </div>
+              <div class="ui-inbox__meta">
+                <a class="ui-inbox__link" href="mailto:tomas.roldan@ejemplo.com">tomas.roldan@ejemplo.com</a>
+                <span class="ui-inbox__muted">Sin pieza asociada</span>
+              </div>
+              <p class="ui-inbox__idea">
+                Quiero encargar un soporte de escritorio para dos joysticks de consola con canaleta trasera para pasar el cable USB sin que quede tirante.
+              </p>
+            </li>
+
+            <li class="ui-inbox__item">
+              <div class="ui-inbox__head">
+                <h4 class="ui-inbox__requester">Camila Pereyra</h4>
+                <p class="ui-inbox__dates">Recibida el 02/04/2026 · Vence el 02/05/2026</p>
+              </div>
+              <div class="ui-inbox__meta">
+                <a class="ui-inbox__link" href="mailto:camila.pereyra@ejemplo.com">camila.pereyra@ejemplo.com</a>
+                <a class="ui-inbox__link" href="/product?id=4">Pieza: Soporte Maceta Groot</a>
+              </div>
+              <p class="ui-inbox__idea">
+                Busco la maceta con orificio de drenaje de 6 mm y plato inferior haciendo juego, en color terracota o gris piedra.
+              </p>
+            </li>
+          </ul>
+
+          <div class="ui-state ui-state--empty">
+            <svg class="ui-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <path d="m3 7 9 6 9-6" />
+            </svg>
+            <p class="ui-state__title">No hay solicitudes de encargo pendientes</p>
+            <p class="ui-state__text">
+              Cuando alguien envíe una consulta desde Encargos a medida va a aparecer acá para revisión manual durante 30 días.
+            </p>
+          </div>
         </div>
       </section>
     </main>
@@ -1816,6 +2786,73 @@
             if (statusEl) {
               statusEl.textContent = 'Vista previa activa: abriría ' + channel + ' con el enlace de la pieza.';
             }
+          });
+        });
+
+        const steppers = document.querySelectorAll('[data-stepper]');
+        steppers.forEach((stepper) => {
+          const decBtn = stepper.querySelector('[data-stepper-dec]');
+          const incBtn = stepper.querySelector('[data-stepper-inc]');
+          const valueEl = stepper.querySelector('[data-stepper-value]');
+          const statusEl = stepper.querySelector('[data-stepper-status]');
+          const badgeEl = stepper.querySelector('[data-stepper-badge]');
+          let stock = Number.parseInt(stepper.getAttribute('data-stock') || '0', 10);
+          if (Number.isNaN(stock) || stock < 0) stock = 0;
+
+          const renderStepper = (announce) => {
+            stepper.setAttribute('data-stock', String(stock));
+            if (valueEl) valueEl.textContent = String(stock);
+            if (decBtn instanceof HTMLButtonElement) decBtn.disabled = stock <= 0;
+
+            if (badgeEl) {
+              badgeEl.classList.remove('ui-badge--success', 'ui-badge--warning', 'ui-badge--danger');
+              if (stock === 0) {
+                badgeEl.classList.add('ui-badge--danger');
+                badgeEl.textContent = 'Sin stock (0)';
+              } else if (stock <= 3) {
+                badgeEl.classList.add('ui-badge--warning');
+                badgeEl.textContent = 'Stock bajo (' + stock + ')';
+              } else {
+                badgeEl.classList.add('ui-badge--success');
+                badgeEl.textContent = 'En stock (' + stock + ')';
+              }
+            }
+
+            if (statusEl) {
+              statusEl.textContent = announce
+                ? 'Stock actualizado a ' + stock
+                : 'Stock actual: ' + stock;
+            }
+          };
+
+          renderStepper(false);
+
+          if (decBtn) {
+            decBtn.addEventListener('click', () => {
+              if (stock > 0) {
+                stock -= 1;
+                renderStepper(true);
+              }
+            });
+          }
+
+          if (incBtn) {
+            incBtn.addEventListener('click', () => {
+              stock += 1;
+              renderStepper(true);
+            });
+          }
+        });
+
+        const fileInputs = document.querySelectorAll('[data-file-input]');
+        fileInputs.forEach((input) => {
+          if (!(input instanceof HTMLInputElement)) return;
+          const labelId = input.getAttribute('data-file-input');
+          const nameEl = labelId ? document.getElementById(labelId) : null;
+          input.addEventListener('change', () => {
+            if (!nameEl) return;
+            const file = input.files && input.files[0];
+            nameEl.textContent = file ? file.name : 'Ningún archivo seleccionado';
           });
         });
       })();
