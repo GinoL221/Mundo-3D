@@ -10,6 +10,15 @@ const PORTAL_CUBE = {
   category: 'Figura',
 };
 
+const NEWER_PLACEHOLDER = {
+  idProduct: 90,
+  nameProduct: 'Sin foto',
+  price: 9000,
+  descriptionProduct: 'Producto sin foto real.',
+  image: 'productoSinImagen.png',
+  category: 'Otras',
+};
+
 const LATEST_PRODUCT = {
   idProduct: 81,
   nameProduct: 'Latest Product',
@@ -33,10 +42,10 @@ describe('fetchFeaturedProduct', () => {
     vi.restoreAllMocks();
   });
 
-  it('selects the Portal companion cube by exact editorial identity from shared catalog data', async () => {
+  it('selects the newest product with a real photo from shared catalog data', async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(
       jsonResponse(200, {
-        products: [LATEST_PRODUCT, PORTAL_CUBE],
+        products: [PORTAL_CUBE, NEWER_PLACEHOLDER, LATEST_PRODUCT],
       }),
     );
     vi.stubGlobal('fetch', fetchMock);
@@ -48,16 +57,16 @@ describe('fetchFeaturedProduct', () => {
     expect(result).toEqual({
       ok: true,
       product: expect.objectContaining({
-        id: 47,
-        name: 'Cubo de Compañía de Portal',
-        price: 24500,
-        image: 'portal-cube.webp',
+        id: 81,
+        name: 'Latest Product',
+        price: 12000,
+        image: 'latest.webp',
       }),
     });
   });
 
   it.each([
-    ['the editorial product is absent', jsonResponse(200, { products: [LATEST_PRODUCT] })],
+    ['no catalog product has a real photo', jsonResponse(200, { products: [NEWER_PLACEHOLDER] })],
     ['the product list fails', jsonResponse(500, {})],
   ])('falls back to latest when %s', async (_scenario, catalogResponse) => {
     const fetchMock = vi

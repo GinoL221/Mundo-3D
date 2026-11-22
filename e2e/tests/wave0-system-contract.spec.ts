@@ -277,7 +277,7 @@ test('keeps real product and approved brand imagery normal while isolating Home 
     const canonicalPlaceholder = createImage('wave0-canonical-placeholder', '', true);
     const featuredPlaceholder = createImage(
       'wave0-featured-placeholder',
-      'home-featured-card__image--placeholder',
+      'hero-specimen__image--placeholder',
     );
     const productPlaceholder = createImage(
       'wave0-product-placeholder',

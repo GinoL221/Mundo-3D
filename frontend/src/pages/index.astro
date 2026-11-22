@@ -11,18 +11,22 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
           <h1 class="home-hero__title" id="home-hero-title">Piezas impresas para tener cerca</h1>
           <p class="home-hero__description">Explorá figuras, bustos y accesorios impresos en 3D sin registrarte. Es una demo funcional: podés simular un pedido sin cobro real o enviar una solicitud de encargo.</p>
           <div class="home-hero__actions">
-            <a class="home-button" href="#catalogo">Ver el catálogo →</a>
-            <a class="home-text-action" href="#encargos">Enviar solicitud de encargo</a>
+            <a class="ui-btn ui-btn--primary" href="#catalogo">Ver el catálogo →</a>
+            <a class="home-text-link" href="/help">Enviar solicitud de encargo</a>
           </div>
         </div>
 
-        <article class="home-featured-card" aria-label="Pieza destacada">
-          <div class="home-featured-card__content" id="home-featured-content">
-            <p class="home-featured-card__state" id="home-featured-loading" role="status">
-              Cargando pieza destacada…
-            </p>
+        <div class="hero-specimen" id="home-featured-content" aria-label="Pieza destacada">
+          <div class="hero-specimen__skeleton" id="home-featured-loading" role="status" aria-busy="true">
+            <span class="hero-specimen__skeleton-media ui-skeleton" aria-hidden="true"></span>
+            <div class="hero-specimen__skeleton-sheet" aria-hidden="true">
+              <span class="ui-skeleton ui-skeleton--medium"></span>
+              <span class="ui-skeleton"></span>
+              <span class="ui-skeleton ui-skeleton--short"></span>
+            </div>
+            <span class="sr-only">Cargando pieza destacada…</span>
           </div>
-        </article>
+        </div>
       </div>
     </section>
 
@@ -33,7 +37,53 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
           <a class="home-products__link" href="/products">Ver todo el catálogo →</a>
         </div>
         <div class="home-products__body" id="home-products-container">
-          <p class="home-products__loading" id="home-loading-msg" role="status">Cargando piezas…</p>
+          <div class="home-products__loading" id="home-loading-msg" role="status" aria-busy="true">
+            <span class="sr-only">Cargando piezas…</span>
+            <div class="home-products__skeleton-grid" aria-hidden="true">
+              <div class="home-product-skeleton">
+                <span class="home-product-skeleton__media ui-skeleton"></span>
+                <div class="home-product-skeleton__body">
+                  <span class="ui-skeleton ui-skeleton--medium"></span>
+                  <span class="ui-skeleton ui-skeleton--short"></span>
+                </div>
+              </div>
+              <div class="home-product-skeleton">
+                <span class="home-product-skeleton__media ui-skeleton"></span>
+                <div class="home-product-skeleton__body">
+                  <span class="ui-skeleton ui-skeleton--medium"></span>
+                  <span class="ui-skeleton ui-skeleton--short"></span>
+                </div>
+              </div>
+              <div class="home-product-skeleton">
+                <span class="home-product-skeleton__media ui-skeleton"></span>
+                <div class="home-product-skeleton__body">
+                  <span class="ui-skeleton ui-skeleton--medium"></span>
+                  <span class="ui-skeleton ui-skeleton--short"></span>
+                </div>
+              </div>
+              <div class="home-product-skeleton">
+                <span class="home-product-skeleton__media ui-skeleton"></span>
+                <div class="home-product-skeleton__body">
+                  <span class="ui-skeleton ui-skeleton--medium"></span>
+                  <span class="ui-skeleton ui-skeleton--short"></span>
+                </div>
+              </div>
+              <div class="home-product-skeleton">
+                <span class="home-product-skeleton__media ui-skeleton"></span>
+                <div class="home-product-skeleton__body">
+                  <span class="ui-skeleton ui-skeleton--medium"></span>
+                  <span class="ui-skeleton ui-skeleton--short"></span>
+                </div>
+              </div>
+              <div class="home-product-skeleton">
+                <span class="home-product-skeleton__media ui-skeleton"></span>
+                <div class="home-product-skeleton__body">
+                  <span class="ui-skeleton ui-skeleton--medium"></span>
+                  <span class="ui-skeleton ui-skeleton--short"></span>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="home-products__state" id="home-products-state" hidden></div>
           <div id="home-products-content" hidden>
             <div class="home-products__grid" id="home-product-grid"></div>
@@ -48,7 +98,7 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
           <h2 class="home-commission__title" id="home-commission-title">¿Tenés una idea para una pieza?</h2>
           <p class="home-commission__description">Enviá una solicitud sin crear cuenta para que el taller la revise. No genera presupuesto, pedido ni cobro real.</p>
         </div>
-        <a class="home-button home-button--commission" href="/help">Enviar solicitud de encargo →</a>
+        <a class="ui-btn ui-btn--secondary home-commission__cta" href="/help">Enviar solicitud de encargo →</a>
       </div>
     </section>
   </main>
@@ -56,45 +106,104 @@ import HomeProductCard from '../domains/products/components/HomeProductCard.astr
   <HomeProductCard />
 
   <template id="home-empty-state-template">
-    <div class="home-state" role="status">
-      <h2>Todavía no hay piezas en el catálogo.</h2>
-      <p>Si buscás algo puntual, podés enviar una solicitud de encargo para que la revisemos.</p>
-      <a class="home-text-action" href="/help">Enviar solicitud de encargo</a>
+    <div class="ui-state ui-state--empty home-state" role="status">
+      <svg class="ui-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+        <path d="m3.3 7 8.7 5 8.7-5" />
+        <path d="M12 22V12" />
+      </svg>
+      <h3 class="ui-state__title">Todavía no hay piezas en el catálogo.</h3>
+      <p class="ui-state__text">Si buscás algo puntual, podés enviar una solicitud de encargo para que la revisemos.</p>
+      <a class="home-text-link" href="/help">Enviar solicitud de encargo</a>
     </div>
   </template>
 
   <template id="home-error-state-template">
-    <div class="home-state" role="alert">
-      <h2>No se pudo cargar el catálogo</h2>
-      <p>Verificá la conexión e intentá de nuevo.</p>
-      <button type="button" class="home-state__retry">Reintentar</button>
+    <div class="ui-callout ui-callout--danger home-state home-state--error" role="alert">
+      <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      <div class="ui-callout__content">
+        <h3 class="ui-callout__title">No se pudo cargar el catálogo</h3>
+        <p class="ui-callout__text">Verificá la conexión e intentá de nuevo.</p>
+        <div class="ui-callout__actions">
+          <button type="button" class="ui-btn ui-btn--secondary home-state__retry">Reintentar</button>
+        </div>
+      </div>
     </div>
   </template>
 
   <template id="home-featured-product-template">
-    <a class="home-featured-card__link" href="">
-          <img class="home-featured-card__image" src="/img/products/cubo_compania_portal.jpg" alt="Cubo de Compañía de Portal" width="420" height="420" loading="eager" decoding="async" />
-      <div class="home-featured-card__caption">
-        <div>
-          <h2 class="home-featured-card__name"></h2>
+    <figure class="hero-specimen__figure">
+      <a class="hero-specimen__media" href="">
+        <img
+          class="hero-specimen__image"
+          src="/img/products/soporte_maceta_groot.jpg"
+          alt=""
+          width="480"
+          height="384"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+        />
+      </a>
+      <figcaption class="hero-specimen__sheet">
+        <p class="hero-specimen__reason">La última pieza que salió del taller.</p>
+        <div class="hero-specimen__head">
+          <h2 class="hero-specimen__name"></h2>
+          <p class="hero-specimen__price"></p>
         </div>
-        <p class="home-featured-card__price"></p>
-      </div>
-    </a>
+        <dl class="hero-specimen__specs">
+          <div class="hero-specimen__spec hero-specimen__spec--category">
+            <dt>Categoría</dt>
+            <dd></dd>
+          </div>
+          <div class="hero-specimen__spec hero-specimen__spec--material">
+            <dt>Material</dt>
+            <dd></dd>
+          </div>
+          <div class="hero-specimen__spec hero-specimen__spec--dimensions">
+            <dt>Dimensiones</dt>
+            <dd></dd>
+          </div>
+        </dl>
+        <div class="hero-specimen__footer">
+          <a class="hero-specimen__cta" href="">Ver la pieza →</a>
+        </div>
+      </figcaption>
+    </figure>
   </template>
 
   <template id="home-featured-empty-state-template">
-    <div class="home-featured-card__state" role="status">
-      <p>Todavía no hay una pieza destacada.</p>
-      <a class="home-text-action" href="/products">Ver el catálogo</a>
+    <div class="ui-state ui-state--empty hero-specimen__state" role="status">
+      <svg class="ui-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+        <path d="m3.3 7 8.7 5 8.7-5" />
+        <path d="M12 22V12" />
+      </svg>
+      <h3 class="ui-state__title">Todavía no hay una pieza destacada.</h3>
+      <p class="ui-state__text">Cuando sumemos piezas con fotografía van a aparecer acá.</p>
+      <a class="home-text-link" href="/products">Ver el catálogo</a>
     </div>
   </template>
 
   <template id="home-featured-error-state-template">
-    <div class="home-featured-card__state" role="alert">
-      <p>No se pudo cargar la pieza destacada. Verificá la conexión e intentá de nuevo.</p>
-      <button type="button" class="home-state__retry">Reintentar</button>
-      <a class="home-text-action" href="/products">Ver el catálogo</a>
+    <div class="ui-callout ui-callout--danger hero-specimen__state hero-specimen__state--error" role="alert">
+      <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      <div class="ui-callout__content">
+        <h3 class="ui-callout__title">No se pudo cargar la pieza destacada</h3>
+        <p class="ui-callout__text">Verificá la conexión e intentá de nuevo.</p>
+        <div class="ui-callout__actions">
+          <button type="button" class="ui-btn ui-btn--secondary home-state__retry">Reintentar</button>
+          <a class="home-text-link" href="/products">Ver el catálogo</a>
+        </div>
+      </div>
     </div>
   </template>
 </Layout>

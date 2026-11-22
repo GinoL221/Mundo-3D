@@ -188,14 +188,14 @@
   }
 
   .home-hero {
-    padding: 48px 0;
+    padding: 40px 0 48px;
   }
 
   .home-hero__inner {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: 48px;
+    gap: 56px;
   }
 
   .home-hero__copy {
@@ -206,18 +206,20 @@
   .home-hero__actions {
     align-items: center;
     flex-direction: row;
-    gap: 20px;
+    gap: 12px 20px;
   }
 
-  .home-featured-card {
-    flex: 0 0 min(444px, 100%);
+  .hero-specimen {
+    flex: 0 0 min(480px, 100%);
   }
 
-  .home-featured-card__link {
-    grid-template-columns: minmax(0, 1.2fr) minmax(140px, 1fr);
+  .hero-specimen__image,
+  .hero-specimen__skeleton-media {
+    aspect-ratio: 5 / 4;
   }
 
-  .home-products__grid {
+  .home-products__grid,
+  .home-products__skeleton-grid {
     grid-template-columns: repeat(auto-fit, minmax(var(--home-card-min), 1fr));
   }
 

@@ -21,9 +21,9 @@ test.describe('Home product loading', () => {
 
     await expect(page.locator('#home-products-content')).toBeVisible();
     await expect(page.locator('.home-product-card')).toHaveCount(homeProducts.length);
-    await expect(page.locator('.home-featured-card__name')).toHaveText(
-      'Cubo de Compañía de Portal',
-    );
+    await expect(page.locator('.hero-specimen__name')).toHaveText('Fixture Reserve');
+    await expect(page.locator('.hero-specimen__cta')).toHaveAttribute('href', '/product?id=106');
+    await expect(page.locator('.hero-specimen__spec--category dd')).toHaveText('Figura');
     await expect.poll(() => catalogRequestCount).toBe(1);
   });
 
@@ -51,7 +51,8 @@ test.describe('Home product loading', () => {
       'No se pudo cargar',
     );
     await expect(page.locator('#home-featured-content').getByRole('alert')).toContainText(
-      'No se pudo cargar la pieza destacada.',
+      'No se pudo cargar la pieza destacada',
     );
+    await expect(page.locator('.home-state__retry')).toHaveCount(1);
   });
 });

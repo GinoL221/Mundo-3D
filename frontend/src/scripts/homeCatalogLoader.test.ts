@@ -35,9 +35,13 @@ class FakeElement {
   dataset: Record<string, string> = {};
   attributes = new Map<string, string>();
   children: FakeElement[] = [];
+  parentNode: FakeElement | null = null;
   listeners = new Map<string, Array<(event: Event) => void>>();
 
-  constructor(tagName: string, options?: { id?: string; className?: string; textContent?: string; href?: string }) {
+  constructor(
+    tagName: string,
+    options?: { id?: string; className?: string; textContent?: string; href?: string },
+  ) {
     this.tagName = tagName.toLowerCase();
     if (options?.id) this.id = options.id;
     if (options?.className) {
@@ -72,16 +76,35 @@ class FakeElement {
     }
   }
 
+  remove() {
+    if (!this.parentNode) return;
+    this.parentNode.children = this.parentNode.children.filter((child) => child !== this);
+    this.parentNode = null;
+  }
+
+  append(...nodes: Array<FakeElement | FakeDocumentFragment>) {
+    for (const node of nodes) {
+      this.appendChild(node);
+    }
+  }
+
   appendChild(node: FakeElement | FakeDocumentFragment) {
     if (node instanceof FakeDocumentFragment) {
-      this.children.push(...node.children);
+      for (const child of node.children) {
+        child.parentNode = this;
+        this.children.push(child);
+      }
       node.children = [];
       return;
     }
+    node.parentNode = this;
     this.children.push(node);
   }
 
   replaceChildren(...nodes: Array<FakeElement | FakeDocumentFragment>) {
+    for (const child of this.children) {
+      child.parentNode = null;
+    }
     this.children = [];
     for (const node of nodes) {
       this.appendChild(node);
@@ -102,7 +125,11 @@ class FakeElement {
     copy.alt = this.alt;
     copy.dataset = { ...this.dataset };
     copy.attributes = new Map(this.attributes);
-    copy.children = this.children.map((child) => child.cloneDeep());
+    copy.children = this.children.map((child) => {
+      const clonedChild = child.cloneDeep();
+      clonedChild.parentNode = copy;
+      return clonedChild;
+    });
     return copy;
   }
 
@@ -215,25 +242,41 @@ function el(
   children: FakeElement[] = [],
 ): FakeElement {
   const node = new FakeElement(tagName, options);
-  node.children = children;
+  for (const child of children) {
+    node.appendChild(child);
+  }
   return node;
 }
 
 function createHomeFixture() {
   const document = new FakeDocument();
 
-  const featuredLoading = el('p', {
-    id: 'home-featured-loading',
-    className: 'home-featured-card__state',
-    textContent: 'Cargando pieza destacada…',
-  });
+  const featuredLoading = el(
+    'div',
+    {
+      id: 'home-featured-loading',
+      className: 'hero-specimen__skeleton',
+    },
+    [
+      el('span', { className: 'hero-specimen__skeleton-media ui-skeleton' }),
+      el('span', { className: 'sr-only', textContent: 'Cargando pieza destacada…' }),
+    ],
+  );
+  featuredLoading.setAttribute('role', 'status');
+  featuredLoading.setAttribute('aria-busy', 'true');
+
   const featuredContent = document.registerRoot(
-    el('div', { id: 'home-featured-content', className: 'home-featured-card__content' }, [featuredLoading]),
+    el('div', { id: 'home-featured-content', className: 'hero-specimen' }, [featuredLoading]),
   );
 
   const loadingMsg = document.registerRoot(
-    el('p', { id: 'home-loading-msg', className: 'home-products__loading', textContent: 'Cargando piezas…' }),
+    el('div', { id: 'home-loading-msg', className: 'home-products__loading' }, [
+      el('span', { className: 'sr-only', textContent: 'Cargando piezas…' }),
+    ]),
   );
+  loadingMsg.setAttribute('role', 'status');
+  loadingMsg.setAttribute('aria-busy', 'true');
+
   const productsState = document.registerRoot(
     el('div', { id: 'home-products-state', className: 'home-products__state' }),
   );
@@ -245,31 +288,64 @@ function createHomeFixture() {
 
   document.registerRoot(
     new FakeTemplateElement('home-empty-state-template', [
-      el('div', { className: 'home-state' }, [
-        el('h2', { textContent: 'Todavía no hay piezas en el catálogo.' }),
-        el('p', { textContent: 'Si buscás algo puntual, podés enviar una solicitud de encargo para que la revisemos.' }),
-        el('a', { className: 'home-text-action', href: '/help', textContent: 'Enviar solicitud de encargo' }),
+      el('div', { className: 'ui-state ui-state--empty home-state' }, [
+        el('h3', { className: 'ui-state__title', textContent: 'Todavía no hay piezas en el catálogo.' }),
+        el('p', {
+          className: 'ui-state__text',
+          textContent:
+            'Si buscás algo puntual, podés enviar una solicitud de encargo para que la revisemos.',
+        }),
+        el('a', { className: 'home-text-link', href: '/help', textContent: 'Enviar solicitud de encargo' }),
       ]),
     ]),
   );
 
   document.registerRoot(
     new FakeTemplateElement('home-error-state-template', [
-      el('div', { className: 'home-state' }, [
-        el('h2', { textContent: 'No se pudo cargar el catálogo' }),
-        el('p', { textContent: 'Verificá la conexión e intentá de nuevo.' }),
-        el('button', { className: 'home-state__retry', textContent: 'Reintentar' }),
+      el('div', { className: 'ui-callout ui-callout--danger home-state home-state--error' }, [
+        el('div', { className: 'ui-callout__content' }, [
+          el('h3', { className: 'ui-callout__title', textContent: 'No se pudo cargar el catálogo' }),
+          el('p', {
+            className: 'ui-callout__text',
+            textContent: 'Verificá la conexión e intentá de nuevo.',
+          }),
+          el('div', { className: 'ui-callout__actions' }, [
+            el('button', { className: 'ui-btn ui-btn--secondary home-state__retry', textContent: 'Reintentar' }),
+          ]),
+        ]),
       ]),
     ]),
   );
 
   document.registerRoot(
     new FakeTemplateElement('home-featured-product-template', [
-      el('a', { className: 'home-featured-card__link', href: '' }, [
-        el('img', { className: 'home-featured-card__image' }),
-        el('div', { className: 'home-featured-card__caption' }, [
-          el('div', {}, [el('h2', { className: 'home-featured-card__name' })]),
-          el('p', { className: 'home-featured-card__price' }),
+      el('figure', { className: 'hero-specimen__figure' }, [
+        el('a', { className: 'hero-specimen__media', href: '' }, [
+          el('img', { className: 'hero-specimen__image' }),
+        ]),
+        el('figcaption', { className: 'hero-specimen__sheet' }, [
+          el('p', { className: 'hero-specimen__reason', textContent: 'La última pieza que salió del taller.' }),
+          el('div', { className: 'hero-specimen__head' }, [
+            el('h2', { className: 'hero-specimen__name' }),
+            el('p', { className: 'hero-specimen__price' }),
+          ]),
+          el('dl', { className: 'hero-specimen__specs' }, [
+            el('div', { className: 'hero-specimen__spec hero-specimen__spec--category' }, [
+              el('dt', { textContent: 'Categoría' }),
+              el('dd'),
+            ]),
+            el('div', { className: 'hero-specimen__spec hero-specimen__spec--material' }, [
+              el('dt', { textContent: 'Material' }),
+              el('dd'),
+            ]),
+            el('div', { className: 'hero-specimen__spec hero-specimen__spec--dimensions' }, [
+              el('dt', { textContent: 'Dimensiones' }),
+              el('dd'),
+            ]),
+          ]),
+          el('div', { className: 'hero-specimen__footer' }, [
+            el('a', { className: 'hero-specimen__cta', href: '', textContent: 'Ver la pieza →' }),
+          ]),
         ]),
       ]),
     ]),
@@ -277,19 +353,27 @@ function createHomeFixture() {
 
   document.registerRoot(
     new FakeTemplateElement('home-featured-empty-state-template', [
-      el('div', { className: 'home-featured-card__state' }, [
-        el('p', { textContent: 'Todavía no hay una pieza destacada.' }),
-        el('a', { className: 'home-text-action', href: '/products', textContent: 'Ver el catálogo' }),
+      el('div', { className: 'ui-state ui-state--empty hero-specimen__state' }, [
+        el('h3', { className: 'ui-state__title', textContent: 'Todavía no hay una pieza destacada.' }),
+        el('a', { className: 'home-text-link', href: '/products', textContent: 'Ver el catálogo' }),
       ]),
     ]),
   );
 
   document.registerRoot(
     new FakeTemplateElement('home-featured-error-state-template', [
-      el('div', { className: 'home-featured-card__state' }, [
-        el('p', { textContent: 'No se pudo cargar la pieza destacada. Verificá la conexión e intentá de nuevo.' }),
-        el('button', { className: 'home-state__retry', textContent: 'Reintentar' }),
-        el('a', { className: 'home-text-action', href: '/products', textContent: 'Ver el catálogo' }),
+      el('div', { className: 'ui-callout ui-callout--danger hero-specimen__state hero-specimen__state--error' }, [
+        el('div', { className: 'ui-callout__content' }, [
+          el('h3', { className: 'ui-callout__title', textContent: 'No se pudo cargar la pieza destacada' }),
+          el('p', {
+            className: 'ui-callout__text',
+            textContent: 'Verificá la conexión e intentá de nuevo.',
+          }),
+          el('div', { className: 'ui-callout__actions' }, [
+            el('button', { className: 'ui-btn ui-btn--secondary home-state__retry', textContent: 'Reintentar' }),
+            el('a', { className: 'home-text-link', href: '/products', textContent: 'Ver el catálogo' }),
+          ]),
+        ]),
       ]),
     ]),
   );
@@ -302,11 +386,10 @@ function createHomeFixture() {
             el('img', { className: 'home-product-card__image' }),
           ]),
           el('div', { className: 'home-product-card__body' }, [
-            el('p', { className: 'home-product-card__category' }),
             el('h3', { className: 'home-product-card__name' }),
             el('div', { className: 'home-product-card__footer' }, [
               el('p', { className: 'home-product-card__price' }),
-              el('span', { className: 'home-product-card__cta', textContent: 'Ver detalle →' }),
+              el('p', { className: 'home-product-card__category' }),
             ]),
           ]),
         ]),
@@ -372,7 +455,7 @@ describe('homeCatalogLoader', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders both error templates with Reintentar on failed fetch and populates up to 6 cards plus featured piece on retry success', async () => {
+  it('shows a single retry on full API failure and populates hero specimen plus up to 6 non-duplicate cards on retry success', async () => {
     const fixture = createHomeFixture();
     const retryCatalogDeferred = createDeferred<ReturnType<typeof jsonResponse>>();
 
@@ -381,16 +464,16 @@ describe('homeCatalogLoader', () => {
       // Initial attempt: /api/products fails, then fallback /api/products/latest fails
       .mockRejectedValueOnce(new Error('network error'))
       .mockResolvedValueOnce(jsonResponse(500, {}))
-      // Retry attempt: /api/products succeeds with 8 products (including Portal Cube)
+      // Retry attempt: /api/products succeeds with 8 products (including Portal Cube id 47)
       .mockImplementationOnce(() => retryCatalogDeferred.promise);
     vi.stubGlobal('fetch', fetchMock);
 
     await initializeHomeCatalog(fixture.document as unknown as Document);
 
-    // Both featured and catalogue error states should render with "Reintentar"
+    // Full API failure: featured suppresses duplicate retry; catalogue renders the single retry
     const featuredRetry = fixture.featuredContent.querySelector('.home-state__retry');
     const productsRetry = fixture.productsState.querySelector('.home-state__retry');
-    expect(featuredRetry?.textContent).toBe('Reintentar');
+    expect(featuredRetry).toBeNull();
     expect(productsRetry?.textContent).toBe('Reintentar');
     expect(fixture.loadingMsg.hidden).toBe(true);
     expect(fixture.productsState.hidden).toBe(false);
@@ -399,16 +482,16 @@ describe('homeCatalogLoader', () => {
     // Clicking Reintentar disables button, restores loading states, and triggers a fresh fetch
     productsRetry!.click();
     expect(productsRetry!.disabled).toBe(true);
-    expect(fixture.document.getElementById('home-featured-loading')?.textContent).toBe(
-      'Cargando pieza destacada…',
-    );
+    const featuredSkeleton = fixture.document.getElementById('home-featured-loading');
+    expect(featuredSkeleton?.getAttribute('aria-busy')).toBe('true');
+    expect(featuredSkeleton?.querySelector('.sr-only')?.textContent).toBe('Cargando pieza destacada…');
     expect(fixture.loadingMsg.hidden).toBe(false);
     expect(fixture.productsState.hidden).toBe(true);
     expect(fixture.productsState.children).toHaveLength(0);
     expect(fixture.productsContent.hidden).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(3);
 
-    // Resolve retry fetch with 8 products (sliced to 6 cards)
+    // Resolve retry fetch with 8 products: id 47 becomes hero specimen and is excluded from the 6 cards
     const products = [
       PORTAL_CUBE,
       makeProduct(1),
@@ -429,17 +512,79 @@ describe('homeCatalogLoader', () => {
     const cards = fixture.productGrid.querySelectorAll('.home-product-card');
     expect(cards).toHaveLength(6);
     expect(cards[0].querySelector('.home-product-card__category')?.textContent).toBe('Figuras');
-    expect(cards[0].querySelector('.home-product-card__name')?.textContent).toBe(
-      'Cubo de Compañía de Portal',
-    );
-    expect(cards[0].querySelector('.home-product-card__link')?.href).toBe('/product?id=47');
-    expect(cards[5].querySelector('.home-product-card__category')?.textContent).toBe('Figuras');
-    expect(cards[5].querySelector('.home-product-card__name')?.textContent).toBe('Pieza 5');
+    expect(cards[0].querySelector('.home-product-card__name')?.textContent).toBe('Pieza 1');
+    expect(cards[0].querySelector('.home-product-card__link')?.href).toBe('/product?id=1');
+    expect(cards[5].querySelector('.home-product-card__name')?.textContent).toBe('Pieza 6');
 
-    const featuredLink = fixture.featuredContent.querySelector('.home-featured-card__link');
-    const featuredName = fixture.featuredContent.querySelector('.home-featured-card__name');
+    const featuredLink = fixture.featuredContent.querySelector('.hero-specimen__media');
+    const featuredName = fixture.featuredContent.querySelector('.hero-specimen__name');
+    const featuredCta = fixture.featuredContent.querySelector('.hero-specimen__cta');
     expect(featuredLink?.href).toBe('/product?id=47');
     expect(featuredName?.textContent).toBe('Cubo de Compañía de Portal');
+    expect(featuredCta?.href).toBe('/product?id=47');
+  });
+
+  it('hides null material and dimensions spec cells while formatting available specs cleanly', async () => {
+    const fixture = createHomeFixture();
+    const sparseProduct = makeProduct(10, {
+      nameProduct: 'Soporte Maceta Groot',
+      category: 'Otras',
+      material: null,
+      height: null,
+      width: null,
+      depth: null,
+    });
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse(200, { products: [sparseProduct] }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await initializeHomeCatalog(fixture.document as unknown as Document);
+
+    expect(
+      fixture.featuredContent.querySelector('.hero-specimen__spec--category')?.querySelector('dd')
+        ?.textContent,
+    ).toBe('Otras');
+    expect(fixture.featuredContent.querySelector('.hero-specimen__spec--material')).toBeNull();
+    expect(fixture.featuredContent.querySelector('.hero-specimen__spec--dimensions')).toBeNull();
+
+    const fullProduct = makeProduct(20, {
+      nameProduct: 'Busto Iron Man',
+      category: 'Busto',
+      material: 'PLA+',
+      height: 15,
+      width: 12,
+      depth: 10,
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValueOnce(jsonResponse(200, { products: [fullProduct] })),
+    );
+
+    await initializeHomeCatalog(fixture.document as unknown as Document);
+
+    expect(
+      fixture.featuredContent.querySelector('.hero-specimen__spec--material')?.querySelector('dd')
+        ?.textContent,
+    ).toBe('PLA+');
+    expect(
+      fixture.featuredContent.querySelector('.hero-specimen__spec--dimensions')?.querySelector('dd')
+        ?.textContent,
+    ).toBe('15 × 12 × 10 cm');
+  });
+
+  it('keeps retry button on hero specimen when only latest endpoint fails while catalog is empty', async () => {
+    const fixture = createHomeFixture();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(200, { products: [] }))
+      .mockResolvedValueOnce(jsonResponse(500, {}));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await initializeHomeCatalog(fixture.document as unknown as Document);
+
+    expect(fixture.productsState.querySelector('.home-state__retry')).toBeNull();
+    expect(fixture.featuredContent.querySelector('.home-state__retry')?.textContent).toBe(
+      'Reintentar',
+    );
   });
 
   it('ignores stale attempt resolutions and rejections after a newer retry starts', async () => {
@@ -468,7 +613,7 @@ describe('homeCatalogLoader', () => {
     retryCatalogDeferred.resolve(jsonResponse(200, { products: [PORTAL_CUBE, makeProduct(2)] }));
     await flushMicrotasks();
 
-    expect(fixture.featuredContent.querySelector('.home-featured-card__name')?.textContent).toBe(
+    expect(fixture.featuredContent.querySelector('.hero-specimen__name')?.textContent).toBe(
       'Cubo de Compañía de Portal',
     );
     expect(fixture.productGrid.querySelectorAll('.home-product-card')).toHaveLength(2);
@@ -478,7 +623,7 @@ describe('homeCatalogLoader', () => {
     await pendingInit;
     await flushMicrotasks();
 
-    expect(fixture.featuredContent.querySelector('.home-featured-card__name')?.textContent).toBe(
+    expect(fixture.featuredContent.querySelector('.hero-specimen__name')?.textContent).toBe(
       'Cubo de Compañía de Portal',
     );
 
@@ -507,7 +652,7 @@ describe('homeCatalogLoader', () => {
     await loadA;
     await flushMicrotasks();
 
-    expect(fixture.featuredContent.querySelector('.home-featured-card__name')?.textContent).toBe(
+    expect(fixture.featuredContent.querySelector('.hero-specimen__name')?.textContent).toBe(
       'Cubo de Compañía de Portal',
     );
     expect(fixture.productsState.hidden).toBe(true);
@@ -515,7 +660,7 @@ describe('homeCatalogLoader', () => {
     expect(fixture.productGrid.querySelectorAll('.home-product-card')).toHaveLength(1);
   });
 
-  it('renders the empty state template with the /help link and hides loading and content when catalog is empty', async () => {
+  it('renders the empty state template with h3 and /help link when catalog is empty', async () => {
     const fixture = createHomeFixture();
     const fetchMock = vi
       .fn()
@@ -529,17 +674,17 @@ describe('homeCatalogLoader', () => {
     expect(fixture.productsContent.hidden).toBe(true);
     expect(fixture.productsState.hidden).toBe(false);
 
-    const emptyHeading = fixture.productsState.querySelector('h2');
-    const helpLink = fixture.productsState.querySelector('.home-text-action');
+    const emptyHeading = fixture.productsState.querySelector('h3');
+    const helpLink = fixture.productsState.querySelector('.home-text-link');
     expect(emptyHeading?.textContent).toBe('Todavía no hay piezas en el catálogo.');
     expect(helpLink?.href).toBe('/help');
-    expect(fixture.featuredContent.querySelector('.home-text-action')?.href).toBe('/products');
+    expect(fixture.featuredContent.querySelector('.home-text-link')?.href).toBe('/products');
   });
 
-  it('uses explicit fallback alt text on placeholder and image-error cards', async () => {
+  it('uses explicit fallback alt text on placeholder and image-error elements', async () => {
     const fixture = createHomeFixture();
     const products = [
-      makeProduct(47, {
+      makeProduct(1, {
         nameProduct: 'Cubo de Compañía de Portal',
         image: 'productoSinImagen.png',
       }),
@@ -553,8 +698,14 @@ describe('homeCatalogLoader', () => {
 
     await initializeHomeCatalog(fixture.document as unknown as Document);
 
-    const featuredImage = fixture.featuredContent.querySelector('.home-featured-card__image')!;
-    expect(featuredImage.alt).toBe('Cubo de Compañía de Portal (sin foto disponible)');
+    // S2 picks id 2 (highest id with real photo) for the hero specimen
+    const featuredImage = fixture.featuredContent.querySelector('.hero-specimen__image')!;
+    expect(featuredImage.alt).toBe('Busto Darth Vader');
+
+    for (const listener of featuredImage.listeners.get('error') ?? []) {
+      listener({ target: featuredImage } as unknown as Event);
+    }
+    expect(featuredImage.alt).toBe('Busto Darth Vader (sin foto disponible)');
 
     const cards = fixture.productGrid.querySelectorAll('.home-product-card');
     const firstCardImage = cards[0].querySelector('.home-product-card__image')!;

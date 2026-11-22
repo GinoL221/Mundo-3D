@@ -15,10 +15,10 @@ const representativeVisualViewports = new Set(['320', '640', '768x1024', '1024x7
 type Theme = (typeof themes)[number];
 
 const matrix: MatrixCase[] = [
-  { name: '320', width: 320, height: 800, columns: 1, compactNavigation: true },
-  { name: '360', width: 360, height: 800, columns: 1, compactNavigation: true },
-  { name: '375', width: 375, height: 800, columns: 1, compactNavigation: true },
-  { name: '639', width: 639, height: 800, columns: 1, compactNavigation: true },
+  { name: '320', width: 320, height: 800, columns: 2, compactNavigation: true },
+  { name: '360', width: 360, height: 800, columns: 2, compactNavigation: true },
+  { name: '375', width: 375, height: 800, columns: 2, compactNavigation: true },
+  { name: '639', width: 639, height: 800, columns: 2, compactNavigation: true },
   { name: '640', width: 640, height: 800, columns: 2, compactNavigation: true },
   { name: '768x1024', width: 768, height: 1024, columns: 2, compactNavigation: true },
   { name: '820', width: 820, height: 800, columns: 2, compactNavigation: true },
@@ -83,7 +83,7 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
         const footerBottom = document.querySelector<HTMLElement>('.home-footer__bottom');
         const footerCopyright = document.querySelector<HTMLElement>('.home-footer__copyright');
         const heroCopy = document.querySelector<HTMLElement>('.home-hero__copy');
-        const featured = document.querySelector<HTMLElement>('.home-featured-card');
+        const featured = document.querySelector<HTMLElement>('.hero-specimen');
         const body = document.querySelector<HTMLElement>('.home-hero__description');
         const heading = document.querySelector<HTMLElement>('.home-hero__title');
         const logo = [
@@ -154,7 +154,11 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
       });
 
       expect(metrics.columns).toBe(viewport.columns);
-      expect(metrics.cardWidth).toBeGreaterThanOrEqual(280);
+      if (viewport.width >= 640) {
+        expect(metrics.cardWidth).toBeGreaterThanOrEqual(280);
+      } else {
+        expect(metrics.cardWidth).toBeGreaterThanOrEqual(130);
+      }
       expect(metrics.target.width).toBeGreaterThanOrEqual(44);
       expect(metrics.target.height).toBeGreaterThanOrEqual(44);
       expect(metrics.bodySize).toBeGreaterThanOrEqual(16);
@@ -186,7 +190,7 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
         expect(metrics.footerTopColumns).toBe(4);
       }
 
-      expect(metrics.footerLinkTargets).toHaveLength(8);
+      expect(metrics.footerLinkTargets).toHaveLength(10);
       for (const target of metrics.footerLinkTargets) {
         expect(target.width).toBeGreaterThanOrEqual(44);
         expect(target.height).toBeGreaterThanOrEqual(44);
