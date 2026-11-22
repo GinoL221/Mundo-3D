@@ -165,6 +165,7 @@ describe('Shared route shell', () => {
     const header = source('../components/HomeHeader.astro');
     const footer = source('../components/HomeFooter.astro');
     const headerStyles = source('../styles/components/home-shell.css');
+    const brandStyles = source('../styles/components/home-brand.css');
     const homeStyles = source('../styles/components/home.css');
     const productsStyles = source('../styles/components/home-products.css');
     const baseLayoutStyles = source('../styles/base/layout.css');
@@ -319,7 +320,15 @@ describe('Shared route shell', () => {
     expect(productCardTemplate).not.toContain('src=""');
     expect(homeStyles).not.toContain('image-rendering: pixelated');
     expect(productsStyles).not.toContain('image-rendering: pixelated');
-    expect(productsStyles).toMatch(/\.home-product-card__copy \{[\s\S]*?align-items: baseline;/);
+    expect(headerStyles).toContain('--home-line-hover:');
+    expect(brandStyles).toContain('--home-line: var(--border);');
+    expect(brandStyles).toContain('--home-line-hover:');
+    expect(productsStyles).toMatch(/\.home-product-card \{[\s\S]*?border-radius: 8px;/);
+    expect(homeStyles).toMatch(/\.home-featured-card \{[\s\S]*?border-radius: 8px;/);
+    expect(productsStyles).toMatch(/\.home-product-card__footer \{[\s\S]*?align-items: baseline;/);
+    expect(productsStyles).toMatch(
+      /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.home-product-card__image/,
+    );
     expect(productsStyles).toMatch(
       /\.home-product-card__price \{[\s\S]*?font-variant-numeric: tabular-nums;/,
     );
@@ -418,8 +427,13 @@ describe('Shared route shell', () => {
     expect(desktopStyles).toMatch(
       /\.home-header__inner:not\(:has\(\.user-only\[style\*='display: block'\]\)\) \.home-header__account \{[^}]*?display: none;/,
     );
+    expect(header).toContain('id="navbar-cart-trigger"');
+    expect(header).toContain('id="navbar-cart-menu"');
+    expect(header).toContain('initializeMiniCart(document)');
+    expect(headerStyles).toMatch(/\.mini-cart \{/);
+    expect(headerStyles).toMatch(/\.home-header \.cart-link__badge \{[\s\S]*?font-size: var\(--text-xs\);/);
     expect(desktopStyles).toMatch(
-      /\.home-header__cart \{[^}]*?order: 3;[^}]*?margin-inline-start: auto;/,
+      /\.home-header__cart-wrap \{[^}]*?position: relative;[^}]*?order: 3;[^}]*?margin-inline-start: auto;/,
     );
     expect(desktopStyles).toMatch(
       /\.home-header__account-section,\s*\.home-header__account \{[^}]*?order: 4;[^}]*?margin-inline-start: 14px;[^}]*?padding-inline-start: 14px;[^}]*?border-inline-start: 1px solid var\(--home-brand-line\);/,

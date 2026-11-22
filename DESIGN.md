@@ -115,7 +115,7 @@ The accepted breakpoint names are `--bp-mobile 640px`, `--bp-tablet 1024px`, and
 
 ## Depth and elevation
 
-The brand is intentionally flat and tactile. Establish hierarchy with paper/surface contrast, ink typography, borders, spacing, and real photography. Do not introduce gradients, drop shadows, bevels, stickers, glow, or artificial elevation into new brand components. The existing LCD glow and dark workshop surfaces are documented legacy/debt, not defaults for new work.
+The brand is intentionally flat and tactile at rest. Establish hierarchy with paper/surface contrast, ink typography, borders, spacing, and real photography. Do not introduce gradients, resting drop shadows, bevels, stickers, glow, or artificial elevation into new brand components; interactive product cards may use a restrained soft-blur hover shadow (`--home-card-shadow-hover`) to signal clickability. The existing LCD glow and dark workshop surfaces are documented legacy/debt, not defaults for new work.
 
 ## Logo assets
 

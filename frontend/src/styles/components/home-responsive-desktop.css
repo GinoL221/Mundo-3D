@@ -162,7 +162,8 @@
     display: inline;
   }
 
-  .home-header__cart {
+  .home-header__cart-wrap {
+    position: relative;
     order: 3;
     flex: 0 0 auto;
     margin-inline-start: auto;

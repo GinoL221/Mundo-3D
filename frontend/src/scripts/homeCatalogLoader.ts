@@ -170,6 +170,7 @@ export function createHomeCatalogLoader(document: Document): HomeCatalogLoader {
       const catImg = getCategoryImg(product.category);
       const link = clone.querySelector<HTMLAnchorElement>('.home-product-card__link');
       const img = clone.querySelector<HTMLImageElement>('.home-product-card__image');
+      const category = clone.querySelector<HTMLElement>('.home-product-card__category');
       const name = clone.querySelector<HTMLElement>('.home-product-card__name');
       const price = clone.querySelector<HTMLElement>('.home-product-card__price');
 
@@ -191,6 +192,7 @@ export function createHomeCatalogLoader(document: Document): HomeCatalogLoader {
           img.classList.add('home-product-card__image--placeholder');
         });
       }
+      if (category) category.textContent = product.category ? product.category.trim() : '';
       if (name) name.textContent = product.name;
       if (price) price.textContent = formatPrice(product.price);
       fragment.appendChild(clone);

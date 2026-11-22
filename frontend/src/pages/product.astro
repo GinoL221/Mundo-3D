@@ -161,7 +161,7 @@ import Layout from '../layouts/Layout.astro';
       if (CartService.hasToken()) {
         window.addEventListener('cart-sync-error', onSyncError, { once: true });
       }
-      CartService.addToCart(resolvedProduct);
+      CartService.addToCart(product);
       addButton.disabled = true;
       addButton.textContent = 'Agregado al carrito';
       setText('cart-status', `${product.name} se agregó al carrito.`);

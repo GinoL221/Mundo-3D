@@ -99,8 +99,17 @@
   width: min(444px, 100%);
   flex: 0 1 auto;
   padding: 12px;
-  border-radius: 6px;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
   background: var(--home-paper);
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.home-featured-card:hover {
+  border-color: var(--home-line-hover);
+  box-shadow: var(--home-card-shadow-hover);
 }
 
 .home-featured-card__content {
@@ -123,6 +132,7 @@
   width: 100%;
   height: auto;
   aspect-ratio: 1 / 1;
+  border-radius: 4px;
   background: var(--home-surface);
   object-fit: contain;
   image-rendering: auto;
@@ -156,6 +166,7 @@
   font-size: var(--text-h3);
   font-weight: 600;
   line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .home-featured-card__price {
@@ -188,7 +199,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .home-button,
-  .home-text-action {
+  .home-text-action,
+  .home-featured-card {
     transition-duration: 0s;
   }
 }

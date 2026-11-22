@@ -298,11 +298,15 @@ function createHomeFixture() {
     new FakeTemplateElement('home-product-card-template', [
       el('article', { className: 'home-product-card' }, [
         el('a', { className: 'home-product-card__link', href: '' }, [
-          el('div', { className: 'home-product-card__content' }, [
+          el('div', { className: 'home-product-card__media' }, [
             el('img', { className: 'home-product-card__image' }),
-            el('div', { className: 'home-product-card__copy' }, [
-              el('h3', { className: 'home-product-card__name' }),
+          ]),
+          el('div', { className: 'home-product-card__body' }, [
+            el('p', { className: 'home-product-card__category' }),
+            el('h3', { className: 'home-product-card__name' }),
+            el('div', { className: 'home-product-card__footer' }, [
               el('p', { className: 'home-product-card__price' }),
+              el('span', { className: 'home-product-card__cta', textContent: 'Ver detalle →' }),
             ]),
           ]),
         ]),
@@ -424,10 +428,12 @@ describe('homeCatalogLoader', () => {
 
     const cards = fixture.productGrid.querySelectorAll('.home-product-card');
     expect(cards).toHaveLength(6);
+    expect(cards[0].querySelector('.home-product-card__category')?.textContent).toBe('Figuras');
     expect(cards[0].querySelector('.home-product-card__name')?.textContent).toBe(
       'Cubo de Compañía de Portal',
     );
     expect(cards[0].querySelector('.home-product-card__link')?.href).toBe('/product?id=47');
+    expect(cards[5].querySelector('.home-product-card__category')?.textContent).toBe('Figuras');
     expect(cards[5].querySelector('.home-product-card__name')?.textContent).toBe('Pieza 5');
 
     const featuredLink = fixture.featuredContent.querySelector('.home-featured-card__link');

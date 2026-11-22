@@ -201,6 +201,17 @@
     gap: 8px;
   }
 
+  .home-header__cart-wrap {
+    position: relative;
+  }
+
+  .mini-cart {
+    top: calc(100% + 6px);
+    right: 0;
+    left: auto;
+    width: min(340px, calc(100vw - 32px));
+  }
+
   .home-products__meta {
     align-items: center;
     flex-direction: row;

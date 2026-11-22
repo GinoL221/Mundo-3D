@@ -238,6 +238,8 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
 
       const toggle = page.locator('#home-menu-toggle');
       const navigation = page.locator('#home-primary-navigation');
+      await expect(page.locator('#navbar-cart-trigger')).toHaveAttribute('aria-expanded', 'false');
+      await expect(page.locator('#navbar-cart-menu')).toBeHidden();
       await expect(toggle).toHaveAttribute('aria-controls', 'home-primary-navigation');
       await expect(navigation).not.toHaveAttribute('role', 'menu');
       await expect(navigation.locator('a').first()).not.toHaveAttribute('role', 'menuitem');
