@@ -76,7 +76,7 @@
 .order-row-link:hover,
 .order-list__pagination a:hover {
   background: var(--surface-subtle);
-  border-color: var(--home-line-hover, #cbd5e1);
+  border-color: var(--border-hover);
   color: var(--fg);
   transform: translateY(-1px);
 }

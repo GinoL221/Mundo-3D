@@ -4,7 +4,6 @@ html[data-theme='dark'] .home-shell {
   --home-ink: var(--fg);
   --home-muted: var(--sys-text-muted);
   --home-line: var(--border);
-  --home-line-hover: #4c4640;
   --home-card-shadow-hover: 0 12px 28px rgba(0, 0, 0, 0.52);
   --home-night: #142b66;
   --home-brand-surface: var(--surface);

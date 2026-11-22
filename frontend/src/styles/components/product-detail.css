@@ -436,7 +436,7 @@
 
 .product-detail__share-button:hover,
 .product-detail__action--secondary:hover {
-  border-color: var(--home-line-hover, #cbd5e1);
+  border-color: var(--border-hover);
   background: var(--surface-subtle);
   color: var(--fg);
   transform: translateY(-1px);
