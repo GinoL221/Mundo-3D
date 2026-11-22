@@ -32,6 +32,7 @@
   flex: 0 0 auto;
   padding: 16px 0;
   background: var(--home-brand-surface);
+  border-bottom: 1px solid var(--home-brand-line);
   color: var(--home-brand-ink);
 }
 
@@ -104,11 +105,16 @@
   color: var(--home-brand-ink);
 }
 
+.home-header__logo:focus-visible,
 .home-header__link:focus-visible,
 .home-header__theme:focus-visible,
 .home-header .nav-item__trigger:focus-visible {
   outline: 3px solid var(--home-blue);
   outline-offset: 2px;
+}
+
+.home-header__logo:focus-visible {
+  border-radius: var(--radius-control);
 }
 
 .home-header__cart {

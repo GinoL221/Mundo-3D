@@ -223,4 +223,88 @@ describe('initializeHomeMenu', () => {
     cleanup();
     expect(fixture.mediaQuery.listeners).toHaveLength(0);
   });
+
+  it('places guest account links inside the mobile drawer on compact viewports and restores them to utility on desktop', () => {
+    const fixture = createFixture(true);
+    const utilityChildren: FakeElement[] = [];
+    const menuChildren: FakeElement[] = [];
+    const cartWrap = new FakeElement();
+    const accountSection = new FakeElement();
+    const themeButton = new FakeElement();
+
+    const utility = new FakeElement();
+    const makeParent = (owner: FakeElement, list: FakeElement[], otherList?: FakeElement[]) => ({
+      appendChild(child: FakeElement & { parentElement?: unknown }) {
+        child.parentElement = owner;
+        if (otherList) {
+          const oldIdx = otherList.indexOf(child);
+          if (oldIdx !== -1) otherList.splice(oldIdx, 1);
+        }
+        if (!list.includes(child)) list.push(child);
+        return child;
+      },
+      insertBefore(child: FakeElement & { parentElement?: unknown }, ref: FakeElement | null) {
+        child.parentElement = owner;
+        if (otherList) {
+          const oldIdx = otherList.indexOf(child);
+          if (oldIdx !== -1) otherList.splice(oldIdx, 1);
+        }
+        const existingIdx = list.indexOf(child);
+        if (existingIdx !== -1) list.splice(existingIdx, 1);
+        const refIdx = ref ? list.indexOf(ref) : -1;
+        if (refIdx === -1) list.push(child);
+        else list.splice(refIdx, 0, child);
+        return child;
+      },
+      prepend(child: FakeElement & { parentElement?: unknown }) {
+        child.parentElement = owner;
+        if (otherList) {
+          const oldIdx = otherList.indexOf(child);
+          if (oldIdx !== -1) otherList.splice(oldIdx, 1);
+        }
+        const existingIdx = list.indexOf(child);
+        if (existingIdx !== -1) list.splice(existingIdx, 1);
+        list.unshift(child);
+      },
+    });
+
+    Object.assign(utility, makeParent(utility, utilityChildren, menuChildren));
+    Object.assign(fixture.menu, makeParent(fixture.menu, menuChildren, utilityChildren));
+
+    const cartWithSibling = cartWrap as FakeElement & {
+      parentElement: FakeElement;
+      nextSibling: FakeElement | null;
+    };
+    cartWithSibling.parentElement = utility;
+    Object.defineProperty(cartWithSibling, 'nextSibling', {
+      get() {
+        const idx = utilityChildren.indexOf(cartWrap);
+        return idx >= 0 ? (utilityChildren[idx + 1] ?? null) : null;
+      },
+    });
+    const acctWithParent = Object.assign(accountSection, { parentElement: utility });
+    utilityChildren.push(cartWithSibling, acctWithParent, themeButton);
+
+    Object.assign(fixture.document, {
+      querySelector: (selector: string) => {
+        if (selector === '.home-header__account-section') return acctWithParent;
+        if (selector === '.home-header__utility') return utility;
+        if (selector === '.home-header__cart-wrap') return cartWithSibling;
+        return null;
+      },
+    });
+
+    const cleanup = initializeHomeMenu(fixture.document as unknown as Document);
+    expect(acctWithParent.parentElement).toBe(fixture.menu);
+    expect(menuChildren).toContain(acctWithParent);
+
+    fixture.mediaQuery.setMatches(false);
+    expect(acctWithParent.parentElement).toBe(utility);
+    expect(utilityChildren).toEqual([cartWithSibling, acctWithParent, themeButton]);
+
+    fixture.mediaQuery.setMatches(true);
+    expect(acctWithParent.parentElement).toBe(fixture.menu);
+
+    cleanup();
+  });
 });

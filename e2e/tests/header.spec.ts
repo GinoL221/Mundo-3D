@@ -49,3 +49,74 @@ test('preserves HomeHeader navigation and keyboard dropdown access', async ({
   await ordersLink.click();
   await expect(page).toHaveURL(/\/orders$/);
 });
+
+test('supports skip link to main, visual left-to-right desktop Tab order, logo focus ring, and mini-cart focus-out', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/aboutUs');
+
+  // 1. Skip link appears on first Tab and moves focus to <main>
+  await page.keyboard.press('Tab');
+  const skipLink = page.locator('.skip-link');
+  await expect(skipLink).toBeFocused();
+  await expect(skipLink).toHaveText('Saltar al contenido');
+  const skipBox = await skipLink.boundingBox();
+  expect(skipBox).not.toBeNull();
+  expect(skipBox!.height).toBeGreaterThanOrEqual(44);
+
+  await page.keyboard.press('Enter');
+  await expect(page.locator('main')).toBeFocused();
+
+  // 2. Desktop header Tab sequence follows visual left-to-right order
+  await page.goto('/aboutUs');
+  await page.keyboard.press('Tab'); // skip-link
+  const actualTabOrder: Array<{ label: string; left: number }> = [];
+  for (let i = 0; i < 8; i += 1) {
+    await page.keyboard.press('Tab');
+    const info = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      return {
+        label: el.getAttribute('aria-label') || el.textContent?.trim() || el.id || el.tagName,
+        left: rect.left,
+        outlineWidth: getComputedStyle(el).outlineWidth,
+        outlineStyle: getComputedStyle(el).outlineStyle,
+      };
+    });
+    expect(info).not.toBeNull();
+    if (i === 0) {
+      expect(info!.outlineStyle).toBe('solid');
+      expect(info!.outlineWidth).toBe('3px');
+    }
+    actualTabOrder.push({ label: info!.label, left: info!.left });
+  }
+
+  expect(actualTabOrder.map((entry) => entry.label)).toEqual([
+    'Mundo 3D — Inicio',
+    'Catálogo',
+    'Encargos',
+    'Cómo funciona',
+    'Carrito de compras',
+    'Iniciar sesión',
+    'Registrarse',
+    'Tema: sistema (actualmente claro). Cambiar a tema claro',
+  ]);
+  for (let i = 1; i < actualTabOrder.length; i += 1) {
+    expect(actualTabOrder[i].left).toBeGreaterThan(actualTabOrder[i - 1].left);
+  }
+
+  // 3. Mini-cart closes on Tab outside without stealing focus
+  const cartTrigger = page.locator('#navbar-cart-trigger');
+  const miniCart = page.locator('#navbar-cart-menu');
+  await cartTrigger.focus();
+  await page.keyboard.press('Enter');
+  await expect(miniCart).toBeVisible();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('.mini-cart__secondary-link')).toBeFocused();
+  await expect(miniCart).toBeVisible();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('.home-header__link[href="/login"]')).toBeFocused();
+  await expect(miniCart).toBeHidden();
+});

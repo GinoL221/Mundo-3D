@@ -224,6 +224,18 @@ export function initializeMiniCart(document: Document): Cleanup {
     }
   };
 
+  const handleDocumentFocusIn = (event: FocusEvent) => {
+    if (!isOpen) return;
+    const target = event.target as Node | null;
+    if (!target) return;
+    const inside = wrap
+      ? wrap.contains(target)
+      : trigger.contains(target) || menu.contains(target);
+    if (!inside) {
+      setOpen(false);
+    }
+  };
+
   setOpen(false);
   render();
 
@@ -231,6 +243,7 @@ export function initializeMiniCart(document: Document): Cleanup {
   trigger.addEventListener('click', handleTriggerClick);
   document.addEventListener('keydown', handleKeydown);
   document.addEventListener('click', handleDocumentClick);
+  document.addEventListener('focusin', handleDocumentFocusIn);
 
   let active = true;
   const cleanup = () => {
@@ -240,6 +253,7 @@ export function initializeMiniCart(document: Document): Cleanup {
     trigger.removeEventListener('click', handleTriggerClick);
     document.removeEventListener('keydown', handleKeydown);
     document.removeEventListener('click', handleDocumentClick);
+    document.removeEventListener('focusin', handleDocumentFocusIn);
     cleanups.delete(document);
   };
 
