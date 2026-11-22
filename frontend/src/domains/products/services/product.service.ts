@@ -1,5 +1,5 @@
 import { API_URL } from '../../../config';
-import { adaptAPIProduct, adaptAPIProducts } from '../adapters/product.adapter';
+import { adaptAPIProduct, adaptAPIProducts, isPlaceholderImage } from '../adapters/product.adapter';
 import type { APIProduct, Product } from '../adapters/product.adapter';
 
 export type FetchProductByIdResult =
@@ -43,11 +43,20 @@ export type FetchLatestProductResult =
   | { ok: true; product: Product }
   | { ok: false; reason: 'not-found' | 'network' | 'server' };
 
-const HOME_FEATURED_PRODUCT_NAME = 'Cubo de Compañía de Portal';
+export function selectLatestPhotoProduct(products: readonly Product[]): Product | undefined {
+  let latest: Product | undefined;
+  for (const product of products) {
+    if (isPlaceholderImage(product.image)) continue;
+    if (!latest || product.id > latest.id) {
+      latest = product;
+    }
+  }
+  return latest;
+}
 
 /**
  * `GET /api/products` — full unpaginated product list, used by the
- * homepage's "Nuestros Seleccionados" grid (contrast with
+ * homepage's "Piezas del catálogo" grid (contrast with
  * `product.search.service.ts`'s paginated `/api/products/search`).
  *
  * Deliberately plain `fetch`, not `authFetch` (design.md D6, task 3.10) —
@@ -71,8 +80,9 @@ export async function fetchProducts(): Promise<FetchProductsResult> {
   return { ok: true, products: adaptAPIProducts(rawProducts) };
 }
 
-/** Selects Home's editorial product from live catalog data, with the legacy
- * latest-product endpoint as the honest fallback for absence or list failure.
+/** Selects Home's hero specimen from live catalog data (newest product with
+ * a real photo), falling back to the legacy latest-product endpoint when
+ * the catalog fails or lacks a real photo.
  */
 export async function fetchFeaturedProduct(
   catalogRequest: Promise<FetchProductsResult> = fetchProducts(),
@@ -80,9 +90,7 @@ export async function fetchFeaturedProduct(
   try {
     const catalog = await catalogRequest;
     if (catalog.ok) {
-      const featured = catalog.products.find(
-        (product) => product.name === HOME_FEATURED_PRODUCT_NAME,
-      );
+      const featured = selectLatestPhotoProduct(catalog.products);
       if (featured) return { ok: true, product: featured };
     }
   } catch {

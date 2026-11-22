@@ -216,13 +216,16 @@ describe('Shared route shell', () => {
     const homeErrorTemplate = homePage.match(
       /<template id="home-error-state-template">[\s\S]*?<\/template>/,
     )?.[0];
-    expect(homeErrorTemplate).toContain('<button type="button" class="home-state__retry">Reintentar</button>');
+    expect(homeErrorTemplate).toContain(
+      '<button type="button" class="ui-btn ui-btn--secondary home-state__retry">Reintentar</button>',
+    );
+    expect(homeErrorTemplate).toContain('<h3 class="ui-callout__title">');
 
     const homeFeaturedErrorTemplate = homePage.match(
       /<template id="home-featured-error-state-template">[\s\S]*?<\/template>/,
     )?.[0];
     expect(homeFeaturedErrorTemplate).toContain(
-      '<button type="button" class="home-state__retry">Reintentar</button>',
+      '<button type="button" class="ui-btn ui-btn--secondary home-state__retry">Reintentar</button>',
     );
     expect(homeFeaturedErrorTemplate).toContain('href="/products"');
 
@@ -239,10 +242,9 @@ describe('Shared route shell', () => {
     expect(homeCatalogLoaderSource).not.toMatch(/contentEl\??\.remove\(\)/);
     expect(homeCatalogLoaderSource).not.toMatch(/loadingMsg\??\.remove\(\)/);
 
-    expect(homeStyles).toMatch(/\.home-featured-card__state \{[\s\S]*?min-height: 224px;/);
-    expect(productsStyles).toMatch(/\.home-products__loading \{[\s\S]*?min-height: 260px;/);
-    expect(productsStyles).toMatch(/\.home-state__retry \{[\s\S]*?min-height: 44px;/);
-    expect(productsStyles).toMatch(/\.home-state__retry:focus-visible \{[\s\S]*?outline: 3px solid var\(--home-blue\);/);
+    expect(homeStyles).toMatch(/\.hero-specimen__state \{[\s\S]*?min-height: 180px;/);
+    expect(productsStyles).toMatch(/\.home-products__loading \{[\s\S]*?margin: 0;/);
+    expect(homeStyles).toMatch(/\.home-text-link:focus-visible \{[\s\S]*?outline: 3px solid var\(--home-blue\);/);
     for (const route of routeSources) {
       expect(route).toContain("import Layout from '../layouts/Layout.astro'");
       expect(route).toMatch(/<Layout(?:\s|>)/);
@@ -330,10 +332,9 @@ describe('Shared route shell', () => {
     expect(headerStyles).toContain('border-color: var(--border-hover);');
     expect(brandStyles).toContain('--home-line: var(--border);');
     expect(brandStyles).not.toContain(retiredToken);
-    expect(homeStyles).toContain('border-color: var(--border-hover);');
     expect(productsStyles).toContain('border-color: var(--border-hover);');
-    expect(productsStyles).toMatch(/\.home-product-card \{[\s\S]*?border-radius: 8px;/);
-    expect(homeStyles).toMatch(/\.home-featured-card \{[\s\S]*?border-radius: 8px;/);
+    expect(productsStyles).toMatch(/\.home-product-card \{[\s\S]*?border-radius: var\(--radius-surface\);/);
+    expect(homeStyles).toMatch(/\.hero-specimen__media \{[\s\S]*?border-radius: var\(--radius-surface\);/);
     expect(productsStyles).toMatch(/\.home-product-card__footer \{[\s\S]*?align-items: baseline;/);
     expect(productsStyles).toMatch(
       /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.home-product-card__image/,
@@ -342,7 +343,7 @@ describe('Shared route shell', () => {
       /\.home-product-card__price \{[\s\S]*?font-variant-numeric: tabular-nums;/,
     );
     expect(homeStyles).toMatch(
-      /\.home-featured-card__price \{[\s\S]*?font-variant-numeric: tabular-nums;/,
+      /\.hero-specimen__price \{[\s\S]*?font-variant-numeric: tabular-nums;/,
     );
     expect(baseLayoutStyles).toContain('::selection');
     expect(baseLayoutStyles).toContain('accent-color: var(--accent);');
@@ -373,12 +374,13 @@ describe('Shared route shell', () => {
       expect(footer).toContain(`<a href="${href}">${label}</a>`);
     }
     for (const heading of ['Tienda', 'Información', 'Proyecto']) {
-      expect(footer).toContain(`<h2 class="home-footer__col-title">${heading}</h2>`);
+      expect(footer).toContain(`<p class="home-footer__col-title">${heading}</p>`);
     }
+    expect(footer).not.toContain('<h2 class="home-footer__col-title">');
     expect(footer).toContain('<nav class="home-footer__columns" aria-label="Navegación del pie">');
     expect(
       footer.match(/<nav class="home-footer__columns"[\s\S]*?<\/nav>/)?.[0].match(/<a[\s\S]*?href="/g),
-    ).toHaveLength(8);
+    ).toHaveLength(10);
     expect(footer).not.toContain('instagram.com');
     expect(footer).not.toContain('x.com');
     expect(footer).not.toContain('tiktok.com');
@@ -391,15 +393,8 @@ describe('Shared route shell', () => {
     expect(footer).toContain('Código fuente en GitHub');
     expect(footer).toContain('Mundo 3D · Proyecto de portfolio (demo interactiva, sin operación comercial real).');
 
-    expect(homeStyles).toMatch(/\.home-button \{[^}]*?background: var\(--sys-action-bg\);/);
     expect(headerStyles).toMatch(
       /\.home-header \.cart-link__badge \{[^}]*?background: var\(--sys-action-bg\);/,
-    );
-    expect(productsStyles).toMatch(
-      /\.home-button--commission \{[^}]*?background: #ffffff;[^}]*?color: #0f172a;/,
-    );
-    expect(productsStyles).toMatch(
-      /\.home-button--commission:focus-visible \{[^}]*?outline: 3px solid #ffffff;/,
     );
     expect(baseLayoutStyles).toMatch(
       /\[data-theme='dark'\] ::selection \{[^}]*?background: var\(--sys-action-bg\);/,
@@ -407,11 +402,13 @@ describe('Shared route shell', () => {
     for (const styles of [homeStyles, headerStyles, productsStyles, baseLayoutStyles]) {
       expect(styles).not.toContain('var(--sys-action-bg,');
     }
-    expect(productsStyles).toMatch(/\.home-commission \{[^}]*?background: var\(--sys-action-bg\);/);
-    expect(productsStyles).not.toMatch(/\.home-commission \{[^}]*?border-top:/);
-    expect(productsStyles).toMatch(/\.home-commission__title \{[^}]*?color: #ffffff;/);
+    expect(productsStyles).toMatch(/\.home-commission \{[^}]*?background: var\(--accent-tint\);/);
     expect(productsStyles).toMatch(
-      /\.home-commission__description \{[^}]*?max-width: 65ch;[^}]*?color: #ffffff;/,
+      /\.home-commission \{[^}]*?border-top: 1px solid var\(--accent-tint-border\);/,
+    );
+    expect(productsStyles).toMatch(/\.home-commission__title \{[^}]*?color: var\(--fg\);/);
+    expect(productsStyles).toMatch(
+      /\.home-commission__description \{[^}]*?max-width: 60ch;[^}]*?color: var\(--accent-tint-text\);/,
     );
     expect(header).toContain('<div class="home-header__primary" id="home-primary-navigation" hidden>');
     expect(header).toContain('<nav class="home-header__nav" aria-label="Navegación principal">');

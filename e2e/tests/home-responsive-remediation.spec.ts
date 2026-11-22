@@ -108,6 +108,27 @@ test.describe('Home responsive remediation evidence', () => {
     await expect(page.locator('.home-product-card')).toHaveCount(homeProducts.length);
   });
 
+  test('keeps the catalogue heading and first row visible above the fold at 390x844', async ({
+    page,
+  }) => {
+    await openHome(page, 390, 844);
+
+    const metrics = await page.evaluate(() => {
+      const hero = document.querySelector<HTMLElement>('.home-hero');
+      const title = document.querySelector<HTMLElement>('#home-products-title');
+      const firstCard = document.querySelector<HTMLElement>('.home-product-card');
+      return {
+        heroHeight: hero?.getBoundingClientRect().height ?? 0,
+        titleTop: title?.getBoundingClientRect().top ?? Infinity,
+        firstCardTop: firstCard?.getBoundingClientRect().top ?? Infinity,
+      };
+    });
+
+    expect(metrics.heroHeight).toBeGreaterThan(0);
+    expect(metrics.titleTop).toBeLessThan(844);
+    expect(metrics.firstCardTop).toBeLessThan(844);
+  });
+
   test('documents 44px as a local product policy distinct from the WCAG AA minimum', async () => {
     const policy = await readFile(
       new URL(
