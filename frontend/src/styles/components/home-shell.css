@@ -14,7 +14,6 @@
   --home-blue: var(--accent, #2f6bff);
   --home-blue-hover: #2459d8;
   --home-line: var(--sys-border, #e2e8f0);
-  --home-line-hover: #cbd5e1;
   --home-card-shadow-hover: 0 8px 20px rgba(15, 23, 42, 0.08);
   --home-night: var(--sys-text, #0f172a);
   --home-on-dark: #ffffff;
@@ -326,7 +325,7 @@
 }
 
 .mini-cart__secondary-link:hover {
-  border-color: var(--home-line-hover);
+  border-color: var(--border-hover);
   background: var(--surface-subtle);
   transform: translateY(-1px);
 }

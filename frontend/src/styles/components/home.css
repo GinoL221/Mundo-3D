@@ -108,7 +108,7 @@
 }
 
 .home-featured-card:hover {
-  border-color: var(--home-line-hover);
+  border-color: var(--border-hover);
   box-shadow: var(--home-card-shadow-hover);
 }
 

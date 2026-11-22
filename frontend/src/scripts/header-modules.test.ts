@@ -168,6 +168,7 @@ describe('Shared route shell', () => {
     const brandStyles = source('../styles/components/home-brand.css');
     const homeStyles = source('../styles/components/home.css');
     const productsStyles = source('../styles/components/home-products.css');
+    const colorTokens = source('../styles/tokens/colors.css');
     const baseLayoutStyles = source('../styles/base/layout.css');
     const productCardTemplate = source('../domains/products/components/HomeProductCard.astro');
     const footerStyles = source('../styles/components/home-footer.css');
@@ -322,9 +323,15 @@ describe('Shared route shell', () => {
     expect(productCardTemplate).not.toContain('src=""');
     expect(homeStyles).not.toContain('image-rendering: pixelated');
     expect(productsStyles).not.toContain('image-rendering: pixelated');
-    expect(headerStyles).toContain('--home-line-hover:');
+    const retiredToken = ['--home', 'line', 'hover'].join('-');
+    expect(colorTokens).toContain('--border-hover: #cbd5e1;');
+    expect(colorTokens).toContain('--border-hover: #46403a;');
+    expect(headerStyles).not.toContain(retiredToken);
+    expect(headerStyles).toContain('border-color: var(--border-hover);');
     expect(brandStyles).toContain('--home-line: var(--border);');
-    expect(brandStyles).toContain('--home-line-hover:');
+    expect(brandStyles).not.toContain(retiredToken);
+    expect(homeStyles).toContain('border-color: var(--border-hover);');
+    expect(productsStyles).toContain('border-color: var(--border-hover);');
     expect(productsStyles).toMatch(/\.home-product-card \{[\s\S]*?border-radius: 8px;/);
     expect(homeStyles).toMatch(/\.home-featured-card \{[\s\S]*?border-radius: 8px;/);
     expect(productsStyles).toMatch(/\.home-product-card__footer \{[\s\S]*?align-items: baseline;/);
