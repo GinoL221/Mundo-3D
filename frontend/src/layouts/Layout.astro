@@ -90,19 +90,18 @@ const { title = "Mundo 3D" } = Astro.props;
 	<body class="home-shell">
 		<a class="skip-link" href="#main-content">Saltar al contenido</a>
 		<HomeHeader pathname={Astro.url.pathname} />
+		<span id="main-content" class="skip-target" tabindex="-1"></span>
 		<slot />
 			<HomeFooter />
 		<script>
 			const main = document.querySelector('main');
-			if (main) {
-				if (!main.id) main.id = 'main-content';
-				if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
-			}
 			const skipLink = document.querySelector<HTMLAnchorElement>('.skip-link');
-			if (skipLink && main) {
-				skipLink.setAttribute('href', `#${main.id}`);
-				skipLink.addEventListener('click', () => {
-					main.focus({ preventScroll: false });
+			if (main && skipLink) {
+				if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
+				skipLink.addEventListener('click', (event) => {
+					event.preventDefault();
+					main.focus();
+					main.scrollIntoView();
 				});
 			}
 		</script>

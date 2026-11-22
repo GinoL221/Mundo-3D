@@ -194,6 +194,7 @@ describe('Shared route shell', () => {
     expect(layout).not.toContain('variant?:');
     expect(layout).toContain('<body class="home-shell">');
     expect(layout).toContain('<a class="skip-link" href="#main-content">Saltar al contenido</a>');
+    expect(layout).toContain('<span id="main-content" class="skip-target" tabindex="-1"></span>');
     expect(layout).toContain('<HomeHeader pathname={Astro.url.pathname} />');
     expect(layout).not.toContain('showUnavailableSearch');
     expect(layout).toContain('<HomeFooter />');

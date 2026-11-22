@@ -136,6 +136,7 @@ main {
   padding: var(--space-lg) var(--space-md);
 }
 
+.skip-target:focus,
 main[tabindex='-1']:focus {
   outline: none;
 }
