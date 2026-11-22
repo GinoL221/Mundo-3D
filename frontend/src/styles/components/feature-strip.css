@@ -8,15 +8,15 @@
   gap: var(--space-md);
   padding: var(--space-lg) var(--space-md);
   background-color: var(--surface);
-  border-top: 2px solid var(--pico-muted);
-  border-bottom: 2px solid var(--pico-muted);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .feature-strip__tile {
   display: flex;
   flex-direction: column;
   padding: var(--space-md);
-  border: 2px solid var(--pico-muted);
+  border: 1px solid var(--border);
   background-color: var(--bg);
 }
 

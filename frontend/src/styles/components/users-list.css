@@ -15,13 +15,13 @@
 .users-list__card {
   margin: var(--space-md);
   padding: var(--space-md);
-  border: 2px solid var(--pico-muted);
+  border: 1px solid var(--border);
   text-align: center;
   background-color: var(--surface);
 }
 
 .users-list__card img {
-  border: 2px solid var(--pico-muted);
+  border: 1px solid var(--border);
   margin-bottom: var(--space-sm);
 }
 
@@ -35,14 +35,16 @@
 .users-list__btn--danger {
   font-family: var(--font-body);
   font-size: 16px;
-  background-color: var(--danger);
-  color: var(--pico-white);
+  background-color: var(--surface);
+  color: var(--danger-text);
   padding: var(--space-sm) var(--space-md);
-  border: 2px solid var(--danger);
+  border: 1px solid var(--border);
   cursor: pointer;
 }
 
-.users-list__btn--danger:hover {
-  background-color: var(--pico-black);
-  border-color: var(--pico-muted);
+.users-list__btn--danger:hover,
+.users-list__btn--danger:focus-visible {
+  background-color: var(--danger-solid);
+  border-color: var(--danger-solid);
+  color: #ffffff;
 }
