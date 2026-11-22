@@ -308,7 +308,7 @@ describe('initializeMiniCart', () => {
 
     expect(fixture.empty.hidden).toBe(true);
     expect(fixture.content.hidden).toBe(false);
-    expect(fixture.count.textContent).toBe('2 productos');
+    expect(fixture.count.textContent).toBe('2 piezas');
     expect(fixture.total.textContent).toBe('$ 12.500');
 
     const rows = fixture.list.querySelectorAll('.mini-cart__item');
@@ -344,7 +344,7 @@ describe('initializeMiniCart', () => {
 
     expect(removeSpy).toHaveBeenCalledWith(7);
     expect(fixture.menu.hidden).toBe(false);
-    expect(fixture.count.textContent).toBe('1 producto');
+    expect(fixture.count.textContent).toBe('1 pieza');
     expect(fixture.total.textContent).toBe('$ 8.700');
     expect(fixture.list.querySelectorAll('.mini-cart__item')).toHaveLength(1);
 

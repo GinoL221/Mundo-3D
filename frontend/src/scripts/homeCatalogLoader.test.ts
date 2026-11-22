@@ -225,14 +225,14 @@ function createHomeFixture() {
   const featuredLoading = el('p', {
     id: 'home-featured-loading',
     className: 'home-featured-card__state',
-    textContent: 'Cargando la pieza destacada...',
+    textContent: 'Cargando pieza destacada…',
   });
   const featuredContent = document.registerRoot(
     el('div', { id: 'home-featured-content', className: 'home-featured-card__content' }, [featuredLoading]),
   );
 
   const loadingMsg = document.registerRoot(
-    el('p', { id: 'home-loading-msg', className: 'home-products__loading', textContent: 'Cargando productos...' }),
+    el('p', { id: 'home-loading-msg', className: 'home-products__loading', textContent: 'Cargando piezas…' }),
   );
   const productsState = document.registerRoot(
     el('div', { id: 'home-products-state', className: 'home-products__state' }),
@@ -246,9 +246,9 @@ function createHomeFixture() {
   document.registerRoot(
     new FakeTemplateElement('home-empty-state-template', [
       el('div', { className: 'home-state' }, [
-        el('h2', { textContent: 'Todavía no hay piezas en el catálogo' }),
-        el('p', { textContent: 'Podés contarnos qué pieza buscás para revisarla como encargo a medida.' }),
-        el('a', { className: 'home-text-action', href: '/help', textContent: 'Pedir un encargo a medida' }),
+        el('h2', { textContent: 'Todavía no hay piezas en el catálogo.' }),
+        el('p', { textContent: 'Si buscás algo puntual, podés enviar una solicitud de encargo para que la revisemos.' }),
+        el('a', { className: 'home-text-action', href: '/help', textContent: 'Enviar solicitud de encargo' }),
       ]),
     ]),
   );
@@ -256,8 +256,8 @@ function createHomeFixture() {
   document.registerRoot(
     new FakeTemplateElement('home-error-state-template', [
       el('div', { className: 'home-state' }, [
-        el('h2', { textContent: 'No se pudo cargar' }),
-        el('p', { textContent: 'Verificá tu conexión e intentá de nuevo.' }),
+        el('h2', { textContent: 'No se pudo cargar el catálogo' }),
+        el('p', { textContent: 'Verificá la conexión e intentá de nuevo.' }),
         el('button', { className: 'home-state__retry', textContent: 'Reintentar' }),
       ]),
     ]),
@@ -278,8 +278,8 @@ function createHomeFixture() {
   document.registerRoot(
     new FakeTemplateElement('home-featured-empty-state-template', [
       el('div', { className: 'home-featured-card__state' }, [
-        el('p', { textContent: 'No hay una pieza destacada disponible.' }),
-        el('a', { className: 'home-text-action', href: '/products', textContent: 'Ver catálogo' }),
+        el('p', { textContent: 'Todavía no hay una pieza destacada.' }),
+        el('a', { className: 'home-text-action', href: '/products', textContent: 'Ver el catálogo' }),
       ]),
     ]),
   );
@@ -287,9 +287,9 @@ function createHomeFixture() {
   document.registerRoot(
     new FakeTemplateElement('home-featured-error-state-template', [
       el('div', { className: 'home-featured-card__state' }, [
-        el('p', { textContent: 'No se pudo cargar la pieza destacada. Verificá tu conexión e intentá de nuevo.' }),
+        el('p', { textContent: 'No se pudo cargar la pieza destacada. Verificá la conexión e intentá de nuevo.' }),
         el('button', { className: 'home-state__retry', textContent: 'Reintentar' }),
-        el('a', { className: 'home-text-action', href: '/products', textContent: 'Ver catálogo' }),
+        el('a', { className: 'home-text-action', href: '/products', textContent: 'Ver el catálogo' }),
       ]),
     ]),
   );
@@ -400,7 +400,7 @@ describe('homeCatalogLoader', () => {
     productsRetry!.click();
     expect(productsRetry!.disabled).toBe(true);
     expect(fixture.document.getElementById('home-featured-loading')?.textContent).toBe(
-      'Cargando la pieza destacada...',
+      'Cargando pieza destacada…',
     );
     expect(fixture.loadingMsg.hidden).toBe(false);
     expect(fixture.productsState.hidden).toBe(true);
@@ -531,8 +531,41 @@ describe('homeCatalogLoader', () => {
 
     const emptyHeading = fixture.productsState.querySelector('h2');
     const helpLink = fixture.productsState.querySelector('.home-text-action');
-    expect(emptyHeading?.textContent).toBe('Todavía no hay piezas en el catálogo');
+    expect(emptyHeading?.textContent).toBe('Todavía no hay piezas en el catálogo.');
     expect(helpLink?.href).toBe('/help');
     expect(fixture.featuredContent.querySelector('.home-text-action')?.href).toBe('/products');
+  });
+
+  it('uses explicit fallback alt text on placeholder and image-error cards', async () => {
+    const fixture = createHomeFixture();
+    const products = [
+      makeProduct(47, {
+        nameProduct: 'Cubo de Compañía de Portal',
+        image: 'productoSinImagen.png',
+      }),
+      makeProduct(2, {
+        nameProduct: 'Busto Darth Vader',
+        image: 'vader.webp',
+      }),
+    ];
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse(200, { products }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await initializeHomeCatalog(fixture.document as unknown as Document);
+
+    const featuredImage = fixture.featuredContent.querySelector('.home-featured-card__image')!;
+    expect(featuredImage.alt).toBe('Cubo de Compañía de Portal (sin foto disponible)');
+
+    const cards = fixture.productGrid.querySelectorAll('.home-product-card');
+    const firstCardImage = cards[0].querySelector('.home-product-card__image')!;
+    const secondCardImage = cards[1].querySelector('.home-product-card__image')!;
+
+    expect(firstCardImage.alt).toBe('Cubo de Compañía de Portal (sin foto disponible)');
+    expect(secondCardImage.alt).toBe('Busto Darth Vader');
+
+    for (const listener of secondCardImage.listeners.get('error') ?? []) {
+      listener({ target: secondCardImage } as unknown as Event);
+    }
+    expect(secondCardImage.alt).toBe('Busto Darth Vader (sin foto disponible)');
   });
 });

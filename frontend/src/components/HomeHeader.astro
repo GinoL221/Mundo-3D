@@ -71,7 +71,7 @@ const adminRequestsIsCurrent = currentPath === '/admin/commission-requests';
               </div>
               <div class="mini-cart__empty" id="mini-cart-empty">
                 <p>Tu carrito está vacío.</p>
-                <a class="mini-cart__secondary-link" href="/products">Explorar productos</a>
+                <a class="mini-cart__secondary-link" href="/products">Ver el catálogo</a>
               </div>
               <div class="mini-cart__content" id="mini-cart-content" hidden>
                 <ul class="mini-cart__list" id="mini-cart-list"></ul>
@@ -125,18 +125,11 @@ const adminRequestsIsCurrent = currentPath === '/admin/commission-requests';
     </div>
 
     <div class="home-header__primary" id="home-primary-navigation" hidden>
-      <div class="home-header__account-section">
-        <h2 class="home-header__account-heading guest-only">Cuenta</h2>
-        <ul class="home-header__auth-links">
-          <li class="guest-only"><a class="home-header__link" href="/login">Iniciar sesión</a></li>
-          <li class="guest-only"><a class="home-header__link home-header__register" href="/register">Registrarse</a></li>
-        </ul>
-      </div>
       <nav class="home-header__nav" aria-label="Navegación principal">
         <ul>
-          <li><a class:list={["home-header__link", { "home-header__link--active": productsIsCurrent }]} href="/products" aria-current={productsIsCurrent ? 'page' : undefined}>Productos</a></li>
+          <li><a class:list={["home-header__link", { "home-header__link--active": productsIsCurrent }]} href="/products" aria-current={productsIsCurrent ? 'page' : undefined}>Catálogo</a></li>
           <li><a class:list={["home-header__link", { "home-header__link--active": helpIsCurrent }]} href="/help" aria-current={helpIsCurrent ? 'page' : undefined}>Encargos</a></li>
-          <li><a class:list={["home-header__link", { "home-header__link--active": stepByStepIsCurrent }]} href="/step-by-step" aria-current={stepByStepIsCurrent ? 'page' : undefined}>Paso a paso</a></li>
+          <li><a class:list={["home-header__link", { "home-header__link--active": stepByStepIsCurrent }]} href="/step-by-step" aria-current={stepByStepIsCurrent ? 'page' : undefined}>Cómo funciona</a></li>
           <li class="admin-only" style="display: none;"><a class:list={["home-header__link", { "home-header__link--active": adminProductsIsCurrent }]} href="/admin/products" aria-current={adminProductsIsCurrent ? 'page' : undefined}>Administrar productos</a></li>
           <li class="admin-only" style="display: none;">
             <a
@@ -144,11 +137,18 @@ const adminRequestsIsCurrent = currentPath === '/admin/commission-requests';
               href="/admin/commission-requests"
               aria-current={adminRequestsIsCurrent ? 'page' : undefined}
             >
-              Solicitudes de encargos
+              Solicitudes de encargo
             </a>
           </li>
         </ul>
       </nav>
+      <div class="home-header__account-section">
+        <p class="home-header__account-heading guest-only">Cuenta</p>
+        <ul class="home-header__auth-links">
+          <li class="guest-only"><a class="home-header__link" href="/login">Iniciar sesión</a></li>
+          <li class="guest-only"><a class="home-header__link home-header__register" href="/register">Registrarse</a></li>
+        </ul>
+      </div>
     </div>
   </div>
 </header>

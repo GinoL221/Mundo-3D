@@ -31,7 +31,7 @@ export function createHomeCatalogLoader(document: Document): HomeCatalogLoader {
     loading.className = 'home-featured-card__state';
     loading.id = 'home-featured-loading';
     loading.setAttribute('role', 'status');
-    loading.textContent = 'Cargando la pieza destacada...';
+    loading.textContent = 'Cargando pieza destacada…';
     content.replaceChildren(loading);
   };
 
@@ -96,7 +96,7 @@ export function createHomeCatalogLoader(document: Document): HomeCatalogLoader {
     if (image) {
       if (isPlaceholderImage(product.image)) {
         image.src = `/images/illustrations/${getCategoryImg(product.category)}.svg`;
-        image.alt = `${product.category} — imagen no disponible`;
+        image.alt = `${product.name} (sin foto disponible)`;
         image.classList.add('home-featured-card__image--placeholder');
       } else {
         image.src = resolveImageUrl(product.image, 'products');
@@ -106,7 +106,7 @@ export function createHomeCatalogLoader(document: Document): HomeCatalogLoader {
         if (image.dataset.fallback) return;
         image.dataset.fallback = 'true';
         image.src = `/images/illustrations/${getCategoryImg(product.category)}.svg`;
-        image.alt = `${product.category} — imagen no disponible`;
+        image.alt = `${product.name} (sin foto disponible)`;
         image.classList.add('home-featured-card__image--placeholder');
       });
     }
@@ -178,7 +178,7 @@ export function createHomeCatalogLoader(document: Document): HomeCatalogLoader {
       if (img) {
         if (isPlaceholderImage(product.image)) {
           img.src = `/images/illustrations/${catImg}.svg`;
-          img.alt = `${product.category} — imagen no disponible`;
+          img.alt = `${product.name} (sin foto disponible)`;
           img.classList.add('home-product-card__image--placeholder');
         } else {
           img.src = resolveImageUrl(product.image, 'products');
@@ -188,7 +188,7 @@ export function createHomeCatalogLoader(document: Document): HomeCatalogLoader {
           if (img.dataset.fallback) return;
           img.dataset.fallback = 'true';
           img.src = '/images/illustrations/Otras.svg';
-          img.alt = 'Imagen de producto no disponible';
+          img.alt = `${product.name} (sin foto disponible)`;
           img.classList.add('home-product-card__image--placeholder');
         });
       }

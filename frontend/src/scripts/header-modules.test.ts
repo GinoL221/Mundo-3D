@@ -304,9 +304,11 @@ describe('Shared route shell', () => {
     expect(header).toContain("aria-current={productsIsCurrent ? 'page' : undefined}");
     expect(header).toContain("aria-current={helpIsCurrent ? 'page' : undefined}");
     expect(header).toContain("aria-current={stepByStepIsCurrent ? 'page' : undefined}");
-    expect(header).toContain('>Productos</a>');
+    expect(header).toContain('>Catálogo</a>');
     expect(header).toContain('>Encargos</a>');
-    expect(header).toContain('>Paso a paso</a>');
+    expect(header).toContain('>Cómo funciona</a>');
+    expect(header).toContain('Solicitudes de encargo');
+    expect(header).toContain('>Ver el catálogo</a>');
     expect(header).not.toContain('>Encargos y ayuda</a>');
     expect(header).not.toContain('Guía de compra');
 
@@ -352,9 +354,9 @@ describe('Shared route shell', () => {
     expect(motionStyles).not.toContain('@media (max-width:');
 
     const footerLinks = [
-      ['Productos', '/products'],
+      ['Catálogo', '/products'],
       ['Encargos', '/help'],
-      ['Paso a paso', '/step-by-step'],
+      ['Cómo funciona', '/step-by-step'],
       ['Preguntas frecuentes', '/faq'],
       ['Nosotros', '/aboutUs'],
       ['Términos', '/terms'],
@@ -379,7 +381,8 @@ describe('Shared route shell', () => {
     expect(footer).not.toContain('home-footer__heading');
     expect(footer).toContain('id="ayuda"');
     expect(footer).toContain('<div class="home-footer__bottom">');
-    expect(footer).toContain('© 2026 Mundo 3D. Todos los derechos reservados.');
+    expect(footer).toContain('Código fuente en GitHub');
+    expect(footer).toContain('Mundo 3D · Proyecto de portfolio (demo interactiva, sin operación comercial real).');
 
     expect(homeStyles).toMatch(/\.home-button \{[^}]*?background: var\(--sys-action-bg\);/);
     expect(headerStyles).toMatch(
@@ -407,7 +410,9 @@ describe('Shared route shell', () => {
     expect(header).toContain('<nav class="home-header__nav" aria-label="Navegación principal">');
     expect(header).toContain('class="home-header__link home-header__register" href="/register"');
     expect(baseStyles).toContain('.home-header__nav > ul');
-    expect(baseStyles).toContain('+ .home-header__nav');
+    expect(baseStyles).toContain('+ .home-header__account-section');
+    expect(header).toContain('<p class="home-header__account-heading guest-only">Cuenta</p>');
+    expect(header).not.toContain('<h2 class="home-header__account-heading');
     expect(baseStyles).not.toContain('border-inline-start: 1px solid var(--home-brand-line)');
     expect(desktopStyles).toMatch(
       /\.home-header__nav > ul > li > \.home-header__link--active \{[^}]*?text-decoration: underline;/,
@@ -440,7 +445,7 @@ describe('Shared route shell', () => {
     );
     expect(desktopStyles).toMatch(/\.home-header__theme \{[^}]*?order: 5;/);
     expect(desktopStyles).toMatch(
-      /\.home-header__account-section \.home-header__register \{[^}]*?border: 1px solid var\(--home-brand-line\);[^}]*?border-radius: 4px;/,
+      /\.home-header__account-section \.home-header__register \{[^}]*?border-radius: 4px;[^}]*?background: var\(--sys-action-bg\);[^}]*?color: var\(--home-on-dark\);/,
     );
 
     expect(footerStyles).toContain('@media (min-width: 640px)');

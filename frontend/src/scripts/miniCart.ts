@@ -174,7 +174,7 @@ export function initializeMiniCart(document: Document): Cleanup {
     if (countEl) {
       countEl.textContent = isEmpty
         ? ''
-        : `${items.length} ${items.length === 1 ? 'producto' : 'productos'}`;
+        : `${items.length} ${items.length === 1 ? 'pieza' : 'piezas'}`;
     }
 
     if (emptyEl) emptyEl.hidden = !isEmpty;

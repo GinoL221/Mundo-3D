@@ -34,11 +34,11 @@ test.describe('Home product loading', () => {
     );
     await openHome(page);
 
-    await expect(page.locator('#home-products-container').getByRole('status')).toHaveText(
-      'Todavía no hay piezas en el catálogo',
+    await expect(page.locator('#home-products-container').getByRole('status')).toContainText(
+      'Todavía no hay piezas en el catálogo.',
     );
     await expect(page.locator('#home-featured-content').getByRole('status')).toContainText(
-      'No hay una pieza destacada disponible.',
+      'Todavía no hay una pieza destacada.',
     );
   });
 
