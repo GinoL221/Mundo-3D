@@ -1,6 +1,7 @@
 /* Brand tokens from docs/diseno/manual-identidad.md. PICO aliases remain for leftover surfaces. */
 
 :root {
+  color-scheme: light;
   --pico-black: #000000;
   --pico-dark-blue: #1d2b53;
   --pico-purple: #7e2553;
@@ -28,9 +29,44 @@
   --title-highlight: #0f172a;
   --lcd-bg: #ffffff;
   --lcd-fg: #2f6bff;
+
+  /* Expressive Taller Maker tokens (Light — Taller Técnico) */
+  --surface-elevated: #ffffff;
+  --surface-subtle: #f1f5f9;
+  --accent-strong: #2d66f0;
+  --accent-strong-hover: #2354cf;
+  --accent-strong-active: #1d46b0;
+  --accent-tint: #eef4ff;
+  --accent-tint-border: #bfd5ff;
+  --accent-tint-text: #174ea6;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d0;
+  --success-text: #047857;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --warning-text: #b45309;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+  --danger-solid: #be123c;
+  --danger-solid-hover: #9f1239;
+  --role-staff-bg: #f5f3ff;
+  --role-staff-border: #ddd6fe;
+  --role-staff-text: #6d28d9;
+  --channel-whatsapp: #15803d;
+  --channel-whatsapp-bg: #f0fdf4;
+  --channel-whatsapp-border: #bbf7d0;
+  --channel-whatsapp-hover: #dcfce7;
+  --channel-mail: #174ea6;
+  --channel-mail-bg: #eef4ff;
+  --channel-mail-border: #bfd5ff;
+  --channel-mail-hover: #dce9ff;
+  --shadow-button: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --shadow-button-primary: 0 2px 6px rgba(45, 102, 240, 0.24);
+  --shadow-panel: 0 14px 34px rgba(15, 23, 42, 0.14);
 }
 
 [data-theme="dark"] {
+  color-scheme: dark;
   --bg: #11100f;
   --fg: #f5f1ea;
   --accent: #2f6bff;
@@ -46,9 +82,44 @@
   --title-highlight: #f5f1ea;
   --lcd-bg: #1b1917;
   --lcd-fg: #2f6bff;
+
+  /* Expressive Taller Maker tokens (Dark — Obsidiana cálida) */
+  --surface-elevated: #24211e;
+  --surface-subtle: #161412;
+  --accent-strong: #2d66f0;
+  --accent-strong-hover: #2354cf;
+  --accent-strong-active: #1d46b0;
+  --accent-tint: #17223a;
+  --accent-tint-border: #28406e;
+  --accent-tint-text: #9ec0ff;
+  --success-bg: #0f281f;
+  --success-border: #1f5742;
+  --success-text: #6ee7b7;
+  --warning-bg: #2b200e;
+  --warning-border: #63461a;
+  --warning-text: #fcd34d;
+  --danger-bg: #2e1518;
+  --danger-border: #6b252e;
+  --danger-solid: #be123c;
+  --danger-solid-hover: #9f1239;
+  --role-staff-bg: #231a33;
+  --role-staff-border: #4a3570;
+  --role-staff-text: #c4b5fd;
+  --channel-whatsapp: #4ade80;
+  --channel-whatsapp-bg: #10261a;
+  --channel-whatsapp-border: #1f5136;
+  --channel-whatsapp-hover: #163624;
+  --channel-mail: #9ec0ff;
+  --channel-mail-bg: #17223a;
+  --channel-mail-border: #28406e;
+  --channel-mail-hover: #1f2e4f;
+  --shadow-button: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-button-primary: 0 2px 8px rgba(45, 102, 240, 0.32);
+  --shadow-panel: 0 18px 42px rgba(0, 0, 0, 0.68);
 }
 
 [data-theme="light"] {
+  color-scheme: light;
   --bg: #f8fafc;
   --fg: #0f172a;
   --accent: #2f6bff;
@@ -64,4 +135,38 @@
   --title-highlight: #0f172a;
   --lcd-bg: #ffffff;
   --lcd-fg: #2f6bff;
+
+  /* Expressive Taller Maker tokens (Light — Taller Técnico) */
+  --surface-elevated: #ffffff;
+  --surface-subtle: #f1f5f9;
+  --accent-strong: #2d66f0;
+  --accent-strong-hover: #2354cf;
+  --accent-strong-active: #1d46b0;
+  --accent-tint: #eef4ff;
+  --accent-tint-border: #bfd5ff;
+  --accent-tint-text: #174ea6;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d0;
+  --success-text: #047857;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --warning-text: #b45309;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+  --danger-solid: #be123c;
+  --danger-solid-hover: #9f1239;
+  --role-staff-bg: #f5f3ff;
+  --role-staff-border: #ddd6fe;
+  --role-staff-text: #6d28d9;
+  --channel-whatsapp: #15803d;
+  --channel-whatsapp-bg: #f0fdf4;
+  --channel-whatsapp-border: #bbf7d0;
+  --channel-whatsapp-hover: #dcfce7;
+  --channel-mail: #174ea6;
+  --channel-mail-bg: #eef4ff;
+  --channel-mail-border: #bfd5ff;
+  --channel-mail-hover: #dce9ff;
+  --shadow-button: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --shadow-button-primary: 0 2px 6px rgba(45, 102, 240, 0.24);
+  --shadow-panel: 0 14px 34px rgba(15, 23, 42, 0.14);
 }

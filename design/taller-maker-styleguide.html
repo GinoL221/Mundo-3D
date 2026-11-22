@@ -1,0 +1,1824 @@
+<!doctype html>
+<!--
+  Standalone Open Design preview for the Mundo 3D "Taller Maker expresivo" styleguide.
+  Production source of truth:
+    - frontend/src/styles/tokens/colors.css
+    - frontend/src/styles/tokens/typography.css
+    - frontend/src/styles/tokens/spacing.css
+    - frontend/src/styles/tokens/semantic.css
+    - frontend/src/styles/base/ui-kit.css
+  Any token or .ui-* component change must originate in those production files and stay synced here.
+-->
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Plantilla de estilo · Taller Maker — Mundo 3D</title>
+    <style>
+      /* ── Fonts (relative to design/, graceful fallback to system-ui) ── */
+      @font-face {
+        font-family: 'IBM Plex Sans';
+        font-style: normal;
+        font-weight: 400 600;
+        font-display: swap;
+        src: url('../frontend/public/fonts/ibm-plex-sans/ibm-plex-sans-latin.woff2') format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+
+      @font-face {
+        font-family: 'IBM Plex Sans';
+        font-style: normal;
+        font-weight: 400 600;
+        font-display: swap;
+        src: url('../frontend/public/fonts/ibm-plex-sans/ibm-plex-sans-latin-ext.woff2') format('woff2');
+        unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+      }
+
+      /* ── tokens/colors.css (exact production copy) ── */
+      :root {
+        color-scheme: light;
+        --pico-black: #000000;
+        --pico-dark-blue: #1d2b53;
+        --pico-purple: #7e2553;
+        --pico-dark-green: #008351;
+        --pico-red: #ff004d;
+        --pico-yellow: #ffec27;
+        --pico-orange: #ffa300;
+        --pico-white: #ffffff;
+        --pico-light: #c2c3c7;
+        --pico-muted: #5f574f;
+        --pico-sky: #29adff;
+
+        --bg: #f8fafc;
+        --fg: #0f172a;
+        --accent: #2f6bff;
+        --link-text: #174ea6;
+        --accent-soft: #dce7ff;
+        --danger: #8a0032;
+        --warning: #2f6bff;
+        --surface: #ffffff;
+        --border: #e2e8f0;
+        --input-bg: #ffffff;
+        --input-fg: #0f172a;
+        --danger-text: #b91c1c;
+        --title-highlight: #0f172a;
+        --lcd-bg: #ffffff;
+        --lcd-fg: #2f6bff;
+
+        /* Expressive Taller Maker tokens (Light — Taller Técnico) */
+        --surface-elevated: #ffffff;
+        --surface-subtle: #f1f5f9;
+        --accent-strong: #2d66f0;
+        --accent-strong-hover: #2354cf;
+        --accent-strong-active: #1d46b0;
+        --accent-tint: #eef4ff;
+        --accent-tint-border: #bfd5ff;
+        --accent-tint-text: #174ea6;
+        --success-bg: #ecfdf5;
+        --success-border: #a7f3d0;
+        --success-text: #047857;
+        --warning-bg: #fffbeb;
+        --warning-border: #fde68a;
+        --warning-text: #b45309;
+        --danger-bg: #fef2f2;
+        --danger-border: #fecaca;
+        --danger-solid: #be123c;
+        --danger-solid-hover: #9f1239;
+        --role-staff-bg: #f5f3ff;
+        --role-staff-border: #ddd6fe;
+        --role-staff-text: #6d28d9;
+        --channel-whatsapp: #15803d;
+        --channel-whatsapp-bg: #f0fdf4;
+        --channel-whatsapp-border: #bbf7d0;
+        --channel-whatsapp-hover: #dcfce7;
+        --channel-mail: #174ea6;
+        --channel-mail-bg: #eef4ff;
+        --channel-mail-border: #bfd5ff;
+        --channel-mail-hover: #dce9ff;
+        --shadow-button: 0 1px 2px rgba(15, 23, 42, 0.08);
+        --shadow-button-primary: 0 2px 6px rgba(45, 102, 240, 0.24);
+        --shadow-panel: 0 14px 34px rgba(15, 23, 42, 0.14);
+      }
+
+      [data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #11100f;
+        --fg: #f5f1ea;
+        --accent: #2f6bff;
+        --link-text: #8eb4ff;
+        --accent-soft: #dce7ff;
+        --danger: #8a0032;
+        --warning: #2f6bff;
+        --surface: #1b1917;
+        --border: #2e2a26;
+        --input-bg: #1b1917;
+        --input-fg: #f5f1ea;
+        --danger-text: #fca5a5;
+        --title-highlight: #f5f1ea;
+        --lcd-bg: #1b1917;
+        --lcd-fg: #2f6bff;
+
+        /* Expressive Taller Maker tokens (Dark — Obsidiana cálida) */
+        --surface-elevated: #24211e;
+        --surface-subtle: #161412;
+        --accent-strong: #2d66f0;
+        --accent-strong-hover: #2354cf;
+        --accent-strong-active: #1d46b0;
+        --accent-tint: #17223a;
+        --accent-tint-border: #28406e;
+        --accent-tint-text: #9ec0ff;
+        --success-bg: #0f281f;
+        --success-border: #1f5742;
+        --success-text: #6ee7b7;
+        --warning-bg: #2b200e;
+        --warning-border: #63461a;
+        --warning-text: #fcd34d;
+        --danger-bg: #2e1518;
+        --danger-border: #6b252e;
+        --danger-solid: #be123c;
+        --danger-solid-hover: #9f1239;
+        --role-staff-bg: #231a33;
+        --role-staff-border: #4a3570;
+        --role-staff-text: #c4b5fd;
+        --channel-whatsapp: #4ade80;
+        --channel-whatsapp-bg: #10261a;
+        --channel-whatsapp-border: #1f5136;
+        --channel-whatsapp-hover: #163624;
+        --channel-mail: #9ec0ff;
+        --channel-mail-bg: #17223a;
+        --channel-mail-border: #28406e;
+        --channel-mail-hover: #1f2e4f;
+        --shadow-button: 0 1px 2px rgba(0, 0, 0, 0.35);
+        --shadow-button-primary: 0 2px 8px rgba(45, 102, 240, 0.32);
+        --shadow-panel: 0 18px 42px rgba(0, 0, 0, 0.68);
+      }
+
+      [data-theme="light"] {
+        color-scheme: light;
+        --bg: #f8fafc;
+        --fg: #0f172a;
+        --accent: #2f6bff;
+        --link-text: #174ea6;
+        --accent-soft: #dce7ff;
+        --danger: #8a0032;
+        --warning: #2f6bff;
+        --surface: #ffffff;
+        --border: #e2e8f0;
+        --input-bg: #ffffff;
+        --input-fg: #0f172a;
+        --danger-text: #b91c1c;
+        --title-highlight: #0f172a;
+        --lcd-bg: #ffffff;
+        --lcd-fg: #2f6bff;
+
+        /* Expressive Taller Maker tokens (Light — Taller Técnico) */
+        --surface-elevated: #ffffff;
+        --surface-subtle: #f1f5f9;
+        --accent-strong: #2d66f0;
+        --accent-strong-hover: #2354cf;
+        --accent-strong-active: #1d46b0;
+        --accent-tint: #eef4ff;
+        --accent-tint-border: #bfd5ff;
+        --accent-tint-text: #174ea6;
+        --success-bg: #ecfdf5;
+        --success-border: #a7f3d0;
+        --success-text: #047857;
+        --warning-bg: #fffbeb;
+        --warning-border: #fde68a;
+        --warning-text: #b45309;
+        --danger-bg: #fef2f2;
+        --danger-border: #fecaca;
+        --danger-solid: #be123c;
+        --danger-solid-hover: #9f1239;
+        --role-staff-bg: #f5f3ff;
+        --role-staff-border: #ddd6fe;
+        --role-staff-text: #6d28d9;
+        --channel-whatsapp: #15803d;
+        --channel-whatsapp-bg: #f0fdf4;
+        --channel-whatsapp-border: #bbf7d0;
+        --channel-whatsapp-hover: #dcfce7;
+        --channel-mail: #174ea6;
+        --channel-mail-bg: #eef4ff;
+        --channel-mail-border: #bfd5ff;
+        --channel-mail-hover: #dce9ff;
+        --shadow-button: 0 1px 2px rgba(15, 23, 42, 0.08);
+        --shadow-button-primary: 0 2px 6px rgba(45, 102, 240, 0.24);
+        --shadow-panel: 0 14px 34px rgba(15, 23, 42, 0.14);
+      }
+
+      /* ── tokens/typography.css (exact production copy) ── */
+      :root {
+        --font-heading: "IBM Plex Sans", system-ui, sans-serif;
+        --font-body: "IBM Plex Sans", system-ui, sans-serif;
+
+        --text-h1: 32px;
+        --text-h2: 24px;
+        --text-h3: 18px;
+        --text-heading: 18px;
+
+        --text-body: 16px;
+        --text-small: 14px;
+        --text-xs: 12px;
+
+        --line-height-base: 1.5;
+        --line-height-heading: 1.2;
+      }
+
+      /* ── tokens/spacing.css (exact production copy) ── */
+      :root {
+        --space-xs:   4px;
+        --space-sm:   8px;
+        --space-md:   16px;
+        --space-lg:   24px;
+        --space-xl:   32px;
+        --space-2xl:  48px;
+
+        --bp-mobile:  640px;
+        --bp-tablet:  1024px;
+        --bp-desktop: 1024px;
+      }
+
+      /* ── tokens/semantic.css (exact production copy) ── */
+      :root {
+        --sys-page-bg: var(--bg);
+        --sys-surface: var(--surface);
+        --sys-text: var(--fg);
+        --sys-text-muted: #475569;
+        --sys-border: var(--border);
+        --sys-action-bg: #2d66f0;
+        --sys-action-text: var(--pico-white);
+        --sys-action-text-link: var(--link-text);
+        --sys-danger-text: var(--danger-text);
+        --sys-focus: var(--fg);
+        --sys-font-body: var(--font-body);
+        --sys-font-heading: var(--font-heading);
+        --sys-text-display: 40px;
+        --sys-text-body: var(--text-body);
+        --sys-line-height-body: var(--line-height-base);
+        --sys-space-section: var(--space-2xl);
+        --sys-space-control: var(--space-sm);
+        --sys-frame-max: 1104px;
+        --sys-frame-gutter: var(--space-md);
+        --sys-prose-max: 75ch;
+        --sys-target-min: 44px;
+        --radius-control: 6px;
+        --radius-surface: 10px;
+        --radius-pill: 999px;
+      }
+
+      [data-theme='dark'] {
+        --sys-text-muted: #b5aea4;
+      }
+
+      /* ── Base Reset & Document Defaults ── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      :root {
+        accent-color: var(--accent);
+        scrollbar-color: var(--border) var(--bg);
+      }
+
+      html {
+        font-size: 16px;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: var(--font-body);
+        font-size: var(--text-body);
+        line-height: var(--line-height-base);
+        color: var(--fg);
+        background-color: var(--bg);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.9em;
+      }
+
+      ::selection {
+        background: var(--accent-soft);
+        color: #0f172a;
+      }
+
+      [data-theme='dark'] ::selection {
+        background: var(--sys-action-bg);
+        color: #ffffff;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+
+      /* ── base/ui-kit.css (exact production copy) ── */
+      /* ── Buttons ───────────────────────────────────────────────── */
+      .ui-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-block-size: var(--sys-target-min, 44px);
+        padding: 10px 18px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-control);
+        font: 600 0.9375rem / 1.2 var(--font-body);
+        text-decoration: none;
+        cursor: pointer;
+        touch-action: manipulation;
+        transition:
+          background-color 150ms ease,
+          border-color 150ms ease,
+          color 150ms ease,
+          box-shadow 150ms ease,
+          transform 150ms ease;
+      }
+
+      .ui-btn svg {
+        flex: 0 0 auto;
+      }
+
+      .ui-btn:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .ui-btn:disabled,
+      .ui-btn[aria-disabled='true'] {
+        opacity: 0.55;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+      }
+
+      /* Primary */
+      .ui-btn--primary {
+        background: var(--accent-strong);
+        border-color: var(--accent-strong);
+        color: #ffffff;
+        box-shadow: var(--shadow-button-primary);
+      }
+
+      .ui-btn--primary:hover:not(:disabled):not([aria-disabled='true']) {
+        background: var(--accent-strong-hover);
+        border-color: var(--accent-strong-hover);
+        color: #ffffff;
+        transform: translateY(-1px);
+      }
+
+      .ui-btn--primary:active:not(:disabled):not([aria-disabled='true']) {
+        background: var(--accent-strong-active);
+        border-color: var(--accent-strong-active);
+        color: #ffffff;
+        transform: translateY(0);
+      }
+
+      .ui-btn--primary:focus-visible {
+        color: #ffffff;
+      }
+
+      /* Soft tinted */
+      .ui-btn--soft {
+        background: var(--accent-tint);
+        border-color: var(--accent-tint-border);
+        color: var(--accent-tint-text);
+      }
+
+      .ui-btn--soft:hover:not(:disabled):not([aria-disabled='true']) {
+        background: var(--channel-mail-hover);
+        border-color: var(--accent-strong);
+        color: var(--accent-tint-text);
+        transform: translateY(-1px);
+      }
+
+      .ui-btn--soft:active:not(:disabled):not([aria-disabled='true']) {
+        transform: translateY(0);
+      }
+
+      .ui-btn--soft:focus-visible {
+        color: var(--accent-tint-text);
+      }
+
+      /* Secondary */
+      .ui-btn--secondary {
+        background: var(--surface);
+        border-color: var(--border);
+        color: var(--fg);
+        box-shadow: var(--shadow-button);
+      }
+
+      .ui-btn--secondary:hover:not(:disabled):not([aria-disabled='true']) {
+        background: var(--surface-subtle);
+        border-color: var(--home-line-hover, #cbd5e1);
+        color: var(--fg);
+        transform: translateY(-1px);
+      }
+
+      [data-theme='dark'] .ui-btn--secondary:hover:not(:disabled):not([aria-disabled='true']) {
+        border-color: #46403a;
+      }
+
+      .ui-btn--secondary:active:not(:disabled):not([aria-disabled='true']) {
+        transform: translateY(0);
+      }
+
+      .ui-btn--secondary:focus-visible {
+        color: var(--fg);
+      }
+
+      /* Ghost */
+      .ui-btn--ghost {
+        background: transparent;
+        border-color: transparent;
+        color: var(--fg);
+      }
+
+      .ui-btn--ghost:hover:not(:disabled):not([aria-disabled='true']) {
+        background: var(--surface-subtle);
+        color: var(--fg);
+      }
+
+      .ui-btn--ghost:focus-visible {
+        color: var(--fg);
+      }
+
+      /* Danger solid */
+      .ui-btn--danger {
+        background: var(--danger-solid);
+        border-color: var(--danger-solid);
+        color: #ffffff;
+        box-shadow: var(--shadow-button);
+      }
+
+      .ui-btn--danger:hover:not(:disabled):not([aria-disabled='true']) {
+        background: var(--danger-solid-hover);
+        border-color: var(--danger-solid-hover);
+        color: #ffffff;
+        transform: translateY(-1px);
+      }
+
+      .ui-btn--danger:active:not(:disabled):not([aria-disabled='true']) {
+        transform: translateY(0);
+      }
+
+      .ui-btn--danger:focus-visible {
+        color: #ffffff;
+      }
+
+      /* Danger outline -> solid crimson on hover (never translucent pink) */
+      .ui-btn--danger-soft {
+        background: var(--surface);
+        border-color: var(--border);
+        color: var(--danger-text);
+        box-shadow: var(--shadow-button);
+      }
+
+      .ui-btn--danger-soft:hover:not(:disabled):not([aria-disabled='true']) {
+        background: var(--danger-solid);
+        border-color: var(--danger-solid);
+        color: #ffffff;
+        transform: translateY(-1px);
+      }
+
+      .ui-btn--danger-soft:active:not(:disabled):not([aria-disabled='true']) {
+        background: var(--danger-solid-hover);
+        border-color: var(--danger-solid-hover);
+        color: #ffffff;
+        transform: translateY(0);
+      }
+
+      .ui-btn--danger-soft:focus-visible {
+        color: var(--danger-text);
+      }
+
+      /* Channel: WhatsApp */
+      .ui-btn--whatsapp {
+        background: var(--channel-whatsapp-bg);
+        border-color: var(--channel-whatsapp-border);
+        color: var(--channel-whatsapp);
+      }
+
+      .ui-btn--whatsapp:hover:not(:disabled):not([aria-disabled='true']) {
+        background: var(--channel-whatsapp-hover);
+        border-color: var(--channel-whatsapp);
+        color: var(--channel-whatsapp);
+        transform: translateY(-1px);
+      }
+
+      .ui-btn--whatsapp:active:not(:disabled):not([aria-disabled='true']) {
+        transform: translateY(0);
+      }
+
+      .ui-btn--whatsapp:focus-visible {
+        color: var(--channel-whatsapp);
+      }
+
+      .ui-btn--whatsapp .social-icon {
+        fill: currentColor;
+        stroke: none;
+      }
+
+      /* Channel: Mail */
+      .ui-btn--mail {
+        background: var(--channel-mail-bg);
+        border-color: var(--channel-mail-border);
+        color: var(--channel-mail);
+      }
+
+      .ui-btn--mail:hover:not(:disabled):not([aria-disabled='true']) {
+        background: var(--channel-mail-hover);
+        border-color: var(--channel-mail);
+        color: var(--channel-mail);
+        transform: translateY(-1px);
+      }
+
+      .ui-btn--mail:active:not(:disabled):not([aria-disabled='true']) {
+        transform: translateY(0);
+      }
+
+      .ui-btn--mail:focus-visible {
+        color: var(--channel-mail);
+      }
+
+      /* Sizes & Icon-only */
+      .ui-btn--sm {
+        min-block-size: 40px;
+        padding: 8px 14px;
+        font-size: 0.875rem;
+      }
+
+      @media (max-width: 639px) {
+        .ui-btn--sm {
+          min-block-size: 44px;
+        }
+      }
+
+      .ui-btn--icon {
+        min-inline-size: 44px;
+        min-block-size: 44px;
+        padding: 0;
+      }
+
+      /* ── Technical Tags & Borderless Semantic Status ───────────── */
+      .ui-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        background: var(--surface-subtle);
+        color: var(--fg);
+        font: 600 0.75rem / 1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+
+      .ui-badge--brand {
+        background: var(--surface);
+        border-color: var(--accent-tint-border);
+        color: var(--accent-tint-text);
+      }
+
+      .ui-badge--admin {
+        background: var(--fg);
+        border-color: var(--fg);
+        color: var(--bg);
+      }
+
+      .ui-badge--staff {
+        background: var(--surface-subtle);
+        border-color: var(--border);
+        color: var(--fg);
+      }
+
+      .ui-badge--neutral {
+        background: transparent;
+        border-color: var(--border);
+        color: var(--sys-text-muted);
+      }
+
+      .ui-badge--success,
+      .ui-badge--warning,
+      .ui-badge--danger {
+        padding: 2px 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        font: 600 0.8125rem / 1.4 var(--font-body);
+        letter-spacing: 0;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .ui-badge--success {
+        color: var(--success-text);
+      }
+
+      .ui-badge--warning {
+        color: var(--warning-text);
+      }
+
+      .ui-badge--danger {
+        color: var(--danger-text);
+      }
+
+      /* ── Tinted Panels & Popovers ──────────────────────────────── */
+      .ui-panel {
+        background: var(--surface-elevated);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-surface);
+        box-shadow: var(--shadow-panel);
+        overflow: hidden;
+      }
+
+      .ui-panel__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--space-sm);
+        padding: 14px 18px;
+        background: var(--accent-tint);
+        border-bottom: 1px solid var(--accent-tint-border);
+      }
+
+      .ui-panel__title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--fg);
+        line-height: 1.3;
+      }
+
+      .ui-panel__subtitle {
+        margin: 2px 0 0 0;
+        font-size: 0.8125rem;
+        color: var(--accent-tint-text);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .ui-panel__body {
+        padding: 16px 18px;
+        display: grid;
+        gap: 14px;
+      }
+
+      /* ── Callouts / Alerts (Full 1px border, no one-sided bar) ── */
+      .ui-callout {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 12px;
+        align-items: start;
+        padding: 14px 16px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-surface);
+        background: var(--surface);
+        color: var(--fg);
+        font-size: 0.9375rem;
+        line-height: 1.5;
+      }
+
+      .ui-callout__icon {
+        width: 20px;
+        height: 20px;
+        flex: 0 0 auto;
+        margin-top: 2px;
+      }
+
+      .ui-callout__content {
+        min-width: 0;
+        display: grid;
+        gap: 4px;
+      }
+
+      .ui-callout__title {
+        margin: 0;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        line-height: 1.35;
+      }
+
+      .ui-callout__text {
+        margin: 0;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        text-wrap: pretty;
+      }
+
+      .ui-callout--info {
+        background: var(--accent-tint);
+        border-color: var(--accent-tint-border);
+        color: var(--accent-tint-text);
+      }
+
+      .ui-callout--success {
+        background: var(--success-bg);
+        border-color: var(--success-border);
+        color: var(--success-text);
+      }
+
+      .ui-callout--warning {
+        background: var(--warning-bg);
+        border-color: var(--warning-border);
+        color: var(--warning-text);
+      }
+
+      .ui-callout--danger {
+        background: var(--danger-bg);
+        border-color: var(--danger-border);
+        color: var(--danger-text);
+      }
+
+      /* ── Form Controls & Input Groups ──────────────────────────── */
+      .ui-field {
+        display: grid;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .ui-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--fg);
+        line-height: 1.35;
+      }
+
+      .ui-input {
+        width: 100%;
+        min-width: 0;
+        min-block-size: var(--sys-target-min, 44px);
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-control);
+        background: var(--input-bg);
+        color: var(--input-fg);
+        font: 400 0.9375rem / 1.4 var(--font-body);
+        transition:
+          border-color 150ms ease,
+          box-shadow 150ms ease;
+      }
+
+      select.ui-input {
+        cursor: pointer;
+      }
+
+      .ui-input::placeholder {
+        color: var(--sys-text-muted);
+        opacity: 1;
+      }
+
+      .ui-input:focus {
+        outline: none;
+        border-color: var(--accent-strong);
+        box-shadow: 0 0 0 3px var(--accent-tint);
+      }
+
+      .ui-input:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .ui-input[aria-invalid='true'] {
+        border-color: var(--danger-text);
+        background: var(--danger-bg);
+      }
+
+      .ui-input[aria-invalid='true']:focus {
+        border-color: var(--danger-text);
+        box-shadow: 0 0 0 3px var(--danger-bg);
+      }
+
+      .ui-input[aria-invalid='true']:focus-visible {
+        outline: 3px solid var(--danger-text);
+        outline-offset: 2px;
+      }
+
+      .ui-help {
+        margin: 0;
+        font-size: 0.8125rem;
+        line-height: 1.4;
+        color: var(--sys-text-muted);
+        text-wrap: pretty;
+      }
+
+      .ui-error {
+        margin: 0;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        line-height: 1.4;
+        color: var(--danger-text);
+        text-wrap: pretty;
+      }
+
+      .ui-input-group {
+        display: flex;
+        align-items: stretch;
+        gap: 6px;
+        min-width: 0;
+        padding: 4px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-control);
+        background: var(--surface-subtle);
+      }
+
+      .ui-input-group .ui-input {
+        flex: 1 1 auto;
+        min-width: 0;
+        min-block-size: 40px;
+        padding: 8px 10px;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+        font-size: 0.875rem;
+      }
+
+      .ui-input-group .ui-input:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 0;
+      }
+
+      .ui-input-group .ui-btn {
+        flex: 0 0 auto;
+        min-block-size: 40px;
+      }
+
+      @media (max-width: 639px) {
+        .ui-input-group .ui-input,
+        .ui-input-group .ui-btn {
+          min-block-size: 44px;
+        }
+      }
+
+      /* ── Data Table ────────────────────────────────────────────── */
+      .ui-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-surface);
+        background: var(--surface);
+      }
+
+      .ui-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.9375rem;
+      }
+
+      .ui-table thead th {
+        padding: 12px 16px;
+        background: var(--surface-subtle);
+        border-bottom: 1px solid var(--border);
+        color: var(--sys-text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .ui-table tbody td {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+        color: var(--fg);
+        vertical-align: middle;
+      }
+
+      .ui-table tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .ui-table tbody tr:hover {
+        background: var(--surface-subtle);
+      }
+
+      .ui-table__num {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+
+      .ui-table__actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: nowrap;
+      }
+
+      /* ── Reduced Motion ────────────────────────────────────────── */
+      @media (prefers-reduced-motion: reduce) {
+        .ui-btn,
+        .ui-input {
+          transition: none;
+        }
+
+        .ui-btn:hover:not(:disabled):not([aria-disabled='true']),
+        .ui-btn:active:not(:disabled):not([aria-disabled='true']) {
+          transform: none;
+        }
+      }
+
+      /* ── Sticky Preview Top Bar ────────────────────────────────── */
+      .sg-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .sg-topbar__inner {
+        width: min(var(--sys-frame-max, 1104px), calc(100% - (var(--sys-frame-gutter, 16px) * 2)));
+        margin-inline: auto;
+        padding-block: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .sg-topbar__brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .sg-topbar__logo-light,
+      .sg-topbar__logo-dark {
+        display: block;
+        width: auto;
+        height: 44px;
+        object-fit: contain;
+      }
+
+      .sg-topbar__logo-dark {
+        display: none;
+      }
+
+      html[data-theme='dark'] .sg-topbar__logo-light {
+        display: none;
+      }
+
+      html[data-theme='dark'] .sg-topbar__logo-dark {
+        display: block;
+      }
+
+      .sg-topbar__meta {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--sys-text-muted);
+      }
+
+      /* ── Styleguide Layout Styles (from styleguide.astro) ──────── */
+      .styleguide-main {
+        flex: 1;
+        width: min(var(--sys-frame-max, 1104px), calc(100% - (var(--sys-frame-gutter, 16px) * 2)));
+        max-width: var(--sys-frame-max, 1104px);
+        margin-inline: auto;
+        padding-inline: 0;
+        padding-block: var(--space-xl);
+        display: grid;
+        gap: var(--space-2xl);
+      }
+
+      .sg-header {
+        display: grid;
+        gap: var(--space-md);
+      }
+
+      .sg-title {
+        margin: 0;
+        font-family: var(--font-heading);
+        font-size: clamp(1.75rem, 3.2vw, 2.25rem);
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+        text-wrap: balance;
+        color: var(--fg);
+      }
+
+      .sg-lead {
+        margin: 0;
+        max-width: 60ch;
+        color: var(--sys-text-muted);
+        font-size: 1rem;
+        line-height: 1.6;
+        text-wrap: pretty;
+      }
+
+      .sg-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+        padding-top: var(--space-xs);
+      }
+
+      .sg-nav__link {
+        min-block-size: 44px;
+        padding: 8px 14px;
+        font-size: 0.875rem;
+        border-color: var(--border);
+      }
+
+      .sg-section {
+        padding-top: var(--space-xl);
+        border-top: 1px solid var(--border);
+        display: grid;
+        gap: 0;
+      }
+
+      .sg-section__title {
+        margin: 0 0 var(--space-xs) 0;
+        font-family: var(--font-heading);
+        font-size: 1.375rem;
+        font-weight: 600;
+        line-height: 1.25;
+        text-wrap: balance;
+        color: var(--fg);
+      }
+
+      .sg-section__lead {
+        margin: 0 0 var(--space-lg) 0;
+        max-width: 60ch;
+        color: var(--sys-text-muted);
+        font-size: 0.9375rem;
+        line-height: 1.55;
+        text-wrap: pretty;
+      }
+
+      .sg-swatches {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: var(--space-md);
+      }
+
+      .sg-swatch {
+        display: grid;
+        gap: var(--space-sm);
+        align-content: start;
+      }
+
+      .sg-swatch__chip {
+        height: 76px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-surface);
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-start;
+      }
+
+      .sg-swatch__sample {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        line-height: 1;
+      }
+
+      .sg-swatch__meta {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .sg-swatch__label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--fg);
+      }
+
+      .sg-swatch__token {
+        font-size: 0.75rem;
+        color: var(--sys-text-muted);
+        overflow-wrap: anywhere;
+      }
+
+      .sg-swatch__hex {
+        font-size: 0.75rem;
+        font-variant-numeric: tabular-nums;
+        color: var(--sys-text-muted);
+      }
+
+      .sg-stack {
+        display: grid;
+        gap: var(--space-md);
+      }
+
+      .sg-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .sg-callouts {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-md);
+      }
+
+      .sg-form-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-lg);
+      }
+
+      .sg-panel-stage {
+        max-width: 440px;
+        width: 100%;
+      }
+
+      .sg-share-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .sg-share-actions__wide {
+        grid-column: 1 / -1;
+      }
+
+      .sg-table-actions-head {
+        text-align: right;
+      }
+
+      .sg-piece-cell {
+        display: grid;
+        gap: 2px;
+      }
+
+      .sg-piece-cell__name {
+        font-weight: 600;
+        color: var(--fg);
+      }
+
+      .sg-piece-cell__meta {
+        font-size: 0.8125rem;
+        color: var(--sys-text-muted);
+      }
+
+      @media (min-width: 640px) {
+        .sg-topbar__logo-light,
+        .sg-topbar__logo-dark {
+          height: 50px;
+        }
+
+        .sg-callouts {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .sg-form-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 419px) {
+        .sg-share-actions {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="sg-topbar">
+      <div class="sg-topbar__inner">
+        <div class="sg-topbar__brand">
+          <img
+            class="sg-topbar__logo-light"
+            src="../docs/diseno/imagenes/Mundo3D_Isologotipo.png"
+            alt="Mundo 3D"
+          />
+          <img
+            class="sg-topbar__logo-dark"
+            src="../docs/diseno/imagenes/Mundo3D_Isologotipo_Inverso.png"
+            alt="Mundo 3D"
+          />
+          <span class="sg-topbar__meta" data-theme-label>Taller Técnico</span>
+        </div>
+
+        <button
+          id="sg-theme-toggle"
+          type="button"
+          class="ui-btn ui-btn--secondary ui-btn--sm"
+          aria-pressed="false"
+        >
+          Cambiar a Obsidiana cálida
+        </button>
+      </div>
+    </header>
+
+    <main class="styleguide-main">
+      <header class="sg-header">
+        <h1 class="sg-title">Plantilla de estilo · Taller Maker</h1>
+        <p class="sg-lead">
+          Esta muestra viva define los tokens semánticos y los componentes <code>.ui-*</code> compartidos de
+          <strong>Mundo 3D</strong> para los modos claro (<strong>Taller Técnico</strong>) y oscuro
+          (<strong>Obsidiana cálida</strong>). Probá el selector de tema del encabezado para verificar
+          contraste, bordes y estados en vivo.
+        </p>
+        <nav class="sg-nav" aria-label="Secciones de la plantilla de estilo">
+          <a class="ui-btn ui-btn--ghost sg-nav__link" href="#paleta">Paleta</a>
+          <a class="ui-btn ui-btn--ghost sg-nav__link" href="#botones">Botones</a>
+          <a class="ui-btn ui-btn--ghost sg-nav__link" href="#badges-avisos">Badges y avisos</a>
+          <a class="ui-btn ui-btn--ghost sg-nav__link" href="#campos">Campos y enlace</a>
+          <a class="ui-btn ui-btn--ghost sg-nav__link" href="#panel-compartir">Panel de Compartir</a>
+          <a class="ui-btn ui-btn--ghost sg-nav__link" href="#tabla-admin">Tabla de Catálogo</a>
+        </nav>
+      </header>
+
+      <section id="paleta" class="sg-section">
+        <h2 class="sg-section__title">Paleta y roles semánticos</h2>
+        <p class="sg-section__lead">
+          Superficies cálidas y frías diseñadas por separado para cada tema, sin inversión mecánica.
+        </p>
+        <div class="sg-swatches">
+          <div class="sg-swatch">
+            <div class="sg-swatch__chip" style="background: var(--bg); border-color: var(--border); color: var(--fg);">
+              <span class="sg-swatch__sample">Aa</span>
+            </div>
+            <div class="sg-swatch__meta">
+              <span class="sg-swatch__label">Fondo de página</span>
+              <code class="sg-swatch__token">--bg</code>
+              <span class="sg-swatch__hex" data-swatch-token="--bg" data-light-hex="#F8FAFC" data-dark-hex="#11100F">#F8FAFC</span>
+            </div>
+          </div>
+
+          <div class="sg-swatch">
+            <div class="sg-swatch__chip" style="background: var(--surface); border-color: var(--border); color: var(--fg);">
+              <span class="sg-swatch__sample">Aa</span>
+            </div>
+            <div class="sg-swatch__meta">
+              <span class="sg-swatch__label">Superficie base</span>
+              <code class="sg-swatch__token">--surface</code>
+              <span class="sg-swatch__hex" data-swatch-token="--surface" data-light-hex="#FFFFFF" data-dark-hex="#1B1917">#FFFFFF</span>
+            </div>
+          </div>
+
+          <div class="sg-swatch">
+            <div class="sg-swatch__chip" style="background: var(--surface-elevated); border-color: var(--border); color: var(--fg);">
+              <span class="sg-swatch__sample">Aa</span>
+            </div>
+            <div class="sg-swatch__meta">
+              <span class="sg-swatch__label">Superficie elevada</span>
+              <code class="sg-swatch__token">--surface-elevated</code>
+              <span class="sg-swatch__hex" data-swatch-token="--surface-elevated" data-light-hex="#FFFFFF" data-dark-hex="#24211E">#FFFFFF</span>
+            </div>
+          </div>
+
+          <div class="sg-swatch">
+            <div class="sg-swatch__chip" style="background: var(--surface-subtle); border-color: var(--border); color: var(--fg);">
+              <span class="sg-swatch__sample">Aa</span>
+            </div>
+            <div class="sg-swatch__meta">
+              <span class="sg-swatch__label">Superficie sutil</span>
+              <code class="sg-swatch__token">--surface-subtle</code>
+              <span class="sg-swatch__hex" data-swatch-token="--surface-subtle" data-light-hex="#F1F5F9" data-dark-hex="#161412">#F1F5F9</span>
+            </div>
+          </div>
+
+          <div class="sg-swatch">
+            <div class="sg-swatch__chip" style="background: var(--accent-strong); border-color: var(--accent-strong); color: #ffffff;">
+              <span class="sg-swatch__sample">Aa</span>
+            </div>
+            <div class="sg-swatch__meta">
+              <span class="sg-swatch__label">Acento primario</span>
+              <code class="sg-swatch__token">--accent-strong</code>
+              <span class="sg-swatch__hex" data-swatch-token="--accent-strong" data-light-hex="#2D66F0" data-dark-hex="#2D66F0">#2D66F0</span>
+            </div>
+          </div>
+
+          <div class="sg-swatch">
+            <div class="sg-swatch__chip" style="background: var(--accent-tint); border-color: var(--accent-tint-border); color: var(--accent-tint-text);">
+              <span class="sg-swatch__sample">Aa</span>
+            </div>
+            <div class="sg-swatch__meta">
+              <span class="sg-swatch__label">Tinte de acento</span>
+              <code class="sg-swatch__token">--accent-tint</code>
+              <span class="sg-swatch__hex" data-swatch-token="--accent-tint" data-light-hex="#EEF4FF" data-dark-hex="#17223A">#EEF4FF</span>
+            </div>
+          </div>
+
+          <div class="sg-swatch">
+            <div class="sg-swatch__chip" style="background: var(--success-bg); border-color: var(--success-border); color: var(--success-text);">
+              <span class="sg-swatch__sample">Aa</span>
+            </div>
+            <div class="sg-swatch__meta">
+              <span class="sg-swatch__label">Estado éxito</span>
+              <code class="sg-swatch__token">--success-bg</code>
+              <span class="sg-swatch__hex" data-swatch-token="--success-bg" data-light-hex="#ECFDF5" data-dark-hex="#0F281F">#ECFDF5</span>
+            </div>
+          </div>
+
+          <div class="sg-swatch">
+            <div class="sg-swatch__chip" style="background: var(--warning-bg); border-color: var(--warning-border); color: var(--warning-text);">
+              <span class="sg-swatch__sample">Aa</span>
+            </div>
+            <div class="sg-swatch__meta">
+              <span class="sg-swatch__label">Estado advertencia</span>
+              <code class="sg-swatch__token">--warning-bg</code>
+              <span class="sg-swatch__hex" data-swatch-token="--warning-bg" data-light-hex="#FFFBEB" data-dark-hex="#2B200E">#FFFBEB</span>
+            </div>
+          </div>
+
+          <div class="sg-swatch">
+            <div class="sg-swatch__chip" style="background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger-text);">
+              <span class="sg-swatch__sample">Aa</span>
+            </div>
+            <div class="sg-swatch__meta">
+              <span class="sg-swatch__label">Peligro suave</span>
+              <code class="sg-swatch__token">--danger-bg</code>
+              <span class="sg-swatch__hex" data-swatch-token="--danger-bg" data-light-hex="#FEF2F2" data-dark-hex="#2E1518">#FEF2F2</span>
+            </div>
+          </div>
+
+          <div class="sg-swatch">
+            <div class="sg-swatch__chip" style="background: var(--danger-solid); border-color: var(--danger-solid); color: #ffffff;">
+              <span class="sg-swatch__sample">Aa</span>
+            </div>
+            <div class="sg-swatch__meta">
+              <span class="sg-swatch__label">Peligro sólido</span>
+              <code class="sg-swatch__token">--danger-solid</code>
+              <span class="sg-swatch__hex" data-swatch-token="--danger-solid" data-light-hex="#BE123C" data-dark-hex="#BE123C">#BE123C</span>
+            </div>
+          </div>
+
+          <div class="sg-swatch">
+            <div class="sg-swatch__chip" style="background: var(--role-staff-bg); border-color: var(--role-staff-border); color: var(--role-staff-text);">
+              <span class="sg-swatch__sample">Aa</span>
+            </div>
+            <div class="sg-swatch__meta">
+              <span class="sg-swatch__label">Rol Staff</span>
+              <code class="sg-swatch__token">--role-staff-bg</code>
+              <span class="sg-swatch__hex" data-swatch-token="--role-staff-bg" data-light-hex="#F5F3FF" data-dark-hex="#231A33">#F5F3FF</span>
+            </div>
+          </div>
+
+          <div class="sg-swatch">
+            <div class="sg-swatch__chip" style="background: var(--channel-whatsapp-bg); border-color: var(--channel-whatsapp-border); color: var(--channel-whatsapp);">
+              <span class="sg-swatch__sample">Aa</span>
+            </div>
+            <div class="sg-swatch__meta">
+              <span class="sg-swatch__label">Canal WhatsApp</span>
+              <code class="sg-swatch__token">--channel-whatsapp-bg</code>
+              <span class="sg-swatch__hex" data-swatch-token="--channel-whatsapp-bg" data-light-hex="#F0FDF4" data-dark-hex="#10261A">#F0FDF4</span>
+            </div>
+          </div>
+
+          <div class="sg-swatch">
+            <div class="sg-swatch__chip" style="background: var(--channel-mail-bg); border-color: var(--channel-mail-border); color: var(--channel-mail);">
+              <span class="sg-swatch__sample">Aa</span>
+            </div>
+            <div class="sg-swatch__meta">
+              <span class="sg-swatch__label">Canal Correo</span>
+              <code class="sg-swatch__token">--channel-mail-bg</code>
+              <span class="sg-swatch__hex" data-swatch-token="--channel-mail-bg" data-light-hex="#EEF4FF" data-dark-hex="#17223A">#EEF4FF</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="botones" class="sg-section">
+        <h2 class="sg-section__title">Botones y acciones</h2>
+        <p class="sg-section__lead">
+          Jerarquía táctil con área mínima de toque segura, foco visible y variantes dedicadas por canal o riesgo.
+        </p>
+        <div class="sg-stack">
+          <div class="sg-row">
+            <button type="button" class="ui-btn ui-btn--primary">Primario</button>
+            <button type="button" class="ui-btn ui-btn--soft">Suave tintado</button>
+            <button type="button" class="ui-btn ui-btn--secondary">Secundario</button>
+            <button type="button" class="ui-btn ui-btn--ghost">Fantasma</button>
+            <button type="button" class="ui-btn ui-btn--danger">Peligro</button>
+            <button type="button" class="ui-btn ui-btn--danger-soft">Peligro suave</button>
+            <button type="button" class="ui-btn ui-btn--primary" disabled>Deshabilitado</button>
+          </div>
+
+          <div class="sg-row">
+            <button type="button" class="ui-btn ui-btn--whatsapp">
+              <svg class="social-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
+              </svg>
+              <span>WhatsApp</span>
+            </button>
+            <button type="button" class="ui-btn ui-btn--mail">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+              <span>Correo</span>
+            </button>
+            <button type="button" class="ui-btn ui-btn--secondary ui-btn--sm">Compacto</button>
+            <button type="button" class="ui-btn ui-btn--secondary ui-btn--icon" aria-label="Copiar enlace rápido">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="badges-avisos" class="sg-section">
+        <h2 class="sg-section__title">Etiquetas técnicas, estados y avisos</h2>
+        <p class="sg-section__lead">
+          Roles como sellos técnicos rectos de 4 px y estados de stock tipográficos sin pastillas ni bordes pastel; avisos con borde completo de 1 px e iconos de trazo uniforme.
+        </p>
+
+        <div class="sg-stack">
+          <div class="sg-row" aria-label="Ejemplos de etiquetas y estados">
+            <span class="ui-badge ui-badge--admin">ADMIN</span>
+            <span class="ui-badge ui-badge--staff">STAFF</span>
+            <span class="ui-badge ui-badge--neutral">USER</span>
+            <span class="ui-badge ui-badge--brand">Pedido simulado</span>
+            <span class="ui-badge ui-badge--success">En stock</span>
+            <span class="ui-badge ui-badge--warning">Stock bajo</span>
+            <span class="ui-badge ui-badge--danger">Sin stock</span>
+          </div>
+
+          <div class="sg-callouts">
+            <div class="ui-callout ui-callout--info" role="note">
+              <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4" />
+                <path d="M12 8h.01" />
+              </svg>
+              <div class="ui-callout__content">
+                <p class="ui-callout__title">Modo de demostración del Catálogo</p>
+                <p class="ui-callout__text">Los pedidos simulados no generan cobros ni despachos reales desde el taller.</p>
+              </div>
+            </div>
+
+            <div class="ui-callout ui-callout--success" role="status">
+              <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+              <div class="ui-callout__content">
+                <p class="ui-callout__title">Pieza actualizada en el Catálogo</p>
+                <p class="ui-callout__text">Los cambios de stock y precio ya están visibles para quienes recorren la vitrina.</p>
+              </div>
+            </div>
+
+            <div class="ui-callout ui-callout--warning" role="note">
+              <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                <path d="M12 9v4" />
+                <path d="M12 17h.01" />
+              </svg>
+              <div class="ui-callout__content">
+                <p class="ui-callout__title">Quedan pocas unidades impresas</p>
+                <p class="ui-callout__text">Esta pieza tiene stock bajo; si necesitás más cantidad, consultá un encargo a medida.</p>
+              </div>
+            </div>
+
+            <div class="ui-callout ui-callout--danger" role="alert">
+              <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <path d="m15 9-6 6" />
+                <path d="m9 9 6 6" />
+              </svg>
+              <div class="ui-callout__content">
+                <p class="ui-callout__title">No pudimos guardar la pieza</p>
+                <p class="ui-callout__text">Revisá los campos marcados en rojo e intentá nuevamente en unos segundos.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="campos" class="sg-section">
+        <h2 class="sg-section__title">Campos y barra de enlace</h2>
+        <p class="sg-section__lead">
+          Controles nítidos con foco accesible, errores explícitos y grupo unificado para compartir enlaces.
+        </p>
+        <div class="sg-form-grid">
+          <div class="ui-field">
+            <label class="ui-label" for="sg-piece-name">Nombre de la pieza</label>
+            <input
+              id="sg-piece-name"
+              class="ui-input"
+              type="text"
+              placeholder="Ej. Soporte articulado para auriculares"
+              value="Mario Bros Coleccionable"
+            />
+            <p class="ui-help">Usá un título descriptivo para identificar la pieza en el Catálogo.</p>
+          </div>
+
+          <div class="ui-field">
+            <label class="ui-label" for="sg-piece-material">Material de impresión</label>
+            <select id="sg-piece-material" class="ui-input">
+              <option value="pla-seda" selected>PLA seda (acabado brillante)</option>
+              <option value="pla-mate">PLA mate (taller arquitectónico)</option>
+              <option value="petg">PETG resistente</option>
+            </select>
+            <p class="ui-help">Seleccioná el filamento disponible para esta serie de piezas.</p>
+          </div>
+
+          <div class="ui-field">
+            <label class="ui-label" for="sg-piece-price">Precio unitario ($)</label>
+            <input
+              id="sg-piece-price"
+              class="ui-input"
+              type="number"
+              value="0"
+              aria-invalid="true"
+              aria-describedby="sg-piece-price-error"
+            />
+            <p id="sg-piece-price-error" class="ui-error">
+              Ingresá un precio mayor a 0 para publicar la pieza en el Catálogo.
+            </p>
+          </div>
+
+          <div class="ui-field">
+            <label class="ui-label" for="sg-share-url">Enlace directo de prueba</label>
+            <div class="ui-input-group">
+              <input
+                id="sg-share-url"
+                class="ui-input"
+                type="url"
+                readonly
+                value="https://mundo-3d.pages.dev/product?id=1"
+              />
+              <button
+                type="button"
+                class="ui-btn ui-btn--soft ui-btn--sm"
+                data-copy-target="sg-share-url"
+                data-copy-status="sg-share-url-status"
+              >
+                Copiar enlace
+              </button>
+            </div>
+            <p id="sg-share-url-status" class="ui-help" aria-live="polite">
+              Copiá la dirección para compartirla por chat o correo.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-compartir" class="sg-section">
+        <h2 class="sg-section__title">Muestra: Panel de Compartir</h2>
+        <p class="sg-section__lead">
+          Vista previa en vivo del popover de <strong>Compartir pieza</strong> construido con <code>.ui-panel</code> y botones semánticos por canal.
+        </p>
+
+        <div class="sg-panel-stage">
+          <div class="ui-panel" role="region" aria-labelledby="sg-share-panel-title">
+            <div class="ui-panel__header">
+              <div>
+                <h3 id="sg-share-panel-title" class="ui-panel__title">Compartir pieza</h3>
+                <p class="ui-panel__subtitle">Mario Bros Coleccionable · $ 18.500</p>
+              </div>
+              <span class="ui-badge ui-badge--brand">Catálogo</span>
+            </div>
+            <div class="ui-panel__body">
+              <div class="ui-field">
+                <label class="ui-label" for="sg-panel-link">Enlace de la pieza</label>
+                <div class="ui-input-group">
+                  <input
+                    id="sg-panel-link"
+                    class="ui-input"
+                    type="url"
+                    readonly
+                    value="https://mundo-3d.pages.dev/product?id=1"
+                  />
+                  <button
+                    type="button"
+                    class="ui-btn ui-btn--soft ui-btn--sm"
+                    data-copy-target="sg-panel-link"
+                    data-copy-status="sg-panel-copy-status"
+                  >
+                    Copiar
+                  </button>
+                </div>
+                <p id="sg-panel-copy-status" class="ui-help" aria-live="polite">
+                  Listo para compartir sin iniciar sesión.
+                </p>
+              </div>
+
+              <div class="sg-share-actions">
+                <button type="button" class="ui-btn ui-btn--whatsapp" data-share-preview="WhatsApp">
+                  <svg class="social-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
+                  </svg>
+                  <span>WhatsApp</span>
+                </button>
+                <button type="button" class="ui-btn ui-btn--mail" data-share-preview="Correo">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                  </svg>
+                  <span>Correo</span>
+                </button>
+                <button type="button" class="ui-btn ui-btn--secondary sg-share-actions__wide" data-share-preview="Selector del sistema">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <path d="m8.59 13.51 6.83 3.98" />
+                    <path d="m15.41 6.51-6.82 3.98" />
+                  </svg>
+                  <span>Más opciones…</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tabla-admin" class="sg-section">
+        <h2 class="sg-section__title">Muestra: Tabla de administración para Catálogo</h2>
+        <p class="sg-section__lead">
+          Tabla responsiva con cifras tabulares, badges de estado/rol y acciones diferenciadas de edición y borrado.
+        </p>
+
+        <div class="ui-table-wrap">
+          <table class="ui-table">
+            <thead>
+              <tr>
+                <th scope="col">Pieza</th>
+                <th scope="col">Rol autor</th>
+                <th scope="col">Stock</th>
+                <th scope="col">Precio</th>
+                <th scope="col" class="sg-table-actions-head">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="sg-piece-cell">
+                    <span class="sg-piece-cell__name">Mario Bros Coleccionable</span>
+                    <span class="sg-piece-cell__meta">PLA seda · 14 cm</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="ui-badge ui-badge--admin">ADMIN</span>
+                </td>
+                <td>
+                  <span class="ui-badge ui-badge--success">En stock (14)</span>
+                </td>
+                <td class="ui-table__num">$ 18.500</td>
+                <td>
+                  <div class="ui-table__actions">
+                    <button type="button" class="ui-btn ui-btn--secondary ui-btn--sm">Editar</button>
+                    <button type="button" class="ui-btn ui-btn--danger-soft ui-btn--sm">Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  <div class="sg-piece-cell">
+                    <span class="sg-piece-cell__name">Soporte Maceta Groot</span>
+                    <span class="sg-piece-cell__meta">PLA mate · 16 cm</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="ui-badge ui-badge--staff">STAFF</span>
+                </td>
+                <td>
+                  <span class="ui-badge ui-badge--warning">Stock bajo (2)</span>
+                </td>
+                <td class="ui-table__num">$ 12.900</td>
+                <td>
+                  <div class="ui-table__actions">
+                    <button type="button" class="ui-btn ui-btn--secondary ui-btn--sm">Editar</button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  <div class="sg-piece-cell">
+                    <span class="sg-piece-cell__name">Llavero Escudo Capitán América</span>
+                    <span class="sg-piece-cell__meta">PETG bicolor · 5 cm</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="ui-badge ui-badge--staff">STAFF</span>
+                </td>
+                <td>
+                  <span class="ui-badge ui-badge--danger">Sin stock (0)</span>
+                </td>
+                <td class="ui-table__num">$ 4.200</td>
+                <td>
+                  <div class="ui-table__actions">
+                    <button type="button" class="ui-btn ui-btn--secondary ui-btn--sm">Editar</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        const root = document.documentElement;
+        const toggleButton = document.getElementById('sg-theme-toggle');
+        const themeLabel = document.querySelector('[data-theme-label]');
+
+        const syncThemeUI = () => {
+          const isDark = root.getAttribute('data-theme') === 'dark';
+
+          if (toggleButton) {
+            toggleButton.textContent = isDark
+              ? 'Cambiar a Taller Técnico'
+              : 'Cambiar a Obsidiana cálida';
+            toggleButton.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+          }
+
+          if (themeLabel) {
+            themeLabel.textContent = isDark ? 'Obsidiana cálida' : 'Taller Técnico';
+          }
+
+          const labels = document.querySelectorAll('[data-swatch-token]');
+          labels.forEach((node) => {
+            const hex = isDark ? node.getAttribute('data-dark-hex') : node.getAttribute('data-light-hex');
+            if (hex) {
+              node.textContent = hex;
+            }
+          });
+        };
+
+        syncThemeUI();
+
+        if (toggleButton) {
+          toggleButton.addEventListener('click', () => {
+            const nextTheme = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', nextTheme);
+            syncThemeUI();
+          });
+        }
+
+        const copyButtons = document.querySelectorAll('[data-copy-target]');
+        copyButtons.forEach((button) => {
+          const originalLabel = (button.textContent || 'Copiar').trim();
+          button.addEventListener('click', () => {
+            const targetId = button.getAttribute('data-copy-target');
+            const statusId = button.getAttribute('data-copy-status');
+            const input = targetId ? document.getElementById(targetId) : null;
+            const statusEl = statusId ? document.getElementById(statusId) : null;
+
+            if (!(input instanceof HTMLInputElement)) return;
+
+            const textToCopy = input.value;
+            const markCopied = () => {
+              button.textContent = 'Copiado';
+              if (statusEl) {
+                statusEl.textContent = 'Enlace copiado al portapapeles.';
+              }
+              window.setTimeout(() => {
+                button.textContent = originalLabel;
+              }, 1800);
+            };
+
+            const fallbackCopy = () => {
+              input.select();
+              try {
+                if (typeof document.execCommand === 'function') {
+                  document.execCommand('copy');
+                }
+              } catch {
+                // Ignore sandboxed execCommand errors
+              }
+              markCopied();
+            };
+
+            try {
+              if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                navigator.clipboard.writeText(textToCopy).then(markCopied, fallbackCopy);
+              } else {
+                fallbackCopy();
+              }
+            } catch {
+              fallbackCopy();
+            }
+          });
+        });
+
+        const sharePreviewButtons = document.querySelectorAll('[data-share-preview]');
+        sharePreviewButtons.forEach((button) => {
+          button.addEventListener('click', () => {
+            const channel = button.getAttribute('data-share-preview') || 'canal';
+            const statusEl = document.getElementById('sg-panel-copy-status');
+            if (statusEl) {
+              statusEl.textContent = 'Vista previa activa: abriría ' + channel + ' con el enlace de la pieza.';
+            }
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -22,6 +22,9 @@
   --sys-frame-gutter: var(--space-md);
   --sys-prose-max: 75ch;
   --sys-target-min: 44px;
+  --radius-control: 6px;
+  --radius-surface: 10px;
+  --radius-pill: 999px;
 }
 
 [data-theme='dark'] {
