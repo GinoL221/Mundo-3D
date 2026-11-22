@@ -1,44 +1,109 @@
 ---
+import EditorialSidebar from '../components/EditorialSidebar.astro';
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="Ayuda y encargos — Mundo 3D">
-  <main class="form-layout">
-    <article class="about-content">
-      <section>
-        <h1>Contanos tu idea</h1>
-        <p>Podés dejar una propuesta sin crear una cuenta. Es una función de demostración local: guardamos la solicitud para revisión; no genera un presupuesto, pedido ni pago. No enviamos correos ni prometemos una respuesta.</p>
-      </section>
+<Layout title="Encargos — Mundo 3D">
+  <main class="editorial-page">
+    <div class="editorial-shell">
+      <EditorialSidebar currentPath={Astro.url.pathname} />
 
-      <section aria-labelledby="commission-form-title">
-        <h2 id="commission-form-title">Solicitud de encargo</h2>
-        <p class="commission-form__status" id="product-status" role="status" aria-live="polite">Cargando el catálogo para asociar una pieza (opcional)…</p>
-        <form class="commission-form" id="commission-form" action="/help" method="post">
-          <p class="commission-form__status" id="product-unavailable" role="status" aria-live="polite" hidden>Ahora no podemos cargar el catálogo. Igual podés enviar tu idea sin asociarla a un producto.</p>
-          <div class="commission-form__field">
-            <label class="commission-form__label" for="commission-name">Nombre</label>
-            <input class="commission-form__control" id="commission-name" name="name" autocomplete="name" required maxlength="100" />
+      <article class="editorial-article">
+        <header class="editorial-header">
+          <h1>Contanos tu idea</h1>
+          <p class="editorial-lead">
+            Podés dejar una solicitud de encargo sin crear cuenta. Es una demo interactiva:
+            guardamos tu idea para revisión interna, sin presupuesto, pedido, pago ni correo
+            automático. Usá datos ficticios al probar.
+          </p>
+        </header>
+
+        <section class="editorial-section" aria-labelledby="commission-form-title">
+          <h2 id="commission-form-title">Solicitud de encargo</h2>
+
+          <div class="editorial-form-surface">
+            <p class="commission-form__status" id="product-status" role="status" aria-live="polite">
+              Cargando el catálogo para asociar una pieza (opcional)…
+            </p>
+            <form class="commission-form" id="commission-form" action="/help" method="post">
+              <p
+                class="commission-form__status"
+                id="product-unavailable"
+                role="status"
+                aria-live="polite"
+                hidden
+              >
+                Ahora no podemos cargar el catálogo. Igual podés enviar tu idea sin asociarla a un
+                producto.
+              </p>
+              <div class="commission-form__field">
+                <label class="commission-form__label" for="commission-name">Nombre</label>
+                <input
+                  class="commission-form__control"
+                  id="commission-name"
+                  name="name"
+                  autocomplete="name"
+                  required
+                  maxlength="100"
+                />
+              </div>
+              <div class="commission-form__field">
+                <label class="commission-form__label" for="commission-email"
+                  >Correo electrónico</label
+                >
+                <input
+                  class="commission-form__control"
+                  id="commission-email"
+                  name="email"
+                  type="email"
+                  autocomplete="email"
+                  required
+                  maxlength="254"
+                />
+              </div>
+              <div class="commission-form__field">
+                <label class="commission-form__label" for="commission-idea">Tu idea</label>
+                <textarea
+                  class="commission-form__control commission-form__control--textarea"
+                  id="commission-idea"
+                  name="idea"
+                  required
+                  maxlength="5000"
+                  rows="6"
+                ></textarea>
+              </div>
+              <div class="commission-form__field">
+                <label class="commission-form__label" for="commission-product"
+                  >Asociar una pieza (opcional)</label
+                >
+                <select
+                  class="commission-form__control"
+                  id="commission-product"
+                  name="idProduct"
+                  disabled
+                >
+                  <option value="">Sin asociar</option>
+                </select>
+              </div>
+              <p class="commission-form__disclosure">
+                La solicitud se guarda en esta demo para revisión por personas con rol{' '}
+                <code>STAFF</code> o <code>ADMIN</code>. Se oculta a los 30 días y se elimina
+                físicamente cada hora mientras el backend está activo; si estuvo detenido, se
+                elimina en el próximo inicio. <a href="/privacy">Leé la política de privacidad</a>.
+              </p>
+              <button class="commission-form__submit" type="submit" disabled>Enviar idea</button>
+              <p
+                class="commission-form__status"
+                id="commission-feedback"
+                role="status"
+                aria-live="polite"
+              >
+              </p>
+            </form>
           </div>
-          <div class="commission-form__field">
-            <label class="commission-form__label" for="commission-email">Correo electrónico</label>
-            <input class="commission-form__control" id="commission-email" name="email" type="email" autocomplete="email" required maxlength="254" />
-          </div>
-          <div class="commission-form__field">
-            <label class="commission-form__label" for="commission-idea">Tu idea</label>
-            <textarea class="commission-form__control commission-form__control--textarea" id="commission-idea" name="idea" required maxlength="5000" rows="6"></textarea>
-          </div>
-          <div class="commission-form__field">
-            <label class="commission-form__label" for="commission-product">Asociar una pieza (opcional)</label>
-            <select class="commission-form__control" id="commission-product" name="idProduct" disabled>
-              <option value="">Sin asociar</option>
-            </select>
-          </div>
-          <p class="commission-form__disclosure">La solicitud se guarda en esta demo local para revisión por personas con rol STAFF o ADMIN. Se oculta a los 30 días y se elimina físicamente cada hora mientras el backend está activo; si estuvo detenido, se elimina en el próximo inicio. <a href="/privacy">Leé la política de privacidad</a>.</p>
-          <button class="commission-form__submit" type="submit" disabled>Enviar idea</button>
-          <p class="commission-form__status" id="commission-feedback" role="status" aria-live="polite"></p>
-        </form>
-      </section>
-    </article>
+        </section>
+      </article>
+    </div>
   </main>
 </Layout>
 
@@ -68,7 +133,8 @@ import Layout from '../layouts/Layout.astro';
           option.textContent = product.name;
           productSelect.append(option);
         }
-        productStatus.textContent = 'Elegí una pieza si querés asociarla; también podés enviar la idea sin hacerlo.';
+        productStatus.textContent =
+          'Elegí una pieza si querés asociarla; también podés enviar la idea sin hacerlo.';
         productSelect.disabled = false;
       }
     } catch {
@@ -102,7 +168,8 @@ import Layout from '../layouts/Layout.astro';
     }
     if (result.ok) {
       form.reset();
-      feedback.textContent = 'Listo: tu solicitud quedó guardada en esta demo local para revisión. No es un pedido, presupuesto ni pago; no enviamos un correo ni prometemos una respuesta. Se oculta a los 30 días y se purga cada hora mientras el backend está activo o al próximo inicio si estuvo detenido.';
+      feedback.textContent =
+        'Listo: tu solicitud quedó guardada en esta demo para revisión. No es un pedido, presupuesto ni pago; no enviamos un correo ni prometemos una respuesta. Se oculta a los 30 días y se purga cada hora mientras el backend está activo o al próximo inicio si estuvo detenido.';
       return;
     }
     feedback.setAttribute('role', 'alert');
@@ -140,9 +207,10 @@ import Layout from '../layouts/Layout.astro';
   .commission-form__control {
     box-sizing: border-box;
     width: 100%;
-    min-height: 44px;
+    min-block-size: var(--sys-target-min, 44px);
     padding: var(--space-sm) var(--space-md);
     border: 1px solid var(--border);
+    border-radius: 4px;
     background: var(--input-bg);
     color: var(--input-fg);
     font: inherit;
@@ -155,7 +223,7 @@ import Layout from '../layouts/Layout.astro';
   }
 
   .commission-form__control--textarea {
-    min-height: 9rem;
+    min-block-size: 9rem;
     resize: vertical;
   }
 
@@ -167,14 +235,23 @@ import Layout from '../layouts/Layout.astro';
   .commission-form__submit {
     justify-self: start;
     min-width: 44px;
-    min-height: 44px;
+    min-block-size: var(--sys-target-min, 44px);
     padding: var(--space-sm) var(--space-lg);
-    border: 1px solid var(--accent);
-    background: var(--accent);
-    color: #fff;
+    border: 1px solid var(--sys-action-bg, #2d66f0);
+    border-radius: 4px;
+    background: var(--sys-action-bg, #2d66f0);
+    color: #ffffff;
     cursor: pointer;
     font: inherit;
     font-weight: 600;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease;
+  }
+
+  .commission-form__submit:hover:not(:disabled) {
+    background: var(--home-blue-hover, #2459d8);
+    border-color: var(--home-blue-hover, #2459d8);
   }
 
   .commission-form__submit:disabled {
@@ -184,17 +261,20 @@ import Layout from '../layouts/Layout.astro';
 
   .commission-form__status {
     color: var(--fg);
+    font-size: 0.9375rem;
   }
 
-  .commission-form__status[role="alert"] {
+  .commission-form__status[role='alert'] {
     color: var(--danger-text);
   }
 
   .commission-form__disclosure {
-    max-width: 70ch;
+    font-size: 0.9375rem;
+    color: var(--editorial-muted);
+    max-width: var(--editorial-prose-max, 58ch);
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 639px) {
     .commission-form {
       width: 100%;
     }

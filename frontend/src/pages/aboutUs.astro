@@ -1,32 +1,59 @@
 ---
+import EditorialSidebar from '../components/EditorialSidebar.astro';
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="Acerca de Nosotros — Mundo 3D">
-  <main class="form-layout">
-    <article class="about-content">
-      <section>
-        <h1>Acerca de Nosotros</h1>
-      </section>
+<Layout title="Nosotros — Mundo 3D">
+  <main class="editorial-page">
+    <div class="editorial-shell">
+      <EditorialSidebar currentPath={Astro.url.pathname} />
 
-      <section>
-        <h2>Nuestra Historia</h2>
-        <p>Somos un apasionado grupo de expertos dedicados a la impresión de figuras en 3D. Desde nuestros inicios,
-          hemos llevado la creatividad y la innovación a un nuevo nivel, ofreciendo a nuestros clientes una amplia
-          variedad de opciones para materializar sus ideas en objetos tangibles y personalizados.</p>
-        <p>Nuestra misión es convertir la visión de nuestros clientes en realidad, proporcionando servicios de
-          impresión 3D de alta calidad. Nos enorgullece ofrecer soluciones únicas que superan las expectativas y
-          reflejan nuestra dedicación a la excelencia.</p>
-      </section>
+      <article class="editorial-article about-content">
+        <header class="editorial-header">
+          <h1>Nosotros</h1>
+          <p class="editorial-lead">
+            Mundo 3D es un proyecto de portfolio diseñado como una tienda de piezas impresas en 3D y
+            solicitudes de encargo, armado para que su arquitectura y su interfaz resistan
+            inspección directa.
+          </p>
+        </header>
 
-      <section>
-        <h2>Nuestro Equipo</h2>
-        <p>Somos un equipo apasionado y comprometido de tres profesionales expertos en impresión 3D. Cada miembro
-          aporta habilidades únicas y experiencia en el campo, asegurando que cada proyecto sea ejecutado con
-          precisión y creatividad.</p>
-        <p>Nuestra fuerza radica en la colaboración y la innovación. Trabajamos juntos para brindar soluciones
-          personalizadas que reflejen la visión única de cada cliente. Con nosotros, su imaginación es el límite.</p>
-      </section>
-    </article>
+        <section class="editorial-section" aria-labelledby="que-es-mundo-3d">
+          <h2 id="que-es-mundo-3d">Qué es Mundo 3D</h2>
+          <p>
+            El sitio presenta un catálogo de 17 piezas predefinidas inspiradas en distintas
+            franquicias junto a un formulario público para enviar solicitudes de encargo
+            personalizado. Todo el recorrido funciona como una demo interactiva para probar flujos
+            reales de extremo a extremo.
+          </p>
+          <p>
+            No se trata de un comercio con pagos reales, envíos ni un estudio ficticio detrás del
+            mostrador: los precios cargados son datos de prueba y cada pedido o propuesta existe
+            para validar el comportamiento de la aplicación.
+          </p>
+        </section>
+
+        <section class="editorial-section" aria-labelledby="como-esta-pensado">
+          <h2 id="como-esta-pensado">Cómo está pensado</h2>
+          <p>
+            La interfaz sigue una línea de vitrina de taller: superficies sobrias en papel y tinta
+            para que la fotografía real de cada pieza lleve el color y el peso visual, sin adornos
+            que compitan con el catálogo.
+          </p>
+          <p>
+            Por detrás, el objetivo es hacer visible la ingeniería real: navegación abierta del
+            catálogo sin registro previo, pedidos simulados con carrito sincronizado tras iniciar
+            sesión y control de permisos aplicado en el servidor para los roles <code>USER</code>,{' '}
+            <code>STAFF</code> y <code>ADMIN</code>.
+          </p>
+
+          <div class="editorial-actions">
+            <a class="editorial-btn editorial-btn--primary" href="/products">Ver el catálogo</a>
+            <a class="editorial-btn editorial-btn--secondary" href="/step-by-step">Cómo funciona</a>
+            <a class="editorial-link-action" href="/help">Enviar solicitud de encargo</a>
+          </div>
+        </section>
+      </article>
+    </div>
   </main>
 </Layout>

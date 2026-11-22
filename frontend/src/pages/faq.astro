@@ -1,22 +1,107 @@
 ---
+import EditorialSidebar from '../components/EditorialSidebar.astro';
 import Layout from '../layouts/Layout.astro';
+
+const sections = [
+  { id: 'catalogo-y-pedidos', label: 'Catálogo y pedidos' },
+  { id: 'encargos-y-roles', label: 'Encargos y roles' },
+];
 ---
 
 <Layout title="Preguntas frecuentes — Mundo 3D">
-  <main class="form-layout">
-    <article class="about-content">
-      <section>
-        <h1>Preguntas frecuentes</h1>
-      </section>
+  <main class="editorial-page">
+    <div class="editorial-shell">
+      <EditorialSidebar currentPath={Astro.url.pathname} sections={sections} />
 
-      <section>
-        <h2>Preguntas de los Clientes</h2>
-        <h3>¿Cómo realizo un pedido?</h3>
-        <p>Puede explorar nuestro catálogo, seleccionar un producto y agregarlo al carrito para finalizar la compra.</p>
+      <article class="editorial-article">
+        <header class="editorial-header">
+          <h1>Preguntas frecuentes</h1>
+          <p class="editorial-lead">
+            Respuestas concretas sobre cómo funciona el catálogo, los pedidos simulados, las
+            solicitudes de encargo y los roles de esta demo.
+          </p>
+        </header>
 
-        <h3>¿Cuáles son los tiempos de entrega?</h3>
-        <p>Dependiendo de la complejidad de la impresión 3D, los pedidos suelen entregarse en un plazo de 3 a 7 días hábiles.</p>
-      </section>
-    </article>
+        <section
+          class="editorial-section"
+          id="catalogo-y-pedidos"
+          tabindex="-1"
+          data-editorial-anchor
+          aria-labelledby="catalogo-y-pedidos-heading"
+        >
+          <h2 id="catalogo-y-pedidos-heading">Catálogo y pedidos</h2>
+
+          <div class="editorial-faq-item">
+            <h3>¿Necesito crear una cuenta para ver el catálogo?</h3>
+            <p>
+              No. Podés recorrer las 17 piezas predefinidas, abrir su detalle y armar tu carrito
+              local desde el navegador sin registrarte.
+            </p>
+          </div>
+
+          <div class="editorial-faq-item">
+            <h3>¿Los pedidos son compras reales? ¿Hay cobro o envío?</h3>
+            <p>
+              No. Mundo 3D es una demo técnica interactiva: los precios son datos de prueba, los
+              pedidos son simulados y no se procesa ningún pago ni envío comercial.
+            </p>
+          </div>
+
+          <div class="editorial-faq-item">
+            <h3>¿Dónde consulto los pedidos que creé?</h3>
+            <p>
+              Después de iniciar sesión y confirmar un pedido simulado, podés revisar su historial y
+              detalle en <a href="/orders">Mis pedidos</a>.
+            </p>
+          </div>
+        </section>
+
+        <section
+          class="editorial-section"
+          id="encargos-y-roles"
+          tabindex="-1"
+          data-editorial-anchor
+          aria-labelledby="encargos-y-roles-heading"
+        >
+          <h2 id="encargos-y-roles-heading">Encargos y roles</h2>
+
+          <div class="editorial-faq-item">
+            <h3>¿Cómo envío una solicitud de encargo?</h3>
+            <p>
+              Desde <a href="/help">Encargos</a>, sin crear cuenta: dejás tu nombre, correo, la idea
+              y, si querés, una pieza del catálogo como referencia. Usá datos ficticios al probar.
+            </p>
+          </div>
+
+          <div class="editorial-faq-item">
+            <h3>¿Enviar una idea genera presupuesto o correo automático?</h3>
+            <p>
+              No. La solicitud queda guardada para revisión interna por personas con rol{' '}
+              <code>STAFF</code> o <code>ADMIN</code> y se purga automáticamente a los 30 días. No
+              implica cotización, pedido ni respuesta por email.
+            </p>
+          </div>
+
+          <div class="editorial-faq-item">
+            <h3>¿Qué puede hacer cada rol en la aplicación?</h3>
+            <p>
+              Hay tres roles validados en el backend: <code>USER</code> (pedidos simulados e
+              historial propio), <code>STAFF</code> (alta y edición de piezas del catálogo y revisión
+              de encargos, sin permiso para borrar productos por diseño) y <code>ADMIN</code>{' '}
+              (administración completa, no expuesta al público).
+            </p>
+          </div>
+
+          <div class="editorial-actions">
+            <a class="editorial-btn editorial-btn--primary" href="/step-by-step"
+              >Ver cómo funciona</a
+            >
+            <a class="editorial-btn editorial-btn--secondary" href="/help"
+              >Enviar solicitud de encargo</a
+            >
+          </div>
+        </section>
+      </article>
+    </div>
   </main>
 </Layout>

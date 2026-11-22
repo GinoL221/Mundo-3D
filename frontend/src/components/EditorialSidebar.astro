@@ -1,0 +1,94 @@
+---
+interface SectionLink {
+  id: string;
+  label: string;
+}
+
+interface Props {
+  currentPath: string;
+  sections?: SectionLink[];
+}
+
+const { currentPath, sections = [] } = Astro.props;
+const normalizedPath = currentPath === '/' ? currentPath : currentPath.replace(/\/+$/, '');
+
+const pages = [
+  { href: '/step-by-step', label: 'Cómo funciona' },
+  { href: '/help', label: 'Encargos' },
+  { href: '/faq', label: 'Preguntas frecuentes' },
+  { href: '/aboutUs', label: 'Nosotros' },
+  { href: '/terms', label: 'Términos' },
+  { href: '/privacy', label: 'Privacidad' },
+] as const;
+
+const activePage = pages.find((page) => page.href === normalizedPath);
+const activeLabel = activePage?.label ?? 'Información';
+---
+
+<aside class="editorial-sidebar" data-editorial-sidebar>
+  <button
+    type="button"
+    class="editorial-sidebar__toggle"
+    aria-expanded="false"
+    aria-controls="editorial-sidebar-panel"
+  >
+    <span class="editorial-sidebar__toggle-label">
+      <span class="editorial-sidebar__toggle-prefix">En esta sección:</span>
+      <span class="editorial-sidebar__toggle-current">{activeLabel}</span>
+    </span>
+    <svg
+      class="editorial-sidebar__chevron"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  </button>
+
+  <nav id="editorial-sidebar-panel" class="editorial-sidebar__panel" aria-label="Navegación de información">
+    <ul class="editorial-sidebar__pages">
+      {
+        pages.map((page) => {
+          const isActive = page.href === normalizedPath;
+          const hasToc = isActive && sections.length > 0;
+          return (
+            <li class="editorial-sidebar__page-item">
+              <a
+                class:list={[
+                  'editorial-sidebar__page-link',
+                  { 'editorial-sidebar__page-link--active': isActive },
+                ]}
+                href={page.href}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                {page.label}
+              </a>
+              {hasToc && (
+                <ul class="editorial-sidebar__toc" data-editorial-toc aria-label="En esta página">
+                  {sections.map((section) => (
+                    <li>
+                      <a class="editorial-sidebar__toc-link" href={`#${section.id}`}>
+                        {section.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          );
+        })
+      }
+    </ul>
+  </nav>
+</aside>
+
+<script>
+  import '../scripts/editorialSidebar';
+</script>

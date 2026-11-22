@@ -1,23 +1,191 @@
 ---
+import EditorialSidebar from '../components/EditorialSidebar.astro';
 import Layout from '../layouts/Layout.astro';
+
+const sections = [
+  { id: 'que-podes-probar', label: 'Qué podés probar hoy' },
+  { id: 'detras-del-mostrador', label: 'Arquitectura técnica' },
+  { id: 'roles-y-permisos', label: 'Roles y permisos' },
+  { id: 'alcance-y-enlaces', label: 'Alcance y enlaces' },
+];
 ---
 
-<Layout title="Paso a paso — Mundo 3D">
-  <main class="form-layout">
-    <article class="about-content">
-      <section>
-        <h1>Paso a paso</h1>
-      </section>
+<Layout title="Cómo funciona — Mundo 3D">
+  <main class="editorial-page">
+    <div class="editorial-shell">
+      <EditorialSidebar currentPath={Astro.url.pathname} sections={sections} />
 
-      <section>
-        <h2>Guía de Impresión Personalizada</h2>
-        <p>Siga estos simples pasos para obtener su figura 3D personalizada:</p>
-        <ol>
-          <li>Seleccione o suba su modelo 3D predilecto.</li>
-          <li>Configure las dimensiones, material y colores deseados.</li>
-          <li>Realice el pago y haga el seguimiento de su pedido desde su perfil.</li>
-        </ol>
-      </section>
-    </article>
+      <article class="editorial-article">
+        <header class="editorial-header">
+          <h1>Cómo funciona</h1>
+          <p class="editorial-lead">
+            Mundo 3D es una tienda demo de piezas impresas en 3D y solicitudes de encargo. Acá
+            tenés el recorrido de lo que podés probar hoy y cómo está construido el proyecto por
+            detrás.
+          </p>
+        </header>
+
+        <section
+          class="editorial-section"
+          id="que-podes-probar"
+          tabindex="-1"
+          data-editorial-anchor
+          aria-labelledby="que-podes-probar-heading"
+        >
+          <h2 id="que-podes-probar-heading">Qué podés probar hoy</h2>
+          <ol class="editorial-steps">
+            <li class="editorial-steps__item">
+              <div class="editorial-steps__body">
+                <h3>Explorá el catálogo sin registrarte</h3>
+                <p>
+                  Recorré las 17 piezas predefinidas por categoría o franquicia, abrí el detalle de
+                  cada una y armá tu carrito local desde el navegador sin crear cuenta.
+                </p>
+              </div>
+            </li>
+            <li class="editorial-steps__item">
+              <div class="editorial-steps__body">
+                <h3>Probá un pedido simulado con cuenta</h3>
+                <p>
+                  Si te registrás o iniciás sesión, el carrito se sincroniza con el servidor para
+                  crear un pedido simulado y consultar su historial en <a href="/orders">Mis pedidos</a>.
+                  Los precios son datos de prueba: no hay cobro ni envío real.
+                </p>
+              </div>
+            </li>
+            <li class="editorial-steps__item">
+              <div class="editorial-steps__body">
+                <h3>Enviá una solicitud de encargo sin cuenta</h3>
+                <p>
+                  En <a href="/help">Encargos</a> podés dejar tu idea con nombre, correo y, si
+                  querés, una pieza del catálogo como referencia. La solicitud queda guardada para
+                  revisión interna y se purga automáticamente a los 30 días. No genera presupuesto,
+                  pedido ni correo automático; usá datos ficticios al probar.
+                </p>
+              </div>
+            </li>
+          </ol>
+
+          <div class="editorial-actions">
+            <a class="editorial-btn editorial-btn--primary" href="/products">Ver el catálogo</a>
+            <a class="editorial-btn editorial-btn--secondary" href="/help"
+              >Enviar solicitud de encargo</a
+            >
+            <a class="editorial-link-action" href="/orders">Ver mis pedidos</a>
+          </div>
+        </section>
+
+        <section
+          class="editorial-section"
+          id="detras-del-mostrador"
+          tabindex="-1"
+          data-editorial-anchor
+          aria-labelledby="detras-del-mostrador-heading"
+        >
+          <h2 id="detras-del-mostrador-heading">
+            Detrás del mostrador: arquitectura y evidencia técnica
+          </h2>
+          <p>
+            Si llegaste a evaluar el proyecto, la tienda está armada para que su estructura interna
+            resista inspección directa en el código y en las pruebas, sin depender de promesas.
+          </p>
+
+          <dl class="editorial-specs">
+            <div class="editorial-specs__row">
+              <dt>Arquitectura</dt>
+              <dd>
+                Frontend en Astro con carrito reactivo en Nanostores y CSS modular sobre tokens
+                semánticos. Backend en Express y TypeScript organizado en capas hexagonales (dominio
+                aislado de infraestructura) con Sequelize sobre MySQL/MariaDB.
+              </dd>
+            </div>
+
+            <div class="editorial-specs__row">
+              <dt>Autenticación y seguridad</dt>
+              <dd>
+                Sesiones con JWT en cookie <code>httpOnly</code>, rotación de refresh tokens con
+                detección de reuso por familia, protección CSRF double-submit firmada, limitación de
+                intentos de login por IP y por cuenta, y política CSP estricta con Helmet sin
+                scripts inline en respuestas del backend.
+              </dd>
+            </div>
+
+            <div
+              class="editorial-specs__row"
+              id="roles-y-permisos"
+              tabindex="-1"
+              data-editorial-anchor
+            >
+              <dt>Roles y permisos</dt>
+              <dd>
+                Modelo de tres roles aplicado en el servidor: <code>USER</code> (pedidos simulados e
+                historial propio), <code>STAFF</code> (alta y edición de piezas del catálogo y
+                revisión de encargos, sin permiso para eliminar productos por diseño) y <code>ADMIN</code>
+                (administración completa, no expuesta al público).
+              </dd>
+            </div>
+
+            <div class="editorial-specs__row">
+              <dt>Pruebas y trazabilidad</dt>
+              <dd>
+                Verificación en tres niveles —pruebas unitarias, integración contra base de datos
+                real y E2E con Playwright—, validación estática de límites de arquitectura
+                (<code>architecture:check</code>) y especificaciones trazables en <code>openspec/</code>.
+              </dd>
+            </div>
+          </dl>
+
+          <div id="alcance-y-enlaces" tabindex="-1" data-editorial-anchor>
+            <div class="editorial-note">
+              <p>
+                <strong>Alcance actual de la demo:</strong> los pedidos son simulados y no procesan
+                dinero real. El aislamiento por visitante para sesiones demo públicas y una futura
+                pasarela de pagos en modo sandbox están documentados como próximos pasos, no como
+                funciones activas.
+              </p>
+            </div>
+
+            <ul class="editorial-links" aria-label="Documentación y código fuente">
+              <li>
+                <a
+                  href="https://github.com/GinoL221/Mundo-3D"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Código fuente en GitHub
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://github.com/GinoL221/Mundo-3D/blob/main/README.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Guía técnica (README.md)
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://github.com/GinoL221/Mundo-3D/tree/main/openspec"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Especificaciones (openspec/)
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://github.com/GinoL221/Mundo-3D/blob/main/PRODUCT.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Alcance del producto (PRODUCT.md)
+                </a>
+              </li>
+            </ul>
+          </div>
+        </section>
+      </article>
+    </div>
   </main>
 </Layout>
