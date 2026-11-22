@@ -22,7 +22,7 @@
   margin-top: var(--space-lg);
   padding: var(--space-lg);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-surface);
   background: var(--surface);
   text-align: center;
   justify-items: center;
@@ -59,7 +59,7 @@
   display: block;
   min-width: 0;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-control);
   background: var(--bg);
 }
 
