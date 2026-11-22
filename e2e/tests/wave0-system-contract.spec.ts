@@ -302,8 +302,8 @@ test('keeps real product and approved brand imagery normal while isolating Home 
     product: 'auto',
     brand: 'auto',
     canonicalPlaceholder: 'pixelated',
-    featuredPlaceholder: 'pixelated',
-    productPlaceholder: 'pixelated',
+    featuredPlaceholder: 'auto',
+    productPlaceholder: 'auto',
     markerRemoved: 'auto',
   });
 });
