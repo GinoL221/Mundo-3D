@@ -283,6 +283,8 @@ describe('Shared route shell', () => {
     }
     expect(header).toContain('pathname: string;');
     expect(header).toContain('const { pathname } = Astro.props;');
+    expect(header).toContain("currentPath.startsWith('/admin/products/')");
+    expect(header).toContain("aria-current={adminProductsIsCurrent ? 'page' : adminProductsSectionIsCurrent ? 'true' : undefined}");
     expect(header).not.toContain('theme-toggle-label');
     expect(header).not.toContain('theme-toggle-btn__label');
     expect(header).not.toContain('<span>Carrito</span>');

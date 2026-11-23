@@ -55,6 +55,55 @@ describe('ProductAdminService', () => {
       expect(result).toEqual(dto);
     });
 
+    it('throws a ProductAdminApiError carrying status 400 and fieldErrors from express-validator array', async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: async () => ({
+          errors: [
+            { path: 'nameProduct', msg: 'Debe ingresar un nombre' },
+            { path: 'price', msg: 'El precio debe ser mayor a 0' },
+          ],
+        }),
+      });
+
+      let caught: unknown;
+      try {
+        await ProductAdminService.create(new FormData());
+      } catch (err) {
+        caught = err;
+      }
+      expect(caught).toBeInstanceOf(ProductAdminApiError);
+      const apiErr = caught as ProductAdminApiError;
+      expect(apiErr.status).toBe(400);
+      expect(apiErr.message).toBe('Debe ingresar un nombre');
+      expect(apiErr.fieldErrors).toEqual({
+        nameProduct: 'Debe ingresar un nombre',
+        price: 'El precio debe ser mayor a 0',
+      });
+    });
+
+    it('throws a ProductAdminApiError carrying fieldErrors from an object map', async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: async () => ({
+          errors: { price: { msg: 'El precio debe ser mayor a 0' } },
+        }),
+      });
+
+      let caught: unknown;
+      try {
+        await ProductAdminService.create(new FormData());
+      } catch (err) {
+        caught = err;
+      }
+      expect(caught).toBeInstanceOf(ProductAdminApiError);
+      expect((caught as ProductAdminApiError).fieldErrors).toEqual({
+        price: 'El precio debe ser mayor a 0',
+      });
+    });
+
     it('throws a ProductAdminApiError carrying status 400 when the response is not ok', async () => {
       fetchMock.mockResolvedValue({ ok: false, status: 400, json: async () => ({ error: 'Debe ingresar un nombre' }) });
 

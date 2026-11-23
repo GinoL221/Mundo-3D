@@ -1,0 +1,36 @@
+---
+// Shared access-denied callout for P1c admin product routes.
+// Client-side UX gate only — the backend requireRoles guard is authoritative.
+---
+
+<div
+  id="admin-gate-denied"
+  class="ui-callout ui-callout--danger"
+  role="alert"
+  hidden
+>
+  <svg
+    class="ui-callout__icon"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.75"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <rect x="3" y="11" width="18" height="11" rx="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+  <div class="ui-callout__content">
+    <p class="ui-callout__title">Acceso restringido al panel del taller</p>
+    <p class="ui-callout__text">
+      No tenés permisos para administrar piezas del Catálogo. Iniciá sesión con una cuenta STAFF o
+      ADMIN validada por el servidor.
+    </p>
+    <div class="ui-callout__actions">
+      <a href="/products" class="ui-btn ui-btn--secondary ui-btn--sm">Volver al Catálogo</a>
+      <a href="/login" class="ui-btn ui-btn--ghost ui-btn--sm">Iniciar sesión</a>
+    </div>
+  </div>
+</div>

@@ -113,7 +113,7 @@ async function sweepFixtureProducts(): Promise<void> {
   }
 }
 
-const row = (page: Page, name: string) => page.locator('.users-list__card').filter({ hasText: name });
+const row = (page: Page, name: string) => page.locator('.admin-product-row').filter({ hasText: name });
 
 test.beforeAll(async () => {
   // Two Playwright quirks, both required for a clean checkout (CI) where
@@ -239,14 +239,9 @@ test.describe('Admin Products - CRUD Lifecycle', () => {
     await page.fill('#nameProduct', nameProduct);
     await page.fill('#price', '1500');
     await page.fill('#descriptionProduct', 'E2E create test');
-    await page.fill('#idCategory', '1');
-    await page.fill('#idFranchise', '1');
-    // A valid material must be supplied: CreateProductUseCase forwards an
-    // empty string verbatim (`material ?? null` only replaces null/
-    // undefined, not ''), and the domain Product entity then rejects any
-    // non-null material that isn't in ALLOWED_MATERIALS — pre-existing
-    // behavior, unrelated to this test-only change.
-    await page.fill('#material', 'PLA');
+    await page.selectOption('#idCategory', '1');
+    await page.selectOption('#idFranchise', '1');
+    await page.selectOption('#material', 'PLA');
     await page.fill('#stock', '3');
     await page.setInputFiles('#image', FIXTURE_IMAGE);
 
@@ -264,9 +259,7 @@ test.describe('Admin Products - CRUD Lifecycle', () => {
     await expect(page.locator('#admin-edit-content')).toBeVisible();
 
     await page.fill('#nameProduct', updatedName);
-    // Same pre-existing empty-material bug as the create test above — the
-    // edit form always submits a `material` field, so it must be non-empty.
-    await page.fill('#material', 'PLA');
+    await page.selectOption('#material', 'PLA');
     await page.click('#edit-btn');
 
     await expect(page).toHaveURL('/admin/products');
