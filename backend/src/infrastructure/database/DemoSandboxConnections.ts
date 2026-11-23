@@ -11,6 +11,7 @@ export interface DemoSandboxConnectionConfiguration {
   host: string;
   port: number;
   controlPlaneDatabase: string;
+  controlPlaneUsername?: string;
   slots: readonly DemoSandboxConnectionSlot[];
   caCert?: string;
 }
@@ -124,11 +125,13 @@ function validateConfiguration(config: DemoSandboxConnectionConfiguration): void
     }
     const database = slot.database.toLowerCase();
     const username = slot.username.toLowerCase();
+    const controlPlaneUsername = config.controlPlaneUsername?.toLowerCase();
     if (
       slotIds.has(slot.slotId) ||
       databases.has(database) ||
       usernames.has(username) ||
       database === config.controlPlaneDatabase.toLowerCase() ||
+      (controlPlaneUsername !== undefined && username === controlPlaneUsername) ||
       systemDatabases.has(database) ||
       username === 'root'
     ) {
@@ -172,10 +175,12 @@ export function loadDemoSandboxConfigFromEnv(
     throw new Error('DB_CA_CERT or DEMO_SANDBOX_DB_CA_CERT is required in production');
   }
 
+  const controlPlaneUsername = env.DB_USER?.trim() || undefined;
   const connections: DemoSandboxConnectionConfiguration = {
     host,
     port: Number(portRaw),
     controlPlaneDatabase: (env.DB_NAME || '').trim(),
+    ...(controlPlaneUsername !== undefined ? { controlPlaneUsername } : {}),
     slots: parseSlotsJson(env.DEMO_SANDBOX_SLOTS_JSON),
     ...(caCert !== undefined ? { caCert } : {}),
   };
@@ -217,7 +222,7 @@ export function createDemoSandboxConnections(
     },
     async closeAll() {
       const results = await Promise.allSettled(
-        Array.from(connections.values(), (connection) => connection.close()),
+        Array.from(connections.values(), async (connection) => connection.close()),
       );
       const failure = results.find(
         (result): result is PromiseRejectedResult => result.status === 'rejected',

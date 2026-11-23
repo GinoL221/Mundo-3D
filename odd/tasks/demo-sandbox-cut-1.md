@@ -14,7 +14,7 @@ Delivered as 4 sequential PRs to `main` (<=400 authored lines each) under active
 
 ## Tasks
 
-- T1A-1 S1,S2 — PR 1A-1 (Refs #275): TLS + `closeAll()` + fail-closed env loader in `DemoSandboxConnections.ts`, `.env.example`, unit tests — inline — commit: pending
+- T1A-1 S1,S2 — PR 1A-1 (Refs #275): TLS + `closeAll()` + fail-closed env loader in `DemoSandboxConnections.ts`, `.env.example`, unit tests — inline — commit: d62d28c (verified)
 - T1A-2 S1,S2 — PR 1A-2 (Closes #275): conditional `env-preflight.js` validation + tests — inline — commit: pending
 - T1B S3 — PR 1B: `NoopMailAdapter`, `SequelizeSandboxResetFence`, deterministic seed (`17` products + `USER`/`STAFF` only), `SequelizeDemoSandboxResetAdapter`, unit tests — inline — commit: pending
 - T1C S4,S5 — PR 1C: `listSlotsByStatus` in slot repo, `demoSandboxScheduler.ts`, flag-gated wiring + graceful shutdown in `backend/index.js`, unit tests — inline — commit: pending

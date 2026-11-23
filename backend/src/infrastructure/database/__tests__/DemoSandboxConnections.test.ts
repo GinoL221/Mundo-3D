@@ -182,6 +182,29 @@ describe('loadDemoSandboxConfigFromEnv', () => {
     });
   });
 
+  it('inherits DB_* defaults with recoverOnBoot=false and allows non-TLS outside production', () => {
+    const inherited = loadDemoSandboxConfigFromEnv(baseEnv());
+    expect(inherited).toEqual({
+      enabled: true,
+      jwtSecret: 'sandbox-only-secret',
+      recoverOnBoot: false,
+      connections: {
+        host: 'tidb.example.test',
+        port: 4000,
+        controlPlaneDatabase: 'mundo_3d_control',
+        caCert: '-----BEGIN CERTIFICATE-----\nCA\n-----END CERTIFICATE-----',
+        slots: validSlots,
+      },
+    });
+    const local = loadDemoSandboxConfigFromEnv({
+      ...baseEnv(),
+      NODE_ENV: 'development',
+      DB_CA_CERT: '',
+    });
+    expect(local).toMatchObject({ enabled: true, connections: { host: 'tidb.example.test' } });
+    if (local.enabled) expect(local.connections.caCert).toBeUndefined();
+  });
+
   it('loads valid config inheriting DB_* and supports DEMO_SANDBOX_DB_* overrides', () => {
     const loaded = loadDemoSandboxConfigFromEnv({
       ...baseEnv(),
@@ -221,7 +244,22 @@ describe('loadDemoSandboxConfigFromEnv', () => {
       { DEMO_SANDBOX_JWT_SECRET: 'prod-secret' },
       /must differ from JWT_SECRET/,
     ],
+    [
+      'padded colliding DEMO_SANDBOX_JWT_SECRET',
+      { DEMO_SANDBOX_JWT_SECRET: '  prod-secret  ' },
+      /must differ from JWT_SECRET/,
+    ],
     ['missing CA cert in production', { DB_CA_CERT: '' }, /DB_CA_CERT/],
+    [
+      'blank DEMO_SANDBOX_DB_CA_CERT',
+      { DEMO_SANDBOX_DB_CA_CERT: '   ' },
+      /DB_CA_CERT/,
+    ],
+    [
+      'slot username colliding with DB_USER',
+      { DB_USER: 'demo_u2' },
+      /Invalid demo sandbox connection configuration/,
+    ],
     ['invalid port', { DB_PORT: '4000abc' }, /Invalid demo sandbox connection configuration/],
     ['malformed slots JSON', { DEMO_SANDBOX_SLOTS_JSON: '{bad' }, /valid JSON/],
     [
