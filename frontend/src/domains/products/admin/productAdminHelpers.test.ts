@@ -39,8 +39,12 @@ describe('formatAdminPrice', () => {
     expect(formatAdminPrice(1250000)).toBe('$ 1.250.000');
   });
 
-  it('preserves non-zero decimal amounts cleanly', () => {
-    expect(formatAdminPrice(1500.5)).toBe('$ 1.500,5');
+  it('formats prices with cents using two decimals and integers with none', () => {
+    expect(formatAdminPrice(7200.5)).toBe('$ 7.200,50');
+    expect(formatAdminPrice(1500.5)).toBe('$ 1.500,50');
+    expect(formatAdminPrice(1500.25)).toBe('$ 1.500,25');
+    expect(formatAdminPrice(1500.05)).toBe('$ 1.500,05');
+    expect(formatAdminPrice(7200.001)).toBe('$ 7.200');
   });
 
   it('falls back to $ 0 when price is non-finite', () => {
@@ -271,6 +275,32 @@ describe('buildProductFormData', () => {
     );
 
     expect(fd.get('material')).toBe('PLA');
+    expect(fd.has('stock')).toBe(false);
+    expect(fd.has('image')).toBe(false);
+  });
+
+  it('sends empty strings for cleared optional fields in edit mode while keeping stock omitted', () => {
+    const fd = buildProductFormData(
+      makeValidValues({
+        materialSelect: '',
+        materialCustom: '',
+        height: '',
+        width: '   ',
+        depth: '',
+        finish: '   ',
+        productionTime: '',
+        stock: '12',
+        imageFile: null,
+      }),
+      'edit',
+    );
+
+    expect(fd.get('material')).toBe('');
+    expect(fd.get('height')).toBe('');
+    expect(fd.get('width')).toBe('');
+    expect(fd.get('depth')).toBe('');
+    expect(fd.get('finish')).toBe('');
+    expect(fd.get('productionTime')).toBe('');
     expect(fd.has('stock')).toBe(false);
     expect(fd.has('image')).toBe(false);
   });

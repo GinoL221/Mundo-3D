@@ -46,7 +46,12 @@ const KNOWN_FORM_FIELD_IDS = new Set([
   'image',
 ]);
 
-const PRICE_FORMATTER = new Intl.NumberFormat('es-AR', {
+const INTEGER_PRICE_FORMATTER = new Intl.NumberFormat('es-AR', {
+  maximumFractionDigits: 0,
+});
+
+const DECIMAL_PRICE_FORMATTER = new Intl.NumberFormat('es-AR', {
+  minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 
@@ -54,7 +59,12 @@ export function formatAdminPrice(price: number): string {
   if (!Number.isFinite(price)) {
     return '$ 0';
   }
-  return `$ ${PRICE_FORMATTER.format(price)}`;
+  const roundedCents = Math.round(price * 100);
+  const normalized = roundedCents === 0 ? 0 : roundedCents / 100;
+  if (roundedCents % 100 === 0) {
+    return `$ ${INTEGER_PRICE_FORMATTER.format(normalized)}`;
+  }
+  return `$ ${DECIMAL_PRICE_FORMATTER.format(normalized)}`;
 }
 
 export function getStockStatus(stock: number): StockStatusPresentation {
@@ -244,6 +254,9 @@ export function buildProductFormData(
   const materialResult = resolveMaterialInput(values.materialSelect, values.materialCustom);
   if (materialResult.value !== null) {
     formData.append('material', materialResult.value);
+  } else if (mode === 'edit') {
+    // Send '' on edit so the backend's customSanitizer coerces it to null and clears any prior material.
+    formData.append('material', '');
   }
 
   const optionalFields: Array<[string, string]> = [
@@ -256,7 +269,7 @@ export function buildProductFormData(
 
   for (const [key, rawValue] of optionalFields) {
     const trimmed = rawValue.trim();
-    if (trimmed !== '') {
+    if (trimmed !== '' || mode === 'edit') {
       formData.append(key, trimmed);
     }
   }
