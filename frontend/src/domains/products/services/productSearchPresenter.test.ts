@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { presentProductSearchPage } from './productSearchPresenter';
+import {
+  formatCatalogPrice,
+  formatProductCardAriaLabel,
+  presentProductSearchPage,
+} from './productSearchPresenter';
 import type { ProductSearchPage } from '../adapters/product.adapter';
 import type { ProductSearchCriteria } from './product.search.service';
 
@@ -66,5 +70,32 @@ describe('presentProductSearchPage', () => {
     expect(prevUrl.has('idCategory')).toBe(false);
     expect(prevUrl.has('idFranchise')).toBe(false);
     expect(prevUrl.get('page')).toBe('1');
+  });
+});
+
+describe('formatCatalogPrice', () => {
+  it('formats integer prices with es-AR thousand separators and a space after $', () => {
+    expect(formatCatalogPrice(1500)).toBe('$ 1.500');
+    expect(formatCatalogPrice(12500)).toBe('$ 12.500');
+    expect(formatCatalogPrice(0)).toBe('$ 0');
+  });
+
+  it('formats non-integer prices with two decimal places in es-AR', () => {
+    expect(formatCatalogPrice(1500.5)).toBe('$ 1.500,50');
+    expect(formatCatalogPrice(99.99)).toBe('$ 99,99');
+  });
+
+  it('handles non-finite values and negative zero safely', () => {
+    expect(formatCatalogPrice(Number.NaN)).toBe('$ 0');
+    expect(formatCatalogPrice(Number.POSITIVE_INFINITY)).toBe('$ 0');
+    expect(formatCatalogPrice(-0)).toBe('$ 0');
+    expect(formatCatalogPrice(1500.004)).toBe('$ 1.500');
+  });
+});
+
+describe('formatProductCardAriaLabel', () => {
+  it('combines the piece name and formatted price with an em dash', () => {
+    expect(formatProductCardAriaLabel('Goku Super Saiyan', 1500)).toBe('Goku Super Saiyan — $ 1.500');
+    expect(formatProductCardAriaLabel('Llavero Mario', 850.5)).toBe('Llavero Mario — $ 850,50');
   });
 });

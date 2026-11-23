@@ -25,6 +25,31 @@ function buildHref(criteria: ProductSearchCriteria, page: number): string {
   return `/products?${params.toString()}`;
 }
 
+const INTEGER_PRICE_FORMATTER = new Intl.NumberFormat('es-AR', {
+  maximumFractionDigits: 0,
+});
+
+const DECIMAL_PRICE_FORMATTER = new Intl.NumberFormat('es-AR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+export function formatCatalogPrice(price: number): string {
+  if (!Number.isFinite(price)) {
+    return '$ 0';
+  }
+  const roundedCents = Math.round(price * 100);
+  const normalized = roundedCents === 0 ? 0 : roundedCents / 100;
+  if (roundedCents % 100 === 0) {
+    return `$ ${INTEGER_PRICE_FORMATTER.format(normalized)}`;
+  }
+  return `$ ${DECIMAL_PRICE_FORMATTER.format(normalized)}`;
+}
+
+export function formatProductCardAriaLabel(name: string, price: number): string {
+  return `${name} — ${formatCatalogPrice(price)}`;
+}
+
 export function presentProductSearchPage(
   page: ProductSearchPage,
   criteria: ProductSearchCriteria,

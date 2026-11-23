@@ -15,9 +15,10 @@ test.describe('Product Listing - Error & Empty States', () => {
 
     await page.goto('/products');
 
-    const emptyState = page.locator('#product-grid-container .empty-state');
-    await expect(emptyState).toBeVisible();
-    await expect(emptyState.locator('h2')).toHaveText('No se pudo cargar');
+    const errorState = page.locator('#product-grid-container .ui-callout.ui-callout--danger');
+    await expect(errorState).toBeVisible();
+    await expect(errorState.locator('.ui-callout__title')).toHaveText('No se pudo cargar');
+    await expect(errorState.locator('#product-search-retry')).toBeVisible();
   });
 
   test('Renders empty state when the products API returns zero products', async ({ page }) => {
@@ -31,9 +32,9 @@ test.describe('Product Listing - Error & Empty States', () => {
 
     await page.goto('/products');
 
-    const emptyState = page.locator('#product-grid-container .empty-state');
+    const emptyState = page.locator('#product-grid-container .ui-state.ui-state--empty');
     await expect(emptyState).toBeVisible();
-    await expect(emptyState.locator('h2')).toHaveText('Próximamente');
+    await expect(emptyState.locator('.ui-state__title')).toHaveText('Próximamente');
   });
 });
 
