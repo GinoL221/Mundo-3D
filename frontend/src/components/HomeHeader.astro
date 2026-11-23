@@ -9,6 +9,7 @@ const productsIsCurrent = currentPath === '/products';
 const helpIsCurrent = currentPath === '/help';
 const stepByStepIsCurrent = currentPath === '/step-by-step';
 const adminProductsIsCurrent = currentPath === '/admin/products';
+const adminProductsSectionIsCurrent = currentPath.startsWith('/admin/products/');
 const adminRequestsIsCurrent = currentPath === '/admin/commission-requests';
 ---
 
@@ -29,7 +30,7 @@ const adminRequestsIsCurrent = currentPath === '/admin/commission-requests';
           <li><a class:list={["home-header__link", { "home-header__link--active": productsIsCurrent }]} href="/products" aria-current={productsIsCurrent ? 'page' : undefined}>Catálogo</a></li>
           <li><a class:list={["home-header__link", { "home-header__link--active": helpIsCurrent }]} href="/help" aria-current={helpIsCurrent ? 'page' : undefined}>Encargos</a></li>
           <li><a class:list={["home-header__link", { "home-header__link--active": stepByStepIsCurrent }]} href="/step-by-step" aria-current={stepByStepIsCurrent ? 'page' : undefined}>Cómo funciona</a></li>
-          <li class="admin-only" style="display: none;"><a class:list={["home-header__link", { "home-header__link--active": adminProductsIsCurrent }]} href="/admin/products" aria-current={adminProductsIsCurrent ? 'page' : undefined}>Administrar productos</a></li>
+          <li class="admin-only" style="display: none;"><a class:list={["home-header__link", { "home-header__link--active": adminProductsIsCurrent || adminProductsSectionIsCurrent }]} href="/admin/products" aria-current={adminProductsIsCurrent ? 'page' : adminProductsSectionIsCurrent ? 'true' : undefined}>Administrar productos</a></li>
           <li class="admin-only" style="display: none;">
             <a
               class:list={["home-header__link", { "home-header__link--active": adminRequestsIsCurrent }]}
