@@ -77,18 +77,22 @@ function makeMockSlotGraph(slotId: string) {
   return { connection, tx, models, fenceRow, fenceModel, receiptModel, callOrder };
 }
 
+function createAdapter(graph: ReturnType<typeof makeMockSlotGraph>) {
+  const connections: DemoSandboxConnections = { get: jest.fn(() => graph.connection) };
+  return new SequelizeDemoSandboxResetAdapter(connections, () => ({
+    models: graph.models as never,
+    fenceModel: graph.fenceModel as never,
+    receiptModel: graph.receiptModel as never,
+  }));
+}
+
 describe('SequelizeDemoSandboxResetAdapter', () => {
   const slotId = 'slot-1';
   const attemptId = '11111111-1111-4111-8111-111111111111';
 
   it('fences, deletes in FK order, seeds 17 products + USER/STAFF only, verifies, and writes receipt', async () => {
     const graph = makeMockSlotGraph(slotId);
-    const connections: DemoSandboxConnections = { get: jest.fn(() => graph.connection) };
-    const adapter = new SequelizeDemoSandboxResetAdapter(connections, () => ({
-      models: graph.models as never,
-      fenceModel: graph.fenceModel as never,
-      receiptModel: graph.receiptModel as never,
-    }));
+    const adapter = createAdapter(graph);
 
     await adapter.reset(slotId, 1, attemptId);
 
@@ -128,15 +132,7 @@ describe('SequelizeDemoSandboxResetAdapter', () => {
   it('fails closed without writing a receipt when fence transition fails or verification detects ADMIN/residual rows', async () => {
     const staleGraph = makeMockSlotGraph(slotId);
     staleGraph.fenceRow.generation = 99;
-    const staleAdapter = new SequelizeDemoSandboxResetAdapter(
-      { get: () => staleGraph.connection },
-      () => ({
-        models: staleGraph.models as never,
-        fenceModel: staleGraph.fenceModel as never,
-        receiptModel: staleGraph.receiptModel as never,
-      }),
-    );
-    await expect(staleAdapter.reset(slotId, 1, attemptId)).rejects.toThrow('fence');
+    await expect(createAdapter(staleGraph).reset(slotId, 1, attemptId)).rejects.toThrow('fence');
     expect(staleGraph.receiptModel.create).not.toHaveBeenCalled();
 
     const adminGraph = makeMockSlotGraph(slotId);
@@ -144,29 +140,17 @@ describe('SequelizeDemoSandboxResetAdapter', () => {
       { idRole: Role.ADMIN, email: 'demo.buyer+slot-1@sandbox.mundo3d.invalid', emailVerifiedAt: new Date() },
       { idRole: Role.STAFF, email: 'demo.staff+slot-1@sandbox.mundo3d.invalid', emailVerifiedAt: new Date() },
     ]);
-    const adminAdapter = new SequelizeDemoSandboxResetAdapter(
-      { get: () => adminGraph.connection },
-      () => ({
-        models: adminGraph.models as never,
-        fenceModel: adminGraph.fenceModel as never,
-        receiptModel: adminGraph.receiptModel as never,
-      }),
+    await expect(createAdapter(adminGraph).reset(slotId, 1, attemptId)).rejects.toThrow(
+      'verification failed',
     );
-    await expect(adminAdapter.reset(slotId, 1, attemptId)).rejects.toThrow('verification failed');
     expect(adminGraph.receiptModel.create).not.toHaveBeenCalled();
   });
 
-  it('verify() requires both matching committed receipt and clean non-ADMIN state', async () => {
+  it('verify() requires valid slotId, matching committed receipt, and clean verified non-ADMIN state', async () => {
     const graph = makeMockSlotGraph(slotId);
-    const adapter = new SequelizeDemoSandboxResetAdapter(
-      { get: () => graph.connection },
-      () => ({
-        models: graph.models as never,
-        fenceModel: graph.fenceModel as never,
-        receiptModel: graph.receiptModel as never,
-      }),
-    );
+    const adapter = createAdapter(graph);
 
+    await expect(adapter.verify('   ', 1, attemptId)).resolves.toBe(false);
     await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
 
     graph.receiptModel.findOne.mockResolvedValue({
@@ -183,5 +167,21 @@ describe('SequelizeDemoSandboxResetAdapter', () => {
 
     graph.models.Product.count.mockResolvedValueOnce(16);
     await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
+
+    for (const badVerifiedAt of [null, undefined]) {
+      graph.models.User.findAll.mockResolvedValueOnce([
+        {
+          idRole: Role.USER,
+          email: 'demo.buyer+slot-1@sandbox.mundo3d.invalid',
+          emailVerifiedAt: badVerifiedAt as unknown as Date,
+        },
+        {
+          idRole: Role.STAFF,
+          email: 'demo.staff+slot-1@sandbox.mundo3d.invalid',
+          emailVerifiedAt: new Date(),
+        },
+      ]);
+      await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
+    }
   });
 });

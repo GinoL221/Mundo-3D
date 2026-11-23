@@ -106,6 +106,11 @@ export class SequelizeDemoSandboxResetAdapter implements DemoSandboxResetPort {
     if (!resetAttemptId.trim() || !Number.isSafeInteger(generation) || generation < 0) {
       return false;
     }
+    try {
+      buildDemoSandboxSlotEmails(slotId);
+    } catch {
+      return false;
+    }
     const connection = this.connections.get(slotId);
     const graph = this.getGraph(connection);
     const receipt = await graph.receiptModel.findOne({
@@ -196,17 +201,19 @@ export class SequelizeDemoSandboxResetAdapter implements DemoSandboxResetPort {
     }
 
     const expectedEmails = buildDemoSandboxSlotEmails(slotId);
+    const isVerified = (value: unknown): boolean =>
+      value instanceof Date && Number.isFinite(value.getTime());
     const hasBuyer = users.some(
       (user) =>
         Number(user.idRole) === Number(Role.USER) &&
         user.email === expectedEmails.buyer &&
-        user.emailVerifiedAt !== null,
+        isVerified(user.emailVerifiedAt),
     );
     const hasStaff = users.some(
       (user) =>
         Number(user.idRole) === Number(Role.STAFF) &&
         user.email === expectedEmails.staff &&
-        user.emailVerifiedAt !== null,
+        isVerified(user.emailVerifiedAt),
     );
     return hasBuyer && hasStaff;
   }
