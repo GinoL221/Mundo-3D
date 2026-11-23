@@ -11,7 +11,7 @@ const { mode, formId, errorBoxId, submitBtnId, submitLabel } = Astro.props;
 const isCreate = mode === 'create';
 ---
 
-<form id={formId} class="ui-form" novalidate enctype="multipart/form-data">
+<form id={formId} class="ui-form" method="post" novalidate enctype="multipart/form-data">
   <div id={errorBoxId} class="ui-callout ui-callout--danger" role="alert" hidden>
     <svg
       class="ui-callout__icon"

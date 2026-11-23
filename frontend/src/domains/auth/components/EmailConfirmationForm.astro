@@ -81,7 +81,7 @@
     </p>
   </div>
 
-  <form id="email-confirmation-form" class="ui-form" novalidate>
+  <form id="email-confirmation-form" class="ui-form" method="post" novalidate>
     <p class="auth-page__panel-lead">
       Cuando estés listo, confirmá tu dirección desde este enlace.
     </p>
@@ -91,6 +91,7 @@
         class="ui-btn ui-btn--primary auth-page__submit"
         type="submit"
         aria-busy="false"
+        disabled
       >
         Confirmar correo
       </button>
@@ -100,6 +101,8 @@
   <form
     id="resend-confirmation-form"
     class="ui-form auth-page__section-divider"
+    method="post"
+    aria-labelledby="resend-form-title"
     novalidate
   >
     <h2 id="resend-form-title" class="auth-page__panel-title">¿Necesitás otro enlace?</h2>
@@ -127,6 +130,7 @@
         class="ui-btn ui-btn--secondary auth-page__submit"
         type="submit"
         aria-busy="false"
+        disabled
       >
         Solicitar otro enlace
       </button>
@@ -381,4 +385,7 @@
       }
     }
   });
+
+  if (confirmationForm && confirmBtn && hasToken) confirmBtn.disabled = false;
+  if (resendForm && resendBtn) resendBtn.disabled = false;
 </script>
