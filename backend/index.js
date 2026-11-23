@@ -201,7 +201,9 @@ if (env === "test") {
             if (bootAborted) {
               const runtimeToStop = demoSandboxRuntime;
               demoSandboxRuntime = null;
-              await runtimeToStop.stop().catch(() => {});
+              if (runtimeToStop) {
+                await runtimeToStop.stop().catch(() => {});
+              }
               return;
             }
           }

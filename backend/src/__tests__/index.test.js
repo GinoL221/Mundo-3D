@@ -671,5 +671,57 @@ describe('index.js boot sequence', () => {
       expect(close).toHaveBeenCalledTimes(1);
       expect(exitSpy).toHaveBeenCalledWith(0);
     });
+
+    it('aborts cleanly without null dereference on SIGTERM during sandbox ready', async () => {
+      process.env.NODE_ENV = 'production';
+      process.env.DEMO_SANDBOX_ENABLED = 'true';
+      const fake = createFakeHttpServer();
+      const stopSandbox = jest.fn().mockResolvedValue(undefined);
+      let finishSandboxReady;
+      const sandboxReady = new Promise((resolve) => {
+        finishSandboxReady = resolve;
+      });
+      const startDemoSandboxRuntime = jest
+        .fn()
+        .mockResolvedValue({ ready: sandboxReady, stop: stopSandbox });
+
+      jest.isolateModules(() => {
+        jest.doMock('../app', () => fake.app);
+        jest.doMock('../infrastructure/logging/logger', () => ({ logger: mockLogger }));
+        jest.doMock('../database/config/ensureDatabase', () => ({
+          ensureDatabaseExists: jest.fn().mockResolvedValue(undefined),
+        }));
+        jest.doMock('../database/models/db', () => ({
+          sequelize: {
+            authenticate: jest.fn().mockResolvedValue(undefined),
+            close: jest.fn().mockResolvedValue(undefined),
+          },
+        }));
+        jest.doMock('../database/checkPendingMigrations', () => ({
+          checkNoPendingMigrations: jest.fn().mockResolvedValue(undefined),
+        }));
+        jest.doMock('../database/seed', () => ({
+          seedInitialData: jest.fn().mockResolvedValue(undefined),
+        }));
+        jest.doMock('../infrastructure/maintenance/commissionRequestRetention', () => ({
+          startCommissionRequestRetention: jest.fn().mockReturnValue({
+            ready: Promise.resolve(),
+            stop: jest.fn(),
+          }),
+        }));
+        jest.doMock('../infrastructure/maintenance/demoSandboxRuntime', () => ({
+          startDemoSandboxRuntime,
+        }));
+        require('../../index');
+      });
+
+      await flushPromiseChain();
+      process.emit('SIGTERM');
+      finishSandboxReady();
+      await flushPromiseChain();
+      expect(stopSandbox).toHaveBeenCalledTimes(1);
+      expect(fake.app.listen).not.toHaveBeenCalled();
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    });
   });
 });
