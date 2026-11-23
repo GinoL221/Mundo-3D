@@ -110,12 +110,95 @@ export function withCredentials(init: RequestInit = {}): RequestInit {
  */
 export interface APIFieldError {
   msg?: string;
+  path?: string;
+  param?: string;
 }
 
 export interface APIErrorBody {
   error?: string;
   message?: string;
   errors?: Record<string, APIFieldError> | APIFieldError[];
+}
+
+export interface ParsedApiError {
+  message: string;
+  fieldErrors: Record<string, string>;
+}
+
+/**
+ * Rich Error subclass thrown by `parseApiResponse` when the API returns a
+ * non-2xx JSON payload. Preserves `Error.message` for all existing callers
+ * while attaching parsed per-field validation messages (`fieldErrors`) and
+ * HTTP `status` for forms that render field-level feedback.
+ */
+export class ApiError extends Error {
+  readonly fieldErrors: Record<string, string>;
+  readonly status?: number;
+
+  constructor(message: string, fieldErrors: Record<string, string> = {}, status?: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.fieldErrors = fieldErrors;
+    this.status = status;
+  }
+}
+
+function readFieldName(entry: APIFieldError | undefined, fallbackKey = ''): string {
+  if (typeof entry?.path === 'string' && entry.path.trim()) {
+    return entry.path.trim();
+  }
+  if (typeof entry?.param === 'string' && entry.param.trim()) {
+    return entry.param.trim();
+  }
+  return fallbackKey.trim();
+}
+
+/**
+ * Extracts both a summary message and a field-to-message map from an API
+ * error body, supporting express-validator's array shape (`path` or legacy
+ * `param` + `msg`) and field-keyed object shape (`{ [field]: { msg } }`).
+ * Keeps the first message per field when multiple errors target the same
+ * field. Never throws — malformed or absent bodies yield `{ message: fallback,
+ * fieldErrors: {} }`.
+ */
+export function readApiErrorDetails(body: unknown, fallback: string): ParsedApiError {
+  if (typeof body !== 'object' || body === null) {
+    return { message: fallback, fieldErrors: {} };
+  }
+
+  const { errors, error, message } = body as APIErrorBody;
+  const fieldErrorMap = new Map<string, string>();
+  let firstMsg: string | undefined;
+
+  if (Array.isArray(errors)) {
+    for (const item of errors) {
+      const msg = typeof item?.msg === 'string' ? item.msg.trim() : '';
+      if (!msg) continue;
+      if (!firstMsg) firstMsg = msg;
+      const field = readFieldName(item);
+      if (field && !fieldErrorMap.has(field)) {
+        fieldErrorMap.set(field, msg);
+      }
+    }
+  } else if (typeof errors === 'object' && errors !== null) {
+    for (const [key, item] of Object.entries(errors)) {
+      const msg = typeof item?.msg === 'string' ? item.msg.trim() : '';
+      if (!msg) continue;
+      if (!firstMsg) firstMsg = msg;
+      const field = readFieldName(item, key);
+      if (field && !fieldErrorMap.has(field)) {
+        fieldErrorMap.set(field, msg);
+      }
+    }
+  }
+
+  const rootError = typeof error === 'string' && error.trim() ? error.trim() : undefined;
+  const rootMessage = typeof message === 'string' && message.trim() ? message.trim() : undefined;
+
+  return {
+    message: firstMsg || rootError || rootMessage || fallback,
+    fieldErrors: Object.fromEntries(fieldErrorMap),
+  };
 }
 
 /**
@@ -125,19 +208,7 @@ export interface APIErrorBody {
  * a malformed or absent body yields the fallback.
  */
 export function readApiErrorMessage(body: unknown, fallback: string): string {
-  if (typeof body !== 'object' || body === null) return fallback;
-
-  const { errors, error, message } = body as APIErrorBody;
-
-  if (Array.isArray(errors)) {
-    const msg = errors[0]?.msg;
-    if (msg) return msg;
-  } else if (typeof errors === 'object' && errors !== null) {
-    const msg = Object.values(errors)[0]?.msg;
-    if (msg) return msg;
-  }
-
-  return error || message || fallback;
+  return readApiErrorDetails(body, fallback).message;
 }
 
 const COLD_START_STATUSES = new Set([502, 503, 504]);
@@ -172,7 +243,8 @@ export async function parseApiResponse<T>(response: Response, fallbackMessage: s
 
   if (!response.ok) {
     if (parsed.ok) {
-      throw new Error(readApiErrorMessage(parsed.value, fallbackMessage));
+      const { message, fieldErrors } = readApiErrorDetails(parsed.value, fallbackMessage);
+      throw new ApiError(message, fieldErrors, response.status);
     }
     if (COLD_START_STATUSES.has(response.status)) {
       throw new Error(COLD_START_ERROR_MESSAGE);

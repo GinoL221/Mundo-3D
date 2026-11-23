@@ -239,7 +239,7 @@ test.describe('Authentication E2E Tests', () => {
     await expect(page).toHaveURL('/register');
   });
 
-  test('Missing Image Registration Rejected', async ({ page }) => {
+  test('Registration Succeeds Without Profile Image', async ({ page }) => {
     const noImageEmail = `no_image_${Date.now()}@example.com`;
 
     await page.goto('/register');
@@ -248,13 +248,36 @@ test.describe('Authentication E2E Tests', () => {
     await page.fill('#email', noImageEmail);
     await page.fill('#password', testPassword);
     await page.fill('#confirmPassword', testPassword);
-    // #image intentionally left empty.
+    // #image intentionally left empty (optional profile image).
 
     await page.click('#register-btn');
 
-    const errorBox = page.locator('#register-error');
-    await expect(errorBox).toBeVisible();
-    await expect(errorBox).toHaveText('Tienes que subir una imagen');
-    await expect(page).toHaveURL('/register');
+    await expect(page).toHaveURL('/');
+    await expect(page.locator('#navbar-greeting')).toContainText('Hola No');
+  });
+
+  test('Password reveal toggle and per-field validation on /register', async ({ page }) => {
+    await page.goto('/register');
+
+    const passwordInput = page.locator('#password');
+    const toggleBtn = page.locator('button[aria-controls="password"]');
+    await expect(toggleBtn).toHaveAttribute('aria-pressed', 'false');
+    await expect(toggleBtn).toHaveAttribute('aria-label', 'Mostrar contraseña');
+
+    await toggleBtn.click();
+    await expect(passwordInput).toHaveAttribute('type', 'text');
+    await expect(toggleBtn).toHaveAttribute('aria-pressed', 'true');
+    await expect(toggleBtn).toHaveAttribute('aria-label', 'Ocultar contraseña');
+
+    await toggleBtn.click();
+    await expect(passwordInput).toHaveAttribute('type', 'password');
+
+    // Submit empty form to verify client-side per-field errors and summary focus
+    await page.click('#register-btn');
+    await expect(page.locator('#register-error')).toBeVisible();
+    await expect(page.locator('#register-error')).toBeFocused();
+    await expect(page.locator('#firstName')).toHaveAttribute('aria-invalid', 'true');
+    await expect(page.locator('#firstName-error')).toHaveText('Ingresá tu nombre');
+    await expect(page.locator('#email-error')).toHaveText('Ingresá tu correo');
   });
 });

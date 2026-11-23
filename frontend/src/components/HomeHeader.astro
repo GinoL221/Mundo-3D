@@ -11,6 +11,8 @@ const stepByStepIsCurrent = currentPath === '/step-by-step';
 const adminProductsIsCurrent = currentPath === '/admin/products';
 const adminProductsSectionIsCurrent = currentPath.startsWith('/admin/products/');
 const adminRequestsIsCurrent = currentPath === '/admin/commission-requests';
+const loginIsCurrent = currentPath === '/login';
+const registerIsCurrent = currentPath === '/register';
 ---
 
 <header class="home-header">
@@ -87,8 +89,8 @@ const adminRequestsIsCurrent = currentPath === '/admin/commission-requests';
 
       <div class="home-header__account-section">
         <ul class="home-header__auth-links">
-          <li class="guest-only"><a class="home-header__link" href="/login">Iniciar sesión</a></li>
-          <li class="guest-only"><a class="home-header__link home-header__register" href="/register">Registrarse</a></li>
+          <li class="guest-only"><a class="home-header__link" href="/login" aria-current={loginIsCurrent ? 'page' : undefined}>Iniciar sesión</a></li>
+          <li class="guest-only"><a class="home-header__link home-header__register" href="/register" aria-current={registerIsCurrent ? 'page' : undefined}>Registrarse</a></li>
         </ul>
       </div>
 

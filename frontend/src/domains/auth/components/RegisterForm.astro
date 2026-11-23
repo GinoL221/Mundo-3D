@@ -1,141 +1,486 @@
-<form id="register-form" class="auth-form" novalidate enctype="multipart/form-data">
-  <div id="register-error" class="auth-form__error" role="alert" hidden></div>
-
-  <div class="auth-form__field">
-    <label for="firstName">Nombre</label>
-    <input type="text" id="firstName" name="firstName" class="auth-form__input" autocomplete="given-name" required />
-  </div>
-  <div class="auth-form__field">
-    <label for="lastName">Apellido</label>
-    <input type="text" id="lastName" name="lastName" class="auth-form__input" autocomplete="family-name" required />
-  </div>
-  <div class="auth-form__field">
-    <label for="email">Correo electrónico</label>
-    <input type="email" id="email" name="email" class="auth-form__input" autocomplete="email" required />
-  </div>
-  <div class="auth-form__field">
-    <label for="password">Contraseña</label>
-    <input type="password" id="password" name="password" maxlength="32" class="auth-form__input" autocomplete="new-password" aria-describedby="password-strength-checks" required />
-    <ul class="auth-form__checks" id="password-strength-checks" aria-live="polite" style="display: none;">
-      <li class="auth-form__check-item" id="check-uppercase"><span class="pw-checks__icon" aria-hidden="true">✘</span> Al menos 1 mayúscula</li>
-      <li class="auth-form__check-item" id="check-number"><span class="pw-checks__icon" aria-hidden="true">✘</span> Al menos 1 número</li>
-      <li class="auth-form__check-item" id="check-special"><span class="pw-checks__icon" aria-hidden="true">✘</span> Al menos 1 carácter especial</li>
-    </ul>
-  </div>
-  <div class="auth-form__field">
-    <label for="confirmPassword">Confirmar contraseña</label>
-    <input type="password" id="confirmPassword" name="confirmPassword" maxlength="32" class="auth-form__input" autocomplete="new-password" aria-describedby="password-match-checks" required />
-    <ul class="auth-form__checks" id="password-match-checks" aria-live="polite">
-      <li class="auth-form__check-item" id="check-match" style="display: none;"><span class="pw-checks__icon" aria-hidden="true">✘</span> Las contraseñas coinciden</li>
-    </ul>
-  </div>
-
-  <div class="auth-form__field">
-    <label for="image">Imagen de perfil</label>
-    <p id="image-requirement" class="auth-form__help">Necesitás elegir una imagen para crear tu cuenta.</p>
-    <div class="auth-form__file-picker">
-      <input type="file" id="image" name="image" class="auth-form__file-input" accept="image/*" aria-describedby="image-requirement image-filename" />
-      <label for="image" class="auth-form__file-action">Elegir imagen</label>
-      <span id="image-filename" class="auth-form__file-name" role="status" aria-live="polite">Ninguna imagen elegida</span>
+<form id="register-form" class="ui-form" novalidate enctype="multipart/form-data">
+  <div id="register-error" class="ui-callout ui-callout--danger" role="alert" tabindex="-1" hidden>
+    <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+    <div class="ui-callout__content">
+      <p id="register-error-text" class="ui-callout__text"></p>
     </div>
   </div>
 
-  <div class="auth-form__actions">
-    <button type="submit" id="register-btn" class="auth-form__button auth-form__button--primary" aria-busy="false">Crear cuenta</button>
-    <button type="reset" class="auth-form__button auth-form__button--secondary">Limpiar formulario</button>
+  <fieldset class="ui-fieldset">
+    <legend class="ui-fieldset__legend">Tus datos</legend>
+
+    <div class="ui-form-row ui-form-row--2">
+      <div class="ui-field">
+        <label class="ui-label" for="firstName">Nombre</label>
+        <input
+          type="text"
+          id="firstName"
+          name="firstName"
+          class="ui-input"
+          minlength="2"
+          maxlength="10"
+          autocomplete="given-name"
+          aria-describedby="firstName-help"
+          required
+        />
+        <p id="firstName-help" class="ui-help">Entre 2 y 10 caracteres.</p>
+        <p id="firstName-error" class="ui-error" hidden></p>
+      </div>
+
+      <div class="ui-field">
+        <label class="ui-label" for="lastName">Apellido</label>
+        <input
+          type="text"
+          id="lastName"
+          name="lastName"
+          class="ui-input"
+          minlength="2"
+          maxlength="10"
+          autocomplete="family-name"
+          aria-describedby="lastName-help"
+          required
+        />
+        <p id="lastName-help" class="ui-help">Entre 2 y 10 caracteres.</p>
+        <p id="lastName-error" class="ui-error" hidden></p>
+      </div>
+    </div>
+
+    <div class="ui-field">
+      <label class="ui-label" for="email">Correo electrónico</label>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        class="ui-input"
+        autocomplete="email"
+        required
+      />
+      <p id="email-error" class="ui-error" hidden></p>
+    </div>
+  </fieldset>
+
+  <fieldset class="ui-fieldset">
+    <legend class="ui-fieldset__legend">Acceso</legend>
+
+    <div class="ui-field">
+      <label class="ui-label" for="password">Contraseña</label>
+      <div class="ui-input-group ui-input-group--field">
+        <input
+          type="password"
+          id="password"
+          name="password"
+          minlength="8"
+          maxlength="32"
+          class="ui-input"
+          autocomplete="new-password"
+          aria-describedby="password-strength-checks"
+          required
+        />
+        <button
+          type="button"
+          class="ui-btn ui-btn--ghost ui-btn--icon"
+          data-password-toggle
+          aria-pressed="false"
+          aria-controls="password"
+          aria-label="Mostrar contraseña"
+        >
+          <svg data-icon="show" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          <svg data-icon="hide" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-6.5 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94" />
+            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19" />
+            <line x1="2" y1="2" x2="22" y2="22" />
+          </svg>
+        </button>
+      </div>
+      <p id="password-error" class="ui-error" hidden></p>
+      <ul class="ui-checklist" id="password-strength-checks" aria-live="polite">
+        <li class="ui-checklist__item" id="check-length">
+          <svg class="ui-checklist__icon" data-check-pending viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+          </svg>
+          <svg class="ui-checklist__icon hidden" data-check-met viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span>Entre 8 y 32 caracteres</span>
+        </li>
+        <li class="ui-checklist__item" id="check-uppercase">
+          <svg class="ui-checklist__icon" data-check-pending viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+          </svg>
+          <svg class="ui-checklist__icon hidden" data-check-met viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span>Al menos 1 mayúscula</span>
+        </li>
+        <li class="ui-checklist__item" id="check-number">
+          <svg class="ui-checklist__icon" data-check-pending viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+          </svg>
+          <svg class="ui-checklist__icon hidden" data-check-met viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span>Al menos 1 número</span>
+        </li>
+        <li class="ui-checklist__item" id="check-special">
+          <svg class="ui-checklist__icon" data-check-pending viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+          </svg>
+          <svg class="ui-checklist__icon hidden" data-check-met viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span>Al menos 1 carácter especial</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="ui-field">
+      <label class="ui-label" for="confirmPassword">Confirmar contraseña</label>
+      <div class="ui-input-group ui-input-group--field">
+        <input
+          type="password"
+          id="confirmPassword"
+          name="confirmPassword"
+          minlength="8"
+          maxlength="32"
+          class="ui-input"
+          autocomplete="new-password"
+          aria-describedby="password-match-checks"
+          required
+        />
+        <button
+          type="button"
+          class="ui-btn ui-btn--ghost ui-btn--icon"
+          data-password-toggle
+          aria-pressed="false"
+          aria-controls="confirmPassword"
+          aria-label="Mostrar contraseña"
+        >
+          <svg data-icon="show" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          <svg data-icon="hide" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-6.5 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94" />
+            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19" />
+            <line x1="2" y1="2" x2="22" y2="22" />
+          </svg>
+        </button>
+      </div>
+      <p id="confirmPassword-error" class="ui-error" hidden></p>
+      <ul class="ui-checklist" id="password-match-checks" aria-live="polite">
+        <li class="ui-checklist__item" id="check-match">
+          <svg class="ui-checklist__icon" data-check-pending viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+          </svg>
+          <svg class="ui-checklist__icon hidden" data-check-met viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span>Las contraseñas coinciden</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="ui-field">
+      <label class="ui-label" for="image">Imagen de perfil</label>
+      <p id="image-requirement" class="ui-help">Opcional. JPG o PNG.</p>
+      <div class="ui-file">
+        <input
+          type="file"
+          id="image"
+          name="image"
+          class="ui-file__input"
+          accept=".jpg,.png,image/jpeg,image/png"
+          aria-describedby="image-requirement image-filename"
+        />
+        <label for="image" class="ui-btn ui-btn--secondary ui-btn--sm">Elegir imagen</label>
+        <span id="image-filename" class="ui-file__name" role="status" aria-live="polite">Ninguna imagen elegida</span>
+      </div>
+      <p id="image-error" class="ui-error" hidden></p>
+      <div id="image-preview" class="ui-media-preview" hidden>
+        <div class="ui-media-preview__meta">
+          <p id="image-preview-title" class="ui-media-preview__title"></p>
+          <p class="ui-media-preview__caption">Vista previa de tu imagen de perfil</p>
+        </div>
+        <button type="button" id="image-clear-btn" class="ui-btn ui-btn--ghost ui-btn--sm">Quitar</button>
+      </div>
+    </div>
+  </fieldset>
+
+  <div class="auth-page__actions">
+    <button type="submit" id="register-btn" class="ui-btn ui-btn--primary auth-page__submit" aria-busy="false">
+      Crear cuenta
+    </button>
   </div>
-  <p class="auth-form__footer">¿Ya tenés cuenta? <a class="auth-form__link" href="/login">Iniciá sesión</a></p>
+
+  <p class="auth-page__footer">
+    ¿Ya tenés cuenta? <a class="auth-page__link" href="/login">Iniciá sesión</a>
+  </p>
 </form>
 
 <script>
   import { AuthService } from '../services/auth.service';
   import { broadcastSessionChanged } from '../services/session.service';
+  import { CartService } from '../../cart/services/CartService';
+  import { bindPasswordToggles } from '../utils/passwordToggle';
+  import {
+    evaluatePasswordRules,
+    extractApiFieldErrors,
+    isAllowedImageFileName,
+    summarizeFieldErrors,
+    validateRegisterInput,
+    type RegisterFieldName,
+  } from '../validation/authValidation';
 
-  // --- Password strength checklist ---
-  try {
-    const passwordInput = document.getElementById('password') as HTMLInputElement | null;
-    const confirmPasswordInput = document.getElementById('confirmPassword') as HTMLInputElement | null;
-    const strengthChecksContainer = document.getElementById('password-strength-checks');
-    const checkUppercase = document.getElementById('check-uppercase');
-    const checkNumber = document.getElementById('check-number');
-    const checkSpecial = document.getElementById('check-special');
-    const checkMatch = document.getElementById('check-match');
+  const HYDRATION_REDIRECT_TIMEOUT_MS = 1500;
+  const EMPTY_IMAGE_FILENAME = 'Ninguna imagen elegida';
 
-    let confirmTouched = false;
-
-    function setCheck(el: HTMLElement | null, valid: boolean): void {
-      if (!el) return;
-      const icon = el.querySelector('.pw-checks__icon');
-      el.classList.toggle('auth-form__check-item--valid', valid);
-      if (icon) icon.textContent = valid ? '✔' : '✘';
-    }
-
-    function updateChecks(): void {
-      if (!passwordInput || !confirmPasswordInput) return;
-      const password = passwordInput.value || '';
-      const confirmPassword = confirmPasswordInput.value || '';
-
-      if (strengthChecksContainer) {
-        (strengthChecksContainer as HTMLElement).style.display = password.length > 0 ? 'block' : 'none';
-      }
-
-      setCheck(checkUppercase, /[A-Z]/.test(password));
-      setCheck(checkNumber, /[0-9]/.test(password));
-      setCheck(checkSpecial, /[^A-Za-z0-9]/.test(password));
-
-      if (checkMatch) {
-        if (!confirmTouched) {
-          (checkMatch as HTMLElement).style.display = 'none';
-        } else {
-          (checkMatch as HTMLElement).style.display = 'flex';
-          const isMatch = password.length > 0 && password === confirmPassword;
-          setCheck(checkMatch, isMatch);
-        }
-      }
-    }
-
-    if (passwordInput && confirmPasswordInput) {
-      passwordInput.addEventListener('input', updateChecks);
-      passwordInput.addEventListener('change', updateChecks);
-      confirmPasswordInput.addEventListener('input', () => { confirmTouched = true; updateChecks(); });
-      confirmPasswordInput.addEventListener('change', () => { confirmTouched = true; updateChecks(); });
-      updateChecks();
-      setTimeout(updateChecks, 100);
-      setTimeout(updateChecks, 500);
-    }
-  } catch (err) {
-    console.error('Error running password checks script:', err);
-  }
-
-  // --- Registration form submit ---
   const form = document.getElementById('register-form') as HTMLFormElement | null;
   const errorBox = document.getElementById('register-error') as HTMLElement | null;
+  const errorText = document.getElementById('register-error-text') as HTMLElement | null;
   const registerBtn = document.getElementById('register-btn') as HTMLButtonElement | null;
+
+  const firstNameInput = document.getElementById('firstName') as HTMLInputElement | null;
+  const lastNameInput = document.getElementById('lastName') as HTMLInputElement | null;
+  const emailInput = document.getElementById('email') as HTMLInputElement | null;
+  const passwordInput = document.getElementById('password') as HTMLInputElement | null;
+  const confirmPasswordInput = document.getElementById('confirmPassword') as HTMLInputElement | null;
   const imageInput = document.getElementById('image') as HTMLInputElement | null;
   const imageFilename = document.getElementById('image-filename');
-  const emptyImageFilename = 'Ninguna imagen elegida';
+  const imagePreview = document.getElementById('image-preview');
+  // Created on demand so the markup never ships an <img> without a source.
+  let imagePreviewThumb: HTMLImageElement | null = null;
+  const ensurePreviewThumb = (): HTMLImageElement | null => {
+    if (!imagePreview) return null;
+    if (!imagePreviewThumb) {
+      imagePreviewThumb = Object.assign(document.createElement('img'), {
+        id: 'image-preview-thumb',
+        className: 'ui-media-preview__thumb',
+        alt: 'Vista previa de tu imagen de perfil',
+        width: 64,
+        height: 64,
+      });
+      imagePreview.prepend(imagePreviewThumb);
+    }
+    return imagePreviewThumb;
+  };
+  const imagePreviewTitle = document.getElementById('image-preview-title');
+  const imageClearBtn = document.getElementById('image-clear-btn') as HTMLButtonElement | null;
 
-  function updateImageFilename(): void {
-    if (imageFilename) {
-      imageFilename.textContent = imageInput?.files?.[0]?.name ?? emptyImageFilename;
+  const checkLength = document.getElementById('check-length');
+  const checkUppercase = document.getElementById('check-uppercase');
+  const checkNumber = document.getElementById('check-number');
+  const checkSpecial = document.getElementById('check-special');
+  const checkMatch = document.getElementById('check-match');
+
+  interface FieldDescriptor {
+    input: HTMLInputElement | null;
+    error: HTMLElement | null;
+    baseDescribedBy: string;
+  }
+
+  const fieldElements: Record<RegisterFieldName, FieldDescriptor> = {
+    firstName: {
+      input: firstNameInput,
+      error: document.getElementById('firstName-error'),
+      baseDescribedBy: 'firstName-help',
+    },
+    lastName: {
+      input: lastNameInput,
+      error: document.getElementById('lastName-error'),
+      baseDescribedBy: 'lastName-help',
+    },
+    email: {
+      input: emailInput,
+      error: document.getElementById('email-error'),
+      baseDescribedBy: '',
+    },
+    password: {
+      input: passwordInput,
+      error: document.getElementById('password-error'),
+      baseDescribedBy: 'password-strength-checks',
+    },
+    confirmPassword: {
+      input: confirmPasswordInput,
+      error: document.getElementById('confirmPassword-error'),
+      baseDescribedBy: 'password-match-checks',
+    },
+    image: {
+      input: imageInput,
+      error: document.getElementById('image-error'),
+      baseDescribedBy: 'image-requirement image-filename',
+    },
+  };
+
+  if (form) {
+    bindPasswordToggles(form);
+  }
+
+  function setChecklistItem(el: HTMLElement | null, met: boolean): void {
+    if (!el) return;
+    el.classList.toggle('ui-checklist__item--met', met);
+    const pendingIcon = el.querySelector<SVGElement>('[data-check-pending]');
+    const metIcon = el.querySelector<SVGElement>('[data-check-met]');
+    pendingIcon?.classList.toggle('hidden', met);
+    metIcon?.classList.toggle('hidden', !met);
+  }
+
+  function updatePasswordChecks(): void {
+    const rules = evaluatePasswordRules(passwordInput?.value || '', confirmPasswordInput?.value || '');
+    setChecklistItem(checkLength, rules.length);
+    setChecklistItem(checkUppercase, rules.uppercase);
+    setChecklistItem(checkNumber, rules.number);
+    setChecklistItem(checkSpecial, rules.special);
+    setChecklistItem(checkMatch, rules.match);
+  }
+
+  passwordInput?.addEventListener('input', updatePasswordChecks);
+  passwordInput?.addEventListener('change', updatePasswordChecks);
+  confirmPasswordInput?.addEventListener('input', updatePasswordChecks);
+  confirmPasswordInput?.addEventListener('change', updatePasswordChecks);
+  updatePasswordChecks();
+
+  function setFieldError(field: RegisterFieldName, message: string | null): void {
+    const entry = fieldElements[field];
+    if (!entry) return;
+    const errorId = `${field}-error`;
+    if (message) {
+      entry.input?.setAttribute('aria-invalid', 'true');
+      const describedBy = [entry.baseDescribedBy, errorId].filter(Boolean).join(' ');
+      entry.input?.setAttribute('aria-describedby', describedBy);
+      if (entry.error) {
+        entry.error.textContent = message;
+        entry.error.hidden = false;
+      }
+    } else {
+      entry.input?.removeAttribute('aria-invalid');
+      if (entry.baseDescribedBy) {
+        entry.input?.setAttribute('aria-describedby', entry.baseDescribedBy);
+      } else {
+        entry.input?.removeAttribute('aria-describedby');
+      }
+      if (entry.error) {
+        entry.error.textContent = '';
+        entry.error.hidden = true;
+      }
     }
   }
 
-  imageInput?.addEventListener('change', updateImageFilename);
-  form?.addEventListener('reset', () => {
-    window.setTimeout(updateImageFilename);
-  });
-
-  function showError(msg: string): void {
-    if (errorBox) {
-      errorBox.textContent = msg;
-      errorBox.hidden = false;
+  function clearAllFieldErrors(): void {
+    for (const field of Object.keys(fieldElements) as RegisterFieldName[]) {
+      setFieldError(field, null);
     }
+  }
+
+  function showSummaryError(msg: string): void {
+    if (errorBox && errorText) {
+      errorText.textContent = msg;
+      errorBox.hidden = false;
+      errorBox.focus();
+    }
+  }
+
+  function hideSummaryError(): void {
+    if (errorBox && errorText) {
+      errorText.textContent = '';
+      errorBox.hidden = true;
+    }
+  }
+
+  let previewObjectUrl: string | null = null;
+
+  function revokePreviewUrl(): void {
+    if (previewObjectUrl) {
+      URL.revokeObjectURL(previewObjectUrl);
+      previewObjectUrl = null;
+    }
+  }
+
+  function updateImagePreview(): void {
+    revokePreviewUrl();
+    const file = imageInput?.files?.[0] ?? null;
+
+    if (imageFilename) {
+      imageFilename.textContent = file?.name ?? EMPTY_IMAGE_FILENAME;
+    }
+
+    if (!file) {
+      if (imagePreview) imagePreview.hidden = true;
+      if (imagePreviewThumb) imagePreviewThumb.removeAttribute('src');
+      if (imagePreviewTitle) imagePreviewTitle.textContent = '';
+      setFieldError('image', null);
+      return;
+    }
+
+    if (!isAllowedImageFileName(file.name)) {
+      if (imagePreview) imagePreview.hidden = true;
+      if (imagePreviewThumb) imagePreviewThumb.removeAttribute('src');
+      setFieldError('image', 'Las extensiones de archivos permitidas son .jpg, .png');
+      return;
+    }
+
+    setFieldError('image', null);
+    const thumb = ensurePreviewThumb();
+    if (imagePreview && thumb && imagePreviewTitle) {
+      previewObjectUrl = URL.createObjectURL(file);
+      thumb.src = previewObjectUrl;
+      imagePreviewTitle.textContent = file.name;
+      imagePreview.hidden = false;
+    }
+  }
+
+  imageInput?.addEventListener('change', updateImagePreview);
+  imageClearBtn?.addEventListener('click', () => {
+    if (imageInput) {
+      imageInput.value = '';
+    }
+    updateImagePreview();
+    imageInput?.focus();
+  });
+  window.addEventListener('pagehide', revokePreviewUrl);
+
+  for (const field of ['firstName', 'lastName', 'email', 'password', 'confirmPassword'] as const) {
+    fieldElements[field].input?.addEventListener('input', () => {
+      if (fieldElements[field].input?.getAttribute('aria-invalid') === 'true') {
+        setFieldError(field, null);
+      }
+    });
   }
 
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (errorBox) errorBox.hidden = true;
+    hideSummaryError();
+    clearAllFieldErrors();
+
+    const selectedFile = imageInput?.files?.[0] ?? null;
+    const clientErrors = validateRegisterInput({
+      firstName: firstNameInput?.value || '',
+      lastName: lastNameInput?.value || '',
+      email: emailInput?.value || '',
+      password: passwordInput?.value || '',
+      confirmPassword: confirmPasswordInput?.value || '',
+      imageName: selectedFile?.name ?? null,
+    });
+
+    if (Object.keys(clientErrors).length > 0) {
+      for (const [field, msg] of Object.entries(clientErrors)) {
+        if (msg) setFieldError(field as RegisterFieldName, msg);
+      }
+      showSummaryError(
+        summarizeFieldErrors(
+          clientErrors as Record<string, string>,
+          'Revisá los campos marcados antes de crear tu cuenta.'
+        )
+      );
+      return;
+    }
+
     if (registerBtn) {
       registerBtn.disabled = true;
       registerBtn.ariaBusy = 'true';
@@ -144,6 +489,9 @@
 
     try {
       const formData = new FormData(form!);
+      if (!selectedFile) {
+        formData.delete('image');
+      }
 
       await AuthService.register(formData);
 
@@ -153,12 +501,38 @@
 
       window.dispatchEvent(new CustomEvent('session-changed'));
       broadcastSessionChanged('logged-in');
-      window.location.href = '/';
+
+      // Merge the guest cart into the new account's server cart before
+      // redirecting, using the same bounded race as LoginForm.
+      const redirect = () => {
+        window.location.href = '/';
+      };
+      await Promise.race([
+        CartService.hydrateFromServer({ mergeLocal: true }),
+        new Promise((resolve) => setTimeout(resolve, HYDRATION_REDIRECT_TIMEOUT_MS)),
+      ]).then(redirect, redirect);
     } catch (err) {
-      if (err instanceof Error) {
-        showError(err.message);
+      const apiFieldErrors = extractApiFieldErrors(err);
+      const mappedErrors: Partial<Record<RegisterFieldName, string>> = {};
+
+      for (const field of Object.keys(fieldElements) as RegisterFieldName[]) {
+        if (apiFieldErrors[field]) {
+          mappedErrors[field] = apiFieldErrors[field];
+          setFieldError(field, apiFieldErrors[field]);
+        }
+      }
+
+      if (Object.keys(mappedErrors).length > 0) {
+        showSummaryError(
+          summarizeFieldErrors(
+            mappedErrors as Record<string, string>,
+            'Revisá los campos marcados antes de crear tu cuenta.'
+          )
+        );
+      } else if (err instanceof Error) {
+        showSummaryError(err.message);
       } else {
-        showError('No se pudo conectar con el servidor. Intentá de nuevo.');
+        showSummaryError('No se pudo conectar con el servidor. Intentá de nuevo.');
       }
     } finally {
       if (registerBtn) {

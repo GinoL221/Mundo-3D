@@ -1,41 +1,74 @@
-<form id="login-form" class="auth-form" novalidate>
-  <div id="login-error" class="auth-form__error" role="alert" hidden></div>
+<form id="login-form" class="ui-form" novalidate>
+  <div id="login-error" class="ui-callout ui-callout--danger" role="alert" tabindex="-1" hidden>
+    <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+    <div class="ui-callout__content">
+      <p id="login-error-text" class="ui-callout__text"></p>
+    </div>
+  </div>
 
-  <div class="auth-form__field">
-    <label for="email">Correo electrónico</label>
+  <div class="ui-field">
+    <label class="ui-label" for="email">Correo electrónico</label>
     <input
       type="email"
       id="email"
       name="email"
-      class="auth-form__input"
+      class="ui-input"
       autocomplete="email"
       required
     />
+    <p id="email-error" class="ui-error" hidden></p>
   </div>
 
-  <div class="auth-form__field">
-    <label for="password">Contraseña</label>
-    <input
-      type="password"
-      id="password"
-      name="password"
-      class="auth-form__input"
-      autocomplete="current-password"
-      required
-    />
+  <div class="ui-field">
+    <label class="ui-label" for="password">Contraseña</label>
+    <div class="ui-input-group ui-input-group--field">
+      <input
+        type="password"
+        id="password"
+        name="password"
+        class="ui-input"
+        autocomplete="current-password"
+        required
+      />
+      <button
+        type="button"
+        class="ui-btn ui-btn--ghost ui-btn--icon"
+        data-password-toggle
+        aria-pressed="false"
+        aria-controls="password"
+        aria-label="Mostrar contraseña"
+      >
+        <svg data-icon="show" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+        <svg data-icon="hide" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-6.5 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94" />
+          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19" />
+          <line x1="2" y1="2" x2="22" y2="22" />
+        </svg>
+      </button>
+    </div>
+    <p id="password-error" class="ui-error" hidden></p>
   </div>
 
-  <label for="remember" class="auth-form__check auth-form__preference">
-    <input type="checkbox" id="remember" name="remember" />
-    Recordarme en este dispositivo
+  <label for="remember" class="ui-check">
+    <input type="checkbox" id="remember" name="remember" class="ui-check__input" />
+    <span>Recordarme en este dispositivo</span>
   </label>
 
-  <div class="auth-form__actions">
-    <button type="submit" id="login-btn" class="auth-form__button auth-form__button--primary" aria-busy="false">Iniciar sesión</button>
+  <div class="auth-page__actions">
+    <button type="submit" id="login-btn" class="ui-btn ui-btn--primary auth-page__submit" aria-busy="false">
+      Iniciar sesión
+    </button>
   </div>
 
-  <p class="auth-form__footer">
-    ¿No tenés cuenta? <a class="auth-form__link" href="/register">Registrate</a>
+  <p class="auth-page__footer">
+    ¿No tenés cuenta? <a class="auth-page__link" href="/register">Registrate</a>
   </p>
 </form>
 
@@ -43,6 +76,13 @@
   import { AuthService } from '../services/auth.service';
   import { broadcastSessionChanged } from '../services/session.service';
   import { CartService } from '../../cart/services/CartService';
+  import { bindPasswordToggles } from '../utils/passwordToggle';
+  import {
+    extractApiFieldErrors,
+    summarizeFieldErrors,
+    validateLoginInput,
+    type LoginFieldName,
+  } from '../validation/authValidation';
 
   // Bounded race, not fire-and-forget (design.md "Resolved: the
   // redirect-vs-GET race"): the redirect must never be delayed beyond this
@@ -53,7 +93,20 @@
 
   const form = document.getElementById('login-form') as HTMLFormElement | null;
   const errorBox = document.getElementById('login-error') as HTMLElement | null;
+  const errorText = document.getElementById('login-error-text') as HTMLElement | null;
   const loginBtn = document.getElementById('login-btn') as HTMLButtonElement | null;
+  const emailEl = document.getElementById('email') as HTMLInputElement | null;
+  const passwordEl = document.getElementById('password') as HTMLInputElement | null;
+  const rememberEl = document.getElementById('remember') as HTMLInputElement | null;
+
+  const fieldElements: Record<LoginFieldName, { input: HTMLInputElement | null; error: HTMLElement | null }> = {
+    email: { input: emailEl, error: document.getElementById('email-error') },
+    password: { input: passwordEl, error: document.getElementById('password-error') },
+  };
+
+  if (form) {
+    bindPasswordToggles(form);
+  }
 
   // One-time cleanup of stale localStorage session keys left over from
   // before the cookie-based auth migration (design.md "Migration/Rollout").
@@ -62,33 +115,71 @@
   localStorage.removeItem('token');
   localStorage.removeItem('user');
 
-  function showError(msg: string): void {
-    if (errorBox) {
-      errorBox.textContent = msg;
+  function setFieldError(field: LoginFieldName, message: string | null): void {
+    const entry = fieldElements[field];
+    if (!entry) return;
+    if (message) {
+      entry.input?.setAttribute('aria-invalid', 'true');
+      entry.input?.setAttribute('aria-describedby', `${field}-error`);
+      if (entry.error) {
+        entry.error.textContent = message;
+        entry.error.hidden = false;
+      }
+    } else {
+      entry.input?.removeAttribute('aria-invalid');
+      entry.input?.removeAttribute('aria-describedby');
+      if (entry.error) {
+        entry.error.textContent = '';
+        entry.error.hidden = true;
+      }
+    }
+  }
+
+  function clearAllFieldErrors(): void {
+    setFieldError('email', null);
+    setFieldError('password', null);
+  }
+
+  function showError(msg: string, focusAlert = true): void {
+    if (errorBox && errorText) {
+      errorText.textContent = msg;
       errorBox.hidden = false;
+      if (focusAlert) {
+        errorBox.focus();
+      }
     }
   }
 
   function hideError(): void {
-    if (errorBox) {
+    if (errorBox && errorText) {
+      errorText.textContent = '';
       errorBox.hidden = true;
     }
+  }
+
+  for (const field of ['email', 'password'] as const) {
+    fieldElements[field].input?.addEventListener('input', () => {
+      if (fieldElements[field].input?.getAttribute('aria-invalid') === 'true') {
+        setFieldError(field, null);
+      }
+    });
   }
 
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideError();
-
-    const emailEl = document.getElementById('email') as HTMLInputElement | null;
-    const passwordEl = document.getElementById('password') as HTMLInputElement | null;
-    const rememberEl = document.getElementById('remember') as HTMLInputElement | null;
+    clearAllFieldErrors();
 
     const email = emailEl?.value?.trim() || '';
     const password = passwordEl?.value || '';
     const remember = rememberEl?.checked ?? false;
 
-    if (!email || !password) {
-      showError('Por favor completá todos los campos.');
+    const validation = validateLoginInput({ email, password });
+    if (validation.summary) {
+      for (const [field, msg] of Object.entries(validation.fieldErrors)) {
+        if (msg) setFieldError(field as LoginFieldName, msg);
+      }
+      showError(validation.summary);
       return;
     }
 
@@ -122,7 +213,20 @@
         new Promise((resolve) => setTimeout(resolve, HYDRATION_REDIRECT_TIMEOUT_MS)),
       ]).then(redirect, redirect);
     } catch (err) {
-      if (err instanceof Error) {
+      const apiFieldErrors = extractApiFieldErrors(err);
+      const mappedErrors: Partial<Record<LoginFieldName, string>> = {};
+      for (const field of ['email', 'password'] as const) {
+        if (apiFieldErrors[field]) {
+          mappedErrors[field] = apiFieldErrors[field];
+          setFieldError(field, apiFieldErrors[field]);
+        }
+      }
+
+      if (Object.keys(mappedErrors).length > 0) {
+        showError(
+          summarizeFieldErrors(mappedErrors as Record<string, string>, 'Revisá los campos marcados antes de ingresar.')
+        );
+      } else if (err instanceof Error) {
         showError(err.message);
       } else {
         showError('No se pudo conectar con el servidor. Intentá de nuevo.');
