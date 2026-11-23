@@ -1,104 +1,152 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import '../../styles/components/admin-commission-requests.css';
 ---
 
-<Layout title="Solicitudes de encargos - Mundo 3D">
-  <main class="products">
-    <h1 class="page-heading">SOLICITUDES DE ENCARGOS</h1>
-    <div id="admin-gate-denied" role="alert" style="display:none; text-align:center; padding:2rem;">
-      <p>No tenés permisos para acceder a esta sección.</p>
-      <a href="/">Volver al inicio</a>
-    </div>
-    <section id="admin-requests-content" style="display:none;" aria-label="Bandeja de solicitudes">
-      <p id="admin-requests-loading" role="status" aria-live="polite">Cargando solicitudes...</p>
-      <div id="admin-requests-error" role="alert" style="display:none; text-align:center;">
-        <p>No se pudieron cargar las solicitudes.</p>
-        <button id="admin-requests-retry" type="button" class="form-card__btn">Reintentar</button>
+<Layout title="Solicitudes de encargo — Mundo 3D">
+  <main class="admin-inbox system-frame system-section">
+    <header class="ui-page-head">
+      <div class="ui-page-head__main">
+        <div class="ui-page-head__title-row">
+          <h1 class="ui-page-head__title">Solicitudes de encargo</h1>
+          <span id="admin-role-badge" class="ui-badge" hidden></span>
+        </div>
+        <p id="admin-requests-scope" class="ui-page-head__scope" hidden>
+          Revisión manual del taller: no envía correos automáticos ni genera presupuestos o
+          pedidos. Cada solicitud se purga automáticamente a los 30 días.
+        </p>
       </div>
-      <p id="admin-requests-empty" role="status" aria-live="polite" style="display:none;">Todavía no hay solicitudes.</p>
-      <div id="admin-requests-list" class="users-list"></div>
+    </header>
+
+    <div
+      id="admin-gate-denied"
+      class="ui-callout"
+      role="alert"
+      aria-labelledby="admin-gate-denied-title"
+      hidden
+    >
+      <svg
+        class="ui-callout__icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="3" y="11" width="18" height="11" rx="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+      <div class="ui-callout__content">
+        <p id="admin-gate-denied-title" class="ui-callout__title">
+          Acceso restringido al panel del taller
+        </p>
+        <p class="ui-callout__text">
+          No tenés permisos para acceder a esta sección. Necesitás una sesión con rol STAFF o
+          ADMIN validada por el servidor.
+        </p>
+        <div class="ui-callout__actions">
+          <a href="/products" class="ui-btn ui-btn--secondary ui-btn--sm">Volver al Catálogo</a>
+          <a href="/" class="ui-btn ui-btn--ghost ui-btn--sm">Ir al inicio</a>
+        </div>
+      </div>
+    </div>
+
+    <section
+      id="admin-requests-content"
+      class="admin-inbox__content"
+      aria-label="Bandeja de solicitudes"
+      hidden
+    >
+      <div
+        id="admin-requests-loading"
+        class="ui-state"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <p class="ui-state__title">Cargando solicitudes de encargo</p>
+        <p class="ui-state__text">Consultando la bandeja del taller y tus permisos de sesión.</p>
+        <div class="ui-skeleton-list" aria-hidden="true">
+          <span class="ui-skeleton"></span>
+          <span class="ui-skeleton ui-skeleton--medium"></span>
+          <span class="ui-skeleton ui-skeleton--short"></span>
+        </div>
+      </div>
+
+      <div id="admin-requests-error" class="ui-callout ui-callout--danger" role="alert" hidden>
+        <svg
+          class="ui-callout__icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="m15 9-6 6"></path>
+          <path d="m9 9 6 6"></path>
+        </svg>
+        <div class="ui-callout__content">
+          <p class="ui-callout__title">No pudimos cargar las solicitudes de encargo</p>
+          <p id="admin-requests-error-text" class="ui-callout__text">
+            El servicio no respondió a tiempo. Volvé a intentar en unos segundos.
+          </p>
+          <div class="ui-callout__actions">
+            <button
+              id="admin-requests-retry"
+              type="button"
+              class="ui-btn ui-btn--secondary ui-btn--sm"
+            >
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        id="admin-requests-empty"
+        class="ui-state ui-state--empty"
+        role="status"
+        aria-live="polite"
+        hidden
+      >
+        <svg
+          class="ui-state__icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+          <path d="m3 7 9 6 9-6"></path>
+        </svg>
+        <p class="ui-state__title">No hay solicitudes de encargo pendientes</p>
+        <p class="ui-state__text">
+          Cuando alguien envíe una consulta desde Encargos a medida va a aparecer acá para
+          revisión manual durante 30 días.
+        </p>
+      </div>
+
+      <ul
+        id="admin-requests-list"
+        class="ui-inbox"
+        aria-label="Solicitudes de encargo recibidas"
+        hidden
+      >
+      </ul>
     </section>
   </main>
 </Layout>
 
 <script>
-  import { clearSession, getSessionUser, hasAdminAccess } from '../../domains/auth';
-  import {
-    CustomCommissionRequestAdminApiError,
-    listCustomCommissionRequests,
-  } from '../../domains/commissions/services/customCommissionRequest.admin.service';
-  import { fetchProducts } from '../../domains/products/services/product.service';
+  import { initializeAdminCommissionRequests } from '../../scripts/adminCommissionRequests';
 
-  const denied = document.getElementById('admin-gate-denied');
-  const content = document.getElementById('admin-requests-content');
-  if (!hasAdminAccess(getSessionUser())) {
-    if (denied) denied.style.display = 'block';
-  } else {
-    if (content) content.style.display = 'block';
-    void loadRequests();
-  }
-
-  document.getElementById('admin-requests-retry')?.addEventListener('click', () => void loadRequests());
-
-  async function loadRequests(): Promise<void> {
-    const loading = document.getElementById('admin-requests-loading');
-    const error = document.getElementById('admin-requests-error');
-    const empty = document.getElementById('admin-requests-empty');
-    const list = document.getElementById('admin-requests-list');
-    if (!loading || !error || !empty || !list) return;
-    loading.style.display = 'block';
-    error.style.display = 'none';
-    empty.style.display = 'none';
-    list.replaceChildren();
-
-    try {
-      const requests = await listCustomCommissionRequests();
-      loading.style.display = 'none';
-      if (!requests.length) {
-        empty.style.display = 'block';
-        return;
-      }
-      // Catalog is deliberately best-effort and independent: its latency must
-      // never hold the protected request list hostage.
-      const catalogPromise = fetchProducts().catch(() => ({ ok: false as const, reason: 'network' as const }));
-      const cards = requests.map((request) => {
-        const card = document.createElement('article');
-        card.className = 'users-list__card';
-        const heading = document.createElement('h2');
-        heading.textContent = request.name;
-        card.append(heading);
-        const email = document.createElement('p');
-        email.textContent = request.email;
-        card.append(email);
-        const idea = document.createElement('p');
-        idea.textContent = request.idea;
-        card.append(idea);
-        const date = document.createElement('p');
-        date.textContent = new Date(request.createdAt).toLocaleString('es-AR');
-        card.append(date);
-        const product = document.createElement('p');
-        product.className = 'request-product-context';
-        product.textContent = request.idProduct === null ? 'Sin producto asociado' : `Producto #${request.idProduct}`;
-        card.append(product);
-        list.append(card);
-        return { idProduct: request.idProduct, product };
-      });
-      void catalogPromise.then((catalog) => {
-        if (!catalog.ok) return;
-        for (const card of cards) {
-          if (card.idProduct === null) continue;
-          const match = catalog.products.find((item) => item.id === card.idProduct);
-          if (match) card.product.textContent = match.name;
-        }
-      });
-    } catch (cause) {
-      loading.style.display = 'none';
-      if (cause instanceof CustomCommissionRequestAdminApiError && cause.status === 401) {
-        void clearSession();
-        window.location.href = '/login';
-        return;
-      }
-      error.style.display = 'block';
-    }
-  }
+  void initializeAdminCommissionRequests(document, window);
 </script>

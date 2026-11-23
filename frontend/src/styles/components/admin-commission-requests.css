@@ -1,0 +1,34 @@
+/* Page-specific layout for /admin/commission-requests.
+   Shared .ui-* primitives live in styles/base/ui-kit.css. */
+
+.admin-inbox {
+  display: grid;
+  gap: var(--space-lg);
+  align-content: start;
+  width: min(var(--sys-frame-max), calc(100% - (var(--sys-frame-gutter) * 2)));
+  max-width: var(--sys-frame-max);
+  margin-inline: auto;
+  padding-inline: 0;
+  min-width: 0;
+}
+
+/* Override .ui-callout / .ui-state / .ui-badge / .ui-inbox display rules
+   when hidden attribute is present. */
+.admin-inbox [hidden] {
+  display: none;
+}
+
+.admin-inbox__content {
+  display: grid;
+  gap: var(--space-md);
+  min-width: 0;
+}
+
+.admin-inbox__content .ui-inbox__requester {
+  overflow-wrap: anywhere;
+}
+
+.admin-inbox__content .ui-inbox__idea {
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
