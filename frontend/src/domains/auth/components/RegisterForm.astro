@@ -1,4 +1,4 @@
-<form id="register-form" class="ui-form" novalidate enctype="multipart/form-data">
+<form id="register-form" class="ui-form" method="post" novalidate enctype="multipart/form-data">
   <div id="register-error" class="ui-callout ui-callout--danger" role="alert" tabindex="-1" hidden>
     <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <circle cx="12" cy="12" r="10" />
@@ -214,7 +214,7 @@
   </fieldset>
 
   <div class="auth-page__actions">
-    <button type="submit" id="register-btn" class="ui-btn ui-btn--primary auth-page__submit" aria-busy="false">
+    <button type="submit" id="register-btn" class="ui-btn ui-btn--primary auth-page__submit" aria-busy="false" disabled>
       Crear cuenta
     </button>
   </div>
@@ -551,4 +551,6 @@
       }
     }
   });
+
+  if (form && registerBtn) registerBtn.disabled = false;
 </script>
