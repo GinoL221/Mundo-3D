@@ -239,7 +239,7 @@ test.describe('Authentication E2E Tests', () => {
     await expect(page).toHaveURL('/register');
   });
 
-  test('Missing Image Registration Rejected', async ({ page }) => {
+  test('Registration Succeeds Without Profile Image', async ({ page }) => {
     const noImageEmail = `no_image_${Date.now()}@example.com`;
 
     await page.goto('/register');
@@ -248,13 +248,87 @@ test.describe('Authentication E2E Tests', () => {
     await page.fill('#email', noImageEmail);
     await page.fill('#password', testPassword);
     await page.fill('#confirmPassword', testPassword);
-    // #image intentionally left empty.
+    // #image intentionally left empty (optional profile image).
 
     await page.click('#register-btn');
 
-    const errorBox = page.locator('#register-error');
-    await expect(errorBox).toBeVisible();
-    await expect(errorBox).toHaveText('Tienes que subir una imagen');
+    await expect(page).toHaveURL('/');
+    await expect(page.locator('#navbar-greeting')).toContainText('Hola No');
+  });
+
+  test('Oversized profile image is rejected on the image field before sending', async ({ page }) => {
+    let registerRequests = 0;
+    page.on('request', (request) => {
+      if (request.url().includes('/api/users/register')) registerRequests += 1;
+    });
+
+    await page.goto('/register');
+    await page.setInputFiles('#image', {
+      name: 'avatar.jpg',
+      mimeType: 'image/jpeg',
+      buffer: Buffer.alloc(5 * 1024 * 1024 + 1),
+    });
+
+    await expect(page.locator('#image-error')).toHaveText('La imagen pesa más de 5 MB. Elegí una más liviana.');
+    await expect(page.locator('#image')).toHaveAttribute('aria-invalid', 'true');
+
+    await page.fill('#firstName', 'Big');
+    await page.fill('#lastName', 'Image');
+    await page.fill('#email', `big_image_${Date.now()}@example.com`);
+    await page.fill('#password', testPassword);
+    await page.fill('#confirmPassword', testPassword);
+    await page.click('#register-btn');
+
+    await expect(page.locator('#image-error')).toHaveText('La imagen pesa más de 5 MB. Elegí una más liviana.');
     await expect(page).toHaveURL('/register');
+    expect(registerRequests).toBe(0);
+  });
+
+  test('Upload-filter rejection from the server shows on the image field in Spanish', async ({ page }) => {
+    await page.goto('/register');
+    await page.fill('#firstName', 'Bad');
+    await page.fill('#lastName', 'Mime');
+    await page.fill('#email', `bad_mime_${Date.now()}@example.com`);
+    await page.fill('#password', testPassword);
+    await page.fill('#confirmPassword', testPassword);
+    // Passes the client name/size rules, but the backend multer filter rejects the MIME type.
+    await page.setInputFiles('#image', {
+      name: 'avatar.jpg',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('not an image'),
+    });
+
+    await page.click('#register-btn');
+
+    await expect(page.locator('#image-error')).toHaveText(
+      'No pudimos aceptar la imagen: tiene que ser JPG o PNG y pesar hasta 5 MB.'
+    );
+    await expect(page.locator('#image')).toHaveAttribute('aria-invalid', 'true');
+    await expect(page).toHaveURL('/register');
+  });
+
+  test('Password reveal toggle and per-field validation on /register', async ({ page }) => {
+    await page.goto('/register');
+
+    const passwordInput = page.locator('#password');
+    const toggleBtn = page.locator('button[aria-controls="password"]');
+    await expect(toggleBtn).toHaveAttribute('aria-pressed', 'false');
+    await expect(toggleBtn).toHaveAttribute('aria-label', 'Mostrar contraseña');
+
+    await toggleBtn.click();
+    await expect(passwordInput).toHaveAttribute('type', 'text');
+    await expect(toggleBtn).toHaveAttribute('aria-pressed', 'true');
+    await expect(toggleBtn).toHaveAttribute('aria-label', 'Ocultar contraseña');
+
+    await toggleBtn.click();
+    await expect(passwordInput).toHaveAttribute('type', 'password');
+
+    // Submit empty form to verify client-side per-field errors and summary focus
+    await page.click('#register-btn');
+    await expect(page.locator('#register-error')).toBeVisible();
+    await expect(page.locator('#register-error')).toBeFocused();
+    await expect(page.locator('#firstName')).toHaveAttribute('aria-invalid', 'true');
+    await expect(page.locator('#firstName-error')).toHaveText('Ingresá tu nombre');
+    await expect(page.locator('#email-error')).toHaveText('Ingresá tu correo');
   });
 });

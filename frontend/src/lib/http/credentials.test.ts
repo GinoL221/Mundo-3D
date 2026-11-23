@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  ApiError,
   getSessionUser,
   parseApiResponse,
+  readApiErrorDetails,
   readApiErrorMessage,
   readCsrfToken,
   withCredentials,
@@ -140,6 +142,62 @@ describe('readApiErrorMessage', () => {
   });
 });
 
+describe('readApiErrorDetails', () => {
+  it('returns fallback and empty fieldErrors for non-object bodies', () => {
+    expect(readApiErrorDetails(null, 'fallback')).toEqual({
+      message: 'fallback',
+      fieldErrors: {},
+    });
+    expect(readApiErrorDetails('oops', 'fallback')).toEqual({
+      message: 'fallback',
+      fieldErrors: {},
+    });
+  });
+
+  it('maps every express-validator array error using path or param', () => {
+    const body = {
+      errors: [
+        { path: 'firstName', msg: 'Ingresá tu nombre' },
+        { param: 'email', msg: 'Ingresá un correo válido' },
+        { path: 'firstName', msg: 'Error duplicado ignorado' },
+      ],
+    };
+
+    expect(readApiErrorDetails(body, 'fallback')).toEqual({
+      message: 'Ingresá tu nombre',
+      fieldErrors: {
+        firstName: 'Ingresá tu nombre',
+        email: 'Ingresá un correo válido',
+      },
+    });
+  });
+
+  it('maps every field-keyed object error and ignores entries without msg', () => {
+    const body = {
+      errors: {
+        firstName: { msg: 'Tiene que tener entre 2 y 10 caracteres' },
+        password: { path: 'password', msg: 'Ingresá tu contraseña' },
+        empty: { msg: '   ' },
+      },
+    };
+
+    expect(readApiErrorDetails(body, 'fallback')).toEqual({
+      message: 'Tiene que tener entre 2 y 10 caracteres',
+      fieldErrors: {
+        firstName: 'Tiene que tener entre 2 y 10 caracteres',
+        password: 'Ingresá tu contraseña',
+      },
+    });
+  });
+
+  it('returns empty fieldErrors for root non-field errors', () => {
+    expect(readApiErrorDetails({ error: 'Este email ya está registrado' }, 'fallback')).toEqual({
+      message: 'Este email ya está registrado',
+      fieldErrors: {},
+    });
+  });
+});
+
 describe('parseApiResponse', () => {
   it('returns parsed JSON payload for ok 200/201 JSON responses', async () => {
     const ok200 = new Response(JSON.stringify({ user: { id: 1 } }), {
@@ -194,6 +252,36 @@ describe('parseApiResponse', () => {
     await expect(parseApiResponse(res400, 'fallback')).rejects.toThrow('Email inválido');
     await expect(parseApiResponse(res401, 'fallback')).rejects.toThrow('Credenciales inválidas');
     await expect(parseApiResponse(res500, 'fallback')).rejects.toThrow('Fallo interno');
+  });
+
+  it('throws ApiError with mapped fieldErrors and status for validation responses', async () => {
+    const res400 = new Response(
+      JSON.stringify({
+        errors: [
+          { path: 'firstName', msg: 'Ingresá tu nombre' },
+          { path: 'email', msg: 'Ingresá un correo válido' },
+        ],
+      }),
+      {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+
+    try {
+      await parseApiResponse(res400, 'Error al registrarse.');
+      expect.unreachable('should have thrown ApiError');
+    } catch (err) {
+      expect(err).toBeInstanceOf(ApiError);
+      expect(err).toBeInstanceOf(Error);
+      const apiErr = err as ApiError;
+      expect(apiErr.message).toBe('Ingresá tu nombre');
+      expect(apiErr.status).toBe(400);
+      expect(apiErr.fieldErrors).toEqual({
+        firstName: 'Ingresá tu nombre',
+        email: 'Ingresá un correo válido',
+      });
+    }
   });
 
   it('throws the cold-start message for non-JSON 502/503/504 responses instead of SyntaxError', async () => {

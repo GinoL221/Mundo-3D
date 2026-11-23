@@ -719,7 +719,7 @@
                   "image": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Required; .jpg/.png only."
+                    "description": "Optional profile image; .jpg/.png only when sent."
                   }
                 },
                 "required": [
@@ -727,8 +727,7 @@
                   "lastName",
                   "email",
                   "password",
-                  "confirmPassword",
-                  "image"
+                  "confirmPassword"
                 ]
               }
             }

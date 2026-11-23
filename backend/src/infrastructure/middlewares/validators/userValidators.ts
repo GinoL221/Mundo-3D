@@ -5,28 +5,28 @@ export const validationsUsers = [
   body('firstName')
     .trim()
     .notEmpty()
-    .withMessage('Tienes que ingresar un nombre')
+    .withMessage('Ingresá tu nombre')
     .bail()
     .isLength({ min: 2, max: 10 })
     .withMessage('Tiene que tener entre 2 y 10 caracteres'),
   body('lastName')
     .trim()
     .notEmpty()
-    .withMessage('Tienes que ingresar un apellido')
+    .withMessage('Ingresá tu apellido')
     .bail()
     .isLength({ min: 2, max: 10 })
     .withMessage('Tiene que tener entre 2 y 10 caracteres'),
   body('email')
     .trim()
     .notEmpty()
-    .withMessage('Tienes que ingresar un mail')
+    .withMessage('Ingresá tu correo')
     .bail()
     .isEmail()
-    .withMessage('Tienes que ingresar un mail valido'),
+    .withMessage('Ingresá un correo válido'),
   body('password')
     .trim()
     .notEmpty()
-    .withMessage('Tienes que ingresar una contraseña')
+    .withMessage('Ingresá tu contraseña')
     .bail()
     .isLength({ min: 8, max: 32 })
     .withMessage('Tiene que tener entre 8 y 32 caracteres')
@@ -42,7 +42,7 @@ export const validationsUsers = [
   body('confirmPassword')
     .trim()
     .notEmpty()
-    .withMessage('Tienes que confirmar la contraseña')
+    .withMessage('Confirmá tu contraseña')
     .bail()
     .custom((value, { req }) => {
       if (value !== req.body.password) {
@@ -50,12 +50,12 @@ export const validationsUsers = [
       }
       return true;
     }),
-  body('image').custom((value, { req }) => {
+  body('image').custom((_value, { req }) => {
     const file = req.file;
-    const acceptedExtensions = ['.jpg', '.png'];
     if (!file) {
-      throw new Error('Tienes que subir una imagen');
+      return true;
     }
+    const acceptedExtensions = ['.jpg', '.png'];
     const fileExtension = path.extname(file.originalname);
     if (!acceptedExtensions.includes(fileExtension)) {
       throw new Error(
@@ -67,11 +67,11 @@ export const validationsUsers = [
 ];
 
 export const loginValidation = [
-  body('email').trim().isEmail().withMessage('Tienes que ingresar un mail válido'),
+  body('email').trim().isEmail().withMessage('Ingresá un correo válido'),
   body('password')
     .trim()
     .notEmpty()
-    .withMessage('Tienes que ingresar una contraseña')
+    .withMessage('Ingresá tu contraseña')
     .bail()
     .isLength({ min: 8 })
     .withMessage('Tiene que tener al menos 8 caracteres'),

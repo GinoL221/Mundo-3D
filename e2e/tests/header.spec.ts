@@ -120,3 +120,27 @@ test('supports skip link to main, visual left-to-right desktop Tab order, logo f
   await expect(page.locator('.home-header__link[href="/login"]')).toBeFocused();
   await expect(miniCart).toBeHidden();
 });
+
+test('marks header auth links with aria-current="page" on /login and /register', async ({
+  page,
+}) => {
+  await page.goto('/login');
+  await expect(page.locator('.home-header__link[href="/login"]')).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await expect(page.locator('.home-header__link[href="/register"]')).not.toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+
+  await page.goto('/register');
+  await expect(page.locator('.home-header__link[href="/register"]')).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await expect(page.locator('.home-header__link[href="/login"]')).not.toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+});

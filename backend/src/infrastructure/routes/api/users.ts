@@ -211,8 +211,8 @@ const normalizeLoginBody = (req: Request, _res: Response, next: NextFunction) =>
  *               email: { type: string, format: email }
  *               password: { type: string, minLength: 8, maxLength: 32, description: 'Needs an uppercase, a digit and a special char.' }
  *               confirmPassword: { type: string }
- *               image: { type: string, format: binary, description: 'Required; .jpg/.png only.' }
- *             required: [firstName, lastName, email, password, confirmPassword, image]
+ *               image: { type: string, format: binary, description: 'Optional profile image; .jpg/.png only when sent.' }
+ *             required: [firstName, lastName, email, password, confirmPassword]
  *     responses:
  *       '201':
  *         description: Registered.
