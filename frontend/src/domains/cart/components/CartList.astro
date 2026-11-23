@@ -100,8 +100,8 @@
     getHydrationErrorMessage,
   } from '../services/cartDisplay';
   import { resolveImageUrl } from '../../../lib/imageUrl';
+  import { formatPrice } from '../../../lib/format/price';
 
-  const formatPrice = (price: number): string => `$ ${new Intl.NumberFormat('es-AR').format(price)}`;
   const setHidden = (element: HTMLElement | null, hidden: boolean): void => {
     if (element) element.hidden = hidden;
   };

@@ -5,9 +5,13 @@ import { OrderList } from '../domains/orders';
 
 <Layout title="Mis pedidos - Mundo 3D">
   <main class="orders-page system-frame system-section">
-    <header class="orders-page__header">
-      <h1>Mis pedidos</h1>
-      <p>Consultá el historial de tus pedidos simulados y entrá al detalle de cada uno.</p>
+    <header class="ui-page-head orders-page__head">
+      <div class="ui-page-head__main">
+        <h1 class="ui-page-head__title">Mis pedidos</h1>
+        <p class="ui-page-head__scope">
+          Consultá el historial de tus pedidos simulados y entrá al detalle de cada uno.
+        </p>
+      </div>
     </header>
     <OrderList />
   </main>

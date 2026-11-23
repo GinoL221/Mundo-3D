@@ -20,6 +20,10 @@ Branch per PR; Impeccable critique precedes each page; `design/taller-maker-styl
 - S14 (L7): Resend 400: "Error en el campo" — client-side email validation and a 400 shown as an inline field error; 202 stays non-enumerating.
 - S15 (L7): Fix the email template copy ("Confirma" → "Confirmá") in the same pass.
 - S16 (L8): Oversized or rejected profile images: validate the 5 MB limit on the client and show the upload-filter rejection (`{error:'Invalid file format or size limit exceeded'}`) on the image field in Spanish; no backend error-shape change (errorHandler is shared with admin uploads).
+- S17 (L9): Order status: "Etiqueta honesta" — `.ui-badge` neutral labels "Pedido simulado" (AWAITING_PAYMENT) / "Confirmado (demo)" (PAID) / "Cancelado" (CANCELLED), never mentioning payment.
+- S18 (L9): Payment reference: "Ocultarla" — do not render "Referencia de pago" in the UI.
+- S19 (L9): Logged out on /orders or /order: "Aviso + Iniciar sesión" — informational `.ui-state` with "Iniciar sesión" and "Ir al catálogo"; no red box and no "Error 401".
+- S20 (L9): Scope "Todo P0–P3": statuses, 401/404/network recovery (single back action, retry), es-AR money formatting identical to /cart ("$ 3.800") with tabular numbers, migration to .ui-* primitives (`hidden` instead of inline display), remove the "PEDIDO" kicker, content-sized columns, no stray mobile divider, labelled actions header, item links to /product?id=, copy unified on "pedido"/"pieza"/"Catálogo".
 - S7 (L1): "Issue #207: el logout deja válida la familia de refresh tokens cuando no hay cookie de acceso."
 
 ## Tasks
@@ -28,10 +32,10 @@ Branch per PR; Impeccable critique precedes each page; `design/taller-maker-styl
 - T2 S2,S3,S5,S6 — /cart pass (empty state, kickers, nested border, Eliminar, copy, guest CTA, error placement, sync-error notice) — inline — commit: 22d5c41 (done)
 - T3 S1,S3,S8,S10,S11 — /login + /register frontend pass (.ui-* migration, field errors, show password, fieldsets, no reset, aria-current, cart merge on register, client validation, optional image UI) — worker — commit: 1f33459 + f501218 (done; S8 PASS by independent verify)
 - T3b S9,S10 — backend: optional register image + voseo validation messages (L6) — worker — commit: 6ce8db4 (done)
-- T3c S16 — register image size/upload-filter error on the field — inline — commit: 3bf81e5 (done)
-- T4 S1,S3,S12-S15 — /confirm-email pass (.ui-* migration, loading/busy, .ui-callout outcomes with exits, no-token state, resend 400 handling, mail template accent, drop legacy auth.css/email-confirmation.css) — worker — commit: next (done)
-- T5 S1,S3 — /orders + /order critique and pass — inline — commit: pending
-- T6 S7 — issue #207 logout revokes refresh family without access cookie — inline — commit: pending
+- T3c S16 — register image size/upload-filter error on the field — inline — commit: 3bf81e5 (done, PR #267)
+- T4 S1,S3,S12-S15 — /confirm-email pass (.ui-* migration, loading/busy, .ui-callout outcomes with exits, no-token state, resend 400 handling, mail template accent, drop legacy auth.css/email-confirmation.css) — worker — commit: 577f2f7 + e6c3d9a (done, PR #268)
+- T5 S1,S3,S17-S20 — /orders + /order pass — worker — commit: see feat(orders) commit (done)
+- T6 S7 — issue #207 — already fixed on main by #206 (+#208, #211); revocation tests pass; issue closed with evidence comment — no commit (done)
 
 ## Log
 
@@ -42,4 +46,6 @@ Branch per PR; Impeccable critique precedes each page; `design/taller-maker-styl
 - L6 (agent): exact voseo backend messages — "Tienes que ingresar un nombre"→"Ingresá tu nombre"; "Tienes que ingresar un apellido"→"Ingresá tu apellido"; "Tienes que ingresar un mail"→"Ingresá tu correo"; "Tienes que ingresar un mail valido"/"válido"→"Ingresá un correo válido"; "Tienes que ingresar una contraseña"→"Ingresá tu contraseña"; "Tienes que confirmar la contraseña"→"Confirmá tu contraseña"; "Tienes que subir una imagen" is removed (image optional); any other tú form in user validators becomes the equivalent voseo imperative. Rules and "Tiene que tener entre …" style messages keep their wording.
 - L7 (user, 2026-11-23, after /confirm-email critique 15/40): Sin token "Aviso + reenvío (Recomendado)"; Tras confirmar "Según sesión (Recomendado)"; Reenvío 400 "Error en el campo (Recomendado)"; Mail "Sí, en el mismo pase". Critique: `.impeccable/critique/2026-11-23T05-18-41Z__frontend-src-pages-confirm-email-astro.md`.
 - L8 (user, 2026-11-23): "1. si 2. si" — rewrite the local backend commit so the stray auth-file-picker.css deletion moves to the frontend commit (done: e9ec158/fa7328a/b5cf1e0 → 6ce8db4/1f33459/f501218, identical final tree 37842cb), and fold the oversized-image error into this pass.
+- L9 (user, 2026-11-23, after /orders 19/40 and /order 18/40 critiques): Estados "Etiqueta honesta (Recomendado)"; Referencia "Ocultarla (Recomendado)"; Sin sesión "Aviso + Iniciar sesión (Recomendado)"; Alcance "Todo P0–P3 (Recomendado)". Critiques: `.impeccable/critique/2026-11-23T13-52-43Z__frontend-src-pages-order{s,}-astro.md`. Screens: isolated e2e harness (`pnpm --filter e2e test --project=chromium <spec>`; register a fresh user via /register for a session).
+- L10 (user, 2026-11-23): "Sí, cerralo con comentario" — #207 closed with evidence (PRs #206/#208/#211, session-revocation.test.ts:172).
 - L4 (agent): fallback SVGs are loaded via `<img>` so they cannot follow `data-theme`; use one warm mid-gray stroke `#8c857d` (≈3.6:1 on #ffffff, ≈4.6:1 on #1b1917), transparent background, keep the five filenames so consumers and tests keep working.

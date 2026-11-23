@@ -1,13 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { presentOrder, presentMyOrdersPage } from './orderPresenter';
-import type { OrderViewModel, MyOrdersPageViewModel } from './order.service';
+import { formatPrice } from '../../../lib/format/price';
+import { formatOrderStatus, presentMyOrdersPage, presentOrder } from './orderPresenter';
+import type { MyOrdersPageViewModel, OrderViewModel } from './order.service';
 
-// Sample DTO taken verbatim from design.md's "Buyer order-detail response
-// DTO" section — this is the smoke-test target OrderDetail.astro's script
-// consumes for every rendered field (see orderPresenter.ts module doc for
-// why the assertion targets this extracted pure function rather than an
-// Astro-rendered DOM tree: no Astro component-render test harness exists in
-// this repo).
 const SAMPLE_ORDER: OrderViewModel = {
   idOrder: 41,
   idUser: 7,
@@ -20,47 +15,65 @@ const SAMPLE_ORDER: OrderViewModel = {
   paymentReference: 'MANUAL-41-9f2c1a',
 };
 
+describe('formatOrderStatus', () => {
+  it('maps known backend order statuses to honest neutral Spanish labels', () => {
+    expect(formatOrderStatus('AWAITING_PAYMENT')).toBe('Pedido simulado');
+    expect(formatOrderStatus('PAID')).toBe('Confirmado (demo)');
+    expect(formatOrderStatus('CANCELLED')).toBe('Cancelado');
+  });
+
+  it('falls back to a neutral label for unknown statuses without leaking raw enums', () => {
+    const label = formatOrderStatus('SOME_FUTURE_ENUM');
+    expect(label).toBe('Pedido registrado');
+    expect(label).not.toContain('SOME_FUTURE_ENUM');
+  });
+});
+
 describe('presentOrder', () => {
-  it('formats every buyer-facing field from the sample order DTO', () => {
-    const presentation = presentOrder(SAMPLE_ORDER);
+  it('formats buyer-facing fields using es-AR currency, neutral status, and item product links without payment reference', () => {
+    const presentation = presentOrder(SAMPLE_ORDER, formatPrice);
 
     expect(presentation.idOrderLabel).toBe('41');
-    expect(presentation.statusLabel).toBe('Estado: AWAITING_PAYMENT');
-    expect(presentation.paymentReferenceLabel).toBe('Referencia de pago: MANUAL-41-9f2c1a');
-    expect(presentation.totalLabel).toBe('3000.00');
+    expect(presentation.statusLabel).toBe('Pedido simulado');
+    expect(presentation).not.toHaveProperty('paymentReferenceLabel');
+    expect(presentation.totalLabel).toBe('$ 3.000');
     expect(presentation.items).toEqual([
       {
         productName: 'Maceta Groot',
+        productHref: '/product?id=12',
         quantityLabel: '2',
-        unitPriceLabel: '$ 1500.00',
-        subtotalLabel: '$ 3000.00',
+        unitPriceLabel: '$ 1.500',
+        subtotalLabel: '$ 3.000',
       },
     ]);
   });
 
-  it('renders an empty payment-reference label when the order has none yet', () => {
-    const presentation = presentOrder({ ...SAMPLE_ORDER, paymentReference: null });
-
-    expect(presentation.paymentReferenceLabel).toBe('');
-  });
-
-  it('shapes one row per order item, preserving order', () => {
+  it('omits the product link when idProduct is null (deleted product)', () => {
     const twoItemOrder: OrderViewModel = {
       ...SAMPLE_ORDER,
       items: [
         { idOrderItem: 1, idProduct: 1, productName: 'A', quantity: 1, unitPrice: 10, subtotal: 10 },
-        { idOrderItem: 2, idProduct: null, productName: 'B (producto eliminado)', quantity: 3, unitPrice: 5, subtotal: 15 },
+        {
+          idOrderItem: 2,
+          idProduct: null,
+          productName: 'B (pieza eliminada)',
+          quantity: 3,
+          unitPrice: 5,
+          subtotal: 15,
+        },
       ],
     };
 
-    const presentation = presentOrder(twoItemOrder);
+    const presentation = presentOrder(twoItemOrder, formatPrice);
 
     expect(presentation.items).toHaveLength(2);
+    expect(presentation.items[0].productHref).toBe('/product?id=1');
     expect(presentation.items[1]).toEqual({
-      productName: 'B (producto eliminado)',
+      productName: 'B (pieza eliminada)',
+      productHref: null,
       quantityLabel: '3',
-      unitPriceLabel: '$ 5.00',
-      subtotalLabel: '$ 15.00',
+      unitPriceLabel: '$ 5',
+      subtotalLabel: '$ 15',
     });
   });
 });
@@ -79,7 +92,7 @@ const SAMPLE_MY_ORDERS_PAGE: MyOrdersPageViewModel = {
       idOrder: 11,
       idUser: 3,
       status: 'AWAITING_PAYMENT',
-      totalAmount: 200,
+      totalAmount: 3800,
       createdAt: '2026-08-19T10:00:00.000Z',
       paymentReference: null,
     },
@@ -91,17 +104,19 @@ const SAMPLE_MY_ORDERS_PAGE: MyOrdersPageViewModel = {
 };
 
 describe('presentMyOrdersPage', () => {
-  it('formats one row per order, reusing formatCurrency and linking to the existing detail route', () => {
-    const presentation = presentMyOrdersPage(SAMPLE_MY_ORDERS_PAGE);
+  it('formats one row per order with neutral status labels, es-AR currency, and detail hrefs', () => {
+    const presentation = presentMyOrdersPage(SAMPLE_MY_ORDERS_PAGE, formatPrice);
 
     expect(presentation.rows).toHaveLength(2);
     expect(presentation.rows[0]).toEqual({
-      idOrderLabel: '12',
-      statusLabel: 'Estado: PAID',
-      totalLabel: '1499.50',
+      idOrderLabel: '#12',
+      statusLabel: 'Confirmado (demo)',
+      totalLabel: '$ 1.499,5',
       createdAtLabel: new Date('2026-08-20T10:00:00.000Z').toLocaleString('es-AR'),
       detailHref: '/order?id=12',
     });
+    expect(presentation.rows[1].statusLabel).toBe('Pedido simulado');
+    expect(presentation.rows[1].totalLabel).toBe('$ 3.800');
     expect(presentation.rows[1].detailHref).toBe('/order?id=11');
   });
 

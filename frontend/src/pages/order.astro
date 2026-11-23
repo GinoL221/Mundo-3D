@@ -5,10 +5,18 @@ import { OrderDetail } from '../domains/orders';
 
 <Layout title="Detalle del pedido - Mundo 3D">
   <main class="orders-page system-frame system-section">
-    <header class="orders-page__header">
-      <h1>Resumen de tu pedido</h1>
-      <p>Este pedido corresponde a una compra simulada dentro de la demo.</p>
-      <p><a class="orders-action" href="/orders">Volver a mis pedidos</a></p>
+    <header class="ui-page-head orders-page__head">
+      <div class="ui-page-head__main">
+        <h1 class="ui-page-head__title">Resumen de tu pedido</h1>
+        <p class="ui-page-head__scope">
+          Este pedido corresponde a una compra simulada dentro de la demo.
+        </p>
+      </div>
+      <div class="ui-page-head__actions">
+        <a id="order-back-link" class="ui-btn ui-btn--secondary" href="/orders" hidden>
+          Volver a mis pedidos
+        </a>
+      </div>
     </header>
     <OrderDetail />
   </main>
