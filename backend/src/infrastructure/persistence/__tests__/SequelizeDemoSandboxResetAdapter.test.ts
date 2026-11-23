@@ -1,0 +1,187 @@
+import type { Sequelize, Transaction } from 'sequelize';
+import { Role } from '../../../domain/Role';
+import {
+  buildDemoSandboxSlotEmails,
+  DEMO_SANDBOX_EXPECTED_COUNTS,
+  DEMO_SANDBOX_SEED_VERSION,
+} from '../../database/demoSandboxSeedData';
+import type { DemoSandboxConnections } from '../../database/DemoSandboxConnections';
+import { SequelizeDemoSandboxResetAdapter } from '../SequelizeDemoSandboxResetAdapter';
+
+function makeMockSlotGraph(slotId: string) {
+  const emails = buildDemoSandboxSlotEmails(slotId);
+  const callOrder: string[] = [];
+  const makeTable = (name: string, countValue: number) => ({
+    destroy: jest.fn(async () => {
+      callOrder.push(`destroy:${name}`);
+      return 0;
+    }),
+    bulkCreate: jest.fn(async (rows: unknown[]) => {
+      callOrder.push(`bulkCreate:${name}:${rows.length}`);
+      return rows;
+    }),
+    count: jest.fn(async () => countValue),
+  });
+
+  const models = {
+    OrderItem: makeTable('OrderItem', 0),
+    Order: makeTable('Order', 0),
+    ShoppingCart: makeTable('ShoppingCart', 0),
+    CustomCommissionRequest: makeTable('CustomCommissionRequest', 0),
+    EmailConfirmationToken: makeTable('EmailConfirmationToken', 0),
+    RememberToken: makeTable('RememberToken', 0),
+    Product: makeTable('Product', DEMO_SANDBOX_EXPECTED_COUNTS.products),
+    User: {
+      ...makeTable('User', DEMO_SANDBOX_EXPECTED_COUNTS.users),
+      findAll: jest.fn(async () => [
+        { idRole: Role.USER, email: emails.buyer, emailVerifiedAt: new Date() },
+        { idRole: Role.STAFF, email: emails.staff, emailVerifiedAt: new Date() },
+      ]),
+    },
+    Category: makeTable('Category', DEMO_SANDBOX_EXPECTED_COUNTS.categories),
+    Franchise: makeTable('Franchise', DEMO_SANDBOX_EXPECTED_COUNTS.franchises),
+  };
+
+  const fenceRow = {
+    slotId,
+    leaseId: null as string | null,
+    generation: 1,
+    state: 'open' as 'open' | 'fenced',
+    resetAttemptId: null as string | null,
+    update: jest.fn(async function (this: { state: string; leaseId: string | null; resetAttemptId: string | null }, patch: { state: 'fenced'; leaseId: null; resetAttemptId: string }) {
+      this.state = patch.state;
+      this.leaseId = patch.leaseId;
+      this.resetAttemptId = patch.resetAttemptId;
+    }),
+  };
+
+  const fenceModel = {
+    findOne: jest.fn(async () => fenceRow),
+    create: jest.fn(),
+  };
+
+  const receiptModel = {
+    findOne: jest.fn(async () => null as Record<string, unknown> | null),
+    create: jest.fn(async (row: Record<string, unknown>) => {
+      callOrder.push('receipt:insert');
+      return row;
+    }),
+  };
+
+  const tx = { LOCK: { UPDATE: 'UPDATE', SHARE: 'SHARE' } } as unknown as Transaction;
+  const connection = {
+    transaction: jest.fn(async (work: (t: Transaction) => Promise<unknown>) => work(tx)),
+  } as unknown as Sequelize;
+  (tx as unknown as { sequelize: Sequelize }).sequelize = connection;
+
+  return { connection, tx, models, fenceRow, fenceModel, receiptModel, callOrder };
+}
+
+describe('SequelizeDemoSandboxResetAdapter', () => {
+  const slotId = 'slot-1';
+  const attemptId = '11111111-1111-4111-8111-111111111111';
+
+  it('fences, deletes in FK order, seeds 17 products + USER/STAFF only, verifies, and writes receipt', async () => {
+    const graph = makeMockSlotGraph(slotId);
+    const connections: DemoSandboxConnections = { get: jest.fn(() => graph.connection) };
+    const adapter = new SequelizeDemoSandboxResetAdapter(connections, () => ({
+      models: graph.models as never,
+      fenceModel: graph.fenceModel as never,
+      receiptModel: graph.receiptModel as never,
+    }));
+
+    await adapter.reset(slotId, 1, attemptId);
+
+    expect(graph.callOrder).toEqual([
+      'destroy:OrderItem',
+      'destroy:Order',
+      'destroy:ShoppingCart',
+      'destroy:CustomCommissionRequest',
+      'destroy:EmailConfirmationToken',
+      'destroy:RememberToken',
+      'destroy:Product',
+      'destroy:User',
+      'destroy:Category',
+      'destroy:Franchise',
+      'bulkCreate:Category:10',
+      'bulkCreate:Franchise:10',
+      'bulkCreate:Product:17',
+      'bulkCreate:User:2',
+      'receipt:insert',
+    ]);
+    expect(graph.models.OrderItem.destroy).toHaveBeenCalledWith({
+      where: {},
+      transaction: graph.tx,
+    });
+    expect(graph.receiptModel.create).toHaveBeenCalledWith(
+      {
+        slotId,
+        generation: 1,
+        attemptId,
+        seedVersion: DEMO_SANDBOX_SEED_VERSION,
+        consumed: false,
+      },
+      { transaction: graph.tx },
+    );
+  });
+
+  it('fails closed without writing a receipt when fence transition fails or verification detects ADMIN/residual rows', async () => {
+    const staleGraph = makeMockSlotGraph(slotId);
+    staleGraph.fenceRow.generation = 99;
+    const staleAdapter = new SequelizeDemoSandboxResetAdapter(
+      { get: () => staleGraph.connection },
+      () => ({
+        models: staleGraph.models as never,
+        fenceModel: staleGraph.fenceModel as never,
+        receiptModel: staleGraph.receiptModel as never,
+      }),
+    );
+    await expect(staleAdapter.reset(slotId, 1, attemptId)).rejects.toThrow('fence');
+    expect(staleGraph.receiptModel.create).not.toHaveBeenCalled();
+
+    const adminGraph = makeMockSlotGraph(slotId);
+    adminGraph.models.User.findAll.mockResolvedValueOnce([
+      { idRole: Role.ADMIN, email: 'demo.buyer+slot-1@sandbox.mundo3d.invalid', emailVerifiedAt: new Date() },
+      { idRole: Role.STAFF, email: 'demo.staff+slot-1@sandbox.mundo3d.invalid', emailVerifiedAt: new Date() },
+    ]);
+    const adminAdapter = new SequelizeDemoSandboxResetAdapter(
+      { get: () => adminGraph.connection },
+      () => ({
+        models: adminGraph.models as never,
+        fenceModel: adminGraph.fenceModel as never,
+        receiptModel: adminGraph.receiptModel as never,
+      }),
+    );
+    await expect(adminAdapter.reset(slotId, 1, attemptId)).rejects.toThrow('verification failed');
+    expect(adminGraph.receiptModel.create).not.toHaveBeenCalled();
+  });
+
+  it('verify() requires both matching committed receipt and clean non-ADMIN state', async () => {
+    const graph = makeMockSlotGraph(slotId);
+    const adapter = new SequelizeDemoSandboxResetAdapter(
+      { get: () => graph.connection },
+      () => ({
+        models: graph.models as never,
+        fenceModel: graph.fenceModel as never,
+        receiptModel: graph.receiptModel as never,
+      }),
+    );
+
+    await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
+
+    graph.receiptModel.findOne.mockResolvedValue({
+      attemptId,
+      slotId,
+      generation: 1,
+      seedVersion: DEMO_SANDBOX_SEED_VERSION,
+      consumed: false,
+    });
+    await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(true);
+
+    graph.models.Order.count.mockResolvedValueOnce(1);
+    await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
+
+    graph.models.Product.count.mockResolvedValueOnce(16);
+    await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
+  });
+});
