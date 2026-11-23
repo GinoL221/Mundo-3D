@@ -1,5 +1,8 @@
 import { Sequelize } from 'sequelize';
-import { createDemoSandboxConnections } from '../DemoSandboxConnections';
+import {
+  createDemoSandboxConnections,
+  loadDemoSandboxConfigFromEnv,
+} from '../DemoSandboxConnections';
 
 jest.mock('sequelize', () => ({
   Sequelize: jest.fn().mockImplementation(() => ({
@@ -122,5 +125,174 @@ describe('explicit demo sandbox connections', () => {
     }
     expect(constructor).toHaveBeenCalledTimes(2);
     expect(connections.get('slot-a')).toBeDefined();
+  });
+
+  it('enables strict TLS with rejectUnauthorized=true when caCert is supplied and rejects blank caCert', () => {
+    const caCert = '-----BEGIN CERTIFICATE-----\nFAKE\n-----END CERTIFICATE-----';
+    createDemoSandboxConnections({ ...configuration(), caCert });
+    expect(constructor).toHaveBeenNthCalledWith(
+      1,
+      'demo_a',
+      'demo_a_user',
+      'fixture-a',
+      expect.objectContaining({
+        dialectOptions: { ssl: { ca: caCert, rejectUnauthorized: true } },
+      }),
+    );
+    expect(() => createDemoSandboxConnections({ ...configuration(), caCert: '   ' })).toThrow(
+      'Invalid demo sandbox connection configuration',
+    );
+  });
+
+  it('closes every slot connection via closeAll and surfaces failures after attempting all closes', async () => {
+    const connections = createDemoSandboxConnections(configuration());
+    const slotA = connections.get('slot-a');
+    const slotB = connections.get('slot-b');
+    jest.mocked(slotA.close).mockRejectedValueOnce(new Error('close-a-failed'));
+    jest.mocked(slotB.close).mockResolvedValueOnce(undefined);
+    await expect(connections.closeAll()).rejects.toThrow('close-a-failed');
+    expect(slotA.close).toHaveBeenCalledTimes(1);
+    expect(slotB.close).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('loadDemoSandboxConfigFromEnv', () => {
+  const validSlots = [
+    { slotId: 'slot-1', database: 'demo_slot_1', username: 'demo_u1', password: 'p1' },
+    { slotId: 'slot-2', database: 'demo_slot_2', username: 'demo_u2', password: 'p2' },
+    { slotId: 'slot-3', database: 'demo_slot_3', username: 'demo_u3', password: 'p3' },
+  ];
+  const baseEnv = (): NodeJS.ProcessEnv => ({
+    NODE_ENV: 'production',
+    JWT_SECRET: 'prod-secret',
+    DB_HOST: 'tidb.example.test',
+    DB_PORT: '4000',
+    DB_NAME: 'mundo_3d_control',
+    DB_CA_CERT: '-----BEGIN CERTIFICATE-----\nCA\n-----END CERTIFICATE-----',
+    DEMO_SANDBOX_ENABLED: 'true',
+    DEMO_SANDBOX_JWT_SECRET: 'sandbox-only-secret',
+    DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(validSlots),
+  });
+
+  it('returns enabled=false when unset, empty, or "false"', () => {
+    expect(loadDemoSandboxConfigFromEnv({})).toEqual({ enabled: false });
+    expect(loadDemoSandboxConfigFromEnv({ DEMO_SANDBOX_ENABLED: '' })).toEqual({ enabled: false });
+    expect(loadDemoSandboxConfigFromEnv({ DEMO_SANDBOX_ENABLED: 'false' })).toEqual({
+      enabled: false,
+    });
+  });
+
+  it('inherits DB_* defaults with recoverOnBoot=false and allows non-TLS outside production', () => {
+    const inherited = loadDemoSandboxConfigFromEnv(baseEnv());
+    expect(inherited).toEqual({
+      enabled: true,
+      jwtSecret: 'sandbox-only-secret',
+      recoverOnBoot: false,
+      connections: {
+        host: 'tidb.example.test',
+        port: 4000,
+        controlPlaneDatabase: 'mundo_3d_control',
+        caCert: '-----BEGIN CERTIFICATE-----\nCA\n-----END CERTIFICATE-----',
+        slots: validSlots,
+      },
+    });
+    const local = loadDemoSandboxConfigFromEnv({
+      ...baseEnv(),
+      NODE_ENV: 'development',
+      DB_CA_CERT: '',
+    });
+    expect(local).toMatchObject({ enabled: true, connections: { host: 'tidb.example.test' } });
+    if (local.enabled) expect(local.connections.caCert).toBeUndefined();
+  });
+
+  it('loads valid config inheriting DB_* and supports DEMO_SANDBOX_DB_* overrides', () => {
+    const loaded = loadDemoSandboxConfigFromEnv({
+      ...baseEnv(),
+      DEMO_SANDBOX_DB_HOST: 'sandbox.tidb.test',
+      DEMO_SANDBOX_DB_PORT: '4001',
+      DEMO_SANDBOX_DB_CA_CERT: 'custom-ca',
+      DEMO_SANDBOX_RECOVER_ON_BOOT: 'true',
+    });
+    expect(loaded).toEqual({
+      enabled: true,
+      jwtSecret: 'sandbox-only-secret',
+      recoverOnBoot: true,
+      connections: {
+        host: 'sandbox.tidb.test',
+        port: 4001,
+        controlPlaneDatabase: 'mundo_3d_control',
+        caCert: 'custom-ca',
+        slots: validSlots,
+      },
+    });
+  });
+
+  it.each([
+    ['invalid DEMO_SANDBOX_ENABLED', { DEMO_SANDBOX_ENABLED: 'yes' }, /DEMO_SANDBOX_ENABLED/],
+    [
+      'invalid DEMO_SANDBOX_RECOVER_ON_BOOT',
+      { DEMO_SANDBOX_RECOVER_ON_BOOT: '1' },
+      /DEMO_SANDBOX_RECOVER_ON_BOOT/,
+    ],
+    [
+      'missing DEMO_SANDBOX_JWT_SECRET',
+      { DEMO_SANDBOX_JWT_SECRET: '' },
+      /DEMO_SANDBOX_JWT_SECRET is required/,
+    ],
+    [
+      'colliding DEMO_SANDBOX_JWT_SECRET',
+      { DEMO_SANDBOX_JWT_SECRET: 'prod-secret' },
+      /must differ from JWT_SECRET/,
+    ],
+    [
+      'padded colliding DEMO_SANDBOX_JWT_SECRET',
+      { DEMO_SANDBOX_JWT_SECRET: '  prod-secret  ' },
+      /must differ from JWT_SECRET/,
+    ],
+    ['missing CA cert in production', { DB_CA_CERT: '' }, /DB_CA_CERT/],
+    [
+      'blank DEMO_SANDBOX_DB_CA_CERT',
+      { DEMO_SANDBOX_DB_CA_CERT: '   ' },
+      /DB_CA_CERT/,
+    ],
+    [
+      'slot username colliding with DB_USER',
+      { DB_USER: 'demo_u2' },
+      /Invalid demo sandbox connection configuration/,
+    ],
+    ['invalid port', { DB_PORT: '4000abc' }, /Invalid demo sandbox connection configuration/],
+    ['malformed slots JSON', { DEMO_SANDBOX_SLOTS_JSON: '{bad' }, /valid JSON/],
+    [
+      'fewer than 3 slots',
+      { DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(validSlots.slice(0, 2)) },
+      /between 3 and 5 slots/,
+    ],
+    [
+      'more than 5 slots',
+      {
+        DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(
+          Array.from({ length: 6 }, (_, i) => ({
+            slotId: `slot-${i + 1}`,
+            database: `demo_slot_${i + 1}`,
+            username: `demo_u${i + 1}`,
+            password: `p${i + 1}`,
+          })),
+        ),
+      },
+      /between 3 and 5 slots/,
+    ],
+    [
+      'slot colliding with control-plane DB',
+      {
+        DEMO_SANDBOX_SLOTS_JSON: JSON.stringify([
+          validSlots[0],
+          validSlots[1],
+          { ...validSlots[2], database: 'mundo_3d_control' },
+        ]),
+      },
+      /Invalid demo sandbox connection configuration/,
+    ],
+  ])('fails closed on %s', (_label, override, pattern) => {
+    expect(() => loadDemoSandboxConfigFromEnv({ ...baseEnv(), ...override })).toThrow(pattern);
   });
 });
