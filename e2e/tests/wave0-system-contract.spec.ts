@@ -255,26 +255,26 @@ for (const theme of themes) {
   });
 }
 
-test('keeps real product and approved brand imagery normal while isolating Home placeholders', async ({
+test('keeps real product, approved brand, and fallback placeholder imagery in normal rendering', async ({
   page,
 }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
 
   const imageRendering = await page.evaluate(() => {
     const fixture = document.createElement('div');
-    const createImage = (id: string, className = '', pixelArt = false): HTMLImageElement => {
+    const createImage = (id: string, className = '', legacyPixelArtMarker = false): HTMLImageElement => {
       const image = document.createElement('img');
       image.id = id;
       image.className = className;
       image.src = '/img/brand/Mundo3D_Isotipo.png';
-      if (pixelArt) image.dataset.imageRendering = 'pixel-art';
+      if (legacyPixelArtMarker) image.dataset.imageRendering = 'pixel-art';
       fixture.append(image);
       return image;
     };
 
     const product = createImage('wave0-real-product');
     const brand = createImage('wave0-approved-brand');
-    const canonicalPlaceholder = createImage('wave0-canonical-placeholder', '', true);
+    const legacyPixelMarker = createImage('wave0-canonical-placeholder', '', true);
     const featuredPlaceholder = createImage(
       'wave0-featured-placeholder',
       'hero-specimen__image--placeholder',
@@ -289,19 +289,21 @@ test('keeps real product and approved brand imagery normal while isolating Home 
     const result = {
       product: rendering(product),
       brand: rendering(brand),
-      canonicalPlaceholder: rendering(canonicalPlaceholder),
+      legacyPixelMarker: rendering(legacyPixelMarker),
       featuredPlaceholder: rendering(featuredPlaceholder),
       productPlaceholder: rendering(productPlaceholder),
     };
-    canonicalPlaceholder.removeAttribute('data-image-rendering');
+    legacyPixelMarker.removeAttribute('data-image-rendering');
 
-    return { ...result, markerRemoved: rendering(canonicalPlaceholder) };
+    return { ...result, markerRemoved: rendering(legacyPixelMarker) };
   });
 
+  // Pixel-art fallback rules have been retired (DESIGN.md); even the legacy
+  // data-image-rendering="pixel-art" marker must stay in normal `auto` rendering.
   expect(imageRendering).toEqual({
     product: 'auto',
     brand: 'auto',
-    canonicalPlaceholder: 'pixelated',
+    legacyPixelMarker: 'auto',
     featuredPlaceholder: 'auto',
     productPlaceholder: 'auto',
     markerRemoved: 'auto',
