@@ -22,6 +22,8 @@ describe('demoSandboxSeedData', () => {
       Array.from({ length: 17 }, (_, index) => index + 1),
     );
     expect(seed.products.every((p) => p.stock > 0)).toBe(true);
+    expect(seed.products.every((p) => p.idCategory >= 1 && p.idCategory <= 10)).toBe(true);
+    expect(seed.products.every((p) => p.idFranchise >= 1 && p.idFranchise <= 10)).toBe(true);
 
     const roles = seed.users.map((u) => u.idRole);
     expect(roles).toEqual([Role.USER, Role.STAFF]);
@@ -42,6 +44,9 @@ describe('demoSandboxSeedData', () => {
     for (const invalid of ['', '   ', 'slot 1', 'slot/1', 'a'.repeat(65)]) {
       expect(() => buildDemoSandboxSlotEmails(invalid)).toThrow('Invalid demo sandbox slot id');
     }
+    expect(() => buildDemoSandboxSeedData('slot-1', new Date('invalid'))).toThrow(
+      'Invalid demo sandbox verification timestamp',
+    );
   });
 
   it('returns fresh defensive copies on repeated calls without mutating cached catalog data', () => {

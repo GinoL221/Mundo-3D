@@ -141,10 +141,24 @@ function loadCatalogProducts(): readonly DemoSandboxProductSeed[] {
     const price = readNumberOrNull(raw, 'Price', 'price');
     const idCategory = readNumberOrNull(raw, 'IDCategory', 'idCategory');
     const idFranchise = readNumberOrNull(raw, 'IDFranchise', 'idFranchise');
-    if (!nameProduct || price === null || idCategory === null || idFranchise === null) {
+    if (
+      !nameProduct ||
+      price === null ||
+      idCategory === null ||
+      idFranchise === null ||
+      !Number.isInteger(idCategory) ||
+      idCategory < 1 ||
+      idCategory > CATEGORY_NAMES.length ||
+      !Number.isInteger(idFranchise) ||
+      idFranchise < 1 ||
+      idFranchise > FRANCHISE_NAMES.length
+    ) {
       throw new Error('Incomplete product entry in demo sandbox seed catalog');
     }
     const stock = readNumberOrNull(raw, 'Stock', 'stock') ?? 50;
+    if (!Number.isInteger(stock) || stock <= 0) {
+      throw new Error('Demo sandbox seed products must have positive integer stock');
+    }
     return {
       idProduct: index + 1,
       nameProduct,
@@ -188,6 +202,9 @@ export function buildDemoSandboxSeedData(
   slotId: string,
   verifiedAt: Date = new Date(DEFAULT_VERIFIED_AT_MS),
 ): DemoSandboxSeedBundle {
+  if (!(verifiedAt instanceof Date) || !Number.isFinite(verifiedAt.getTime())) {
+    throw new Error('Invalid demo sandbox verification timestamp');
+  }
   const emails = buildDemoSandboxSlotEmails(slotId);
   const passwordUser = getSyntheticPasswordHash();
   const verifiedTimestamp = new Date(verifiedAt.getTime());
