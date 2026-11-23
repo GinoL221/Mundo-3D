@@ -1,5 +1,5 @@
 /* ============================================================
-   base/reset.css — Box-Sizing + Pixelated Images
+   base/reset.css — Box-Sizing
    ============================================================ */
 
 /* ── Global Reset ──────────────────────────────────────────── */
@@ -8,9 +8,4 @@
 *::after {
   box-sizing: border-box;
   border-radius: 0;
-}
-
-/* ── Default Image Rendering ───────────────────────────────── */
-img:where(:not([data-image-rendering='pixel-art'])) {
-  image-rendering: auto;
 }

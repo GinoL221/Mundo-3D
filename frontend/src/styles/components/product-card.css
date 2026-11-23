@@ -141,7 +141,6 @@
   width: 128px;
   height: 128px;
   margin-bottom: var(--space-lg);
-  image-rendering: pixelated;
 }
 
 .empty-state h2 {

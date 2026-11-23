@@ -53,6 +53,19 @@ test.describe('Cart E2E Tests - Guest Flow', () => {
     await page.evaluate(() => localStorage.removeItem('cart'));
   });
 
+  test('Empty Cart State', async ({ page }) => {
+    await page.goto('/cart');
+
+    const emptyState = page.locator('#cart-items-container .ui-state--empty.ui-state--open');
+    await expect(emptyState).toBeVisible();
+    await expect(emptyState.locator('img')).toHaveCount(0);
+    await expect(emptyState.getByRole('link', { name: 'Ver catálogo' })).toHaveAttribute(
+      'href',
+      '/products',
+    );
+    await expect(page.locator('#cart-summary')).toBeHidden();
+  });
+
   test('Add Product to Cart as Guest', async ({ page }) => {
     // Navigate to product 1 details page
     await page.goto('/product?id=1');
@@ -101,9 +114,15 @@ test.describe('Cart E2E Tests - Guest Flow', () => {
 
     const firstItem = items.first();
     const productName = (await firstItem.locator('.cart__item-name').textContent())?.trim() ?? '';
+    await expect(firstItem.locator('.cart__item-name a')).toHaveAttribute('href', '/product?id=1');
     await expect(firstItem.locator('.cart__item-remove')).toHaveAccessibleName(
       `Eliminar ${productName} del carrito`,
     );
+    await expect(page.locator('#cart-count')).toHaveText('2 piezas');
+    await expect(page.locator('.cart__btn-checkout')).toHaveText('Iniciá sesión para finalizar');
+
+    await firstItem.locator('.cart__quantity-increase').click();
+    await expect(page.locator('#cart-count')).toHaveText('3 piezas');
 
     const image = firstItem.locator('.cart__item-image');
     await image.evaluate((element) => {

@@ -20,7 +20,7 @@ This document translates the product experience defined in [PRODUCT.md](PRODUCT.
 
 The table above orders visual authority only. `PRODUCT.md` governs audience, product scope, and target experience; the brand manual governs identity. Neither a product goal nor a visual rule proves that a capability is implemented or publicly deployed.
 
-The product direction is a workshop vitrine: catalogue first, paper and ink surfaces, IBM Plex Sans, and blue `#2F6BFF`. The five PNG identity assets in `docs/diseno/imagenes/` are approved and materialize the manual's logo variants. PICO-8 colors, pixel-art selectors, and CRT/JRPG effects that still ship are legacy implementation surfaces, not brand authority.
+The product direction is a workshop vitrine: catalogue first, paper and ink surfaces, IBM Plex Sans, and blue `#2F6BFF`. The five PNG identity assets in `docs/diseno/imagenes/` are approved and materialize the manual's logo variants. PICO-8 colors and CRT/JRPG effects that still ship are legacy implementation surfaces, not brand authority.
 
 ## Recruiter demo experience — target
 
@@ -133,7 +133,7 @@ The header (`HomeHeader.astro`) uses the horizontal isologotype as one responsiv
 - Styles are plain CSS files imported by `frontend/src/layouts/Layout.astro` in this order: normalize, tokens, base reset, base layout, base utilities, base system primitives, then components.
 - The shared layout shell uses `HomeHeader.astro` and `HomeFooter.astro` with BEM classes such as `.home-header__link`, `.home-header__utility`, `.home-footer__links`, `.product-card__action`, and `.orders-page`. Account dropdown selectors (`.nav-item__trigger`, `.nav-item__dropdown`, `.navbar__greeting`) and older standalone blocks (`.cart-link`, `.empty-state`) remain in use.
 - `--bp-*` is the only breakpoint token naming convention. Use the existing 640px and 1024px boundaries rather than adding aliases.
-- `reset.css` keeps `image-rendering: auto` by default (`img:where(:not([data-image-rendering='pixel-art']))`) while `border-radius: 0` remains on legacy rules; explicit `[data-image-rendering='pixel-art']` and `--pixelart`/`--placeholder` classes still opt into `pixelated` as legacy implementation debt.
+- `reset.css` no longer special-cases pixel art; `border-radius: 0` remains on legacy rules, and `--placeholder` classes render the neutral fallback art without `pixelated`.
 - Keep disabled controls visibly disabled (`opacity: 0.5; cursor: not-allowed`) and remove their hover accent state.
 - Header controls use 24px outline SVG icons.
 
@@ -141,7 +141,7 @@ The header (`HomeHeader.astro`) uses the horizontal isologotype as one responsiv
 
 - `Layout.astro` and `HomeHeader.astro` do not read `localStorage['retro-theme-preference']`, toggle `html.crt-theme-active`, or render `.crt-overlay` or a CRT toggle button.
 - The legacy `crtToggle.ts` script, `--lcd-bg` / `--lcd-fg` tokens, and unused stylesheets (`carousel.css`, `feature-strip.css`, `forms.css`, `profile.css`, `users-list.css`, `error-pages.css`, `whatsapp-floating.css`) plus `WhatsAppFloating.astro` have been retired.
-- Remaining pixel-art legacy debt is limited to `CartList.astro`'s `empty-cart.svg` (`data-image-rendering="pixel-art"`) and the matching `image-rendering: pixelated` rules in `system-primitives.css`, `cart.css`, and `product-card.css`; do not copy them into new work.
+- The PICO-8 fallback art has been retired: `frontend/public/images/illustrations/*.svg` and `img/products/productoSinImagen.svg` are neutral outline placeholders (stroke `#8c857d`, transparent background) and no stylesheet sets `image-rendering: pixelated`.
 
 ## Do's and don'ts
 
