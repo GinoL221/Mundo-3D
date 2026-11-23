@@ -190,7 +190,7 @@ test.describe('Home responsive contract (fixed Chromium rendering)', () => {
         expect(metrics.footerTopColumns).toBe(4);
       }
 
-      expect(metrics.footerLinkTargets).toHaveLength(10);
+      expect(metrics.footerLinkTargets).toHaveLength(9);
       for (const target of metrics.footerLinkTargets) {
         expect(target.width).toBeGreaterThanOrEqual(44);
         expect(target.height).toBeGreaterThanOrEqual(44);

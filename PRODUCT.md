@@ -106,7 +106,7 @@ Partial visitor-isolation persistence and lease primitives (`backend/src/.../Dem
 ## Evidence on Hand
 
 - Real product imagery for the 17 seeded catalogue items, under `frontend/public/img/products/`.
-- A verifiable engineering trail: `openspec/specs/` (capability specifications), `openspec/changes/archive/` (closed change cycles with their exploration, research, design, and verification records), and tests across unit, real-database, and Playwright tiers. Current execution results belong in verification records, not in a fixed test-count claim here.
+- A verifiable engineering trail: `odd/tasks/` (current per-feature requirements, decisions, and verification evidence), the frozen `openspec/` archive (specifications and closed change cycles through September 2026; some describe the earlier visual identity), and tests across unit, real-database, and Playwright tiers. Current execution results belong in verification records, not in a fixed test-count claim here.
 - `README.md` documents setup, architecture, and testing strategy; `docs/RUNBOOKS.md` documents the free-tier deployment stack and operational checks.
 
 **Absences that must not be fabricated:** no customers, no testimonials, no sales figures, no press, no case studies, no pricing tiers, no delivery guarantees, no payment processing. Prices exist on catalogue items as seed data only.

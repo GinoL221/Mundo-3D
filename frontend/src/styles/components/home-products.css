@@ -227,9 +227,7 @@
 
 .home-commission {
   padding: var(--space-xl) 0;
-  background: var(--accent-tint);
-  border-top: 1px solid var(--accent-tint-border);
-  border-bottom: 1px solid var(--accent-tint-border);
+  border-top: 1px solid var(--border);
   color: var(--fg);
 }
 
@@ -261,7 +259,7 @@
 .home-commission__description {
   max-width: 60ch;
   margin: 0;
-  color: var(--accent-tint-text);
+  color: var(--sys-text-muted);
   font-size: var(--text-body);
   line-height: var(--line-height-base);
   text-wrap: pretty;

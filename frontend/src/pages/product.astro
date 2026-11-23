@@ -211,9 +211,11 @@ import SocialIcon from '../components/SocialIcon.astro';
 
     if (imageElement) {
       imageElement.src = initialImageSrc;
+      imageElement.classList.toggle('product-detail__image--placeholder', placeholder);
       imageElement.alt = placeholder ? `Ilustración de ${product.category} para ${product.name}` : product.name;
       imageElement.addEventListener('error', () => {
         fallbackCartImage = '/images/illustrations/Otras.svg';
+        imageElement.classList.add('product-detail__image--placeholder');
         imageElement.src = fallbackCartImage;
         imageElement.alt = `Ilustración genérica para ${product.name}`;
       }, { once: true });

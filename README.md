@@ -16,7 +16,7 @@ La experiencia prevista permite navegar el catálogo sin registro, probar una co
 
 - [Arquitectura del backend y frontend](#arquitectura).
 - [Estrategia de pruebas](#estrategia-de-pruebas) e [integración continua](#integración-continua).
-- [Especificaciones de capacidades](openspec/specs/) y [registros históricos de cambios](openspec/changes/archive/); un registro no sustituye la evidencia de ejecución actual.
+- [Documentos de tareas ODD](odd/tasks/) con requisitos, decisiones y evidencia por funcionalidad, y el [archivo histórico de OpenSpec](openspec/README.md) (congelado en septiembre de 2026); un registro no sustituye la evidencia de ejecución actual.
 - [Límites actuales](#limitaciones-actuales) y [procedimientos de operación](docs/RUNBOOKS.md).
 
 ## Inicio rápido local
@@ -315,12 +315,13 @@ Mundo-3D/
 |       |-- layouts/            # Layout base
 |       `-- styles/             # Sistema visual
 |-- e2e/                        # Configuración y escenarios Playwright
-|-- openspec/                   # Especificaciones y cambios SDD
+|-- odd/                        # Documentos de tareas ODD (registro vigente)
+|-- openspec/                   # Archivo histórico de especificaciones (congelado)
 |-- package.json                # Scripts del monorepo
 `-- pnpm-workspace.yaml         # backend, frontend y e2e
 ```
 
-Las especificaciones aceptadas están en [`openspec/specs/`](openspec/specs/). Los cambios bajo `openspec/changes/` pueden ser propuestas o trabajo pendiente y no implican que una capacidad esté disponible en `main`.
+Los requisitos y decisiones vigentes se registran por funcionalidad en [`odd/tasks/`](odd/tasks/). [`openspec/`](openspec/README.md) es un archivo histórico congelado en septiembre de 2026: algunas especificaciones describen la identidad visual anterior y no prueban el comportamiento actual.
 
 ## Operación
 

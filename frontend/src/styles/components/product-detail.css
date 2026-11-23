@@ -257,9 +257,12 @@
   display: block;
   width: 100%;
   max-width: 100%;
-  aspect-ratio: 4 / 3;
-  max-height: 440px;
-  padding: var(--space-md);
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+.product-detail__image--placeholder {
+  padding: var(--space-xl);
   object-fit: contain;
 }
 
