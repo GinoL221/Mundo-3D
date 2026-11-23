@@ -27,7 +27,13 @@ function runPreflight(env) {
 
 test('all required vars and every warn-only var present -> no missing, no warnings', () => {
   const result = checkEnv(buildFullEnv());
-  assert.deepEqual(result, { missing: [], warnings: [], nodeEnv: null, storageDriver: null });
+  assert.deepEqual(result, {
+    missing: [],
+    warnings: [],
+    nodeEnv: null,
+    storageDriver: null,
+    demoSandbox: null,
+  });
 });
 
 test('the hard-required list matches the deploy-pipeline spec contract, in order', () => {
@@ -117,6 +123,7 @@ test('all required present, COOKIE_DOMAIN absent -> warns, does not fail', () =>
     warnings: ['COOKIE_DOMAIN'],
     nodeEnv: null,
     storageDriver: null,
+    demoSandbox: null,
   });
 });
 
@@ -129,6 +136,7 @@ test('all required present, PUBLIC_API_URL absent -> warns, does not fail', () =
     warnings: ['PUBLIC_API_URL'],
     nodeEnv: null,
     storageDriver: null,
+    demoSandbox: null,
   });
 });
 
@@ -194,7 +202,13 @@ test('script exits 0 when every hard-required var is set', () => {
 
 test('STORAGE_DRIVER=r2 explicit requires R2 vars and passes when set', () => {
   const env = { ...buildFullEnv(), STORAGE_DRIVER: 'r2' };
-  assert.deepEqual(checkEnv(env), { missing: [], warnings: [], nodeEnv: null, storageDriver: null });
+  assert.deepEqual(checkEnv(env), {
+    missing: [],
+    warnings: [],
+    nodeEnv: null,
+    storageDriver: null,
+    demoSandbox: null,
+  });
   assert.equal(runPreflight(env).status, 0);
 });
 
@@ -217,7 +231,13 @@ test('STORAGE_DRIVER=cloudinary requires CLOUDINARY_* vars and does not require 
     CLOUDINARY_API_KEY: 'key',
     CLOUDINARY_API_SECRET: 'secret',
   };
-  assert.deepEqual(checkEnv(env), { missing: [], warnings: [], nodeEnv: null, storageDriver: null });
+  assert.deepEqual(checkEnv(env), {
+    missing: [],
+    warnings: [],
+    nodeEnv: null,
+    storageDriver: null,
+    demoSandbox: null,
+  });
   assert.equal(runPreflight(env).status, 0);
 });
 
@@ -263,7 +283,13 @@ test('STORAGE_DRIVER=disabled requires no storage provider vars and exits 0', ()
     COOKIE_DOMAIN: 'value',
     PUBLIC_API_URL: 'value',
   };
-  assert.deepEqual(checkEnv(env), { missing: [], warnings: [], nodeEnv: null, storageDriver: null });
+  assert.deepEqual(checkEnv(env), {
+    missing: [],
+    warnings: [],
+    nodeEnv: null,
+    storageDriver: null,
+    demoSandbox: null,
+  });
   assert.equal(runPreflight(env).status, 0);
 });
 
@@ -276,3 +302,88 @@ test('invalid STORAGE_DRIVER fails closed with explicit STORAGE_DRIVER error and
   assert.notEqual(res.status, 0);
   assert.match(res.stdout, /STORAGE_DRIVER/);
 });
+
+const VALID_SANDBOX_SLOTS = JSON.stringify([
+  { slotId: 'slot-1', database: 'demo_slot_1', username: 'demo_u1', password: 'p1' },
+  { slotId: 'slot-2', database: 'demo_slot_2', username: 'demo_u2', password: 'p2' },
+  { slotId: 'slot-3', database: 'demo_slot_3', username: 'demo_u3', password: 'p3' },
+]);
+
+test('DEMO_SANDBOX_ENABLED=false keeps sandbox vars unrequired and exits 0', () => {
+  const env = { ...buildFullEnv(), DEMO_SANDBOX_ENABLED: 'false' };
+  assert.deepEqual(checkEnv(env), {
+    missing: [],
+    warnings: [],
+    nodeEnv: null,
+    storageDriver: null,
+    demoSandbox: null,
+  });
+  assert.equal(runPreflight(env).status, 0);
+});
+
+test('DEMO_SANDBOX_ENABLED=true passes when secret is distinct and 3-5 slots are valid', () => {
+  const env = {
+    ...buildFullEnv(),
+    DB_NAME: 'mundo_3d_control',
+    DB_PORT: '4000',
+    DEMO_SANDBOX_ENABLED: 'true',
+    DEMO_SANDBOX_JWT_SECRET: 'sandbox-distinct-secret',
+    DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS,
+  };
+  assert.deepEqual(checkEnv(env), {
+    missing: [],
+    warnings: [],
+    nodeEnv: null,
+    storageDriver: null,
+    demoSandbox: null,
+  });
+  assert.equal(runPreflight(env).status, 0);
+});
+
+test('DEMO_SANDBOX_ENABLED=true requires DEMO_SANDBOX_JWT_SECRET and DEMO_SANDBOX_SLOTS_JSON', () => {
+  const env = { ...buildFullEnv(), DEMO_SANDBOX_ENABLED: 'true' };
+  assert.deepEqual(checkEnv(env).missing, ['DEMO_SANDBOX_JWT_SECRET', 'DEMO_SANDBOX_SLOTS_JSON']);
+  const res = runPreflight(env);
+  assert.notEqual(res.status, 0);
+  assert.match(res.stdout, /DEMO_SANDBOX_JWT_SECRET/);
+});
+
+for (const [label, override] of [
+  ['invalid DEMO_SANDBOX_ENABLED', { DEMO_SANDBOX_ENABLED: 'yes' }],
+  ['invalid DEMO_SANDBOX_RECOVER_ON_BOOT', { DEMO_SANDBOX_RECOVER_ON_BOOT: '1' }],
+  ['invalid DEMO_SANDBOX_DB_PORT', { DEMO_SANDBOX_DB_PORT: '4000abc' }],
+  ['blank DEMO_SANDBOX_DB_CA_CERT', { DEMO_SANDBOX_DB_CA_CERT: '   ' }],
+  ['secret equal to JWT_SECRET', { DEMO_SANDBOX_JWT_SECRET: 'value' }],
+  ['fewer than 3 slots', { DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(JSON.parse(VALID_SANDBOX_SLOTS).slice(0, 2)) }],
+  [
+    'more than 5 slots',
+    {
+      DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(
+        Array.from({ length: 6 }, (_, i) => ({
+          slotId: `slot-${i + 1}`,
+          database: `demo_slot_${i + 1}`,
+          username: `demo_u${i + 1}`,
+          password: `p${i + 1}`,
+        })),
+      ),
+    },
+  ],
+  ['root slot account', { DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS.replace('demo_u3', 'root') }],
+  ['slot user colliding with DB_USER', { DB_USER: 'demo_u2' }],
+  ['slot DB colliding with DB_NAME', { DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS.replace('demo_slot_3', 'value') }],
+]) {
+  test(`demo sandbox preflight fails closed on ${label}`, () => {
+    const env = {
+      ...buildFullEnv(),
+      DEMO_SANDBOX_ENABLED: 'true',
+      DEMO_SANDBOX_JWT_SECRET: 'sandbox-distinct-secret',
+      DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS,
+      ...override,
+    };
+    const result = checkEnv(env);
+    assert.ok(result.demoSandbox);
+    const res = runPreflight(env);
+    assert.notEqual(res.status, 0);
+    assert.match(res.stdout, /FAIL:/);
+  });
+}
