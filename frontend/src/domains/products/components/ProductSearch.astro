@@ -30,11 +30,57 @@ import ProductCard from './ProductCard.astro';
   <section class="product-search__catalog" aria-labelledby="product-grid-heading">
     <h2 id="product-grid-heading">Piezas disponibles</h2>
     <div class="product-grid" id="product-grid-container" aria-live="polite">
-      <p id="loading-msg" class="product-search__loading">Cargando productos...</p>
+      <div id="loading-msg" class="product-search__loading" role="status" aria-busy="true">
+        <span class="sr-only">Cargando piezas del Catálogo…</span>
+        <div class="product-search__skeleton-grid" aria-hidden="true">
+          <div class="product-card-skeleton">
+            <span class="product-card-skeleton__media ui-skeleton"></span>
+            <div class="product-card-skeleton__body">
+              <span class="ui-skeleton ui-skeleton--medium"></span>
+              <span class="ui-skeleton ui-skeleton--short"></span>
+            </div>
+          </div>
+          <div class="product-card-skeleton">
+            <span class="product-card-skeleton__media ui-skeleton"></span>
+            <div class="product-card-skeleton__body">
+              <span class="ui-skeleton ui-skeleton--medium"></span>
+              <span class="ui-skeleton ui-skeleton--short"></span>
+            </div>
+          </div>
+          <div class="product-card-skeleton">
+            <span class="product-card-skeleton__media ui-skeleton"></span>
+            <div class="product-card-skeleton__body">
+              <span class="ui-skeleton ui-skeleton--medium"></span>
+              <span class="ui-skeleton ui-skeleton--short"></span>
+            </div>
+          </div>
+          <div class="product-card-skeleton">
+            <span class="product-card-skeleton__media ui-skeleton"></span>
+            <div class="product-card-skeleton__body">
+              <span class="ui-skeleton ui-skeleton--medium"></span>
+              <span class="ui-skeleton ui-skeleton--short"></span>
+            </div>
+          </div>
+          <div class="product-card-skeleton">
+            <span class="product-card-skeleton__media ui-skeleton"></span>
+            <div class="product-card-skeleton__body">
+              <span class="ui-skeleton ui-skeleton--medium"></span>
+              <span class="ui-skeleton ui-skeleton--short"></span>
+            </div>
+          </div>
+          <div class="product-card-skeleton">
+            <span class="product-card-skeleton__media ui-skeleton"></span>
+            <div class="product-card-skeleton__body">
+              <span class="ui-skeleton ui-skeleton--medium"></span>
+              <span class="ui-skeleton ui-skeleton--short"></span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <nav class="product-search__pagination" aria-label="Paginación del catálogo">
+  <nav class="product-search__pagination" id="product-search-pagination" aria-label="Paginación del catálogo" hidden>
     <a id="product-search-prev" href="#" hidden>&laquo; Anterior</a>
     <span id="product-search-page-label"></span>
     <a id="product-search-next" href="#" hidden>Siguiente &raquo;</a>
@@ -43,27 +89,126 @@ import ProductCard from './ProductCard.astro';
 
 <ProductCard />
 
+<template id="loading-state-template">
+  <div id="loading-msg" class="product-search__loading" role="status" aria-busy="true">
+    <span class="sr-only">Cargando piezas del Catálogo…</span>
+    <div class="product-search__skeleton-grid" aria-hidden="true">
+      <div class="product-card-skeleton">
+        <span class="product-card-skeleton__media ui-skeleton"></span>
+        <div class="product-card-skeleton__body">
+          <span class="ui-skeleton ui-skeleton--medium"></span>
+          <span class="ui-skeleton ui-skeleton--short"></span>
+        </div>
+      </div>
+      <div class="product-card-skeleton">
+        <span class="product-card-skeleton__media ui-skeleton"></span>
+        <div class="product-card-skeleton__body">
+          <span class="ui-skeleton ui-skeleton--medium"></span>
+          <span class="ui-skeleton ui-skeleton--short"></span>
+        </div>
+      </div>
+      <div class="product-card-skeleton">
+        <span class="product-card-skeleton__media ui-skeleton"></span>
+        <div class="product-card-skeleton__body">
+          <span class="ui-skeleton ui-skeleton--medium"></span>
+          <span class="ui-skeleton ui-skeleton--short"></span>
+        </div>
+      </div>
+      <div class="product-card-skeleton">
+        <span class="product-card-skeleton__media ui-skeleton"></span>
+        <div class="product-card-skeleton__body">
+          <span class="ui-skeleton ui-skeleton--medium"></span>
+          <span class="ui-skeleton ui-skeleton--short"></span>
+        </div>
+      </div>
+      <div class="product-card-skeleton">
+        <span class="product-card-skeleton__media ui-skeleton"></span>
+        <div class="product-card-skeleton__body">
+          <span class="ui-skeleton ui-skeleton--medium"></span>
+          <span class="ui-skeleton ui-skeleton--short"></span>
+        </div>
+      </div>
+      <div class="product-card-skeleton">
+        <span class="product-card-skeleton__media ui-skeleton"></span>
+        <div class="product-card-skeleton__body">
+          <span class="ui-skeleton ui-skeleton--medium"></span>
+          <span class="ui-skeleton ui-skeleton--short"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
 <template id="empty-state-template">
-  <div class="empty-state">
-    <img src="/images/illustrations/empty-state.svg" alt="Próximamente" class="empty-state-img" />
-    <h2>Próximamente</h2>
-    <p>Estamos preparando productos increíbles para vos.</p>
+  <div class="ui-state ui-state--empty product-search__state" role="status">
+    <svg
+      class="ui-state__icon product-search__state-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+      <path d="m3.3 7 8.7 5 8.7-5" />
+      <path d="M12 22V12" />
+    </svg>
+    <h3 class="ui-state__title">Próximamente</h3>
+    <p class="ui-state__text">
+      Todavía no hay piezas cargadas en el Catálogo. Si buscás algo puntual, podés enviarnos una solicitud de encargo.
+    </p>
+    <a class="ui-btn ui-btn--secondary" href="/help">Pedir un encargo a medida</a>
   </div>
 </template>
 
 <template id="no-results-state-template">
-  <div class="empty-state">
-    <img src="/images/illustrations/empty-state.svg" alt="Sin resultados" class="empty-state-img" />
-    <h2>Sin resultados</h2>
-    <p>No encontramos productos para esa búsqueda.</p>
+  <div class="ui-state ui-state--empty product-search__state" role="status">
+    <svg
+      class="ui-state__icon product-search__state-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+    <h3 class="ui-state__title">Sin resultados</h3>
+    <p class="ui-state__text">
+      No encontramos piezas para esa búsqueda. Probá con otro término o quitá los filtros.
+    </p>
+    <a class="ui-btn ui-btn--secondary" href="/products">Limpiar filtros</a>
   </div>
 </template>
 
 <template id="error-state-template">
-  <div class="empty-state">
-    <img src="/images/illustrations/empty-state.svg" alt="Error" class="empty-state-img" />
-    <h2>No se pudo cargar</h2>
-    <p>Verificá tu conexión e intentá de nuevo.</p>
+  <div class="ui-callout ui-callout--danger product-search__state product-search__state--error" role="alert">
+    <svg
+      class="ui-callout__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+    <div class="ui-callout__content">
+      <h3 class="ui-callout__title">No se pudo cargar</h3>
+      <p class="ui-callout__text">No pudimos consultar el Catálogo. Verificá tu conexión e intentá de nuevo.</p>
+      <div class="ui-callout__actions">
+        <button type="button" class="ui-btn ui-btn--secondary" id="product-search-retry">Reintentar</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -72,8 +217,12 @@ import ProductCard from './ProductCard.astro';
   import { resolveImageUrl } from '../../../lib/imageUrl';
   import type { APIProduct } from '../adapters/product.adapter';
   import { fetchProductSearch, fetchFilterOptions } from '../services/product.search.service';
-  import type { ProductSearchCriteria } from '../services/product.search.service';
-  import { presentProductSearchPage } from '../services/productSearchPresenter';
+  import type { FilterOption, ProductSearchCriteria } from '../services/product.search.service';
+  import {
+    formatCatalogPrice,
+    formatProductCardAriaLabel,
+    presentProductSearchPage,
+  } from '../services/productSearchPresenter';
 
   function getCriteria(): ProductSearchCriteria {
     const params = new URLSearchParams(window.location.search);
@@ -99,6 +248,24 @@ import ProductCard from './ProductCard.astro';
     return Boolean(criteria.search || criteria.idCategory !== undefined || criteria.idFranchise !== undefined);
   }
 
+  function populateSelectOptions(
+    select: HTMLSelectElement | null,
+    options: FilterOption[],
+    selectedId?: number,
+  ): void {
+    if (!select) return;
+    while (select.options.length > 1) {
+      select.remove(1);
+    }
+    for (const item of options) {
+      const option = document.createElement('option');
+      option.value = String(item.id);
+      option.textContent = item.name;
+      select.appendChild(option);
+    }
+    if (selectedId !== undefined) select.value = String(selectedId);
+  }
+
   async function rehydrateForm(criteria: ProductSearchCriteria): Promise<void> {
     const searchInput = document.getElementById('product-search-input') as HTMLInputElement | null;
     if (searchInput && criteria.search) searchInput.value = criteria.search;
@@ -107,25 +274,8 @@ import ProductCard from './ProductCard.astro';
     const franchiseSelect = document.getElementById('product-search-franchise') as HTMLSelectElement | null;
     const { categories, franchises } = await fetchFilterOptions();
 
-    if (categorySelect) {
-      for (const category of categories) {
-        const option = document.createElement('option');
-        option.value = String(category.id);
-        option.textContent = category.name;
-        categorySelect.appendChild(option);
-      }
-      if (criteria.idCategory !== undefined) categorySelect.value = String(criteria.idCategory);
-    }
-
-    if (franchiseSelect) {
-      for (const franchise of franchises) {
-        const option = document.createElement('option');
-        option.value = String(franchise.id);
-        option.textContent = franchise.name;
-        franchiseSelect.appendChild(option);
-      }
-      if (criteria.idFranchise !== undefined) franchiseSelect.value = String(criteria.idFranchise);
-    }
+    populateSelectOptions(categorySelect, categories, criteria.idCategory);
+    populateSelectOptions(franchiseSelect, franchises, criteria.idFranchise);
   }
 
   function showState(templateId: string, container: HTMLElement): void {
@@ -153,7 +303,10 @@ import ProductCard from './ProductCard.astro';
       const category = clone.querySelector('.product-card-category') as HTMLElement | null;
       const price = clone.querySelector('.product-card-price') as HTMLElement | null;
 
-      if (link) link.href = `/product?id=${product.idProduct}`;
+      if (link) {
+        link.href = `/product?id=${product.idProduct}`;
+        link.setAttribute('aria-label', formatProductCardAriaLabel(product.nameProduct, product.price));
+      }
       if (img) {
         const isPlaceholder = isPlaceholderImage(product.image);
         if (isPlaceholder) {
@@ -172,7 +325,7 @@ import ProductCard from './ProductCard.astro';
       }
       if (name) name.textContent = product.nameProduct;
       if (category) category.textContent = product.category || 'Otras';
-      if (price) price.textContent = `$${product.price}`;
+      if (price) price.textContent = formatCatalogPrice(product.price);
 
       fragment.appendChild(clone);
     }
@@ -182,10 +335,14 @@ import ProductCard from './ProductCard.astro';
   }
 
   function renderPagination(pageLabel: string, prevHref: string | null, nextHref: string | null): void {
+    const paginationNav = document.getElementById('product-search-pagination');
     const pageLabelEl = document.getElementById('product-search-page-label');
     const prevEl = document.getElementById('product-search-prev') as HTMLAnchorElement | null;
     const nextEl = document.getElementById('product-search-next') as HTMLAnchorElement | null;
 
+    if (paginationNav) {
+      paginationNav.hidden = !pageLabel && !prevHref && !nextHref;
+    }
     if (pageLabelEl) pageLabelEl.textContent = pageLabel;
     if (prevEl) {
       prevEl.hidden = !prevHref;
@@ -197,23 +354,36 @@ import ProductCard from './ProductCard.astro';
     }
   }
 
+  function bindRetryButton(container: HTMLElement): void {
+    const retryButton = container.querySelector('#product-search-retry') as HTMLButtonElement | null;
+    if (!retryButton) return;
+
+    retryButton.addEventListener('click', () => {
+      if (retryButton.disabled) return;
+      retryButton.disabled = true;
+      showState('loading-state-template', container);
+      void loadProducts();
+    });
+  }
+
   async function loadProducts(): Promise<void> {
     const container = document.getElementById('product-grid-container') as HTMLElement | null;
     if (!container) return;
 
     const criteria = getCriteria();
-    await rehydrateForm(criteria);
+    const [, result] = await Promise.all([rehydrateForm(criteria), fetchProductSearch(criteria)]);
 
-    const result = await fetchProductSearch(criteria);
     if (!result.ok) {
       showState('error-state-template', container);
+      renderPagination('', null, null);
+      bindRetryButton(container);
       return;
     }
 
     const presentation = presentProductSearchPage(result.page, criteria);
     if (presentation.isEmpty) {
       showState(hasActiveFilters(criteria) ? 'no-results-state-template' : 'empty-state-template', container);
-      renderPagination(presentation.pageLabel, null, null);
+      renderPagination('', null, null);
       return;
     }
 
