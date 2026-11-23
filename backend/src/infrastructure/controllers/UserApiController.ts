@@ -168,13 +168,8 @@ export class UserApiController {
         throw new Error('RegisterUserUseCase not injected');
       }
 
-      if (!req.file) {
-        res.status(400).json({ error: 'Tienes que subir una imagen' });
-        return;
-      }
-
       const { firstName, lastName, email, password } = req.body;
-      const image = req.file.location;
+      const image = req.file?.location ?? null;
 
       const userDto = await this.registerUserUseCase.execute({ firstName, lastName, email, password, image });
       await establishSession(res, this.createRememberTokenUseCase, userDto);

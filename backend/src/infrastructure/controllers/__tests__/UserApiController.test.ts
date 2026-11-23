@@ -180,7 +180,7 @@ describe('UserApiController', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('returns 400 if req.file is missing', async () => {
+    it('registers successfully with image: null when req.file is missing', async () => {
       req.body = {
         firstName: 'John',
         lastName: 'Doe',
@@ -188,13 +188,34 @@ describe('UserApiController', () => {
         password: 'password123',
       };
 
+      const mockUserDto = {
+        idUser: 124,
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john@example.com',
+        image: null,
+        idRole: 2,
+        category: 'User',
+      };
+
+      mockRegisterUserUseCase.execute.mockResolvedValue(mockUserDto);
+
       await (controller as any).register(req as Request, res as Response, next);
 
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        error: 'Tienes que subir una imagen',
+      expect(mockRegisterUserUseCase.execute).toHaveBeenCalledWith({
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john@example.com',
+        password: 'password123',
+        image: null,
       });
-      expect(mockRegisterUserUseCase.execute).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith({ user: mockUserDto });
+      const cookieNames = (res.cookie as jest.Mock).mock.calls.map((call) => call[0]);
+      expect(cookieNames).toEqual(
+        expect.arrayContaining([AUTH_COOKIE, CSRF_COOKIE, USER_COOKIE, REFRESH_COOKIE]),
+      );
+      expect(next).not.toHaveBeenCalled();
     });
   });
 

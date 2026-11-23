@@ -339,7 +339,7 @@ describe('userValidators - validationsUsers', () => {
     expect(errors.isEmpty()).toBe(true);
   });
 
-  it('fails if no image is uploaded', async () => {
+  it('passes when no image is uploaded (image is optional)', async () => {
     req.body = {
       firstName: 'John',
       lastName: 'Doe',
@@ -350,8 +350,34 @@ describe('userValidators - validationsUsers', () => {
     req.file = undefined;
 
     const errors = await runValidation(req as Request, validationsUsers);
-    expect(errors.mapped().image).toBeDefined();
-    expect(errors.mapped().image.msg).toBe('Tienes que subir una imagen');
+    expect(errors.isEmpty()).toBe(true);
+    expect(errors.mapped().image).toBeUndefined();
+  });
+
+  it('fails with voseo messages when required fields are empty or email is invalid', async () => {
+    req.body = {
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      confirmPassword: ''
+    };
+    req.file = undefined;
+
+    const emptyErrors = await runValidation(req as Request, validationsUsers);
+    expect(emptyErrors.mapped().firstName?.msg).toBe('Ingresá tu nombre');
+    expect(emptyErrors.mapped().lastName?.msg).toBe('Ingresá tu apellido');
+    expect(emptyErrors.mapped().email?.msg).toBe('Ingresá tu correo');
+    expect(emptyErrors.mapped().password?.msg).toBe('Ingresá tu contraseña');
+    expect(emptyErrors.mapped().confirmPassword?.msg).toBe('Confirmá tu contraseña');
+    expect(emptyErrors.mapped().image).toBeUndefined();
+
+    const invalidEmailReq = {
+      body: { ...req.body, email: 'not-an-email' },
+      file: undefined,
+    } as unknown as Request;
+    const invalidEmailErrors = await runValidation(invalidEmailReq, validationsUsers);
+    expect(invalidEmailErrors.mapped().email?.msg).toBe('Ingresá un correo válido');
   });
 
   it('fails if image extension is not allowed', async () => {
@@ -381,7 +407,7 @@ describe('userValidators - validationsUsers', () => {
 
     const errors = await runValidation(req as Request, validationsUsers);
     expect(errors.mapped().confirmPassword).toBeDefined();
-    expect(errors.mapped().confirmPassword.msg).toBe('Tienes que confirmar la contraseña');
+    expect(errors.mapped().confirmPassword.msg).toBe('Confirmá tu contraseña');
   });
 
   it('fails if confirmPassword does not match password', async () => {
@@ -409,15 +435,21 @@ describe('userValidators - loginValidation', () => {
     };
   });
 
-  it('fails on invalid login credentials', async () => {
+  it('fails on invalid login credentials with voseo messages', async () => {
     req.body = {
       email: 'invalid-email',
-      password: '123' // too short
+      password: ''
     };
 
     const errors = await runValidation(req as Request, loginValidation);
-    expect(errors.mapped().email).toBeDefined();
-    expect(errors.mapped().password).toBeDefined();
+    expect(errors.mapped().email?.msg).toBe('Ingresá un correo válido');
+    expect(errors.mapped().password?.msg).toBe('Ingresá tu contraseña');
+
+    const shortPasswordReq = {
+      body: { email: 'invalid-email', password: '123' },
+    } as unknown as Request;
+    const shortPasswordErrors = await runValidation(shortPasswordReq, loginValidation);
+    expect(shortPasswordErrors.mapped().password?.msg).toBe('Tiene que tener al menos 8 caracteres');
   });
 
   it('passes on valid login credentials structure', async () => {

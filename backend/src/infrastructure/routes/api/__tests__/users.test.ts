@@ -5,6 +5,8 @@ import jwt from 'jsonwebtoken';
 
 const mockListExecute = jest.fn();
 const mockGetByIdExecute = jest.fn();
+const mockRegisterExecute = jest.fn();
+const mockCreateRememberTokenExecute = jest.fn();
 
 jest.mock('../../../../application/use-cases/ListUsersUseCase', () => ({
   ListUsersUseCase: jest.fn().mockImplementation(() => ({ execute: mockListExecute })),
@@ -12,6 +14,16 @@ jest.mock('../../../../application/use-cases/ListUsersUseCase', () => ({
 
 jest.mock('../../../../application/use-cases/GetUserByIdUseCase', () => ({
   GetUserByIdUseCase: jest.fn().mockImplementation(() => ({ execute: mockGetByIdExecute })),
+}));
+
+jest.mock('../../../../application/use-cases/RegisterUserUseCase', () => ({
+  RegisterUserUseCase: jest.fn().mockImplementation(() => ({ execute: mockRegisterExecute })),
+}));
+
+jest.mock('../../../../application/use-cases/CreateRememberTokenUseCase', () => ({
+  CreateRememberTokenUseCase: jest.fn().mockImplementation(() => ({
+    execute: mockCreateRememberTokenExecute,
+  })),
 }));
 
 import errorHandler from '../../../middlewares/errorHandler';
@@ -187,6 +199,89 @@ describe('api/users admin routes — guard matrix', () => {
       const res = await request(app).post('/api/users/register').send({});
 
       expect(res.status).not.toBe(403);
+    });
+  });
+
+  describe('POST /api/users/register — optional image & voseo validation', () => {
+    beforeEach(() => {
+      mockCreateRememberTokenExecute.mockResolvedValue({
+        idRememberToken: 1,
+        tokenHash: 'hashed-token',
+        idUser: 42,
+        expiryDate: new Date(Date.now() + 2 * 60 * 60 * 1000),
+        familyId: 'fam-register-test',
+      });
+    });
+
+    it('returns 201 and creates user with image: null when no image is uploaded', async () => {
+      const createdUser = {
+        idUser: 42,
+        firstName: 'Ana',
+        lastName: 'Lopez',
+        email: 'ana@example.com',
+        image: null,
+        idRole: Role.USER,
+        category: 'User',
+      };
+      mockRegisterExecute.mockResolvedValue(createdUser);
+
+      const res = await request(app)
+        .post('/api/users/register')
+        .field('firstName', 'Ana')
+        .field('lastName', 'Lopez')
+        .field('email', 'ana@example.com')
+        .field('password', 'Password1!')
+        .field('confirmPassword', 'Password1!');
+
+      expect(res.status).toBe(201);
+      expect(res.body).toEqual({ user: createdUser });
+      expect(mockRegisterExecute).toHaveBeenCalledWith({
+        firstName: 'Ana',
+        lastName: 'Lopez',
+        email: 'ana@example.com',
+        password: 'Password1!',
+        image: null,
+      });
+    });
+
+    it('returns 400 with the existing extension message when a .gif image is uploaded', async () => {
+      const gifBytes = Buffer.from('GIF89a', 'ascii');
+
+      const res = await request(app)
+        .post('/api/users/register')
+        .field('firstName', 'Ana')
+        .field('lastName', 'Lopez')
+        .field('email', 'ana@example.com')
+        .field('password', 'Password1!')
+        .field('confirmPassword', 'Password1!')
+        .attach('image', gifBytes, { filename: 'avatar.gif', contentType: 'image/gif' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.errors).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: 'field',
+            path: 'image',
+            location: 'body',
+            msg: 'Las extensiones de archivos permitidas son .jpg, .png',
+          }),
+        ]),
+      );
+      expect(mockRegisterExecute).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 with express-validator field errors in voseo when fields are missing', async () => {
+      const res = await request(app).post('/api/users/register').send({});
+
+      expect(res.status).toBe(400);
+      expect(res.body.errors).toEqual([
+        { type: 'field', value: '', msg: 'Ingresá tu nombre', path: 'firstName', location: 'body' },
+        { type: 'field', value: '', msg: 'Ingresá tu apellido', path: 'lastName', location: 'body' },
+        { type: 'field', value: '', msg: 'Ingresá tu correo', path: 'email', location: 'body' },
+        { type: 'field', value: '', msg: 'Ingresá tu contraseña', path: 'password', location: 'body' },
+        { type: 'field', value: '', msg: 'Confirmá tu contraseña', path: 'confirmPassword', location: 'body' },
+      ]);
+      expect(mockRegisterExecute).not.toHaveBeenCalled();
     });
   });
 });
