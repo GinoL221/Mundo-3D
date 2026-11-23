@@ -185,4 +185,33 @@ describe('SequelizeDemoSandboxSlotRepository', () => {
     expect(sequelize.transaction).not.toHaveBeenCalled();
     expect(model.findOrCreate).not.toHaveBeenCalled();
   });
+
+  it('lists slots by status scoped to configured pool and returns empty when unconfigured', async () => {
+    const drainingRow = {
+      ...availableRecord('slot-a'),
+      status: 'draining' as const,
+      leaseId: 'lease-a',
+    };
+    const { repository, model } = makeRepository({
+      findAll: jest.fn().mockResolvedValue([drainingRow]),
+    });
+
+    await expect(repository.listSlotsByStatus(['draining', 'resetting'])).resolves.toEqual([]);
+    expect(model.findAll).not.toHaveBeenCalled();
+
+    await repository.registerConfiguredSlots(['slot-a', 'slot-b'], 2);
+    await expect(repository.listSlotsByStatus([])).resolves.toEqual([]);
+    expect(model.findAll).not.toHaveBeenCalled();
+
+    const rows = await repository.listSlotsByStatus(['draining', 'resetting']);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].id).toBe('slot-a');
+    expect(model.findAll).toHaveBeenCalledWith({
+      where: {
+        id: { [Op.in]: ['slot-a', 'slot-b'] },
+        status: { [Op.in]: ['draining', 'resetting'] },
+      },
+      order: [['id', 'ASC']],
+    });
+  });
 });

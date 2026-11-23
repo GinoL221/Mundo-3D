@@ -3,15 +3,21 @@ import {
   DemoSandboxLeasePolicy,
   DemoSandboxSlot,
   DemoSandboxSlotSnapshot,
+  DemoSandboxSlotStatus,
 } from '../../domain/entities/DemoSandboxSlot';
-import { DemoSandboxSlotRepositoryPort } from '../../domain/ports/DemoSandboxSlotRepositoryPort';
+import {
+  DemoSandboxSlotQueryPort,
+  DemoSandboxSlotRepositoryPort,
+} from '../../domain/ports/DemoSandboxSlotRepositoryPort';
 import { DemoSandboxClockPort } from '../../domain/ports/DemoSandboxRuntimePorts';
 import {
   createDemoSandboxSlotModel,
   DemoSandboxSlotRecord,
 } from '../../database/models/DemoSandboxSlot';
 
-export class SequelizeDemoSandboxSlotRepository implements DemoSandboxSlotRepositoryPort {
+export class SequelizeDemoSandboxSlotRepository
+  implements DemoSandboxSlotRepositoryPort, DemoSandboxSlotQueryPort
+{
   private readonly model: ReturnType<typeof createDemoSandboxSlotModel>;
   private configuredSlotIds: readonly string[] = [];
 
@@ -47,6 +53,22 @@ export class SequelizeDemoSandboxSlotRepository implements DemoSandboxSlotReposi
       }
     });
     this.configuredSlotIds = [...slotIds];
+  }
+
+  async listSlotsByStatus(
+    statuses: readonly DemoSandboxSlotStatus[],
+  ): Promise<DemoSandboxSlotSnapshot[]> {
+    if (statuses.length === 0 || this.configuredSlotIds.length === 0) {
+      return [];
+    }
+    const records = await this.model.findAll({
+      where: {
+        id: { [Op.in]: this.configuredSlotIds },
+        status: { [Op.in]: [...statuses] },
+      },
+      order: [['id', 'ASC']],
+    });
+    return records.map((record) => this.toSnapshot(record));
   }
 
   async claimAvailableSlot(

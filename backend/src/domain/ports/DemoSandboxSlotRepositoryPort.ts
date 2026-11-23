@@ -1,5 +1,13 @@
-import { DemoSandboxLeasePolicy, DemoSandboxSlotSnapshot } from '../entities/DemoSandboxSlot';
+import {
+  DemoSandboxLeasePolicy,
+  DemoSandboxSlotSnapshot,
+  DemoSandboxSlotStatus,
+} from '../entities/DemoSandboxSlot';
 import { DemoSandboxClockPort } from './DemoSandboxRuntimePorts';
+
+export interface DemoSandboxSlotQueryPort {
+  listSlotsByStatus(statuses: readonly DemoSandboxSlotStatus[]): Promise<DemoSandboxSlotSnapshot[]>;
+}
 
 export interface DemoSandboxSlotRepositoryPort {
   registerConfiguredSlots(slotIds: readonly string[], maxSlots: number): Promise<void>;
