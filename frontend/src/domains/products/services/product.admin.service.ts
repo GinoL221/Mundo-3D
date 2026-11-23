@@ -29,25 +29,72 @@ export interface AdminProductDTO {
  */
 export class ProductAdminApiError extends Error {
   status: number;
+  fieldErrors: Record<string, string>;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, fieldErrors: Record<string, string> = {}) {
     super(message);
     this.name = 'ProductAdminApiError';
     this.status = status;
+    this.fieldErrors = fieldErrors;
   }
 }
 
-async function parseErrorMessage(res: Response): Promise<string> {
+interface RawFieldErrorItem {
+  path?: string;
+  param?: string;
+  msg?: string;
+}
+
+function extractFieldErrors(data: unknown): Record<string, string> {
+  if (typeof data !== 'object' || data === null) return {};
+  const { errors } = data as { errors?: unknown };
+  const fieldErrors: Record<string, string> = {};
+
+  if (Array.isArray(errors)) {
+    for (const item of errors) {
+      if (typeof item !== 'object' || item === null) continue;
+      const entry = item as RawFieldErrorItem;
+      const field = entry.path ?? entry.param;
+      if (typeof field === 'string' && field && typeof entry.msg === 'string' && entry.msg) {
+        if (!(field in fieldErrors)) {
+          fieldErrors[field] = entry.msg;
+        }
+      }
+    }
+  } else if (typeof errors === 'object' && errors !== null) {
+    for (const [field, val] of Object.entries(errors)) {
+      if (typeof val === 'object' && val !== null) {
+        const msg = (val as { msg?: unknown }).msg;
+        if (typeof msg === 'string' && msg) {
+          fieldErrors[field] = msg;
+        }
+      }
+    }
+  }
+
+  return fieldErrors;
+}
+
+async function parseErrorDetails(
+  res: Response,
+): Promise<{ message: string; fieldErrors: Record<string, string> }> {
   try {
     const data: unknown = await res.json();
-    return readApiErrorMessage(data, `Error ${res.status}`);
+    return {
+      message: readApiErrorMessage(data, `Error ${res.status}`),
+      fieldErrors: extractFieldErrors(data),
+    };
   } catch {
-    return `Error ${res.status}`;
+    return {
+      message: `Error ${res.status}`,
+      fieldErrors: {},
+    };
   }
 }
 
 async function throwApiError(res: Response): Promise<never> {
-  throw new ProductAdminApiError(res.status, await parseErrorMessage(res));
+  const { message, fieldErrors } = await parseErrorDetails(res);
+  throw new ProductAdminApiError(res.status, message, fieldErrors);
 }
 
 export class ProductAdminService {

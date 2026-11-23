@@ -1,0 +1,211 @@
+/* ============================================================
+   components/admin-products.css — P1c Admin Products Views
+   Page-specific layout complementing base/ui-kit.css (.ui-*).
+   ============================================================ */
+
+.admin-shell {
+  width: min(100%, var(--sys-frame-max, 1104px));
+  margin-inline: auto;
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.admin-shell [hidden],
+.admin-shell .ui-callout[hidden],
+.admin-shell .ui-state[hidden],
+.admin-shell .ui-page-head[hidden],
+.admin-shell .ui-table-wrap[hidden],
+.admin-shell .ui-media-preview[hidden],
+.admin-shell .ui-field[hidden],
+.admin-shell .ui-error[hidden] {
+  display: none;
+}
+
+.admin-products__content {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.admin-back-link {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-block-size: var(--sys-target-min, 44px);
+  padding: 6px 4px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--link-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.admin-back-link:hover {
+  color: var(--accent-strong-hover);
+}
+
+.admin-back-link:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Products Table Cells ──────────────────────────────────── */
+.admin-products-table__actions-head {
+  text-align: right;
+}
+
+.admin-products__piece {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.admin-products__thumb {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border);
+  object-fit: cover;
+  background: var(--surface-subtle);
+}
+
+.admin-products__thumb--placeholder {
+  object-fit: contain;
+  padding: 6px;
+}
+
+.admin-products__piece-info {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-product-name {
+  font-weight: 600;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.admin-product-meta {
+  font-size: 0.8125rem;
+  color: var(--sys-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.admin-products__price {
+  font-weight: 600;
+}
+
+/* ── Tablet & Compact Desktop Table Spacing ────────────────── */
+@media (min-width: 640px) and (max-width: 960px) {
+  .admin-products-table thead th,
+  .admin-products-table tbody td {
+    padding: 12px;
+  }
+}
+
+/* ── Mobile Stacked Rows (< 640px) ─────────────────────────── */
+@media (max-width: 639px) {
+  .admin-products-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .admin-products-table,
+  .admin-products-table tbody,
+  .admin-products-table tr,
+  .admin-products-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-products-table tbody tr {
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    gap: var(--space-sm);
+  }
+
+  .admin-products-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .admin-products-table tbody td {
+    padding: 0;
+    border-bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+  }
+
+  .admin-products-table tbody td[data-cell='piece'] {
+    display: block;
+    padding-bottom: var(--space-xs);
+  }
+
+  .admin-products-table tbody td[data-cell='actions'] {
+    padding-top: var(--space-xs);
+    justify-content: flex-start;
+  }
+
+  .admin-products-table tbody td[data-label]::before {
+    content: attr(data-label);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--sys-text-muted);
+    flex: 0 0 auto;
+  }
+
+  .admin-products-table .ui-table__actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .admin-products-table .ui-table__actions .ui-btn {
+    flex: 1 1 auto;
+  }
+}
+
+/* ── Create / Edit Form Layout ─────────────────────────────── */
+.admin-form-shell {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.admin-form__required-note {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--sys-text-muted);
+}
+
+.admin-required {
+  color: var(--danger-text);
+  font-weight: 600;
+}
+
+.admin-material-custom {
+  margin-top: var(--space-xs);
+}
+
+.admin-edit-stock-note {
+  margin: 0;
+}
+
+.ui-file:has(.ui-file__input[aria-invalid='true']) {
+  border-color: var(--danger-text);
+  background: var(--danger-bg);
+}

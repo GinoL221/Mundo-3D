@@ -1,191 +1,126 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
+import AdminGateDenied from '../../../domains/products/components/admin/AdminGateDenied.astro';
+import AdminProductForm from '../../../domains/products/components/admin/AdminProductForm.astro';
+import '../../../styles/components/admin-products.css';
 ---
 
-<Layout title="Editar Producto - Mundo 3D">
-  <main class="form-layout">
-    <h1 class="sr-only">Editar producto — Mundo 3D</h1>
-    <!--
-      Client-side UX gate only (visual-admin-hiding spec) — the API's
-      requireRoles guard (ADMIN, STAFF) on PUT /api/products/:id is the real
-      security boundary, not this check.
-    -->
-    <div id="admin-gate-denied" style="display:none; text-align:center; padding:2rem;">
-      <p>No tenés permisos para acceder a esta sección.</p>
-      <a href="/">Volver al inicio</a>
-    </div>
-
-    <div id="admin-edit-loading" style="display:none; text-align:center; padding:2rem;">Cargando producto...</div>
-    <div id="admin-edit-load-error" style="display:none; text-align:center; padding:2rem;">
-      <p>No se pudo cargar el producto.</p>
-      <a href="/admin/products">Volver al listado</a>
-    </div>
-
-    <div id="admin-edit-content" class="form-card--wide" style="display:none;">
+<Layout title="Editar pieza — Mundo 3D">
+  <main>
+    <div class="admin-shell">
       <!--
-        Catalog fields only — this form intentionally has NO stock field.
-        PUT /api/products/:id MUST NOT modify stock (product-inventory
-        spec, "Product Update"); stock changes go exclusively through the
-        stock-adjust control on the admin products list.
+        Client-side UX gate only (visual-admin-hiding spec) — the API's
+        requireRoles guard (ADMIN, STAFF) on PUT /api/products/:id is the real
+        security boundary, not this check.
       -->
-      <form id="edit-product-form" class="form-card__form" novalidate enctype="multipart/form-data">
-        <h2>Editar Producto</h2>
+      <AdminGateDenied />
 
-        <div id="edit-error" class="form-card__error" role="alert" style="display:none;"></div>
+      <div id="admin-edit-shell" class="admin-form-shell" hidden>
+        <a href="/admin/products" class="admin-back-link">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+          <span>Volver al Catálogo</span>
+        </a>
 
-        <p style="font-size: var(--text-small); color: var(--sys-text-muted); text-align:left; margin-bottom: var(--space-sm);">
-          Los campos marcados con <span aria-hidden="true">*</span> son obligatorios.
-        </p>
+        <header class="ui-page-head">
+          <div class="ui-page-head__main">
+            <div class="ui-page-head__title-row">
+              <h1 class="ui-page-head__title">Editar pieza</h1>
+              <span id="admin-role-badge" class="ui-badge ui-badge--staff">STAFF</span>
+            </div>
+            <p id="admin-scope-text" class="ui-page-head__scope">
+              Actualizá los datos de la pieza en el Catálogo. El stock se ajusta desde el listado.
+            </p>
+          </div>
+        </header>
 
-        <label for="nameProduct">Nombre: <span aria-hidden="true">*</span></label>
-        <input type="text" id="nameProduct" name="nameProduct" class="form-card__input" minlength="5" maxlength="20" required />
-
-        <label for="price">Precio: <span aria-hidden="true">*</span></label>
-        <input type="number" id="price" name="price" class="form-card__input" min="0.01" step="0.01" required />
-
-        <label for="descriptionProduct">Descripción: <span aria-hidden="true">*</span></label>
-        <input type="text" id="descriptionProduct" name="descriptionProduct" class="form-card__input" maxlength="40" required />
-
-        <label for="idCategory">ID de categoría: <span aria-hidden="true">*</span></label>
-        <input type="number" id="idCategory" name="idCategory" class="form-card__input" min="1" step="1" required />
-
-        <label for="idFranchise">ID de franquicia: <span aria-hidden="true">*</span></label>
-        <input type="number" id="idFranchise" name="idFranchise" class="form-card__input" min="1" step="1" required />
-
-        <label for="material">Material (PLA, Resina, PETG, Flex, u "Otros: detalle"):</label>
-        <input type="text" id="material" name="material" class="form-card__input" placeholder="Opcional" />
-
-        <label for="height">Alto (cm):</label>
-        <input type="number" id="height" name="height" class="form-card__input" min="0" step="0.1" placeholder="Opcional" />
-
-        <label for="width">Ancho (cm):</label>
-        <input type="number" id="width" name="width" class="form-card__input" min="0" step="0.1" placeholder="Opcional" />
-
-        <label for="depth">Profundidad (cm):</label>
-        <input type="number" id="depth" name="depth" class="form-card__input" min="0" step="0.1" placeholder="Opcional" />
-
-        <label for="finish">Acabado:</label>
-        <input type="text" id="finish" name="finish" class="form-card__input" placeholder="Opcional" />
-
-        <label for="productionTime">Tiempo de producción (días):</label>
-        <input type="number" id="productionTime" name="productionTime" class="form-card__input" min="1" max="30" step="1" placeholder="Opcional" />
-
-        <label for="image">Reemplazar imagen (.jpg, .png):</label>
-        <input type="file" id="image" name="image" accept=".jpg,.png" />
-
-        <div class="form-card__actions">
-          <a href="/admin/products" class="form-card__btn" style="text-decoration:none; text-align:center;">Cancelar</a>
-          <button type="submit" id="edit-btn" class="form-card__btn">Guardar cambios</button>
+        <div
+          id="admin-edit-loading"
+          class="ui-state"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+          hidden
+        >
+          <p class="ui-state__title">Cargando datos de la pieza</p>
+          <p class="ui-state__text">
+            Obteniendo información del Catálogo y opciones de clasificación.
+          </p>
+          <div class="ui-skeleton-list" aria-hidden="true">
+            <span class="ui-skeleton"></span>
+            <span class="ui-skeleton ui-skeleton--medium"></span>
+            <span class="ui-skeleton ui-skeleton--short"></span>
+          </div>
         </div>
-      </form>
+
+        <div id="admin-edit-load-error" class="ui-callout ui-callout--danger" role="alert" hidden>
+          <svg
+            class="ui-callout__icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="m15 9-6 6" />
+            <path d="m9 9 6 6" />
+          </svg>
+          <div class="ui-callout__content">
+            <p class="ui-callout__title">No pudimos cargar la pieza</p>
+            <p id="admin-edit-load-error-text" class="ui-callout__text">
+              No se pudo cargar la pieza para editar.
+            </p>
+            <div class="ui-callout__actions">
+              <button
+                type="button"
+                id="admin-edit-retry"
+                class="ui-btn ui-btn--secondary ui-btn--sm"
+              >
+                Reintentar
+              </button>
+              <a href="/admin/products" class="ui-btn ui-btn--ghost ui-btn--sm">
+                Volver al Catálogo
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!--
+          Catalog fields only — this form intentionally has NO stock field.
+          PUT /api/products/:id MUST NOT modify stock (product-inventory
+          spec, "Product Update"); stock changes go exclusively through the
+          stock-adjust control on the admin products list.
+        -->
+        <div id="admin-edit-content" hidden>
+          <AdminProductForm
+            mode="edit"
+            formId="edit-product-form"
+            errorBoxId="edit-error"
+            submitBtnId="edit-btn"
+            submitLabel="Guardar cambios"
+          />
+        </div>
+      </div>
     </div>
   </main>
 </Layout>
 
 <script>
-  import { clearSession, getSessionUser, hasAdminAccess } from '../../../domains/auth';
-  import { ProductAdminApiError, ProductAdminService } from '../../../domains/products';
-  import type { AdminProductDTO } from '../../../domains/products';
+  import { initializeAdminProductsEdit } from '../../../scripts/adminProductsEdit';
 
-  function getProductId(): string | null {
-    const searchParams = new URLSearchParams(window.location.search);
-    return searchParams.get('id');
-  }
-
-  const deniedEl = document.getElementById('admin-gate-denied');
-  const loadingEl = document.getElementById('admin-edit-loading');
-  const loadErrorEl = document.getElementById('admin-edit-load-error');
-  const contentEl = document.getElementById('admin-edit-content');
-
-  const sessionUser = getSessionUser();
-  const isAdminOrStaff = hasAdminAccess(sessionUser);
-
-  const productId = getProductId();
-
-  if (!isAdminOrStaff) {
-    if (deniedEl) deniedEl.style.display = 'block';
-  } else if (!productId) {
-    if (loadErrorEl) loadErrorEl.style.display = 'block';
-  } else {
-    if (loadingEl) loadingEl.style.display = 'block';
-    void loadProduct(productId);
-  }
-
-  async function loadProduct(id: string): Promise<void> {
-    try {
-      const product = await ProductAdminService.getById(Number(id));
-      fillForm(product);
-
-      if (loadingEl) loadingEl.style.display = 'none';
-      if (contentEl) contentEl.style.display = 'block';
-    } catch (err) {
-      if (loadingEl) loadingEl.style.display = 'none';
-      if (loadErrorEl) loadErrorEl.style.display = 'block';
-      console.error('Error loading product for edit:', err);
-    }
-  }
-
-  function fillForm(product: AdminProductDTO): void {
-    const set = (name: string, value: string | number | null) => {
-      const el = document.getElementById(name) as HTMLInputElement | null;
-      if (el && value !== null && value !== undefined) el.value = String(value);
-    };
-
-    set('nameProduct', product.nameProduct);
-    set('price', product.price);
-    set('descriptionProduct', product.descriptionProduct);
-    set('idCategory', product.idCategory);
-    set('idFranchise', product.idFranchise);
-    set('material', product.material);
-    set('height', product.height);
-    set('width', product.width);
-    set('depth', product.depth);
-    set('finish', product.finish);
-    set('productionTime', product.productionTime);
-  }
-
-  const form = document.getElementById('edit-product-form') as HTMLFormElement | null;
-  const errorBox = document.getElementById('edit-error') as HTMLElement | null;
-  const editBtn = document.getElementById('edit-btn') as HTMLButtonElement | null;
-
-  function showError(msg: string): void {
-    if (errorBox) {
-      errorBox.textContent = msg;
-      errorBox.style.display = 'block';
-    }
-  }
-
-  const editBtnLabel = editBtn?.textContent ?? 'Guardar cambios';
-
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!productId) return;
-    if (errorBox) errorBox.style.display = 'none';
-    if (editBtn) {
-      editBtn.disabled = true;
-      editBtn.textContent = 'Guardando...';
-    }
-
-    try {
-      const formData = new FormData(form!);
-      // No stock field exists on this form by design — nothing to strip.
-      await ProductAdminService.update(Number(productId), formData);
-      window.location.href = '/admin/products';
-    } catch (err) {
-      if (err instanceof ProductAdminApiError && err.status === 401) {
-        // clearSession() is now async (POST /users/logout) — fire-and-forget.
-        void clearSession();
-        window.location.href = '/login';
-      } else if (err instanceof Error) {
-        showError(err.message);
-      } else {
-        showError('No se pudo conectar con el servidor. Intentá de nuevo.');
-      }
-    } finally {
-      if (editBtn) {
-        editBtn.disabled = false;
-        editBtn.textContent = editBtnLabel;
-      }
-    }
-  });
+  initializeAdminProductsEdit();
 </script>

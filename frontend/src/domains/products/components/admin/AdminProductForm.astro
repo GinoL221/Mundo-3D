@@ -1,0 +1,372 @@
+---
+interface Props {
+  mode: 'create' | 'edit';
+  formId: string;
+  errorBoxId: string;
+  submitBtnId: string;
+  submitLabel: string;
+}
+
+const { mode, formId, errorBoxId, submitBtnId, submitLabel } = Astro.props;
+const isCreate = mode === 'create';
+---
+
+<form id={formId} class="ui-form" novalidate enctype="multipart/form-data">
+  <div id={errorBoxId} class="ui-callout ui-callout--danger" role="alert" hidden>
+    <svg
+      class="ui-callout__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="m15 9-6 6" />
+      <path d="m9 9 6 6" />
+    </svg>
+    <div class="ui-callout__content">
+      <p class="ui-callout__title">No pudimos guardar la pieza</p>
+      <p id={`${errorBoxId}-text`} class="ui-callout__text"></p>
+    </div>
+  </div>
+
+  <p class="admin-form__required-note">
+    Los campos marcados con <span class="admin-required" aria-hidden="true">*</span> son obligatorios.
+  </p>
+
+  <fieldset class="ui-fieldset">
+    <legend class="ui-fieldset__legend">Datos básicos</legend>
+
+    <div class="ui-form-row ui-form-row--2">
+      <div class="ui-field">
+        <label class="ui-label" for="nameProduct">
+          Nombre de la pieza <span class="admin-required" aria-hidden="true">*</span>
+        </label>
+        <input
+          id="nameProduct"
+          name="nameProduct"
+          class="ui-input"
+          type="text"
+          minlength="5"
+          maxlength="20"
+          required
+          aria-describedby="nameProduct-help"
+        />
+        <p id="nameProduct-help" class="ui-help">Entre 5 y 20 caracteres visibles en el Catálogo.</p>
+        <p id="nameProduct-error" class="ui-error" hidden></p>
+      </div>
+
+      <div class="ui-field">
+        <label class="ui-label" for="price">
+          Precio unitario ($) <span class="admin-required" aria-hidden="true">*</span>
+        </label>
+        <input
+          id="price"
+          name="price"
+          class="ui-input"
+          type="number"
+          min="0.01"
+          step="0.01"
+          required
+          aria-describedby="price-help"
+        />
+        <p id="price-help" class="ui-help">Ingresá un monto mayor a 0 en pesos argentinos.</p>
+        <p id="price-error" class="ui-error" hidden></p>
+      </div>
+    </div>
+
+    <div class="ui-field">
+      <label class="ui-label" for="descriptionProduct">
+        Descripción breve <span class="admin-required" aria-hidden="true">*</span>
+      </label>
+      <textarea
+        id="descriptionProduct"
+        name="descriptionProduct"
+        class="ui-input ui-textarea"
+        maxlength="40"
+        required
+        aria-describedby="descriptionProduct-help"
+      ></textarea>
+      <p id="descriptionProduct-help" class="ui-help">Máximo 40 caracteres para resumir la pieza.</p>
+      <p id="descriptionProduct-error" class="ui-error" hidden></p>
+    </div>
+  </fieldset>
+
+  <fieldset class="ui-fieldset">
+    <legend class="ui-fieldset__legend">Clasificación</legend>
+
+    <div id="classification-load-warning" class="ui-callout ui-callout--warning" role="status" hidden>
+      <svg
+        class="ui-callout__icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+        <path d="M12 9v4" />
+        <path d="M12 17h.01" />
+      </svg>
+      <div class="ui-callout__content">
+        <p class="ui-callout__title">No pudimos cargar categorías ni franquicias</p>
+        <p class="ui-callout__text">
+          Intentá recargarlas para poder clasificar la pieza antes de guardar.
+        </p>
+        <div class="ui-callout__actions">
+          <button
+            type="button"
+            id="classification-retry-btn"
+            class="ui-btn ui-btn--secondary ui-btn--sm"
+          >
+            Reintentar carga
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ui-form-row ui-form-row--3">
+      <div class="ui-field">
+        <label class="ui-label" for="idCategory">
+          Categoría <span class="admin-required" aria-hidden="true">*</span>
+        </label>
+        <select
+          id="idCategory"
+          name="idCategory"
+          class="ui-input"
+          required
+          aria-describedby="idCategory-help"
+        >
+          <option value="">Elegí una categoría</option>
+        </select>
+        <p id="idCategory-help" class="ui-help">Agrupación en la vitrina.</p>
+        <p id="idCategory-error" class="ui-error" hidden></p>
+      </div>
+
+      <div class="ui-field">
+        <label class="ui-label" for="idFranchise">
+          Franquicia <span class="admin-required" aria-hidden="true">*</span>
+        </label>
+        <select
+          id="idFranchise"
+          name="idFranchise"
+          class="ui-input"
+          required
+          aria-describedby="idFranchise-help"
+        >
+          <option value="">Elegí una franquicia</option>
+        </select>
+        <p id="idFranchise-help" class="ui-help">Universo o colección de la pieza.</p>
+        <p id="idFranchise-error" class="ui-error" hidden></p>
+      </div>
+
+      <div class="ui-field">
+        <label class="ui-label" for="material">Material</label>
+        <select
+          id="material"
+          name="material"
+          class="ui-input"
+          aria-describedby="material-help"
+        >
+          <option value="">Sin especificar (opcional)</option>
+          <option value="PLA">PLA</option>
+          <option value="Resina">Resina</option>
+          <option value="PETG">PETG</option>
+          <option value="Flex">Flex</option>
+          <option value="Otros">Otros</option>
+        </select>
+        <p id="material-help" class="ui-help">Filamento o resina utilizada.</p>
+        <p id="material-error" class="ui-error" hidden></p>
+      </div>
+    </div>
+
+    <div id="materialCustom-wrap" class="ui-field admin-material-custom" hidden>
+      <label class="ui-label" for="materialCustom">
+        Detalle de otro material <span class="admin-required" aria-hidden="true">*</span>
+      </label>
+      <input
+        id="materialCustom"
+        class="ui-input"
+        type="text"
+        placeholder="Ej. ABS técnico o Nylon"
+        aria-describedby="materialCustom-help"
+      />
+      <p id="materialCustom-help" class="ui-help">
+        Se guarda con el prefijo «Otros: » en la ficha de la pieza.
+      </p>
+      <p id="materialCustom-error" class="ui-error" hidden></p>
+    </div>
+  </fieldset>
+
+  <fieldset class="ui-fieldset">
+    <legend class="ui-fieldset__legend">Especificaciones 3D (opcionales)</legend>
+
+    <div class="ui-form-row ui-form-row--3">
+      <div class="ui-field">
+        <label class="ui-label" for="height">Alto (cm)</label>
+        <input
+          id="height"
+          name="height"
+          class="ui-input"
+          type="number"
+          min="0"
+          step="0.1"
+          placeholder="Opcional"
+          aria-describedby="height-help"
+        />
+        <p id="height-help" class="ui-help">Mayor o igual a 0.</p>
+        <p id="height-error" class="ui-error" hidden></p>
+      </div>
+
+      <div class="ui-field">
+        <label class="ui-label" for="width">Ancho (cm)</label>
+        <input
+          id="width"
+          name="width"
+          class="ui-input"
+          type="number"
+          min="0"
+          step="0.1"
+          placeholder="Opcional"
+          aria-describedby="width-help"
+        />
+        <p id="width-help" class="ui-help">Mayor o igual a 0.</p>
+        <p id="width-error" class="ui-error" hidden></p>
+      </div>
+
+      <div class="ui-field">
+        <label class="ui-label" for="depth">Profundidad (cm)</label>
+        <input
+          id="depth"
+          name="depth"
+          class="ui-input"
+          type="number"
+          min="0"
+          step="0.1"
+          placeholder="Opcional"
+          aria-describedby="depth-help"
+        />
+        <p id="depth-help" class="ui-help">Mayor o igual a 0.</p>
+        <p id="depth-error" class="ui-error" hidden></p>
+      </div>
+    </div>
+
+    <div class="ui-form-row ui-form-row--2">
+      <div class="ui-field">
+        <label class="ui-label" for="finish">Acabado</label>
+        <input
+          id="finish"
+          name="finish"
+          class="ui-input"
+          type="text"
+          placeholder="Ej. Mate, lijado o pintado a mano"
+          aria-describedby="finish-help"
+        />
+        <p id="finish-help" class="ui-help">Terminación superficial si aplica.</p>
+        <p id="finish-error" class="ui-error" hidden></p>
+      </div>
+
+      <div class="ui-field">
+        <label class="ui-label" for="productionTime">Tiempo de producción (días)</label>
+        <input
+          id="productionTime"
+          name="productionTime"
+          class="ui-input"
+          type="number"
+          min="1"
+          max="30"
+          step="1"
+          placeholder="Opcional (1 a 30)"
+          aria-describedby="productionTime-help"
+        />
+        <p id="productionTime-help" class="ui-help">Entero entre 1 y 30 días.</p>
+        <p id="productionTime-error" class="ui-error" hidden></p>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="ui-fieldset">
+    <legend class="ui-fieldset__legend">Imagen y stock</legend>
+
+    <div class={isCreate ? 'ui-form-row ui-form-row--2' : 'ui-form-row'}>
+      {isCreate && (
+        <div class="ui-field">
+          <label class="ui-label" for="stock">Stock inicial</label>
+          <input
+            id="stock"
+            name="stock"
+            class="ui-input"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="0 por defecto"
+            aria-describedby="stock-help"
+          />
+          <p id="stock-help" class="ui-help">
+            Si lo dejás vacío se crea con 0 unidades; luego se ajusta desde el listado.
+          </p>
+          <p id="stock-error" class="ui-error" hidden></p>
+        </div>
+      )}
+
+      <div class="ui-field">
+        <span id="image-label" class="ui-label">
+          {isCreate ? 'Fotografía de la pieza ' : 'Reemplazar imagen '}
+          {isCreate && <span class="admin-required" aria-hidden="true">*</span>}
+        </span>
+        <div class="ui-file">
+          <input
+            id="image"
+            name="image"
+            class="ui-file__input"
+            type="file"
+            accept=".jpg,.png"
+            required={isCreate}
+            aria-labelledby="image-label"
+            aria-describedby="image-help image-file-name"
+          />
+          <label class="ui-btn ui-btn--soft ui-btn--sm" for="image">Elegir imagen</label>
+          <span id="image-file-name" class="ui-file__name">Ningún archivo seleccionado</span>
+        </div>
+        <p id="image-help" class="ui-help">
+          Formatos aceptados: .jpg o .png.
+        </p>
+        <p id="image-error" class="ui-error" hidden></p>
+      </div>
+    </div>
+
+    <div id="image-preview-wrap" class="ui-media-preview" hidden>
+      <img
+        id="image-preview-img"
+        class="ui-media-preview__thumb"
+        src="/images/illustrations/Otras.svg"
+        alt=""
+        width="64"
+        height="64"
+      />
+      <div class="ui-media-preview__meta">
+        <p id="image-preview-title" class="ui-media-preview__title">Vista previa</p>
+        <p id="image-preview-caption" class="ui-media-preview__caption"></p>
+      </div>
+    </div>
+
+    {!isCreate && (
+      <p class="ui-help admin-edit-stock-note">
+        El stock no se modifica desde acá: podés ajustarlo directamente con el selector del listado
+        del Catálogo.
+      </p>
+    )}
+  </fieldset>
+
+  <div class="ui-form-actions">
+    <a href="/admin/products" class="ui-btn ui-btn--secondary">Cancelar</a>
+    <button type="submit" id={submitBtnId} class="ui-btn ui-btn--primary">
+      {submitLabel}
+    </button>
+  </div>
+</form>
