@@ -19,7 +19,7 @@ function classifyFile(file) {
 const compositionRoots = new Set([
   'backend/index.js', 'backend/src/app.js', 'backend/src/infrastructure/routes/health.ts',
   ...['index', 'products', 'users', 'cart', 'categories', 'franchises', 'orders', 'customCommissionRequests'].map((name) => `backend/src/infrastructure/routes/api/${name}.ts`),
-  ...['sessionUI', 'cartBadge', 'crtToggle', 'themeToggle'].map((name) => `frontend/src/scripts/${name}.ts`),
+  ...['sessionUI', 'cartBadge', 'themeToggle'].map((name) => `frontend/src/scripts/${name}.ts`),
   ...['index', 'products', 'product', 'cart', 'login', 'register', 'aboutUs', 'help', 'faq', 'privacy', 'terms', 'step-by-step'].map((name) => `frontend/src/pages/${name}.astro`),
   ...['index', 'create', 'edit'].map((name) => `frontend/src/pages/admin/products/${name}.astro`),
   'frontend/src/layouts/Layout.astro', ...['Header', 'Footer', 'Welcome'].map((name) => `frontend/src/components/${name}.astro`),

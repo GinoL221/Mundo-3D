@@ -72,8 +72,6 @@ The default `:root` values and the explicit `data-theme="light"` values are the 
 | `--input-fg`        | `#0f172a`     | `#f5f1ea` |
 | `--danger-text`     | `#b91c1c`     | `#fca5a5` |
 | `--title-highlight` | `#0f172a`     | `#f5f1ea` |
-| `--lcd-bg`          | `#ffffff`     | `#1b1917` |
-| `--lcd-fg`          | `#2f6bff`     | `#2f6bff` |
 
 `--danger` is for filled danger backgrounds with light text. `--danger-text` is for danger text and borders directly on surfaces; keep the roles separate. `--warning` currently maps to the blue accent because no separate warning color is prescribed.
 
@@ -115,7 +113,7 @@ The accepted breakpoint names are `--bp-mobile 640px`, `--bp-tablet 1024px`, and
 
 ## Depth and elevation
 
-The brand is intentionally flat and tactile at rest. Establish hierarchy with paper/surface contrast, ink typography, borders, spacing, and real photography. Do not introduce gradients, resting drop shadows, bevels, stickers, glow, or artificial elevation into new brand components; interactive product cards may use a restrained soft-blur hover shadow (`--home-card-shadow-hover`) to signal clickability. The existing LCD glow and dark workshop surfaces are documented legacy/debt, not defaults for new work.
+The brand is intentionally flat and tactile at rest. Establish hierarchy with paper/surface contrast, ink typography, borders, spacing, and real photography. Do not introduce gradients, resting drop shadows, bevels, stickers, glow, or artificial elevation into new brand components; interactive product cards may use a restrained soft-blur hover shadow (`--home-card-shadow-hover`) to signal clickability. The dark workshop surfaces are documented implementation status, not an approved dark brand palette.
 
 ## Logo assets
 
@@ -137,16 +135,13 @@ The header (`HomeHeader.astro`) uses the horizontal isologotype as one responsiv
 - `--bp-*` is the only breakpoint token naming convention. Use the existing 640px and 1024px boundaries rather than adding aliases.
 - `reset.css` keeps `image-rendering: auto` by default (`img:where(:not([data-image-rendering='pixel-art']))`) while `border-radius: 0` remains on legacy rules; explicit `[data-image-rendering='pixel-art']` and `--pixelart`/`--placeholder` classes still opt into `pixelated` as legacy implementation debt.
 - Keep disabled controls visibly disabled (`opacity: 0.5; cursor: not-allowed`) and remove their hover accent state.
-- Header controls use 24px outline SVG icons; CRT emoji/pixel-art icon code remains unused legacy, not new brand guidance.
+- Header controls use 24px outline SVG icons.
 
 ## CRT/JRPG legacy surface
 
-These legacy artifacts remain in the repository as cleanup debt and are not brand guidance:
-
-- `Layout.astro` and `HomeHeader.astro` no longer read `localStorage['retro-theme-preference']`, toggle `html.crt-theme-active`, or render `.crt-overlay` or a CRT toggle button.
-- `crtToggle.ts` remains in `frontend/src/scripts/` only as an orphaned, unit-tested legacy module.
-- `carousel.css` (including `.carousel--lcd` and `@keyframes lcd-glow`, which lacks a `prefers-reduced-motion` override), `feature-strip.css`, `profile.css`, and `error-pages.css` are still imported globally by `Layout.astro` despite being unused on active pages; do not copy them into new work.
-- Legacy `--pico-*` token references remain in `semantic.css`, `alerts.css`, `users-list.css`, `nav-toggles.css`, and inline admin styles; migrate them to official semantic tokens as each sector is refined.
+- `Layout.astro` and `HomeHeader.astro` do not read `localStorage['retro-theme-preference']`, toggle `html.crt-theme-active`, or render `.crt-overlay` or a CRT toggle button.
+- The legacy `crtToggle.ts` script, `--lcd-bg` / `--lcd-fg` tokens, and unused stylesheets (`carousel.css`, `feature-strip.css`, `forms.css`, `profile.css`, `users-list.css`, `error-pages.css`, `whatsapp-floating.css`) plus `WhatsAppFloating.astro` have been retired.
+- Remaining pixel-art legacy debt is limited to `CartList.astro`'s `empty-cart.svg` (`data-image-rendering="pixel-art"`) and the matching `image-rendering: pixelated` rules in `system-primitives.css`, `cart.css`, and `product-card.css`; do not copy them into new work.
 
 ## Do's and don'ts
 
@@ -172,7 +167,7 @@ These legacy artifacts remain in the repository as cleanup debt and are not bran
 - Header and footer content must remain content-driven; do not force desktop widths into narrow viewports.
 - Catalogue cards and calls to action may stack or wrap, but must remain inside the viewport without horizontal scrolling.
 - Preserve 44 × 44px targets for interactive controls and keep focus indicators visible at every width.
-- Respect `prefers-reduced-motion: reduce` for every new animation. Do not copy the current LCD exception without first resolving its missing reduced-motion override.
+- Respect `prefers-reduced-motion: reduce` for every new animation.
 
 ## Accessibility conventions
 
@@ -181,7 +176,7 @@ These legacy artifacts remain in the repository as cleanup debt and are not bran
 - The manual's accessibility touch-target guidance is separate from logo sizing: interactive areas should be at least 44 × 44px. The isotipo has no artificial 24 × 24px brand minimum.
 - Page-level H1s exist; catalogue, authentication, and admin pages commonly use `.sr-only`, while informational pages render a visible H1. Do not add a second H1 merely to satisfy a visual layout.
 - Async errors and confirmations use `role="alert"` or `aria-live="polite"` where the current component exposes them. Preserve visible keyboard focus and do not rely on color alone for state.
-- Any new animation needs a matching reduced-motion behavior. The current LCD exception is tracked above as debt.
+- Any new animation needs a matching reduced-motion behavior.
 
 ## Agent prompt guide
 
