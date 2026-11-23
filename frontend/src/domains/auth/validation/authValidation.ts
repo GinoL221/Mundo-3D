@@ -159,6 +159,17 @@ export function validateLoginInput(input: LoginValidationInput): {
   return { summary: null, fieldErrors };
 }
 
+export function validateResendEmail(email: string): string | null {
+  const trimmed = email.trim();
+  if (!trimmed) {
+    return 'Ingresá tu correo';
+  }
+  if (!SIMPLE_EMAIL_PATTERN.test(trimmed)) {
+    return 'Ingresá un correo válido';
+  }
+  return null;
+}
+
 export function extractApiFieldErrors(err: unknown): Record<string, string> {
   if (typeof err !== 'object' || err === null || !('fieldErrors' in err)) {
     return {};

@@ -8,6 +8,7 @@ import {
   validateImageFile,
   validateLoginInput,
   validateRegisterInput,
+  validateResendEmail,
 } from './authValidation';
 
 describe('evaluatePasswordRules', () => {
@@ -162,6 +163,20 @@ describe('validateLoginInput', () => {
       summary: null,
       fieldErrors: {},
     });
+  });
+});
+
+describe('validateResendEmail', () => {
+  it('returns an inline voseo error when empty or malformed', () => {
+    expect(validateResendEmail('')).toBe('Ingresá tu correo');
+    expect(validateResendEmail('   ')).toBe('Ingresá tu correo');
+    expect(validateResendEmail('no-es-un-correo')).toBe('Ingresá un correo válido');
+    expect(validateResendEmail('ada@ejemplo')).toBe('Ingresá un correo válido');
+  });
+
+  it('returns null for a valid email address', () => {
+    expect(validateResendEmail('ada@example.com')).toBeNull();
+    expect(validateResendEmail('  ada@example.com  ')).toBeNull();
   });
 });
 

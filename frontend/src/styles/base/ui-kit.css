@@ -843,6 +843,10 @@ select.ui-input {
   max-width: 720px;
 }
 
+.ui-form[hidden] {
+  display: none;
+}
+
 .ui-fieldset {
   margin: 0;
   padding: var(--space-lg);
@@ -1014,6 +1018,10 @@ select.ui-input {
   display: grid;
   gap: var(--space-md);
   justify-items: start;
+}
+
+.ui-state[hidden] {
+  display: none;
 }
 
 .ui-state--empty {

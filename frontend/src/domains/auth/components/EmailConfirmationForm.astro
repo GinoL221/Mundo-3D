@@ -1,19 +1,136 @@
-<section class="email-confirmation" aria-labelledby="email-confirmation-title">
-  <h2 id="email-confirmation-title">Confirmá tu correo</h2>
-  <p>Cuando estés listo, confirmá tu dirección desde este enlace.</p>
+<section class="auth-page__panel" aria-label="Confirmación de correo">
+  <div
+    id="email-confirmation-feedback"
+    class="ui-callout ui-callout--info"
+    role="status"
+    aria-live="polite"
+    tabindex="-1"
+    hidden
+  >
+    <svg
+      data-callout-icon="success"
+      class="ui-callout__icon hidden"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+    <svg
+      data-callout-icon="danger"
+      class="ui-callout__icon hidden"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+    <svg
+      data-callout-icon="info"
+      class="ui-callout__icon hidden"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="16" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12.01" y2="8" />
+    </svg>
+    <div class="ui-callout__content">
+      <p id="email-confirmation-feedback-text" class="ui-callout__text"></p>
+      <div id="email-confirmation-feedback-actions" class="ui-callout__actions" hidden>
+        <a id="email-confirmation-exit-link" class="ui-btn ui-btn--primary" href="/login">
+          Iniciar sesión
+        </a>
+      </div>
+    </div>
+  </div>
 
-  <form id="email-confirmation-form" class="email-confirmation__form">
-    <button class="auth-form__button auth-form__button--primary" type="submit">Confirmar correo</button>
+  <div id="email-confirmation-no-token" class="ui-state ui-state--open" hidden>
+    <svg
+      class="ui-state__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+    </svg>
+    <p class="ui-state__title">No encontramos un enlace de confirmación</p>
+    <p class="ui-state__text">
+      Abrí el enlace que te mandamos por correo o pedí uno nuevo.
+    </p>
+  </div>
+
+  <form id="email-confirmation-form" class="ui-form" novalidate>
+    <p class="auth-page__panel-lead">
+      Cuando estés listo, confirmá tu dirección desde este enlace.
+    </p>
+    <div class="auth-page__actions">
+      <button
+        id="confirm-email-btn"
+        class="ui-btn ui-btn--primary auth-page__submit"
+        type="submit"
+        aria-busy="false"
+      >
+        Confirmar correo
+      </button>
+    </div>
   </form>
 
-  <p id="email-confirmation-feedback" class="email-confirmation__feedback" aria-live="polite" tabindex="-1" hidden></p>
+  <form
+    id="resend-confirmation-form"
+    class="ui-form auth-page__section-divider"
+    novalidate
+  >
+    <h2 id="resend-form-title" class="auth-page__panel-title">¿Necesitás otro enlace?</h2>
 
-  <form id="resend-confirmation-form" class="email-confirmation__form email-confirmation__form--resend">
-    <label class="auth-form__field" for="resend-email">
-      <span>Correo electrónico</span>
-      <input class="auth-form__input" id="resend-email" name="email" type="email" autocomplete="email" required />
-    </label>
-    <button class="auth-form__button auth-form__button--secondary" type="submit">Solicitar otro enlace</button>
+    <div class="ui-field">
+      <label class="ui-label" for="resend-email">Correo electrónico</label>
+      <input
+        class="ui-input"
+        id="resend-email"
+        name="email"
+        type="email"
+        autocomplete="email"
+        aria-describedby="resend-email-help"
+        required
+      />
+      <p id="resend-email-help" class="ui-help">
+        Si tu cuenta todavía no está confirmada, te mandamos un enlace nuevo.
+      </p>
+      <p id="resend-email-error" class="ui-error" hidden></p>
+    </div>
+
+    <div class="auth-page__actions">
+      <button
+        id="resend-confirmation-btn"
+        class="ui-btn ui-btn--secondary auth-page__submit"
+        type="submit"
+        aria-busy="false"
+      >
+        Solicitar otro enlace
+      </button>
+    </div>
   </form>
 </section>
 
@@ -22,45 +139,245 @@
     ConfirmationNetworkError,
     EmailConfirmationService,
   } from '../services/emailConfirmation.service';
+  import { getSessionUser } from '../services/session.service';
+  import { validateResendEmail } from '../validation/authValidation';
+
+  type CalloutVariant = 'success' | 'danger' | 'info';
 
   const confirmationForm = document.getElementById('email-confirmation-form') as HTMLFormElement | null;
+  const confirmBtn = document.getElementById('confirm-email-btn') as HTMLButtonElement | null;
+  const noTokenState = document.getElementById('email-confirmation-no-token') as HTMLElement | null;
   const resendForm = document.getElementById('resend-confirmation-form') as HTMLFormElement | null;
+  const resendFormTitle = document.getElementById('resend-form-title') as HTMLElement | null;
   const resendEmail = document.getElementById('resend-email') as HTMLInputElement | null;
+  const resendEmailError = document.getElementById('resend-email-error') as HTMLElement | null;
+  const resendBtn = document.getElementById('resend-confirmation-btn') as HTMLButtonElement | null;
   const feedback = document.getElementById('email-confirmation-feedback') as HTMLElement | null;
+  const feedbackText = document.getElementById('email-confirmation-feedback-text') as HTMLElement | null;
+  const feedbackActions = document.getElementById('email-confirmation-feedback-actions') as HTMLElement | null;
+  const exitLink = document.getElementById('email-confirmation-exit-link') as HTMLAnchorElement | null;
 
-  function showFeedback(message: string) {
-    if (!feedback) return;
-    feedback.textContent = message;
+  const calloutIcons: Record<CalloutVariant, SVGElement | null> = {
+    success: feedback?.querySelector('[data-callout-icon="success"]') ?? null,
+    danger: feedback?.querySelector('[data-callout-icon="danger"]') ?? null,
+    info: feedback?.querySelector('[data-callout-icon="info"]') ?? null,
+  };
+
+  let isConfirming = false;
+  let isResending = false;
+  let isConfirmed = false;
+
+  function setResendPromoted(promoted: boolean): void {
+    if (!resendBtn) return;
+    resendBtn.classList.toggle('ui-btn--primary', promoted);
+    resendBtn.classList.toggle('ui-btn--secondary', !promoted);
+  }
+
+  function setResendEmailError(message: string | null): void {
+    if (!resendEmail || !resendEmailError) return;
+    if (message) {
+      resendEmail.setAttribute('aria-invalid', 'true');
+      resendEmail.setAttribute('aria-describedby', 'resend-email-error resend-email-help');
+      resendEmailError.textContent = message;
+      resendEmailError.hidden = false;
+    } else {
+      resendEmail.removeAttribute('aria-invalid');
+      resendEmail.setAttribute('aria-describedby', 'resend-email-help');
+      resendEmailError.textContent = '';
+      resendEmailError.hidden = true;
+    }
+  }
+
+  function showFeedback(
+    variant: CalloutVariant,
+    message: string,
+    exitAction?: { href: string; label: string },
+  ): void {
+    if (!feedback || !feedbackText) return;
+
+    feedback.classList.remove('ui-callout--success', 'ui-callout--danger', 'ui-callout--info');
+    feedback.classList.add(`ui-callout--${variant}`);
+
+    if (variant === 'danger') {
+      feedback.setAttribute('role', 'alert');
+      feedback.removeAttribute('aria-live');
+    } else {
+      feedback.setAttribute('role', 'status');
+      feedback.setAttribute('aria-live', 'polite');
+    }
+
+    for (const key of ['success', 'danger', 'info'] as const) {
+      const icon = calloutIcons[key];
+      if (icon) {
+        icon.classList.toggle('hidden', key !== variant);
+      }
+    }
+
+    feedbackText.textContent = message;
+
+    if (feedbackActions && exitLink) {
+      if (exitAction) {
+        exitLink.href = exitAction.href;
+        exitLink.textContent = exitAction.label;
+        feedbackActions.hidden = false;
+      } else {
+        feedbackActions.hidden = true;
+      }
+    }
+
     feedback.hidden = false;
     feedback.focus();
   }
 
+  function hideFeedback(): void {
+    if (!feedback || !feedbackText) return;
+    feedback.hidden = true;
+    feedbackText.textContent = '';
+    if (feedbackActions) {
+      feedbackActions.hidden = true;
+    }
+  }
+
+  // Client-only check: no GET API request and no Astro server-side token read.
+  const hasToken = (new URLSearchParams(window.location.search).get('token') ?? '').trim().length > 0;
+
+  if (!hasToken) {
+    if (confirmationForm) confirmationForm.hidden = true;
+    if (noTokenState) noTokenState.hidden = false;
+    resendForm?.classList.remove('auth-page__section-divider');
+    if (resendFormTitle) resendFormTitle.textContent = 'Pedí un enlace nuevo';
+    setResendPromoted(true);
+  } else {
+    if (confirmationForm) confirmationForm.hidden = false;
+    if (noTokenState) noTokenState.hidden = true;
+    setResendPromoted(false);
+  }
+
+  resendEmail?.addEventListener('input', () => {
+    if (resendEmail.getAttribute('aria-invalid') === 'true') {
+      setResendEmailError(null);
+    }
+  });
+
   confirmationForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (isConfirming || isConfirmed) return;
+
+    isConfirming = true;
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.ariaBusy = 'true';
+      confirmBtn.textContent = 'Confirmando…';
+    }
+
     try {
       const outcome = await EmailConfirmationService.confirmFromCurrentLocation();
       if (outcome === 'confirmed') {
-        showFeedback('Tu correo fue confirmado.');
-      }
-      if (outcome === 'invalid') {
-        showFeedback('El enlace no es válido o ya venció. Podés solicitar otro.');
+        isConfirmed = true;
+        confirmationForm.hidden = true;
+        if (confirmBtn) {
+          confirmBtn.disabled = true;
+        }
+        const activeSession = getSessionUser() !== null;
+        showFeedback(
+          'success',
+          'Tu correo fue confirmado.',
+          activeSession
+            ? { href: '/products', label: 'Ir al catálogo' }
+            : { href: '/login', label: 'Iniciar sesión' },
+        );
+      } else if (outcome === 'rate-limited') {
+        showFeedback(
+          'danger',
+          'Hiciste muchos intentos. Esperá unos minutos y volvé a probar.',
+        );
+      } else if (outcome === 'invalid') {
+        showFeedback(
+          'danger',
+          'El enlace no es válido o ya venció. Podés solicitar otro.',
+        );
+        setResendPromoted(true);
+        confirmBtn?.classList.remove('ui-btn--primary');
+        confirmBtn?.classList.add('ui-btn--secondary');
       }
     } catch (error) {
       if (error instanceof ConfirmationNetworkError) {
-        showFeedback('No pudimos confirmar tu correo. Revisá tu conexión e intentá de nuevo.');
+        showFeedback(
+          'danger',
+          'No pudimos confirmar tu correo. Revisá tu conexión e intentá de nuevo.',
+        );
+      } else {
+        showFeedback(
+          'danger',
+          'No pudimos confirmar tu correo. Intentá de nuevo en unos instantes.',
+        );
+      }
+    } finally {
+      isConfirming = false;
+      if (confirmBtn) {
+        confirmBtn.ariaBusy = 'false';
+        confirmBtn.textContent = 'Confirmar correo';
+        if (!isConfirmed) {
+          confirmBtn.disabled = false;
+        }
       }
     }
   });
 
   resendForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (!resendEmail?.value) return;
+    if (isResending) return;
+
+    setResendEmailError(null);
+
+    const email = resendEmail?.value?.trim() ?? '';
+    const validationError = validateResendEmail(email);
+    if (validationError) {
+      hideFeedback();
+      setResendEmailError(validationError);
+      resendEmail?.focus();
+      return;
+    }
+
+    isResending = true;
+    if (resendBtn) {
+      resendBtn.disabled = true;
+      resendBtn.ariaBusy = 'true';
+      resendBtn.textContent = 'Enviando…';
+    }
+
     try {
-      await EmailConfirmationService.resend(resendEmail.value.trim());
-      showFeedback('Si la cuenta es elegible, podrá recibir un nuevo enlace de confirmación.');
+      const outcome = await EmailConfirmationService.resend(email);
+      if (outcome.status === 'accepted') {
+        showFeedback('info', 'Si la cuenta es elegible, te enviamos un enlace nuevo.');
+      } else if (outcome.status === 'validation-error') {
+        hideFeedback();
+        setResendEmailError(outcome.fieldErrors.email || outcome.message);
+        resendEmail?.focus();
+      } else {
+        showFeedback(
+          'danger',
+          'Hiciste muchos intentos. Esperá unos minutos y volvé a probar.',
+        );
+      }
     } catch (error) {
       if (error instanceof ConfirmationNetworkError) {
-        showFeedback('No pudimos procesar la solicitud. Revisá tu conexión e intentá de nuevo.');
+        showFeedback(
+          'danger',
+          'No pudimos procesar la solicitud. Revisá tu conexión e intentá de nuevo.',
+        );
+      } else {
+        showFeedback(
+          'danger',
+          'No pudimos procesar la solicitud. Intentá de nuevo en unos instantes.',
+        );
+      }
+    } finally {
+      isResending = false;
+      if (resendBtn) {
+        resendBtn.disabled = false;
+        resendBtn.ariaBusy = 'false';
+        resendBtn.textContent = 'Solicitar otro enlace';
       }
     }
   });

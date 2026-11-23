@@ -19,8 +19,8 @@ async function submitResend(page: Page, email: string) {
   await page.getByRole('button', { name: 'Solicitar otro enlace' }).click();
   const response = await responsePromise;
   expect(response.status()).toBe(202);
-  await expect(page.locator('#email-confirmation-feedback')).toHaveText(
-    'Si la cuenta es elegible, podrá recibir un nuevo enlace de confirmación.',
+  await expect(page.locator('#email-confirmation-feedback-text')).toHaveText(
+    'Si la cuenta es elegible, te enviamos un enlace nuevo.',
   );
   return response.json();
 }
@@ -80,8 +80,13 @@ test.describe('email confirmation', () => {
     );
     await page.getByRole('button', { name: 'Confirmar correo' }).click();
     expect((await confirmationResponse).status()).toBe(204);
-    await expect(page.locator('#email-confirmation-feedback')).toHaveText(
+    await expect(page.locator('#email-confirmation-feedback-text')).toHaveText(
       'Tu correo fue confirmado.',
+    );
+    await expect(page.getByRole('button', { name: 'Confirmar correo' })).toBeHidden();
+    await expect(page.getByRole('link', { name: 'Ir al catálogo' })).toHaveAttribute(
+      'href',
+      '/products',
     );
     await expect(readConfirmationState(email)).resolves.toEqual({
       emailVerifiedAt: expect.any(Date),
@@ -103,20 +108,45 @@ test.describe('email confirmation', () => {
     );
     await page.getByRole('button', { name: 'Confirmar correo' }).click();
     expect((await confirmationResponse).status()).toBe(400);
-    await expect(page.locator('#email-confirmation-feedback')).toHaveText(
+    await expect(page.locator('#email-confirmation-feedback')).toHaveAttribute('role', 'alert');
+    await expect(page.locator('#email-confirmation-feedback-text')).toHaveText(
       'El enlace no es válido o ya venció. Podés solicitar otro.',
     );
     await expect(page.locator('#email-confirmation-feedback')).not.toContainText(invalidToken);
   });
 
+  test('shows no-token state without confirm button when token is absent', async ({ page }) => {
+    await page.goto('/confirm-email');
+    await expect(
+      page.getByRole('heading', { name: 'Confirmá tu correo electrónico' }),
+    ).toBeVisible();
+    await expect(page.locator('#email-confirmation-no-token.ui-state')).toBeVisible();
+    await expect(page.locator('#email-confirmation-no-token')).toContainText(
+      'Abrí el enlace que te mandamos por correo o pedí uno nuevo.',
+    );
+    await expect(page.getByRole('button', { name: 'Confirmar correo' })).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Solicitar otro enlace' })).toBeVisible();
+  });
+
+  test('shows an inline field error when resending with a malformed email', async ({ page }) => {
+    await page.goto('/confirm-email');
+    await page.fill('#resend-email', 'correo-invalido');
+    await page.getByRole('button', { name: 'Solicitar otro enlace' }).click();
+
+    await expect(page.locator('#resend-email')).toHaveAttribute('aria-invalid', 'true');
+    await expect(page.locator('#resend-email-error')).toBeVisible();
+    await expect(page.locator('#resend-email-error')).toHaveText('Ingresá un correo válido');
+  });
+
   test('keeps repeated successful confirmation idempotent and generic', async ({ page }) => {
     const { email } = await registerUnverifiedUser(page);
-    await page.goto(await confirmationLinkAcceptedByLocalMailpit(email));
+    const confirmationLink = await confirmationLinkAcceptedByLocalMailpit(email);
 
     for (const expectedState of [
       { emailVerifiedAt: expect.any(Date), consumedAt: expect.any(Date) },
       { emailVerifiedAt: expect.any(Date), consumedAt: expect.any(Date) },
     ]) {
+      await page.goto(confirmationLink);
       const confirmationResponse = page.waitForResponse(
         (response) =>
           response.url().endsWith('/api/users/email-confirmation/confirm') &&
@@ -124,9 +154,10 @@ test.describe('email confirmation', () => {
       );
       await page.getByRole('button', { name: 'Confirmar correo' }).click();
       expect((await confirmationResponse).status()).toBe(204);
-      await expect(page.locator('#email-confirmation-feedback')).toHaveText(
+      await expect(page.locator('#email-confirmation-feedback-text')).toHaveText(
         'Tu correo fue confirmado.',
       );
+      await expect(page.getByRole('button', { name: 'Confirmar correo' })).toBeHidden();
       await expect(readConfirmationState(email)).resolves.toEqual(expectedState);
     }
   });

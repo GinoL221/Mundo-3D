@@ -13,12 +13,12 @@ describe('renderEmailConfirmationTemplate', () => {
       expiresAt: new Date('2026-09-05T12:00:00.000Z'),
     });
 
-    expect(template.subject).toBe('Confirma tu correo electrónico');
-    expect(template.text).toContain('Confirma tu correo electrónico');
+    expect(template.subject).toBe('Confirmá tu correo electrónico');
+    expect(template.text).toContain('Confirmá tu correo electrónico');
     expect(template.text).toContain(
       'https://shop.example.com/confirm-email?token=<script>alert(1)</script>',
     );
-    expect(template.html).toContain('Confirma tu correo electrónico');
+    expect(template.html).toContain('Confirmá tu correo electrónico');
     expect(template.html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
     expect(template.html).not.toContain('<script>alert(1)</script>');
   });

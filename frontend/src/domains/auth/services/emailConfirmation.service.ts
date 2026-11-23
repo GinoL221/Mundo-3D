@@ -1,4 +1,14 @@
-import { API_URL } from '../../../config';
+import { API_URL, parseApiResponse } from '../../../config';
+import { extractApiFieldErrors } from '../validation/authValidation';
+
+const FALLBACK_RESEND_EMAIL_ERROR = 'Ingresá un correo válido';
+
+export type ConfirmEmailOutcome = 'confirmed' | 'invalid' | 'rate-limited';
+
+export type ResendEmailOutcome =
+  | { status: 'accepted' }
+  | { status: 'rate-limited' }
+  | { status: 'validation-error'; fieldErrors: Record<string, string>; message: string };
 
 export class ConfirmationNetworkError extends Error {
   constructor() {
@@ -8,17 +18,47 @@ export class ConfirmationNetworkError extends Error {
 }
 
 export class EmailConfirmationService {
-  static async confirmFromCurrentLocation(): Promise<'confirmed' | 'invalid'> {
+  static async confirmFromCurrentLocation(): Promise<ConfirmEmailOutcome> {
     const token = new URLSearchParams(window.location.search).get('token') ?? '';
     const response = await this.post('/api/users/email-confirmation/confirm', { token });
 
     if (response.status === 204) return 'confirmed';
+    if (response.status === 429) return 'rate-limited';
     return 'invalid';
   }
 
-  static async resend(email: string): Promise<'accepted'> {
-    await this.post('/api/users/email-confirmation/resend', { email });
-    return 'accepted';
+  static async resend(email: string): Promise<ResendEmailOutcome> {
+    const response = await this.post('/api/users/email-confirmation/resend', { email });
+
+    if (response.status === 429) {
+      return { status: 'rate-limited' };
+    }
+
+    if (response.status === 400) {
+      try {
+        await parseApiResponse(response, FALLBACK_RESEND_EMAIL_ERROR);
+      } catch (err) {
+        const fieldErrors = extractApiFieldErrors(err);
+        const message =
+          fieldErrors.email ||
+          (err instanceof Error && err.message.trim()
+            ? err.message.trim()
+            : FALLBACK_RESEND_EMAIL_ERROR);
+        return {
+          status: 'validation-error',
+          fieldErrors: fieldErrors.email ? fieldErrors : { email: message },
+          message,
+        };
+      }
+
+      return {
+        status: 'validation-error',
+        fieldErrors: { email: FALLBACK_RESEND_EMAIL_ERROR },
+        message: FALLBACK_RESEND_EMAIL_ERROR,
+      };
+    }
+
+    return { status: 'accepted' };
   }
 
   private static async post(path: string, body: Record<string, string>): Promise<Response> {
