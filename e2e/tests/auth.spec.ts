@@ -256,6 +256,57 @@ test.describe('Authentication E2E Tests', () => {
     await expect(page.locator('#navbar-greeting')).toContainText('Hola No');
   });
 
+  test('Oversized profile image is rejected on the image field before sending', async ({ page }) => {
+    let registerRequests = 0;
+    page.on('request', (request) => {
+      if (request.url().includes('/api/users/register')) registerRequests += 1;
+    });
+
+    await page.goto('/register');
+    await page.setInputFiles('#image', {
+      name: 'avatar.jpg',
+      mimeType: 'image/jpeg',
+      buffer: Buffer.alloc(5 * 1024 * 1024 + 1),
+    });
+
+    await expect(page.locator('#image-error')).toHaveText('La imagen pesa más de 5 MB. Elegí una más liviana.');
+    await expect(page.locator('#image')).toHaveAttribute('aria-invalid', 'true');
+
+    await page.fill('#firstName', 'Big');
+    await page.fill('#lastName', 'Image');
+    await page.fill('#email', `big_image_${Date.now()}@example.com`);
+    await page.fill('#password', testPassword);
+    await page.fill('#confirmPassword', testPassword);
+    await page.click('#register-btn');
+
+    await expect(page.locator('#image-error')).toHaveText('La imagen pesa más de 5 MB. Elegí una más liviana.');
+    await expect(page).toHaveURL('/register');
+    expect(registerRequests).toBe(0);
+  });
+
+  test('Upload-filter rejection from the server shows on the image field in Spanish', async ({ page }) => {
+    await page.goto('/register');
+    await page.fill('#firstName', 'Bad');
+    await page.fill('#lastName', 'Mime');
+    await page.fill('#email', `bad_mime_${Date.now()}@example.com`);
+    await page.fill('#password', testPassword);
+    await page.fill('#confirmPassword', testPassword);
+    // Passes the client name/size rules, but the backend multer filter rejects the MIME type.
+    await page.setInputFiles('#image', {
+      name: 'avatar.jpg',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('not an image'),
+    });
+
+    await page.click('#register-btn');
+
+    await expect(page.locator('#image-error')).toHaveText(
+      'No pudimos aceptar la imagen: tiene que ser JPG o PNG y pesar hasta 5 MB.'
+    );
+    await expect(page.locator('#image')).toHaveAttribute('aria-invalid', 'true');
+    await expect(page).toHaveURL('/register');
+  });
+
   test('Password reveal toggle and per-field validation on /register', async ({ page }) => {
     await page.goto('/register');
 

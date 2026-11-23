@@ -23,6 +23,7 @@ export interface RegisterValidationInput {
   password: string;
   confirmPassword: string;
   imageName?: string | null;
+  imageSize?: number | null;
 }
 
 export interface LoginValidationInput {
@@ -35,6 +36,13 @@ const NAME_MAX_LENGTH = 10;
 const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_MAX_LENGTH = 32;
 const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.png'] as const;
+// Matches the multer `limits.fileSize` in backend/src/infrastructure/middlewares/upload.ts.
+const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+const IMAGE_EXTENSION_MESSAGE = `Las extensiones de archivos permitidas son ${ALLOWED_IMAGE_EXTENSIONS.join(', ')}`;
+const IMAGE_TOO_LARGE_MESSAGE = 'La imagen pesa más de 5 MB. Elegí una más liviana.';
+// The backend upload filter answers `{ error }` (no field path) for format or size rejections.
+const BACKEND_UPLOAD_REJECTION = 'Invalid file format or size limit exceeded';
+const UPLOAD_REJECTION_MESSAGE = 'No pudimos aceptar la imagen: tiene que ser JPG o PNG y pesar hasta 5 MB.';
 
 const SIMPLE_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -58,6 +66,16 @@ export function isAllowedImageFileName(fileName: string): boolean {
   const lastDot = fileName.lastIndexOf('.');
   if (lastDot <= 0) return false;
   return (ALLOWED_IMAGE_EXTENSIONS as readonly string[]).includes(fileName.slice(lastDot));
+}
+
+export function validateImageFile(fileName: string, sizeInBytes: number | null | undefined): string | null {
+  if (!isAllowedImageFileName(fileName)) return IMAGE_EXTENSION_MESSAGE;
+  if (typeof sizeInBytes === 'number' && sizeInBytes > IMAGE_MAX_BYTES) return IMAGE_TOO_LARGE_MESSAGE;
+  return null;
+}
+
+export function uploadRejectionMessage(err: unknown): string | null {
+  return err instanceof Error && err.message === BACKEND_UPLOAD_REJECTION ? UPLOAD_REJECTION_MESSAGE : null;
 }
 
 export function validateRegisterInput(
@@ -108,8 +126,9 @@ export function validateRegisterInput(
   }
 
   const imageName = input.imageName ?? '';
-  if (imageName.trim() && !isAllowedImageFileName(imageName)) {
-    errors.image = `Las extensiones de archivos permitidas son ${ALLOWED_IMAGE_EXTENSIONS.join(', ')}`;
+  if (imageName.trim()) {
+    const imageError = validateImageFile(imageName, input.imageSize);
+    if (imageError) errors.image = imageError;
   }
 
   return errors;

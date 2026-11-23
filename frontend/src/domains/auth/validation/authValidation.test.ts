@@ -4,6 +4,8 @@ import {
   extractApiFieldErrors,
   isAllowedImageFileName,
   summarizeFieldErrors,
+  uploadRejectionMessage,
+  validateImageFile,
   validateLoginInput,
   validateRegisterInput,
 } from './authValidation';
@@ -186,5 +188,49 @@ describe('extractApiFieldErrors & summarizeFieldErrors', () => {
         'Revisá los campos marcados antes de crear tu cuenta.'
       )
     ).toBe('Revisá los campos marcados antes de crear tu cuenta.');
+  });
+});
+
+describe('validateImageFile', () => {
+  const FIVE_MB = 5 * 1024 * 1024;
+
+  it('accepts a .jpg or .png up to exactly 5 MB', () => {
+    expect(validateImageFile('a.jpg', FIVE_MB)).toBeNull();
+    expect(validateImageFile('a.png', 1)).toBeNull();
+  });
+
+  it('rejects files over 5 MB with a Spanish message', () => {
+    expect(validateImageFile('a.jpg', FIVE_MB + 1)).toBe('La imagen pesa más de 5 MB. Elegí una más liviana.');
+  });
+
+  it('reports the extension error before the size error', () => {
+    expect(validateImageFile('a.gif', FIVE_MB + 1)).toBe('Las extensiones de archivos permitidas son .jpg, .png');
+  });
+
+  it('blocks register submit for an oversized image', () => {
+    const errors = validateRegisterInput({
+      firstName: 'Ana',
+      lastName: 'Paz',
+      email: 'ana@example.com',
+      password: 'Secreta1!',
+      confirmPassword: 'Secreta1!',
+      imageName: 'a.jpg',
+      imageSize: FIVE_MB + 1,
+    });
+    expect(errors.image).toBe('La imagen pesa más de 5 MB. Elegí una más liviana.');
+  });
+});
+
+describe('uploadRejectionMessage', () => {
+  it('maps the backend upload-filter rejection to a Spanish field message', () => {
+    expect(uploadRejectionMessage(new Error('Invalid file format or size limit exceeded'))).toBe(
+      'No pudimos aceptar la imagen: tiene que ser JPG o PNG y pesar hasta 5 MB.'
+    );
+  });
+
+  it('ignores any other error', () => {
+    expect(uploadRejectionMessage(new Error('El usuario ya existe'))).toBeNull();
+    expect(uploadRejectionMessage('Invalid file format or size limit exceeded')).toBeNull();
+    expect(uploadRejectionMessage(null)).toBeNull();
   });
 });

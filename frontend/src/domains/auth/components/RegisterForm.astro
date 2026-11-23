@@ -232,8 +232,9 @@
   import {
     evaluatePasswordRules,
     extractApiFieldErrors,
-    isAllowedImageFileName,
     summarizeFieldErrors,
+    uploadRejectionMessage,
+    validateImageFile,
     validateRegisterInput,
     type RegisterFieldName,
   } from '../validation/authValidation';
@@ -418,10 +419,11 @@
       return;
     }
 
-    if (!isAllowedImageFileName(file.name)) {
+    const imageError = validateImageFile(file.name, file.size);
+    if (imageError) {
       if (imagePreview) imagePreview.hidden = true;
       if (imagePreviewThumb) imagePreviewThumb.removeAttribute('src');
-      setFieldError('image', 'Las extensiones de archivos permitidas son .jpg, .png');
+      setFieldError('image', imageError);
       return;
     }
 
@@ -466,6 +468,7 @@
       password: passwordInput?.value || '',
       confirmPassword: confirmPasswordInput?.value || '',
       imageName: selectedFile?.name ?? null,
+      imageSize: selectedFile?.size ?? null,
     });
 
     if (Object.keys(clientErrors).length > 0) {
@@ -520,6 +523,12 @@
           mappedErrors[field] = apiFieldErrors[field];
           setFieldError(field, apiFieldErrors[field]);
         }
+      }
+
+      const uploadError = uploadRejectionMessage(err);
+      if (uploadError && !mappedErrors.image) {
+        mappedErrors.image = uploadError;
+        setFieldError('image', uploadError);
       }
 
       if (Object.keys(mappedErrors).length > 0) {
