@@ -108,11 +108,27 @@ describe('adminCommissionRequestsModel', () => {
   });
 
   describe('buildSafeMailtoHref', () => {
-    it('returns a mailto href for clean email addresses and rejects control/whitespace injection', () => {
+    it('returns a mailto href for clean email addresses including plus addressing', () => {
       expect(buildSafeMailtoHref('  lucia@ejemplo.com  ')).toBe('mailto:lucia@ejemplo.com');
+      expect(buildSafeMailtoHref('ana.perez+taller@ejemplo.com')).toBe(
+        'mailto:ana.perez+taller@ejemplo.com',
+      );
+    });
+
+    it('rejects empty strings, whitespace, control characters, and mailto header/URI injection payloads', () => {
       expect(buildSafeMailtoHref('')).toBeNull();
       expect(buildSafeMailtoHref('bad email@ejemplo.com')).toBeNull();
       expect(buildSafeMailtoHref('bad\n@ejemplo.com')).toBeNull();
+      expect(buildSafeMailtoHref('bad\u0000@ejemplo.com')).toBeNull();
+      expect(buildSafeMailtoHref('a?cc=evil%40x.com&body=hi@ejemplo.com')).toBeNull();
+      expect(buildSafeMailtoHref('a?subject=Hola&body=x@ejemplo.com')).toBeNull();
+      expect(buildSafeMailtoHref('a#frag@ejemplo.com')).toBeNull();
+      expect(buildSafeMailtoHref('a%0Abcc=evil@ejemplo.com')).toBeNull();
+      expect(buildSafeMailtoHref('a/b@ejemplo.com')).toBeNull();
+      expect(buildSafeMailtoHref('a\\b@ejemplo.com')).toBeNull();
+      expect(buildSafeMailtoHref('a:b@ejemplo.com')).toBeNull();
+      expect(buildSafeMailtoHref('a<b>@ejemplo.com')).toBeNull();
+      expect(buildSafeMailtoHref('a"b@ejemplo.com')).toBeNull();
     });
   });
 

@@ -416,4 +416,50 @@ describe('initializeAdminCommissionRequests', () => {
     );
     expect(doc.getElementById('admin-requests-empty')?.hidden).toBe(true);
   });
+
+  it('renders unsafe emails as plain text instead of mailto links while keeping normal emails linked', async () => {
+    mocks.getSessionUser.mockReturnValue({
+      idUser: 1,
+      firstName: 'Ana',
+      lastName: 'Admin',
+      idRole: Role.ADMIN,
+    });
+    mocks.listCustomCommissionRequests.mockResolvedValue([
+      {
+        idCustomCommissionRequest: 30,
+        name: 'Payload Test',
+        email: 'a?cc=evil%40x.com&body=hi@ejemplo.com',
+        idea: 'Prueba de seguridad.',
+        idProduct: null,
+        createdAt: '2026-04-12T12:00:00.000Z',
+        expiresAt: '2026-05-12T12:00:00.000Z',
+      },
+      {
+        idCustomCommissionRequest: 31,
+        name: 'Ana Pérez',
+        email: 'ana.perez+taller@ejemplo.com',
+        idea: 'Figura normal.',
+        idProduct: null,
+        createdAt: '2026-04-12T12:00:00.000Z',
+        expiresAt: '2026-05-12T12:00:00.000Z',
+      },
+    ]);
+
+    const doc = new FakeDocument();
+    const win = createWindowMock();
+
+    await initializeAdminCommissionRequests(
+      doc as unknown as Document,
+      win as unknown as Window,
+    );
+
+    const list = doc.getElementById('admin-requests-list')!;
+    const links = list.findAll((el) => el.tagName === 'a');
+    expect(links.map((el) => el.href)).toEqual(['mailto:ana.perez+taller@ejemplo.com']);
+
+    const muted = list.findAll((el) => el.classList.contains('ui-inbox__muted'));
+    expect(muted.map((el) => el.textContent)).toContain(
+      'a?cc=evil%40x.com&body=hi@ejemplo.com',
+    );
+  });
 });

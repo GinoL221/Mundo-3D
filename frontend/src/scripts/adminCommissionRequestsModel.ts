@@ -96,9 +96,25 @@ export function buildCommissionPieceReference(
   };
 }
 
+const UNSAFE_MAILTO_CHARS = /[\s?&%#/\\:<>",;]/;
+
+function hasControlCharacters(value: string): boolean {
+  for (let i = 0; i < value.length; i += 1) {
+    const code = value.charCodeAt(i);
+    if (code <= 0x1f || code === 0x7f) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function buildSafeMailtoHref(email: string): string | null {
   const trimmed = email.trim();
-  if (!trimmed || /\s/.test(trimmed)) {
+  if (!trimmed || UNSAFE_MAILTO_CHARS.test(trimmed) || hasControlCharacters(trimmed)) {
+    return null;
+  }
+  const atIndex = trimmed.indexOf('@');
+  if (atIndex <= 0 || atIndex !== trimmed.lastIndexOf('@') || atIndex === trimmed.length - 1) {
     return null;
   }
   return `mailto:${trimmed}`;
