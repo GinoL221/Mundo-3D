@@ -6,53 +6,64 @@ const readSource = (relativePath: string) =>
   readFileSync(fileURLToPath(new URL(relativePath, import.meta.url)), 'utf8');
 
 describe('Orders pages design-system contract', () => {
-  it('wires orders.astro and OrderList.astro to orders.css layout, states, and mobile data-labels', () => {
+  it('wires orders.astro and OrderList.astro to ui-kit primitives, hidden attributes, and mobile data-labels', () => {
     const page = readSource('../../pages/orders.astro');
     const component = readSource('./components/OrderList.astro');
 
     expect(page).toContain('<main class="orders-page system-frame system-section">');
-    expect(page).toContain('<header class="orders-page__header">');
-    expect(page).toMatch(/<h1>[^<]+<\/h1>/);
+    expect(page).toContain('class="ui-page-head orders-page__head"');
+    expect(page).toMatch(/<h1 class="ui-page-head__title">[^<]+<\/h1>/);
     expect(page).not.toContain('class="sr-only"');
 
+    expect(component).toContain('id="my-orders-region"');
+    expect(component).toContain('aria-busy="true"');
     expect(component).toContain('id="my-orders-loading"');
-    expect(component).toContain('class="orders-state"');
-    expect(component).toContain('class="orders-state orders-state--error"');
-    expect(component).toContain('class="orders-action"');
-    expect(component).toContain('class="order-list__table-frame"');
-    expect(component).toContain('class="order-row-id" data-label="Pedido"');
-    expect(component).toContain('class="order-row-status" data-label="Estado"');
-    expect(component).toContain('class="order-row-created-at" data-label="Fecha"');
-    expect(component).toContain('class="order-row-total" data-label="Total"');
-    expect(component).toContain('class="order-row-action"');
-    expect(component).toContain("errorEl.style.display = 'grid'");
-    expect(component).toContain("emptyEl.style.display = 'grid'");
-    expect(component).toContain("prevHref ? 'inline-flex' : 'none'");
-    expect(component).toContain("nextHref ? 'inline-flex' : 'none'");
+    expect(component).toContain('class="ui-skeleton-list"');
+    expect(component).toContain('id="my-orders-unauth"');
+    expect(component).toContain('href="/login"');
+    expect(component).toContain('href="/products"');
+    expect(component).toContain('id="my-orders-error" class="ui-callout ui-callout--danger"');
+    expect(component).toContain('id="my-orders-retry"');
+    expect(component).toContain('id="my-orders-empty" class="ui-state ui-state--empty ui-state--open"');
+    expect(component).toContain('Ver catálogo');
+    expect(component).not.toContain('Ver productos');
+    expect(component).toContain('class="ui-table-wrap orders-table-wrap"');
+    expect(component).toContain('class="ui-table orders-table"');
+    expect(component).toContain('<span class="sr-only">Acciones</span>');
+    expect(component).toContain('class="ui-badge ui-badge--neutral order-row-status-badge"');
+    expect(component).toContain('data-label="Pedido"');
+    expect(component).toContain('data-label="Estado"');
+    expect(component).toContain('data-label="Fecha"');
+    expect(component).toContain('data-label="Total"');
+    expect(component).not.toContain('style="display: none;"');
   });
 
-  it('wires order.astro and OrderDetail.astro to orders.css summary, total, states, and mobile data-labels', () => {
+  it('wires order.astro and OrderDetail.astro to ui-kit primitives, neutral states, and no payment reference or kicker', () => {
     const page = readSource('../../pages/order.astro');
     const component = readSource('./components/OrderDetail.astro');
 
     expect(page).toContain('<main class="orders-page system-frame system-section">');
-    expect(page).toContain('<header class="orders-page__header">');
-    expect(page).toMatch(/<h1>[^<]+<\/h1>/);
-    expect(page).not.toContain('class="sr-only"');
-    expect(page).toContain('href="/orders"');
+    expect(page).toContain('class="ui-page-head orders-page__head"');
+    expect(page).toMatch(/<h1 class="ui-page-head__title">[^<]+<\/h1>/);
+    expect(page).toContain('id="order-back-link"');
 
+    expect(component).toContain('id="order-region"');
+    expect(component).toContain('aria-busy="true"');
     expect(component).toContain('id="order-loading"');
-    expect(component).toContain('class="orders-state"');
-    expect(component).toContain('class="orders-state orders-state--error"');
-    expect(component).toContain('class="order-detail__summary"');
-    expect(component).toContain('class="order-detail__meta"');
-    expect(component).toContain('class="order-detail__table-frame"');
-    expect(component).toContain('class="order-detail__total"');
-    expect(component).toContain('class="order-item-name" data-label="Producto"');
-    expect(component).toContain('class="order-item-qty" data-label="Cantidad"');
-    expect(component).toContain('class="order-item-price" data-label="Precio unitario"');
-    expect(component).toContain('class="order-item-subtotal" data-label="Subtotal"');
-    expect(component).toContain("errorEl.style.display = 'grid'");
-    expect(component).toContain("contentEl.style.display = 'grid'");
+    expect(component).toContain('class="ui-skeleton-list"');
+    expect(component).toContain('id="order-unauth"');
+    expect(component).toContain('id="order-not-found"');
+    expect(component).toContain('No encontramos este pedido');
+    expect(component).toContain('id="order-error" class="ui-callout ui-callout--danger"');
+    expect(component).toContain('id="order-retry"');
+    expect(component).toContain('id="order-status" class="ui-badge ui-badge--neutral"');
+    expect(component).not.toContain('order-payment-reference');
+    expect(component).not.toContain('order-detail__label');
+    expect(component).toContain('class="ui-table-wrap orders-table-wrap"');
+    expect(component).toContain('data-label="Pieza"');
+    expect(component).toContain('data-label="Cantidad"');
+    expect(component).toContain('data-label="Precio unitario"');
+    expect(component).toContain('data-label="Subtotal"');
+    expect(component).not.toContain('style="display: none;"');
   });
 });

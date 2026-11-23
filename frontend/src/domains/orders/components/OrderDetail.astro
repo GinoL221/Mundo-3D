@@ -1,102 +1,210 @@
 ---
-// Order-detail view (order-checkout spec, "Buyer order-detail response
-// DTO"). Self-contained per `frontend.domain.locality`: imports only from
-// this domain and `../../../config` — see order.service.ts. Reads the `?id=`
-// query param itself so `frontend/src/pages/order.astro` only needs to wire
-// this component into a page, matching CartList.astro's self-contained
-// script convention.
+// Order-detail view. Self-contained component that reads `?id=` and
+// coordinates loading, unauthenticated, not-found, error, and detail states.
 ---
 
-<div id="order-loading" class="orders-state" role="status" aria-live="polite">
-  <p>Cargando pedido...</p>
-</div>
-
-<div id="order-error" class="orders-state orders-state--error" role="alert" style="display: none;">
-  <p id="order-error-message">No se pudo cargar el pedido.</p>
-  <p><a class="orders-action" href="/orders">Volver a mis pedidos</a></p>
-</div>
-
-<div id="order-content" class="order-detail__container" style="display: none;">
-  <section class="order-detail__summary" aria-label="Resumen del pedido">
-    <div>
-      <p class="order-detail__label">Pedido</p>
-      <h2>Pedido #<span id="order-id"></span></h2>
+<section id="order-region" class="orders-region" aria-busy="true" aria-label="Detalle del pedido">
+  <div id="order-loading" class="ui-state" role="status" aria-live="polite">
+    <p class="ui-state__text">Cargando el detalle del pedido…</p>
+    <div class="ui-skeleton-list" aria-hidden="true">
+      <span class="ui-skeleton"></span>
+      <span class="ui-skeleton ui-skeleton--medium"></span>
+      <span class="ui-skeleton ui-skeleton--short"></span>
     </div>
-    <div class="order-detail__meta">
-      <p id="order-status"></p>
-      <p id="order-created-at"></p>
-      <p id="order-payment-reference"></p>
-    </div>
-  </section>
-
-  <div class="order-detail__table-frame">
-    <table class="order-detail__items">
-      <thead>
-        <tr>
-          <th>Producto</th>
-          <th>Cantidad</th>
-          <th>Precio unitario</th>
-          <th>Subtotal</th>
-        </tr>
-      </thead>
-      <tbody id="order-items-body"></tbody>
-    </table>
   </div>
 
-  <div class="order-detail__total">
-    <span>Total</span>
-    <strong>$<span id="order-total"></span></strong>
+  <div id="order-unauth" class="ui-state ui-state--empty ui-state--open" hidden>
+    <svg
+      class="ui-state__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+    <h2 class="ui-state__title">Iniciá sesión para ver este pedido</h2>
+    <p class="ui-state__text">
+      Necesitás ingresar a tu cuenta para consultar el detalle de este pedido simulado.
+    </p>
+    <div class="orders-state__actions">
+      <a class="ui-btn ui-btn--primary" href="/login">Iniciar sesión</a>
+      <a class="ui-btn ui-btn--secondary" href="/products">Ir al catálogo</a>
+    </div>
   </div>
-</div>
+
+  <div id="order-not-found" class="ui-state ui-state--empty ui-state--open" hidden>
+    <svg
+      class="ui-state__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+    <h2 class="ui-state__title">No encontramos este pedido</h2>
+    <p class="ui-state__text">
+      Puede que el enlace sea incorrecto o que el pedido no pertenezca a tu cuenta.
+    </p>
+    <a class="ui-btn ui-btn--primary" href="/orders">Volver a mis pedidos</a>
+  </div>
+
+  <div id="order-error" class="ui-callout ui-callout--danger" role="alert" hidden>
+    <svg
+      class="ui-callout__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+    <div class="ui-callout__content">
+      <p class="ui-callout__title">No pudimos cargar este pedido</p>
+      <p id="order-error-message" class="ui-callout__text">Intentá de nuevo en unos instantes.</p>
+      <div class="ui-callout__actions">
+        <button id="order-retry" type="button" class="ui-btn ui-btn--secondary">Reintentar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="order-content" class="order-detail__container" hidden>
+    <section class="order-detail__summary" aria-label="Resumen del pedido">
+      <div class="order-detail__identity">
+        <h2>Pedido #<span id="order-id" class="orders-tabular"></span></h2>
+        <p id="order-created-at" class="order-detail__date orders-tabular"></p>
+      </div>
+      <div class="order-detail__status-wrap">
+        <span id="order-status" class="ui-badge ui-badge--neutral"></span>
+      </div>
+    </section>
+
+    <div class="ui-table-wrap orders-table-wrap">
+      <table class="ui-table orders-table order-detail__items">
+        <thead>
+          <tr>
+            <th scope="col">Pieza</th>
+            <th scope="col" class="ui-table__num orders-col-num">Cantidad</th>
+            <th scope="col" class="ui-table__num orders-col-num">Precio unitario</th>
+            <th scope="col" class="ui-table__num orders-col-num">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody id="order-items-body"></tbody>
+      </table>
+    </div>
+
+    <div class="order-detail__total">
+      <span>Total</span>
+      <strong id="order-total" class="orders-tabular"></strong>
+    </div>
+  </div>
+</section>
 
 <template id="order-item-row-template">
   <tr>
-    <td class="order-item-name" data-label="Producto"></td>
-    <td class="order-item-qty" data-label="Cantidad"></td>
-    <td class="order-item-price" data-label="Precio unitario"></td>
-    <td class="order-item-subtotal" data-label="Subtotal"></td>
+    <td class="order-item-name" data-label="Pieza"></td>
+    <td class="order-item-qty ui-table__num orders-col-num" data-label="Cantidad"></td>
+    <td class="order-item-price ui-table__num orders-col-num" data-label="Precio unitario"></td>
+    <td class="order-item-subtotal ui-table__num orders-col-num" data-label="Subtotal"></td>
   </tr>
 </template>
 
 <script>
+  import { formatPrice } from '../../../lib/format/price';
   import { fetchOrder } from '../services/order.service';
   import type { OrderViewModel } from '../services/order.service';
   import { presentOrder } from '../services/orderPresenter';
+
+  const regionEl = document.getElementById('order-region');
+  const loadingEl = document.getElementById('order-loading');
+  const unauthEl = document.getElementById('order-unauth');
+  const notFoundEl = document.getElementById('order-not-found');
+  const errorEl = document.getElementById('order-error');
+  const errorMessageEl = document.getElementById('order-error-message');
+  const contentEl = document.getElementById('order-content');
+  const backLinkEl = document.getElementById('order-back-link');
+  const retryBtn = document.getElementById('order-retry') as HTMLButtonElement | null;
+
+  function setHidden(el: HTMLElement | null, hidden: boolean): void {
+    if (el) el.hidden = hidden;
+  }
+
+  function setBusy(busy: boolean): void {
+    regionEl?.setAttribute('aria-busy', String(busy));
+  }
+
+  function hideAllStates(): void {
+    setHidden(loadingEl, true);
+    setHidden(unauthEl, true);
+    setHidden(notFoundEl, true);
+    setHidden(errorEl, true);
+    setHidden(contentEl, true);
+    setHidden(backLinkEl, true);
+  }
 
   function getOrderId(): number | null {
     const raw = new URLSearchParams(window.location.search).get('id');
     if (!raw) return null;
     const id = Number.parseInt(raw, 10);
-    return Number.isNaN(id) ? null : id;
+    return Number.isNaN(id) || id < 1 ? null : id;
+  }
+
+  function showLoading(): void {
+    hideAllStates();
+    setBusy(true);
+    setHidden(loadingEl, false);
+  }
+
+  function showUnauthenticated(): void {
+    hideAllStates();
+    setBusy(false);
+    setHidden(unauthEl, false);
+  }
+
+  function showNotFound(): void {
+    hideAllStates();
+    setBusy(false);
+    setHidden(notFoundEl, false);
   }
 
   function showError(message: string): void {
-    const loadingEl = document.getElementById('order-loading');
-    const errorEl = document.getElementById('order-error');
-    const messageEl = document.getElementById('order-error-message');
-    if (loadingEl) loadingEl.style.display = 'none';
-    if (messageEl) messageEl.textContent = message;
-    if (errorEl) errorEl.style.display = 'grid';
+    hideAllStates();
+    setBusy(false);
+    if (errorMessageEl) errorMessageEl.textContent = message;
+    setHidden(errorEl, false);
+    setHidden(backLinkEl, false);
   }
 
   function renderOrder(order: OrderViewModel): void {
-    const presentation = presentOrder(order);
+    const presentation = presentOrder(order, formatPrice);
 
-    const loadingEl = document.getElementById('order-loading');
-    const contentEl = document.getElementById('order-content');
     const idEl = document.getElementById('order-id');
     const statusEl = document.getElementById('order-status');
     const createdEl = document.getElementById('order-created-at');
-    const paymentEl = document.getElementById('order-payment-reference');
     const totalEl = document.getElementById('order-total');
     const bodyEl = document.getElementById('order-items-body');
     const rowTemplate = document.getElementById('order-item-row-template') as HTMLTemplateElement | null;
 
-    if (loadingEl) loadingEl.style.display = 'none';
+    hideAllStates();
+    setBusy(false);
+
     if (idEl) idEl.textContent = presentation.idOrderLabel;
     if (statusEl) statusEl.textContent = presentation.statusLabel;
     if (createdEl) createdEl.textContent = presentation.createdAtLabel;
-    if (paymentEl) paymentEl.textContent = presentation.paymentReferenceLabel;
     if (totalEl) totalEl.textContent = presentation.totalLabel;
 
     if (bodyEl && rowTemplate) {
@@ -107,7 +215,17 @@
         const qtyEl = clone.querySelector('.order-item-qty');
         const priceEl = clone.querySelector('.order-item-price');
         const subtotalEl = clone.querySelector('.order-item-subtotal');
-        if (nameEl) nameEl.textContent = item.productName;
+        if (nameEl) {
+          if (item.productHref) {
+            const link = document.createElement('a');
+            link.className = 'order-item-link';
+            link.href = item.productHref;
+            link.textContent = item.productName;
+            nameEl.replaceChildren(link);
+          } else {
+            nameEl.textContent = item.productName;
+          }
+        }
         if (qtyEl) qtyEl.textContent = item.quantityLabel;
         if (priceEl) priceEl.textContent = item.unitPriceLabel;
         if (subtotalEl) subtotalEl.textContent = item.subtotalLabel;
@@ -115,23 +233,33 @@
       });
     }
 
-    if (contentEl) contentEl.style.display = 'grid';
+    setHidden(contentEl, false);
+    setHidden(backLinkEl, false);
   }
 
   async function loadOrder(): Promise<void> {
     const idOrder = getOrderId();
     if (idOrder === null) {
-      showError('Orden no encontrada.');
+      showNotFound();
       return;
     }
 
+    showLoading();
     const result = await fetchOrder(idOrder);
     if (result.ok) {
       renderOrder(result.order);
+    } else if (result.code === 'UNAUTHENTICATED') {
+      showUnauthenticated();
+    } else if (result.code === 'NOT_FOUND') {
+      showNotFound();
     } else {
       showError(result.message);
     }
   }
+
+  retryBtn?.addEventListener('click', () => {
+    void loadOrder();
+  });
 
   void loadOrder();
 </script>

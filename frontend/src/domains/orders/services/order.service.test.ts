@@ -52,12 +52,26 @@ describe('fetchOrder', () => {
     expect(result).toEqual({ ok: true, order: SAMPLE_ORDER_DTO });
   });
 
+  it('maps a 401 to UNAUTHENTICATED when the transparent refresh also fails', async () => {
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(401, {}))
+      .mockResolvedValueOnce(jsonResponse(401, {}));
+
+    const result = await fetchOrder(41);
+
+    expect(result).toEqual({
+      ok: false,
+      code: 'UNAUTHENTICATED',
+      message: 'Necesitás iniciar sesión para ver este pedido.',
+    });
+  });
+
   it('maps a 404 to NOT_FOUND (covers both a missing order and a non-owner)', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(404, { error: 'Orden no encontrada', code: 'ORDER_NOT_FOUND' }));
 
     const result = await fetchOrder(999);
 
-    expect(result).toEqual({ ok: false, code: 'NOT_FOUND', message: 'Orden no encontrada.' });
+    expect(result).toEqual({ ok: false, code: 'NOT_FOUND', message: 'No encontramos este pedido.' });
   });
 
   it('maps a thrown fetch (network failure) to NETWORK', async () => {
@@ -68,12 +82,16 @@ describe('fetchOrder', () => {
     expect(result).toEqual({ ok: false, code: 'NETWORK', message: expect.any(String) });
   });
 
-  it('maps any other non-ok status to UNKNOWN', async () => {
+  it('maps any other non-ok status to UNKNOWN without exposing raw HTTP status text', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(500, {}));
 
     const result = await fetchOrder(41);
 
-    expect(result).toEqual({ ok: false, code: 'UNKNOWN', message: 'Error 500' });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe('UNKNOWN');
+      expect(result.message).not.toMatch(/Error\s+500/);
+    }
   });
 
   it('retries transparently after a 401 triggers a successful refresh (authFetch, task 3.9)', async () => {
@@ -187,11 +205,15 @@ describe('fetchMyOrders', () => {
     expect(result).toEqual({ ok: false, code: 'NETWORK', message: expect.any(String) });
   });
 
-  it('maps any other non-ok status to UNKNOWN', async () => {
+  it('maps any other non-ok status to UNKNOWN without exposing raw HTTP status text', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(500, {}));
 
     const result = await fetchMyOrders();
 
-    expect(result).toEqual({ ok: false, code: 'UNKNOWN', message: 'Error 500' });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe('UNKNOWN');
+      expect(result.message).not.toMatch(/Error\s+500/);
+    }
   });
 });

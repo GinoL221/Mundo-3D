@@ -24,7 +24,7 @@ export interface OrderViewModel {
   paymentReference: string | null;
 }
 
-export type FetchOrderErrorCode = 'NOT_FOUND' | 'NETWORK' | 'UNKNOWN';
+export type FetchOrderErrorCode = 'UNAUTHENTICATED' | 'NOT_FOUND' | 'NETWORK' | 'UNKNOWN';
 
 export type FetchOrderResult =
   | { ok: true; order: OrderViewModel }
@@ -41,15 +41,19 @@ export async function fetchOrder(idOrder: number): Promise<FetchOrderResult> {
   try {
     res = await authFetch(`${API_URL}/api/orders/${idOrder}`, { method: 'GET' });
   } catch {
-    return { ok: false, code: 'NETWORK', message: 'No se pudo conectar con el servidor.' };
+    return { ok: false, code: 'NETWORK', message: 'No pudimos conectar con el servidor. Intentá de nuevo.' };
+  }
+
+  if (res.status === 401) {
+    return { ok: false, code: 'UNAUTHENTICATED', message: 'Necesitás iniciar sesión para ver este pedido.' };
   }
 
   if (res.status === 404) {
-    return { ok: false, code: 'NOT_FOUND', message: 'Orden no encontrada.' };
+    return { ok: false, code: 'NOT_FOUND', message: 'No encontramos este pedido.' };
   }
 
   if (!res.ok) {
-    return { ok: false, code: 'UNKNOWN', message: `Error ${res.status}` };
+    return { ok: false, code: 'UNKNOWN', message: 'No pudimos cargar este pedido. Intentá de nuevo.' };
   }
 
   const order = (await res.json()) as OrderViewModel;
@@ -100,19 +104,19 @@ export async function fetchMyOrders(page?: number, pageSize?: number): Promise<F
   try {
     res = await authFetch(`${API_URL}/api/orders/mine${query ? `?${query}` : ''}`, { method: 'GET' });
   } catch {
-    return { ok: false, code: 'NETWORK', message: 'No se pudo conectar con el servidor.' };
+    return { ok: false, code: 'NETWORK', message: 'No pudimos conectar con el servidor. Intentá de nuevo.' };
   }
 
   if (res.status === 401) {
-    return { ok: false, code: 'UNAUTHENTICATED', message: 'Necesitás iniciar sesión.' };
+    return { ok: false, code: 'UNAUTHENTICATED', message: 'Necesitás iniciar sesión para ver tus pedidos.' };
   }
 
   if (res.status === 400) {
-    return { ok: false, code: 'INVALID_PAGINATION', message: 'Parámetros de paginación inválidos.' };
+    return { ok: false, code: 'INVALID_PAGINATION', message: 'Los parámetros de paginación no son válidos.' };
   }
 
   if (!res.ok) {
-    return { ok: false, code: 'UNKNOWN', message: `Error ${res.status}` };
+    return { ok: false, code: 'UNKNOWN', message: 'No pudimos cargar tus pedidos. Intentá de nuevo.' };
   }
 
   const page_ = (await res.json()) as MyOrdersPageViewModel;

@@ -1,63 +1,154 @@
 ---
-// Buyer order-history list view (order-history spec). Self-contained per
-// `frontend.domain.locality`: imports only from this domain and
-// `../../../config` — see order.service.ts. Reads the `?page=` query param
-// itself so `frontend/src/pages/orders.astro` only needs to wire this
-// component into a page, matching OrderDetail.astro's convention.
+// Buyer order-history list view. Self-contained component that reads `?page=`
+// and coordinates loading, unauthenticated, error, empty, and table states.
 ---
 
-<div id="my-orders-loading" class="orders-state" role="status" aria-live="polite">
-  <p>Cargando tus pedidos...</p>
-</div>
-
-<div id="my-orders-error" class="orders-state orders-state--error" role="alert" style="display: none;">
-  <p id="my-orders-error-message">No se pudieron cargar tus pedidos.</p>
-  <p><a class="orders-action" href="/">Volver al inicio</a></p>
-</div>
-
-<div id="my-orders-empty" class="orders-state" style="display: none;">
-  <h2>Todavía no tenés pedidos</h2>
-  <p>Explorá el catálogo para armar tu primer pedido simulado.</p>
-  <p><a class="orders-action" href="/products">Ver productos</a></p>
-</div>
-
-<div id="my-orders-content" class="order-list__container" style="display: none;">
-  <div class="order-list__table-frame">
-    <table class="order-list__table">
-      <thead>
-        <tr>
-          <th>Pedido</th>
-          <th>Estado</th>
-          <th>Fecha</th>
-          <th>Total</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="my-orders-body"></tbody>
-    </table>
+<section id="my-orders-region" class="orders-region" aria-busy="true" aria-label="Historial de pedidos">
+  <div id="my-orders-loading" class="ui-state" role="status" aria-live="polite">
+    <p class="ui-state__text">Cargando tus pedidos…</p>
+    <div class="ui-skeleton-list" aria-hidden="true">
+      <span class="ui-skeleton"></span>
+      <span class="ui-skeleton ui-skeleton--medium"></span>
+      <span class="ui-skeleton ui-skeleton--short"></span>
+    </div>
   </div>
 
-  <nav class="order-list__pagination" aria-label="Paginación de pedidos">
-    <a id="my-orders-prev" href="#" style="display: none;">&laquo; Anterior</a>
-    <span id="my-orders-page-label"></span>
-    <a id="my-orders-next" href="#" style="display: none;">Siguiente &raquo;</a>
-  </nav>
-</div>
+  <div id="my-orders-unauth" class="ui-state ui-state--empty ui-state--open" hidden>
+    <svg
+      class="ui-state__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+    <h2 class="ui-state__title">Iniciá sesión para ver tus pedidos</h2>
+    <p class="ui-state__text">
+      Necesitás ingresar a tu cuenta para consultar el historial de tus pedidos simulados.
+    </p>
+    <div class="orders-state__actions">
+      <a class="ui-btn ui-btn--primary" href="/login">Iniciar sesión</a>
+      <a class="ui-btn ui-btn--secondary" href="/products">Ir al catálogo</a>
+    </div>
+  </div>
+
+  <div id="my-orders-error" class="ui-callout ui-callout--danger" role="alert" hidden>
+    <svg
+      class="ui-callout__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+    <div class="ui-callout__content">
+      <p class="ui-callout__title">No pudimos cargar tus pedidos</p>
+      <p id="my-orders-error-message" class="ui-callout__text">Intentá de nuevo en unos instantes.</p>
+      <div class="ui-callout__actions">
+        <button id="my-orders-retry" type="button" class="ui-btn ui-btn--secondary">Reintentar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="my-orders-empty" class="ui-state ui-state--empty ui-state--open" hidden>
+    <svg
+      class="ui-state__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+      <path d="m3.3 7 8.7 5 8.7-5" />
+      <path d="M12 22V12" />
+    </svg>
+    <h2 class="ui-state__title">Todavía no tenés pedidos</h2>
+    <p class="ui-state__text">Explorá el catálogo para armar tu primer pedido simulado.</p>
+    <a class="ui-btn ui-btn--primary" href="/products">Ver catálogo</a>
+  </div>
+
+  <div id="my-orders-content" class="order-list__container" hidden>
+    <div class="ui-table-wrap orders-table-wrap">
+      <table class="ui-table orders-table">
+        <thead>
+          <tr>
+            <th scope="col" class="ui-table__num orders-col-num orders-col-id">Pedido</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Fecha</th>
+            <th scope="col" class="ui-table__num orders-col-num">Total</th>
+            <th scope="col" class="orders-col-action"><span class="sr-only">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody id="my-orders-body"></tbody>
+      </table>
+    </div>
+
+    <nav class="order-list__pagination" aria-label="Paginación de pedidos">
+      <a id="my-orders-prev" class="ui-btn ui-btn--secondary ui-btn--sm" href="#" hidden>&laquo; Anterior</a>
+      <span id="my-orders-page-label" class="orders-tabular"></span>
+      <a id="my-orders-next" class="ui-btn ui-btn--secondary ui-btn--sm" href="#" hidden>Siguiente &raquo;</a>
+    </nav>
+  </div>
+</section>
 
 <template id="my-orders-row-template">
   <tr>
-    <td class="order-row-id" data-label="Pedido"></td>
-    <td class="order-row-status" data-label="Estado"></td>
-    <td class="order-row-created-at" data-label="Fecha"></td>
-    <td class="order-row-total" data-label="Total"></td>
-    <td class="order-row-action"><a class="order-row-link">Ver detalle</a></td>
+    <td class="order-row-id ui-table__num orders-col-num" data-label="Pedido"></td>
+    <td class="order-row-status" data-label="Estado">
+      <span class="ui-badge ui-badge--neutral order-row-status-badge"></span>
+    </td>
+    <td class="order-row-created-at ui-table__num" data-label="Fecha"></td>
+    <td class="order-row-total ui-table__num orders-col-num" data-label="Total"></td>
+    <td class="order-row-action">
+      <a class="order-row-link ui-btn ui-btn--secondary ui-btn--sm">Ver detalle</a>
+    </td>
   </tr>
 </template>
 
 <script>
+  import { formatPrice } from '../../../lib/format/price';
   import { fetchMyOrders } from '../services/order.service';
   import type { MyOrdersPageViewModel } from '../services/order.service';
   import { presentMyOrdersPage } from '../services/orderPresenter';
+
+  const regionEl = document.getElementById('my-orders-region');
+  const loadingEl = document.getElementById('my-orders-loading');
+  const unauthEl = document.getElementById('my-orders-unauth');
+  const errorEl = document.getElementById('my-orders-error');
+  const errorMessageEl = document.getElementById('my-orders-error-message');
+  const emptyEl = document.getElementById('my-orders-empty');
+  const contentEl = document.getElementById('my-orders-content');
+  const retryBtn = document.getElementById('my-orders-retry') as HTMLButtonElement | null;
+
+  function setHidden(el: HTMLElement | null, hidden: boolean): void {
+    if (el) el.hidden = hidden;
+  }
+
+  function setBusy(busy: boolean): void {
+    regionEl?.setAttribute('aria-busy', String(busy));
+  }
+
+  function hideAllStates(): void {
+    setHidden(loadingEl, true);
+    setHidden(unauthEl, true);
+    setHidden(errorEl, true);
+    setHidden(emptyEl, true);
+    setHidden(contentEl, true);
+  }
 
   function getPage(): number {
     const raw = new URLSearchParams(window.location.search).get('page');
@@ -66,13 +157,23 @@
     return Number.isNaN(page) || page < 1 ? 1 : page;
   }
 
+  function showLoading(): void {
+    hideAllStates();
+    setBusy(true);
+    setHidden(loadingEl, false);
+  }
+
+  function showUnauthenticated(): void {
+    hideAllStates();
+    setBusy(false);
+    setHidden(unauthEl, false);
+  }
+
   function showError(message: string): void {
-    const loadingEl = document.getElementById('my-orders-loading');
-    const errorEl = document.getElementById('my-orders-error');
-    const messageEl = document.getElementById('my-orders-error-message');
-    if (loadingEl) loadingEl.style.display = 'none';
-    if (messageEl) messageEl.textContent = message;
-    if (errorEl) errorEl.style.display = 'grid';
+    hideAllStates();
+    setBusy(false);
+    if (errorMessageEl) errorMessageEl.textContent = message;
+    setHidden(errorEl, false);
   }
 
   function renderRows(rows: ReturnType<typeof presentMyOrdersPage>['rows']): void {
@@ -84,12 +185,12 @@
     rows.forEach((row) => {
       const clone = rowTemplate.content.cloneNode(true) as DocumentFragment;
       const idEl = clone.querySelector('.order-row-id');
-      const statusEl = clone.querySelector('.order-row-status');
+      const statusBadgeEl = clone.querySelector('.order-row-status-badge');
       const createdEl = clone.querySelector('.order-row-created-at');
       const totalEl = clone.querySelector('.order-row-total');
       const linkEl = clone.querySelector('.order-row-link') as HTMLAnchorElement | null;
       if (idEl) idEl.textContent = row.idOrderLabel;
-      if (statusEl) statusEl.textContent = row.statusLabel;
+      if (statusBadgeEl) statusBadgeEl.textContent = row.statusLabel;
       if (createdEl) createdEl.textContent = row.createdAtLabel;
       if (totalEl) totalEl.textContent = row.totalLabel;
       if (linkEl) linkEl.href = row.detailHref;
@@ -104,43 +205,46 @@
 
     if (pageLabelEl) pageLabelEl.textContent = pageLabel;
     if (prevEl) {
-      prevEl.style.display = prevHref ? 'inline-flex' : 'none';
+      prevEl.hidden = !prevHref;
       if (prevHref) prevEl.href = prevHref;
     }
     if (nextEl) {
-      nextEl.style.display = nextHref ? 'inline-flex' : 'none';
+      nextEl.hidden = !nextHref;
       if (nextHref) nextEl.href = nextHref;
     }
   }
 
   function renderPage(pageData: MyOrdersPageViewModel): void {
-    const presentation = presentMyOrdersPage(pageData);
+    const presentation = presentMyOrdersPage(pageData, formatPrice);
 
-    const loadingEl = document.getElementById('my-orders-loading');
-    const emptyEl = document.getElementById('my-orders-empty');
-    const contentEl = document.getElementById('my-orders-content');
-
-    if (loadingEl) loadingEl.style.display = 'none';
+    hideAllStates();
+    setBusy(false);
 
     if (presentation.isEmpty) {
-      if (emptyEl) emptyEl.style.display = 'grid';
+      setHidden(emptyEl, false);
       return;
     }
 
     renderRows(presentation.rows);
     renderPagination(presentation.pageLabel, presentation.prevHref, presentation.nextHref);
-
-    if (contentEl) contentEl.style.display = 'block';
+    setHidden(contentEl, false);
   }
 
   async function loadMyOrders(): Promise<void> {
+    showLoading();
     const result = await fetchMyOrders(getPage());
     if (result.ok) {
       renderPage(result.page);
+    } else if (result.code === 'UNAUTHENTICATED') {
+      showUnauthenticated();
     } else {
       showError(result.message);
     }
   }
+
+  retryBtn?.addEventListener('click', () => {
+    void loadMyOrders();
+  });
 
   void loadMyOrders();
 </script>
