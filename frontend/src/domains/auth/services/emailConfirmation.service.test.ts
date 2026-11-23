@@ -123,6 +123,19 @@ describe('EmailConfirmationService', () => {
     });
   });
 
+  it('throws ConfirmationNetworkError on unexpected 4xx resend responses instead of reporting accepted', async () => {
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(403, { error: 'Forbidden' }))
+      .mockResolvedValueOnce(jsonResponse(404, { error: 'Not found' }));
+
+    await expect(EmailConfirmationService.resend('ada@example.com')).rejects.toBeInstanceOf(
+      ConfirmationNetworkError,
+    );
+    await expect(EmailConfirmationService.resend('ada@example.com')).rejects.toBeInstanceOf(
+      ConfirmationNetworkError,
+    );
+  });
+
   it('throws ConfirmationNetworkError on 5xx resend responses', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(503));
 

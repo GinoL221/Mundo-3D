@@ -35,30 +35,31 @@ export class EmailConfirmationService {
     }
 
     if (response.status === 400) {
+      let fieldErrors: Record<string, string> = {};
+      let message = FALLBACK_RESEND_EMAIL_ERROR;
       try {
         await parseApiResponse(response, FALLBACK_RESEND_EMAIL_ERROR);
       } catch (err) {
-        const fieldErrors = extractApiFieldErrors(err);
-        const message =
+        fieldErrors = extractApiFieldErrors(err);
+        message =
           fieldErrors.email ||
           (err instanceof Error && err.message.trim()
             ? err.message.trim()
             : FALLBACK_RESEND_EMAIL_ERROR);
-        return {
-          status: 'validation-error',
-          fieldErrors: fieldErrors.email ? fieldErrors : { email: message },
-          message,
-        };
       }
 
       return {
         status: 'validation-error',
-        fieldErrors: { email: FALLBACK_RESEND_EMAIL_ERROR },
-        message: FALLBACK_RESEND_EMAIL_ERROR,
+        fieldErrors: fieldErrors.email ? fieldErrors : { email: message },
+        message,
       };
     }
 
-    return { status: 'accepted' };
+    if (response.ok) {
+      return { status: 'accepted' };
+    }
+
+    throw new ConfirmationNetworkError();
   }
 
   private static async post(path: string, body: Record<string, string>): Promise<Response> {

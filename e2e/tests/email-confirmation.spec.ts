@@ -94,6 +94,40 @@ test.describe('email confirmation', () => {
     });
   });
 
+  test('shows Iniciar sesión exit link when confirming without an active session', async ({
+    page,
+    browser,
+  }) => {
+    const { email } = await registerUnverifiedUser(page);
+    const confirmationLink = await confirmationLinkAcceptedByLocalMailpit(email);
+
+    const unauthenticatedContext = await browser.newContext();
+    try {
+      const guestPage = await unauthenticatedContext.newPage();
+      await guestPage.goto(confirmationLink);
+
+      const confirmationResponse = guestPage.waitForResponse(
+        (response) =>
+          response.url().endsWith('/api/users/email-confirmation/confirm') &&
+          response.request().method() === 'POST',
+      );
+      await guestPage.getByRole('button', { name: 'Confirmar correo' }).click();
+      expect((await confirmationResponse).status()).toBe(204);
+
+      await expect(guestPage.locator('#email-confirmation-feedback-text')).toHaveText(
+        'Tu correo fue confirmado.',
+      );
+      await expect(guestPage.getByRole('button', { name: 'Confirmar correo' })).toBeHidden();
+      const exitLink = guestPage.locator('#email-confirmation-exit-link');
+      await expect(exitLink).toBeVisible();
+      await expect(exitLink).toHaveText('Iniciar sesión');
+      await expect(exitLink).toHaveAttribute('href', '/login');
+      await expect(guestPage.getByRole('link', { name: 'Ir al catálogo' })).toHaveCount(0);
+    } finally {
+      await unauthenticatedContext.close();
+    }
+  });
+
   test('shows generic invalid-link feedback without rendering the token', async ({ page }) => {
     const invalidToken = 'invalid-confirmation-token';
     await page.goto(`/confirm-email?token=${invalidToken}`);
