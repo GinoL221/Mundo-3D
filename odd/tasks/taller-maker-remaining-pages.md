@@ -19,6 +19,7 @@ Branch per PR; Impeccable critique precedes each page; `design/taller-maker-styl
 - S13 (L7): After confirming: "Según sesión" — with an active session "Ir al catálogo"; without one "Iniciar sesión".
 - S14 (L7): Resend 400: "Error en el campo" — client-side email validation and a 400 shown as an inline field error; 202 stays non-enumerating.
 - S15 (L7): Fix the email template copy ("Confirma" → "Confirmá") in the same pass.
+- S16 (L8): Oversized or rejected profile images: validate the 5 MB limit on the client and show the upload-filter rejection (`{error:'Invalid file format or size limit exceeded'}`) on the image field in Spanish; no backend error-shape change (errorHandler is shared with admin uploads).
 - S7 (L1): "Issue #207: el logout deja válida la familia de refresh tokens cuando no hay cookie de acceso."
 
 ## Tasks
@@ -27,8 +28,8 @@ Branch per PR; Impeccable critique precedes each page; `design/taller-maker-styl
 - T2 S2,S3,S5,S6 — /cart pass (empty state, kickers, nested border, Eliminar, copy, guest CTA, error placement, sync-error notice) — inline — commit: 22d5c41 (done)
 - T3 S1,S3,S8,S10,S11 — /login + /register frontend pass (.ui-* migration, field errors, show password, fieldsets, no reset, aria-current, cart merge on register, client validation, optional image UI) — worker — commit: 1f33459 + f501218 (done; S8 PASS by independent verify)
 - T3b S9,S10 — backend: optional register image + voseo validation messages (L6) — worker — commit: 6ce8db4 (done)
-- T3c S16 — register image size/upload-filter error on the field — inline — commit: next (done)
-- T4 S1,S3,S12-S15 — /confirm-email pass (.ui-* migration, loading/busy, .ui-callout outcomes with exits, no-token state, resend 400 handling, mail template accent, drop legacy auth.css/email-confirmation.css) — worker — commit: pending
+- T3c S16 — register image size/upload-filter error on the field — inline — commit: 3bf81e5 (done)
+- T4 S1,S3,S12-S15 — /confirm-email pass (.ui-* migration, loading/busy, .ui-callout outcomes with exits, no-token state, resend 400 handling, mail template accent, drop legacy auth.css/email-confirmation.css) — worker — commit: next (done)
 - T5 S1,S3 — /orders + /order critique and pass — inline — commit: pending
 - T6 S7 — issue #207 logout revokes refresh family without access cookie — inline — commit: pending
 
@@ -40,4 +41,5 @@ Branch per PR; Impeccable critique precedes each page; `design/taller-maker-styl
 - L5 (user, 2026-11-23, after /login 23/40 and /register 18/40 critiques): Validaciones "Frontend al contrato actual (Recomendado)"; Foto perfil "Pasa a opcional"; Errores "Por campo + backend en vos (Recomendado)"; Extras "Mostrar contraseña, Quitar Limpiar formulario, aria-current en header, Fusionar carrito al registrarse".
 - L6 (agent): exact voseo backend messages — "Tienes que ingresar un nombre"→"Ingresá tu nombre"; "Tienes que ingresar un apellido"→"Ingresá tu apellido"; "Tienes que ingresar un mail"→"Ingresá tu correo"; "Tienes que ingresar un mail valido"/"válido"→"Ingresá un correo válido"; "Tienes que ingresar una contraseña"→"Ingresá tu contraseña"; "Tienes que confirmar la contraseña"→"Confirmá tu contraseña"; "Tienes que subir una imagen" is removed (image optional); any other tú form in user validators becomes the equivalent voseo imperative. Rules and "Tiene que tener entre …" style messages keep their wording.
 - L7 (user, 2026-11-23, after /confirm-email critique 15/40): Sin token "Aviso + reenvío (Recomendado)"; Tras confirmar "Según sesión (Recomendado)"; Reenvío 400 "Error en el campo (Recomendado)"; Mail "Sí, en el mismo pase". Critique: `.impeccable/critique/2026-11-23T05-18-41Z__frontend-src-pages-confirm-email-astro.md`.
+- L8 (user, 2026-11-23): "1. si 2. si" — rewrite the local backend commit so the stray auth-file-picker.css deletion moves to the frontend commit (done: e9ec158/fa7328a/b5cf1e0 → 6ce8db4/1f33459/f501218, identical final tree 37842cb), and fold the oversized-image error into this pass.
 - L4 (agent): fallback SVGs are loaded via `<img>` so they cannot follow `data-theme`; use one warm mid-gray stroke `#8c857d` (≈3.6:1 on #ffffff, ≈4.6:1 on #1b1917), transparent background, keep the five filenames so consumers and tests keep working.

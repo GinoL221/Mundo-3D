@@ -43,7 +43,7 @@ describe('BrevoHttpMailAdapter', () => {
     expect(parsedBody).toEqual({
       sender: { name: 'Mundo-3D', email: 'no-reply@example.com' },
       to: [{ email: 'ana@example.com' }],
-      subject: 'Confirma tu correo electrónico',
+      subject: 'Confirmá tu correo electrónico',
       textContent: expect.stringContaining(intent.confirmationUrl),
       htmlContent: expect.stringContaining(intent.confirmationUrl),
     });

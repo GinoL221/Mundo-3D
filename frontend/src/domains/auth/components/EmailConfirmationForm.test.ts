@@ -20,8 +20,30 @@ describe('EmailConfirmationForm source contract', () => {
   it('keeps confirmation outcomes distinct without persisting the opaque token', () => {
     expect(componentSource).toContain("'confirmed'");
     expect(componentSource).toContain("'invalid'");
+    expect(componentSource).toContain("'rate-limited'");
     expect(componentSource).toContain('ConfirmationNetworkError');
     expect(componentSource).not.toMatch(/localStorage|sessionStorage|document\.cookie|analytics/i);
+  });
+
+  it('uses Taller Maker ui-kit primitives, busy states, and session-aware exit actions', () => {
+    expect(componentSource).toContain('class="auth-page__panel"');
+    expect(componentSource).toContain('class="ui-form"');
+    expect(componentSource).toContain('novalidate');
+    expect(componentSource).toContain('ui-state ui-state--open');
+    expect(componentSource).toContain('Abrí el enlace que te mandamos por correo o pedí uno nuevo.');
+    expect(componentSource).toContain('ui-callout--success');
+    expect(componentSource).toContain('ui-callout--danger');
+    expect(componentSource).toContain('ui-callout--info');
+    expect(componentSource).toContain('ui-callout__actions');
+    expect(componentSource).toContain("setAttribute('role', 'alert')");
+    expect(componentSource).toContain("setAttribute('role', 'status')");
+    expect(componentSource).toContain('Confirmando…');
+    expect(componentSource).toContain('Enviando…');
+    expect(componentSource).toContain('getSessionUser');
+    expect(componentSource).toContain("href: '/products', label: 'Ir al catálogo'");
+    expect(componentSource).toContain("href: '/login', label: 'Iniciar sesión'");
+    expect(componentSource).toContain('validateResendEmail');
+    expect(componentSource).not.toContain('auth-form__');
   });
 
   it('submits resend email explicitly and uses non-enumerating acceptance copy', () => {

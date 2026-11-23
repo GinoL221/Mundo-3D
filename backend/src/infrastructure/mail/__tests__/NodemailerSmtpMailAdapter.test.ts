@@ -56,7 +56,7 @@ describe('NodemailerSmtpMailAdapter', () => {
     expect(transport.sendMail).toHaveBeenCalledWith({
       from: 'Mundo-3D <no-reply@example.com>',
       to: 'ana@example.com',
-      subject: 'Confirma tu correo electrónico',
+      subject: 'Confirmá tu correo electrónico',
       text: expect.stringContaining(intent.confirmationUrl),
       html: expect.stringContaining('https://shop.example.com/confirm-email?token=opaque-token'),
       headers: { 'X-Idempotency-Key': 'email-confirmation-token:42' },

@@ -23,9 +23,9 @@ export function renderEmailConfirmationTemplate({
   confirmationUrl: string;
   expiresAt: Date;
 }): EmailConfirmationTemplate {
-  const subject = 'Confirma tu correo electrónico';
-  const text = `${subject}\n\nConfirma tu correo electrónico abriendo este enlace:\n${confirmationUrl}\n\nEl enlace vence en 24 horas.`;
-  const html = `<p>${subject}</p><p>Confirma tu correo electrónico abriendo este enlace:</p><p><a href="${escapeHtml(confirmationUrl)}">Confirmar correo electrónico</a></p><p>El enlace vence en 24 horas.</p>`;
+  const subject = 'Confirmá tu correo electrónico';
+  const text = `${subject}\n\nConfirmá tu correo electrónico abriendo este enlace:\n${confirmationUrl}\n\nEl enlace vence en 24 horas.`;
+  const html = `<p>${subject}</p><p>Confirmá tu correo electrónico abriendo este enlace:</p><p><a href="${escapeHtml(confirmationUrl)}">Confirmar correo electrónico</a></p><p>El enlace vence en 24 horas.</p>`;
 
   return { subject, text, html };
 }
