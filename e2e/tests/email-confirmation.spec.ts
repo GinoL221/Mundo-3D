@@ -138,6 +138,22 @@ test.describe('email confirmation', () => {
     await expect(page.locator('#resend-email-error')).toHaveText('Ingresá un correo válido');
   });
 
+  test('shows the server validation message in Spanish when only the backend rejects the email', async ({ page }) => {
+    await page.goto('/confirm-email');
+    // Passes the client pattern but fails express-validator isEmail on the server.
+    await page.fill('#resend-email', 'a@b.c');
+    const resendResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/users/email-confirmation/resend') &&
+        response.request().method() === 'POST',
+    );
+    await page.getByRole('button', { name: 'Solicitar otro enlace' }).click();
+    expect((await resendResponse).status()).toBe(400);
+
+    await expect(page.locator('#resend-email')).toHaveAttribute('aria-invalid', 'true');
+    await expect(page.locator('#resend-email-error')).toHaveText('Ingresá un correo válido');
+  });
+
   test('keeps repeated successful confirmation idempotent and generic', async ({ page }) => {
     const { email } = await registerUnverifiedUser(page);
     const confirmationLink = await confirmationLinkAcceptedByLocalMailpit(email);
