@@ -351,8 +351,13 @@ test('DEMO_SANDBOX_ENABLED=true requires DEMO_SANDBOX_JWT_SECRET and DEMO_SANDBO
 for (const [label, override] of [
   ['invalid DEMO_SANDBOX_ENABLED', { DEMO_SANDBOX_ENABLED: 'yes' }],
   ['invalid DEMO_SANDBOX_RECOVER_ON_BOOT', { DEMO_SANDBOX_RECOVER_ON_BOOT: '1' }],
+  ['invalid DEMO_SANDBOX_DB_HOST', { DEMO_SANDBOX_DB_HOST: 'https://bad host/path' }],
+  ['blank DEMO_SANDBOX_DB_HOST', { DEMO_SANDBOX_DB_HOST: '   ' }],
+  ['invalid fallback DB_PORT', { DB_PORT: 'not-a-port' }],
   ['invalid DEMO_SANDBOX_DB_PORT', { DEMO_SANDBOX_DB_PORT: '4000abc' }],
+  ['invalid DB_NAME identifier', { DB_NAME: 'bad-db!' }],
   ['blank DEMO_SANDBOX_DB_CA_CERT', { DEMO_SANDBOX_DB_CA_CERT: '   ' }],
+  ['blank DEMO_SANDBOX_JWT_SECRET', { DEMO_SANDBOX_JWT_SECRET: '   ' }],
   ['secret equal to JWT_SECRET', { DEMO_SANDBOX_JWT_SECRET: 'value' }],
   ['fewer than 3 slots', { DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(JSON.parse(VALID_SANDBOX_SLOTS).slice(0, 2)) }],
   [
@@ -375,6 +380,7 @@ for (const [label, override] of [
   test(`demo sandbox preflight fails closed on ${label}`, () => {
     const env = {
       ...buildFullEnv(),
+      DB_PORT: '4000',
       DEMO_SANDBOX_ENABLED: 'true',
       DEMO_SANDBOX_JWT_SECRET: 'sandbox-distinct-secret',
       DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS,

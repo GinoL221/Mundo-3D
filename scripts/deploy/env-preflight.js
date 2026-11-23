@@ -151,14 +151,35 @@ function checkDemoSandbox(env) {
       error: `Invalid DEMO_SANDBOX_RECOVER_ON_BOOT "${recover}". Expected "true" or "false".`,
     };
   }
-  if (env.DEMO_SANDBOX_DB_PORT) {
-    const port = Number(env.DEMO_SANDBOX_DB_PORT);
-    if (!/^\d+$/.test(env.DEMO_SANDBOX_DB_PORT) || port < 1 || port > 65535) {
-      return { enabled: true, error: 'DEMO_SANDBOX_DB_PORT must be an integer between 1 and 65535.' };
+  const effectiveHost = (env.DEMO_SANDBOX_DB_HOST || env.DB_HOST || '').trim();
+  if ((env.DEMO_SANDBOX_DB_HOST || env.DB_HOST) && !/^[a-zA-Z0-9.:-]+$/.test(effectiveHost)) {
+    return {
+      enabled: true,
+      error: 'DEMO_SANDBOX_DB_HOST (or fallback DB_HOST) must be a valid hostname or IP.',
+    };
+  }
+  const effectivePort = (env.DEMO_SANDBOX_DB_PORT || env.DB_PORT || '').trim();
+  if (env.DEMO_SANDBOX_DB_PORT || env.DB_PORT) {
+    const port = Number(effectivePort);
+    if (!/^\d+$/.test(effectivePort) || port < 1 || port > 65535) {
+      return {
+        enabled: true,
+        error: 'DEMO_SANDBOX_DB_PORT (or fallback DB_PORT) must be an integer between 1 and 65535.',
+      };
     }
   }
-  if (env.DEMO_SANDBOX_DB_CA_CERT && !env.DEMO_SANDBOX_DB_CA_CERT.trim()) {
-    return { enabled: true, error: 'DEMO_SANDBOX_DB_CA_CERT cannot be blank.' };
+  if (env.DB_NAME && !isSqlIdentifier(env.DB_NAME.trim(), 64)) {
+    return { enabled: true, error: 'DB_NAME must be a valid SQL identifier when demo sandbox is enabled.' };
+  }
+  const effectiveCa =
+    env.DEMO_SANDBOX_DB_CA_CERT !== undefined && env.DEMO_SANDBOX_DB_CA_CERT !== ''
+      ? env.DEMO_SANDBOX_DB_CA_CERT
+      : env.DB_CA_CERT;
+  if (effectiveCa !== undefined && effectiveCa !== '' && !effectiveCa.trim()) {
+    return { enabled: true, error: 'DEMO_SANDBOX_DB_CA_CERT (or fallback DB_CA_CERT) cannot be blank.' };
+  }
+  if (env.DEMO_SANDBOX_JWT_SECRET && !env.DEMO_SANDBOX_JWT_SECRET.trim()) {
+    return { enabled: true, error: 'DEMO_SANDBOX_JWT_SECRET cannot be blank.' };
   }
   if (
     env.DEMO_SANDBOX_JWT_SECRET &&
