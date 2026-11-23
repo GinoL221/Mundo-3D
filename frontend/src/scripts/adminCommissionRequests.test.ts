@@ -339,7 +339,7 @@ describe('initializeAdminCommissionRequests', () => {
     expect(doc.getElementById('admin-requests-empty')?.hidden).toBe(false);
   });
 
-  it('clears session and redirects to /login on 401', async () => {
+  it('remains silent without calling clearSession, showing an error callout, or re-enabling retry on 401', async () => {
     mocks.getSessionUser.mockReturnValue({
       idUser: 3,
       firstName: 'Sol',
@@ -358,8 +358,10 @@ describe('initializeAdminCommissionRequests', () => {
       win as unknown as Window,
     );
 
-    expect(mocks.clearSession).toHaveBeenCalledTimes(1);
-    expect(win.location.href).toBe('/login');
+    expect(mocks.clearSession).not.toHaveBeenCalled();
+    expect(win.location.href).toBe('/admin/commission-requests');
+    expect(doc.getElementById('admin-requests-error')?.hidden).toBe(true);
+    expect(doc.getElementById('admin-requests-retry')?.disabled).toBe(true);
   });
 
   it('skips the catalog lookup when no request references a product', async () => {

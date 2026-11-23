@@ -8,7 +8,7 @@ import {
   getStockStatus,
 } from '../domains/products/admin/productAdminHelpers';
 import { resolveImageUrl } from '../lib/imageUrl';
-import { applyAdminRoleHeader, handleAdminUnauthorized } from './adminProductsForm';
+import { applyAdminRoleHeader } from './adminProductsForm';
 
 export function initializeAdminProductsList(): void {
   const deniedEl = document.getElementById('admin-gate-denied');
@@ -60,10 +60,6 @@ export function initializeAdminProductsList(): void {
     if (statusTextEl) statusTextEl.textContent = msg;
   }
 
-  function handleUnauthorized(): void {
-    handleAdminUnauthorized();
-  }
-
   async function loadProducts(): Promise<void> {
     const listEl = document.getElementById('admin-products-list');
     const loadingEl = document.getElementById('admin-loading-state');
@@ -103,7 +99,7 @@ export function initializeAdminProductsList(): void {
       if (tableWrapEl) tableWrapEl.hidden = false;
     } catch (err) {
       if (err instanceof ProductAdminApiError && err.status === 401) {
-        handleUnauthorized();
+        // authFetch already handles 401 teardown and /login redirect.
         return;
       }
       if (loadingEl) loadingEl.hidden = true;
@@ -177,6 +173,7 @@ export function initializeAdminProductsList(): void {
       if (plusBtn) plusBtn.disabled = true;
       if (minusBtn) minusBtn.disabled = true;
 
+      let unauthorized = false;
       try {
         const updated = await ProductAdminService.adjustStock(product.idProduct, delta);
         currentStock = updated.stock;
@@ -184,7 +181,8 @@ export function initializeAdminProductsList(): void {
         showInlineStatus(`Stock de «${product.nameProduct}» actualizado a ${currentStock}.`);
       } catch (err) {
         if (err instanceof ProductAdminApiError && err.status === 401) {
-          handleUnauthorized();
+          // authFetch already handles 401 teardown and /login redirect.
+          unauthorized = true;
           return;
         }
         showInlineError(
@@ -193,8 +191,10 @@ export function initializeAdminProductsList(): void {
             : `No se pudo ajustar el stock de «${product.nameProduct}».`,
         );
       } finally {
-        if (plusBtn) plusBtn.disabled = false;
-        if (minusBtn) minusBtn.disabled = currentStock <= 0;
+        if (!unauthorized) {
+          if (plusBtn) plusBtn.disabled = false;
+          if (minusBtn) minusBtn.disabled = currentStock <= 0;
+        }
       }
     }
 
@@ -231,7 +231,7 @@ export function initializeAdminProductsList(): void {
             })
             .catch((err) => {
               if (err instanceof ProductAdminApiError && err.status === 401) {
-                handleUnauthorized();
+                // authFetch already handles 401 teardown and /login redirect.
                 return;
               }
               showInlineError(
