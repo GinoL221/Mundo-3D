@@ -24,6 +24,9 @@ Branch per PR; Impeccable critique precedes each page; `design/taller-maker-styl
 - S18 (L9): Payment reference: "Ocultarla" — do not render "Referencia de pago" in the UI.
 - S19 (L9): Logged out on /orders or /order: "Aviso + Iniciar sesión" — informational `.ui-state` with "Iniciar sesión" and "Ir al catálogo"; no red box and no "Error 401".
 - S20 (L9): Scope "Todo P0–P3": statuses, 401/404/network recovery (single back action, retry), es-AR money formatting identical to /cart ("$ 3.800") with tabular numbers, migration to .ui-* primitives (`hidden` instead of inline display), remove the "PEDIDO" kicker, content-sized columns, no stray mobile divider, labelled actions header, item links to /product?id=, copy unified on "pedido"/"pieza"/"Catálogo".
+- S21 (L12): `EmailConfirmationService.resend()` returns `{ status: 'accepted' }` only on `response.ok` (`2xx`); unexpected non-400/429 `4xx` responses throw an error instead of reporting accepted; simplify the `400` branch via `readApiErrorDetails` (removing redundant fallback construction).
+- S22 (L12): E2E test in `e2e/tests/email-confirmation.spec.ts` proving that confirming an email without an active session (fresh `browser.newContext()` with no cookies) renders the `"Iniciar sesión"` CTA pointing to `/login`.
+- S23 (L12): E2E test proving that a guest cart item added before signing up on `/register` survives registration and is merged into the new account's server cart.
 - S7 (L1): "Issue #207: el logout deja válida la familia de refresh tokens cuando no hay cookie de acceso."
 
 ## Tasks
@@ -34,8 +37,9 @@ Branch per PR; Impeccable critique precedes each page; `design/taller-maker-styl
 - T3b S9,S10 — backend: optional register image + voseo validation messages (L6) — worker — commit: 6ce8db4 (done)
 - T3c S16 — register image size/upload-filter error on the field — inline — commit: 3bf81e5 (done, PR #267)
 - T4 S1,S3,S12-S15 — /confirm-email pass (.ui-* migration, loading/busy, .ui-callout outcomes with exits, no-token state, resend 400 handling, mail template accent, drop legacy auth.css/email-confirmation.css) — worker — commit: 577f2f7 + e6c3d9a (done, PR #268)
-- T5 S1,S3,S17-S20 — /orders + /order pass — worker — commit: see feat(orders) commit (done)
+- T5 S1,S3,S17-S20 — /orders + /order pass — worker — commit: 5646f6a (done, PR #269)
 - T6 S7 — issue #207 — already fixed on main by #206 (+#208, #211); revocation tests pass; issue closed with evidence comment — no commit (done)
+- T7 S21-S23 — auth review follow-ups: resend non-2xx error handling, confirm-email no-session E2E, register guest-cart merge E2E — worker — commit: see fix(auth) commit (done)
 
 ## Log
 
@@ -48,4 +52,5 @@ Branch per PR; Impeccable critique precedes each page; `design/taller-maker-styl
 - L8 (user, 2026-11-23): "1. si 2. si" — rewrite the local backend commit so the stray auth-file-picker.css deletion moves to the frontend commit (done: e9ec158/fa7328a/b5cf1e0 → 6ce8db4/1f33459/f501218, identical final tree 37842cb), and fold the oversized-image error into this pass.
 - L9 (user, 2026-11-23, after /orders 19/40 and /order 18/40 critiques): Estados "Etiqueta honesta (Recomendado)"; Referencia "Ocultarla (Recomendado)"; Sin sesión "Aviso + Iniciar sesión (Recomendado)"; Alcance "Todo P0–P3 (Recomendado)". Critiques: `.impeccable/critique/2026-11-23T13-52-43Z__frontend-src-pages-order{s,}-astro.md`. Screens: isolated e2e harness (`pnpm --filter e2e test --project=chromium <spec>`; register a fresh user via /register for a session).
 - L10 (user, 2026-11-23): "Sí, cerralo con comentario" — #207 closed with evidence (PRs #206/#208/#211, session-revocation.test.ts:172).
+- L12 (user, 2026-11-23): "revisamos esos 3 entonces?" + "Primero Slice 4 (/orders) y después el mini PR de los 3 follow-ups (Recomendado)" — after merging PRs #266 (a74c4d5), #267 (00593b3), #268 (2d86a42) and #269 (2a9dbf2), implement the 3 non-blocking review follow-ups in `fix/auth-review-followups` to close #265.
 - L4 (agent): fallback SVGs are loaded via `<img>` so they cannot follow `data-theme`; use one warm mid-gray stroke `#8c857d` (≈3.6:1 on #ffffff, ≈4.6:1 on #1b1917), transparent background, keep the five filenames so consumers and tests keep working.

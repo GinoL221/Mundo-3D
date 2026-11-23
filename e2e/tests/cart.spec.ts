@@ -348,6 +348,45 @@ test.describe('Cart E2E Tests - Guest-to-Account Merge on Login', () => {
     await page.goto('/cart');
     await expect(page.locator('.cart__item')).toHaveCount(2);
   });
+
+  test('Guest cart merges into the new account server cart on registration', async ({ page }) => {
+    const email = `merge_reg_${Date.now()}@example.com`;
+    const password = 'Password123!';
+
+    // Start as a guest with a clean local cart and add product 1.
+    await page.goto('/');
+    await page.evaluate(() => localStorage.removeItem('cart'));
+
+    await page.goto('/product?id=1');
+    await expect(page.locator('#product-name')).not.toBeEmpty();
+    await page.click('#add-to-cart-btn');
+    await expect(page.locator('#navbar-cart-badge')).toHaveText('1');
+    await expect(async () => {
+      const cart = await page.evaluate(() => localStorage.getItem('cart'));
+      expect(cart).toContain('"productId":1');
+    }).toPass();
+
+    // Register a fresh account without a profile image.
+    await page.goto('/register');
+    await page.fill('#firstName', 'RegMerge');
+    await page.fill('#lastName', 'Test');
+    await page.fill('#email', email);
+    await page.fill('#password', password);
+    await page.fill('#confirmPassword', password);
+
+    await page.click('#register-btn');
+    await expect(page).toHaveURL('/');
+
+    // Clear localStorage cart so /cart must hydrate from the server — proving
+    // the guest item persisted to the new account's server cart.
+    await page.evaluate(() => localStorage.removeItem('cart'));
+    await page.goto('/cart');
+    await expect(page.locator('.cart__item')).toHaveCount(1);
+    await expect(page.locator('.cart__item').first().locator('.cart__item-name a')).toHaveAttribute(
+      'href',
+      '/product?id=1',
+    );
+  });
 });
 
 test.describe('Cart E2E Tests - Login Redirect Bounded Race', () => {
