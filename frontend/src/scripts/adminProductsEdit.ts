@@ -13,7 +13,6 @@ import {
   applyAdminRoleHeader,
   applyFormFieldErrors,
   clearFormFieldErrors,
-  handleAdminUnauthorized,
   hideFormErrorBanner,
   loadClassificationOptions,
   navigateToInternalRoute,
@@ -178,7 +177,7 @@ export function initializeAdminProductsEdit(): void {
       if (contentEl) contentEl.hidden = false;
     } catch (err) {
       if (err instanceof ProductAdminApiError && err.status === 401) {
-        handleAdminUnauthorized();
+        // authFetch already handles 401 teardown and /login redirect.
         return;
       }
       if (loadingEl) loadingEl.hidden = true;
@@ -220,13 +219,15 @@ export function initializeAdminProductsEdit(): void {
       editBtn.textContent = 'Guardando...';
     }
 
+    let unauthorized = false;
     try {
       const formData = buildProductFormData(values, 'edit');
       await ProductAdminService.update(id, formData);
       navigateToInternalRoute('/admin/products');
     } catch (err) {
       if (err instanceof ProductAdminApiError && err.status === 401) {
-        handleAdminUnauthorized();
+        // authFetch already handles 401 teardown and /login redirect.
+        unauthorized = true;
         return;
       }
       if (err instanceof ProductAdminApiError) {
@@ -240,10 +241,12 @@ export function initializeAdminProductsEdit(): void {
         showFormErrorBanner(errorBox, 'No se pudo conectar con el servidor. Intentá de nuevo.');
       }
     } finally {
-      form.removeAttribute('aria-busy');
-      if (editBtn) {
-        editBtn.disabled = false;
-        editBtn.textContent = editBtnLabel;
+      if (!unauthorized) {
+        form.removeAttribute('aria-busy');
+        if (editBtn) {
+          editBtn.disabled = false;
+          editBtn.textContent = editBtnLabel;
+        }
       }
     }
   }

@@ -1,4 +1,4 @@
-import { clearSession, getSessionUser } from '../domains/auth';
+import { getSessionUser } from '../domains/auth';
 import { fetchFilterOptions } from '../domains/products';
 import type { FilterOption } from '../domains/products';
 import {
@@ -38,11 +38,6 @@ export function navigateToInternalRoute(path: '/login' | '/admin/products'): voi
   if (path.startsWith('/') && !path.startsWith('//')) {
     window.location.assign(path);
   }
-}
-
-export function handleAdminUnauthorized(): void {
-  void clearSession();
-  navigateToInternalRoute('/login');
 }
 
 function populateSelectOptions(

@@ -1,4 +1,4 @@
-import { clearSession, getSessionUser, hasAdminAccess } from '../domains/auth';
+import { getSessionUser, hasAdminAccess } from '../domains/auth';
 import {
   CustomCommissionRequestAdminApiError,
   listCustomCommissionRequests,
@@ -85,7 +85,7 @@ function renderInboxItem(
 
 export async function initializeAdminCommissionRequests(
   document: Document,
-  window: Pick<Window, 'location'>,
+  _window?: Pick<Window, 'location'>,
 ): Promise<AdminCommissionRequestsController> {
   const roleBadge = document.getElementById('admin-role-badge');
   const scopeNote = document.getElementById('admin-requests-scope');
@@ -114,6 +114,7 @@ export async function initializeAdminCommissionRequests(
     setHidden(listEl, true);
     listEl.replaceChildren();
 
+    let unauthorized = false;
     try {
       const requests = await listCustomCommissionRequests();
       if (attempt !== activeAttempt) return;
@@ -168,14 +169,14 @@ export async function initializeAdminCommissionRequests(
     } catch (cause) {
       if (attempt !== activeAttempt) return;
 
-      loadingEl.removeAttribute('aria-busy');
-      setHidden(loadingEl, true);
-
       if (cause instanceof CustomCommissionRequestAdminApiError && cause.status === 401) {
-        void clearSession();
-        window.location.assign('/login');
+        // authFetch already handles 401 teardown and /login redirect.
+        unauthorized = true;
         return;
       }
+
+      loadingEl.removeAttribute('aria-busy');
+      setHidden(loadingEl, true);
 
       if (errorTextEl) {
         errorTextEl.textContent =
@@ -185,7 +186,7 @@ export async function initializeAdminCommissionRequests(
       }
       setHidden(errorEl, false);
     } finally {
-      if (retryBtn && attempt === activeAttempt) {
+      if (!unauthorized && retryBtn && attempt === activeAttempt) {
         retryBtn.disabled = false;
       }
     }

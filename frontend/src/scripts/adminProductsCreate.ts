@@ -8,7 +8,6 @@ import {
   applyAdminRoleHeader,
   applyFormFieldErrors,
   clearFormFieldErrors,
-  handleAdminUnauthorized,
   hideFormErrorBanner,
   loadClassificationOptions,
   navigateToInternalRoute,
@@ -92,13 +91,15 @@ export function initializeAdminProductsCreate(): void {
       createBtn.textContent = 'Creando...';
     }
 
+    let unauthorized = false;
     try {
       const formData = buildProductFormData(values, 'create');
       await ProductAdminService.create(formData);
       navigateToInternalRoute('/admin/products');
     } catch (err) {
       if (err instanceof ProductAdminApiError && err.status === 401) {
-        handleAdminUnauthorized();
+        // authFetch already handles 401 teardown and /login redirect.
+        unauthorized = true;
         return;
       }
       if (err instanceof ProductAdminApiError) {
@@ -112,10 +113,12 @@ export function initializeAdminProductsCreate(): void {
         showFormErrorBanner(errorBox, 'No se pudo conectar con el servidor. Intentá de nuevo.');
       }
     } finally {
-      form.removeAttribute('aria-busy');
-      if (createBtn) {
-        createBtn.disabled = false;
-        createBtn.textContent = createBtnLabel;
+      if (!unauthorized) {
+        form.removeAttribute('aria-busy');
+        if (createBtn) {
+          createBtn.disabled = false;
+          createBtn.textContent = createBtnLabel;
+        }
       }
     }
   }
