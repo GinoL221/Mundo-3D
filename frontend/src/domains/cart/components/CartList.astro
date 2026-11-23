@@ -3,25 +3,49 @@
 ---
 
 <div class="cart__notices" aria-live="polite" aria-atomic="false">
-  <div class="alert system-state system-state--status" id="cart-price-drift" hidden></div>
-  <div class="alert system-state system-state--error" id="checkout-error" role="alert" hidden></div>
+  <div class="ui-callout ui-callout--info" id="cart-price-drift" hidden>
+    <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
+    </svg>
+    <div class="ui-callout__content" id="cart-price-drift-content"></div>
+  </div>
+  <div class="ui-callout ui-callout--danger" id="cart-sync-error" role="alert" hidden>
+    <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="m15 9-6 6" />
+      <path d="m9 9 6 6" />
+    </svg>
+    <div class="ui-callout__content" id="cart-sync-error-content"></div>
+  </div>
 </div>
 
 <div class="cart__container">
   <section class="cart__items system-section" id="cart-items-container" aria-label="Productos en el carrito" aria-busy="true">
-    <p class="cart__state system-state system-state--loading" id="cart-loading" role="status">Cargando tu carrito…</p>
+    <p class="ui-state cart__loading" id="cart-loading" role="status">Cargando tu carrito…</p>
   </section>
 
   <section class="cart__summary system-section" id="cart-summary" aria-labelledby="cart-summary-title" hidden>
     <div class="cart__summary-details">
-      <p class="cart__summary-label">RESUMEN</p>
       <h2 id="cart-summary-title">Resumen de tu compra</h2>
-      <p class="cart__summary-count" id="cart-count">Cantidad de productos: 0</p>
+      <p class="cart__summary-count" id="cart-count">0 piezas</p>
       <p class="cart__summary-total">Total <strong id="cart-total">$ 0</strong></p>
+      <p class="cart__summary-note">Pedido simulado: no se cobra nada.</p>
     </div>
+
+    <div class="ui-callout ui-callout--danger cart__checkout-error" id="checkout-error" role="alert" hidden>
+      <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" />
+        <path d="m15 9-6 6" />
+        <path d="m9 9 6 6" />
+      </svg>
+      <div class="ui-callout__content" id="checkout-error-content"></div>
+    </div>
+
     <div class="cart__summary-actions">
-      <a href="/products" class="cart__btn-continue system-action">Seguir comprando</a>
-      <button class="cart__btn-checkout system-action system-action--primary" type="button">Finalizar compra</button>
+      <a href="/products" class="cart__btn-continue ui-btn ui-btn--secondary">Seguir en el catálogo</a>
+      <button class="cart__btn-checkout ui-btn ui-btn--primary" type="button">Finalizar compra</button>
     </div>
   </section>
 </div>
@@ -32,36 +56,49 @@
       <img class="cart__item-image" src="" alt="" width="240" height="240" loading="lazy" decoding="async" />
     </div>
     <div class="cart__item-content">
-      <h2 class="cart__item-name"></h2>
+      <h2 class="cart__item-name"><a class="cart__item-link" href=""></a></h2>
       <dl class="cart__item-details">
         <div><dt>Precio unitario</dt><dd class="cart__item-price"></dd></div>
         <div>
           <dt>Cantidad</dt>
           <dd class="cart__item-quantity">
-            <button class="cart__quantity-btn cart__quantity-decrease" type="button">−</button>
-            <span class="cart__item-qty" aria-live="polite"></span>
-            <button class="cart__quantity-btn cart__quantity-increase" type="button">+</button>
+            <div class="ui-stepper">
+              <button class="cart__quantity-btn cart__quantity-decrease ui-stepper__btn" type="button">−</button>
+              <span class="cart__item-qty ui-stepper__value" aria-live="polite"></span>
+              <button class="cart__quantity-btn cart__quantity-increase ui-stepper__btn" type="button">+</button>
+            </div>
           </dd>
         </div>
         <div><dt>Subtotal</dt><dd class="cart__item-subtotal"></dd></div>
       </dl>
-      <button class="cart__item-remove system-action" type="button">Eliminar</button>
+      <button class="cart__item-remove ui-btn ui-btn--danger-soft" type="button">Eliminar</button>
     </div>
   </article>
 </template>
 
 <template id="cart-empty-template">
-  <div class="empty-state cart__state system-state" role="status">
-    <img src="/images/illustrations/empty-cart.svg" alt="" class="empty-state-img" width="200" height="160" data-image-rendering="pixel-art" />
-    <h2>Tu carrito está vacío</h2>
-    <p>Cuando elijas una pieza del taller, va a aparecer acá.</p>
-    <a href="/products" class="system-action system-action--primary">Ver productos</a>
+  <div class="ui-state ui-state--empty ui-state--open" role="status">
+    <svg class="ui-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="8" cy="21" r="1" />
+      <circle cx="19" cy="21" r="1" />
+      <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+    </svg>
+    <h2 class="ui-state__title">Tu carrito está vacío</h2>
+    <p class="ui-state__text">Cuando elijas una pieza del taller, va a aparecer acá.</p>
+    <a href="/products" class="ui-btn ui-btn--primary">Ver catálogo</a>
   </div>
 </template>
 
 <script>
   import { cartItems, cartTotal, CartService } from '../services/CartService';
   import type { CartItem, PriceDrift, CheckoutResult } from '../services/CartService';
+  import {
+    countCartPieces,
+    formatCartPieceCount,
+    formatSyncErrorMessage,
+    getCheckoutButtonLabel,
+    getHydrationErrorMessage,
+  } from '../services/cartDisplay';
   import { resolveImageUrl } from '../../../lib/imageUrl';
 
   const formatPrice = (price: number): string => `$ ${new Intl.NumberFormat('es-AR').format(price)}`;
@@ -69,21 +106,43 @@
     if (element) element.hidden = hidden;
   };
 
+  function createCalloutLine(text: string): HTMLParagraphElement {
+    const line = document.createElement('p');
+    line.className = 'alert__text ui-callout__text';
+    line.textContent = text;
+    return line;
+  }
+
   function renderPriceDrift(drifts: PriceDrift[]): void {
     const driftEl = document.getElementById('cart-price-drift');
-    if (!driftEl) return;
-    driftEl.replaceChildren();
-    for (const drift of drifts) {
-      const line = document.createElement('p');
-      line.className = 'alert__text';
-      line.textContent = `El precio de "${drift.name}" cambió de ${formatPrice(drift.oldPrice)} a ${formatPrice(drift.newPrice)}.`;
-      driftEl.appendChild(line);
-    }
+    const contentEl = document.getElementById('cart-price-drift-content');
+    if (!driftEl || !contentEl) return;
+    contentEl.replaceChildren(
+      ...drifts.map((drift) =>
+        createCalloutLine(
+          `El precio de "${drift.name}" cambió de ${formatPrice(drift.oldPrice)} a ${formatPrice(drift.newPrice)}.`,
+        ),
+      ),
+    );
     setHidden(driftEl, drifts.length === 0);
+  }
+
+  function renderSyncError(message: string): void {
+    const noticeEl = document.getElementById('cart-sync-error');
+    const contentEl = document.getElementById('cart-sync-error-content');
+    if (!noticeEl || !contentEl) return;
+    contentEl.replaceChildren(createCalloutLine(message));
+    setHidden(noticeEl, false);
   }
 
   function updateQuantity(item: CartItem, quantity: number): void {
     CartService.updateQuantity(item.productId, quantity);
+  }
+
+  function syncCheckoutButtonLabel(busy = false): void {
+    const button = document.querySelector('.cart__btn-checkout') as HTMLButtonElement | null;
+    if (!button) return;
+    button.textContent = getCheckoutButtonLabel(CartService.hasToken(), busy);
   }
 
   function renderCart(): void {
@@ -111,12 +170,15 @@
       const decrease = clone.querySelector('.cart__quantity-decrease') as HTMLButtonElement | null;
       const increase = clone.querySelector('.cart__quantity-increase') as HTMLButtonElement | null;
       const remove = clone.querySelector('.cart__item-remove') as HTMLButtonElement | null;
-      const name = clone.querySelector('.cart__item-name');
+      const nameLink = clone.querySelector('.cart__item-link') as HTMLAnchorElement | null;
       const price = clone.querySelector('.cart__item-price');
       const quantity = clone.querySelector('.cart__item-qty');
       const subtotal = clone.querySelector('.cart__item-subtotal');
 
-      if (name) name.textContent = item.name;
+      if (nameLink) {
+        nameLink.href = `/product?id=${item.productId}`;
+        nameLink.textContent = item.name;
+      }
       if (price) price.textContent = formatPrice(item.unitPrice);
       if (quantity) quantity.textContent = String(item.quantity);
       if (subtotal) subtotal.textContent = formatPrice(item.unitPrice * item.quantity);
@@ -152,30 +214,47 @@
     setHidden(summaryEl, false);
     const count = document.getElementById('cart-count');
     const total = document.getElementById('cart-total');
-    if (count) count.textContent = `Cantidad de productos: ${items.length}`;
+    if (count) count.textContent = formatCartPieceCount(countCartPieces(items));
     if (total) total.textContent = formatPrice(cartTotal.get());
+    syncCheckoutButtonLabel(false);
   }
+
+  window.addEventListener('cart-sync-error', (event: Event) => {
+    const detail = (event as CustomEvent<{ message?: string }>).detail;
+    renderSyncError(formatSyncErrorMessage(detail?.message));
+  });
 
   CartService.loadCartFromStorage();
   renderCart();
   cartItems.subscribe(renderCart);
-  void CartService.hydrateFromServer().then((result) => renderPriceDrift(result.priceDrifts));
+  void CartService.hydrateFromServer().then((result) => {
+    renderPriceDrift(result.priceDrifts);
+    const hydrationError = getHydrationErrorMessage(result);
+    if (hydrationError) {
+      renderSyncError(hydrationError);
+    }
+  });
 
   function setCheckoutBusy(busy: boolean): void {
     const button = document.querySelector('.cart__btn-checkout') as HTMLButtonElement | null;
     if (!button) return;
     button.disabled = busy;
     button.setAttribute('aria-busy', String(busy));
-    button.textContent = busy ? 'Procesando…' : 'Finalizar compra';
+    syncCheckoutButtonLabel(busy);
   }
 
   function renderCheckoutError(result: Extract<CheckoutResult, { ok: false }>): void {
     const error = document.getElementById('checkout-error');
-    if (!error) return;
-    const lines = result.code === 'INSUFFICIENT_STOCK' && result.shortages?.length
-      ? result.shortages.map((item) => `Sin stock suficiente de "${item.productName}": pediste ${item.requested}, quedan ${item.available}.`)
-      : [result.message];
-    error.replaceChildren(...lines.map((text) => Object.assign(document.createElement('p'), { className: 'alert__text', textContent: text })));
+    const content = document.getElementById('checkout-error-content');
+    if (!error || !content) return;
+    const lines =
+      result.code === 'INSUFFICIENT_STOCK' && result.shortages?.length
+        ? result.shortages.map(
+            (item) =>
+              `Sin stock suficiente de "${item.productName}": pediste ${item.requested}, quedan ${item.available}.`,
+          )
+        : [result.message];
+    content.replaceChildren(...lines.map((text) => createCalloutLine(text)));
     setHidden(error, false);
   }
 
@@ -186,7 +265,8 @@
     }
     setCheckoutBusy(true);
     const error = document.getElementById('checkout-error');
-    error?.replaceChildren();
+    const content = document.getElementById('checkout-error-content');
+    content?.replaceChildren();
     setHidden(error, true);
     try {
       const result = await CartService.checkout();

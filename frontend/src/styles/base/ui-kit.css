@@ -899,6 +899,12 @@ select.ui-input {
   padding-block: var(--space-xl);
 }
 
+.ui-state--open {
+  border: 0;
+  background: transparent;
+  padding-inline: 0;
+}
+
 .ui-state__icon {
   width: 24px;
   height: 24px;
