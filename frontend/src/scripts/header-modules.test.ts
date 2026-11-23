@@ -164,6 +164,7 @@ describe('Shared route shell', () => {
     const brandStyles = source('../styles/components/home-brand.css');
     const homeStyles = source('../styles/components/home.css');
     const productsStyles = source('../styles/components/home-products.css');
+    const indexPage = source('../pages/index.astro');
     const colorTokens = source('../styles/tokens/colors.css');
     const baseLayoutStyles = source('../styles/base/layout.css');
     const productCardTemplate = source('../domains/products/components/HomeProductCard.astro');
@@ -381,7 +382,8 @@ describe('Shared route shell', () => {
     expect(footer).toContain('<nav class="home-footer__columns" aria-label="Navegación del pie">');
     expect(
       footer.match(/<nav class="home-footer__columns"[\s\S]*?<\/nav>/)?.[0].match(/<a[\s\S]*?href="/g),
-    ).toHaveLength(10);
+    ).toHaveLength(9);
+    expect(footer).not.toContain('openspec');
     expect(footer).not.toContain('instagram.com');
     expect(footer).not.toContain('x.com');
     expect(footer).not.toContain('tiktok.com');
@@ -403,13 +405,16 @@ describe('Shared route shell', () => {
     for (const styles of [homeStyles, headerStyles, productsStyles, baseLayoutStyles]) {
       expect(styles).not.toContain('var(--sys-action-bg,');
     }
-    expect(productsStyles).toMatch(/\.home-commission \{[^}]*?background: var\(--accent-tint\);/);
-    expect(productsStyles).toMatch(
-      /\.home-commission \{[^}]*?border-top: 1px solid var\(--accent-tint-border\);/,
-    );
+    const commissionBlock = productsStyles.match(/\.home-commission \{[^}]*\}/)?.[0] ?? '';
+    expect(commissionBlock).toContain('border-top: 1px solid var(--border);');
+    expect(commissionBlock).not.toContain('background');
+    expect(commissionBlock).not.toContain('accent-tint');
     expect(productsStyles).toMatch(/\.home-commission__title \{[^}]*?color: var\(--fg\);/);
     expect(productsStyles).toMatch(
-      /\.home-commission__description \{[^}]*?max-width: 60ch;[^}]*?color: var\(--accent-tint-text\);/,
+      /\.home-commission__description \{[^}]*?max-width: 60ch;[^}]*?color: var\(--sys-text-muted\);/,
+    );
+    expect(indexPage).toContain(
+      '<a class="ui-btn ui-btn--primary home-commission__cta" href="/help">',
     );
     expect(header).toContain('<div class="home-header__primary" id="home-primary-navigation" hidden>');
     expect(header).toContain('<nav class="home-header__nav" aria-label="Navegación principal">');
