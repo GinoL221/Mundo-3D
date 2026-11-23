@@ -62,6 +62,7 @@ let httpServer = null;
 let shuttingDown = false;
 let bootAborted = false;
 let commissionRequestRetention = null;
+let demoSandboxRuntime = null;
 
 // Flushes the Pino logger before exiting. `logger.flush(cb)` is not
 // guaranteed to invoke `cb` on a transport-less destination, so a fallback
@@ -96,9 +97,16 @@ function shutdown(signal) {
     commissionRequestRetention.stop();
     commissionRequestRetention = null;
   }
+  const sandboxToStop = demoSandboxRuntime;
+  demoSandboxRuntime = null;
 
   if (!httpServer) {
     bootAborted = true;
+    if (sandboxToStop) {
+      void sandboxToStop.stop().catch((stopErr) => {
+        logger.error({ err: stopErr }, "Error while stopping demo sandbox runtime");
+      });
+    }
     logger.error({ signal }, "Signal received before boot completed; aborting boot");
     process.exit(1);
     return;
@@ -121,15 +129,20 @@ function shutdown(signal) {
     if (err) {
       logger.error({ err, signal }, "Error while closing HTTP server");
     }
-    db.sequelize
-      .close()
-      .catch((closeErr) => {
+    const closeSandbox = sandboxToStop
+      ? sandboxToStop.stop().catch((stopErr) => {
+          logger.error({ err: stopErr }, "Error while stopping demo sandbox runtime");
+        })
+      : Promise.resolve();
+    Promise.all([
+      closeSandbox,
+      db.sequelize.close().catch((closeErr) => {
         logger.error({ err: closeErr }, "Error while closing database connection");
-      })
-      .finally(() => {
-        logger.info({ signal }, "Graceful shutdown complete");
-        exitAfterFlush(0);
-      });
+      }),
+    ]).finally(() => {
+      logger.info({ signal }, "Graceful shutdown complete");
+      exitAfterFlush(0);
+    });
   });
 }
 
@@ -170,6 +183,28 @@ if (env === "test") {
           commissionRequestRetention.stop();
           commissionRequestRetention = null;
           return;
+        }
+        const sandboxFlag = process.env.DEMO_SANDBOX_ENABLED;
+        if (sandboxFlag !== undefined && sandboxFlag !== "" && sandboxFlag !== "false") {
+          const { startDemoSandboxRuntime } = require(`${base}/infrastructure/maintenance/demoSandboxRuntime`);
+          demoSandboxRuntime = await startDemoSandboxRuntime(db.sequelize, logger);
+          if (bootAborted) {
+            if (demoSandboxRuntime) {
+              const runtimeToStop = demoSandboxRuntime;
+              demoSandboxRuntime = null;
+              await runtimeToStop.stop().catch(() => {});
+            }
+            return;
+          }
+          if (demoSandboxRuntime) {
+            await demoSandboxRuntime.ready;
+            if (bootAborted) {
+              const runtimeToStop = demoSandboxRuntime;
+              demoSandboxRuntime = null;
+              await runtimeToStop.stop().catch(() => {});
+              return;
+            }
+          }
         }
       }
       // Bind every interface explicitly: the platform routes to this
