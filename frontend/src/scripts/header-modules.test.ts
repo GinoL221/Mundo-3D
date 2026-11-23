@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { initializeCartBadge } from './cartBadge';
-import { initializeCrtToggle } from './crtToggle';
 import { initializeSessionUI } from './sessionUI';
 import { initializeThemeToggle } from './themeToggle';
 import { cartItems } from '../domains/cart/services/CartService';
@@ -80,7 +79,6 @@ class FakeDocument {
   querySelector(selector: string) {
     const ids: Record<string, string> = {
       '.theme-toggle-btn__icon': 'theme-icon',
-      '.crt-toggle-btn__icon': 'crt-icon',
       'meta[name="color-scheme"]': 'color-scheme-meta',
     };
     return this.elements.get(ids[selector]) ?? null;
@@ -129,8 +127,6 @@ function createFixture() {
     'theme-toggle',
     'theme-icon',
     'color-scheme-meta',
-    'crt-toggle',
-    'crt-icon',
     'navbar-cart-badge',
     'product-link',
     'orders-link',
@@ -809,45 +805,6 @@ describe('Header browser modules', () => {
     expect(fixture.document.documentElement.getAttribute('data-theme-preference')).toBe('system');
 
     cleanup?.();
-  });
-
-  it('persists CRT toggles and cleans up duplicate initialization', () => {
-    const fixture = createFixture();
-    fixture.storage.setItem('retro-theme-preference', 'disabled');
-    const cleanup = initializeCrtToggle(
-      fixture.document as unknown as Document,
-      fixture.storage as unknown as Storage,
-    );
-    expect(fixture.document.documentElement.classList.contains('crt-theme-active')).toBe(false);
-    expect(fixture.document.elements.get('crt-icon')!.textContent).toBe('🔌');
-    fixture.document.elements.get('crt-toggle')!.click();
-    expect(fixture.storage.setItem).toHaveBeenCalledWith('retro-theme-preference', 'enabled');
-    expect(
-      initializeCrtToggle(
-        fixture.document as unknown as Document,
-        fixture.storage as unknown as Storage,
-      ),
-    ).toBe(cleanup);
-    cleanup();
-    cleanup();
-  });
-
-  it('starts CRT enabled and persists the disabled state when toggled off', () => {
-    const fixture = createFixture();
-    const cleanup = initializeCrtToggle(
-      fixture.document as unknown as Document,
-      fixture.storage as unknown as Storage,
-    );
-
-    expect(fixture.document.documentElement.classList.contains('crt-theme-active')).toBe(true);
-    expect(fixture.document.elements.get('crt-icon')!.textContent).toBe('📺');
-
-    fixture.document.elements.get('crt-toggle')!.click();
-    expect(fixture.storage.getItem('retro-theme-preference')).toBe('disabled');
-    expect(fixture.document.documentElement.classList.contains('crt-theme-active')).toBe(false);
-    expect(fixture.document.elements.get('crt-icon')!.textContent).toBe('🔌');
-
-    cleanup();
   });
 
   it('renders distinct cart items, hides empty state, and unsubscribes', () => {
