@@ -53,8 +53,11 @@ export function evaluatePasswordRules(password: string, confirmPassword: string)
 }
 
 export function isAllowedImageFileName(fileName: string): boolean {
-  // Mirrors the backend's case-sensitive path.extname check (.jpg/.png only).
-  return ALLOWED_IMAGE_EXTENSIONS.some((ext) => fileName.trim().endsWith(ext));
+  // Mirrors the backend's case-sensitive `path.extname` check: no trimming, and a
+  // leading dot alone (".jpg") is not an extension.
+  const lastDot = fileName.lastIndexOf('.');
+  if (lastDot <= 0) return false;
+  return (ALLOWED_IMAGE_EXTENSIONS as readonly string[]).includes(fileName.slice(lastDot));
 }
 
 export function validateRegisterInput(
@@ -104,8 +107,8 @@ export function validateRegisterInput(
     errors.confirmPassword = 'Las contraseñas no coinciden';
   }
 
-  const imageName = input.imageName?.trim() ?? '';
-  if (imageName && !isAllowedImageFileName(imageName)) {
+  const imageName = input.imageName ?? '';
+  if (imageName.trim() && !isAllowedImageFileName(imageName)) {
     errors.image = `Las extensiones de archivos permitidas son ${ALLOWED_IMAGE_EXTENSIONS.join(', ')}`;
   }
 

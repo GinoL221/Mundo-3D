@@ -25,8 +25,8 @@ Branch per PR; Impeccable critique precedes each page; `design/taller-maker-styl
 
 - T1 S2,S4 — replace the 5 PICO-8 illustration SVGs with neutral placeholders, drop pixelated rendering hints — inline — commit: bdfa2a3 (done)
 - T2 S2,S3,S5,S6 — /cart pass (empty state, kickers, nested border, Eliminar, copy, guest CTA, error placement, sync-error notice) — inline — commit: 22d5c41 (done)
-- T3 S1,S3,S8,S10,S11 — /login + /register frontend pass (.ui-* migration, field errors, show password, fieldsets, no reset, aria-current, cart merge on register, client validation, optional image UI) — worker — commit: pending
-- T3b S9,S10 — backend: optional register image + voseo validation messages (L6) — worker — commit: pending
+- T3 S1,S3,S8,S10,S11 — /login + /register frontend pass (.ui-* migration, field errors, show password, fieldsets, no reset, aria-current, cart merge on register, client validation, optional image UI) — worker — commit: fa7328a (done)
+- T3b S9,S10 — backend: optional register image + voseo validation messages (L6) — worker — commit: e9ec158 (done; also carries the auth-file-picker.css deletion by mistake, fixed by fa7328a)
 - T4 S1,S3,S12-S15 — /confirm-email pass (.ui-* migration, loading/busy, .ui-callout outcomes with exits, no-token state, resend 400 handling, mail template accent, drop legacy auth.css/email-confirmation.css) — worker — commit: pending
 - T5 S1,S3 — /orders + /order critique and pass — inline — commit: pending
 - T6 S7 — issue #207 logout revokes refresh family without access cookie — inline — commit: pending

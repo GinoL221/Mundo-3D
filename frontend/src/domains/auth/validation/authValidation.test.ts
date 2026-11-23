@@ -52,6 +52,28 @@ describe('isAllowedImageFileName', () => {
     expect(isAllowedImageFileName('avatar.webp')).toBe(false);
     expect(isAllowedImageFileName('avatar.gif')).toBe(false);
   });
+
+  it('follows path.extname semantics: no trimming and no extension-only names', () => {
+    expect(isAllowedImageFileName('a.jpg ')).toBe(false);
+    expect(isAllowedImageFileName('a.jpg\t')).toBe(false);
+    expect(isAllowedImageFileName('.jpg')).toBe(false);
+    expect(isAllowedImageFileName('.png')).toBe(false);
+    expect(isAllowedImageFileName(' a.jpg')).toBe(true);
+    expect(isAllowedImageFileName('archive.exe.jpg')).toBe(true);
+    expect(isAllowedImageFileName('archive.jpg.exe')).toBe(false);
+  });
+
+  it('validates the untrimmed file name on register', () => {
+    const errors = validateRegisterInput({
+      firstName: 'Ana',
+      lastName: 'Paz',
+      email: 'ana@example.com',
+      password: 'Secreta1!',
+      confirmPassword: 'Secreta1!',
+      imageName: 'a.jpg ',
+    });
+    expect(errors.image).toBe('Las extensiones de archivos permitidas son .jpg, .png');
+  });
 });
 
 describe('validateRegisterInput', () => {
