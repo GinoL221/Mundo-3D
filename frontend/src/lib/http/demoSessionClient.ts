@@ -182,7 +182,6 @@ export async function switchDemoRole(role: DemoRole): Promise<SwitchDemoRoleResu
 
 export async function endDemoSession(): Promise<void> {
   const token = readDemoCsrfToken();
-  clearDemoSession('ended');
   try {
     const headers: Record<string, string> = {};
     if (token) headers['X-CSRF-Token'] = token;
@@ -193,6 +192,8 @@ export async function endDemoSession(): Promise<void> {
       headers,
     });
   } catch {
-    // Best-effort: local demo state is already cleared.
+    // Best-effort: local demo state is cleared in finally.
+  } finally {
+    clearDemoSession('ended');
   }
 }

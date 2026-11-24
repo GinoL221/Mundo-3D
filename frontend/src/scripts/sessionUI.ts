@@ -124,14 +124,16 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
   const logout = (event: Event) => {
     event.preventDefault();
     if (isDemoSessionActive()) {
-      void endDemoSession();
-      try {
-        localStorage.removeItem('m3d_demo_cart');
-      } catch {
-        // Ignore storage errors.
-      }
-      CartService.loadCartFromStorage();
-      window.location.href = '/';
+      void (async () => {
+        await endDemoSession();
+        try {
+          localStorage.removeItem('m3d_demo_cart');
+        } catch {
+          // Ignore storage errors.
+        }
+        CartService.loadCartFromStorage();
+        window.location.href = '/';
+      })();
       return;
     }
     // Fire-and-forget: the redirect never waits on the network call (same

@@ -29,9 +29,18 @@ function createFakeDom(initialCookie = '') {
   const adminEl = { style: { display: 'none' } };
   const greeting = { textContent: 'Hola' };
   const avatar = { src: '' };
+  const logoutListeners: Array<(ev: Event) => void> = [];
+  const logoutBtn = {
+    addEventListener: (type: string, fn: (ev: Event) => void) => {
+      if (type === 'click') logoutListeners.push(fn);
+    },
+    removeEventListener: vi.fn(),
+    click: () => logoutListeners.forEach((fn) => fn({ preventDefault: vi.fn() } as unknown as Event)),
+  };
   const elements = new Map<string, unknown>([
     ['navbar-greeting', greeting],
     ['navbar-avatar', avatar],
+    ['navbar-logout', logoutBtn],
   ]);
 
   const doc = {
@@ -75,7 +84,7 @@ function createFakeDom(initialCookie = '') {
 
   vi.stubGlobal('document', doc);
   vi.stubGlobal('window', win);
-  return { doc, win, guestEl, userEl, adminEl, greeting };
+  return { doc, win, guestEl, userEl, adminEl, greeting, logoutBtn };
 }
 
 describe('Demo shell integration (sessionUI + m3d_demo_cart)', () => {
@@ -145,6 +154,39 @@ describe('Demo shell integration (sessionUI + m3d_demo_cart)', () => {
 
     expect(adminEl.style.display).toBe('block');
     expect(greeting.textContent).toBe('Demo STAFF');
+    cleanup();
+  });
+
+  it('awaits endDemoSession() before clearing cart and redirecting on navbar logout', async () => {
+    const local = createMemoryStorage();
+    const session = createMemoryStorage();
+    vi.stubGlobal('localStorage', local);
+    vi.stubGlobal('sessionStorage', session);
+    const { doc, win, logoutBtn } = createFakeDom(`${DEMO_CSRF_COOKIE_NAME}=demo.nav`);
+    win.location.href = '/cart';
+    local.setItem(DEMO_CART_STORAGE_KEY, JSON.stringify([{ productId: 9, name: 'Demo', image: '', unitPrice: 10, quantity: 1 }]));
+    let resolveDelete!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveDelete = resolve;
+          }),
+      ),
+    );
+
+    const cleanup = initializeSessionUI(doc, win);
+    logoutBtn.click();
+    expect(win.location.href).toBe('/cart');
+    expect(doc.cookie).toContain(`${DEMO_CSRF_COOKIE_NAME}=demo.nav`);
+
+    resolveDelete(new Response(null, { status: 204 }));
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(doc.cookie).not.toContain(DEMO_CSRF_COOKIE_NAME);
+    expect(local.getItem(DEMO_CART_STORAGE_KEY)).toBeNull();
+    expect(win.location.href).toBe('/');
     cleanup();
   });
 });
