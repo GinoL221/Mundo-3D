@@ -1,5 +1,6 @@
 ---
 import HomeHeader from '../components/HomeHeader.astro';
+import DemoSessionBar from '../components/DemoSessionBar.astro';
 import HomeFooter from '../components/HomeFooter.astro';
 
 // Global styling imports
@@ -16,6 +17,7 @@ import '../styles/base/system-primitives.css';
 import '../styles/base/ui-kit.css';
 import '../styles/components/nav-toggles.css';
 import '../styles/components/home-shell.css';
+import '../styles/components/demo-bar.css';
 import '../styles/components/home-brand.css';
 import '../styles/components/home.css';
 import '../styles/components/home-products.css';
@@ -79,6 +81,7 @@ const { title = "Mundo 3D" } = Astro.props;
 	<body class="home-shell">
 		<a class="skip-link" href="#main-content">Saltar al contenido</a>
 		<HomeHeader pathname={Astro.url.pathname} />
+		<DemoSessionBar />
 		<span id="main-content" class="skip-target" tabindex="-1"></span>
 		<slot />
 			<HomeFooter />

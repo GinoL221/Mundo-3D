@@ -1,3 +1,4 @@
+import { DEMO_SESSION_EVENT, endDemoSession, getDemoSession, isDemoSessionActive } from '../config';
 import { hasAdminAccess, clearSession } from '../domains/auth/services/session.service';
 import type { SessionChangedMessage } from '../domains/auth/services/session.service';
 import { CartService } from '../domains/cart/services/CartService';
@@ -33,7 +34,9 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
   const existing = cleanups.get(document);
   if (existing) return existing;
 
-  const userMenuTrigger = document.getElementById('navbar-user-menu-trigger') as HTMLButtonElement | null;
+  const userMenuTrigger = document.getElementById(
+    'navbar-user-menu-trigger',
+  ) as HTMLButtonElement | null;
   const userMenu = document.getElementById('navbar-user-menu');
   let userMenuOpen = false;
 
@@ -70,9 +73,26 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
   };
 
   const update = () => {
-    const raw = readCookie(document, USER_COOKIE_NAME);
     const greeting = document.getElementById('navbar-greeting');
     const avatar = document.getElementById('navbar-avatar') as HTMLImageElement | null;
+
+    const demoSession = getDemoSession();
+    if (demoSession) {
+      const idRole = demoSession.role === 'STAFF' ? 3 : 2;
+      setVisibility(document.querySelectorAll('.guest-only'), 'none');
+      setVisibility(document.querySelectorAll('.user-only'), 'block');
+      setVisibility(
+        document.querySelectorAll('.admin-only'),
+        hasAdminAccess({ idRole }) ? 'block' : 'none',
+      );
+      if (greeting) {
+        greeting.textContent = demoSession.role === 'STAFF' ? 'Demo STAFF' : 'Demo Buyer';
+      }
+      if (avatar) avatar.src = '/img/users/default-avatar.png';
+      return;
+    }
+
+    const raw = readCookie(document, USER_COOKIE_NAME);
 
     if (!raw) {
       resetToGuest();
@@ -103,6 +123,17 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
 
   const logout = (event: Event) => {
     event.preventDefault();
+    if (isDemoSessionActive()) {
+      void endDemoSession();
+      try {
+        localStorage.removeItem('m3d_demo_cart');
+      } catch {
+        // Ignore storage errors.
+      }
+      CartService.loadCartFromStorage();
+      window.location.href = '/';
+      return;
+    }
     // Fire-and-forget: the redirect never waits on the network call (same
     // "best-effort, never block" spirit as session.service.ts's
     // clearSession()).
@@ -147,6 +178,7 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
   }
 
   window.addEventListener('session-changed', update);
+  window.addEventListener(DEMO_SESSION_EVENT, update);
   window.addEventListener('focus', update);
   document.addEventListener('visibilitychange', update);
   update();
@@ -162,6 +194,7 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
       document.removeEventListener('click', handleDocumentClick);
     }
     window.removeEventListener('session-changed', update);
+    window.removeEventListener(DEMO_SESSION_EVENT, update);
     window.removeEventListener('focus', update);
     document.removeEventListener('visibilitychange', update);
     channel?.close();
