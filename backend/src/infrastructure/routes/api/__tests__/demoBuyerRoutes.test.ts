@@ -185,9 +185,13 @@ describe('/api/demo/* Buyer routes', () => {
       const [a, x] = [await send(k, p, S1, undefined, b), await send(k, p, S1, S2.csrf, b)];
       expect([a.status, x.status]).toEqual([403, 403]);
     }
-    for (const p of ['/products', '/users/login', '/users/register'])
+    for (const p of ['/users/login', '/users/register']) {
       expect((await send('post', p, S1, S1.csrf)).status).toBe(404);
-    for (const p of ['/custom-commission-requests', '/admin/products', '/orders'])
+      expect((await send('post', p)).status).toBe(404);
+    }
+    for (const p of ['/admin/products', '/orders'])
       expect((await send('get', p, S1, S1.csrf)).status).toBe(404);
+    expect((await send('post', '/products', S1, S1.csrf)).status).toBe(403);
+    expect((await send('get', '/custom-commission-requests', S1)).status).toBe(403);
   });
 });
