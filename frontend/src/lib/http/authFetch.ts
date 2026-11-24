@@ -1,9 +1,13 @@
 import { API_URL } from './apiBase';
+import { expireClientReadableSessionCookies, getSessionUser, withCredentials } from './credentials';
+import { ensureDemoRefreshed } from './demoSessionClient';
 import {
-  expireClientReadableSessionCookies,
-  getSessionUser,
-  withCredentials,
-} from './credentials';
+  clearDemoSession,
+  isDemoApiUrl,
+  isDemoSessionActive,
+  rewriteDemoApiUrl,
+  withDemoCredentials,
+} from './demoSessionState';
 import { ensureRefreshed } from './refreshSingleFlight';
 
 const SESSION_BROADCAST_CHANNEL = 'm3d-session';
@@ -98,7 +102,32 @@ function endSessionAndRedirect(): void {
  * can exit silently without showing error banners or firing duplicate
  * redirects. Guests (`!hadSession`) are never logged out or redirected.
  */
+async function demoAuthFetch(url: string, init?: RequestInit): Promise<Response> {
+  const targetUrl = rewriteDemoApiUrl(url);
+  const first = await fetch(targetUrl, withDemoCredentials(init));
+
+  if (first.status !== 401) return first;
+
+  const hadDemo = isDemoSessionActive();
+  const refreshed = await ensureDemoRefreshed();
+  if (!refreshed) {
+    if (hadDemo) clearDemoSession('expired');
+    return first;
+  }
+
+  const retried = await fetch(targetUrl, withDemoCredentials(init));
+  if (retried.status === 401 && hadDemo) {
+    clearDemoSession('expired');
+  }
+  return retried;
+}
+
 export async function authFetch(url: string, init?: RequestInit): Promise<Response> {
+  const targetUrl = isDemoSessionActive() ? rewriteDemoApiUrl(url) : url;
+  if (isDemoApiUrl(targetUrl)) {
+    return demoAuthFetch(targetUrl, init);
+  }
+
   const first = await fetch(url, withCredentials(init));
 
   if (first.status !== 401) return first;
@@ -134,4 +163,17 @@ export async function authFetch(url: string, init?: RequestInit): Promise<Respon
   }
 
   return retried;
+}
+
+/**
+ * Public-endpoint fetch wrapper that stays a plain uncredentialed `fetch` in
+ * normal storefront mode and transparently routes through `authFetch` to
+ * `/api/demo/*` (with demo cookies and `m3d_demo_csrf`) while a Demo Sandbox
+ * session is active.
+ */
+export function apiFetch(url: string, init?: RequestInit): Promise<Response> {
+  if (isDemoSessionActive()) {
+    return authFetch(url, init);
+  }
+  return init === undefined ? fetch(url) : fetch(url, init);
 }

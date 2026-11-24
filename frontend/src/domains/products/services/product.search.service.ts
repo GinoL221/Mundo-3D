@@ -1,4 +1,4 @@
-import { API_URL } from '../../../config';
+import { API_URL, apiFetch } from '../../../config';
 import type { ProductSearchPage } from '../adapters/product.adapter';
 
 // Public, unauthenticated search endpoint (product-catalog-search spec) —
@@ -24,7 +24,9 @@ export type FetchProductSearchResult =
  * this is the public, unauthenticated search endpoint noted above — it
  * sends no credentials and can never 401.
  */
-export async function fetchProductSearch(criteria: ProductSearchCriteria): Promise<FetchProductSearchResult> {
+export async function fetchProductSearch(
+  criteria: ProductSearchCriteria,
+): Promise<FetchProductSearchResult> {
   const params = new URLSearchParams();
   const trimmedSearch = criteria.search?.trim();
   if (trimmedSearch) params.set('search', trimmedSearch);
@@ -35,7 +37,7 @@ export async function fetchProductSearch(criteria: ProductSearchCriteria): Promi
 
   let res: Response;
   try {
-    res = await fetch(`${API_URL}/api/products/search${query ? `?${query}` : ''}`);
+    res = await apiFetch(`${API_URL}/api/products/search${query ? `?${query}` : ''}`);
   } catch {
     return { ok: false, reason: 'network' };
   }
@@ -73,11 +75,14 @@ interface FranchiseDTO {
  * Both calls are deliberately plain `fetch`, not `authFetch` (design.md D6,
  * task 3.10): both are public, no-credentials reads that cannot 401.
  */
-export async function fetchFilterOptions(): Promise<{ categories: FilterOption[]; franchises: FilterOption[] }> {
+export async function fetchFilterOptions(): Promise<{
+  categories: FilterOption[];
+  franchises: FilterOption[];
+}> {
   try {
     const [categoriesRes, franchisesRes] = await Promise.all([
-      fetch(`${API_URL}/api/categories`),
-      fetch(`${API_URL}/api/franchises`),
+      apiFetch(`${API_URL}/api/categories`),
+      apiFetch(`${API_URL}/api/franchises`),
     ]);
 
     if (!categoriesRes.ok || !franchisesRes.ok) {

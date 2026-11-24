@@ -16,5 +16,31 @@ export {
   withCredentials,
 } from './lib/http/credentials';
 export type { APIErrorBody, APIFieldError, SessionUser } from './lib/http/credentials';
-export { authFetch } from './lib/http/authFetch';
+export { apiFetch, authFetch } from './lib/http/authFetch';
+export {
+  checkDemoAvailability,
+  endDemoSession,
+  hydrateDemoSession,
+  startDemoSession,
+} from './lib/http/demoSessionClient';
+export type {
+  HydrateDemoSessionResult,
+  StartDemoSessionResult,
+} from './lib/http/demoSessionClient';
+export {
+  clearDemoSession,
+  DEMO_BROADCAST_CHANNEL,
+  DEMO_SESSION_EVENT,
+  getDemoSession,
+  isDemoSessionActive,
+  saveDemoSession,
+} from './lib/http/demoSessionState';
+export type {
+  DemoChangeReason,
+  DemoRole,
+  DemoSessionChangedMessage,
+  DemoSessionLease,
+  DemoSessionState,
+  DemoSessionUser,
+} from './lib/http/demoSessionState';
 export { ensureRefreshed } from './lib/http/refreshSingleFlight';

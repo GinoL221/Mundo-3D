@@ -1,4 +1,4 @@
-import { API_URL } from '../../../config';
+import { API_URL, apiFetch } from '../../../config';
 
 export interface CustomCommissionRequestInput {
   name: string;
@@ -22,7 +22,7 @@ export async function submitCustomCommissionRequest(
   };
 
   try {
-    const response = await fetch(`${API_URL}/api/custom-commission-requests`, {
+    const response = await apiFetch(`${API_URL}/api/custom-commission-requests`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
