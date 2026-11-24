@@ -189,8 +189,10 @@ describe('/api/demo/* Buyer routes', () => {
       expect((await send('post', p, S1, S1.csrf)).status).toBe(404);
       expect((await send('post', p)).status).toBe(404);
     }
-    for (const p of ['/admin/products', '/orders'])
-      expect((await send('get', p, S1, S1.csrf)).status).toBe(404);
+    expect((await send('get', '/admin/products', S1, S1.csrf)).status).toBe(404);
+    expect((await send('get', '/orders', S1, S1.csrf)).status).toBe(403);
+    expect((await send('post', '/orders/1/confirm-payment', S1, S1.csrf)).status).toBe(403);
+    expect((await send('post', '/orders/1/cancel', S1, S1.csrf)).status).toBe(403);
     expect((await send('post', '/products', S1, S1.csrf)).status).toBe(403);
     expect((await send('get', '/custom-commission-requests', S1)).status).toBe(403);
   });

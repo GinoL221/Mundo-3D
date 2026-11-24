@@ -66,4 +66,40 @@ describe('demoSandboxUpload middleware', () => {
       });
     expect(mismatchRes.status).toBe(400);
   });
+
+  it('rejects oversize uploads (> 5 MB) with 413 and Spanish error message', async () => {
+    const res = await request(buildApp())
+      .post('/upload')
+      .field('nameProduct', 'Grande')
+      .attach('image', Buffer.alloc(5 * 1024 * 1024 + 1, 0x61), {
+        filename: 'oversize.png',
+        contentType: 'image/png',
+      });
+    expect(res.status).toBe(413);
+    expect(res.body.error).toMatch(/5 MB/i);
+    expect(res.body.errors?.[0]).toEqual({ path: 'image', msg: res.body.error });
+  });
+
+  it('rejects multipart field floods (> 20 fields) and multiple files (> 1 file) with 413', async () => {
+    const app = buildApp();
+    let req = request(app).post('/upload');
+    for (let i = 0; i < 21; i += 1) {
+      req = req.field(`extra${i}`, 'val');
+    }
+    const fieldFloodRes = await req;
+    expect(fieldFloodRes.status).toBe(413);
+
+    const multiFileRes = await request(app)
+      .post('/upload')
+      .field('nameProduct', 'Dos Fotos')
+      .attach('image', Buffer.from([0x89, 0x50, 0x4e, 0x47]), {
+        filename: 'one.png',
+        contentType: 'image/png',
+      })
+      .attach('image', Buffer.from([0x89, 0x50, 0x4e, 0x47]), {
+        filename: 'two.png',
+        contentType: 'image/png',
+      });
+    expect(multiFileRes.status).toBe(413);
+  });
 });

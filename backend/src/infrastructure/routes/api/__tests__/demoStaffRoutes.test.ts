@@ -186,9 +186,9 @@ const creds = (slotId: string, leaseId: string, userId: number, role: ses.Allowe
 const BUYER1 = creds('slot-1', 'lease-1', 1, Role.USER);
 const STAFF1 = creds('slot-1', 'lease-1', 2, Role.STAFF);
 
-function buildApp() {
+function buildApp(options?: Parameters<typeof createDemoRouter>[0]) {
   const app = express().set('trust proxy', 1).use(express.json(), cookieParser());
-  app.use(B, createDemoRouter()).use(errorHandler);
+  app.use(B, createDemoRouter(options)).use(errorHandler);
   return app;
 }
 
@@ -219,6 +219,19 @@ describe('/api/demo/* STAFF endpoints and explicit 403 boundaries', () => {
         contentType: 'image/png',
       });
     expect([created.status, created.body.image]).toEqual([201, null]);
+
+    const createdNoImage = await request(app)
+      .post(`${B}/products`)
+      .set('Cookie', STAFF1.cookies)
+      .set('x-csrf-token', STAFF1.csrf)
+      .send({
+        nameProduct: 'Pieza Sin Foto',
+        price: 3900,
+        descriptionProduct: 'Sin archivo adjunto',
+        idCategory: 1,
+        idFranchise: 1,
+      });
+    expect([createdNoImage.status, createdNoImage.body.image]).toEqual([201, null]);
 
     const badExt = await request(app)
       .post(`${B}/products`)
@@ -284,12 +297,13 @@ describe('/api/demo/* STAFF endpoints and explicit 403 boundaries', () => {
         .delete(`${B}/franchises/1`)
         .set('Cookie', STAFF1.cookies)
         .set('x-csrf-token', STAFF1.csrf),
+      request(app).get(`${B}/orders`).set('Cookie', STAFF1.cookies),
       request(app)
-        .patch(`${B}/orders/1/status`)
+        .post(`${B}/orders/1/confirm-payment`)
         .set('Cookie', STAFF1.cookies)
         .set('x-csrf-token', STAFF1.csrf),
       request(app)
-        .delete(`${B}/orders/1`)
+        .post(`${B}/orders/1/cancel`)
         .set('Cookie', STAFF1.cookies)
         .set('x-csrf-token', STAFF1.csrf),
       request(app).get(`${B}/custom-commission-requests`).set('Cookie', BUYER1.cookies),
@@ -313,5 +327,77 @@ describe('/api/demo/* STAFF endpoints and explicit 403 boundaries', () => {
     for (const reqPromise of adminChecks) {
       expect((await reqPromise).status).toBe(403);
     }
+  });
+
+  it('rejects missing or invalid CSRF with 403 on STAFF write routes', async () => {
+    rtMod.setActiveDemoSandboxRuntime(makeRuntime().runtime);
+    const app = buildApp();
+    const checks = [
+      request(app).post(`${B}/products`).set('Cookie', STAFF1.cookies).send({ nameProduct: 'Test 3D' }),
+      request(app)
+        .post(`${B}/products`)
+        .set('Cookie', STAFF1.cookies)
+        .set('x-csrf-token', 'invalid-csrf')
+        .send({ nameProduct: 'Test 3D' }),
+      request(app).put(`${B}/products/1`).set('Cookie', STAFF1.cookies).send({ price: 3000 }),
+      request(app)
+        .put(`${B}/products/1`)
+        .set('Cookie', STAFF1.cookies)
+        .set('x-csrf-token', 'invalid-csrf')
+        .send({ price: 3000 }),
+      request(app).patch(`${B}/products/1/stock`).set('Cookie', STAFF1.cookies).send({ delta: 1 }),
+      request(app)
+        .patch(`${B}/products/1/stock`)
+        .set('Cookie', STAFF1.cookies)
+        .set('x-csrf-token', 'invalid-csrf')
+        .send({ delta: 1 }),
+    ];
+    for (const reqPromise of checks) {
+      expect((await reqPromise).status).toBe(403);
+    }
+  });
+
+  it('returns 413 on oversize upload (> 5 MB) without persisting product and rate-limits STAFF writes', async () => {
+    const { runtime, perSlot } = makeRuntime();
+    rtMod.setActiveDemoSandboxRuntime(runtime);
+    const app = buildApp({ staffWriteLimiterMax: 2 });
+
+    const oversize = await request(app)
+      .post(`${B}/products`)
+      .set('X-Forwarded-For', '198.51.100.40')
+      .set('Cookie', STAFF1.cookies)
+      .set('x-csrf-token', STAFF1.csrf)
+      .field('nameProduct', 'Figura Pesada')
+      .field('price', '4500')
+      .field('descriptionProduct', 'Supera limite')
+      .field('idCategory', '1')
+      .field('idFranchise', '1')
+      .attach('image', Buffer.alloc(5 * 1024 * 1024 + 1, 0x61), {
+        filename: 'huge.png',
+        contentType: 'image/png',
+      });
+    expect(oversize.status).toBe(413);
+    expect(oversize.body.error).toMatch(/5 MB/i);
+    expect(perSlot.get('slot-1')!.productRepo.create).not.toHaveBeenCalled();
+
+    const s1 = await request(app)
+      .patch(`${B}/products/1/stock`)
+      .set('X-Forwarded-For', '198.51.100.41')
+      .set('Cookie', STAFF1.cookies)
+      .set('x-csrf-token', STAFF1.csrf)
+      .send({ delta: 1 });
+    const s2 = await request(app)
+      .patch(`${B}/products/1/stock`)
+      .set('X-Forwarded-For', '198.51.100.41')
+      .set('Cookie', STAFF1.cookies)
+      .set('x-csrf-token', STAFF1.csrf)
+      .send({ delta: 1 });
+    const s3 = await request(app)
+      .patch(`${B}/products/1/stock`)
+      .set('X-Forwarded-For', '198.51.100.41')
+      .set('Cookie', STAFF1.cookies)
+      .set('x-csrf-token', STAFF1.csrf)
+      .send({ delta: 1 });
+    expect([s1.status, s2.status, s3.status]).toEqual([200, 200, 429]);
   });
 });

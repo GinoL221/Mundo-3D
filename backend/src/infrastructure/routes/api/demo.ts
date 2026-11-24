@@ -34,6 +34,10 @@ export interface DemoRouterOptions {
   refreshLimiterMax?: number;
   commissionLimiterWindowMs?: number;
   commissionLimiterMax?: number;
+  roleSwitchLimiterWindowMs?: number;
+  roleSwitchLimiterMax?: number;
+  staffWriteLimiterWindowMs?: number;
+  staffWriteLimiterMax?: number;
 }
 
 const makeLim = (windowMs: number, limit: number, error: string, skipFailedRequests = false) =>
@@ -91,6 +95,8 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   const cMsg = 'Too many demo session requests. Please try again later.';
   const rMsg = 'Too many demo session refresh requests. Please try again later.';
   const cmMsg = 'Too many requests. Please try again later.';
+  const roleMsg = 'Too many demo role switch requests. Please try again later.';
+  const swMsg = 'Too many demo write requests. Please try again later.';
   const cCap = makeLim(o.sessionLimiterWindowMs ?? w, o.sessionCeilingMax ?? 30, cMsg, false);
   const cLim = makeLim(o.sessionLimiterWindowMs ?? w, o.sessionLimiterMax ?? 5, cMsg, true);
   const rLim = makeLim(o.refreshLimiterWindowMs ?? w, o.refreshLimiterMax ?? 10, rMsg);
@@ -99,6 +105,8 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
     o.commissionLimiterMax ?? 5,
     cmMsg,
   );
+  const roleLim = makeLim(o.roleSwitchLimiterWindowMs ?? w, o.roleSwitchLimiterMax ?? 30, roleMsg);
+  const swLim = makeLim(o.staffWriteLimiterWindowMs ?? w, o.staffWriteLimiterMax ?? 60, swMsg);
   const [hSearch, hMine] = [run((b) => b.products.search), run((b) => b.orders.listMine)];
   const [hCart, hOrd, hComm] = [
     run((b) => b.cart.syncCart),
@@ -112,7 +120,7 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   });
   router.post('/session', cCap, cLim, c.create);
   router.get('/session', auth, c.get);
-  router.post('/session/role', ...write, c.switchRole);
+  router.post('/session/role', ...write, roleLim, c.switchRole);
   router.post('/session/refresh', rLim, c.refresh);
   router.delete('/session', ...write, c.destroy);
   router.get('/products/search', auth, searchVal, hSearch);
@@ -129,6 +137,7 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   router.post(
     '/products',
     ...staffWrite,
+    swLim,
     demoProductUpload,
     demoProductCreateValidators,
     handleValidationErrors,
@@ -138,6 +147,7 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   router.put(
     '/products/:id',
     ...staffWrite,
+    swLim,
     demoProductUpload,
     stripDemoUploadedFile,
     prodUpdVal,
@@ -147,6 +157,7 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   router.patch(
     '/products/:id/stock',
     ...staffWrite,
+    swLim,
     run((b) => b.products.adjustStock),
   );
   router.delete('/products/:id', ...write, denyAdmin);
@@ -163,8 +174,9 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   router.post('/franchises', ...write, denyAdmin);
   router.put('/franchises/:id', ...write, denyAdmin);
   router.delete('/franchises/:id', ...write, denyAdmin);
-  router.patch('/orders/:id/status', ...write, denyAdmin);
-  router.delete('/orders/:id', ...write, denyAdmin);
+  router.get('/orders', auth, denyAdmin);
+  router.post('/orders/:id/confirm-payment', ...write, denyAdmin);
+  router.post('/orders/:id/cancel', ...write, denyAdmin);
   return router;
 }
 

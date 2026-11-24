@@ -86,7 +86,7 @@ const optionalProductAttributeValidators = [
     .withMessage('El stock debe ser un entero mayor o igual a 0'),
 ];
 
-export const productCreateValidators = [
+const productCreateBaseValidators = [
   body('nameProduct')
     .trim()
     .notEmpty()
@@ -123,11 +123,18 @@ export const productCreateValidators = [
   body('idCategory').notEmpty().withMessage('Debe seleccionar una categoría'),
 
   body('idFranchise').notEmpty().withMessage('Debe seleccionar una franquicia'),
-
-  imageValidator(true),
-
-  ...optionalProductAttributeValidators,
 ];
+
+export const createProductCreateValidators = (options: { requireImage?: boolean } = {}) => {
+  const { requireImage = true } = options;
+  return [
+    ...productCreateBaseValidators,
+    imageValidator(requireImage),
+    ...optionalProductAttributeValidators,
+  ];
+};
+
+export const productCreateValidators = createProductCreateValidators({ requireImage: true });
 
 export const productUpdateValidators = [
   body('nameProduct')
