@@ -157,17 +157,28 @@ test('completes full Buyer demo flow over /api/demo/* with m3d_demo_csrf and cle
   await page.goto('/');
   const entryBtn = page.locator('[data-demo-entry]').first();
   await expect(entryBtn).toBeVisible();
-  await entryBtn.click();
+  await Promise.all([
+    page.waitForResponse((r) => r.url().includes('/api/demo/session') && r.request().method() === 'POST'),
+    entryBtn.click(),
+  ]);
+  await page.waitForLoadState('networkidle');
 
   await expect(page.locator('#demo-session-bar')).toBeVisible();
   await expect(page.locator('#demo-bar-role-badge')).toHaveText('BUYER');
   await expect(page.locator('#navbar-greeting')).toHaveText('Demo Buyer');
 
   await page.goto('/product?id=1');
-  await page.getByRole('button', { name: /Agregar al carrito/i }).click();
+  const addBtn = page.getByRole('button', { name: /Agregar al carrito/i });
+  await expect(addBtn).toBeVisible();
+  await Promise.all([
+    page.waitForResponse((r) => r.url().includes('/api/demo/cart') && r.request().method() === 'PUT'),
+    addBtn.click(),
+  ]);
   await page.goto('/cart');
   await expect(page.locator('.cart__summary-note')).toContainText('Pedido simulado');
-  await page.locator('.cart__btn-checkout').click();
+  const checkoutBtn = page.locator('.cart__btn-checkout');
+  await expect(checkoutBtn).toBeVisible();
+  await checkoutBtn.click();
   await expect(page).toHaveURL(/\/order\?id=101$/);
 
   await page.goto('/orders');
