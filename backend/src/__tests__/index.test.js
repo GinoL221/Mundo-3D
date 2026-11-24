@@ -573,5 +573,155 @@ describe('index.js boot sequence', () => {
       await flushPromiseChain();
       expect(close).toHaveBeenCalledTimes(1);
     });
+
+    it('keeps demo sandbox dormant when DEMO_SANDBOX_ENABLED is unset or false', async () => {
+      process.env.NODE_ENV = 'production';
+      process.env.DEMO_SANDBOX_ENABLED = 'false';
+      const fake = createFakeHttpServer();
+      const startDemoSandboxRuntime = jest.fn();
+
+      jest.isolateModules(() => {
+        jest.doMock('../app', () => fake.app);
+        jest.doMock('../infrastructure/logging/logger', () => ({ logger: mockLogger }));
+        jest.doMock('../database/config/ensureDatabase', () => ({
+          ensureDatabaseExists: jest.fn().mockResolvedValue(undefined),
+        }));
+        jest.doMock('../database/models/db', () => ({
+          sequelize: {
+            authenticate: jest.fn().mockResolvedValue(undefined),
+            close: jest.fn().mockResolvedValue(undefined),
+          },
+        }));
+        jest.doMock('../database/checkPendingMigrations', () => ({
+          checkNoPendingMigrations: jest.fn().mockResolvedValue(undefined),
+        }));
+        jest.doMock('../database/seed', () => ({
+          seedInitialData: jest.fn().mockResolvedValue(undefined),
+        }));
+        jest.doMock('../infrastructure/maintenance/commissionRequestRetention', () => ({
+          startCommissionRequestRetention: jest.fn().mockReturnValue({
+            ready: Promise.resolve(),
+            stop: jest.fn(),
+          }),
+        }));
+        jest.doMock('../infrastructure/maintenance/demoSandboxRuntime', () => ({
+          startDemoSandboxRuntime,
+        }));
+        require('../../index');
+      });
+
+      await flushPromiseChain();
+      expect(startDemoSandboxRuntime).not.toHaveBeenCalled();
+      expect(fake.app.listen).toHaveBeenCalledTimes(1);
+    });
+
+    it('boots demo sandbox before listening when enabled and stops it during graceful shutdown', async () => {
+      process.env.NODE_ENV = 'production';
+      process.env.DEMO_SANDBOX_ENABLED = 'true';
+      const fake = createFakeHttpServer();
+      const close = jest.fn().mockResolvedValue(undefined);
+      const stopSandbox = jest.fn().mockResolvedValue(undefined);
+      let finishSandboxReady;
+      const sandboxReady = new Promise((resolve) => {
+        finishSandboxReady = resolve;
+      });
+      const startDemoSandboxRuntime = jest
+        .fn()
+        .mockResolvedValue({ ready: sandboxReady, stop: stopSandbox });
+
+      jest.isolateModules(() => {
+        jest.doMock('../app', () => fake.app);
+        jest.doMock('../infrastructure/logging/logger', () => ({ logger: mockLogger }));
+        jest.doMock('../database/config/ensureDatabase', () => ({
+          ensureDatabaseExists: jest.fn().mockResolvedValue(undefined),
+        }));
+        jest.doMock('../database/models/db', () => ({
+          sequelize: { authenticate: jest.fn().mockResolvedValue(undefined), close },
+        }));
+        jest.doMock('../database/checkPendingMigrations', () => ({
+          checkNoPendingMigrations: jest.fn().mockResolvedValue(undefined),
+        }));
+        jest.doMock('../database/seed', () => ({
+          seedInitialData: jest.fn().mockResolvedValue(undefined),
+        }));
+        jest.doMock('../infrastructure/maintenance/commissionRequestRetention', () => ({
+          startCommissionRequestRetention: jest.fn().mockReturnValue({
+            ready: Promise.resolve(),
+            stop: jest.fn(),
+          }),
+        }));
+        jest.doMock('../infrastructure/maintenance/demoSandboxRuntime', () => ({
+          startDemoSandboxRuntime,
+        }));
+        require('../../index');
+      });
+
+      await flushPromiseChain();
+      expect(startDemoSandboxRuntime).toHaveBeenCalledTimes(1);
+      expect(fake.app.listen).not.toHaveBeenCalled();
+
+      finishSandboxReady();
+      await flushPromiseChain();
+      expect(fake.app.listen).toHaveBeenCalledTimes(1);
+
+      process.emit('SIGTERM');
+      fake.flushClose();
+      await flushPromiseChain();
+      expect(stopSandbox).toHaveBeenCalledTimes(1);
+      expect(close).toHaveBeenCalledTimes(1);
+      expect(exitSpy).toHaveBeenCalledWith(0);
+    });
+
+    it('aborts cleanly without null dereference on SIGTERM during sandbox ready', async () => {
+      process.env.NODE_ENV = 'production';
+      process.env.DEMO_SANDBOX_ENABLED = 'true';
+      const fake = createFakeHttpServer();
+      const stopSandbox = jest.fn().mockResolvedValue(undefined);
+      let finishSandboxReady;
+      const sandboxReady = new Promise((resolve) => {
+        finishSandboxReady = resolve;
+      });
+      const startDemoSandboxRuntime = jest
+        .fn()
+        .mockResolvedValue({ ready: sandboxReady, stop: stopSandbox });
+
+      jest.isolateModules(() => {
+        jest.doMock('../app', () => fake.app);
+        jest.doMock('../infrastructure/logging/logger', () => ({ logger: mockLogger }));
+        jest.doMock('../database/config/ensureDatabase', () => ({
+          ensureDatabaseExists: jest.fn().mockResolvedValue(undefined),
+        }));
+        jest.doMock('../database/models/db', () => ({
+          sequelize: {
+            authenticate: jest.fn().mockResolvedValue(undefined),
+            close: jest.fn().mockResolvedValue(undefined),
+          },
+        }));
+        jest.doMock('../database/checkPendingMigrations', () => ({
+          checkNoPendingMigrations: jest.fn().mockResolvedValue(undefined),
+        }));
+        jest.doMock('../database/seed', () => ({
+          seedInitialData: jest.fn().mockResolvedValue(undefined),
+        }));
+        jest.doMock('../infrastructure/maintenance/commissionRequestRetention', () => ({
+          startCommissionRequestRetention: jest.fn().mockReturnValue({
+            ready: Promise.resolve(),
+            stop: jest.fn(),
+          }),
+        }));
+        jest.doMock('../infrastructure/maintenance/demoSandboxRuntime', () => ({
+          startDemoSandboxRuntime,
+        }));
+        require('../../index');
+      });
+
+      await flushPromiseChain();
+      process.emit('SIGTERM');
+      finishSandboxReady();
+      await flushPromiseChain();
+      expect(stopSandbox).toHaveBeenCalledTimes(1);
+      expect(fake.app.listen).not.toHaveBeenCalled();
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    });
   });
 });
