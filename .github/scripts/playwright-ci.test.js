@@ -87,6 +87,6 @@ test('the E2E workflow reports recovered passes and uploads diagnostics only aft
     workflow,
     /Upload coverage and risk-map evidence[\s\S]*?if: always\(\)[\s\S]*?retention-days: 14/,
   );
-  assert.match(workflow, /needs: \[quality, integration, e2e\]/);
+  assert.match(workflow, /needs: \[quality, integration, sandbox-mysql, e2e\]/);
   assert.doesNotMatch(workflow, /continue-on-error/);
 });
