@@ -246,5 +246,11 @@ describe('/api/demo/session routes', () => {
       'USER',
       1,
     ]);
+
+    const cBack = parseCk(backBuyer.headers['set-cookie']);
+    rememberTokenRepo.revokeFamily.mockRejectedValueOnce(new Error('revoke failed'));
+    const failedSwitch = await switchRole(cBack, 'STAFF');
+    expect(failedSwitch.status).toBe(500);
+    expect(failedSwitch.headers['set-cookie']).toBeUndefined();
   });
 });

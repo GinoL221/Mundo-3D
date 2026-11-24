@@ -171,6 +171,8 @@ export class DemoSandboxSessionController {
     if (!rt) return;
     const { sandbox } = req;
     if (!sandbox || !req.user) return fail(res, 401, 'Demo sandbox session invalid or expired');
+    if (req.user.role === undefined || !ses.isAllowedDemoRole(req.user.role))
+      return fail(res, 403, 'Demo sandbox is restricted to Buyer and Staff roles');
     const rawRole = typeof req.body?.role === 'string' ? req.body.role.trim().toUpperCase() : '';
     if (rawRole === 'ADMIN') return fail(res, 403, 'ADMIN role is not permitted in demo sandbox');
     if (rawRole !== 'USER' && rawRole !== 'STAFF') {
@@ -203,9 +205,7 @@ export class DemoSandboxSessionController {
       }
       const auth = createDemoSandboxAuthUseCases(rt.repositories, slotId, authDeps);
       if (sandbox.familyId) {
-        await auth.revoke.execute(sandbox.familyId).catch((err: unknown) => {
-          logger.warn({ slotId, err }, 'Demo sandbox prior role family revoke failed');
-        });
+        await auth.revoke.execute(sandbox.familyId);
       }
       const cl = { userId: account.idUser, slotId, leaseId, role: targetRole };
       const ref = ses.signDemoSandboxRefreshToken(cl, rt.jwtSecret, absoluteExpiresAt);
