@@ -144,4 +144,19 @@ describe('DemoSandboxSlot', () => {
     expect(slot.completeReset('attempt-new', at(22), true)).toBe(true);
     expect(slot.snapshot()).toMatchObject({ status: 'available', resetAttemptId: null });
   });
+
+  it('releases an active lease to draining only when leased with matching leaseId', () => {
+    const slot = DemoSandboxSlot.create('slot-a');
+    expect(slot.release('lease-a')).toBe(false);
+
+    slot.allocate('lease-a', origin, policy);
+    expect(slot.release('   ')).toBe(false);
+    expect(slot.release('wrong-lease')).toBe(false);
+    expect(slot.snapshot().status).toBe('leased');
+
+    expect(slot.release('lease-a')).toBe(true);
+    expect(slot.snapshot()).toMatchObject({ status: 'draining', leaseId: 'lease-a' });
+    expect(slot.recordActivity('lease-a', at(5), policy)).toBe(false);
+    expect(slot.release('lease-a')).toBe(false);
+  });
 });

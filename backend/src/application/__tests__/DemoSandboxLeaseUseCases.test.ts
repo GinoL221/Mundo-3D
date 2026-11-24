@@ -3,6 +3,7 @@ import { DemoSandboxSlotRepositoryPort } from '../../domain/ports/DemoSandboxSlo
 import { DemoSandboxResetPort } from '../../domain/ports/DemoSandboxResetPort';
 import { AllocateDemoSandboxLeaseUseCase } from '../use-cases/AllocateDemoSandboxLeaseUseCase';
 import { ExpireDemoSandboxLeasesUseCase } from '../use-cases/ExpireDemoSandboxLeasesUseCase';
+import { ReleaseDemoSandboxLeaseUseCase } from '../use-cases/ReleaseDemoSandboxLeaseUseCase';
 import { ResetDemoSandboxSlotUseCase } from '../use-cases/ResetDemoSandboxSlotUseCase';
 
 const minute = 60_000;
@@ -217,5 +218,18 @@ describe('demo sandbox lease use cases', () => {
     await expect(useCase.execute('slot-a', 'stale-lease')).resolves.toBe('not_resettable');
     expect(resetter.reset).not.toHaveBeenCalled();
     expect(repository.completeReset).not.toHaveBeenCalled();
+  });
+
+  it('releases an active lease via ReleaseDemoSandboxLeaseUseCase', async () => {
+    const slot = DemoSandboxSlot.restore(leasedSlot());
+    slot.release('lease-a');
+    const drainingSnapshot = slot.snapshot();
+    const releasePort = {
+      releaseLease: jest.fn().mockResolvedValue(drainingSnapshot),
+    };
+    const useCase = new ReleaseDemoSandboxLeaseUseCase(releasePort);
+
+    await expect(useCase.execute('slot-a', 'lease-a')).resolves.toEqual(drainingSnapshot);
+    expect(releasePort.releaseLease).toHaveBeenCalledWith('slot-a', 'lease-a');
   });
 });

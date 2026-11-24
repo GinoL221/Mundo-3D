@@ -25,12 +25,12 @@ describe('startDemoSandboxRuntime', () => {
   ]);
   const validEnv = (): NodeJS.ProcessEnv => ({
     NODE_ENV: 'development',
-    JWT_SECRET: 'prod-secret',
+    JWT_SECRET: 'prod-secret-at-least-32-chars-long-0001',
     DB_HOST: '127.0.0.1',
     DB_PORT: '3306',
     DB_NAME: 'mundo_3d_control',
     DEMO_SANDBOX_ENABLED: 'true',
-    DEMO_SANDBOX_JWT_SECRET: 'sandbox-secret',
+    DEMO_SANDBOX_JWT_SECRET: 'sandbox-secret-at-least-32-chars-long-01',
     DEMO_SANDBOX_SLOTS_JSON: validSlots,
   });
   const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };

@@ -26,6 +26,7 @@ export interface ManagedDemoSandboxConnections extends DemoSandboxConnections {
 
 export const DEMO_SANDBOX_MIN_SLOTS = 3;
 export const DEMO_SANDBOX_MAX_SLOTS = 5;
+export const DEMO_SANDBOX_MIN_JWT_SECRET_LENGTH = 32;
 
 export interface DemoSandboxRuntimeConfiguration {
   enabled: true;
@@ -156,6 +157,11 @@ export function loadDemoSandboxConfigFromEnv(
   const jwtSecret = env.DEMO_SANDBOX_JWT_SECRET?.trim() ?? '';
   if (!jwtSecret) {
     throw new Error('DEMO_SANDBOX_JWT_SECRET is required when DEMO_SANDBOX_ENABLED=true');
+  }
+  if (jwtSecret.length < DEMO_SANDBOX_MIN_JWT_SECRET_LENGTH) {
+    throw new Error(
+      `DEMO_SANDBOX_JWT_SECRET must be at least ${DEMO_SANDBOX_MIN_JWT_SECRET_LENGTH} characters long`,
+    );
   }
   const mainSecret = env.JWT_SECRET?.trim() ?? '';
   if (env.DEMO_SANDBOX_JWT_SECRET === env.JWT_SECRET || (mainSecret && jwtSecret === mainSecret)) {

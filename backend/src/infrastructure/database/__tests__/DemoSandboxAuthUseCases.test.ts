@@ -205,5 +205,8 @@ test('successful slot auth, issuance, rotation and revocation use the same injec
   );
   await expect(auth.revoke.execute('family-a')).resolves.toBe(1);
   expect(tokens.revokeFamily).toHaveBeenCalledWith('family-a');
+  await expect(auth.revoke.revokeByToken('plain-refresh')).resolves.toBe(1);
+  expect(tokens.findByHash).toHaveBeenCalledWith('hash:plain-refresh');
+  expect(tokens.revokeFamily).toHaveBeenCalledTimes(2);
   expect(otherSlot).not.toHaveBeenCalled();
 });

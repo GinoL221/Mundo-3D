@@ -327,7 +327,7 @@ test('DEMO_SANDBOX_ENABLED=true passes when secret is distinct and 3-5 slots are
     DB_NAME: 'mundo_3d_control',
     DB_PORT: '4000',
     DEMO_SANDBOX_ENABLED: 'true',
-    DEMO_SANDBOX_JWT_SECRET: 'sandbox-distinct-secret',
+    DEMO_SANDBOX_JWT_SECRET: 'sandbox-distinct-secret-at-least-32-chars',
     DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS,
   };
   assert.deepEqual(checkEnv(env), {
@@ -358,8 +358,18 @@ for (const [label, override] of [
   ['invalid DB_NAME identifier', { DB_NAME: 'bad-db!' }],
   ['blank DEMO_SANDBOX_DB_CA_CERT', { DEMO_SANDBOX_DB_CA_CERT: '   ' }],
   ['blank DEMO_SANDBOX_JWT_SECRET', { DEMO_SANDBOX_JWT_SECRET: '   ' }],
-  ['secret equal to JWT_SECRET', { DEMO_SANDBOX_JWT_SECRET: 'value' }],
-  ['fewer than 3 slots', { DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(JSON.parse(VALID_SANDBOX_SLOTS).slice(0, 2)) }],
+  ['short DEMO_SANDBOX_JWT_SECRET', { DEMO_SANDBOX_JWT_SECRET: 'a'.repeat(31) }],
+  [
+    'secret equal to JWT_SECRET',
+    {
+      JWT_SECRET: 'shared-secret-at-least-32-chars-long-0001',
+      DEMO_SANDBOX_JWT_SECRET: 'shared-secret-at-least-32-chars-long-0001',
+    },
+  ],
+  [
+    'fewer than 3 slots',
+    { DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(JSON.parse(VALID_SANDBOX_SLOTS).slice(0, 2)) },
+  ],
   [
     'more than 5 slots',
     {
@@ -373,16 +383,22 @@ for (const [label, override] of [
       ),
     },
   ],
-  ['root slot account', { DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS.replace('demo_u3', 'root') }],
+  [
+    'root slot account',
+    { DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS.replace('demo_u3', 'root') },
+  ],
   ['slot user colliding with DB_USER', { DB_USER: 'demo_u2' }],
-  ['slot DB colliding with DB_NAME', { DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS.replace('demo_slot_3', 'value') }],
+  [
+    'slot DB colliding with DB_NAME',
+    { DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS.replace('demo_slot_3', 'value') },
+  ],
 ]) {
   test(`demo sandbox preflight fails closed on ${label}`, () => {
     const env = {
       ...buildFullEnv(),
       DB_PORT: '4000',
       DEMO_SANDBOX_ENABLED: 'true',
-      DEMO_SANDBOX_JWT_SECRET: 'sandbox-distinct-secret',
+      DEMO_SANDBOX_JWT_SECRET: 'sandbox-distinct-secret-at-least-32-chars',
       DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS,
       ...override,
     };
@@ -393,3 +409,21 @@ for (const [label, override] of [
     assert.match(res.stdout, /FAIL:/);
   });
 }
+
+test('demo sandbox preflight distinguishes short secret from JWT_SECRET collision', () => {
+  const base = {
+    ...buildFullEnv(),
+    DB_PORT: '4000',
+    DEMO_SANDBOX_ENABLED: 'true',
+    DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS,
+  };
+  assert.match(
+    checkEnv({ ...base, DEMO_SANDBOX_JWT_SECRET: 'a'.repeat(31) }).demoSandbox,
+    /at least 32 characters/,
+  );
+  const shared = 'shared-secret-at-least-32-chars-long-0001';
+  assert.match(
+    checkEnv({ ...base, JWT_SECRET: shared, DEMO_SANDBOX_JWT_SECRET: shared }).demoSandbox,
+    /must differ from JWT_SECRET/,
+  );
+});

@@ -73,6 +73,7 @@ function resolveStorageDriver(env) {
 const DEMO_SANDBOX_REQUIRED = ['DEMO_SANDBOX_JWT_SECRET', 'DEMO_SANDBOX_SLOTS_JSON'];
 const DEMO_SANDBOX_MIN_SLOTS = 3;
 const DEMO_SANDBOX_MAX_SLOTS = 5;
+const DEMO_SANDBOX_MIN_JWT_SECRET_LENGTH = 32;
 const SYSTEM_DATABASES = new Set(['mysql', 'information_schema', 'performance_schema', 'sys']);
 
 function isSqlIdentifier(value, maxLength) {
@@ -169,17 +170,32 @@ function checkDemoSandbox(env) {
     }
   }
   if (env.DB_NAME && !isSqlIdentifier(env.DB_NAME.trim(), 64)) {
-    return { enabled: true, error: 'DB_NAME must be a valid SQL identifier when demo sandbox is enabled.' };
+    return {
+      enabled: true,
+      error: 'DB_NAME must be a valid SQL identifier when demo sandbox is enabled.',
+    };
   }
   const effectiveCa =
     env.DEMO_SANDBOX_DB_CA_CERT !== undefined && env.DEMO_SANDBOX_DB_CA_CERT !== ''
       ? env.DEMO_SANDBOX_DB_CA_CERT
       : env.DB_CA_CERT;
   if (effectiveCa !== undefined && effectiveCa !== '' && !effectiveCa.trim()) {
-    return { enabled: true, error: 'DEMO_SANDBOX_DB_CA_CERT (or fallback DB_CA_CERT) cannot be blank.' };
+    return {
+      enabled: true,
+      error: 'DEMO_SANDBOX_DB_CA_CERT (or fallback DB_CA_CERT) cannot be blank.',
+    };
   }
   if (env.DEMO_SANDBOX_JWT_SECRET && !env.DEMO_SANDBOX_JWT_SECRET.trim()) {
     return { enabled: true, error: 'DEMO_SANDBOX_JWT_SECRET cannot be blank.' };
+  }
+  if (
+    env.DEMO_SANDBOX_JWT_SECRET &&
+    env.DEMO_SANDBOX_JWT_SECRET.trim().length < DEMO_SANDBOX_MIN_JWT_SECRET_LENGTH
+  ) {
+    return {
+      enabled: true,
+      error: `DEMO_SANDBOX_JWT_SECRET must be at least ${DEMO_SANDBOX_MIN_JWT_SECRET_LENGTH} characters long.`,
+    };
   }
   if (
     env.DEMO_SANDBOX_JWT_SECRET &&
@@ -221,7 +237,7 @@ if (require.main === module) {
 
   if (nodeEnv) {
     console.log(
-      `[env-preflight] FAIL: ${nodeEnv} Running a deploy with NODE_ENV=test falls back to secrets committed in this repository and disables the login/register rate limiters.`
+      `[env-preflight] FAIL: ${nodeEnv} Running a deploy with NODE_ENV=test falls back to secrets committed in this repository and disables the login/register rate limiters.`,
     );
     process.exitCode = 1;
   }
@@ -238,14 +254,14 @@ if (require.main === module) {
 
   if (missing.length > 0) {
     console.log(
-      `[env-preflight] FAIL: ${missing.length} required production env var(s) missing: ${missing.join(', ')}`
+      `[env-preflight] FAIL: ${missing.length} required production env var(s) missing: ${missing.join(', ')}`,
     );
     process.exitCode = 1;
   }
 
   for (const key of warnings) {
     console.log(
-      `[env-preflight] WARN: ${key} not set — warn-only (COOKIE_DOMAIN applies only to the cross-subdomain cookie topology; PUBLIC_API_URL is a frontend build-time variable). Safe to ignore if it does not apply to this deploy.`
+      `[env-preflight] WARN: ${key} not set — warn-only (COOKIE_DOMAIN applies only to the cross-subdomain cookie topology; PUBLIC_API_URL is a frontend build-time variable). Safe to ignore if it does not apply to this deploy.`,
     );
   }
 }
