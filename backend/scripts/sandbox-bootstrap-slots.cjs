@@ -20,6 +20,9 @@ const BUSINESS_MIGRATIONS = Object.freeze([
   '20260927000000-custom-commission-requests.js',
 ]);
 const isSqlIdentifier = (v, max) => typeof v === 'string' && v.length <= max && /^[a-zA-Z0-9_]+$/.test(v);
+const isSqlUsername = (v, max) =>
+  typeof v === 'string' && v.length <= max && /^[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)?$/.test(v);
+const isRootSqlUsername = (userLower) => userLower === 'root' || userLower.endsWith('.root');
 
 function normalizeCaCert(env) {
   const raw = env.DEMO_SANDBOX_DB_CA_CERT || env.DB_CA_CERT || undefined;
@@ -45,7 +48,7 @@ function parseSlotsJson(raw, controlPlaneDb, controlPlaneUser) {
       !entry || typeof entry !== 'object' || Array.isArray(entry) ||
       typeof entry.slotId !== 'string' || entry.slotId !== entry.slotId.trim() ||
       !SLOT_ID_RE.test(entry.slotId) || !isSqlIdentifier(entry.database, 64) ||
-      !isSqlIdentifier(entry.username, 32) || typeof entry.password !== 'string' || !entry.password.length
+      !isSqlUsername(entry.username, 32) || typeof entry.password !== 'string' || !entry.password.length
     ) {
       throw new Error('DEMO_SANDBOX_SLOTS_JSON contains an invalid slot definition');
     }
@@ -55,7 +58,7 @@ function parseSlotsJson(raw, controlPlaneDb, controlPlaneUser) {
       slotIds.has(entry.slotId) || databases.has(dbLower) || usernames.has(userLower) ||
       (controlDbLower && dbLower === controlDbLower) ||
       (controlUserLower && userLower === controlUserLower) ||
-      SYSTEM_DATABASES.has(dbLower) || userLower === 'root'
+      SYSTEM_DATABASES.has(dbLower) || isRootSqlUsername(userLower)
     ) {
       throw new Error('DEMO_SANDBOX_SLOTS_JSON contains colliding, root, or reserved database/account values');
     }
@@ -87,8 +90,8 @@ function parseBootstrapConfig(env = process.env) {
     throw new Error('DB_NAME must be a valid SQL identifier to guard against control-plane collisions');
   }
   const controlPlaneUser = (env.DB_USER || '').trim();
-  if (!isSqlIdentifier(controlPlaneUser, 32)) {
-    throw new Error('DB_USER must be a valid SQL identifier to guard against control-plane collisions');
+  if (!isSqlUsername(controlPlaneUser, 32)) {
+    throw new Error('DB_USER must be a valid SQL username to guard against control-plane collisions');
   }
   return {
     host,

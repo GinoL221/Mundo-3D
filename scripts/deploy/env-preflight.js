@@ -80,6 +80,18 @@ function isSqlIdentifier(value, maxLength) {
   return typeof value === 'string' && value.length <= maxLength && /^[a-zA-Z0-9_]+$/.test(value);
 }
 
+function isSqlUsername(value, maxLength) {
+  return (
+    typeof value === 'string' &&
+    value.length <= maxLength &&
+    /^[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)?$/.test(value)
+  );
+}
+
+function isRootSqlUsername(userLower) {
+  return userLower === 'root' || userLower.endsWith('.root');
+}
+
 function validateSandboxSlotsJson(raw, controlPlaneDb, controlPlaneUser) {
   let parsed;
   try {
@@ -108,7 +120,7 @@ function validateSandboxSlotsJson(raw, controlPlaneDb, controlPlaneUser) {
       !slot.slotId.trim() ||
       slot.slotId !== slot.slotId.trim() ||
       !isSqlIdentifier(slot.database, 64) ||
-      !isSqlIdentifier(slot.username, 32) ||
+      !isSqlUsername(slot.username, 32) ||
       typeof slot.password !== 'string' ||
       slot.password.length === 0
     ) {
@@ -123,7 +135,7 @@ function validateSandboxSlotsJson(raw, controlPlaneDb, controlPlaneUser) {
       dbLower === controlLower ||
       (controlUserLower && userLower === controlUserLower) ||
       SYSTEM_DATABASES.has(dbLower) ||
-      userLower === 'root'
+      isRootSqlUsername(userLower)
     ) {
       return 'DEMO_SANDBOX_SLOTS_JSON contains colliding, root, or reserved database/account values.';
     }

@@ -236,6 +236,28 @@ describe('loadDemoSandboxConfigFromEnv', () => {
     expect(loaded).toMatchObject({ enabled: true, jwtSecret: exact32 });
   });
 
+  it('accepts TiDB Cloud Starter prefixed slot usernames up to 32 chars', () => {
+    const prefixedSlots = [
+      { slotId: 'slot-1', database: 'demo_slot_1', username: '2abcde123456789.m3d_s1', password: 'p1' },
+      { slotId: 'slot-2', database: 'demo_slot_2', username: '2abcde123456789.m3d_s2', password: 'p2' },
+      {
+        slotId: 'slot-3',
+        database: 'demo_slot_3',
+        username: `2abcde123456789.${'a'.repeat(16)}`,
+        password: 'p3',
+      },
+    ];
+    const loaded = loadDemoSandboxConfigFromEnv({
+      ...baseEnv(),
+      DB_USER: '2abcde123456789.app',
+      DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(prefixedSlots),
+    });
+    expect(loaded).toMatchObject({
+      enabled: true,
+      connections: { controlPlaneUsername: '2abcde123456789.app', slots: prefixedSlots },
+    });
+  });
+
   it.each([
     ['invalid DEMO_SANDBOX_ENABLED', { DEMO_SANDBOX_ENABLED: 'yes' }, /DEMO_SANDBOX_ENABLED/],
     [
@@ -273,6 +295,84 @@ describe('loadDemoSandboxConfigFromEnv', () => {
     [
       'slot username colliding with DB_USER',
       { DB_USER: 'demo_u2' },
+      /Invalid demo sandbox connection configuration/,
+    ],
+    [
+      'prefixed slot username colliding case-insensitively with prefixed DB_USER',
+      {
+        DB_USER: '2abcde123456789.app',
+        DEMO_SANDBOX_SLOTS_JSON: JSON.stringify([
+          { ...validSlots[0], username: '2abcde123456789.m3d_s1' },
+          { ...validSlots[1], username: '2ABCDE123456789.APP' },
+          { ...validSlots[2], username: '2abcde123456789.m3d_s3' },
+        ]),
+      },
+      /Invalid demo sandbox connection configuration/,
+    ],
+    [
+      'prefixed root slot username',
+      {
+        DEMO_SANDBOX_SLOTS_JSON: JSON.stringify([
+          { ...validSlots[0], username: '2abcde123456789.ROOT' },
+          validSlots[1],
+          validSlots[2],
+        ]),
+      },
+      /Invalid demo sandbox connection configuration/,
+    ],
+    [
+      'malformed dotted slot usernames and >32 chars',
+      {
+        DEMO_SANDBOX_SLOTS_JSON: JSON.stringify([
+          { ...validSlots[0], username: 'a.b.c' },
+          validSlots[1],
+          validSlots[2],
+        ]),
+      },
+      /Invalid demo sandbox connection configuration/,
+    ],
+    [
+      'leading dot slot username',
+      {
+        DEMO_SANDBOX_SLOTS_JSON: JSON.stringify([
+          { ...validSlots[0], username: '.m3d_s1' },
+          validSlots[1],
+          validSlots[2],
+        ]),
+      },
+      /Invalid demo sandbox connection configuration/,
+    ],
+    [
+      'trailing dot slot username',
+      {
+        DEMO_SANDBOX_SLOTS_JSON: JSON.stringify([
+          { ...validSlots[0], username: '2abcde123456789.' },
+          validSlots[1],
+          validSlots[2],
+        ]),
+      },
+      /Invalid demo sandbox connection configuration/,
+    ],
+    [
+      'prefixed slot username exceeding 32 chars',
+      {
+        DEMO_SANDBOX_SLOTS_JSON: JSON.stringify([
+          { ...validSlots[0], username: `2abcde123456789.${'a'.repeat(17)}` },
+          validSlots[1],
+          validSlots[2],
+        ]),
+      },
+      /Invalid demo sandbox connection configuration/,
+    ],
+    [
+      'dotted slot database name',
+      {
+        DEMO_SANDBOX_SLOTS_JSON: JSON.stringify([
+          { ...validSlots[0], database: 'bad.db_name' },
+          validSlots[1],
+          validSlots[2],
+        ]),
+      },
       /Invalid demo sandbox connection configuration/,
     ],
     ['invalid port', { DB_PORT: '4000abc' }, /Invalid demo sandbox connection configuration/],

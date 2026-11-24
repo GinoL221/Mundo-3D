@@ -65,18 +65,51 @@ describe('sandbox-bootstrap-slots', () => {
     const badSql = makeSlots(3);
     badSql[0].database = 'bad-db-name';
     assert.throws(() => parseBootstrapConfig(makeEnv({ DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(badSql) })), /invalid/i);
+    const dottedDb = makeSlots(3);
+    dottedDb[0].database = 'bad.db_name';
+    assert.throws(() => parseBootstrapConfig(makeEnv({ DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(dottedDb) })), /invalid/i);
+    for (const badUser of ['.m3d_s1', '2abcde123456789.', 'a.b.c', 'a..b', `2abcde123456789.${'a'.repeat(17)}`]) {
+      const badUserSlots = makeSlots(3);
+      badUserSlots[0].username = badUser;
+      assert.throws(() => parseBootstrapConfig(makeEnv({ DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(badUserSlots) })), /invalid/i);
+    }
+    assert.throws(() => parseBootstrapConfig(makeEnv({ DB_USER: 'a.b.c' })), /DB_USER/);
   });
 
-  it('rejects collisions with DB_NAME, DB_USER, root, and MySQL system databases', () => {
+  it('accepts TiDB Cloud Starter prefixed DB_USER and slot usernames up to 32 chars', () => {
+    const prefixedSlots = makeSlots(3).map((slot, idx) => ({
+      ...slot,
+      username: idx === 2 ? `2abcde123456789.${'a'.repeat(16)}` : `2abcde123456789.m3d_s${idx + 1}`,
+    }));
+    const cfg = parseBootstrapConfig(makeEnv({
+      DB_USER: '2abcde123456789.app',
+      DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(prefixedSlots),
+    }));
+    assert.deepEqual(
+      cfg.slots.map((s) => s.username),
+      prefixedSlots.map((s) => s.username),
+    );
+  });
+
+  it('rejects collisions with DB_NAME, DB_USER, root, *.root, and MySQL system databases', () => {
     const dbCollision = makeSlots(3);
     dbCollision[0].database = 'MUNDO_3D_PROD';
     assert.throws(() => parseBootstrapConfig(makeEnv({ DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(dbCollision) })), /colliding|reserved/i);
     const userCollision = makeSlots(3);
     userCollision[1].username = 'MUNDO_3D_APP';
     assert.throws(() => parseBootstrapConfig(makeEnv({ DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(userCollision) })), /colliding|reserved/i);
+    const prefixedCollision = makeSlots(3);
+    prefixedCollision[1].username = '2ABCDE123456789.APP';
+    assert.throws(
+      () => parseBootstrapConfig(makeEnv({ DB_USER: '2abcde123456789.app', DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(prefixedCollision) })),
+      /colliding|reserved/i,
+    );
     const rootUser = makeSlots(3);
     rootUser[2].username = 'ROOT';
     assert.throws(() => parseBootstrapConfig(makeEnv({ DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(rootUser) })), /colliding|reserved/i);
+    const prefixedRoot = makeSlots(3);
+    prefixedRoot[2].username = '2abcde123456789.ROOT';
+    assert.throws(() => parseBootstrapConfig(makeEnv({ DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(prefixedRoot) })), /colliding|reserved/i);
     for (const sysDb of ['mysql', 'information_schema', 'performance_schema', 'sys']) {
       const sysSlots = makeSlots(3);
       sysSlots[0].database = sysDb;

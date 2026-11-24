@@ -249,7 +249,7 @@ Opt-in ephemeral sandbox mode backed by 3–5 isolated MySQL schemas. Keep `DEMO
 
 ### 1. Provision 3–5 isolated slot databases & DML-only users in TiDB Cloud Starter
 
-Using your TiDB Cloud admin account (never reuse `DB_NAME`, `DB_USER`, or `root`, and never use system schemas `mysql`, `information_schema`, `performance_schema`, `sys`), create 3–5 schemas and one least-privilege DML-only user per slot (only `SELECT, INSERT, UPDATE, DELETE` — **no** `CREATE`, `ALTER`, `DROP`, or `GRANT`):
+Using your TiDB Cloud admin account (never reuse `DB_NAME`, `DB_USER`, `root`, or `<cluster_prefix>.root`, and never use system schemas `mysql`, `information_schema`, `performance_schema`, `sys`), create 3–5 schemas and one least-privilege DML-only user per slot (only `SELECT, INSERT, UPDATE, DELETE` — **no** `CREATE`, `ALTER`, `DROP`, or `GRANT`). On TiDB Cloud Starter, include your cluster username prefix (e.g. `<cluster_prefix>.m3d_s1`) and keep the full username within MySQL/TiDB's 32-character limit:
 
 ```sql
 CREATE DATABASE IF NOT EXISTS mundo_3d_slot_1 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

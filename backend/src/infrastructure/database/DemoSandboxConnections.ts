@@ -44,6 +44,18 @@ function isIdentifier(value: string, maxLength: number): boolean {
   return typeof value === 'string' && value.length <= maxLength && /^[a-zA-Z0-9_]+$/.test(value);
 }
 
+function isSqlUsername(value: string, maxLength: number): boolean {
+  return (
+    typeof value === 'string' &&
+    value.length <= maxLength &&
+    /^[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)?$/.test(value)
+  );
+}
+
+function isRootSqlUsername(userLower: string): boolean {
+  return userLower === 'root' || userLower.endsWith('.root');
+}
+
 function parseStrictBoolean(value: string | undefined, name: string): boolean {
   if (value === undefined || value === '' || value === 'false') return false;
   if (value === 'true') return true;
@@ -118,7 +130,7 @@ function validateConfiguration(config: DemoSandboxConnectionConfiguration): void
       !slot.slotId.trim() ||
       slot.slotId !== slot.slotId.trim() ||
       !isIdentifier(slot.database, 64) ||
-      !isIdentifier(slot.username, 32) ||
+      !isSqlUsername(slot.username, 32) ||
       typeof slot.password !== 'string' ||
       slot.password.length === 0
     ) {
@@ -134,7 +146,7 @@ function validateConfiguration(config: DemoSandboxConnectionConfiguration): void
       database === config.controlPlaneDatabase.toLowerCase() ||
       (controlPlaneUsername !== undefined && username === controlPlaneUsername) ||
       systemDatabases.has(database) ||
-      username === 'root'
+      isRootSqlUsername(username)
     ) {
       throw new Error(invalidConfiguration);
     }
