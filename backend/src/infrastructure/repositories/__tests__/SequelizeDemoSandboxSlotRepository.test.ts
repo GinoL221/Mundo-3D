@@ -214,4 +214,36 @@ describe('SequelizeDemoSandboxSlotRepository', () => {
       order: [['id', 'ASC']],
     });
   });
+
+  it('releases a leased configured slot to draining under a row lock and fails closed otherwise', async () => {
+    const slot = DemoSandboxSlot.create('slot-a');
+    slot.allocate('lease-a', now, policy);
+    const record = {
+      ...slot.snapshot(),
+      update: jest.fn().mockResolvedValue(undefined),
+    };
+    const { repository, sequelize, model, transaction } = makeRepository({
+      findOne: jest.fn().mockResolvedValue(record),
+    });
+
+    await expect(repository.releaseLease('slot-a', 'lease-a')).resolves.toBeNull();
+    expect(sequelize.transaction).not.toHaveBeenCalled();
+
+    await repository.registerConfiguredSlots(['slot-a'], 1);
+    jest.mocked(sequelize.transaction).mockClear();
+    await expect(repository.releaseLease('slot-b', 'lease-a')).resolves.toBeNull();
+    await expect(repository.releaseLease('slot-a', '   ')).resolves.toBeNull();
+    expect(sequelize.transaction).not.toHaveBeenCalled();
+
+    const released = await repository.releaseLease('slot-a', 'lease-a');
+    expect(released).toMatchObject({ id: 'slot-a', status: 'draining', leaseId: 'lease-a' });
+    expect(model.findOne).toHaveBeenCalledWith({
+      where: { id: 'slot-a', leaseId: 'lease-a', status: 'leased' },
+      transaction,
+      lock: 'UPDATE_LOCK',
+    });
+    expect(record.update).toHaveBeenCalledWith(expect.objectContaining({ status: 'draining' }), {
+      transaction,
+    });
+  });
 });

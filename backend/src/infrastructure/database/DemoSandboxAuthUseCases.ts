@@ -46,6 +46,6 @@ export function createDemoSandboxAuthUseCases(
       rotate,
       dependencies.logger,
     ),
-    revoke: new RevokeRefreshTokenUseCase(tokens),
+    revoke: new RevokeRefreshTokenUseCase(tokens, dependencies.tokenHasher),
   };
 }

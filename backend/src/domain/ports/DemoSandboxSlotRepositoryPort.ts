@@ -9,6 +9,10 @@ export interface DemoSandboxSlotQueryPort {
   listSlotsByStatus(statuses: readonly DemoSandboxSlotStatus[]): Promise<DemoSandboxSlotSnapshot[]>;
 }
 
+export interface DemoSandboxLeaseReleasePort {
+  releaseLease(slotId: string, leaseId: string): Promise<DemoSandboxSlotSnapshot | null>;
+}
+
 export interface DemoSandboxSlotRepositoryPort {
   registerConfiguredSlots(slotIds: readonly string[], maxSlots: number): Promise<void>;
   claimAvailableSlot(

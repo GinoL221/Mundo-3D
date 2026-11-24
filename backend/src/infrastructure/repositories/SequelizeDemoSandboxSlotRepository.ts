@@ -6,6 +6,7 @@ import {
   DemoSandboxSlotStatus,
 } from '../../domain/entities/DemoSandboxSlot';
 import {
+  DemoSandboxLeaseReleasePort,
   DemoSandboxSlotQueryPort,
   DemoSandboxSlotRepositoryPort,
 } from '../../domain/ports/DemoSandboxSlotRepositoryPort';
@@ -16,7 +17,7 @@ import {
 } from '../../database/models/DemoSandboxSlot';
 
 export class SequelizeDemoSandboxSlotRepository
-  implements DemoSandboxSlotRepositoryPort, DemoSandboxSlotQueryPort
+  implements DemoSandboxSlotRepositoryPort, DemoSandboxSlotQueryPort, DemoSandboxLeaseReleasePort
 {
   private readonly model: ReturnType<typeof createDemoSandboxSlotModel>;
   private configuredSlotIds: readonly string[] = [];
@@ -122,6 +123,30 @@ export class SequelizeDemoSandboxSlotRepository
         await this.persist(record, snapshot, transaction);
       }
       return active ? snapshot : null;
+    });
+  }
+
+  async releaseLease(slotId: string, leaseId: string): Promise<DemoSandboxSlotSnapshot | null> {
+    if (!slotId.trim() || !leaseId.trim() || !this.configuredSlotIds.includes(slotId)) {
+      return null;
+    }
+    return this.sequelize.transaction(async (transaction) => {
+      const record = await this.model.findOne({
+        where: { id: slotId, leaseId, status: 'leased' },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+      if (!record) {
+        return null;
+      }
+
+      const slot = DemoSandboxSlot.restore(this.toSnapshot(record));
+      if (!slot.release(leaseId)) {
+        return null;
+      }
+      const snapshot = slot.snapshot();
+      await this.persist(record, snapshot, transaction);
+      return snapshot;
     });
   }
 

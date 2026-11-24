@@ -164,13 +164,13 @@ describe('loadDemoSandboxConfigFromEnv', () => {
   ];
   const baseEnv = (): NodeJS.ProcessEnv => ({
     NODE_ENV: 'production',
-    JWT_SECRET: 'prod-secret',
+    JWT_SECRET: 'prod-secret-at-least-32-chars-long-0001',
     DB_HOST: 'tidb.example.test',
     DB_PORT: '4000',
     DB_NAME: 'mundo_3d_control',
     DB_CA_CERT: '-----BEGIN CERTIFICATE-----\nCA\n-----END CERTIFICATE-----',
     DEMO_SANDBOX_ENABLED: 'true',
-    DEMO_SANDBOX_JWT_SECRET: 'sandbox-only-secret',
+    DEMO_SANDBOX_JWT_SECRET: 'sandbox-only-secret-at-least-32-chars-01',
     DEMO_SANDBOX_SLOTS_JSON: JSON.stringify(validSlots),
   });
 
@@ -186,7 +186,7 @@ describe('loadDemoSandboxConfigFromEnv', () => {
     const inherited = loadDemoSandboxConfigFromEnv(baseEnv());
     expect(inherited).toEqual({
       enabled: true,
-      jwtSecret: 'sandbox-only-secret',
+      jwtSecret: 'sandbox-only-secret-at-least-32-chars-01',
       recoverOnBoot: false,
       connections: {
         host: 'tidb.example.test',
@@ -215,7 +215,7 @@ describe('loadDemoSandboxConfigFromEnv', () => {
     });
     expect(loaded).toEqual({
       enabled: true,
-      jwtSecret: 'sandbox-only-secret',
+      jwtSecret: 'sandbox-only-secret-at-least-32-chars-01',
       recoverOnBoot: true,
       connections: {
         host: 'sandbox.tidb.test',
@@ -240,21 +240,22 @@ describe('loadDemoSandboxConfigFromEnv', () => {
       /DEMO_SANDBOX_JWT_SECRET is required/,
     ],
     [
+      'short DEMO_SANDBOX_JWT_SECRET',
+      { DEMO_SANDBOX_JWT_SECRET: 'a'.repeat(31) },
+      /at least 32 characters/,
+    ],
+    [
       'colliding DEMO_SANDBOX_JWT_SECRET',
-      { DEMO_SANDBOX_JWT_SECRET: 'prod-secret' },
+      { DEMO_SANDBOX_JWT_SECRET: 'prod-secret-at-least-32-chars-long-0001' },
       /must differ from JWT_SECRET/,
     ],
     [
       'padded colliding DEMO_SANDBOX_JWT_SECRET',
-      { DEMO_SANDBOX_JWT_SECRET: '  prod-secret  ' },
+      { DEMO_SANDBOX_JWT_SECRET: '  prod-secret-at-least-32-chars-long-0001  ' },
       /must differ from JWT_SECRET/,
     ],
     ['missing CA cert in production', { DB_CA_CERT: '' }, /DB_CA_CERT/],
-    [
-      'blank DEMO_SANDBOX_DB_CA_CERT',
-      { DEMO_SANDBOX_DB_CA_CERT: '   ' },
-      /DB_CA_CERT/,
-    ],
+    ['blank DEMO_SANDBOX_DB_CA_CERT', { DEMO_SANDBOX_DB_CA_CERT: '   ' }, /DB_CA_CERT/],
     [
       'slot username colliding with DB_USER',
       { DB_USER: 'demo_u2' },

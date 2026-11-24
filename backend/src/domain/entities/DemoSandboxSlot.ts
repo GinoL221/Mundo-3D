@@ -205,6 +205,15 @@ export class DemoSandboxSlot {
     return true;
   }
 
+  release(leaseId: string): boolean {
+    if (this.state.status !== 'leased' || !leaseId.trim() || this.state.leaseId !== leaseId) {
+      return false;
+    }
+
+    this.state = { ...this.state, status: 'draining' };
+    return true;
+  }
+
   beginReset(resetAttemptId: string): boolean {
     if (this.state.status !== 'draining' || !resetAttemptId.trim()) {
       return false;
