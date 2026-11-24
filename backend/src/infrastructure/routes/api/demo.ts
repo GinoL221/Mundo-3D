@@ -90,6 +90,10 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
     run((b) => b.commissions.create),
   ];
   router.use(ses.requireDemoSandboxEnabled);
+  router.get('/status', (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(200).json({ enabled: true });
+  });
   router.post('/session', cCap, cLim, c.create);
   router.get('/session', auth, c.get);
   router.post('/session/refresh', rLim, c.refresh);
