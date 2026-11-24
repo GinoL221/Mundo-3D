@@ -17,6 +17,7 @@ import { createDemoRouter } from '../demo';
 const S_SEC = 'sandbox-secret-at-least-32-chars-long-001';
 const P_SEC = 'prod-secret-at-least-32-chars-long-00001';
 const BUYER = new User(1, 'Demo', 'Buyer', 'buyer@demo.test', 'hash', null, Role.USER, 'User');
+const STAFF = new User(2, 'Demo', 'Staff', 'staff@demo.test', 'hash', null, Role.STAFF, 'Staff');
 const [A, R, C] = [ck.DEMO_AUTH_COOKIE, ck.DEMO_REFRESH_COOKIE, ck.DEMO_CSRF_COOKIE];
 const asArr = (r: string[] | string | undefined) => (Array.isArray(r) ? r : r ? [r] : []);
 const parseCk = (raw: string[] | string | undefined): Record<string, string> =>
@@ -64,7 +65,9 @@ function makeRuntime(busy = false) {
       return rows.length;
     }),
   };
-  const uRepo = { findById: jest.fn(async (id: number) => (id === 1 ? BUYER : null)) };
+  const uRepo = {
+    findById: jest.fn(async (id: number) => (id === 1 ? BUYER : id === 2 ? STAFF : null)),
+  };
   const uow = { runInTransaction: jest.fn(async <T>(w: (tx: unknown) => Promise<T>) => w({})) };
   const repositories = {
     getUserRepository: () => uRepo,
@@ -193,13 +196,55 @@ describe('/api/demo/session routes', () => {
     const badAud = jwt.sign({ ...b, typ: 'sandbox-access' }, S_SEC, o);
     const [g1, g2] = [await get(`${A}=${prod}`), await get(`${A}=${badAud}`)];
     expect([g1.status, g2.status]).toEqual([401, 401]);
-    for (const role of [Role.STAFF, Role.ADMIN]) {
-      const p = { userId: 2, slotId: slot.id, leaseId: slot.leaseId!, role };
-      const aTok = ses.signDemoSandboxAccessToken(p, S_SEC);
-      const rTok = ses.signDemoSandboxRefreshToken(p, S_SEC, slot.absoluteExpiresAt!);
-      const [ga, rr] = [await get(`${A}=${aTok}`), await ref(`${R}=${rTok}`)];
-      expect([ga.status, rr.status]).toEqual([403, 403]);
-      expectClr(rr.headers['set-cookie']);
-    }
+    const admPayload = { userId: 9, slotId: slot.id, leaseId: slot.leaseId!, role: Role.ADMIN };
+    const aTok = ses.signDemoSandboxAccessToken(admPayload, S_SEC);
+    const rTok = ses.signDemoSandboxRefreshToken(admPayload, S_SEC, slot.absoluteExpiresAt!);
+    const [ga, rr] = [await get(`${A}=${aTok}`), await ref(`${R}=${rTok}`)];
+    expect([ga.status, rr.status]).toEqual([403, 403]);
+    expectClr(rr.headers['set-cookie']);
+  });
+
+  it('switches USER <-> STAFF within the same lease, rotates CSRF/refresh, and rejects ADMIN with 403', async () => {
+    const { runtime, slotRepository, rememberTokenRepo } = makeRuntime();
+    rtMod.setActiveDemoSandboxRuntime(runtime);
+    const { app, post, get, ref } = buildApp();
+
+    const r1 = await post('198.51.100.11');
+    const c1 = parseCk(r1.headers['set-cookie']);
+    const switchRole = (ckPair: Record<string, string>, role: string, csrf = ckPair[C]) =>
+      request(app)
+        .post('/api/demo/session/role')
+        .set('Cookie', [`${A}=${ckPair[A]}`, `${C}=${ckPair[C]}`])
+        .set('x-csrf-token', csrf)
+        .send({ role });
+
+    const admRes = await switchRole(c1, 'ADMIN');
+    expect(admRes.status).toBe(403);
+    expect((await switchRole(c1, 'SUPERUSER')).status).toBe(400);
+
+    const toStaff = await switchRole(c1, 'STAFF');
+    expect(toStaff.status).toBe(200);
+    expect(toStaff.body.role).toBe('STAFF');
+    expect(toStaff.body.user.idUser).toBe(2);
+    expect(rememberTokenRepo.revokeFamily).toHaveBeenCalledTimes(1);
+    expect(slotRepository.claimAvailableSlot).toHaveBeenCalledTimes(1);
+
+    const cStaff = parseCk(toStaff.headers['set-cookie']);
+    expect(cStaff[C]).not.toBe(c1[C]);
+    expect((await switchRole(cStaff, 'USER', c1[C])).status).toBe(403);
+
+    const getStaff = await get(`${A}=${cStaff[A]}`);
+    expect([getStaff.status, getStaff.body.role]).toEqual([200, 'STAFF']);
+
+    const refStaff = await ref(`${R}=${cStaff[R]}`);
+    expect([refStaff.status, refStaff.body.role]).toEqual([200, 'STAFF']);
+    const cStaffRef = parseCk(refStaff.headers['set-cookie']);
+
+    const backBuyer = await switchRole(cStaffRef, 'USER');
+    expect([backBuyer.status, backBuyer.body.role, backBuyer.body.user.idUser]).toEqual([
+      200,
+      'USER',
+      1,
+    ]);
   });
 });

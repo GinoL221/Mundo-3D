@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import type { NextFunction, Request, Response } from 'express';
+import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { ValidateDemoSandboxLeaseUseCase } from '../../application/use-cases/ValidateDemoSandboxLeaseUseCase';
 import { Role } from '../../domain/Role';
@@ -7,6 +7,12 @@ import * as rtMod from '../maintenance/demoSandboxRuntime';
 import * as ck from '../security/demoSandboxCookies';
 import { verifyDemoSandboxCsrfToken } from '../security/demoSandboxCsrfToken';
 import { JWT_ALGORITHM, JWT_ISSUER } from '../security/jwtOptions';
+
+export type AllowedDemoRole = Role.USER | Role.STAFF;
+const ALLOWED_DEMO_ROLES = new Set<Role>([Role.USER, Role.STAFF]);
+
+export const isAllowedDemoRole = (role: Role): role is AllowedDemoRole =>
+  ALLOWED_DEMO_ROLES.has(role);
 
 const ACCESS_AUD = 'mundo-3d-sandbox';
 const REFRESH_AUD = 'mundo-3d-sandbox-refresh';
@@ -107,18 +113,31 @@ export async function demoSandboxAuthMiddleware(
   const raw = req.cookies?.[ck.DEMO_AUTH_COOKIE];
   const payload = typeof raw === 'string' ? verifyDemoSandboxAccessToken(raw, rt.jwtSecret) : null;
   if (!payload) return fail(res, 401, { error: 'Demo sandbox session invalid or expired' });
-  if (payload.role !== Role.USER) {
-    return fail(res, 403, { error: 'Demo sandbox is restricted to Buyer role' });
+  if (!isAllowedDemoRole(payload.role)) {
+    return fail(res, 403, { error: 'Demo sandbox is restricted to Buyer and Staff roles' });
   }
   try {
     const lease = await validateActiveSandboxLease(rt, payload);
     if (!lease) return fail(res, 401, { error: 'Demo sandbox lease invalid or expired' });
     req.sandbox = payload.familyId ? { ...lease, familyId: payload.familyId } : lease;
-    req.user = { userId: payload.userId, role: Role.USER };
+    req.user = { userId: payload.userId, role: payload.role };
     next();
   } catch (error) {
     next(error);
   }
+}
+
+export function requireDemoRole(...roles: ReadonlyArray<AllowedDemoRole>): RequestHandler {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.sandbox || !req.user) {
+      return fail(res, 401, { error: 'Demo sandbox session invalid or expired' });
+    }
+    const role = req.user.role;
+    if (role === undefined || !isAllowedDemoRole(role) || !roles.includes(role)) {
+      return fail(res, 403, { error: 'Insufficient demo sandbox role' });
+    }
+    next();
+  };
 }
 
 export function demoSandboxCsrfMiddleware(req: Request, res: Response, next: NextFunction): void {

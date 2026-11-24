@@ -55,9 +55,21 @@ describe('demoSandboxSession', () => {
     const aReq = req({ cookies: { [ck.DEMO_AUTH_COOKIE]: acc({ familyId: 'fam-9' }) } });
     await s.demoSandboxAuthMiddleware(aReq, mkRes(), next);
     expect(aReq.sandbox).toMatchObject({ slotId: 'slot-1', leaseId: 'lease-1', familyId: 'fam-9' });
-    const sReq = req({ cookies: { [ck.DEMO_AUTH_COOKIE]: acc({ role: Role.STAFF }) } });
-    await s.demoSandboxAuthMiddleware(sReq, r403, next);
+    const sReq = req({ cookies: { [ck.DEMO_AUTH_COOKIE]: acc({ userId: 2, role: Role.STAFF }) } });
+    await s.demoSandboxAuthMiddleware(sReq, mkRes(), next);
+    expect(sReq.user).toEqual({ userId: 2, role: Role.STAFF });
+    const admReq = req({
+      cookies: { [ck.DEMO_AUTH_COOKIE]: acc({ userId: 9, role: Role.ADMIN }) },
+    });
+    await s.demoSandboxAuthMiddleware(admReq, r403, next);
     expect(r403.status).toHaveBeenCalledWith(403);
+    const roleGuard = s.requireDemoRole(Role.STAFF);
+    const rRole403 = mkRes();
+    const roleOk = jest.fn();
+    roleGuard(aReq, rRole403, roleOk);
+    expect(rRole403.status).toHaveBeenCalledWith(403);
+    roleGuard(sReq, mkRes(), roleOk);
+    expect(roleOk).toHaveBeenCalledTimes(1);
     setRt(false);
     await s.demoSandboxAuthMiddleware(aReq, r401, next);
     expect(r401.status).toHaveBeenCalledWith(401);
