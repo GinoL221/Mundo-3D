@@ -99,10 +99,17 @@ describe('/api/demo/session routes', () => {
     for (const m of ['post', 'get', 'delete'] as const) {
       expect((await request(app)[m]('/api/demo/session')).status).toBe(404);
     }
+    expect((await request(app).get('/api/demo/status')).status).toBe(404);
     expect((await request(app).post('/api/demo/session/refresh')).status).toBe(404);
     const { runtime, slotRepository, rememberTokenRepo } = makeRuntime();
     rtMod.setActiveDemoSandboxRuntime(runtime);
-    const { post, get, ref, del } = buildApp();
+    const { app: activeApp, post, get, ref, del } = buildApp();
+    const st = await request(activeApp).get('/api/demo/status');
+    expect([st.status, st.headers['cache-control'], st.body]).toEqual([
+      200,
+      'no-store',
+      { enabled: true },
+    ]);
     const res1 = await post('198.51.100.1');
     const raw = asArr(res1.headers['set-cookie']);
     const has = (p: string, f: string) => raw.some((c) => c.startsWith(`${p}=`) && c.includes(f));
