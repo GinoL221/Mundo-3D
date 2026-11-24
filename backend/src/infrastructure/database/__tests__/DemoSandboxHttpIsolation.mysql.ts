@@ -293,7 +293,7 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
     expect(ctrlTables.map((row) => Object.values(row)[0])).toEqual(['DemoSandboxSlot']);
   }, 30_000);
 
-  it('3. rejects cross-token auth, cross-slot CSRF (cookie+header), and non-Buyer roles', async () => {
+  it('3. rejects cross-token auth, cross-slot CSRF (cookie+header), and ADMIN role', async () => {
     const prodTok = jwt.sign(
       { userId: 1, idRole: Role.USER, typ: 'access' },
       getJwtSecret(),
@@ -321,16 +321,19 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
     expect([xCart.status, xOrd.status]).toEqual([403, 403]);
 
     const absExp = new Date(Date.now() + 60_000);
-    for (const role of [Role.STAFF, Role.ADMIN]) {
-      const cl = { userId: 2, slotId: visitorA.slotId, leaseId: visitorA.leaseId, role };
-      const acc = ses.signDemoSandboxAccessToken(cl, SANDBOX_SECRET);
-      const ref = ses.signDemoSandboxRefreshToken(cl, SANDBOX_SECRET, absExp);
-      const [gRes, rRes] = await Promise.all([
-        send('get', '/api/demo/products', { ck: `${A}=${acc}` }),
-        send('post', '/api/demo/session/refresh', { ck: `${R}=${ref}` }),
-      ]);
-      expect([gRes.status, rRes.status]).toEqual([403, 403]);
-    }
+    const adminCl = {
+      userId: 2,
+      slotId: visitorA.slotId,
+      leaseId: visitorA.leaseId,
+      role: Role.ADMIN,
+    };
+    const acc = ses.signDemoSandboxAccessToken(adminCl, SANDBOX_SECRET);
+    const ref = ses.signDemoSandboxRefreshToken(adminCl, SANDBOX_SECRET, absExp);
+    const [gRes, rRes] = await Promise.all([
+      send('get', '/api/demo/products', { ck: `${A}=${acc}` }),
+      send('post', '/api/demo/session/refresh', { ck: `${R}=${ref}` }),
+    ]);
+    expect([gRes.status, rRes.status]).toEqual([403, 403]);
   });
 
   it('4. revokes tokens on DELETE /session, fences reset to available gen 1, and keeps slot B alive', async () => {

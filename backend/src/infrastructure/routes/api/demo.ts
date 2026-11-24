@@ -96,6 +96,7 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   });
   router.post('/session', cCap, cLim, c.create);
   router.get('/session', auth, c.get);
+  router.post('/session/role', ...write, c.switchRole);
   router.post('/session/refresh', rLim, c.refresh);
   router.delete('/session', ...write, c.destroy);
   router.get('/products/search', auth, searchVal, hSearch);
