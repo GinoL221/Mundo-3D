@@ -140,8 +140,8 @@ describe('demoSessionClient', () => {
     await expect(Promise.all([p1, p2])).resolves.toEqual([true, true]);
   });
 
-  it('switches demo role via POST /api/demo/session/role with CSRF, retries once on 401, and handles 403/401', async () => {
-    const { cookies } = stubEnv(`${DEMO_CSRF_COOKIE_NAME}=demo.r1`);
+  it('switches demo role via POST /api/demo/session/role with CSRF, emits role-changed, retries once on 401, and handles 403/401', async () => {
+    const { cookies, events } = stubEnv(`${DEMO_CSRF_COOKIE_NAME}=demo.r1`);
     const staffSession: DemoSessionState = {
       ...buyerSession,
       role: 'STAFF',
@@ -161,6 +161,7 @@ describe('demoSessionClient', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(switchDemoRole('STAFF')).resolves.toEqual({ ok: true, session: staffSession });
+    expect(events.at(-1)?.detail).toEqual({ reason: 'role-changed' });
     expect(fetchMock).toHaveBeenNthCalledWith(
       3,
       `${API_URL}/api/demo/session/role`,
@@ -174,6 +175,25 @@ describe('demoSessionClient', () => {
     await expect(switchDemoRole('USER')).resolves.toEqual({ ok: false, reason: 'forbidden' });
     await expect(switchDemoRole('USER')).resolves.toEqual({ ok: false, reason: 'expired' });
     expect(cookies.has(DEMO_CSRF_COOKIE_NAME)).toBe(false);
+  });
+
+  it('does not broadcast to BroadcastChannel during hydrateDemoSession (prevents cross-tab loops)', async () => {
+    stubEnv(`${DEMO_CSRF_COOKIE_NAME}=demo.tok`);
+    const postMessage = vi.fn();
+    vi.stubGlobal(
+      'BroadcastChannel',
+      class {
+        postMessage = postMessage;
+        close = vi.fn();
+      },
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValueOnce(new Response(JSON.stringify(buyerSession), { status: 200 })),
+    );
+
+    await expect(hydrateDemoSession()).resolves.toEqual({ status: 'active', session: buyerSession });
+    expect(postMessage).not.toHaveBeenCalled();
   });
 
   it('ends demo session cleanly with DELETE /api/demo/session and m3d_demo_csrf', async () => {

@@ -6,6 +6,7 @@ import {
   DEMO_CSRF_COOKIE_NAME,
   DEMO_SESSION_EVENT,
   DEMO_STORAGE_KEY,
+  DEMO_TAB_ID,
   demoRoleToId,
   getDemoSession,
   isDemoApiUrl,
@@ -149,7 +150,10 @@ describe('demoSessionState', () => {
     expect((events[0] as CustomEvent<{ reason: string }>).type).toBe(DEMO_SESSION_EVENT);
     expect((events[0] as CustomEvent<{ reason: string }>).detail).toEqual({ reason: 'expired' });
     expect(posted).toEqual([
-      { channel: DEMO_BROADCAST_CHANNEL, msg: { type: 'demo-session-changed', reason: 'expired' } },
+      {
+        channel: DEMO_BROADCAST_CHANNEL,
+        msg: { type: 'demo-session-changed', reason: 'expired', senderId: DEMO_TAB_ID },
+      },
     ]);
   });
 });

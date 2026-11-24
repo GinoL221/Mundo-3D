@@ -76,6 +76,7 @@
 </form>
 
 <script>
+  import { endDemoSession, isDemoSessionActive } from '../../../config';
   import { AuthService } from '../services/auth.service';
   import { broadcastSessionChanged } from '../services/session.service';
   import { CartService } from '../../cart/services/CartService';
@@ -194,6 +195,16 @@
 
     try {
       await AuthService.login(email, password, remember);
+
+      if (isDemoSessionActive()) {
+        try {
+          localStorage.removeItem('m3d_demo_cart');
+        } catch {
+          // Storage unavailable.
+        }
+        await endDemoSession().catch(() => undefined);
+        CartService.loadCartFromStorage();
+      }
 
       // Server issues the session as httpOnly/CSRF/display cookies — no
       // client-side storage write needed (design.md "No Script-Readable

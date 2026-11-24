@@ -20,6 +20,9 @@ class FakeEl {
   setAttribute(k: string, v: string) {
     this.attrs.set(k, v);
   }
+  removeAttribute(k: string) {
+    this.attrs.delete(k);
+  }
   hasAttribute(k: string) {
     return this.attrs.has(k);
   }
@@ -264,5 +267,111 @@ describe('initializeDemoSessionUI', () => {
     expect(dom.noticeTitle.textContent).toContain('venció');
     expect(dom.retryBtn.hidden).toBe(false);
     cleanup();
+  });
+
+  it('syncs cross-tab ended/expired and role-changed broadcasts without re-broadcasting loops', async () => {
+    const dom = setupDom(`${DEMO_CSRF_COOKIE_NAME}=demo.sig`);
+    dom.store.set(DEMO_STORAGE_KEY, JSON.stringify(buyerSession));
+    dom.store.set('m3d_demo_cart', JSON.stringify([{ productId: 1, quantity: 1 }]));
+    const staffSession: DemoSessionState = {
+      ...buyerSession,
+      role: 'STAFF',
+      user: { idUser: 2, firstName: 'Demo', lastName: 'Staff', email: 'staff@demo.invalid' },
+    };
+    const channels: Array<{ onmessage: ((ev: MessageEvent) => void) | null; postMessage: ReturnType<typeof vi.fn> }> = [];
+    vi.stubGlobal('BroadcastChannel', class {
+      onmessage: ((ev: MessageEvent) => void) | null = null;
+      postMessage = vi.fn();
+      close = vi.fn();
+      constructor() { channels.push(this); }
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn()
+        .mockResolvedValueOnce(new Response(JSON.stringify(buyerSession), { status: 200 }))
+        .mockResolvedValueOnce(new Response(JSON.stringify(staffSession), { status: 200 })),
+    );
+    const sessionChanged = vi.fn();
+    dom.win.addEventListener('session-changed', sessionChanged);
+
+    const cleanup = initializeDemoSessionUI(dom.doc, dom.win, { reloadOnTransition: false });
+    await flush();
+    sessionChanged.mockClear();
+
+    channels[0].onmessage?.({ data: { type: 'demo-session-changed', reason: 'role-changed' } } as MessageEvent);
+    await flush();
+    expect(dom.roleBadge.textContent).toBe('STAFF');
+    expect(dom.staffBtn.attrs.get('aria-pressed')).toBe('true');
+    expect(sessionChanged).toHaveBeenCalledTimes(1);
+
+    channels[0].onmessage?.({ data: { type: 'demo-session-changed', reason: 'expired' } } as MessageEvent);
+    expect(dom.store.has(DEMO_STORAGE_KEY)).toBe(false);
+    expect(dom.store.has('m3d_demo_cart')).toBe(false);
+    expect(dom.bar.hidden).toBe(true);
+    expect(dom.noticeWrap.hidden).toBe(false);
+    expect(sessionChanged).toHaveBeenCalledTimes(2);
+    expect(channels.every((ch) => ch.postMessage.mock.calls.length === 0)).toBe(true);
+    cleanup();
+  });
+
+  it('clears stale m3d_demo_cart and awaits cart hydration before reload on handleStart', async () => {
+    const dom = setupDom();
+    dom.store.set('m3d_demo_cart', JSON.stringify([{ productId: 99, quantity: 2 }]));
+    let resolveCart!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn()
+        .mockResolvedValueOnce(new Response(JSON.stringify({ enabled: true }), { status: 200 }))
+        .mockImplementationOnce(async () => {
+          dom.doc.cookie = `${DEMO_CSRF_COOKIE_NAME}=demo.sig; path=/`;
+          return new Response(JSON.stringify(buyerSession), { status: 201 });
+        })
+        .mockImplementationOnce(() => new Promise<Response>((r) => { resolveCart = r; })),
+    );
+    const cleanup = initializeDemoSessionUI(dom.doc, dom.win, { reloadOnTransition: true });
+    await flush();
+    dom.entryBtn.click();
+    await flush();
+    expect(dom.store.has('m3d_demo_cart')).toBe(false);
+    expect(dom.reload).not.toHaveBeenCalled();
+
+    resolveCart(new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    await flush();
+    expect(dom.reload).toHaveBeenCalledTimes(1);
+    cleanup();
+  });
+
+  it('re-checks demo availability on transient startup hydration failure and toggles exitBtn aria-busy', async () => {
+    const dom1 = setupDom(`${DEMO_CSRF_COOKIE_NAME}=demo.sig`);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn()
+        .mockResolvedValueOnce(new Response(null, { status: 500 }))
+        .mockResolvedValueOnce(new Response(JSON.stringify({ enabled: true }), { status: 200 })),
+    );
+    const c1 = initializeDemoSessionUI(dom1.doc, dom1.win, { reloadOnTransition: false });
+    await flush();
+    dom1.win.dispatchEvent(new CustomEvent(DEMO_SESSION_EVENT, { detail: { reason: 'ended' } }));
+    expect(dom1.entryBtn.hidden).toBe(false);
+    c1();
+
+    const dom2 = setupDom(`${DEMO_CSRF_COOKIE_NAME}=demo.sig`);
+    dom2.store.set(DEMO_STORAGE_KEY, JSON.stringify(buyerSession));
+    let resolveDel!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn()
+        .mockResolvedValueOnce(new Response(JSON.stringify(buyerSession), { status: 200 }))
+        .mockImplementationOnce(() => new Promise<Response>((r) => { resolveDel = r; })),
+    );
+    const c2 = initializeDemoSessionUI(dom2.doc, dom2.win, { reloadOnTransition: false });
+    await flush();
+    dom2.exitBtn.click();
+    expect(dom2.exitBtn.attrs.get('aria-busy')).toBe('true');
+    resolveDel(new Response(null, { status: 204 }));
+    await flush();
+    expect(dom2.exitBtn.hasAttribute('aria-busy')).toBe(false);
+    expect(dom2.exitBtn.disabled).toBe(false);
+    c2();
   });
 });
