@@ -49,7 +49,9 @@ const reqRt = (res: Response): Rt | null => {
   return rt;
 };
 const relSlot = (rt: Rt, id: string, lid: string) =>
-  new ReleaseDemoSandboxLeaseUseCase(rt.slotRepository).execute(id, lid).catch(() => undefined);
+  new ReleaseDemoSandboxLeaseUseCase(rt.slotRepository).execute(id, lid).catch((err: unknown) => {
+    logger.warn({ slotId: id, err }, 'Demo sandbox slot release failed');
+  });
 const busyRes = (res: Response) => res.setHeader('Retry-After', '30').status(503).json(BUSY);
 
 function setCk(
@@ -73,11 +75,28 @@ function setCk(
 }
 
 export class DemoSandboxSessionController {
-  create = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const rt = reqRt(res);
     if (!rt) return;
     let alloc: { id: string; leaseId: string } | null = null;
     try {
+      const raw = req.cookies?.[ck.DEMO_AUTH_COOKIE];
+      const existing =
+        typeof raw === 'string' ? ses.verifyDemoSandboxAccessToken(raw, rt.jwtSecret) : null;
+      if (existing && existing.role === Role.USER) {
+        const lease = await ses.validateActiveSandboxLease(rt, existing);
+        if (lease) {
+          const active = await rt.repositories
+            .getUserRepository(lease.slotId)
+            .findById(existing.userId);
+          if (active && Number(active.idRole) === Number(Role.USER)) {
+            const { slotId, leaseId, idleExpiresAt, absoluteExpiresAt } = lease;
+            setCk(res, rt, slotId, leaseId, active.idUser, absoluteExpiresAt, existing.familyId);
+            res.status(200).json(fmt(active, { idleExpiresAt, absoluteExpiresAt }));
+            return;
+          }
+        }
+      }
       const [clk, ids] = [{ now: () => new Date() }, { next: () => crypto.randomUUID() }];
       const uc = new AllocateDemoSandboxLeaseUseCase(rt.slotRepository, rt.leasePolicy, clk, ids);
       const s = await uc.execute();
@@ -88,6 +107,7 @@ export class DemoSandboxSessionController {
       alloc = { id: s.id, leaseId: s.leaseId };
       const buyer = await rt.repositories.getUserRepository(s.id).findById(BUYER_ID);
       if (!buyer || Number(buyer.idRole) !== Number(Role.USER)) {
+        logger.warn({ slotId: s.id }, 'Demo sandbox slot missing valid Buyer seed');
         await relSlot(rt, s.id, s.leaseId);
         busyRes(res);
         return;
@@ -160,12 +180,16 @@ export class DemoSandboxSessionController {
     const { sandbox } = req;
     if (!sandbox) return fail(res, 401, 'Demo sandbox session invalid or expired');
     try {
-      const auth = createDemoSandboxAuthUseCases(rt.repositories, sandbox.slotId, authDeps);
-      if (sandbox.familyId) {
-        await auth.revoke.execute(sandbox.familyId);
-      } else {
-        const raw = req.cookies?.[ck.DEMO_REFRESH_COOKIE];
-        if (typeof raw === 'string' && raw.length > 0) await auth.revoke.revokeByToken(raw);
+      try {
+        const auth = createDemoSandboxAuthUseCases(rt.repositories, sandbox.slotId, authDeps);
+        if (sandbox.familyId) {
+          await auth.revoke.execute(sandbox.familyId);
+        } else {
+          const raw = req.cookies?.[ck.DEMO_REFRESH_COOKIE];
+          if (typeof raw === 'string' && raw.length > 0) await auth.revoke.revokeByToken(raw);
+        }
+      } catch (err) {
+        logger.warn({ slotId: sandbox.slotId, err }, 'Demo sandbox token revoke failed');
       }
       const rel = new ReleaseDemoSandboxLeaseUseCase(rt.slotRepository);
       await rel.execute(sandbox.slotId, sandbox.leaseId);

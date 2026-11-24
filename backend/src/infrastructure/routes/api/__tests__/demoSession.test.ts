@@ -81,7 +81,8 @@ function buildApp(sessionLimiterMax = 20, refreshLimiterMax = 20) {
   const app = express().set('trust proxy', 1).use(express.json(), cookieParser());
   const router = createDemoRouter({ sessionLimiterMax, refreshLimiterMax });
   app.use('/api/demo', router).use(errorHandler);
-  const post = (ip: string) => request(app).post('/api/demo/session').set('X-Forwarded-For', ip);
+  const post = (ip: string, c = '') =>
+    request(app).post('/api/demo/session').set('X-Forwarded-For', ip).set('Cookie', c);
   const get = (c: string) => request(app).get('/api/demo/session').set('Cookie', c);
   const ref = (c = '', ip = '198.51.100.9') =>
     request(app).post('/api/demo/session/refresh').set('X-Forwarded-For', ip).set('Cookie', c);
@@ -130,8 +131,11 @@ describe('/api/demo/session routes', () => {
     const lim = buildApp(1, 1);
     const [b1, b2] = [await lim.post('198.51.100.3'), await lim.post('198.51.100.3')];
     const [r1, r2] = [await lim.ref('', '198.51.100.3'), await lim.ref('', '198.51.100.3')];
-    expect([b1.status, b2.status, r1.status, r2.status]).toEqual([503, 429, 401, 429]);
+    expect([b1.status, b2.status, r1.status, r2.status]).toEqual([503, 503, 401, 429]);
     expectClr(r1.headers['set-cookie']);
+    rtMod.setActiveDemoSandboxRuntime(makeRuntime().runtime);
+    const [ok1, lim2] = [await lim.post('198.51.100.7'), await lim.post('198.51.100.7')];
+    expect([ok1.status, lim2.status]).toEqual([201, 429]);
     const failRt = makeRuntime();
     failRt.rememberTokenRepo.create.mockRejectedValueOnce(new Error('db write failed'));
     rtMod.setActiveDemoSandboxRuntime(failRt.runtime);
@@ -139,6 +143,23 @@ describe('/api/demo/session routes', () => {
     expect([err.status, err.headers['set-cookie']]).toEqual([500, undefined]);
     const s = failRt.getSlot()!;
     expect(failRt.slotRepository.releaseLease).toHaveBeenCalledWith(s.id, s.leaseId);
+  });
+
+  it('reuses active session on POST without re-allocating and releases slot when revoke fails', async () => {
+    const { runtime, slotRepository, rememberTokenRepo } = makeRuntime();
+    rtMod.setActiveDemoSandboxRuntime(runtime);
+    const { post, del } = buildApp();
+    const r1 = await post('198.51.100.8');
+    const c1 = parseCk(r1.headers['set-cookie']);
+    const r2 = await post('198.51.100.8', `${A}=${c1[A]}`);
+    expect([r1.status, r2.status, slotRepository.claimAvailableSlot.mock.calls.length]).toEqual([
+      201, 200, 1,
+    ]);
+    const c2 = parseCk(r2.headers['set-cookie']);
+    rememberTokenRepo.revokeFamily.mockRejectedValueOnce(new Error('revoke boom'));
+    const dRes = await del([`${A}=${c2[A]}`, `${C}=${c2[C]}`], c2[C]);
+    expect([dRes.status, slotRepository.releaseLease.mock.calls.length]).toEqual([204, 1]);
+    expectClr(dRes.headers['set-cookie']);
   });
 
   it('enforces CSRF, audience/secret isolation, and Buyer-only role on GET and /refresh', async () => {
