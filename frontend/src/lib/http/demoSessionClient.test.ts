@@ -196,6 +196,37 @@ describe('demoSessionClient', () => {
     expect(postMessage).not.toHaveBeenCalled();
   });
 
+  it('distinguishes transient 5xx/network errors from definitive inactive and skips persisting if ended in flight', async () => {
+    const { cookies, store } = stubEnv(`${DEMO_CSRF_COOKIE_NAME}=demo.tok`);
+    store.set(DEMO_STORAGE_KEY, JSON.stringify(buyerSession));
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(new Response(null, { status: 500 })));
+    await expect(hydrateDemoSession()).resolves.toEqual({ status: 'error' });
+    expect(store.has(DEMO_STORAGE_KEY)).toBe(true);
+    expect(cookies.has(DEMO_CSRF_COOKIE_NAME)).toBe(true);
+
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValueOnce(new Error('network down')));
+    await expect(hydrateDemoSession()).resolves.toEqual({ status: 'error' });
+    expect(store.has(DEMO_STORAGE_KEY)).toBe(true);
+
+    let resolveFetch!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveFetch = resolve;
+          }),
+      ),
+    );
+    const pending = hydrateDemoSession();
+    cookies.delete(DEMO_CSRF_COOKIE_NAME);
+    store.delete(DEMO_STORAGE_KEY);
+    resolveFetch(new Response(JSON.stringify(buyerSession), { status: 200 }));
+    await expect(pending).resolves.toEqual({ status: 'inactive' });
+    expect(store.has(DEMO_STORAGE_KEY)).toBe(false);
+  });
+
   it('ends demo session cleanly with DELETE /api/demo/session and m3d_demo_csrf', async () => {
     const { cookies } = stubEnv(`${DEMO_CSRF_COOKIE_NAME}=demo.exit`);
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));

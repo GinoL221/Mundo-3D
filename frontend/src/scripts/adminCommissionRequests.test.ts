@@ -196,6 +196,7 @@ describe('initializeAdminCommissionRequests', () => {
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
@@ -500,7 +501,6 @@ describe('initializeAdminCommissionRequests', () => {
     expect(doc.getElementById('admin-gate-denied')?.hidden).toBe(true);
     expect(doc.getElementById('admin-requests-content')?.hidden).toBe(false);
     expect(doc.getElementById('admin-requests-empty')?.hidden).toBe(false);
-    vi.unstubAllGlobals();
   });
 
   it('unfreezes loading state and shows Spanish error when demo session expires with 401', async () => {
@@ -531,6 +531,5 @@ describe('initializeAdminCommissionRequests', () => {
     expect(retry.disabled).toBe(false);
     expect(error.hidden).toBe(false);
     expect(errorText.textContent).toMatch(/sesión demo expiró/i);
-    vi.unstubAllGlobals();
   });
 });

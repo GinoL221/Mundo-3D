@@ -25,7 +25,8 @@ export type HydrateDemoSessionResult =
   | { status: 'inactive' }
   | { status: 'active'; session: DemoSessionState }
   | { status: 'expired' }
-  | { status: 'disabled' };
+  | { status: 'disabled' }
+  | { status: 'error' };
 
 let demoRefreshInFlight: Promise<boolean> | null = null;
 let demoHydrateInFlight: Promise<HydrateDemoSessionResult> | null = null;
@@ -114,13 +115,15 @@ async function fetchHydrateDemoSession(): Promise<HydrateDemoSessionResult> {
       clearDemoSession('expired');
       return { status: 'expired' };
     }
+    if (res.status >= 500) return { status: 'error' };
     if (!res.ok) return { status: 'inactive' };
     const body: unknown = await res.json();
     if (!isValidDemoSession(body)) return { status: 'inactive' };
+    if (!readDemoCsrfToken()) return { status: 'inactive' };
     saveDemoSession(body, 'updated', { broadcast: false });
     return { status: 'active', session: body };
   } catch {
-    return { status: 'inactive' };
+    return { status: 'error' };
   }
 }
 

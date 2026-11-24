@@ -341,6 +341,77 @@ describe('initializeDemoSessionUI', () => {
     cleanup();
   });
 
+  it('completes session-changed and reload when cart hydration hangs past the timeout cap', async () => {
+    const dom = setupDom();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn()
+        .mockResolvedValueOnce(new Response(JSON.stringify({ enabled: true }), { status: 200 }))
+        .mockImplementationOnce(async () => {
+          dom.doc.cookie = `${DEMO_CSRF_COOKIE_NAME}=demo.sig; path=/`;
+          return new Response(JSON.stringify(buyerSession), { status: 201 });
+        })
+        .mockImplementationOnce(() => new Promise<Response>(() => {})),
+    );
+    const sessionChanged = vi.fn();
+    dom.win.addEventListener('session-changed', sessionChanged);
+    const cleanup = initializeDemoSessionUI(dom.doc, dom.win, { reloadOnTransition: true, cartHydrationTimeoutMs: 20 });
+    await flush();
+    dom.entryBtn.click();
+    await flush();
+    expect(dom.reload).not.toHaveBeenCalled();
+
+    await new Promise((r) => setTimeout(r, 40));
+    expect(sessionChanged).toHaveBeenCalledTimes(1);
+    expect(dom.reload).toHaveBeenCalledTimes(1);
+    cleanup();
+  });
+
+  it('ignores stale broadcast hydration after ended and preserves active bar on transient 500', async () => {
+    const dom = setupDom(`${DEMO_CSRF_COOKIE_NAME}=demo.sig`);
+    dom.store.set(DEMO_STORAGE_KEY, JSON.stringify(buyerSession));
+    const staffSession: DemoSessionState = { ...buyerSession, role: 'STAFF', user: { idUser: 2, firstName: 'Demo', lastName: 'Staff', email: 'staff@demo.invalid' } };
+    const channels: Array<{ onmessage: ((ev: MessageEvent) => void) | null }> = [];
+    vi.stubGlobal('BroadcastChannel', class {
+      onmessage: ((ev: MessageEvent) => void) | null = null;
+      postMessage = vi.fn();
+      close = vi.fn();
+      constructor() { channels.push(this); }
+    });
+    let resolveStale!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn()
+        .mockResolvedValueOnce(new Response(JSON.stringify(buyerSession), { status: 200 }))
+        .mockResolvedValueOnce(new Response(null, { status: 500 }))
+        .mockImplementationOnce(() => new Promise<Response>((r) => { resolveStale = r; })),
+    );
+    const sessionChanged = vi.fn();
+    dom.win.addEventListener('session-changed', sessionChanged);
+    const cleanup = initializeDemoSessionUI(dom.doc, dom.win, { reloadOnTransition: false });
+    await flush();
+    sessionChanged.mockClear();
+
+    channels[0].onmessage?.({ data: { type: 'demo-session-changed', reason: 'role-changed' } } as MessageEvent);
+    await flush();
+    expect(dom.bar.hidden).toBe(false);
+    expect(dom.store.has(DEMO_STORAGE_KEY)).toBe(true);
+    expect(sessionChanged).not.toHaveBeenCalled();
+
+    channels[0].onmessage?.({ data: { type: 'demo-session-changed', reason: 'role-changed' } } as MessageEvent);
+    channels[0].onmessage?.({ data: { type: 'demo-session-changed', reason: 'ended' } } as MessageEvent);
+    expect(dom.bar.hidden).toBe(true);
+    expect(dom.store.has(DEMO_STORAGE_KEY)).toBe(false);
+    expect(sessionChanged).toHaveBeenCalledTimes(1);
+
+    resolveStale(new Response(JSON.stringify(staffSession), { status: 200 }));
+    await flush();
+    expect(dom.bar.hidden).toBe(true);
+    expect(dom.store.has(DEMO_STORAGE_KEY)).toBe(false);
+    expect(sessionChanged).toHaveBeenCalledTimes(1);
+    cleanup();
+  });
+
   it('re-checks demo availability on transient startup hydration failure and toggles exitBtn aria-busy', async () => {
     const dom1 = setupDom(`${DEMO_CSRF_COOKIE_NAME}=demo.sig`);
     vi.stubGlobal(

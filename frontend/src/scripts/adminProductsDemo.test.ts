@@ -111,6 +111,37 @@ describe('admin products demo hydration (S3) and 401 expiry recovery (S4)', () =
     expect(env2.byId.get('admin-products-content')?.hidden).toBe(true);
   });
 
+  it('denies confirmed Demo Buyer immediately without fetching /api/demo/session and denies pending hydration resolving to USER or inactive', async () => {
+    const buyerSession = { active: true, role: 'USER', user: { idUser: 1, firstName: 'Demo', lastName: 'Buyer', email: 'b@d.invalid' }, lease: {} };
+    const demoBuyer = { idUser: 1, firstName: 'Demo', lastName: 'Buyer', idRole: Role.USER, isDemo: true };
+    const confirmedEnv = stubBrowser(['admin-gate-denied', 'admin-products-content'], `${DEMO_CSRF_COOKIE_NAME}=demo.tok`);
+    confirmedEnv.store.set(DEMO_STORAGE_KEY, JSON.stringify(buyerSession));
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    mocks.getSessionUser.mockReturnValueOnce(demoBuyer);
+
+    initializeAdminProductsList();
+    expect(confirmedEnv.byId.get('admin-gate-denied')?.hidden).toBe(false);
+    expect(confirmedEnv.byId.get('admin-products-content')?.hidden).toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const pendingUserEnv = stubBrowser(['admin-gate-denied', 'admin-products-content'], `${DEMO_CSRF_COOKIE_NAME}=demo.tok`);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(new Response(JSON.stringify(buyerSession), { status: 200 })));
+    mocks.getSessionUser.mockReturnValue(demoBuyer);
+    initializeAdminProductsList();
+    await flush();
+    expect(pendingUserEnv.byId.get('admin-gate-denied')?.hidden).toBe(false);
+    expect(pendingUserEnv.byId.get('admin-products-content')?.hidden).toBe(true);
+
+    const pendingInactiveEnv = stubBrowser(['admin-gate-denied', 'admin-products-content'], `${DEMO_CSRF_COOKIE_NAME}=demo.tok`);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(new Response(null, { status: 404 })));
+    mocks.getSessionUser.mockReturnValueOnce(demoBuyer).mockReturnValueOnce(null);
+    initializeAdminProductsList();
+    await flush();
+    expect(pendingInactiveEnv.byId.get('admin-gate-denied')?.hidden).toBe(false);
+    expect(pendingInactiveEnv.byId.get('admin-products-content')?.hidden).toBe(true);
+  });
+
   it('unfreezes list, create, and edit UIs with Spanish error on demo 401', async () => {
     mocks.getSessionUser.mockReturnValue(DEMO_STAFF);
     const listEnv = stubBrowser(
