@@ -5,6 +5,9 @@ export interface DemoBarElements {
   bar: HTMLElement | null;
   roleBadge: HTMLElement | null;
   summary: HTMLElement | null;
+  roleControls: HTMLElement | null;
+  buyerBtn: HTMLButtonElement | null;
+  staffBtn: HTMLButtonElement | null;
   exitBtn: HTMLButtonElement | null;
   noticeWrap: HTMLElement | null;
   noticeEl: HTMLElement | null;
@@ -19,6 +22,9 @@ export function queryDemoBarElements(document: Document): DemoBarElements {
     bar: document.getElementById('demo-session-bar'),
     roleBadge: document.getElementById('demo-bar-role-badge'),
     summary: document.getElementById('demo-bar-summary'),
+    roleControls: document.getElementById('demo-bar-role-controls'),
+    buyerBtn: document.getElementById('demo-role-buyer') as HTMLButtonElement | null,
+    staffBtn: document.getElementById('demo-role-staff') as HTMLButtonElement | null,
     exitBtn: document.getElementById('demo-bar-exit') as HTMLButtonElement | null,
     noticeWrap: document.getElementById('demo-session-notice-wrap'),
     noticeEl: document.getElementById('demo-session-notice'),
@@ -69,6 +75,14 @@ export function showDemoNotice(els: DemoBarElements, notice: DemoNoticePresentat
   if (typeof els.noticeEl.focus === 'function') els.noticeEl.focus();
 }
 
+export function setDemoRoleSwitchBusy(els: DemoBarElements, busy: boolean): void {
+  for (const btn of [els.buyerBtn, els.staffBtn, els.exitBtn]) {
+    if (!btn) continue;
+    btn.disabled = busy;
+    btn.setAttribute('aria-busy', String(busy));
+  }
+}
+
 export function renderDemoBar(
   document: Document,
   els: DemoBarElements,
@@ -78,6 +92,7 @@ export function renderDemoBar(
   if (!els.bar) return;
   if (!session) {
     els.bar.hidden = true;
+    if (els.roleControls) els.roleControls.hidden = true;
     setDemoEntriesVisibility(document, demoAvailable);
     return;
   }
@@ -89,4 +104,7 @@ export function renderDemoBar(
     els.roleBadge.className = presentation.roleBadgeClass;
   }
   if (els.summary) els.summary.textContent = presentation.summaryText;
+  if (els.roleControls) els.roleControls.hidden = false;
+  els.buyerBtn?.setAttribute('aria-pressed', String(session.role === 'USER'));
+  els.staffBtn?.setAttribute('aria-pressed', String(session.role === 'STAFF'));
 }

@@ -22,10 +22,12 @@ export {
   endDemoSession,
   hydrateDemoSession,
   startDemoSession,
+  switchDemoRole,
 } from './lib/http/demoSessionClient';
 export type {
   HydrateDemoSessionResult,
   StartDemoSessionResult,
+  SwitchDemoRoleResult,
 } from './lib/http/demoSessionClient';
 export {
   clearDemoSession,

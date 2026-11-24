@@ -7,7 +7,9 @@ import {
   hydrateDemoSession,
   isDemoSessionActive,
   startDemoSession,
+  switchDemoRole,
   type DemoChangeReason,
+  type DemoRole,
   type DemoSessionChangedMessage,
 } from '../config';
 import { CartService } from '../domains/cart/services/CartService';
@@ -19,6 +21,7 @@ import {
   renderDemoBar,
   setDemoEntriesBusy,
   setDemoEntriesVisibility,
+  setDemoRoleSwitchBusy,
   showDemoNotice,
 } from './demoSessionDom';
 import { buildDemoNotice, isDemoProtectedPath } from './demoSessionModel';
@@ -51,6 +54,7 @@ export function initializeDemoSessionUI(
   const els = queryDemoBarElements(document);
   let demoAvailable = false;
   let starting = false;
+  let switchingRole = false;
 
   const handleTransitionReload = (redirectHome = false): void => {
     if (!reloadOnTransition) return;
@@ -89,6 +93,34 @@ export function initializeDemoSessionUI(
     }
   };
 
+  const handleRoleSwitch = async (targetRole: DemoRole): Promise<void> => {
+    if (switchingRole) return;
+    const current = getDemoSession();
+    if (!current || current.role === targetRole) return;
+    switchingRole = true;
+    hideDemoNotice(els);
+    setDemoRoleSwitchBusy(els, true);
+    try {
+      const result = await switchDemoRole(targetRole);
+      if (result.ok) {
+        renderDemoBar(document, els, result.session, demoAvailable);
+        window.dispatchEvent(new Event('session-changed'));
+        const pathname = window.location?.pathname ?? '/';
+        const leaveAdmin = targetRole === 'USER' && pathname.startsWith('/admin');
+        handleTransitionReload(leaveAdmin);
+        return;
+      }
+      if (result.reason === 'expired' || result.reason === 'disabled') {
+        handleReason(result.reason);
+        return;
+      }
+      showDemoNotice(els, buildDemoNotice('error'));
+    } finally {
+      switchingRole = false;
+      setDemoRoleSwitchBusy(els, false);
+    }
+  };
+
   const handleExit = async (): Promise<void> => {
     if (els.exitBtn) els.exitBtn.disabled = true;
     hideDemoNotice(els);
@@ -122,6 +154,14 @@ export function initializeDemoSessionUI(
     event.preventDefault();
     void handleExit();
   };
+  const onBuyerRoleClick = (event: Event): void => {
+    event.preventDefault();
+    void handleRoleSwitch('USER');
+  };
+  const onStaffRoleClick = (event: Event): void => {
+    event.preventDefault();
+    void handleRoleSwitch('STAFF');
+  };
   const onDismissClick = (): void => hideDemoNotice(els);
   const onDemoEvent = (event: Event): void => {
     const detail = (event as CustomEvent<{ reason?: DemoChangeReason }>).detail;
@@ -131,6 +171,8 @@ export function initializeDemoSessionUI(
   const entries = queryDemoEntryButtons(document);
   for (const btn of entries) btn.addEventListener('click', onEntryClick);
   els.retryBtn?.addEventListener('click', onEntryClick);
+  els.buyerBtn?.addEventListener('click', onBuyerRoleClick);
+  els.staffBtn?.addEventListener('click', onStaffRoleClick);
   els.exitBtn?.addEventListener('click', onExitClick);
   els.dismissBtn?.addEventListener('click', onDismissClick);
   window.addEventListener(DEMO_SESSION_EVENT, onDemoEvent);
@@ -170,6 +212,8 @@ export function initializeDemoSessionUI(
     active = false;
     for (const btn of entries) btn.removeEventListener('click', onEntryClick);
     els.retryBtn?.removeEventListener('click', onEntryClick);
+    els.buyerBtn?.removeEventListener('click', onBuyerRoleClick);
+    els.staffBtn?.removeEventListener('click', onStaffRoleClick);
     els.exitBtn?.removeEventListener('click', onExitClick);
     els.dismissBtn?.removeEventListener('click', onDismissClick);
     window.removeEventListener(DEMO_SESSION_EVENT, onDemoEvent);

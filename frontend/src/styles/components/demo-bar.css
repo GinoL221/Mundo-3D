@@ -47,7 +47,55 @@
 .demo-bar__role-controls {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+}
+
+.demo-bar__role-btn {
+  appearance: none;
+  border: 0;
+  border-radius: calc(var(--radius-sm, 6px) - 2px);
+  background: transparent;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1;
+  min-height: 32px;
+  padding: 0 12px;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+}
+
+.demo-bar__role-btn:hover:not(:disabled) {
+  color: var(--fg);
+  background: var(--surface-subtle);
+}
+
+.demo-bar__role-btn[aria-pressed='true'] {
+  background: var(--accent-strong);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.demo-bar__role-btn[aria-pressed='true']:hover:not(:disabled) {
+  background: var(--accent-strong-hover);
+  color: #ffffff;
+}
+
+.demo-bar__role-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.demo-bar__role-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .demo-notice-wrap {
@@ -71,5 +119,10 @@
   .demo-bar__actions {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .demo-bar__role-btn {
+    min-height: 44px;
+    padding: 0 14px;
   }
 }

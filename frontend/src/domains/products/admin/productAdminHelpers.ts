@@ -155,9 +155,14 @@ function isSupportedImageFile(file: File): boolean {
   return lower.endsWith('.jpg') || lower.endsWith('.png');
 }
 
+export interface ProductValidationOptions {
+  requireImageOnCreate?: boolean;
+}
+
 export function validateProductForm(
   values: ProductFormValues,
   mode: 'create' | 'edit',
+  options: ProductValidationOptions = {},
 ): Record<string, string> {
   const errors: Record<string, string> = {};
 
@@ -228,8 +233,11 @@ export function validateProductForm(
       }
     }
 
+    const requireImage = options.requireImageOnCreate ?? true;
     if (!values.imageFile || values.imageFile.size === 0) {
-      errors.image = 'Seleccioná una imagen en formato .jpg o .png.';
+      if (requireImage) {
+        errors.image = 'Seleccioná una imagen en formato .jpg o .png.';
+      }
     } else if (!isSupportedImageFile(values.imageFile)) {
       errors.image = 'Solo se permiten archivos .jpg o .png.';
     }

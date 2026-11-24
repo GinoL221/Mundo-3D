@@ -1,3 +1,4 @@
+import { isDemoSessionActive } from '../config';
 import { getSessionUser, hasAdminAccess } from '../domains/auth';
 import { ProductAdminApiError, ProductAdminService } from '../domains/products';
 import {
@@ -47,10 +48,19 @@ export function initializeAdminProductsCreate(): void {
   const materialCustomWrap = document.getElementById('materialCustom-wrap');
   const materialCustomInput = document.getElementById('materialCustom') as HTMLInputElement | null;
 
+  const fileInput = document.getElementById('image') as HTMLInputElement | null;
+  if (isDemoSessionActive()) {
+    fileInput?.removeAttribute('required');
+    const reqMark = document.getElementById('image-required-mark');
+    if (reqMark) reqMark.hidden = true;
+    const demoNote = document.getElementById('image-demo-note');
+    if (demoNote) demoNote.hidden = false;
+  }
+
   wireMaterialToggle(materialSelect, materialCustomWrap, materialCustomInput);
   wireImagePickerPreview(
     {
-      fileInput: document.getElementById('image') as HTMLInputElement | null,
+      fileInput,
       fileNameEl: document.getElementById('image-file-name'),
       previewWrap: document.getElementById('image-preview-wrap'),
       previewImg: document.getElementById('image-preview-img') as HTMLImageElement | null,
@@ -78,7 +88,9 @@ export function initializeAdminProductsCreate(): void {
     clearFormFieldErrors(form);
 
     const values = readProductFormValues(form, 'create');
-    const clientErrors = validateProductForm(values, 'create');
+    const clientErrors = validateProductForm(values, 'create', {
+      requireImageOnCreate: !isDemoSessionActive(),
+    });
     if (Object.keys(clientErrors).length > 0) {
       applyFormFieldErrors(form, clientErrors);
       showFormErrorBanner(errorBox, 'Revisá los campos marcados antes de crear la pieza.');
