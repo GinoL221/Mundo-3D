@@ -11,9 +11,10 @@ function hasValidScope(
   scope: DemoSandboxCsrfScope | undefined | null,
 ): scope is DemoSandboxCsrfScope {
   if (!scope) return false;
+  if (typeof scope.slotId !== 'string' || typeof scope.leaseId !== 'string') return false;
   if (!scope.slotId.trim() || !scope.leaseId.trim()) return false;
   if (typeof scope.userId === 'number') return Number.isFinite(scope.userId);
-  return scope.userId.trim().length > 0;
+  return typeof scope.userId === 'string' && scope.userId.trim().length > 0;
 }
 
 function signDemoCsrfPayload(scope: DemoSandboxCsrfScope, random: string, secret: string): string {

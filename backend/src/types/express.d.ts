@@ -1,12 +1,20 @@
 import 'express';
+import type { Role } from '../domain/Role';
 
 declare global {
   namespace Express {
     interface Request {
       reqId?: string;
-      sandbox?: { slotId: string; leaseId: string; idleExpiresAt: Date };
+      sandbox?: {
+        slotId: string;
+        leaseId: string;
+        idleExpiresAt: Date;
+        absoluteExpiresAt?: Date;
+        familyId?: string;
+      };
       user?: {
         userId: number;
+        role?: Role;
         email?: string;
         category?: string;
         idRole?: number;

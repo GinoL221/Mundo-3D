@@ -2,21 +2,47 @@ import crypto from 'node:crypto';
 import type { Sequelize } from 'sequelize';
 import { ExpireDemoSandboxLeasesUseCase } from '../../application/use-cases/ExpireDemoSandboxLeasesUseCase';
 import { ResetDemoSandboxSlotUseCase } from '../../application/use-cases/ResetDemoSandboxSlotUseCase';
+import type { DemoSandboxLeasePolicy } from '../../domain/entities/DemoSandboxSlot';
+import type {
+  DemoSandboxLeaseReleasePort,
+  DemoSandboxSlotRepositoryPort,
+} from '../../domain/ports/DemoSandboxSlotRepositoryPort';
 import {
   createDemoSandboxConnections,
   DEMO_SANDBOX_MAX_SLOTS,
   loadDemoSandboxConfigFromEnv,
+  type ManagedDemoSandboxConnections,
 } from '../database/DemoSandboxConnections';
+import {
+  createDemoSandboxProductRepositories,
+  type DemoSandboxProductRepositories,
+} from '../database/DemoSandboxProductRepositories';
 import { SequelizeDemoSandboxResetAdapter } from '../persistence/SequelizeDemoSandboxResetAdapter';
 import { SequelizeDemoSandboxSlotRepository } from '../repositories/SequelizeDemoSandboxSlotRepository';
 import {
-  startDemoSandboxScheduler,
-  type DemoSandboxSchedulerLogger,
-} from './demoSandboxScheduler';
+  DEMO_SANDBOX_IDLE_TIMEOUT_MS,
+  DEMO_SANDBOX_MAX_LIFETIME_MS,
+} from '../security/demoSandboxCookies';
+import { startDemoSandboxScheduler, type DemoSandboxSchedulerLogger } from './demoSandboxScheduler';
 
 export interface DemoSandboxRuntimeHandle {
   ready: Promise<void>;
   stop(): Promise<void>;
+  slotRepository: DemoSandboxSlotRepositoryPort & DemoSandboxLeaseReleasePort;
+  connections: ManagedDemoSandboxConnections;
+  repositories: DemoSandboxProductRepositories;
+  jwtSecret: string;
+  leasePolicy: DemoSandboxLeasePolicy;
+}
+
+let activeDemoSandboxRuntime: DemoSandboxRuntimeHandle | null = null;
+
+export function getActiveDemoSandboxRuntime(): DemoSandboxRuntimeHandle | null {
+  return activeDemoSandboxRuntime;
+}
+
+export function setActiveDemoSandboxRuntime(runtime: DemoSandboxRuntimeHandle | null): void {
+  activeDemoSandboxRuntime = runtime;
 }
 
 /**
@@ -66,10 +92,24 @@ export async function startDemoSandboxRuntime(
     logger,
   });
 
+  const repositories = createDemoSandboxProductRepositories(connections);
+  const leasePolicy: DemoSandboxLeasePolicy = {
+    idleTimeoutMs: DEMO_SANDBOX_IDLE_TIMEOUT_MS,
+    maxLifetimeMs: DEMO_SANDBOX_MAX_LIFETIME_MS,
+  };
+
   let stopPromise: Promise<void> | null = null;
-  return {
+  const handle: DemoSandboxRuntimeHandle = {
     ready: scheduler.ready,
+    slotRepository: repository,
+    connections,
+    repositories,
+    jwtSecret: config.jwtSecret,
+    leasePolicy,
     stop: () => {
+      if (activeDemoSandboxRuntime === handle) {
+        activeDemoSandboxRuntime = null;
+      }
       if (!stopPromise) {
         scheduler.stop();
         stopPromise = connections.closeAll();
@@ -77,4 +117,6 @@ export async function startDemoSandboxRuntime(
       return stopPromise;
     },
   };
+  activeDemoSandboxRuntime = handle;
+  return handle;
 }
