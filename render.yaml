@@ -104,3 +104,20 @@ services:
         sync: false
       - key: R2_PUBLIC_URL_BASE
         sync: false
+      # Demo Sandbox — opt-in ephemeral isolated slots (disabled by default).
+      # Keep DEMO_SANDBOX_ENABLED="false" until slots are bootstrapped via
+      # `pnpm --filter backend db:sandbox:bootstrap`.
+      - key: DEMO_SANDBOX_ENABLED
+        value: "false"
+      - key: DEMO_SANDBOX_RECOVER_ON_BOOT
+        value: "false"
+      - key: DEMO_SANDBOX_JWT_SECRET
+        sync: false
+      - key: DEMO_SANDBOX_SLOTS_JSON
+        sync: false
+      - key: DEMO_SANDBOX_DB_HOST
+        sync: false
+      - key: DEMO_SANDBOX_DB_PORT
+        sync: false
+      - key: DEMO_SANDBOX_DB_CA_CERT
+        sync: false

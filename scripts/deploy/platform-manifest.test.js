@@ -45,6 +45,11 @@ const SYNC_FALSE_SECRETS = [
   'R2_SECRET_ACCESS_KEY',
   'R2_BUCKET_NAME',
   'R2_PUBLIC_URL_BASE',
+  'DEMO_SANDBOX_JWT_SECRET',
+  'DEMO_SANDBOX_SLOTS_JSON',
+  'DEMO_SANDBOX_DB_HOST',
+  'DEMO_SANDBOX_DB_PORT',
+  'DEMO_SANDBOX_DB_CA_CERT',
 ];
 
 test('render.yaml exists at the repository root', () => {
@@ -71,6 +76,8 @@ test('render.yaml sets the non-secret runtime env inline', () => {
   assert.match(text, /- key:\s*NODE_ENV\n\s+value:\s*production/);
   assert.match(text, /- key:\s*RUN_COMPILED\n\s+value:\s*["']?true["']?/);
   assert.match(text, /- key:\s*NODE_VERSION\n\s+value:\s*["']?22["']?/);
+  assert.match(text, /- key:\s*DEMO_SANDBOX_ENABLED\n\s+value:\s*["']?false["']?/);
+  assert.match(text, /- key:\s*DEMO_SANDBOX_RECOVER_ON_BOOT\n\s+value:\s*["']?false["']?/);
 });
 
 test('render.yaml declares every secret as a sync:false key with no inline value', () => {
