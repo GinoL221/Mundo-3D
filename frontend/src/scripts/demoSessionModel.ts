@@ -1,0 +1,76 @@
+import type { DemoRole } from '../config';
+
+export interface DemoBarPresentation {
+  roleLabel: 'BUYER' | 'STAFF';
+  roleBadgeClass: string;
+  summaryText: string;
+}
+
+export interface DemoNoticePresentation {
+  tone: 'info' | 'warning';
+  title: string;
+  text: string;
+  retryLabel?: string;
+}
+
+export type DemoNoticeKind = 'disabled' | 'busy' | 'rate-limit' | 'error' | 'expired';
+
+export function buildDemoBarPresentation(role: DemoRole): DemoBarPresentation {
+  if (role === 'STAFF') {
+    return {
+      roleLabel: 'STAFF',
+      roleBadgeClass: 'ui-badge ui-badge--staff',
+      summaryText: 'Modo STAFF aislado · podés gestionar encargos y catálogo sin eliminar piezas.',
+    };
+  }
+  return {
+    roleLabel: 'BUYER',
+    roleBadgeClass: 'ui-badge ui-badge--user',
+    summaryText: 'Sesión temporal aislada · los cambios se reinician al salir.',
+  };
+}
+
+export function buildDemoNotice(
+  kind: DemoNoticeKind,
+  retryAfterSeconds = 30,
+): DemoNoticePresentation {
+  switch (kind) {
+    case 'disabled':
+      return {
+        tone: 'info',
+        title: 'El modo demo no está disponible en este momento',
+        text: 'Podés seguir navegando la tienda normalmente.',
+      };
+    case 'busy':
+      return {
+        tone: 'warning',
+        title: 'Todas las sesiones demo están ocupadas',
+        text: `Hay otras pruebas activas ahora. Intentá de nuevo en unos ${retryAfterSeconds} segundos.`,
+        retryLabel: 'Reintentar',
+      };
+    case 'rate-limit':
+      return {
+        tone: 'warning',
+        title: 'Demasiados intentos en poco tiempo',
+        text: 'Esperá unos minutos antes de abrir otra sesión demo.',
+      };
+    case 'expired':
+      return {
+        tone: 'info',
+        title: 'Tu sesión demo venció',
+        text: 'Los cambios temporales de esa sesión se descartaron. Podés abrir una nueva sesión para seguir probando.',
+        retryLabel: 'Iniciar nueva sesión demo',
+      };
+    case 'error':
+      return {
+        tone: 'warning',
+        title: 'No pudimos iniciar la sesión demo',
+        text: 'Verificá la conexión e intentá de nuevo.',
+        retryLabel: 'Reintentar',
+      };
+  }
+}
+
+export function isDemoProtectedPath(pathname: string): boolean {
+  return pathname.startsWith('/admin') || pathname === '/orders' || pathname === '/order';
+}
