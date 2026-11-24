@@ -71,10 +71,11 @@ function validateWorkflow(source) {
   assert.match(source, /contents: read/);
   assert.match(source, /cancel-in-progress: true/);
   assert.match(source, /timeout-minutes: 20/);
-  assert.match(source, /needs: \[quality, integration, e2e\]/);
+  assert.match(source, /needs: \[quality, integration, sandbox-mysql, e2e\]/);
   assert.match(source, /if: always\(\)/);
   assert.match(source, /needs\.quality\.result.*!= "success"/);
   assert.match(source, /needs\.integration\.result.*!= "success"/);
+  assert.match(source, /needs\.sandbox-mysql\.result.*!= "success"/);
   assert.match(source, /needs\.e2e\.result.*!= "success"/);
 }
 
