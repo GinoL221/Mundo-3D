@@ -227,14 +227,21 @@ describe('demoSessionClient', () => {
     expect(store.has(DEMO_STORAGE_KEY)).toBe(false);
   });
 
-  it('ends demo session cleanly with DELETE /api/demo/session and m3d_demo_csrf', async () => {
-    const { cookies } = stubEnv(`${DEMO_CSRF_COOKIE_NAME}=demo.exit`);
-    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+  it('keeps m3d_demo_csrf cookie intact until DELETE /api/demo/session is sent and clears local state even on network error', async () => {
+    const { cookies, store } = stubEnv(`${DEMO_CSRF_COOKIE_NAME}=demo.exit`);
+    store.set(DEMO_STORAGE_KEY, JSON.stringify(buyerSession));
+    let csrfCookieDuringDelete: string | undefined;
+    const fetchMock = vi.fn().mockImplementation(async () => {
+      csrfCookieDuringDelete = cookies.get(DEMO_CSRF_COOKIE_NAME);
+      return new Response(null, { status: 204 });
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     await endDemoSession();
 
+    expect(csrfCookieDuringDelete).toBe('demo.exit');
     expect(cookies.has(DEMO_CSRF_COOKIE_NAME)).toBe(false);
+    expect(store.has(DEMO_STORAGE_KEY)).toBe(false);
     expect(fetchMock).toHaveBeenCalledWith(
       `${API_URL}/api/demo/session`,
       expect.objectContaining({
@@ -244,5 +251,12 @@ describe('demoSessionClient', () => {
         headers: { 'X-CSRF-Token': 'demo.exit' },
       }),
     );
+
+    const env2 = stubEnv(`${DEMO_CSRF_COOKIE_NAME}=demo.err`);
+    env2.store.set(DEMO_STORAGE_KEY, JSON.stringify(buyerSession));
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValueOnce(new Error('offline')));
+    await endDemoSession();
+    expect(env2.cookies.has(DEMO_CSRF_COOKIE_NAME)).toBe(false);
+    expect(env2.store.has(DEMO_STORAGE_KEY)).toBe(false);
   });
 });
