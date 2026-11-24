@@ -1,0 +1,75 @@
+---
+---
+
+<aside
+  id="demo-session-bar"
+  class="demo-bar"
+  aria-label="Sesión demo temporal"
+  hidden
+>
+  <div class="demo-bar__inner">
+    <div class="demo-bar__info">
+      <span class="ui-badge ui-badge--brand">MODO DEMO</span>
+      <span id="demo-bar-role-badge" class="ui-badge ui-badge--user">BUYER</span>
+      <p id="demo-bar-summary" class="demo-bar__text">
+        Sesión temporal aislada · los cambios se reinician al salir.
+      </p>
+    </div>
+
+    <div class="demo-bar__actions">
+      <div id="demo-bar-role-controls" class="demo-bar__role-controls" hidden></div>
+      <button
+        type="button"
+        id="demo-bar-exit"
+        class="ui-btn ui-btn--secondary ui-btn--sm"
+      >
+        Salir de la demo
+      </button>
+    </div>
+  </div>
+</aside>
+
+<div id="demo-session-notice-wrap" class="demo-notice-wrap" hidden>
+  <div
+    id="demo-session-notice"
+    class="ui-callout ui-callout--info demo-notice"
+    role="alert"
+    tabindex="-1"
+  >
+    <svg
+      class="ui-callout__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+    <div class="ui-callout__content">
+      <p id="demo-notice-title" class="ui-callout__title"></p>
+      <p id="demo-notice-text" class="ui-callout__text"></p>
+      <div class="demo-notice__actions">
+        <button
+          type="button"
+          id="demo-notice-retry"
+          class="ui-btn ui-btn--secondary ui-btn--sm"
+          hidden
+        >
+          Reintentar
+        </button>
+        <button
+          type="button"
+          id="demo-notice-dismiss"
+          class="ui-btn ui-btn--ghost ui-btn--sm"
+        >
+          Cerrar aviso
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

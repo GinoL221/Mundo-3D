@@ -1,8 +1,20 @@
 import { getSessionUser } from '../../../config';
-import { cartItems, cartTotal, persistCart, type APICartSyncPayload, type CartItem } from './cartState';
+import {
+  cartItems,
+  cartTotal,
+  getCartStorageKey,
+  persistCart,
+  type APICartSyncPayload,
+  type CartItem,
+} from './cartState';
 import { discardPendingSync, scheduleSync } from './cartSync';
 import { hydrateFromServer, type HydrationResult, type PriceDrift } from './cartHydration';
-import { checkout, type CheckoutErrorCode, type CheckoutResult, type StockShortage } from './checkout';
+import {
+  checkout,
+  type CheckoutErrorCode,
+  type CheckoutResult,
+  type StockShortage,
+} from './checkout';
 
 export { cartItems, cartTotal };
 export type { CartItem, APICartSyncPayload, HydrationResult, PriceDrift };
@@ -11,7 +23,7 @@ export type { CheckoutErrorCode, CheckoutResult, StockShortage };
 export class CartService {
   static loadCartFromStorage(): void {
     try {
-      const raw = localStorage.getItem('cart');
+      const raw = localStorage.getItem(getCartStorageKey());
       if (raw) {
         const parsed = JSON.parse(raw) as CartItem[];
         if (Array.isArray(parsed)) {
@@ -29,14 +41,17 @@ export class CartService {
     cartItems.set([]);
   }
 
-  static addToCart(product: { id: number; name: string; image: string; price: number }, qty = 1): void {
+  static addToCart(
+    product: { id: number; name: string; image: string; price: number },
+    qty = 1,
+  ): void {
     const current = cartItems.get();
     const existing = current.find((i) => i.productId === product.id);
 
     let updated: CartItem[];
     if (existing) {
       updated = current.map((i) =>
-        i.productId === product.id ? { ...i, quantity: i.quantity + qty } : i
+        i.productId === product.id ? { ...i, quantity: i.quantity + qty } : i,
       );
     } else {
       updated = [
