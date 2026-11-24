@@ -261,11 +261,38 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  sandbox-mysql:
+    name: Demo Sandbox MySQL 8.0 isolation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - name: Install pnpm
+        # v6.1.0
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        with:
+          version: 11.0.9
+
+      - name: Use Node.js 22
+        # v5.0.0
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Demo Sandbox MySQL 8.0 isolation suites
+        run: pnpm --filter backend test:sandbox:mysql:ci
+
   verification-gate:
     name: Verification gate
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [quality, integration, e2e]
+    needs: [quality, integration, sandbox-mysql, e2e]
     if: always()
 
     steps:
@@ -273,9 +300,11 @@ jobs:
         run: |
           echo "quality: ${{ needs.quality.result }}"
           echo "integration: ${{ needs.integration.result }}"
+          echo "sandbox-mysql: ${{ needs.sandbox-mysql.result }}"
           echo "e2e: ${{ needs.e2e.result }}"
           if [ "${{ needs.quality.result }}" != "success" ] || \
              [ "${{ needs.integration.result }}" != "success" ] || \
+             [ "${{ needs.sandbox-mysql.result }}" != "success" ] || \
              [ "${{ needs.e2e.result }}" != "success" ]; then
             echo "One or more mandatory checks failed or could not run." \
               "Blocking integration." >&2
