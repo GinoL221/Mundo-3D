@@ -5,6 +5,7 @@ import {
   persistDemoSession,
   readDemoCsrfToken,
   saveDemoSession,
+  type DemoRole,
   type DemoSessionState,
 } from './demoSessionState';
 
@@ -15,6 +16,10 @@ export type StartDemoSessionResult =
       reason: 'disabled' | 'busy' | 'rate-limit' | 'error';
       retryAfterSeconds?: number;
     };
+
+export type SwitchDemoRoleResult =
+  | { ok: true; session: DemoSessionState }
+  | { ok: false; reason: 'disabled' | 'expired' | 'forbidden' | 'error' };
 
 export type HydrateDemoSessionResult =
   | { status: 'inactive' }
@@ -119,6 +124,47 @@ export async function hydrateDemoSession(): Promise<HydrateDemoSessionResult> {
     return { status: 'active', session: body };
   } catch {
     return { status: 'inactive' };
+  }
+}
+
+export async function switchDemoRole(role: DemoRole): Promise<SwitchDemoRoleResult> {
+  const send = (): Promise<Response> => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const token = readDemoCsrfToken();
+    if (token) headers['X-CSRF-Token'] = token;
+    return fetch(`${API_URL}/api/demo/session/role`, {
+      method: 'POST',
+      credentials: 'include',
+      headers,
+      body: JSON.stringify({ role }),
+    });
+  };
+  try {
+    let res = await send();
+    if (res.status === 401) {
+      const refreshed = await ensureDemoRefreshed();
+      if (!refreshed) {
+        clearDemoSession('expired');
+        return { ok: false, reason: 'expired' };
+      }
+      res = await send();
+    }
+    if (res.status === 404) {
+      clearDemoSession('disabled');
+      return { ok: false, reason: 'disabled' };
+    }
+    if (res.status === 401) {
+      clearDemoSession('expired');
+      return { ok: false, reason: 'expired' };
+    }
+    if (res.status === 403) return { ok: false, reason: 'forbidden' };
+    if (!res.ok) return { ok: false, reason: 'error' };
+    const body: unknown = await res.json();
+    if (!isValidDemoSession(body)) return { ok: false, reason: 'error' };
+    saveDemoSession(body, 'updated');
+    return { ok: true, session: body };
+  } catch {
+    return { ok: false, reason: 'error' };
   }
 }
 

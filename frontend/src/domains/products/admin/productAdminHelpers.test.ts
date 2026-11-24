@@ -199,6 +199,20 @@ describe('validateProductForm', () => {
     expect(errors.image).toBeTruthy();
   });
 
+  it('allows omitting image on create when requireImageOnCreate is false while still rejecting invalid extensions', () => {
+    const okErrors = validateProductForm(makeValidValues({ imageFile: null }), 'create', {
+      requireImageOnCreate: false,
+    });
+    expect(okErrors).toEqual({});
+
+    const badExtErrors = validateProductForm(
+      makeValidValues({ imageFile: new File(['txt'], 'note.txt', { type: 'text/plain' }) }),
+      'create',
+      { requireImageOnCreate: false },
+    );
+    expect(badExtErrors.image).toBeTruthy();
+  });
+
   it('does not require image or validate stock on edit', () => {
     const errors = validateProductForm(
       makeValidValues({

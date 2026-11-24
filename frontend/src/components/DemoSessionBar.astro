@@ -17,7 +17,32 @@
     </div>
 
     <div class="demo-bar__actions">
-      <div id="demo-bar-role-controls" class="demo-bar__role-controls" hidden></div>
+      <div
+        id="demo-bar-role-controls"
+        class="demo-bar__role-controls"
+        role="group"
+        aria-label="Cambiar rol en la demo"
+        hidden
+      >
+        <button
+          type="button"
+          id="demo-role-buyer"
+          class="demo-bar__role-btn"
+          data-demo-role="USER"
+          aria-pressed="true"
+        >
+          Buyer
+        </button>
+        <button
+          type="button"
+          id="demo-role-staff"
+          class="demo-bar__role-btn"
+          data-demo-role="STAFF"
+          aria-pressed="false"
+        >
+          STAFF
+        </button>
+      </div>
       <button
         type="button"
         id="demo-bar-exit"

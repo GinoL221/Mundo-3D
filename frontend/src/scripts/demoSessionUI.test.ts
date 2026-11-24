@@ -46,6 +46,9 @@ function setupDom(initialCookie = '') {
   const bar = new FakeEl(true);
   const roleBadge = new FakeEl(false);
   const summary = new FakeEl(false);
+  const roleControls = new FakeEl(true);
+  const buyerBtn = new FakeEl(false);
+  const staffBtn = new FakeEl(false);
   const exitBtn = new FakeEl(false);
   const noticeWrap = new FakeEl(true);
   const noticeEl = new FakeEl(false);
@@ -59,6 +62,9 @@ function setupDom(initialCookie = '') {
     ['demo-session-bar', bar],
     ['demo-bar-role-badge', roleBadge],
     ['demo-bar-summary', summary],
+    ['demo-bar-role-controls', roleControls],
+    ['demo-role-buyer', buyerBtn],
+    ['demo-role-staff', staffBtn],
     ['demo-bar-exit', exitBtn],
     ['demo-session-notice-wrap', noticeWrap],
     ['demo-session-notice', noticeEl],
@@ -83,8 +89,10 @@ function setupDom(initialCookie = '') {
   } as unknown as Document;
 
   const winListeners = new Map<string, Set<EventListener>>();
+  const assign = vi.fn();
+  const reload = vi.fn();
   const win = {
-    location: { pathname: '/', assign: vi.fn(), reload: vi.fn() },
+    location: { pathname: '/', assign, reload },
     addEventListener: (t: string, fn: EventListener) => {
       const set = winListeners.get(t) ?? new Set();
       set.add(fn);
@@ -110,7 +118,23 @@ function setupDom(initialCookie = '') {
   vi.stubGlobal('sessionStorage', storage);
   vi.stubGlobal('localStorage', storage);
 
-  return { doc, win, bar, roleBadge, exitBtn, noticeWrap, noticeTitle, retryBtn, entryBtn, store };
+  return {
+    doc,
+    win,
+    bar,
+    roleBadge,
+    roleControls,
+    buyerBtn,
+    staffBtn,
+    exitBtn,
+    noticeWrap,
+    noticeTitle,
+    retryBtn,
+    entryBtn,
+    store,
+    assign,
+    reload,
+  };
 }
 
 const buyerSession: DemoSessionState = {
@@ -180,6 +204,42 @@ describe('initializeDemoSessionUI', () => {
     expect(dom.bar.hidden).toBe(false);
     expect(dom.roleBadge.textContent).toBe('BUYER');
     expect(dom.entryBtn.hidden).toBe(true);
+    cleanup();
+  });
+
+  it('switches Buyer <-> STAFF via segmented controls and redirects off /admin when returning to Buyer', async () => {
+    const dom = setupDom(`${DEMO_CSRF_COOKIE_NAME}=demo.sig`);
+    dom.win.location.pathname = '/admin/products';
+    dom.store.set(DEMO_STORAGE_KEY, JSON.stringify(buyerSession));
+    const staffSession: DemoSessionState = {
+      ...buyerSession,
+      role: 'STAFF',
+      user: { idUser: 2, firstName: 'Demo', lastName: 'Staff', email: 'staff@demo.invalid' },
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(new Response(JSON.stringify(buyerSession), { status: 200 }))
+        .mockResolvedValueOnce(new Response(JSON.stringify(staffSession), { status: 200 }))
+        .mockResolvedValueOnce(new Response(JSON.stringify(buyerSession), { status: 200 })),
+    );
+
+    const cleanup = initializeDemoSessionUI(dom.doc, dom.win, { reloadOnTransition: true });
+    await flush();
+    expect(dom.roleControls.hidden).toBe(false);
+    expect(dom.buyerBtn.attrs.get('aria-pressed')).toBe('true');
+
+    dom.staffBtn.click();
+    await flush();
+    expect(dom.roleBadge.textContent).toBe('STAFF');
+    expect(dom.staffBtn.attrs.get('aria-pressed')).toBe('true');
+    expect(dom.reload).toHaveBeenCalledTimes(1);
+
+    dom.buyerBtn.click();
+    await flush();
+    expect(dom.roleBadge.textContent).toBe('BUYER');
+    expect(dom.assign).toHaveBeenCalledWith('/');
     cleanup();
   });
 

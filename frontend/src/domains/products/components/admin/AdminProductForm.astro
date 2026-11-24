@@ -317,7 +317,9 @@ const isCreate = mode === 'create';
       <div class="ui-field">
         <span id="image-label" class="ui-label">
           {isCreate ? 'Fotografía de la pieza ' : 'Reemplazar imagen '}
-          {isCreate && <span class="admin-required" aria-hidden="true">*</span>}
+          {isCreate && (
+            <span id="image-required-mark" class="admin-required" aria-hidden="true">*</span>
+          )}
         </span>
         <div class="ui-file">
           <input
@@ -328,13 +330,17 @@ const isCreate = mode === 'create';
             accept=".jpg,.png"
             required={isCreate}
             aria-labelledby="image-label"
-            aria-describedby="image-help image-file-name"
+            aria-describedby="image-help image-demo-note image-file-name"
           />
           <label class="ui-btn ui-btn--soft ui-btn--sm" for="image">Elegir imagen</label>
           <span id="image-file-name" class="ui-file__name">Ningún archivo seleccionado</span>
         </div>
         <p id="image-help" class="ui-help">
           Formatos aceptados: .jpg o .png.
+        </p>
+        <p id="image-demo-note" class="ui-help" hidden>
+          En modo demo la imagen es opcional: no se suben archivos externos y la pieza usa una
+          ilustración neutra del taller.
         </p>
         <p id="image-error" class="ui-error" hidden></p>
       </div>

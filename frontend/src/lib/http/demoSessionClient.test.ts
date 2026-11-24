@@ -6,6 +6,7 @@ import {
   ensureDemoRefreshed,
   hydrateDemoSession,
   startDemoSession,
+  switchDemoRole,
 } from './demoSessionClient';
 import { DEMO_CSRF_COOKIE_NAME, DEMO_STORAGE_KEY, type DemoSessionState } from './demoSessionState';
 
@@ -137,6 +138,42 @@ describe('demoSessionClient', () => {
     );
     resolveFetch(new Response(JSON.stringify(buyerSession), { status: 200 }));
     await expect(Promise.all([p1, p2])).resolves.toEqual([true, true]);
+  });
+
+  it('switches demo role via POST /api/demo/session/role with CSRF, retries once on 401, and handles 403/401', async () => {
+    const { cookies } = stubEnv(`${DEMO_CSRF_COOKIE_NAME}=demo.r1`);
+    const staffSession: DemoSessionState = {
+      ...buyerSession,
+      role: 'STAFF',
+      user: { idUser: 2, firstName: 'Demo', lastName: 'Staff', email: 'demo.staff@sandbox.invalid' },
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockImplementationOnce(async () => {
+        document.cookie = `${DEMO_CSRF_COOKIE_NAME}=demo.r2; path=/`;
+        return new Response(JSON.stringify(buyerSession), { status: 200 });
+      })
+      .mockResolvedValueOnce(new Response(JSON.stringify(staffSession), { status: 200 }))
+      .mockResolvedValueOnce(new Response(null, { status: 403 }))
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response(null, { status: 401 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(switchDemoRole('STAFF')).resolves.toEqual({ ok: true, session: staffSession });
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      `${API_URL}/api/demo/session/role`,
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': 'demo.r2' },
+        body: JSON.stringify({ role: 'STAFF' }),
+      }),
+    );
+    await expect(switchDemoRole('USER')).resolves.toEqual({ ok: false, reason: 'forbidden' });
+    await expect(switchDemoRole('USER')).resolves.toEqual({ ok: false, reason: 'expired' });
+    expect(cookies.has(DEMO_CSRF_COOKIE_NAME)).toBe(false);
   });
 
   it('ends demo session cleanly with DELETE /api/demo/session and m3d_demo_csrf', async () => {

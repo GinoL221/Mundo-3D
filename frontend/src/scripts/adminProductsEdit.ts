@@ -1,3 +1,4 @@
+import { isDemoSessionActive } from '../config';
 import { getSessionUser, hasAdminAccess } from '../domains/auth';
 import { ProductAdminApiError, ProductAdminService } from '../domains/products';
 import type { AdminProductDTO } from '../domains/products';
@@ -74,6 +75,14 @@ export function initializeAdminProductsEdit(): void {
   const materialCustomInput = document.getElementById('materialCustom') as HTMLInputElement | null;
 
   const syncMaterial = wireMaterialToggle(materialSelect, materialCustomWrap, materialCustomInput);
+  if (isDemoSessionActive()) {
+    const demoNote = document.getElementById('image-demo-note');
+    if (demoNote) {
+      demoNote.textContent =
+        'En modo demo no se suben archivos externos: se conserva la imagen actual de la pieza.';
+      demoNote.hidden = false;
+    }
+  }
 
   let currentFallbackPreview: PreviewFallback | null = null;
   let loadedCategoryId = '';
