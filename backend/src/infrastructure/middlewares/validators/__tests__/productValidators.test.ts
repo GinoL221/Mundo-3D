@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { ValidationChain } from 'express-validator';
-import { searchProductsValidation } from '../productValidators';
+import { ValidationChain, validationResult } from 'express-validator';
+import {
+  createProductCreateValidators,
+  productCreateValidators,
+  searchProductsValidation,
+} from '../productValidators';
 
 type Middleware = ValidationChain | ((req: Request, res: Response, next: NextFunction) => void);
 
@@ -121,5 +125,37 @@ describe('searchProductsValidation', () => {
 
     expect(reachedEnd).toBe(true);
     expect(res.status).not.toHaveBeenCalled();
+  });
+});
+
+describe('createProductCreateValidators', () => {
+  const validBody = {
+    nameProduct: 'Figura Demo 3D',
+    price: '4500',
+    descriptionProduct: 'Pieza de prueba',
+    idCategory: '1',
+    idFranchise: '1',
+  };
+
+  const runChains = async (chains: ValidationChain[], body: Record<string, unknown>, file?: unknown) => {
+    const req = { body, file } as unknown as Request;
+    for (const chain of chains) {
+      await chain.run(req);
+    }
+    return validationResult(req).array();
+  };
+
+  it('production productCreateValidators still requires an uploaded image', async () => {
+    const errors = await runChains(productCreateValidators, validBody);
+    expect(errors.some((e) => e.msg === 'Tienes que subir una imagen')).toBe(true);
+  });
+
+  it('createProductCreateValidators({ requireImage: false }) allows omitting image while validating fields', async () => {
+    const optionalImageValidators = createProductCreateValidators({ requireImage: false });
+    const okErrors = await runChains(optionalImageValidators, validBody);
+    expect(okErrors).toEqual([]);
+
+    const badPriceErrors = await runChains(optionalImageValidators, { ...validBody, price: '0' });
+    expect(badPriceErrors.some((e) => e.msg === 'El precio debe ser mayor a 0')).toBe(true);
   });
 });

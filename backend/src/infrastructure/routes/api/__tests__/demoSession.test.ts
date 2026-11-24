@@ -80,9 +80,19 @@ function makeRuntime(busy = false) {
   return { runtime, slotRepository, rememberTokenRepo, getSlot: () => slot };
 }
 
-function buildApp(sessionLimiterMax = 20, refreshLimiterMax = 20, sessionCeilingMax = 30) {
+function buildApp(
+  sessionLimiterMax = 20,
+  refreshLimiterMax = 20,
+  sessionCeilingMax = 30,
+  roleSwitchLimiterMax = 30,
+) {
   const app = express().set('trust proxy', 1).use(express.json(), cookieParser());
-  const router = createDemoRouter({ sessionLimiterMax, refreshLimiterMax, sessionCeilingMax });
+  const router = createDemoRouter({
+    sessionLimiterMax,
+    refreshLimiterMax,
+    sessionCeilingMax,
+    roleSwitchLimiterMax,
+  });
   app.use('/api/demo', router).use(errorHandler);
   const post = (ip: string, c = '') =>
     request(app).post('/api/demo/session').set('X-Forwarded-For', ip).set('Cookie', c);
@@ -252,5 +262,55 @@ describe('/api/demo/session routes', () => {
     const failedSwitch = await switchRole(cBack, 'STAFF');
     expect(failedSwitch.status).toBe(500);
     expect(failedSwitch.headers['set-cookie']).toBeUndefined();
+  });
+
+  it('enforces CSRF and rate limiting on POST /api/demo/session/role', async () => {
+    const { runtime } = makeRuntime();
+    rtMod.setActiveDemoSandboxRuntime(runtime);
+    const { app, post } = buildApp(20, 20, 30, 2);
+
+    const r1 = await post('198.51.100.21');
+    const c1 = parseCk(r1.headers['set-cookie']);
+
+    const missingCsrf = await request(app)
+      .post('/api/demo/session/role')
+      .set('X-Forwarded-For', '198.51.100.21')
+      .set('Cookie', [`${A}=${c1[A]}`, `${C}=${c1[C]}`])
+      .send({ role: 'STAFF' });
+    expect(missingCsrf.status).toBe(403);
+
+    const invalidCsrf = await request(app)
+      .post('/api/demo/session/role')
+      .set('X-Forwarded-For', '198.51.100.21')
+      .set('Cookie', [`${A}=${c1[A]}`, `${C}=${c1[C]}`])
+      .set('x-csrf-token', 'wrong-csrf')
+      .send({ role: 'STAFF' });
+    expect(invalidCsrf.status).toBe(403);
+
+    const ok1 = await request(app)
+      .post('/api/demo/session/role')
+      .set('X-Forwarded-For', '198.51.100.21')
+      .set('Cookie', [`${A}=${c1[A]}`, `${C}=${c1[C]}`])
+      .set('x-csrf-token', c1[C])
+      .send({ role: 'STAFF' });
+    expect(ok1.status).toBe(200);
+    const c2 = parseCk(ok1.headers['set-cookie']);
+
+    const ok2 = await request(app)
+      .post('/api/demo/session/role')
+      .set('X-Forwarded-For', '198.51.100.21')
+      .set('Cookie', [`${A}=${c2[A]}`, `${C}=${c2[C]}`])
+      .set('x-csrf-token', c2[C])
+      .send({ role: 'USER' });
+    expect(ok2.status).toBe(200);
+    const c3 = parseCk(ok2.headers['set-cookie']);
+
+    const throttled = await request(app)
+      .post('/api/demo/session/role')
+      .set('X-Forwarded-For', '198.51.100.21')
+      .set('Cookie', [`${A}=${c3[A]}`, `${C}=${c3[C]}`])
+      .set('x-csrf-token', c3[C])
+      .send({ role: 'STAFF' });
+    expect(throttled.status).toBe(429);
   });
 });
