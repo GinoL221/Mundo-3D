@@ -77,9 +77,9 @@ function makeRuntime(busy = false) {
   return { runtime, slotRepository, rememberTokenRepo, getSlot: () => slot };
 }
 
-function buildApp(sessionLimiterMax = 20, refreshLimiterMax = 20) {
+function buildApp(sessionLimiterMax = 20, refreshLimiterMax = 20, sessionCeilingMax = 30) {
   const app = express().set('trust proxy', 1).use(express.json(), cookieParser());
-  const router = createDemoRouter({ sessionLimiterMax, refreshLimiterMax });
+  const router = createDemoRouter({ sessionLimiterMax, refreshLimiterMax, sessionCeilingMax });
   app.use('/api/demo', router).use(errorHandler);
   const post = (ip: string, c = '') =>
     request(app).post('/api/demo/session').set('X-Forwarded-For', ip).set('Cookie', c);
@@ -128,10 +128,16 @@ describe('/api/demo/session routes', () => {
     const busy = await buildApp().post('198.51.100.2');
     expect([busy.status, busy.headers['retry-after']]).toEqual([503, '30']);
     expect(busy.body.code).toBe('DEMO_SANDBOX_BUSY');
-    const lim = buildApp(1, 1);
-    const [b1, b2] = [await lim.post('198.51.100.3'), await lim.post('198.51.100.3')];
+    const lim = buildApp(1, 1, 2);
+    const [b1, b2, b3] = [
+      await lim.post('198.51.100.3'),
+      await lim.post('198.51.100.3'),
+      await lim.post('198.51.100.3'),
+    ];
     const [r1, r2] = [await lim.ref('', '198.51.100.3'), await lim.ref('', '198.51.100.3')];
-    expect([b1.status, b2.status, r1.status, r2.status]).toEqual([503, 503, 401, 429]);
+    expect([b1.status, b2.status, b3.status, r1.status, r2.status]).toEqual([
+      503, 503, 429, 401, 429,
+    ]);
     expectClr(r1.headers['set-cookie']);
     rtMod.setActiveDemoSandboxRuntime(makeRuntime().runtime);
     const [ok1, lim2] = [await lim.post('198.51.100.7'), await lim.post('198.51.100.7')];

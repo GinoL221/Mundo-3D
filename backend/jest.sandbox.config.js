@@ -5,5 +5,6 @@ module.exports = {
     '**/src/infrastructure/database/__tests__/DemoSandboxProductRepositories.mysql.ts',
     '**/src/infrastructure/database/__tests__/sandboxReleasePinning.mysql.ts',
     '**/src/infrastructure/database/__tests__/DemoSandboxResetAdapter.mysql.ts',
+    '**/src/infrastructure/database/__tests__/DemoSandboxHttpIsolation.mysql.ts',
   ],
 };

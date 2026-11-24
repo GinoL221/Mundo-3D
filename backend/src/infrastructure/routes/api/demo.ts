@@ -19,6 +19,7 @@ import { searchProductsValidation as searchVal } from '../../middlewares/validat
 export interface DemoRouterOptions {
   sessionLimiterWindowMs?: number;
   sessionLimiterMax?: number;
+  sessionCeilingMax?: number;
   refreshLimiterWindowMs?: number;
   refreshLimiterMax?: number;
   commissionLimiterWindowMs?: number;
@@ -48,7 +49,9 @@ const run =
   (req, res, next) => {
     const rt = rtMod.getActiveDemoSandboxRuntime();
     if (!rt || !req.sandbox) return void res.status(404).json({ message: 'Not found' });
-    void pick(getBuyer(rt.repositories, req.sandbox.slotId))(req, res, next);
+    void Promise.resolve(pick(getBuyer(rt.repositories, req.sandbox.slotId))(req, res, next)).catch(
+      next,
+    );
   };
 
 const READS: [string, (b: Buyer) => RequestHandler][] = [
@@ -72,6 +75,7 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   const cMsg = 'Too many demo session requests. Please try again later.';
   const rMsg = 'Too many demo session refresh requests. Please try again later.';
   const cmMsg = 'Too many requests. Please try again later.';
+  const cCap = makeLim(o.sessionLimiterWindowMs ?? w, o.sessionCeilingMax ?? 30, cMsg, false);
   const cLim = makeLim(o.sessionLimiterWindowMs ?? w, o.sessionLimiterMax ?? 5, cMsg, true);
   const rLim = makeLim(o.refreshLimiterWindowMs ?? w, o.refreshLimiterMax ?? 10, rMsg);
   const cmLim = makeLim(
@@ -86,7 +90,7 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
     run((b) => b.commissions.create),
   ];
   router.use(ses.requireDemoSandboxEnabled);
-  router.post('/session', cLim, c.create);
+  router.post('/session', cCap, cLim, c.create);
   router.get('/session', auth, c.get);
   router.post('/session/refresh', rLim, c.refresh);
   router.delete('/session', ...write, c.destroy);
