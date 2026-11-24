@@ -4,6 +4,10 @@ export const DEMO_CSRF_COOKIE_NAME = 'm3d_demo_csrf';
 export const DEMO_STORAGE_KEY = 'm3d_demo_session';
 export const DEMO_BROADCAST_CHANNEL = 'm3d-demo-session';
 export const DEMO_SESSION_EVENT = 'demo-session-changed';
+export const DEMO_TAB_ID =
+  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 export type DemoRole = 'USER' | 'STAFF';
 export type DemoChangeReason =
@@ -37,6 +41,7 @@ export interface DemoSessionState {
 export interface DemoSessionChangedMessage {
   type: 'demo-session-changed';
   reason: DemoChangeReason;
+  senderId?: string;
 }
 
 const DEMO_ROUTE_RE =
@@ -104,7 +109,22 @@ export function persistDemoSession(session: DemoSessionState | null): void {
   }
 }
 
-export function notifyDemoSessionChanged(reason: DemoChangeReason): void {
+export function isDemoSessionPendingHydration(): boolean {
+  if (!readDemoCsrfToken()) return false;
+  try {
+    if (typeof sessionStorage === 'undefined') return false;
+    const raw = sessionStorage.getItem(DEMO_STORAGE_KEY);
+    if (!raw) return true;
+    return !isValidDemoSession(JSON.parse(raw));
+  } catch {
+    return true;
+  }
+}
+
+export function notifyDemoSessionChanged(
+  reason: DemoChangeReason,
+  options: { broadcast?: boolean } = {},
+): void {
   try {
     if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
       window.dispatchEvent(new CustomEvent(DEMO_SESSION_EVENT, { detail: { reason } }));
@@ -112,11 +132,16 @@ export function notifyDemoSessionChanged(reason: DemoChangeReason): void {
   } catch {
     // Non-browser environment.
   }
+  if (options.broadcast === false) return;
   try {
     if (typeof BroadcastChannel === 'undefined') return;
     const channel = new BroadcastChannel(DEMO_BROADCAST_CHANNEL);
     try {
-      const msg: DemoSessionChangedMessage = { type: 'demo-session-changed', reason };
+      const msg: DemoSessionChangedMessage = {
+        type: 'demo-session-changed',
+        reason,
+        senderId: DEMO_TAB_ID,
+      };
       channel.postMessage(msg);
     } finally {
       channel.close();
@@ -129,9 +154,10 @@ export function notifyDemoSessionChanged(reason: DemoChangeReason): void {
 export function saveDemoSession(
   session: DemoSessionState,
   reason: DemoChangeReason = 'updated',
+  options?: { broadcast?: boolean },
 ): void {
   persistDemoSession(session);
-  notifyDemoSessionChanged(reason);
+  notifyDemoSessionChanged(reason, options);
 }
 
 export function getDemoSession(): DemoSessionState | null {

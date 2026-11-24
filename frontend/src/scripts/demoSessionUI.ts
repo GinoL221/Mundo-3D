@@ -12,6 +12,7 @@ import {
   type DemoRole,
   type DemoSessionChangedMessage,
 } from '../config';
+import { DEMO_TAB_ID, persistDemoSession } from '../lib/http/demoSessionState';
 import { CartService } from '../domains/cart/services/CartService';
 import { DEMO_CART_STORAGE_KEY } from '../domains/cart/services/cartState';
 import {
@@ -76,8 +77,9 @@ export function initializeDemoSessionUI(
       if (result.ok) {
         demoAvailable = true;
         renderDemoBar(document, els, result.session, demoAvailable);
+        clearDemoCartCache();
         CartService.loadCartFromStorage();
-        void CartService.hydrateFromServer();
+        await CartService.hydrateFromServer().catch(() => undefined);
         window.dispatchEvent(new Event('session-changed'));
         handleTransitionReload(false);
         return;
@@ -122,25 +124,54 @@ export function initializeDemoSessionUI(
   };
 
   const handleExit = async (): Promise<void> => {
-    if (els.exitBtn) els.exitBtn.disabled = true;
-    hideDemoNotice(els);
-    clearDemoCartCache();
-    await endDemoSession();
-    CartService.loadCartFromStorage();
-    renderDemoBar(document, els, null, demoAvailable);
-    window.dispatchEvent(new Event('session-changed'));
-    handleTransitionReload(isDemoProtectedPath(window.location?.pathname ?? '/'));
-    if (els.exitBtn) els.exitBtn.disabled = false;
+    if (els.exitBtn) {
+      els.exitBtn.disabled = true;
+      els.exitBtn.setAttribute('aria-busy', 'true');
+    }
+    try {
+      hideDemoNotice(els);
+      clearDemoCartCache();
+      await endDemoSession();
+      CartService.loadCartFromStorage();
+      renderDemoBar(document, els, null, demoAvailable);
+      window.dispatchEvent(new Event('session-changed'));
+      handleTransitionReload(isDemoProtectedPath(window.location?.pathname ?? '/'));
+    } finally {
+      if (els.exitBtn) {
+        els.exitBtn.disabled = false;
+        els.exitBtn.removeAttribute('aria-busy');
+      }
+    }
   };
 
-  const handleReason = (reason: DemoChangeReason | undefined): void => {
+  const handleReason = (reason: DemoChangeReason | undefined, fromBroadcast = false): void => {
     if (reason === 'expired' || reason === 'disabled' || reason === 'ended') {
+      if (fromBroadcast) persistDemoSession(null);
       clearDemoCartCache();
       CartService.loadCartFromStorage();
       if (reason === 'expired') demoAvailable = true;
       if (reason === 'disabled') demoAvailable = false;
       renderDemoBar(document, els, null, demoAvailable);
       if (reason !== 'ended') showDemoNotice(els, buildDemoNotice(reason));
+      window.dispatchEvent(new Event('session-changed'));
+      return;
+    }
+    if (
+      fromBroadcast &&
+      (reason === 'started' || reason === 'updated' || reason === 'role-changed')
+    ) {
+      void (async () => {
+        const hydrated = await hydrateDemoSession();
+        if (hydrated.status === 'active') {
+          demoAvailable = true;
+          renderDemoBar(document, els, hydrated.session, demoAvailable);
+          window.dispatchEvent(new Event('session-changed'));
+        } else if (hydrated.status === 'inactive') {
+          persistDemoSession(null);
+          renderDemoBar(document, els, null, demoAvailable);
+          window.dispatchEvent(new Event('session-changed'));
+        }
+      })();
       return;
     }
     renderDemoBar(document, els, getDemoSession(), demoAvailable);
@@ -183,7 +214,8 @@ export function initializeDemoSessionUI(
       channel = new BroadcastChannel(DEMO_BROADCAST_CHANNEL);
       channel.onmessage = (event: MessageEvent) => {
         const msg = event?.data as Partial<DemoSessionChangedMessage> | undefined;
-        handleReason(msg?.reason);
+        if (msg?.senderId === DEMO_TAB_ID) return;
+        handleReason(msg?.reason, true);
       };
     }
   } catch {
@@ -198,6 +230,9 @@ export function initializeDemoSessionUI(
         demoAvailable = true;
         renderDemoBar(document, els, hydrated.session, demoAvailable);
         window.dispatchEvent(new Event('session-changed'));
+      } else if (hydrated.status === 'inactive' && entries.length > 0) {
+        demoAvailable = await checkDemoAvailability();
+        renderDemoBar(document, els, getDemoSession(), demoAvailable);
       }
       return;
     }

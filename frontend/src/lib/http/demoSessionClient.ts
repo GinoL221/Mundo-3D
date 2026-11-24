@@ -28,6 +28,7 @@ export type HydrateDemoSessionResult =
   | { status: 'disabled' };
 
 let demoRefreshInFlight: Promise<boolean> | null = null;
+let demoHydrateInFlight: Promise<HydrateDemoSessionResult> | null = null;
 
 export function ensureDemoRefreshed(): Promise<boolean> {
   if (demoRefreshInFlight) return demoRefreshInFlight;
@@ -88,11 +89,7 @@ export async function startDemoSession(): Promise<StartDemoSessionResult> {
   }
 }
 
-export async function hydrateDemoSession(): Promise<HydrateDemoSessionResult> {
-  if (!readDemoCsrfToken()) {
-    persistDemoSession(null);
-    return { status: 'inactive' };
-  }
+async function fetchHydrateDemoSession(): Promise<HydrateDemoSessionResult> {
   try {
     let res = await fetch(`${API_URL}/api/demo/session`, {
       method: 'GET',
@@ -120,11 +117,23 @@ export async function hydrateDemoSession(): Promise<HydrateDemoSessionResult> {
     if (!res.ok) return { status: 'inactive' };
     const body: unknown = await res.json();
     if (!isValidDemoSession(body)) return { status: 'inactive' };
-    saveDemoSession(body, 'updated');
+    saveDemoSession(body, 'updated', { broadcast: false });
     return { status: 'active', session: body };
   } catch {
     return { status: 'inactive' };
   }
+}
+
+export function hydrateDemoSession(): Promise<HydrateDemoSessionResult> {
+  if (!readDemoCsrfToken()) {
+    persistDemoSession(null);
+    return Promise.resolve({ status: 'inactive' });
+  }
+  if (demoHydrateInFlight) return demoHydrateInFlight;
+  demoHydrateInFlight = fetchHydrateDemoSession().finally(() => {
+    demoHydrateInFlight = null;
+  });
+  return demoHydrateInFlight;
 }
 
 export async function switchDemoRole(role: DemoRole): Promise<SwitchDemoRoleResult> {
@@ -161,7 +170,7 @@ export async function switchDemoRole(role: DemoRole): Promise<SwitchDemoRoleResu
     if (!res.ok) return { ok: false, reason: 'error' };
     const body: unknown = await res.json();
     if (!isValidDemoSession(body)) return { ok: false, reason: 'error' };
-    saveDemoSession(body, 'updated');
+    saveDemoSession(body, 'role-changed');
     return { ok: true, session: body };
   } catch {
     return { ok: false, reason: 'error' };

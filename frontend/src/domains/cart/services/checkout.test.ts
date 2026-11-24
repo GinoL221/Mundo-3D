@@ -236,4 +236,21 @@ describe('checkout', () => {
     const secondKey = fetchMock.mock.calls[1][1].headers['Idempotency-Key'];
     expect(firstKey).not.toBe(secondKey);
   });
+
+  it('maps HTTP 401 after failed refresh to UNAUTHENTICATED with a Spanish message', async () => {
+    stubCookie(LOGGED_IN_COOKIE);
+    seedCart([{ productId: 1, name: 'X', image: 'a.jpg', unitPrice: 100, quantity: 1 }]);
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(401, { error: 'Unauthorized' }))
+      .mockResolvedValueOnce(jsonResponse(401, {}));
+
+    const result = await checkout();
+
+    expect(result).toEqual({
+      ok: false,
+      code: 'UNAUTHENTICATED',
+      message: expect.stringMatching(/sesión/i),
+    });
+    expect(cartItems.get()).toHaveLength(1);
+  });
 });

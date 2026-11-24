@@ -51,20 +51,20 @@
   padding: 2px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm, 6px);
+  border-radius: var(--radius-control);
 }
 
 .demo-bar__role-btn {
   appearance: none;
   border: 0;
-  border-radius: calc(var(--radius-sm, 6px) - 2px);
+  border-radius: calc(var(--radius-control) - 2px);
   background: transparent;
-  color: var(--fg-muted);
+  color: var(--sys-text-muted);
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1;
-  min-height: 32px;
+  min-height: var(--sys-target-min, 44px);
   padding: 0 12px;
   cursor: pointer;
   transition:
@@ -122,7 +122,12 @@
   }
 
   .demo-bar__role-btn {
-    min-height: 44px;
     padding: 0 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-bar__role-btn {
+    transition: none;
   }
 }

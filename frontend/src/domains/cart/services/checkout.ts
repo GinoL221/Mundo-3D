@@ -113,6 +113,14 @@ export async function checkout(): Promise<CheckoutResult> {
   // order was rejected, nothing was committed server-side.
   pendingCheckoutKey = null;
 
+  if (res.status === 401) {
+    return {
+      ok: false,
+      code: 'UNAUTHENTICATED',
+      message: 'Tu sesión expiró. Iniciá sesión o una nueva demo para finalizar la compra.',
+    };
+  }
+
   let body: OrderApiErrorBody = {};
   try {
     body = (await res.json()) as OrderApiErrorBody;
