@@ -340,6 +340,36 @@ test('DEMO_SANDBOX_ENABLED=true passes when secret is distinct and 3-5 slots are
   assert.equal(runPreflight(env).status, 0);
 });
 
+test('DEMO_SANDBOX_ENABLED=true accepts TiDB Cloud Starter prefixed slot usernames up to 32 chars', () => {
+  const prefixedSlots = JSON.stringify([
+    { slotId: 'slot-1', database: 'demo_slot_1', username: '2abcde123456789.m3d_s1', password: 'p1' },
+    { slotId: 'slot-2', database: 'demo_slot_2', username: '2abcde123456789.m3d_s2', password: 'p2' },
+    {
+      slotId: 'slot-3',
+      database: 'demo_slot_3',
+      username: `2abcde123456789.${'a'.repeat(16)}`,
+      password: 'p3',
+    },
+  ]);
+  const env = {
+    ...buildFullEnv(),
+    DB_NAME: 'mundo_3d_control',
+    DB_USER: '2abcde123456789.app',
+    DB_PORT: '4000',
+    DEMO_SANDBOX_ENABLED: 'true',
+    DEMO_SANDBOX_JWT_SECRET: 'sandbox-distinct-secret-at-least-32-chars',
+    DEMO_SANDBOX_SLOTS_JSON: prefixedSlots,
+  };
+  assert.deepEqual(checkEnv(env), {
+    missing: [],
+    warnings: [],
+    nodeEnv: null,
+    storageDriver: null,
+    demoSandbox: null,
+  });
+  assert.equal(runPreflight(env).status, 0);
+});
+
 test('DEMO_SANDBOX_ENABLED=true requires DEMO_SANDBOX_JWT_SECRET and DEMO_SANDBOX_SLOTS_JSON', () => {
   const env = { ...buildFullEnv(), DEMO_SANDBOX_ENABLED: 'true' };
   assert.deepEqual(checkEnv(env).missing, ['DEMO_SANDBOX_JWT_SECRET', 'DEMO_SANDBOX_SLOTS_JSON']);
@@ -387,7 +417,43 @@ for (const [label, override] of [
     'root slot account',
     { DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS.replace('demo_u3', 'root') },
   ],
+  [
+    'prefixed root slot account',
+    { DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS.replace('demo_u3', '2abcde123456789.root') },
+  ],
+  [
+    'multi-dot slot username',
+    { DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS.replace('demo_u3', 'a.b.c') },
+  ],
+  [
+    'leading-dot slot username',
+    { DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS.replace('demo_u3', '.m3d_s3') },
+  ],
+  [
+    'trailing-dot slot username',
+    { DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS.replace('demo_u3', '2abcde123456789.') },
+  ],
+  [
+    'prefixed slot username >32 chars',
+    {
+      DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS.replace(
+        'demo_u3',
+        `2abcde123456789.${'a'.repeat(17)}`,
+      ),
+    },
+  ],
+  [
+    'dotted slot database name',
+    { DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS.replace('demo_slot_3', 'bad.db_3') },
+  ],
   ['slot user colliding with DB_USER', { DB_USER: 'demo_u2' }],
+  [
+    'prefixed slot user colliding with prefixed DB_USER',
+    {
+      DB_USER: '2abcde123456789.app',
+      DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS.replace('demo_u2', '2ABCDE123456789.APP'),
+    },
+  ],
   [
     'slot DB colliding with DB_NAME',
     { DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS.replace('demo_slot_3', 'value') },
@@ -425,5 +491,13 @@ test('demo sandbox preflight distinguishes short secret from JWT_SECRET collisio
   assert.match(
     checkEnv({ ...base, JWT_SECRET: shared, DEMO_SANDBOX_JWT_SECRET: shared }).demoSandbox,
     /must differ from JWT_SECRET/,
+  );
+  assert.match(
+    checkEnv({
+      ...base,
+      DEMO_SANDBOX_JWT_SECRET: 'sandbox-distinct-secret-at-least-32-chars',
+      DEMO_SANDBOX_SLOTS_JSON: VALID_SANDBOX_SLOTS.replace('demo_u3', '2abcde123456789.ROOT'),
+    }).demoSandbox,
+    /colliding, root, or reserved/,
   );
 });
