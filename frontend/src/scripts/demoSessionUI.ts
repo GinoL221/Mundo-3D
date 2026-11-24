@@ -12,7 +12,11 @@ import {
   type DemoRole,
   type DemoSessionChangedMessage,
 } from '../config';
-import { DEMO_TAB_ID, persistDemoSession } from '../lib/http/demoSessionState';
+import {
+  DEMO_TAB_ID,
+  expireDemoCsrfCookie,
+  persistDemoSession,
+} from '../lib/http/demoSessionState';
 import { CartService } from '../domains/cart/services/CartService';
 import { DEMO_CART_STORAGE_KEY } from '../domains/cart/services/cartState';
 import {
@@ -30,6 +34,7 @@ import { buildDemoNotice, isDemoProtectedPath } from './demoSessionModel';
 type Cleanup = () => void;
 
 const cleanups = new WeakMap<Document, Cleanup>();
+const DEFAULT_CART_HYDRATION_TIMEOUT_MS = 1500;
 
 function clearDemoCartCache(): void {
   try {
@@ -39,8 +44,23 @@ function clearDemoCartCache(): void {
   }
 }
 
+async function hydrateCartWithTimeout(timeoutMs: number): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      CartService.hydrateFromServer().catch(() => undefined),
+      new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
 export interface DemoSessionUIOptions {
   reloadOnTransition?: boolean;
+  cartHydrationTimeoutMs?: number;
 }
 
 export function initializeDemoSessionUI(
@@ -52,10 +72,13 @@ export function initializeDemoSessionUI(
   if (existing) return existing;
 
   const reloadOnTransition = options.reloadOnTransition ?? true;
+  const cartHydrationTimeoutMs =
+    options.cartHydrationTimeoutMs ?? DEFAULT_CART_HYDRATION_TIMEOUT_MS;
   const els = queryDemoBarElements(document);
   let demoAvailable = false;
   let starting = false;
   let switchingRole = false;
+  let syncVersion = 0;
 
   const handleTransitionReload = (redirectHome = false): void => {
     if (!reloadOnTransition) return;
@@ -75,11 +98,12 @@ export function initializeDemoSessionUI(
     try {
       const result = await startDemoSession();
       if (result.ok) {
+        syncVersion += 1;
         demoAvailable = true;
         renderDemoBar(document, els, result.session, demoAvailable);
         clearDemoCartCache();
         CartService.loadCartFromStorage();
-        await CartService.hydrateFromServer().catch(() => undefined);
+        await hydrateCartWithTimeout(cartHydrationTimeoutMs);
         window.dispatchEvent(new Event('session-changed'));
         handleTransitionReload(false);
         return;
@@ -105,6 +129,7 @@ export function initializeDemoSessionUI(
     try {
       const result = await switchDemoRole(targetRole);
       if (result.ok) {
+        syncVersion += 1;
         renderDemoBar(document, els, result.session, demoAvailable);
         window.dispatchEvent(new Event('session-changed'));
         const pathname = window.location?.pathname ?? '/';
@@ -129,6 +154,7 @@ export function initializeDemoSessionUI(
       els.exitBtn.setAttribute('aria-busy', 'true');
     }
     try {
+      syncVersion += 1;
       hideDemoNotice(els);
       clearDemoCartCache();
       await endDemoSession();
@@ -146,7 +172,11 @@ export function initializeDemoSessionUI(
 
   const handleReason = (reason: DemoChangeReason | undefined, fromBroadcast = false): void => {
     if (reason === 'expired' || reason === 'disabled' || reason === 'ended') {
-      if (fromBroadcast) persistDemoSession(null);
+      syncVersion += 1;
+      if (fromBroadcast) {
+        expireDemoCsrfCookie();
+        persistDemoSession(null);
+      }
       clearDemoCartCache();
       CartService.loadCartFromStorage();
       if (reason === 'expired') demoAvailable = true;
@@ -160,8 +190,10 @@ export function initializeDemoSessionUI(
       fromBroadcast &&
       (reason === 'started' || reason === 'updated' || reason === 'role-changed')
     ) {
+      const version = ++syncVersion;
       void (async () => {
         const hydrated = await hydrateDemoSession();
+        if (version !== syncVersion) return;
         if (hydrated.status === 'active') {
           demoAvailable = true;
           renderDemoBar(document, els, hydrated.session, demoAvailable);
@@ -222,22 +254,31 @@ export function initializeDemoSessionUI(
     channel = null;
   }
 
+  const startupVersion = syncVersion;
   void (async () => {
     if (isDemoSessionActive()) {
       renderDemoBar(document, els, getDemoSession(), demoAvailable);
       const hydrated = await hydrateDemoSession();
+      if (startupVersion !== syncVersion) return;
       if (hydrated.status === 'active') {
         demoAvailable = true;
         renderDemoBar(document, els, hydrated.session, demoAvailable);
         window.dispatchEvent(new Event('session-changed'));
-      } else if (hydrated.status === 'inactive' && entries.length > 0) {
-        demoAvailable = await checkDemoAvailability();
+      } else if (hydrated.status === 'inactive') {
+        persistDemoSession(null);
+        if (entries.length > 0) demoAvailable = await checkDemoAvailability();
+        if (startupVersion !== syncVersion) return;
+        renderDemoBar(document, els, null, demoAvailable);
+      } else if (hydrated.status === 'error') {
+        if (entries.length > 0) demoAvailable = await checkDemoAvailability();
+        if (startupVersion !== syncVersion) return;
         renderDemoBar(document, els, getDemoSession(), demoAvailable);
       }
       return;
     }
     if (entries.length === 0) return;
     demoAvailable = await checkDemoAvailability();
+    if (startupVersion !== syncVersion) return;
     renderDemoBar(document, els, null, demoAvailable);
   })();
 

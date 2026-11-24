@@ -11,6 +11,7 @@ import {
   getDemoSession,
   isDemoApiUrl,
   isDemoSessionActive,
+  isDemoSessionPendingHydration,
   isValidDemoSession,
   readDemoCsrfToken,
   rewriteDemoApiUrl,
@@ -122,6 +123,26 @@ describe('demoSessionState', () => {
     expect(demoRoleToId('USER')).toBe(2);
     expect(demoRoleToId('STAFF')).toBe(3);
     expect(isValidDemoSession({ ...sampleBuyer, role: 'ADMIN' })).toBe(false);
+  });
+
+  it('reports isDemoSessionPendingHydration across all 4 cookie/storage branches', () => {
+    const { store } = stubStorage();
+
+    // 1. No cookie -> false
+    stubCookieJar('');
+    expect(isDemoSessionPendingHydration()).toBe(false);
+
+    // 2. Cookie + empty storage -> true
+    stubCookieJar(`${DEMO_CSRF_COOKIE_NAME}=demo.sig`);
+    expect(isDemoSessionPendingHydration()).toBe(true);
+
+    // 3. Cookie + invalid JSON -> true
+    store.set(DEMO_STORAGE_KEY, '{not-json');
+    expect(isDemoSessionPendingHydration()).toBe(true);
+
+    // 4. Cookie + valid session -> false
+    store.set(DEMO_STORAGE_KEY, JSON.stringify(sampleBuyer));
+    expect(isDemoSessionPendingHydration()).toBe(false);
   });
 
   it('clears demo cookie and storage and notifies window + BroadcastChannel without touching m3d_user', () => {
