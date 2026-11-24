@@ -464,4 +464,73 @@ describe('initializeAdminCommissionRequests', () => {
       'a?cc=evil%40x.com&body=hi@ejemplo.com',
     );
   });
+
+  it('hydrates pending demo STAFF session in a new tab instead of locking on denied', async () => {
+    vi.stubGlobal('document', { cookie: 'm3d_demo_csrf=demo.tok' });
+    const store = new Map<string, string>();
+    vi.stubGlobal('sessionStorage', {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => void store.set(k, v),
+      removeItem: (k: string) => void store.delete(k),
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            active: true,
+            role: 'STAFF',
+            user: { idUser: 2, firstName: 'Demo', lastName: 'Staff', email: 'staff@demo.invalid' },
+            lease: {},
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
+    mocks.getSessionUser
+      .mockReturnValueOnce({ idUser: 1, firstName: 'Demo', lastName: 'Buyer', idRole: Role.USER, isDemo: true })
+      .mockReturnValueOnce({ idUser: 2, firstName: 'Demo', lastName: 'Staff', idRole: Role.STAFF, isDemo: true });
+    mocks.listCustomCommissionRequests.mockResolvedValue([]);
+
+    const doc = new FakeDocument();
+    const win = createWindowMock();
+
+    await initializeAdminCommissionRequests(doc as unknown as Document, win as unknown as Window);
+
+    expect(doc.getElementById('admin-gate-denied')?.hidden).toBe(true);
+    expect(doc.getElementById('admin-requests-content')?.hidden).toBe(false);
+    expect(doc.getElementById('admin-requests-empty')?.hidden).toBe(false);
+    vi.unstubAllGlobals();
+  });
+
+  it('unfreezes loading state and shows Spanish error when demo session expires with 401', async () => {
+    vi.stubGlobal('document', { cookie: 'm3d_demo_csrf=demo.tok' });
+    mocks.getSessionUser.mockReturnValue({
+      idUser: 2,
+      firstName: 'Demo',
+      lastName: 'Staff',
+      idRole: Role.STAFF,
+      isDemo: true,
+    });
+    mocks.listCustomCommissionRequests.mockRejectedValue(
+      new CustomCommissionRequestAdminApiError(401, 'Unauthorized'),
+    );
+
+    const doc = new FakeDocument();
+    const win = createWindowMock();
+
+    await initializeAdminCommissionRequests(doc as unknown as Document, win as unknown as Window);
+
+    const loading = doc.getElementById('admin-requests-loading')!;
+    const retry = doc.getElementById('admin-requests-retry')!;
+    const error = doc.getElementById('admin-requests-error')!;
+    const errorText = doc.getElementById('admin-requests-error-text')!;
+
+    expect(loading.hidden).toBe(true);
+    expect(loading.getAttribute('aria-busy')).toBeNull();
+    expect(retry.disabled).toBe(false);
+    expect(error.hidden).toBe(false);
+    expect(errorText.textContent).toMatch(/sesión demo expiró/i);
+    vi.unstubAllGlobals();
+  });
 });

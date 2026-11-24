@@ -1,5 +1,6 @@
-import { isDemoSessionActive } from '../config';
+import { hydrateDemoSession, isDemoSessionActive } from '../config';
 import { getSessionUser, hasAdminAccess } from '../domains/auth';
+import { isDemoSessionPendingHydration } from '../lib/http/demoSessionState';
 import { ProductAdminApiError, ProductAdminService } from '../domains/products';
 import {
   buildProductFormData,
@@ -18,6 +19,9 @@ import {
   wireMaterialToggle,
 } from './adminProductsForm';
 
+const DEMO_EXPIRED_MESSAGE =
+  'Tu sesión demo expiró. Iniciá una nueva demo desde la barra superior para continuar.';
+
 export function initializeAdminProductsCreate(): void {
   const deniedEl = document.getElementById('admin-gate-denied');
   const contentEl = document.getElementById('admin-create-content');
@@ -26,10 +30,28 @@ export function initializeAdminProductsCreate(): void {
 
   const sessionUser = getSessionUser();
   if (!hasAdminAccess(sessionUser)) {
+    if (isDemoSessionPendingHydration()) {
+      void hydrateDemoSession().then(() => {
+        if (hasAdminAccess(getSessionUser())) {
+          initAdminProductsCreateContent(contentEl, roleBadgeEl, scopeEl);
+        } else if (deniedEl) {
+          deniedEl.hidden = false;
+        }
+      });
+      return;
+    }
     if (deniedEl) deniedEl.hidden = false;
     return;
   }
 
+  initAdminProductsCreateContent(contentEl, roleBadgeEl, scopeEl);
+}
+
+function initAdminProductsCreateContent(
+  contentEl: HTMLElement | null,
+  roleBadgeEl: HTMLElement | null,
+  scopeEl: HTMLElement | null,
+): void {
   applyAdminRoleHeader(roleBadgeEl, scopeEl, {
     adminScope: 'Cargá una nueva pieza en el Catálogo con clasificación y stock inicial opcional.',
     staffScope: 'Cargá una nueva pieza en el Catálogo. Como STAFF podés crearla y ajustar stock, pero no eliminarla.',
@@ -103,6 +125,7 @@ export function initializeAdminProductsCreate(): void {
       createBtn.textContent = 'Creando...';
     }
 
+    const wasDemo = isDemoSessionActive();
     let unauthorized = false;
     try {
       const formData = buildProductFormData(values, 'create');
@@ -110,8 +133,12 @@ export function initializeAdminProductsCreate(): void {
       navigateToInternalRoute('/admin/products');
     } catch (err) {
       if (err instanceof ProductAdminApiError && err.status === 401) {
-        // authFetch already handles 401 teardown and /login redirect.
-        unauthorized = true;
+        if (!wasDemo) {
+          // authFetch already handles 401 teardown and /login redirect.
+          unauthorized = true;
+          return;
+        }
+        showFormErrorBanner(errorBox, DEMO_EXPIRED_MESSAGE);
         return;
       }
       if (err instanceof ProductAdminApiError) {

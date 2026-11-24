@@ -1,4 +1,6 @@
+import { hydrateDemoSession, isDemoSessionActive } from '../config';
 import { getSessionUser, hasAdminAccess, isAdminOnly } from '../domains/auth';
+import { isDemoSessionPendingHydration } from '../lib/http/demoSessionState';
 import { ProductAdminApiError, ProductAdminService } from '../domains/products';
 import type { AdminProductDTO } from '../domains/products';
 import { getCategoryImg, isPlaceholderImage } from '../domains/products/adapters/product.adapter';
@@ -10,29 +12,49 @@ import {
 import { resolveImageUrl } from '../lib/imageUrl';
 import { applyAdminRoleHeader } from './adminProductsForm';
 
+const DEMO_EXPIRED_MESSAGE =
+  'Tu sesión demo expiró. Iniciá una nueva demo desde la barra superior para continuar.';
+
 export function initializeAdminProductsList(): void {
   const deniedEl = document.getElementById('admin-gate-denied');
   const contentEl = document.getElementById('admin-products-content');
   const roleBadgeEl = document.getElementById('admin-role-badge');
   const scopeEl = document.getElementById('admin-scope-text');
 
-  const sessionUser = getSessionUser();
-  const isAdmin = isAdminOnly(sessionUser);
-  const isAdminOrStaff = hasAdminAccess(sessionUser);
+  const start = (sessionUser: ReturnType<typeof getSessionUser>): void => {
+    const isAdmin = isAdminOnly(sessionUser);
 
-  if (!isAdminOrStaff) {
+    applyAdminRoleHeader(roleBadgeEl, scopeEl, {
+      adminScope: 'Podés crear, editar, ajustar stock y eliminar piezas del Catálogo.',
+      staffScope:
+        'Podés crear y editar piezas y ajustar su stock en el Catálogo. El rol STAFF nunca puede eliminar piezas.',
+    });
+
+    if (contentEl) contentEl.hidden = false;
+    initAdminProductsListContent(isAdmin);
+  };
+
+  const sessionUser = getSessionUser();
+  if (!hasAdminAccess(sessionUser)) {
+    if (isDemoSessionPendingHydration()) {
+      void hydrateDemoSession().then(() => {
+        const hydratedUser = getSessionUser();
+        if (hasAdminAccess(hydratedUser)) {
+          start(hydratedUser);
+        } else if (deniedEl) {
+          deniedEl.hidden = false;
+        }
+      });
+      return;
+    }
     if (deniedEl) deniedEl.hidden = false;
     return;
   }
 
-  applyAdminRoleHeader(roleBadgeEl, scopeEl, {
-    adminScope: 'Podés crear, editar, ajustar stock y eliminar piezas del Catálogo.',
-    staffScope:
-      'Podés crear y editar piezas y ajustar su stock en el Catálogo. El rol STAFF nunca puede eliminar piezas.',
-  });
+  start(sessionUser);
+}
 
-  if (contentEl) contentEl.hidden = false;
-
+function initAdminProductsListContent(isAdmin: boolean): void {
   const retryBtn = document.getElementById('admin-products-retry');
   retryBtn?.addEventListener('click', () => {
     void loadProducts();
@@ -75,6 +97,7 @@ export function initializeAdminProductsList(): void {
     if (tableWrapEl) tableWrapEl.hidden = true;
     listEl.replaceChildren();
 
+    const wasDemo = isDemoSessionActive();
     try {
       const products = await ProductAdminService.list();
       if (loadingEl) loadingEl.hidden = true;
@@ -99,7 +122,12 @@ export function initializeAdminProductsList(): void {
       if (tableWrapEl) tableWrapEl.hidden = false;
     } catch (err) {
       if (err instanceof ProductAdminApiError && err.status === 401) {
-        // authFetch already handles 401 teardown and /login redirect.
+        if (!wasDemo) {
+          // authFetch already handles 401 teardown and /login redirect.
+          return;
+        }
+        if (loadingEl) loadingEl.hidden = true;
+        showInlineError(DEMO_EXPIRED_MESSAGE);
         return;
       }
       if (loadingEl) loadingEl.hidden = true;
@@ -173,6 +201,7 @@ export function initializeAdminProductsList(): void {
       if (plusBtn) plusBtn.disabled = true;
       if (minusBtn) minusBtn.disabled = true;
 
+      const wasDemo = isDemoSessionActive();
       let unauthorized = false;
       try {
         const updated = await ProductAdminService.adjustStock(product.idProduct, delta);
@@ -181,8 +210,12 @@ export function initializeAdminProductsList(): void {
         showInlineStatus(`Stock de «${product.nameProduct}» actualizado a ${currentStock}.`);
       } catch (err) {
         if (err instanceof ProductAdminApiError && err.status === 401) {
-          // authFetch already handles 401 teardown and /login redirect.
-          unauthorized = true;
+          if (!wasDemo) {
+            // authFetch already handles 401 teardown and /login redirect.
+            unauthorized = true;
+            return;
+          }
+          showInlineError(DEMO_EXPIRED_MESSAGE);
           return;
         }
         showInlineError(
@@ -216,6 +249,7 @@ export function initializeAdminProductsList(): void {
           deleteBtn.disabled = true;
           deleteBtn.textContent = 'Eliminando...';
 
+          const wasDemo = isDemoSessionActive();
           ProductAdminService.remove(product.idProduct)
             .then(() => {
               const tr = deleteBtn.closest('tr');
@@ -231,7 +265,13 @@ export function initializeAdminProductsList(): void {
             })
             .catch((err) => {
               if (err instanceof ProductAdminApiError && err.status === 401) {
-                // authFetch already handles 401 teardown and /login redirect.
+                if (!wasDemo) {
+                  // authFetch already handles 401 teardown and /login redirect.
+                  return;
+                }
+                showInlineError(DEMO_EXPIRED_MESSAGE);
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = originalLabel;
                 return;
               }
               showInlineError(

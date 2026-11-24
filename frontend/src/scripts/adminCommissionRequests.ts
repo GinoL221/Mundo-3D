@@ -1,4 +1,6 @@
+import { hydrateDemoSession, isDemoSessionActive } from '../config';
 import { getSessionUser, hasAdminAccess } from '../domains/auth';
+import { isDemoSessionPendingHydration } from '../lib/http/demoSessionState';
 import {
   CustomCommissionRequestAdminApiError,
   listCustomCommissionRequests,
@@ -9,6 +11,9 @@ import {
   buildCommissionRequestItemViewModel,
   resolveAdminRoleBadge,
 } from './adminCommissionRequestsModel';
+
+const DEMO_EXPIRED_MESSAGE =
+  'Tu sesión demo expiró. Iniciá una nueva demo desde la barra superior para continuar.';
 
 export interface AdminCommissionRequestsController {
   reload: () => Promise<void>;
@@ -114,6 +119,7 @@ export async function initializeAdminCommissionRequests(
     setHidden(listEl, true);
     listEl.replaceChildren();
 
+    const wasDemo = isDemoSessionActive();
     let unauthorized = false;
     try {
       const requests = await listCustomCommissionRequests();
@@ -170,8 +176,15 @@ export async function initializeAdminCommissionRequests(
       if (attempt !== activeAttempt) return;
 
       if (cause instanceof CustomCommissionRequestAdminApiError && cause.status === 401) {
-        // authFetch already handles 401 teardown and /login redirect.
-        unauthorized = true;
+        if (!wasDemo) {
+          // authFetch already handles 401 teardown and /login redirect.
+          unauthorized = true;
+          return;
+        }
+        loadingEl.removeAttribute('aria-busy');
+        setHidden(loadingEl, true);
+        if (errorTextEl) errorTextEl.textContent = DEMO_EXPIRED_MESSAGE;
+        setHidden(errorEl, false);
         return;
       }
 
@@ -192,7 +205,11 @@ export async function initializeAdminCommissionRequests(
     }
   };
 
-  const sessionUser = getSessionUser();
+  let sessionUser = getSessionUser();
+  if (!hasAdminAccess(sessionUser) && isDemoSessionPendingHydration()) {
+    await hydrateDemoSession();
+    sessionUser = getSessionUser();
+  }
   if (!hasAdminAccess(sessionUser)) {
     setHidden(roleBadge, true);
     setHidden(scopeNote, true);
