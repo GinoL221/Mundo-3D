@@ -1,4 +1,4 @@
-import { API_URL, authFetch, readApiErrorMessage } from '../../../config';
+import { API_URL, apiFetch, authFetch, readApiErrorMessage } from '../../../config';
 
 // Mirrors backend/src/application/dtos/ProductDTO.ts. This is the admin
 // mutation surface — server-side validation (express-validator) is the
@@ -113,7 +113,7 @@ export class ProductAdminService {
    * for the retry wrapper to do here.
    */
   static async list(): Promise<AdminProductDTO[]> {
-    const res = await fetch(`${API_URL}/api/products`);
+    const res = await apiFetch(`${API_URL}/api/products`);
 
     if (!res.ok) {
       return throwApiError(res);
@@ -132,7 +132,7 @@ export class ProductAdminService {
    * same reason as `list`: a public, no-credentials read cannot 401.
    */
   static async getById(id: number): Promise<AdminProductDTO> {
-    const res = await fetch(`${API_URL}/api/product/${id}`);
+    const res = await apiFetch(`${API_URL}/api/product/${id}`);
 
     if (!res.ok) {
       return throwApiError(res);

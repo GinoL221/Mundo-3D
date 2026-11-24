@@ -7,6 +7,8 @@
 // re-exports these so `session.service.ts`/`auth.service.ts` and every
 // other existing import specifier keep working unchanged.
 
+import { demoRoleToId, getDemoSession } from './demoSessionState';
+
 const CSRF_COOKIE_NAME = 'm3d_csrf';
 const USER_COOKIE_NAME = 'm3d_user';
 
@@ -41,7 +43,7 @@ function expiryScopes(): string[] {
   // dev/CI topology, and losing it because a hostname could not be read
   // would silently turn the whole clear into a no-op.
   const scopes = [''];
-  const hostname = typeof location === 'undefined' ? '' : location?.hostname ?? '';
+  const hostname = typeof location === 'undefined' ? '' : (location?.hostname ?? '');
   const labels = hostname.split('.').filter(Boolean);
   for (let i = 0; i < labels.length - 1; i += 1) {
     scopes.push(`; domain=${labels.slice(i).join('.')}`);
@@ -266,16 +268,21 @@ export async function parseApiResponse<T>(response: Response, fallbackMessage: s
  */
 export interface SessionUser {
   idRole: number;
+  isDemo?: boolean;
 }
 
 /**
- * Reads the current session user from the `m3d_user` cookie (design.md
- * "Decision: Display data in a non-httpOnly m3d_user cookie"). Returns null
- * when logged out (no cookie) or when the stored value is malformed —
- * never throws. Express's `res.cookie` URL-encodes the value by default, so
- * it must be decoded before parsing.
+ * Reads the active session user. When a Demo Sandbox session is active,
+ * returns the synthetic demo user (`Role.USER` or `Role.STAFF`, never
+ * `ADMIN`) without touching the standard `m3d_user` cookie; otherwise reads
+ * `m3d_user` (design.md "Decision: Display data in a non-httpOnly m3d_user
+ * cookie"). Never throws.
  */
 export function getSessionUser(): SessionUser | null {
+  const demo = getDemoSession();
+  if (demo) {
+    return { idRole: demoRoleToId(demo.role), isDemo: true };
+  }
   try {
     const raw = readCookie(USER_COOKIE_NAME);
     if (!raw) return null;

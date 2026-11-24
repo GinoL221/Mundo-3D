@@ -1,4 +1,4 @@
-import { API_URL } from '../../../config';
+import { API_URL, apiFetch } from '../../../config';
 import { adaptAPIProduct, adaptAPIProducts, isPlaceholderImage } from '../adapters/product.adapter';
 import type { APIProduct, Product } from '../adapters/product.adapter';
 
@@ -18,7 +18,7 @@ export type FetchProductByIdResult =
 export async function fetchProductById(id: string): Promise<FetchProductByIdResult> {
   let res: Response;
   try {
-    res = await fetch(`${API_URL}/api/product/${id}`);
+    res = await apiFetch(`${API_URL}/api/product/${id}`);
   } catch {
     return { ok: false, reason: 'network' };
   }
@@ -66,7 +66,7 @@ export function selectLatestPhotoProduct(products: readonly Product[]): Product 
 export async function fetchProducts(): Promise<FetchProductsResult> {
   let res: Response;
   try {
-    res = await fetch(`${API_URL}/api/products`);
+    res = await apiFetch(`${API_URL}/api/products`);
   } catch {
     return { ok: false, reason: 'network' };
   }
@@ -107,7 +107,7 @@ export async function fetchFeaturedProduct(
 export async function fetchLatestProduct(): Promise<FetchLatestProductResult> {
   let res: Response;
   try {
-    res = await fetch(`${API_URL}/api/products/latest`);
+    res = await apiFetch(`${API_URL}/api/products/latest`);
   } catch {
     return { ok: false, reason: 'network' };
   }
