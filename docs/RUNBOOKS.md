@@ -69,6 +69,8 @@ Two real incidents hit this repo in one session (2026-08-26) — both were genui
 | `JWT_SECRET`                     | **Every existing session is invalidated immediately** — all logged-in users get logged out.                                                                                              | Set the new value in the deploy environment, restart the backend. No migration needed. Warn users beforehand if possible; this is disruptive by design (it's the whole point if the secret leaked).                                           |
 | `COOKIE_SECRET`                  | Invalidates in-flight CSRF tokens (`m3d_csrf`) — users mid-form-submission get a CSRF rejection on their next state-changing request, resolved by a page reload. Does not log users out. | Set the new value, restart.                                                                                                                                                                                                                   |
 | `DB_PASS` (or any DB credential) | Backend can't reconnect until updated — a bad rotation order causes the "backend won't start" incident above.                                                                            | Update the credential in MySQL _and_ in every environment's `.env`/deploy config in the same maintenance window, then restart the backend. Never rotate the DB-side credential before the backend's config is ready to pick up the new value. |
+| `DEMO_SANDBOX_JWT_SECRET`        | **Every active Demo Sandbox session is invalidated immediately** — production user sessions (`JWT_SECRET`) are unaffected.                                                               | Generate a new >= 32-char secret distinct from `JWT_SECRET`, update `DEMO_SANDBOX_JWT_SECRET` in Render, and restart the backend.                                                                                                             |
+| Slot DB passwords (`DEMO_SANDBOX_SLOTS_JSON`) | Affected sandbox slots fail to connect or reset until both sides match; production `DB_USER`/`DB_NAME` is unaffected.                                                               | Update the slot MySQL user password in TiDB Cloud and the matching `password` entry inside `DEMO_SANDBOX_SLOTS_JSON` in Render in the same window (or temporarily set `DEMO_SANDBOX_ENABLED=false` during rotation), then restart.            |
 
 None of these secrets are recoverable from git history if they were ever committed — if a secret lands in a commit, rotating it is mandatory even after the commit is removed/force-pushed away, because the old value is still in anyone's already-fetched history (see `AGENTS.md`).
 
@@ -117,8 +119,8 @@ Three small, dependency-free Node scripts under `scripts/deploy/` (repo root) im
      - `cloudinary`: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`.
      - `disabled`: no storage credentials required (runtime uploads return `503`).
    - Lists every missing var in one message, not one at a time. `COOKIE_DOMAIN` and `PUBLIC_API_URL` are warn-only (exit 0 with a warning): `COOKIE_DOMAIN` is optional per `cookieOptions.ts` (not needed with the Cloudflare Pages same-origin `/api/*` proxy, required only for a cross-subdomain `api.<domain>` topology), and `PUBLIC_API_URL` is a frontend build-time var baked by Cloudflare Pages (or a custom-domain frontend build) at `astro build` — irrelevant to the backend process, so its absence here only warns.
-3. **Migrate, then start** — `pnpm --filter backend deploy:migrate-and-start` runs `db:migrate` first; if it fails, the app is never started (exit code propagates, non-zero) — this is what actually enforces "migrations run before the new version serves traffic," since `index.js`'s own boot refuses to auto-migrate (see "Incident: backend process won't start" above). Forwards `SIGTERM`/`SIGINT` to the spawned server process so graceful shutdown still works normally when this wrapper is what the platform sends the signal to (see "Graceful shutdown" above). In production, `render.yaml`'s `startCommand` runs `pnpm --filter backend deploy:start`, which chains steps 2 and 3 (`env-preflight && migrate-and-start`) so a missing required var aborts before any DB or app work happens — steps 2/3 are also runnable standalone, as shown here.
-4. **Smoke test** — `pnpm --filter backend deploy:smoke-test` (needs `SMOKE_TEST_BASE_URL` pointed at the just-deployed instance). Polls `GET /health/live` then `GET /health/ready` until both return 200 or `SMOKE_TEST_TIMEOUT_MS` elapses (default `120000ms`) — readiness is never checked before liveness succeeds at least once. Non-zero exit means the deploy did not actually come up healthy, regardless of what the platform's own "deploy succeeded" signal says.
+3. **Migrate, then start** — `pnpm --filter backend deploy:migrate-and-start` runs `db:migrate` first; if it fails, the app is never started (exit code propagates, non-zero) — this is what actually enforces "migrations run before the new version serves traffic," since `index.js`'s own boot refuses to auto-migrate (see "Incident: backend process won't start" above). Forwards `SIGTERM`/`SIGINT` to the spawned server process so graceful shutdown still works normally when this wrapper is what the platform sends the signal to (see "Graceful shutdown" above). In production, `render.yaml`'s `startCommand` runs `pnpm --filter backend deploy:start`, which chains steps 2 and 3 (`env-preflight && migrate-and-start`) so a missing required var aborts before any DB or app work happens — steps 2/3 are also runnable standalone, as shown here. When enabling Demo Sandbox, run `pnpm --filter backend db:sandbox:bootstrap` before flipping `DEMO_SANDBOX_ENABLED=true` (see "Demo Sandbox" below).
+4. **Smoke test** — `pnpm --filter backend deploy:smoke-test` (needs `SMOKE_TEST_BASE_URL` pointed at the just-deployed instance). Polls `GET /health/live` then `GET /health/ready` until both return 200 or `SMOKE_TEST_TIMEOUT_MS` elapses (default `120000ms`) — readiness is never checked before liveness succeeds at least once. Optionally set `SMOKE_EXPECT_DEMO_ENABLED=true` (asserts `GET /api/demo/status` returns `200` with `{ "enabled": true }`) or `SMOKE_EXPECT_DEMO_ENABLED=false` (asserts `404`); leaving it unset skips the demo check and invalid values fail fast. Non-zero exit means the deploy did not actually come up healthy, regardless of what the platform's own "deploy succeeded" signal says.
 
 A non-zero exit at any step should stop the pipeline there — a build failure is a compile/lint problem, a preflight failure is a config problem, a migrate-and-start failure is a runtime/DB problem, and a smoke-test failure means the app started but never became healthy. Each failure category points somewhere different, so don't advance past a failed step assuming a later one will "recover."
 
@@ -240,3 +242,59 @@ Use the root `Dockerfile` when deploying as a container image (Render **New → 
 ### Cold starts and `SMOKE_TEST_TIMEOUT_MS`
 
 Render Free spins the service down after ~15 minutes of inactivity. The next request triggers a cold boot: the server restarts and runs DB `authenticate()` over TLS to TiDB Cloud, `checkNoPendingMigrations()`, and `seedInitialData()` before `/health/ready` returns `200`. `deploy:smoke-test` defaults to `SMOKE_TEST_TIMEOUT_MS=120000`; if your instance has been idle or TiDB TLS warm-up is slow, raise `SMOKE_TEST_TIMEOUT_MS` (for example `120000`–`180000`). While Render is waking up, `frontend/functions/api/[[path]].ts` converts non-JSON `502`/`503`/`504` gateway pages into `503` JSON with `Retry-After: 10` so the browser shows an actionable retry message instead of crashing on HTML.
+
+## Demo Sandbox (TiDB Cloud Starter + Render Free)
+
+Opt-in ephemeral sandbox mode backed by 3–5 isolated MySQL schemas. Keep `DEMO_SANDBOX_ENABLED=false` (the default in `render.yaml`) until every slot database and DML-only user is provisioned and bootstrapped.
+
+### 1. Provision 3–5 isolated slot databases & DML-only users in TiDB Cloud Starter
+
+Using your TiDB Cloud admin account (never reuse `DB_NAME`, `DB_USER`, or `root`, and never use system schemas `mysql`, `information_schema`, `performance_schema`, `sys`), create 3–5 schemas and one least-privilege DML-only user per slot (only `SELECT, INSERT, UPDATE, DELETE` — **no** `CREATE`, `ALTER`, `DROP`, or `GRANT`):
+
+```sql
+CREATE DATABASE IF NOT EXISTS mundo_3d_slot_1 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'm3d_slot_1'@'%' IDENTIFIED BY '<strong-unique-password-1>';
+GRANT SELECT, INSERT, UPDATE, DELETE ON mundo_3d_slot_1.* TO 'm3d_slot_1'@'%';
+-- Repeat for slot_2 .. slot_3 (up to slot_5), then:
+FLUSH PRIVILEGES;
+```
+
+### 2. Bootstrap slots with `db:sandbox:bootstrap`
+
+From an operator shell with network access to TiDB Cloud (never commit credentials), export `DB_NAME` and `DB_USER` (required so the CLI enforces control-plane collision checks), `DEMO_SANDBOX_SLOTS_JSON`, `DEMO_SANDBOX_DB_HOST` (or `DB_HOST`), `DEMO_SANDBOX_DB_PORT=4000` (or `DB_PORT`), `DEMO_SANDBOX_DB_CA_CERT` (or `DB_CA_CERT`), and explicit DDL admin credentials (`SANDBOX_BOOTSTRAP_ADMIN_USER`, `SANDBOX_BOOTSTRAP_ADMIN_PASS`):
+
+```sh
+# 1) Validate slot definitions, collisions, and target plan without mutating DBs:
+pnpm --filter backend db:sandbox:bootstrap --dry-run
+
+# 2) Apply business + slot migrations, verify DML-only users, and seed 17 products + synthetic USER/STAFF:
+pnpm --filter backend db:sandbox:bootstrap
+```
+
+The CLI is idempotent and never seeds `ADMIN` accounts or prints passwords. Because each run fences and reseeds every slot, disable `DEMO_SANDBOX_ENABLED=false` (or confirm zero active demo sessions) before re-running against an already-enabled environment. New files in `backend/src/database/slot-migrations/` are discovered automatically; new business migrations must also be registered in `BUSINESS_MIGRATIONS` inside `backend/scripts/sandbox-bootstrap-slots.cjs`.
+
+### 3. Configure the 7 `DEMO_SANDBOX_*` env vars in Render
+
+Set the `sync: false` keys declared in `render.yaml` in the Render dashboard **before** flipping `DEMO_SANDBOX_ENABLED` to `true`:
+
+- `DEMO_SANDBOX_JWT_SECRET` — fresh random secret (`>= 32` chars, strictly distinct from `JWT_SECRET`).
+- `DEMO_SANDBOX_SLOTS_JSON` — JSON array of 3–5 objects `[{"slotId":"slot-1","database":"mundo_3d_slot_1","username":"m3d_slot_1","password":"..."}, ...]`.
+- `DEMO_SANDBOX_DB_HOST`, `DEMO_SANDBOX_DB_PORT`, `DEMO_SANDBOX_DB_CA_CERT` — optional overrides if slots live on a separate TiDB cluster (otherwise they fall back to `DB_HOST`/`DB_PORT`/`DB_CA_CERT`).
+- `DEMO_SANDBOX_RECOVER_ON_BOOT` — keep `"false"` for normal boots; set `"true"` only for crash recovery (see below).
+- `DEMO_SANDBOX_ENABLED` — flip from `"false"` to `"true"` **only after** step 2 (`db:sandbox:bootstrap`) succeeds; `env-preflight` validates all constraints and fails closed on misconfiguration.
+
+### 4. Verify live rollout
+
+1. Run the deploy smoke test with the demo assertion enabled:
+   ```sh
+   SMOKE_TEST_BASE_URL=https://<service>.onrender.com SMOKE_EXPECT_DEMO_ENABLED=true pnpm --filter backend deploy:smoke-test
+   ```
+   Confirms `/health/live` (`200`), `/health/ready` (`200`), and `GET /api/demo/status` (`200` with `{ "enabled": true }`).
+2. Perform a quick Buyer ↔ `STAFF` sanity check in the browser: start a sandbox session, add a product to the demo cart and send a test commission request as Buyer, switch role to `STAFF`, verify `/admin/products` (create without image) and `/admin/commission-requests` work while `DELETE /api/demo/products/:id` and `/api/demo/orders` return `403`, then click "Salir de la demo" (`DELETE /api/demo/session` returns `204`) and confirm production data is untouched.
+
+### 5. Crash recovery, rollback, and local-env notes
+
+- **Crash recovery (`DEMO_SANDBOX_RECOVER_ON_BOOT=true`)**: if the Render instance crashed mid-reset and left slots stuck in a dirty/expired lease state, temporarily set `DEMO_SANDBOX_RECOVER_ON_BOOT=true`, redeploy/restart so boot resets orphaned slots, then return it to `"false"`.
+- **Instant kill-switch rollback**: set `DEMO_SANDBOX_ENABLED=false` in Render and restart. Demo endpoints immediately return `404` (verify with `SMOKE_EXPECT_DEMO_ENABLED=false`) while production traffic continues normally.
+- **Secret rotation**: see "Rotating a leaked secret" above for `DEMO_SANDBOX_JWT_SECRET` and slot DB password rotation.
+- **Local environment caveats**: under `NODE_ENV=test`, `backend/index.js:151-159` short-circuits boot and skips `startDemoSandboxRuntime`; under `NODE_ENV=development`, Sequelize's development config ignores `DB_PORT` (defaults to `3306`), so use explicit `DEMO_SANDBOX_DB_PORT` or `NODE_ENV=production` when targeting TiDB port `4000`.
