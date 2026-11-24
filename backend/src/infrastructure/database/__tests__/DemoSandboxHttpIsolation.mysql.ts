@@ -120,7 +120,7 @@ const parseCk = (raw: string[] | string | undefined): Record<string, string> =>
       .map(([k, ...v]) => [k.trim(), decodeURIComponent(v.join('='))]),
   );
 
-type Method = 'get' | 'put' | 'post' | 'delete';
+type Method = 'get' | 'put' | 'post' | 'patch' | 'delete';
 const send = (
   m: Method,
   path: string,
@@ -335,6 +335,65 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
     ]);
     expect([gRes.status, rRes.status]).toEqual([403, 403]);
   });
+
+  it('3b. switches slot A to STAFF, isolates inbox/catalog writes from slot B, and enforces 403 on delete/ADMIN', async () => {
+    const sw = await send('post', '/api/demo/session/role', {
+      ck: [`${A}=${visitorA.auth}`, `${C}=${visitorA.csrf}`],
+      csrf: visitorA.csrf,
+      body: { role: 'STAFF' },
+    });
+    expect([sw.status, sw.body.role, sw.body.user.idUser]).toEqual([200, 'STAFF', 2]);
+    const c = parseCk(sw.headers['set-cookie']);
+    visitorA = { ...visitorA, auth: c[A], refresh: c[R], csrf: c[C] };
+    const ckStaff = [`${A}=${visitorA.auth}`, `${C}=${visitorA.csrf}`];
+
+    const [inboxA, buyerInboxB] = await Promise.all([
+      send('get', '/api/demo/custom-commission-requests', { ck: ckStaff }),
+      send('get', '/api/demo/custom-commission-requests', { ck: `${A}=${visitorB.auth}` }),
+    ]);
+    expect([inboxA.status, inboxA.body.length, buyerInboxB.status]).toEqual([200, 1, 403]);
+
+    const created = await request(app)
+      .post('/api/demo/products')
+      .set('Cookie', ckStaff)
+      .set('x-csrf-token', visitorA.csrf)
+      .field('nameProduct', 'Busto Staff 3D')
+      .field('price', '7900')
+      .field('descriptionProduct', 'Alta STAFF aislada')
+      .field('idCategory', '1')
+      .field('idFranchise', '1')
+      .field('stock', '3')
+      .attach('image', Buffer.from([0x89, 0x50, 0x4e, 0x47]), {
+        filename: 'preview.png',
+        contentType: 'image/png',
+      });
+    expect([created.status, created.body.image]).toEqual([201, null]);
+    const pid = created.body.idProduct as number;
+
+    const [upd, stk, delProd, usrAdm] = await Promise.all([
+      send('put', `/api/demo/products/${pid}`, {
+        ck: ckStaff,
+        csrf: visitorA.csrf,
+        body: { nameProduct: 'Busto Staff Edit', price: 8200 },
+      }),
+      send('patch', `/api/demo/products/${pid}/stock`, {
+        ck: ckStaff,
+        csrf: visitorA.csrf,
+        body: { delta: 2 },
+      }),
+      send('delete', `/api/demo/products/${pid}`, { ck: ckStaff, csrf: visitorA.csrf }),
+      send('get', '/api/demo/users', { ck: ckStaff }),
+    ]);
+    expect([upd.status, stk.status, stk.body.stock, delProd.status, usrAdm.status]).toEqual([
+      200, 200, 5, 403, 403,
+    ]);
+
+    const [connA, connB] = [connections.get(visitorA.slotId), connections.get(visitorB.slotId)];
+    expect([await countRows(connA, 'Product'), await countRows(connB, 'Product')]).toEqual([
+      COUNTS.products + 1,
+      COUNTS.products,
+    ]);
+  }, 30_000);
 
   it('4. revokes tokens on DELETE /session, fences reset to available gen 1, and keeps slot B alive', async () => {
     const del = await send('delete', '/api/demo/session', {
