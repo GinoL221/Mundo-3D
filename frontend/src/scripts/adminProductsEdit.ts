@@ -1,5 +1,6 @@
-import { isDemoSessionActive } from '../config';
+import { hydrateDemoSession, isDemoSessionActive } from '../config';
 import { getSessionUser, hasAdminAccess } from '../domains/auth';
+import { isDemoSessionPendingHydration } from '../lib/http/demoSessionState';
 import { ProductAdminApiError, ProductAdminService } from '../domains/products';
 import type { AdminProductDTO } from '../domains/products';
 import { getCategoryImg, isPlaceholderImage } from '../domains/products/adapters/product.adapter';
@@ -24,6 +25,9 @@ import {
   type PreviewFallback,
 } from './adminProductsForm';
 
+const DEMO_EXPIRED_MESSAGE =
+  'Tu sesión demo expiró. Iniciá una nueva demo desde la barra superior para continuar.';
+
 function getProductId(): number | null {
   const searchParams = new URLSearchParams(window.location.search);
   return parseAdminProductId(searchParams.get('id'));
@@ -31,6 +35,27 @@ function getProductId(): number | null {
 
 export function initializeAdminProductsEdit(): void {
   const deniedEl = document.getElementById('admin-gate-denied');
+
+  const sessionUser = getSessionUser();
+  if (!hasAdminAccess(sessionUser)) {
+    if (isDemoSessionPendingHydration()) {
+      void hydrateDemoSession().then(() => {
+        if (hasAdminAccess(getSessionUser())) {
+          initAdminProductsEditContent();
+        } else if (deniedEl) {
+          deniedEl.hidden = false;
+        }
+      });
+      return;
+    }
+    if (deniedEl) deniedEl.hidden = false;
+    return;
+  }
+
+  initAdminProductsEditContent();
+}
+
+function initAdminProductsEditContent(): void {
   const editShellEl = document.getElementById('admin-edit-shell');
   const loadingEl = document.getElementById('admin-edit-loading');
   const loadErrorEl = document.getElementById('admin-edit-load-error');
@@ -39,12 +64,6 @@ export function initializeAdminProductsEdit(): void {
   const contentEl = document.getElementById('admin-edit-content');
   const roleBadgeEl = document.getElementById('admin-role-badge');
   const scopeEl = document.getElementById('admin-scope-text');
-
-  const sessionUser = getSessionUser();
-  if (!hasAdminAccess(sessionUser)) {
-    if (deniedEl) deniedEl.hidden = false;
-    return;
-  }
 
   if (editShellEl) editShellEl.hidden = false;
 
@@ -174,6 +193,7 @@ export function initializeAdminProductsEdit(): void {
     if (loadErrorEl) loadErrorEl.hidden = true;
     if (contentEl) contentEl.hidden = true;
 
+    const wasDemo = isDemoSessionActive();
     try {
       const product = await ProductAdminService.getById(id);
       await loadClassificationOptions(categorySelect, franchiseSelect, classificationWarning, {
@@ -186,7 +206,13 @@ export function initializeAdminProductsEdit(): void {
       if (contentEl) contentEl.hidden = false;
     } catch (err) {
       if (err instanceof ProductAdminApiError && err.status === 401) {
-        // authFetch already handles 401 teardown and /login redirect.
+        if (!wasDemo) {
+          // authFetch already handles 401 teardown and /login redirect.
+          return;
+        }
+        if (loadingEl) loadingEl.hidden = true;
+        if (loadErrorTextEl) loadErrorTextEl.textContent = DEMO_EXPIRED_MESSAGE;
+        if (loadErrorEl) loadErrorEl.hidden = false;
         return;
       }
       if (loadingEl) loadingEl.hidden = true;
@@ -228,6 +254,7 @@ export function initializeAdminProductsEdit(): void {
       editBtn.textContent = 'Guardando...';
     }
 
+    const wasDemo = isDemoSessionActive();
     let unauthorized = false;
     try {
       const formData = buildProductFormData(values, 'edit');
@@ -235,8 +262,12 @@ export function initializeAdminProductsEdit(): void {
       navigateToInternalRoute('/admin/products');
     } catch (err) {
       if (err instanceof ProductAdminApiError && err.status === 401) {
-        // authFetch already handles 401 teardown and /login redirect.
-        unauthorized = true;
+        if (!wasDemo) {
+          // authFetch already handles 401 teardown and /login redirect.
+          unauthorized = true;
+          return;
+        }
+        showFormErrorBanner(errorBox, DEMO_EXPIRED_MESSAGE);
         return;
       }
       if (err instanceof ProductAdminApiError) {
