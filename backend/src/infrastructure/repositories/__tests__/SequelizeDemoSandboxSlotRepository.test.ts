@@ -246,4 +246,13 @@ describe('SequelizeDemoSandboxSlotRepository', () => {
       transaction,
     });
   });
+
+  it('resolves null without calling record.update when releaseLease finds no leased row', async () => {
+    const record = availableRecord('slot-a');
+    const { repository } = makeRepository({ findOne: jest.fn().mockResolvedValue(null) });
+    await repository.registerConfiguredSlots(['slot-a'], 1);
+
+    await expect(repository.releaseLease('slot-a', 'lease-a')).resolves.toBeNull();
+    expect(record.update).not.toHaveBeenCalled();
+  });
 });

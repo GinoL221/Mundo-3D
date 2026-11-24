@@ -13,8 +13,9 @@ Delivered as 4 sequential PRs to `main` (`<= 400` authored lines each) under act
 
 ## Tasks
 
-- T2A S2,S3,S4 — PR 2A (Closes #287): `DemoSandboxSlot.release` + `releaseLease` repo/use-case, `tokenHasher` fix in `DemoSandboxAuthUseCases`, `DEMO_SANDBOX_JWT_SECRET >= 32` check in `DemoSandboxConnections` & `env-preflight`, dedicated sandbox cookie & scoped CSRF helpers + unit tests — inline — commit: feat/demo-sandbox-cut2a-foundations
-- T2B S1,S2,S3,S4 — PR 2B: Expose sandbox runtime accessor (`demoSandboxRuntime` → `index.js` → `app.js`), flag-gated `/api/demo` gate (`404` when off), Buyer session auth/CSRF middlewares, `/api/demo/session` (`POST`/`GET`/`DELETE`) + `POST /api/demo/session/refresh` with IP rate-limiting + tests — inline — commit: pending
+- T2A S2,S3,S4 — PR 2A (#288 MERGED, Closes #287): `DemoSandboxSlot.release` + `releaseLease` repo/use-case, `tokenHasher` fix in `DemoSandboxAuthUseCases`, `DEMO_SANDBOX_JWT_SECRET >= 32` check in `DemoSandboxConnections` & `env-preflight`, dedicated sandbox cookie & scoped CSRF helpers + unit tests — inline — commit: d448853 (verified, RDD review-9a5c9660f49e4b66 burned)
+- T2B-1 S2,S4 — PR 2B-1 (Refs #289): PR #288 advisory follow-ups (`typeof` CSRF scope guards, null-row `releaseLease` test, 32-char/trimmed secret boundary tests), active sandbox runtime accessor in `demoSandboxRuntime.ts`, Buyer session auth/JWT/CSRF middlewares (`demoSandboxSession.ts`) + unit tests — worker — commit: pending
+- T2B-2 S1,S2,S3,S4 — PR 2B-2 (Closes #289): `DemoSandboxSessionController` (`/api/demo/session` `POST`/`GET`/`DELETE`, `POST /api/demo/session/refresh`, slot-release-on-error, `familyId` family revocation), per-IP rate limiters (`routes/api/demo.ts`), router mount & architecture allowlist + Supertest suite — worker — commit: pending
 - T2C S1,S4,S5 — PR 2C: Mount Buyer-only `/api/demo/{products,categories,franchises,cart,orders,custom-commission-requests}` wired exclusively to `DemoSandboxProductRepositories` + `NoopMailAdapter`, architecture `compositionRoots` & OpenAPI annotations + tests — inline — commit: pending
 - T2D S4,S5 — PR 2D: Cross-slot, main-DB, cross-token, cross-CSRF, role-rejection, and post-exit isolation integration tests against disposable MySQL 8.0 — inline — commit: pending
 

@@ -87,6 +87,19 @@ describe('demo sandbox scoped CSRF token', () => {
         SANDBOX_SECRET,
       ),
     ).toBe(false);
+    for (const malformed of [
+      { slotId: 123, leaseId: 'lease-a', userId: 1 },
+      { slotId: 'slot-1', leaseId: null, userId: 1 },
+      { slotId: 'slot-1', leaseId: 'lease-a', userId: {} },
+    ]) {
+      expect(
+        verifyDemoSandboxCsrfToken(
+          token,
+          malformed as unknown as Parameters<typeof verifyDemoSandboxCsrfToken>[1],
+          SANDBOX_SECRET,
+        ),
+      ).toBe(false);
+    }
   });
 
   it('rejects short secrets when issuing and fails closed when verifying', () => {

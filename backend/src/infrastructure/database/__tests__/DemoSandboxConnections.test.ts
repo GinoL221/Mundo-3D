@@ -227,6 +227,15 @@ describe('loadDemoSandboxConfigFromEnv', () => {
     });
   });
 
+  it('accepts an exact 32-char DEMO_SANDBOX_JWT_SECRET', () => {
+    const exact32 = 'x'.repeat(32);
+    const loaded = loadDemoSandboxConfigFromEnv({
+      ...baseEnv(),
+      DEMO_SANDBOX_JWT_SECRET: exact32,
+    });
+    expect(loaded).toMatchObject({ enabled: true, jwtSecret: exact32 });
+  });
+
   it.each([
     ['invalid DEMO_SANDBOX_ENABLED', { DEMO_SANDBOX_ENABLED: 'yes' }, /DEMO_SANDBOX_ENABLED/],
     [
@@ -242,6 +251,11 @@ describe('loadDemoSandboxConfigFromEnv', () => {
     [
       'short DEMO_SANDBOX_JWT_SECRET',
       { DEMO_SANDBOX_JWT_SECRET: 'a'.repeat(31) },
+      /at least 32 characters/,
+    ],
+    [
+      'space-padded DEMO_SANDBOX_JWT_SECRET trimming to 31 chars',
+      { DEMO_SANDBOX_JWT_SECRET: `  ${'a'.repeat(31)}  ` },
       /at least 32 characters/,
     ],
     [

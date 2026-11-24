@@ -2,7 +2,11 @@ import type { Sequelize } from 'sequelize';
 import { createDemoSandboxConnections } from '../../database/DemoSandboxConnections';
 import { SequelizeDemoSandboxSlotRepository } from '../../repositories/SequelizeDemoSandboxSlotRepository';
 import { startDemoSandboxScheduler } from '../demoSandboxScheduler';
-import { startDemoSandboxRuntime } from '../demoSandboxRuntime';
+import {
+  getActiveDemoSandboxRuntime,
+  setActiveDemoSandboxRuntime,
+  startDemoSandboxRuntime,
+} from '../demoSandboxRuntime';
 
 jest.mock('../../database/DemoSandboxConnections', () => {
   const actual = jest.requireActual<typeof import('../../database/DemoSandboxConnections')>(
@@ -36,7 +40,10 @@ describe('startDemoSandboxRuntime', () => {
   const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const controlDb = {} as unknown as Sequelize;
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    setActiveDemoSandboxRuntime(null);
+  });
 
   it('returns null without opening connections when disabled', async () => {
     await expect(startDemoSandboxRuntime(controlDb, logger, {})).resolves.toBeNull();
@@ -69,6 +76,14 @@ describe('startDemoSandboxRuntime', () => {
 
     const runtime = await startDemoSandboxRuntime(controlDb, logger, validEnv());
     expect(runtime).not.toBeNull();
+    expect(getActiveDemoSandboxRuntime()).toBe(runtime);
+    expect(runtime).toMatchObject({
+      jwtSecret: 'sandbox-secret-at-least-32-chars-long-01',
+      leasePolicy: { idleTimeoutMs: 15 * 60 * 1000, maxLifetimeMs: 45 * 60 * 1000 },
+    });
+    expect(runtime?.slotRepository).toBeDefined();
+    expect(runtime?.connections).toBeDefined();
+    expect(runtime?.repositories).toBeDefined();
     expect(registerConfiguredSlots).toHaveBeenCalledWith(['slot-1', 'slot-2', 'slot-3'], 5);
     expect(startDemoSandboxScheduler).toHaveBeenCalledWith(
       expect.objectContaining({ recoverInterruptedOnBoot: false, logger }),
@@ -76,6 +91,7 @@ describe('startDemoSandboxRuntime', () => {
 
     await runtime!.ready;
     await runtime!.stop();
+    expect(getActiveDemoSandboxRuntime()).toBeNull();
     await runtime!.stop();
     expect(stopScheduler).toHaveBeenCalledTimes(1);
     expect(closeAll).toHaveBeenCalledTimes(1);
