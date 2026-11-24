@@ -74,6 +74,11 @@ test('visitor submits from the home CTA; STAFF/ADMIN can read while USER/guest a
     }
 
     if (url.pathname.startsWith('/api/')) {
+      if (request.method() === 'GET' && url.pathname === '/api/demo/status') {
+        await fulfillJson(route, 404, { message: 'Not found' });
+        return;
+      }
+
       if (request.method() === 'GET' && url.pathname === '/api/products') {
         await fulfillJson(route, 200, { products: homeProducts });
         return;
