@@ -1,5 +1,7 @@
+import { AdjustProductStockUseCase as AdjStock } from '../../application/use-cases/AdjustProductStockUseCase';
 import { CreateCustomCommissionRequestUseCase as CreateComm } from '../../application/use-cases/CreateCustomCommissionRequestUseCase';
 import { CreateOrderUseCase as CreateOrd } from '../../application/use-cases/CreateOrderUseCase';
+import { CreateProductUseCase as CreateProd } from '../../application/use-cases/CreateProductUseCase';
 import { GetCartByUserIdUseCase as GetCart } from '../../application/use-cases/GetCartByUserIdUseCase';
 import { GetCategoryByIdUseCase as GetCat } from '../../application/use-cases/GetCategoryByIdUseCase';
 import { GetFranchiseByIdUseCase as GetFran } from '../../application/use-cases/GetFranchiseByIdUseCase';
@@ -7,11 +9,13 @@ import { GetLatestProductUseCase as GetLat } from '../../application/use-cases/G
 import { GetOrderByIdUseCase as GetOrd } from '../../application/use-cases/GetOrderByIdUseCase';
 import { GetProductByIdUseCase as GetProd } from '../../application/use-cases/GetProductByIdUseCase';
 import { ListCategoriesUseCase as ListCat } from '../../application/use-cases/ListCategoriesUseCase';
+import { ListCustomCommissionRequestsUseCase as ListComm } from '../../application/use-cases/ListCustomCommissionRequestsUseCase';
 import { ListFranchisesUseCase as ListFran } from '../../application/use-cases/ListFranchisesUseCase';
 import { ListMyOrdersUseCase as ListMyOrd } from '../../application/use-cases/ListMyOrdersUseCase';
 import { ListProductsUseCase as ListProd } from '../../application/use-cases/ListProductsUseCase';
 import { SearchProductsUseCase as SearchProd } from '../../application/use-cases/SearchProductsUseCase';
 import { SyncCartUseCase as SyncCart } from '../../application/use-cases/SyncCartUseCase';
+import { UpdateProductUseCase as UpdateProd } from '../../application/use-cases/UpdateProductUseCase';
 import type { DemoSandboxProductRepositories as Repos } from '../database/DemoSandboxProductRepositories';
 import { PinoLogger } from '../logging/PinoLogger';
 import { ManualPaymentGateway } from '../payments/ManualPaymentGateway';
@@ -23,12 +27,15 @@ import { OrderApiController } from './OrderApiController';
 import { ProductApiController } from './ProductApiController';
 
 export interface DemoSandboxBuyerControllers {
-  products: Pick<ProductApiController, 'index' | 'show' | 'latest' | 'search'>;
+  products: Pick<
+    ProductApiController,
+    'index' | 'show' | 'latest' | 'search' | 'create' | 'update' | 'adjustStock'
+  >;
   categories: Pick<CategoryApiController, 'index' | 'show'>;
   franchises: Pick<FranchiseApiController, 'index' | 'show'>;
   cart: Pick<CartApiController, 'getCart' | 'syncCart'>;
   orders: Pick<OrderApiController, 'create' | 'show' | 'listMine'>;
-  commissions: Pick<CustomCommissionRequestApiController, 'create'>;
+  commissions: Pick<CustomCommissionRequestApiController, 'create' | 'list'>;
 }
 
 const cache = new WeakMap<Repos, Map<string, DemoSandboxBuyerControllers>>();
@@ -42,10 +49,10 @@ function build(r: Repos, id: string): DemoSandboxBuyerControllers {
     new ListProd(p),
     new GetProd(p),
     new GetLat(p),
+    new CreateProd(p, c),
+    new UpdateProd(p, c),
     off,
-    off,
-    off,
-    off,
+    new AdjStock(p, log),
     new SearchProd(p),
   );
   const ca = new CategoryApiController(new ListCat(c), new GetCat(c), off, off, off);
@@ -59,14 +66,25 @@ function build(r: Repos, id: string): DemoSandboxBuyerControllers {
     off,
     new ListMyOrd(ord),
   );
-  const cm = new CustomCommissionRequestApiController(new CreateComm(comm, undefined, p), off);
+  const cm = new CustomCommissionRequestApiController(
+    new CreateComm(comm, undefined, p),
+    new ListComm(comm),
+  );
   return {
-    products: { index: pr.index, show: pr.show, latest: pr.latest, search: pr.search },
+    products: {
+      index: pr.index,
+      show: pr.show,
+      latest: pr.latest,
+      search: pr.search,
+      create: pr.create,
+      update: pr.update,
+      adjustStock: pr.adjustStock,
+    },
     categories: { index: ca.index, show: ca.show },
     franchises: { index: fr.index, show: fr.show },
     cart: { getCart: ct.getCart, syncCart: ct.syncCart },
     orders: { create: or.create, show: or.show, listMine: or.listMine },
-    commissions: { create: cm.create },
+    commissions: { create: cm.create, list: cm.list },
   };
 }
 

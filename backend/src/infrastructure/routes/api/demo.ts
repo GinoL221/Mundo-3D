@@ -1,6 +1,7 @@
 import { NextFunction, Request, RequestHandler, Response, Router } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { validationResult } from 'express-validator';
+import { Role } from '../../../domain/Role';
 import { DemoSandboxSessionController } from '../../controllers/DemoSandboxSessionController';
 import {
   createDemoSandboxBuyerControllers as getBuyer,
@@ -8,13 +9,22 @@ import {
 } from '../../controllers/demoSandboxBuyerControllers';
 import * as rtMod from '../../maintenance/demoSandboxRuntime';
 import * as ses from '../../middlewares/demoSandboxSession';
+import {
+  demoProductCreateValidators,
+  demoProductUpload,
+  stripDemoUploadedFile,
+} from '../../middlewares/demoSandboxUpload';
+import handleValidationErrors from '../../middlewares/handleValidationErrors';
 import { cartSyncValidation as cartVal } from '../../middlewares/validators/cartValidators';
 import { customCommissionRequestValidators as commVal } from '../../middlewares/validators/customCommissionRequestValidators';
 import {
   listMyOrdersValidation as myOrdVal,
   orderCreateValidation as ordVal,
 } from '../../middlewares/validators/orderValidators';
-import { searchProductsValidation as searchVal } from '../../middlewares/validators/productValidators';
+import {
+  productUpdateValidators as prodUpdVal,
+  searchProductsValidation as searchVal,
+} from '../../middlewares/validators/productValidators';
 
 export interface DemoRouterOptions {
   sessionLimiterWindowMs?: number;
@@ -72,6 +82,12 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   const c = new DemoSandboxSessionController();
   const [w, auth] = [15 * 60 * 1000, ses.demoSandboxAuthMiddleware];
   const write = [auth, ses.demoSandboxCsrfMiddleware];
+  const staffOnly = ses.requireDemoRole(Role.STAFF);
+  const staffRead = [auth, staffOnly];
+  const staffWrite = [...write, staffOnly];
+  const denyAdmin: RequestHandler = (_req, res) => {
+    res.status(403).json({ error: 'ADMIN operations are forbidden in demo sandbox' });
+  };
   const cMsg = 'Too many demo session requests. Please try again later.';
   const rMsg = 'Too many demo session refresh requests. Please try again later.';
   const cmMsg = 'Too many requests. Please try again later.';
@@ -105,6 +121,50 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   router.put('/cart', ...write, cartVal, hCart);
   router.post('/orders', ...write, ordVal, hOrd);
   router.post('/custom-commission-requests', ...write, cmLim, ...commVal, commErr, hComm);
+  router.get(
+    '/custom-commission-requests',
+    ...staffRead,
+    run((b) => b.commissions.list),
+  );
+  router.post(
+    '/products',
+    ...staffWrite,
+    demoProductUpload,
+    demoProductCreateValidators,
+    handleValidationErrors,
+    stripDemoUploadedFile,
+    run((b) => b.products.create),
+  );
+  router.put(
+    '/products/:id',
+    ...staffWrite,
+    demoProductUpload,
+    stripDemoUploadedFile,
+    prodUpdVal,
+    handleValidationErrors,
+    run((b) => b.products.update),
+  );
+  router.patch(
+    '/products/:id/stock',
+    ...staffWrite,
+    run((b) => b.products.adjustStock),
+  );
+  router.delete('/products/:id', ...write, denyAdmin);
+  router.all('/users', auth, denyAdmin);
+  router.all(
+    '/users/:id',
+    (req, _res, next) => (/^\d+$/.test(String(req.params.id)) ? next() : next('route')),
+    auth,
+    denyAdmin,
+  );
+  router.post('/categories', ...write, denyAdmin);
+  router.put('/categories/:id', ...write, denyAdmin);
+  router.delete('/categories/:id', ...write, denyAdmin);
+  router.post('/franchises', ...write, denyAdmin);
+  router.put('/franchises/:id', ...write, denyAdmin);
+  router.delete('/franchises/:id', ...write, denyAdmin);
+  router.patch('/orders/:id/status', ...write, denyAdmin);
+  router.delete('/orders/:id', ...write, denyAdmin);
   return router;
 }
 
