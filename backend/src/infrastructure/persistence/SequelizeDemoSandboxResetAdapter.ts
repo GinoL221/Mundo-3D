@@ -13,6 +13,7 @@ import {
   type DemoSandboxResetReceiptRecord,
 } from '../../database/models/DemoSandboxResetReceipt';
 import { initializeModelsForConnection } from '../../database/models/registerModels';
+import { OrderStatus } from '../../domain/entities/Order';
 import type { DemoSandboxResetPort } from '../../domain/ports/DemoSandboxResetPort';
 import type { TransactionContext } from '../../domain/ports/UnitOfWorkPort';
 import { Role } from '../../domain/Role';
@@ -21,6 +22,7 @@ import {
   buildDemoSandboxSeedData,
   buildDemoSandboxSlotEmails,
   DEMO_SANDBOX_EXPECTED_COUNTS,
+  DEMO_SANDBOX_SEED_ORDER_IDEMPOTENCY_KEY,
   DEMO_SANDBOX_SEED_VERSION,
 } from '../database/demoSandboxSeedData';
 import { resolveScopedTransaction } from './scopedTransactionContext';
@@ -185,6 +187,8 @@ export class SequelizeDemoSandboxResetAdapter implements DemoSandboxResetPort {
     await models.Franchise.bulkCreate(seed.franchises, { transaction });
     await models.Product.bulkCreate(seed.products, { transaction });
     await models.User.bulkCreate(seed.users, { transaction });
+    await models.Order.bulkCreate(seed.orders, { transaction });
+    await models.OrderItem.bulkCreate(seed.orderItems, { transaction });
   }
 
   private async verifyCleanState(
@@ -194,8 +198,6 @@ export class SequelizeDemoSandboxResetAdapter implements DemoSandboxResetPort {
   ): Promise<boolean> {
     const opts = transaction ? { transaction } : {};
     const residualCounts = await Promise.all([
-      models.OrderItem.count(opts),
-      models.Order.count(opts),
       models.ShoppingCart.count(opts),
       models.CustomCommissionRequest.count(opts),
       models.EmailConfirmationToken.count(opts),
@@ -205,18 +207,37 @@ export class SequelizeDemoSandboxResetAdapter implements DemoSandboxResetPort {
       return false;
     }
 
-    const [categories, franchises, products, users] = await Promise.all([
+    const [categories, franchises, products, users, orders, orderItems] = await Promise.all([
       models.Category.count(opts),
       models.Franchise.count(opts),
       models.Product.count(opts),
       models.User.findAll({ attributes: ['idRole', 'email', 'emailVerifiedAt'], ...opts }),
+      models.Order.findAll({
+        attributes: ['idOrder', 'idUser', 'idempotencyKey', 'orderStatus', 'paymentReference'],
+        ...opts,
+      }),
+      models.OrderItem.count(opts),
     ]);
 
     if (
       categories !== DEMO_SANDBOX_EXPECTED_COUNTS.categories ||
       franchises !== DEMO_SANDBOX_EXPECTED_COUNTS.franchises ||
       products !== DEMO_SANDBOX_EXPECTED_COUNTS.products ||
-      users.length !== DEMO_SANDBOX_EXPECTED_COUNTS.users
+      users.length !== DEMO_SANDBOX_EXPECTED_COUNTS.users ||
+      orders.length !== DEMO_SANDBOX_EXPECTED_COUNTS.orders ||
+      orderItems !== DEMO_SANDBOX_EXPECTED_COUNTS.orderItems
+    ) {
+      return false;
+    }
+
+    const seededOrder = orders[0];
+    if (
+      !seededOrder ||
+      Number(seededOrder.idOrder) !== 1 ||
+      Number(seededOrder.idUser) !== 1 ||
+      seededOrder.idempotencyKey !== DEMO_SANDBOX_SEED_ORDER_IDEMPOTENCY_KEY ||
+      seededOrder.orderStatus !== OrderStatus.AWAITING_PAYMENT ||
+      seededOrder.paymentReference !== null
     ) {
       return false;
     }

@@ -262,7 +262,11 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
       }),
     ];
     expect([cA.status, oA.status, mA.status, mA.body.orders.length, cmA.status]).toEqual([
-      200, 201, 200, 1, 201,
+      200,
+      201,
+      200,
+      COUNTS.orders + 1,
+      201,
     ]);
 
     visitorB = await openVisitor('198.51.100.12');
@@ -277,7 +281,7 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
     expect([pB.body.products.length, cB.body.items.length, mB.body.orders.length]).toEqual([
       COUNTS.products,
       0,
-      0,
+      COUNTS.orders,
     ]);
     expect(cA2.body.items.length).toBe(0);
 
@@ -288,7 +292,7 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
       await countRows(connA, 'ShoppingCart', "cart_status = 'ACTIVE'"),
       await countRows(connB, 'Order'),
       await countRows(connB, 'CustomCommissionRequest'),
-    ]).toEqual([1, 1, 0, 0, 0]);
+    ]).toEqual([COUNTS.orders + 1, 1, 0, COUNTS.orders, 0]);
     const ctrlTables = await sel<Record<string, string>>(controlDb, 'SHOW TABLES');
     expect(ctrlTables.map((row) => Object.values(row)[0])).toEqual(['DemoSandboxSlot']);
   }, 30_000);
@@ -347,11 +351,22 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
     visitorA = { ...visitorA, auth: c[A], refresh: c[R], csrf: c[C] };
     const ckStaff = [`${A}=${visitorA.auth}`, `${C}=${visitorA.csrf}`];
 
-    const [inboxA, buyerInboxB] = await Promise.all([
+    const [inboxA, buyerInboxB, ordersA, buyerOrdersB] = await Promise.all([
       send('get', '/api/demo/custom-commission-requests', { ck: ckStaff }),
       send('get', '/api/demo/custom-commission-requests', { ck: `${A}=${visitorB.auth}` }),
+      send('get', '/api/demo/orders', { ck: ckStaff }),
+      send('get', '/api/demo/orders', { ck: `${A}=${visitorB.auth}` }),
     ]);
-    expect([inboxA.status, inboxA.body.length, buyerInboxB.status]).toEqual([200, 1, 403]);
+    expect([
+      inboxA.status,
+      inboxA.body.length,
+      buyerInboxB.status,
+      ordersA.status,
+      ordersA.body.length,
+      ordersA.body[0]?.customer?.displayName,
+      buyerOrdersB.status,
+    ]).toEqual([200, 1, 403, 200, COUNTS.orders + 1, 'Demo B.', 403]);
+    expect(JSON.stringify(ordersA.body)).not.toContain('sandbox.mundo3d.invalid');
 
     const created = await request(app)
       .post('/api/demo/products')
@@ -431,9 +446,10 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
       await countRows(connA, 'Product'),
       await countRows(connA, 'User'),
       await countRows(connA, 'Order'),
+      await countRows(connA, 'OrderItem'),
       await countRows(connA, 'CustomCommissionRequest'),
       await countRows(connA, 'ShoppingCart'),
-    ]).toEqual([COUNTS.products, COUNTS.users, 0, 0, 0]);
+    ]).toEqual([COUNTS.products, COUNTS.users, COUNTS.orders, COUNTS.orderItems, 0, 0]);
 
     const sesB = await send('get', '/api/demo/session', { ck: `${A}=${visitorB.auth}` });
     expect(sesB.status).toBe(200);

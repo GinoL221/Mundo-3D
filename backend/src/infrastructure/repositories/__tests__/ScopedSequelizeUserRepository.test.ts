@@ -1,4 +1,4 @@
-import { UniqueConstraintError } from 'sequelize';
+import { Op, UniqueConstraintError } from 'sequelize';
 import { User } from '../../../domain/entities/User';
 import { UserAlreadyExistsException } from '../../../domain/exceptions/UserAlreadyExistsException';
 import { ScopedSequelizeUserRepository } from '../ScopedSequelizeUserRepository';
@@ -41,6 +41,15 @@ test('uses only the injected user model while preserving lookup, mapping and err
   expect(await repository.findAll()).toEqual([
     new User(1, 'A', 'B', 'a@example.com', 'hash', null, null, null),
   ]);
+  expect(await repository.findByIds([])).toEqual([]);
+  expect(model.findAll).toHaveBeenCalledTimes(1);
+  model.findAll.mockResolvedValueOnce([row]);
+  expect(await repository.findByIds([1, 1, 2])).toEqual([
+    new User(1, 'A', 'B', 'a@example.com', 'hash', null, null, null),
+  ]);
+  expect(model.findAll).toHaveBeenLastCalledWith({
+    where: { idUser: { [Op.in]: [1, 2] } },
+  });
   const input = new User(0, 'A', 'B', 'a@example.com', 'hash', null);
   model.create.mockResolvedValueOnce(row);
   await repository.create(input);

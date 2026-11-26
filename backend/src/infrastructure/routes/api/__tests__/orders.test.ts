@@ -185,6 +185,19 @@ describe('api/orders routes', () => {
       expect(res.body.code).toBe('ORDER_NOT_FOUND');
     });
 
+    it('returns 404 for STAFF reading another user order (no STAFF bypass on GET /orders/:id)', async () => {
+      mockGetOrderByIdExecute.mockResolvedValue(null);
+
+      const res = await request(app)
+        .get('/api/orders/41')
+        .set('Cookie', staff.cookie)
+        .set('X-CSRF-Token', staff.csrfToken);
+
+      expect(res.status).toBe(404);
+      expect(res.body.code).toBe('ORDER_NOT_FOUND');
+      expect(mockGetOrderByIdExecute).toHaveBeenCalledWith(41, 8, false);
+    });
+
     it('returns 401 without an auth cookie', async () => {
       const res = await request(app).get('/api/orders/41');
 
@@ -366,14 +379,21 @@ describe('api/orders routes', () => {
       expect(res.body).toEqual([sampleOrder]);
     });
 
-    it('returns 403 for STAFF', async () => {
+    it('returns 200 and the workshop order list for STAFF', async () => {
+      const workshopOrder = {
+        ...sampleOrder,
+        customer: { idUser: 7, displayName: 'María G.' },
+      };
+      mockListOrdersExecute.mockResolvedValue([workshopOrder]);
+
       const res = await request(app)
         .get('/api/orders')
         .set('Cookie', staff.cookie)
         .set('X-CSRF-Token', staff.csrfToken);
 
-      expect(res.status).toBe(403);
-      expect(mockListOrdersExecute).not.toHaveBeenCalled();
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([workshopOrder]);
+      expect(mockListOrdersExecute).toHaveBeenCalledTimes(1);
     });
 
     it('returns 403 for a plain buyer', async () => {

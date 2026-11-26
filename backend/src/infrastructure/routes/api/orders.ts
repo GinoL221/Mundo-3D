@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { SequelizeOrderRepository } from '../../repositories/SequelizeOrderRepository';
 import { SequelizeShoppingCartRepository } from '../../repositories/SequelizeShoppingCartRepository';
 import { SequelizeProductRepository } from '../../repositories/SequelizeProductRepository';
+import { SequelizeUserRepository } from '../../repositories/SequelizeUserRepository';
 import { SequelizeUnitOfWork } from '../../persistence/SequelizeUnitOfWork';
 import { ManualPaymentGateway } from '../../payments/ManualPaymentGateway';
 import { PinoLogger } from '../../logging/PinoLogger';
@@ -12,7 +13,8 @@ import { ConfirmOrderPaymentUseCase } from '../../../application/use-cases/Confi
 import { CancelOrderUseCase } from '../../../application/use-cases/CancelOrderUseCase';
 import { ListMyOrdersUseCase } from '../../../application/use-cases/ListMyOrdersUseCase';
 import { OrderApiController } from '../../controllers/OrderApiController';
-import { apiAuthMiddleware, adminGuard } from '../../middlewares/auth';
+import { apiAuthMiddleware, adminGuard, requireRoles } from '../../middlewares/auth';
+import { Role } from '../../../domain/Role';
 import { csrfGuard } from '../../middlewares/csrf';
 import { orderCreateValidation, listMyOrdersValidation } from '../../middlewares/validators/orderValidators';
 
@@ -21,13 +23,14 @@ const router = Router();
 const orderRepo = new SequelizeOrderRepository();
 const cartRepo = new SequelizeShoppingCartRepository();
 const productRepo = new SequelizeProductRepository();
+const userRepo = new SequelizeUserRepository();
 const uow = new SequelizeUnitOfWork();
 const paymentGateway = new ManualPaymentGateway();
 const logger = new PinoLogger();
 
 const createOrderUseCase = new CreateOrderUseCase(uow, orderRepo, cartRepo, productRepo, paymentGateway, logger);
 const getOrderByIdUseCase = new GetOrderByIdUseCase(orderRepo);
-const listOrdersUseCase = new ListOrdersUseCase(orderRepo);
+const listOrdersUseCase = new ListOrdersUseCase(orderRepo, userRepo);
 const confirmOrderPaymentUseCase = new ConfirmOrderPaymentUseCase(orderRepo);
 const cancelOrderUseCase = new CancelOrderUseCase(uow, orderRepo, productRepo);
 const listMyOrdersUseCase = new ListMyOrdersUseCase(orderRepo);
@@ -75,17 +78,17 @@ const controller = new OrderApiController(
  *                 - $ref: '#/components/schemas/ErrorWithCode'
  *                 - $ref: '#/components/schemas/InsufficientStockError'
  *   get:
- *     summary: List all orders (admin only)
+ *     summary: List all orders (ADMIN/STAFF)
  *     tags: [Orders]
  *     security: [{ cookieAuth: [] }]
  *     responses:
  *       '200':
- *         description: All orders.
+ *         description: All orders with minimal customer identification (first name + last-name initial + id).
  *         content:
  *           application/json:
- *             schema: { type: array, items: { $ref: '#/components/schemas/Order' } }
+ *             schema: { type: array, items: { $ref: '#/components/schemas/WorkshopOrder' } }
  *       '401': { description: Not authenticated. }
- *       '403': { description: Authenticated but not ADMIN. }
+ *       '403': { description: Authenticated but not ADMIN or STAFF. }
  * /orders/mine:
  *   get:
  *     summary: List the caller's own orders, paginated
@@ -211,7 +214,7 @@ router.post('/orders', apiAuthMiddleware, csrfGuard, orderCreateValidation, cont
 // their order list (design.md, order-history change).
 router.get('/orders/mine', apiAuthMiddleware, listMyOrdersValidation, controller.listMine);
 router.get('/orders/:id', apiAuthMiddleware, controller.show);
-router.get('/orders', apiAuthMiddleware, adminGuard, controller.index);
+router.get('/orders', apiAuthMiddleware, requireRoles(Role.ADMIN, Role.STAFF), controller.index);
 router.post('/orders/:id/confirm-payment', apiAuthMiddleware, csrfGuard, adminGuard, controller.confirmPayment);
 router.post('/orders/:id/cancel', apiAuthMiddleware, csrfGuard, adminGuard, controller.cancel);
 

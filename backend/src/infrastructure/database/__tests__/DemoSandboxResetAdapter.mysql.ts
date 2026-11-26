@@ -282,9 +282,9 @@ describe('SequelizeDemoSandboxResetAdapter on disposable MySQL 8.0', () => {
     expect(await countTable(connA, 'Franchise')).toBe(DEMO_SANDBOX_EXPECTED_COUNTS.franchises);
     expect(await countTable(connA, 'Product')).toBe(DEMO_SANDBOX_EXPECTED_COUNTS.products);
     expect(await countTable(connA, 'User')).toBe(DEMO_SANDBOX_EXPECTED_COUNTS.users);
+    expect(await countTable(connA, 'Order')).toBe(DEMO_SANDBOX_EXPECTED_COUNTS.orders);
+    expect(await countTable(connA, 'OrderItem')).toBe(DEMO_SANDBOX_EXPECTED_COUNTS.orderItems);
     for (const emptyTable of [
-      'Order',
-      'OrderItem',
       'ShoppingCart',
       'CustomCommissionRequest',
       'RememberToken',
@@ -322,8 +322,10 @@ describe('SequelizeDemoSandboxResetAdapter on disposable MySQL 8.0', () => {
       },
     ]);
 
-    // Sibling slot-b remained isolated with its sentinel order intact.
-    expect(await countTable(connections.get('slot-b'), 'Order')).toBe(1);
+    // Sibling slot-b remained isolated with its seeded order + sentinel order intact.
+    expect(await countTable(connections.get('slot-b'), 'Order')).toBe(
+      DEMO_SANDBOX_EXPECTED_COUNTS.orders + 1,
+    );
     const availableSlots = await slotRepo.listSlotsByStatus(['available']);
     expect(availableSlots.map((s) => ({ id: s.id, generation: s.generation }))).toEqual([
       { id: 'slot-a', generation: 1 },

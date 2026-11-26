@@ -139,7 +139,7 @@ describe('Demo shell integration (sessionUI + m3d_demo_cart)', () => {
     expect(guestEl.style.display).toBe('none');
     expect(userEl.style.display).toBe('block');
     expect(adminEl.style.display).toBe('none');
-    expect(greeting.textContent).toBe('Demo Buyer');
+    expect(greeting.textContent).toBe('Cuenta demo');
 
     session.setItem(
       DEMO_STORAGE_KEY,
@@ -153,7 +153,7 @@ describe('Demo shell integration (sessionUI + m3d_demo_cart)', () => {
     win.dispatchEvent(new Event('demo-session-changed'));
 
     expect(adminEl.style.display).toBe('block');
-    expect(greeting.textContent).toBe('Demo STAFF');
+    expect(greeting.textContent).toBe('Cuenta demo');
     cleanup();
   });
 

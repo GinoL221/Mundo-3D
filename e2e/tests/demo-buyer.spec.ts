@@ -164,8 +164,8 @@ test('completes full Buyer demo flow over /api/demo/* with m3d_demo_csrf and cle
   await page.waitForLoadState('networkidle');
 
   await expect(page.locator('#demo-session-bar')).toBeVisible();
-  await expect(page.locator('#demo-bar-role-badge')).toHaveText('BUYER');
-  await expect(page.locator('#navbar-greeting')).toHaveText('Demo Buyer');
+  await expect(page.locator('#demo-role-buyer')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#navbar-greeting')).toHaveText('Cuenta demo');
 
   await page.goto('/product?id=1');
   const addBtn = page.getByRole('button', { name: /Agregar al carrito/i });

@@ -103,6 +103,7 @@ function makeRuntime() {
     getFranchiseRepository: (id: string) => perSlot.get(id)!.franchiseRepo,
     getShoppingCartRepository: (id: string) => perSlot.get(id)!.cartRepo,
     getOrderRepository: (id: string) => perSlot.get(id)!.orderRepo,
+    getUserRepository: () => ({ findByIds: jest.fn(async () => []) }),
     getCustomCommissionRequestRepository: (id: string) => perSlot.get(id)!.commRepo,
     getUnitOfWork: (id: string) => perSlot.get(id)!.uow,
   };

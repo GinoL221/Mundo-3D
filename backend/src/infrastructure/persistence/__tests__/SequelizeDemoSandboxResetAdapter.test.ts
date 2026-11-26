@@ -1,4 +1,5 @@
 import type { Sequelize, Transaction } from 'sequelize';
+import { OrderStatus } from '../../../domain/entities/Order';
 import { Role } from '../../../domain/Role';
 import {
   buildDemoSandboxSlotEmails,
@@ -24,8 +25,19 @@ function makeMockSlotGraph(slotId: string) {
   });
 
   const models = {
-    OrderItem: makeTable('OrderItem', 0),
-    Order: makeTable('Order', 0),
+    OrderItem: makeTable('OrderItem', DEMO_SANDBOX_EXPECTED_COUNTS.orderItems),
+    Order: {
+      ...makeTable('Order', DEMO_SANDBOX_EXPECTED_COUNTS.orders),
+      findAll: jest.fn(async () => [
+        {
+          idOrder: 1,
+          idUser: 1,
+          idempotencyKey: 'demo-seed-order-1',
+          orderStatus: OrderStatus.AWAITING_PAYMENT,
+          paymentReference: null as string | null,
+        },
+      ]),
+    },
     ShoppingCart: makeTable('ShoppingCart', 0),
     CustomCommissionRequest: makeTable('CustomCommissionRequest', 0),
     EmailConfirmationToken: makeTable('EmailConfirmationToken', 0),
@@ -122,6 +134,8 @@ describe('SequelizeDemoSandboxResetAdapter', () => {
       `bulkCreate:Franchise:${DEMO_SANDBOX_EXPECTED_COUNTS.franchises}`,
       `bulkCreate:Product:${DEMO_SANDBOX_EXPECTED_COUNTS.products}`,
       `bulkCreate:User:${DEMO_SANDBOX_EXPECTED_COUNTS.users}`,
+      `bulkCreate:Order:${DEMO_SANDBOX_EXPECTED_COUNTS.orders}`,
+      `bulkCreate:OrderItem:${DEMO_SANDBOX_EXPECTED_COUNTS.orderItems}`,
       'receipt:insert',
     ]);
     expect(graph.models.OrderItem.destroy).toHaveBeenCalledWith({
@@ -173,7 +187,47 @@ describe('SequelizeDemoSandboxResetAdapter', () => {
     });
     await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(true);
 
-    graph.models.Order.count.mockResolvedValueOnce(1);
+    graph.models.Order.findAll.mockResolvedValueOnce([
+      {
+        idOrder: 1,
+        idUser: 1,
+        idempotencyKey: 'demo-seed-order-1',
+        orderStatus: OrderStatus.AWAITING_PAYMENT,
+        paymentReference: null,
+      },
+      {
+        idOrder: 2,
+        idUser: 1,
+        idempotencyKey: 'visitor-order',
+        orderStatus: OrderStatus.AWAITING_PAYMENT,
+        paymentReference: null,
+      },
+    ]);
+    await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
+
+    graph.models.Order.findAll.mockResolvedValueOnce([
+      {
+        idOrder: 9,
+        idUser: 1,
+        idempotencyKey: 'visitor-order-only',
+        orderStatus: OrderStatus.AWAITING_PAYMENT,
+        paymentReference: null,
+      },
+    ]);
+    await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
+
+    graph.models.Order.findAll.mockResolvedValueOnce([
+      {
+        idOrder: 1,
+        idUser: 1,
+        idempotencyKey: 'demo-seed-order-1',
+        orderStatus: OrderStatus.PAID,
+        paymentReference: 'MAN-1',
+      },
+    ]);
+    await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
+
+    graph.models.OrderItem.count.mockResolvedValueOnce(0);
     await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
 
     graph.models.Product.count.mockResolvedValueOnce(16);

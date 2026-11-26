@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchOrder, fetchMyOrders } from './order.service';
+import { fetchOrder, fetchMyOrders, fetchWorkshopOrders } from './order.service';
 
 function stubCookie(cookie: string) {
   vi.stubGlobal('document', { cookie });
@@ -215,5 +215,70 @@ describe('fetchMyOrders', () => {
       expect(result.code).toBe('UNKNOWN');
       expect(result.message).not.toMatch(/Error\s+500/);
     }
+  });
+});
+
+const SAMPLE_WORKSHOP_ORDERS = [
+  {
+    ...SAMPLE_ORDER_DTO,
+    customer: { idUser: 7, displayName: 'María G.' },
+  },
+];
+
+describe('fetchWorkshopOrders', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    stubCookie('m3d_csrf=random.hmac');
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('requests GET /api/orders with credentials and returns workshop orders on 200', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, SAMPLE_WORKSHOP_ORDERS));
+
+    const result = await fetchWorkshopOrders();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toMatch(/\/api\/orders$/);
+    expect(options.method).toBe('GET');
+    expect(options.credentials).toBe('include');
+    expect(result).toEqual({ ok: true, orders: SAMPLE_WORKSHOP_ORDERS });
+  });
+
+  it('maps 403 to FORBIDDEN, 401 to UNAUTHENTICATED, network failure to NETWORK, and 500 to UNKNOWN', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(403, {}));
+    expect(await fetchWorkshopOrders()).toEqual({
+      ok: false,
+      code: 'FORBIDDEN',
+      message: expect.any(String),
+    });
+
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(401, {}))
+      .mockResolvedValueOnce(jsonResponse(401, {}));
+    expect(await fetchWorkshopOrders()).toEqual({
+      ok: false,
+      code: 'UNAUTHENTICATED',
+      message: expect.any(String),
+    });
+
+    fetchMock.mockRejectedValueOnce(new Error('offline'));
+    expect(await fetchWorkshopOrders()).toEqual({
+      ok: false,
+      code: 'NETWORK',
+      message: expect.any(String),
+    });
+
+    fetchMock.mockResolvedValueOnce(jsonResponse(500, {}));
+    const unknown = await fetchWorkshopOrders();
+    expect(unknown.ok).toBe(false);
+    if (!unknown.ok) expect(unknown.code).toBe('UNKNOWN');
   });
 });

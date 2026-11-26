@@ -9,7 +9,10 @@ import { Category } from '../../../../domain/entities/Category';
 import { CustomCommissionRequest as Comm } from '../../../../domain/entities/CustomCommissionRequest';
 import { DemoSandboxSlotSnapshot as Snap } from '../../../../domain/entities/DemoSandboxSlot';
 import { Franchise } from '../../../../domain/entities/Franchise';
+import { Order, OrderStatus } from '../../../../domain/entities/Order';
+import { OrderItem } from '../../../../domain/entities/OrderItem';
 import { Product } from '../../../../domain/entities/Product';
+import { User } from '../../../../domain/entities/User';
 import { Role } from '../../../../domain/Role';
 import * as rtMod from '../../../maintenance/demoSandboxRuntime';
 import * as ses from '../../../middlewares/demoSandboxSession';
@@ -22,7 +25,7 @@ const SEC = 'sandbox-secret-at-least-32-chars-long-003';
 const [A, C, B] = [ck.DEMO_AUTH_COOKIE, ck.DEMO_CSRF_COOKIE, '/api/demo'];
 const [CAT, FRAN] = [new Category(1, 'Figura'), new Franchise(1, 'Marvel')];
 
-function makeSlotRepos() {
+function makeSlotRepos(slotLabel: string) {
   const products: Product[] = [
     new Product(
       1,
@@ -52,6 +55,28 @@ function makeSlotRepos() {
       1,
       new Date(),
       new Date(Date.now() + 86_400_000),
+    ),
+  ];
+  const orders: Order[] = [
+    new Order(
+      1,
+      1,
+      `demo-seed-order-${slotLabel}`,
+      OrderStatus.AWAITING_PAYMENT,
+      [new OrderItem(1, 1, 1, `Busto Groot (${slotLabel})`, 1, 2500)],
+      new Date('2026-01-01T12:00:00.000Z'),
+    ),
+  ];
+  const users: User[] = [
+    new User(
+      1,
+      slotLabel === 'slot-1' ? 'Demo' : 'Visitante',
+      slotLabel === 'slot-1' ? 'Buyer' : 'Secreto',
+      `demo.buyer+${slotLabel}@sandbox.mundo3d.invalid`,
+      'hashed-secret',
+      null,
+      Role.USER,
+      'User',
     ),
   ];
   return {
@@ -139,7 +164,15 @@ function makeSlotRepos() {
     },
     franchiseRepo: { findAll: jest.fn(async () => [FRAN]) },
     cartRepo: {},
-    orderRepo: {},
+    orderRepo: {
+      findAll: jest.fn(async () => orders),
+      findById: jest.fn(async (id: number) => orders.find((o) => o.idOrder === id) ?? null),
+    },
+    userRepo: {
+      findByIds: jest.fn(async (ids: readonly number[]) =>
+        users.filter((u) => ids.includes(u.idUser)),
+      ),
+    },
     commRepo: { listActive: jest.fn(async () => comms) },
     uow: { runInTransaction: jest.fn(async <T>(w: (tx: unknown) => Promise<T>) => w({})) },
   };
@@ -154,7 +187,7 @@ function makeRuntime() {
   for (const n of ['1', '2']) {
     const [id, leaseId] = [`slot-${n}`, `lease-${n}`];
     slots.set(leaseId, { ...base, id, leaseId, idleExpiresAt: t1, absoluteExpiresAt: t2 } as Snap);
-    perSlot.set(id, makeSlotRepos());
+    perSlot.set(id, makeSlotRepos(id));
   }
   const slotRepository = {
     recordLeaseActivity: jest.fn(async (l: string) => slots.get(l) ?? null),
@@ -165,6 +198,7 @@ function makeRuntime() {
     getFranchiseRepository: (id: string) => perSlot.get(id)!.franchiseRepo,
     getShoppingCartRepository: (id: string) => perSlot.get(id)!.cartRepo,
     getOrderRepository: (id: string) => perSlot.get(id)!.orderRepo,
+    getUserRepository: (id: string) => perSlot.get(id)!.userRepo,
     getCustomCommissionRequestRepository: (id: string) => perSlot.get(id)!.commRepo,
     getUnitOfWork: (id: string) => perSlot.get(id)!.uow,
   };
@@ -204,6 +238,15 @@ describe('/api/demo/* STAFF endpoints and explicit 403 boundaries', () => {
       .get(`${B}/custom-commission-requests`)
       .set('Cookie', STAFF1.cookies);
     expect([inbox.status, inbox.body.length]).toEqual([200, 1]);
+
+    const ordersRes = await request(app).get(`${B}/orders`).set('Cookie', STAFF1.cookies);
+    expect(ordersRes.status).toBe(200);
+    expect(ordersRes.body).toHaveLength(1);
+    expect(ordersRes.body[0].customer).toEqual({ idUser: 1, displayName: 'Demo B.' });
+    expect(ordersRes.body[0].items[0].productName).toBe('Busto Groot (slot-1)');
+    expect(JSON.stringify(ordersRes.body)).not.toContain('sandbox.mundo3d.invalid');
+    expect(JSON.stringify(ordersRes.body)).not.toContain('Visitante');
+    expect(JSON.stringify(ordersRes.body)).not.toContain('hashed-secret');
 
     const created = await request(app)
       .post(`${B}/products`)
@@ -268,6 +311,8 @@ describe('/api/demo/* STAFF endpoints and explicit 403 boundaries', () => {
     expect(slot2.productRepo.create).not.toHaveBeenCalled();
     expect(slot2.productRepo.update).not.toHaveBeenCalled();
     expect(slot2.productRepo.adjustStock).not.toHaveBeenCalled();
+    expect(slot2.orderRepo.findAll).not.toHaveBeenCalled();
+    expect(slot2.userRepo.findByIds).not.toHaveBeenCalled();
   });
 
   it('enforces real 403 on product delete, ADMIN routes, and Buyer attempts on STAFF routes', async () => {
@@ -297,7 +342,6 @@ describe('/api/demo/* STAFF endpoints and explicit 403 boundaries', () => {
         .delete(`${B}/franchises/1`)
         .set('Cookie', STAFF1.cookies)
         .set('x-csrf-token', STAFF1.csrf),
-      request(app).get(`${B}/orders`).set('Cookie', STAFF1.cookies),
       request(app)
         .post(`${B}/orders/1/confirm-payment`)
         .set('Cookie', STAFF1.cookies)
@@ -306,6 +350,7 @@ describe('/api/demo/* STAFF endpoints and explicit 403 boundaries', () => {
         .post(`${B}/orders/1/cancel`)
         .set('Cookie', STAFF1.cookies)
         .set('x-csrf-token', STAFF1.csrf),
+      request(app).get(`${B}/orders`).set('Cookie', BUYER1.cookies),
       request(app).get(`${B}/custom-commission-requests`).set('Cookie', BUYER1.cookies),
       request(app)
         .post(`${B}/products`)
@@ -327,6 +372,14 @@ describe('/api/demo/* STAFF endpoints and explicit 403 boundaries', () => {
     for (const reqPromise of adminChecks) {
       expect((await reqPromise).status).toBe(403);
     }
+
+    const unauthOrders = await request(app).get(`${B}/orders`);
+    expect(unauthOrders.status).toBe(401);
+
+    const staffOrderDetail = await request(app)
+      .get(`${B}/orders/1`)
+      .set('Cookie', STAFF1.cookies);
+    expect(staffOrderDetail.status).toBe(404);
   });
 
   it('rejects missing or invalid CSRF with 403 on STAFF write routes', async () => {

@@ -135,6 +135,7 @@ describe('Session revocation on logout — public HTTP interface', () => {
         category: 'User',
       }),
       findByEmail: jest.fn(),
+      findByIds: jest.fn().mockResolvedValue([]),
       create: jest.fn(),
       findAll: jest.fn(),
     };

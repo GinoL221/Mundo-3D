@@ -1,4 +1,4 @@
-import { UniqueConstraintError } from 'sequelize';
+import { Op, UniqueConstraintError } from 'sequelize';
 import { User } from '../../domain/entities/User';
 import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
 import { UserAlreadyExistsException } from '../../domain/exceptions/UserAlreadyExistsException';
@@ -26,6 +26,15 @@ export class ScopedSequelizeUserRepository implements UserRepositoryPort {
     const instance = await this.db.User.findByPk(id);
     if (!instance) return null;
     return this.toEntity(instance);
+  }
+
+  async findByIds(ids: readonly number[]): Promise<User[]> {
+    const uniqueIds = [...new Set(ids)];
+    if (uniqueIds.length === 0) return [];
+    const instances = await this.db.User.findAll({
+      where: { idUser: { [Op.in]: uniqueIds } },
+    });
+    return instances.map((instance) => this.toEntity(instance));
   }
 
   async findByEmail(email: string): Promise<User | null> {

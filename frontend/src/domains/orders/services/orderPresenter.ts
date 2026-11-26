@@ -1,4 +1,8 @@
-import type { MyOrdersPageViewModel, OrderViewModel } from './order.service';
+import type {
+  MyOrdersPageViewModel,
+  OrderViewModel,
+  WorkshopOrderViewModel,
+} from './order.service';
 
 // Pure formatting layer between the fetched OrderViewModel and
 // OrderDetail.astro / OrderList.astro DOM scripts. Keeps business/presentation
@@ -89,4 +93,56 @@ export function presentMyOrdersPage(
     prevHref: page.page > 1 ? `/orders?page=${page.page - 1}` : null,
     nextHref: page.page < page.totalPages ? `/orders?page=${page.page + 1}` : null,
   };
+}
+
+export type WorkshopOrderBadgeClass =
+  | 'ui-badge--warning'
+  | 'ui-badge--success'
+  | 'ui-badge--danger'
+  | 'ui-badge--user';
+
+export interface WorkshopOrderRow {
+  idOrderLabel: string;
+  createdAtLabel: string;
+  customerLabel: string;
+  statusLabel: string;
+  statusBadgeClass: WorkshopOrderBadgeClass;
+  itemsCountLabel: string;
+  totalLabel: string;
+  items: OrderItemRow[];
+}
+
+function getOrderStatusBadgeClass(status: string): WorkshopOrderBadgeClass {
+  if (status === 'AWAITING_PAYMENT') return 'ui-badge--warning';
+  if (status === 'PAID') return 'ui-badge--success';
+  if (status === 'CANCELLED') return 'ui-badge--danger';
+  return 'ui-badge--user';
+}
+
+export function presentWorkshopOrders(
+  orders: readonly WorkshopOrderViewModel[],
+  formatAmount: AmountFormatter = defaultFormatAmount,
+): WorkshopOrderRow[] {
+  return orders.map((order) => {
+    const totalUnits = order.items.reduce((sum, item) => sum + item.quantity, 0);
+    const itemsCountLabel = totalUnits === 1 ? '1 pieza' : `${totalUnits} piezas`;
+    const customerName = order.customer?.displayName?.trim() || 'Cliente';
+    const customerId = order.customer?.idUser ?? order.idUser;
+    return {
+      idOrderLabel: `#${order.idOrder}`,
+      createdAtLabel: new Date(order.createdAt).toLocaleString('es-AR'),
+      customerLabel: `${customerName} · #${customerId}`,
+      statusLabel: formatOrderStatus(order.status),
+      statusBadgeClass: getOrderStatusBadgeClass(order.status),
+      itemsCountLabel,
+      totalLabel: formatAmount(order.totalAmount),
+      items: order.items.map((item) => ({
+        productName: item.productName,
+        productHref: item.idProduct !== null ? `/product?id=${item.idProduct}` : null,
+        quantityLabel: String(item.quantity),
+        unitPriceLabel: formatAmount(item.unitPrice),
+        subtotalLabel: formatAmount(item.subtotal),
+      })),
+    };
+  });
 }

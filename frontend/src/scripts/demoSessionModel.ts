@@ -20,7 +20,8 @@ export function buildDemoBarPresentation(role: DemoRole): DemoBarPresentation {
     return {
       roleLabel: 'STAFF',
       roleBadgeClass: 'ui-badge ui-badge--staff',
-      summaryText: 'Modo STAFF aislado · podés gestionar encargos y catálogo sin eliminar piezas.',
+      summaryText:
+        'Sesión aislada · podés ver pedidos, ajustar stock, editar el catálogo y revisar solicitudes. Sin eliminar piezas ni tocar pagos.',
     };
   }
   return {

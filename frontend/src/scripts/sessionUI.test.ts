@@ -116,6 +116,19 @@ function createFixture() {
   document.elements.set('navbar-user-menu-trigger', userMenuTrigger);
   document.elements.set('navbar-user-menu', userMenu);
 
+  const workshopTrigger = new FakeElement();
+  const workshopMenu = new FakeElement();
+  const workshopLink = new FakeElement();
+  const workshopParent = new FakeElement();
+  workshopMenu.querySelectorResult = workshopLink;
+  workshopTrigger.setAttribute('aria-expanded', 'false');
+  workshopMenu.hidden = true;
+  workshopTrigger.parentElement = workshopParent;
+  workshopMenu.parentElement = workshopParent;
+  workshopParent.containedElements = new Set([workshopTrigger, workshopMenu, workshopLink]);
+  document.elements.set('navbar-workshop-trigger', workshopTrigger);
+  document.elements.set('navbar-workshop-menu', workshopMenu);
+
   const window = {
     listeners: new Map<string, (event: Event) => void>(),
     location: { href: '' },
@@ -363,6 +376,44 @@ describe('initializeSessionUI', () => {
       fixture.start();
 
       expect(fixture.visibility().admin).toBe('block');
+    });
+
+    it('toggles the Taller workshop menu, coordinates with the user menu, and closes on Escape or outside click', () => {
+      const fixture = createFixture();
+      setUserCookie(fixture.document, { firstName: 'Sam', idRole: Role.STAFF });
+      fixture.start();
+
+      const workshopTrigger = fixture.document.elements.get('navbar-workshop-trigger')!;
+      const workshopMenu = fixture.document.elements.get('navbar-workshop-menu')!;
+      const userTrigger = fixture.document.elements.get('navbar-user-menu-trigger')!;
+      const userMenu = fixture.document.elements.get('navbar-user-menu')!;
+
+      workshopTrigger.click();
+      expect(workshopTrigger.getAttribute('aria-expanded')).toBe('true');
+      expect(workshopMenu.hidden).toBe(false);
+      expect(workshopMenu.querySelectorResult?.focusCount).toBe(1);
+
+      userTrigger.click();
+      expect(userMenu.hidden).toBe(false);
+      expect(workshopMenu.hidden).toBe(true);
+      expect(workshopTrigger.getAttribute('aria-expanded')).toBe('false');
+
+      workshopTrigger.click();
+      expect(workshopMenu.hidden).toBe(false);
+      expect(userMenu.hidden).toBe(true);
+
+      fixture.document.listeners.get('keydown')?.({
+        key: 'Escape',
+        preventDefault: vi.fn(),
+      } as unknown as Event);
+      expect(workshopMenu.hidden).toBe(true);
+      expect(workshopTrigger.getAttribute('aria-expanded')).toBe('false');
+      expect(workshopTrigger.focusCount).toBe(1);
+
+      workshopTrigger.click();
+      expect(workshopMenu.hidden).toBe(false);
+      fixture.document.listeners.get('click')?.({ target: new FakeElement() } as unknown as Event);
+      expect(workshopMenu.hidden).toBe(true);
     });
 
     it('hides admin-only elements from a regular USER, who still sees the user UI', () => {

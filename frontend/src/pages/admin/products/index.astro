@@ -145,6 +145,55 @@ import '../../../styles/components/admin-products.css';
         </div>
 
         <div
+          id="admin-stock-filters"
+          class="admin-stock-filters"
+          role="group"
+          aria-label="Filtrar catálogo por stock"
+          hidden
+        >
+          <button
+            type="button"
+            class="admin-stock-filters__btn"
+            data-stock-filter="all"
+            aria-pressed="true"
+          >
+            Todos <span class="admin-stock-filters__count" data-stock-count="all">0</span>
+          </button>
+          <button
+            type="button"
+            class="admin-stock-filters__btn"
+            data-stock-filter="low"
+            aria-pressed="false"
+          >
+            Stock bajo <span class="admin-stock-filters__count" data-stock-count="low">0</span>
+          </button>
+          <button
+            type="button"
+            class="admin-stock-filters__btn"
+            data-stock-filter="out"
+            aria-pressed="false"
+          >
+            Sin stock <span class="admin-stock-filters__count" data-stock-count="out">0</span>
+          </button>
+        </div>
+
+        <div id="admin-filter-empty-state" class="ui-state ui-state--empty" role="status" hidden>
+          <p id="admin-filter-empty-title" class="ui-state__title">
+            No hay piezas en este estado de stock
+          </p>
+          <p class="ui-state__text">
+            Probá cambiar el filtro o volver al listado completo del taller.
+          </p>
+          <button
+            type="button"
+            id="admin-filter-reset"
+            class="ui-btn ui-btn--secondary ui-btn--sm"
+          >
+            Ver todas las piezas
+          </button>
+        </div>
+
+        <div
           id="admin-table-wrap"
           class="ui-table-wrap"
           role="region"
