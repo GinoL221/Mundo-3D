@@ -84,6 +84,16 @@ export function adaptAPIProduct(apiProduct: APIProduct): Product {
   };
 }
 
+export function formatProductDimensionsSummary(
+  product: Pick<Product, 'hasDimensions' | 'height' | 'width' | 'depth'>,
+): string {
+  if (!product.hasDimensions) {
+    return 'A consultar';
+  }
+
+  return `Alto: ${product.height} · Ancho: ${product.width} · Profundidad: ${product.depth}`;
+}
+
 export function adaptAPIProducts(apiProducts: APIProduct[]): Product[] {
   return apiProducts.map(adaptAPIProduct);
 }
