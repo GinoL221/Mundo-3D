@@ -76,6 +76,7 @@ class FakeDocument {
       '.guest-only': 'guest',
       '.user-only': 'user',
       '.admin-only': 'admin',
+      '.admin-strict-only': 'adminStrict',
       '.buyer-only': 'buyer',
     };
     const element = this.elements.get(ids[selector]);
