@@ -149,7 +149,11 @@ test('visitor submits from the home CTA; STAFF/ADMIN can read while USER/guest a
     await page.goto('/admin/commission-requests');
     await expect(page.locator('#admin-requests-content')).toBeVisible();
     await expect(page.locator('#admin-requests-list')).toContainText(requestFixture.name);
-    await expect(page.locator('.admin-only a[href="/admin/commission-requests"]')).toBeVisible();
+    await expect(page.locator('#navbar-workshop-trigger')).toBeVisible();
+    await page.locator('#navbar-workshop-trigger').click();
+    await expect(
+      page.locator('#navbar-workshop-menu a[href="/admin/commission-requests"]'),
+    ).toBeVisible();
     expect(protectedReadRoles).toContain(role.name);
   }
 
@@ -163,7 +167,10 @@ test('visitor submits from the home CTA; STAFF/ADMIN can read while USER/guest a
     await page.goto('/admin/commission-requests');
     await expect(page.locator('#admin-gate-denied')).toBeVisible();
     await expect(page.locator('#admin-requests-content')).toBeHidden();
-    await expect(page.locator('.admin-only a[href="/admin/commission-requests"]')).toBeHidden();
+    await expect(page.locator('#navbar-workshop-trigger')).toBeHidden();
+    await expect(
+      page.locator('#navbar-workshop-menu a[href="/admin/commission-requests"]'),
+    ).toBeHidden();
     expect(protectedReadRoles).toHaveLength(readsBeforeNavigation);
   }
 
