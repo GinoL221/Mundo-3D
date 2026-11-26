@@ -1,0 +1,102 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AdminGateDenied from '../../domains/products/components/admin/AdminGateDenied.astro';
+import '../../styles/components/admin-products.css';
+import '../../styles/components/admin-users.css';
+---
+
+<Layout title="Usuarios — Mundo 3D">
+  <main>
+    <div class="admin-shell">
+      <AdminGateDenied />
+
+      <section id="admin-users-content" class="admin-users__content" hidden>
+        <header class="ui-page-head">
+          <div class="ui-page-head__main">
+            <div class="ui-page-head__title-row">
+              <h1 class="ui-page-head__title">Usuarios</h1>
+              <span class="ui-badge ui-badge--admin">ADMIN</span>
+              <span id="admin-users-count" class="ui-badge ui-badge--user"></span>
+            </div>
+            <p class="ui-page-head__scope">
+              Listado de cuentas en solo lectura. No se exponen contraseñas ni credenciales.
+            </p>
+          </div>
+          <div class="ui-page-head__actions">
+            <a href="/admin/orders" class="ui-btn ui-btn--secondary">Ver pedidos</a>
+          </div>
+        </header>
+
+        <div id="admin-users-demo-note" class="ui-callout ui-callout--info" hidden>
+          <div class="ui-callout__content">
+            <p class="ui-callout__title">Cuentas ficticias de tu sesión demo</p>
+            <p class="ui-callout__text">
+              Este listado muestra únicamente las 3 cuentas sintéticas aisladas de tu sesión demo
+              (Buyer, STAFF y ADMIN). Nunca accede a usuarios reales ni a otras sesiones.
+            </p>
+          </div>
+        </div>
+
+        <div id="admin-users-loading" class="ui-state" aria-busy="true">
+          <p class="ui-state__title">Cargando usuarios</p>
+          <p class="ui-state__text">Consultando las cuentas registradas.</p>
+          <div class="ui-skeleton-list" aria-hidden="true">
+            <span class="ui-skeleton"></span>
+            <span class="ui-skeleton ui-skeleton--medium"></span>
+            <span class="ui-skeleton ui-skeleton--short"></span>
+          </div>
+        </div>
+
+        <div id="admin-users-error" class="ui-callout ui-callout--danger" role="alert" hidden>
+          <div class="ui-callout__content">
+            <p class="ui-callout__title">No pudimos cargar los usuarios</p>
+            <p id="admin-users-error-text" class="ui-callout__text">
+              El servicio no respondió a tiempo. Volvé a intentar en unos segundos.
+            </p>
+            <div class="ui-callout__actions">
+              <button
+                id="admin-users-retry"
+                type="button"
+                class="ui-btn ui-btn--secondary ui-btn--sm"
+              >
+                Reintentar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="admin-users-empty" class="ui-state ui-state--empty" hidden>
+          <p class="ui-state__title">No hay cuentas registradas</p>
+          <p class="ui-state__text">Cuando se registren usuarios aparecerán en este listado.</p>
+        </div>
+
+        <div
+          id="admin-users-table-wrap"
+          class="ui-table-wrap admin-users__table-wrap"
+          role="region"
+          aria-label="Listado de usuarios"
+          tabindex="0"
+          hidden
+        >
+          <table class="ui-table admin-users-table">
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Nombre</th>
+                <th scope="col">Correo electrónico</th>
+                <th scope="col">Rol</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-list"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  import { initializeAdminUsers } from '../../scripts/adminUsers';
+
+  void initializeAdminUsers(document);
+</script>
