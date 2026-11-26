@@ -42,7 +42,7 @@ test('preserves HomeHeader navigation and keyboard dropdown access', async ({
   await expect(userMenu).toBeVisible();
   const headerHeightAfter = (await header.boundingBox())!.height;
   expect(Math.abs(headerHeightAfter - headerHeightBefore)).toBeLessThanOrEqual(1);
-  await expect(userMenu.locator('a[href="/profile"]')).toHaveCount(0);
+  await expect(userMenu.locator('a[href="/profile"]')).toBeVisible();
   const ordersLink = userMenu.locator('a[href="/orders"]');
   await ordersLink.focus();
   await expect(ordersLink).toBeFocused();
