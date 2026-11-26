@@ -12,6 +12,7 @@ import { ListCategoriesUseCase as ListCat } from '../../application/use-cases/Li
 import { ListCustomCommissionRequestsUseCase as ListComm } from '../../application/use-cases/ListCustomCommissionRequestsUseCase';
 import { ListFranchisesUseCase as ListFran } from '../../application/use-cases/ListFranchisesUseCase';
 import { ListMyOrdersUseCase as ListMyOrd } from '../../application/use-cases/ListMyOrdersUseCase';
+import { ListOrdersUseCase as ListOrd } from '../../application/use-cases/ListOrdersUseCase';
 import { ListProductsUseCase as ListProd } from '../../application/use-cases/ListProductsUseCase';
 import { SearchProductsUseCase as SearchProd } from '../../application/use-cases/SearchProductsUseCase';
 import { SyncCartUseCase as SyncCart } from '../../application/use-cases/SyncCartUseCase';
@@ -34,7 +35,7 @@ export interface DemoSandboxBuyerControllers {
   categories: Pick<CategoryApiController, 'index' | 'show'>;
   franchises: Pick<FranchiseApiController, 'index' | 'show'>;
   cart: Pick<CartApiController, 'getCart' | 'syncCart'>;
-  orders: Pick<OrderApiController, 'create' | 'show' | 'listMine'>;
+  orders: Pick<OrderApiController, 'create' | 'show' | 'index' | 'listMine'>;
   commissions: Pick<CustomCommissionRequestApiController, 'create' | 'list'>;
 }
 
@@ -43,7 +44,11 @@ const [log, pay, off] = [new PinoLogger(), new ManualPaymentGateway(), undefined
 
 function build(r: Repos, id: string): DemoSandboxBuyerControllers {
   const [p, c, f] = [r.get(id), r.getCategoryRepository(id), r.getFranchiseRepository(id)];
-  const [cart, ord] = [r.getShoppingCartRepository(id), r.getOrderRepository(id)];
+  const [cart, ord, usr] = [
+    r.getShoppingCartRepository(id),
+    r.getOrderRepository(id),
+    r.getUserRepository(id),
+  ];
   const [comm, uow] = [r.getCustomCommissionRequestRepository(id), r.getUnitOfWork(id)];
   const pr = new ProductApiController(
     new ListProd(p),
@@ -61,7 +66,7 @@ function build(r: Repos, id: string): DemoSandboxBuyerControllers {
   const or = new OrderApiController(
     new CreateOrd(uow, ord, cart, p, pay, log),
     new GetOrd(ord),
-    off,
+    new ListOrd(ord, usr),
     off,
     off,
     new ListMyOrd(ord),
@@ -83,7 +88,7 @@ function build(r: Repos, id: string): DemoSandboxBuyerControllers {
     categories: { index: ca.index, show: ca.show },
     franchises: { index: fr.index, show: fr.show },
     cart: { getCart: ct.getCart, syncCart: ct.syncCart },
-    orders: { create: or.create, show: or.show, listMine: or.listMine },
+    orders: { create: or.create, show: or.show, index: or.index, listMine: or.listMine },
     commissions: { create: cm.create, list: cm.list },
   };
 }

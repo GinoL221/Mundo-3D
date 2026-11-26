@@ -15,6 +15,15 @@ describe('demoSandboxSeedData', () => {
     expect(seed.franchises).toHaveLength(DEMO_SANDBOX_EXPECTED_COUNTS.franchises);
     expect(seed.products).toHaveLength(DEMO_SANDBOX_EXPECTED_COUNTS.products);
     expect(seed.users).toHaveLength(DEMO_SANDBOX_EXPECTED_COUNTS.users);
+    expect(seed.orders).toHaveLength(DEMO_SANDBOX_EXPECTED_COUNTS.orders);
+    expect(seed.orderItems).toHaveLength(DEMO_SANDBOX_EXPECTED_COUNTS.orderItems);
+    expect(seed.orders[0]).toMatchObject({
+      idOrder: 1,
+      idUser: 1,
+      idempotencyKey: 'demo-seed-order-1',
+      orderStatus: 'AWAITING_PAYMENT',
+    });
+    expect(seed.orderItems.every((item) => item.idOrder === 1 && item.quantity > 0)).toBe(true);
 
     expect(seed.categories.map((c) => c.idCategory)).toEqual(
       Array.from({ length: DEMO_SANDBOX_EXPECTED_COUNTS.categories }, (_, index) => index + 1),

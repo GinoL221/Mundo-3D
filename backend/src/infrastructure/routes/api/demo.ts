@@ -174,7 +174,11 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   router.post('/franchises', ...write, denyAdmin);
   router.put('/franchises/:id', ...write, denyAdmin);
   router.delete('/franchises/:id', ...write, denyAdmin);
-  router.get('/orders', auth, denyAdmin);
+  router.get(
+    '/orders',
+    ...staffRead,
+    run((b) => b.orders.index),
+  );
   router.post('/orders/:id/confirm-payment', ...write, denyAdmin);
   router.post('/orders/:id/cancel', ...write, denyAdmin);
   return router;

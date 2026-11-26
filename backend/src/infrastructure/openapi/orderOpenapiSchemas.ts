@@ -43,8 +43,28 @@ const orderSummarySchema = {
   required: ['idOrder', 'idUser', 'status', 'totalAmount', 'createdAt', 'paymentReference'],
 };
 
+const orderCustomerSchema = {
+  type: 'object',
+  properties: {
+    idUser: { type: 'integer' },
+    displayName: { type: 'string' },
+  },
+  required: ['idUser', 'displayName'],
+};
+
+const workshopOrderSchema = {
+  type: 'object',
+  properties: {
+    ...orderSchema.properties,
+    customer: { $ref: '#/components/schemas/OrderCustomer' },
+  },
+  required: [...orderSchema.required, 'customer'],
+};
+
 export const orderOpenapiSchemas = {
   OrderItem: orderItemSchema,
   Order: orderSchema,
   OrderSummary: orderSummarySchema,
+  OrderCustomer: orderCustomerSchema,
+  WorkshopOrder: workshopOrderSchema,
 };

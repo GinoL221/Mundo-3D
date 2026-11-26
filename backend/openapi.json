@@ -605,6 +605,65 @@
           "createdAt",
           "paymentReference"
         ]
+      },
+      "OrderCustomer": {
+        "type": "object",
+        "properties": {
+          "idUser": {
+            "type": "integer"
+          },
+          "displayName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "idUser",
+          "displayName"
+        ]
+      },
+      "WorkshopOrder": {
+        "type": "object",
+        "properties": {
+          "idOrder": {
+            "type": "integer"
+          },
+          "idUser": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItem"
+            }
+          },
+          "totalAmount": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "paymentReference": {
+            "type": "string",
+            "nullable": true
+          },
+          "customer": {
+            "$ref": "#/components/schemas/OrderCustomer"
+          }
+        },
+        "required": [
+          "idOrder",
+          "idUser",
+          "status",
+          "items",
+          "totalAmount",
+          "createdAt",
+          "paymentReference",
+          "customer"
+        ]
       }
     },
     "securitySchemes": {
@@ -1545,7 +1604,7 @@
         }
       },
       "get": {
-        "summary": "List all orders (admin only)",
+        "summary": "List all orders (ADMIN/STAFF)",
         "tags": [
           "Orders"
         ],
@@ -1556,13 +1615,13 @@
         ],
         "responses": {
           "200": {
-            "description": "All orders.",
+            "description": "All orders with minimal customer identification (first name + last-name initial + id).",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Order"
+                    "$ref": "#/components/schemas/WorkshopOrder"
                   }
                 }
               }
@@ -1572,7 +1631,7 @@
             "description": "Not authenticated."
           },
           "403": {
-            "description": "Authenticated but not ADMIN."
+            "description": "Authenticated but not ADMIN or STAFF."
           }
         }
       }

@@ -3,15 +3,19 @@ import fs from 'node:fs';
 import path from 'node:path';
 // @ts-expect-error: bcryptjs does not provide native TypeScript types in all environments
 import bcryptjs from 'bcryptjs';
+import { OrderStatus } from '../../domain/entities/Order';
 import { Role } from '../../domain/Role';
 
-export const DEMO_SANDBOX_SEED_VERSION = 'v2-catalog-26-user-staff';
+export const DEMO_SANDBOX_SEED_VERSION = 'v3-catalog-26-user-staff-seed-order';
+export const DEMO_SANDBOX_SEED_ORDER_IDEMPOTENCY_KEY = 'demo-seed-order-1';
 
 export const DEMO_SANDBOX_EXPECTED_COUNTS = {
   categories: 13,
   franchises: 14,
   products: 26,
   users: 2,
+  orders: 1,
+  orderItems: 2,
 } as const;
 
 export interface DemoSandboxCategorySeed {
@@ -53,12 +57,32 @@ export interface DemoSandboxUserSeed {
   emailVerifiedAt: Date;
 }
 
+export interface DemoSandboxOrderSeed {
+  idOrder: number;
+  idUser: number;
+  idempotencyKey: string;
+  orderStatus: OrderStatus;
+  paymentReference: string | null;
+  createdAt: Date;
+}
+
+export interface DemoSandboxOrderItemSeed {
+  idOrderItem: number;
+  idOrder: number;
+  idProduct: number;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+}
+
 export interface DemoSandboxSeedBundle {
   readonly seedVersion: string;
   categories: DemoSandboxCategorySeed[];
   franchises: DemoSandboxFranchiseSeed[];
   products: DemoSandboxProductSeed[];
   users: DemoSandboxUserSeed[];
+  orders: DemoSandboxOrderSeed[];
+  orderItems: DemoSandboxOrderItemSeed[];
 }
 
 const SLOT_ID_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
@@ -241,6 +265,27 @@ export function buildDemoSandboxSeedData(
     },
   ];
 
+  const products = loadCatalogProducts().map((product) => ({ ...product }));
+  const sampleProducts = products.slice(0, DEMO_SANDBOX_EXPECTED_COUNTS.orderItems);
+  const orders: DemoSandboxOrderSeed[] = [
+    {
+      idOrder: 1,
+      idUser: 1,
+      idempotencyKey: DEMO_SANDBOX_SEED_ORDER_IDEMPOTENCY_KEY,
+      orderStatus: OrderStatus.AWAITING_PAYMENT,
+      paymentReference: null,
+      createdAt: new Date(verifiedTimestamp.getTime()),
+    },
+  ];
+  const orderItems: DemoSandboxOrderItemSeed[] = sampleProducts.map((product, index) => ({
+    idOrderItem: index + 1,
+    idOrder: 1,
+    idProduct: product.idProduct,
+    productName: product.nameProduct,
+    quantity: 1,
+    unitPrice: product.price,
+  }));
+
   return {
     seedVersion: DEMO_SANDBOX_SEED_VERSION,
     categories: CATEGORY_NAMES.map((nameCategory, index) => ({
@@ -251,7 +296,9 @@ export function buildDemoSandboxSeedData(
       idFranchise: index + 1,
       nameFranchise,
     })),
-    products: loadCatalogProducts().map((product) => ({ ...product })),
+    products,
     users,
+    orders,
+    orderItems,
   };
 }
