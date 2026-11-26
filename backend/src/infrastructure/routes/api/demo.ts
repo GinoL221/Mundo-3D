@@ -77,7 +77,6 @@ const READS: [string, (b: Buyer) => RequestHandler][] = [
   ['/categories/:id', (b) => b.categories.show],
   ['/franchises', (b) => b.franchises.index],
   ['/franchises/:id', (b) => b.franchises.show],
-  ['/cart', (b) => b.cart.getCart],
   ['/orders/:id', (b) => b.orders.show],
 ];
 
@@ -86,6 +85,7 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   const c = new DemoSandboxSessionController();
   const [w, auth] = [15 * 60 * 1000, ses.demoSandboxAuthMiddleware];
   const write = [auth, ses.demoSandboxCsrfMiddleware];
+  const buyerOnly = ses.requireDemoRole(Role.USER);
   const staffOnly = ses.requireDemoRole(Role.STAFF);
   const staffRead = [auth, staffOnly];
   const staffWrite = [...write, staffOnly];
@@ -124,10 +124,11 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   router.post('/session/refresh', rLim, c.refresh);
   router.delete('/session', ...write, c.destroy);
   router.get('/products/search', auth, searchVal, hSearch);
-  router.get('/orders/mine', auth, myOrdVal, hMine);
+  router.get('/cart', auth, buyerOnly, run((b) => b.cart.getCart));
+  router.get('/orders/mine', auth, buyerOnly, myOrdVal, hMine);
   for (const [path, pick] of READS) router.get(path, auth, run(pick));
-  router.put('/cart', ...write, cartVal, hCart);
-  router.post('/orders', ...write, ordVal, hOrd);
+  router.put('/cart', ...write, buyerOnly, cartVal, hCart);
+  router.post('/orders', ...write, buyerOnly, ordVal, hOrd);
   router.post('/custom-commission-requests', ...write, cmLim, ...commVal, commErr, hComm);
   router.get(
     '/custom-commission-requests',
@@ -161,6 +162,7 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
     run((b) => b.products.adjustStock),
   );
   router.delete('/products/:id', ...write, denyAdmin);
+  router.get('/users/me', auth, run((b) => b.users.me));
   router.all('/users', auth, denyAdmin);
   router.all(
     '/users/:id',

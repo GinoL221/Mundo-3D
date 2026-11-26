@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ApiError,
   getSessionUser,
+  isOperationalRole,
   parseApiResponse,
   readApiErrorDetails,
   readApiErrorMessage,
@@ -325,5 +326,18 @@ describe('parseApiResponse', () => {
     await expect(parseApiResponse(empty400, 'Error al registrarse.')).rejects.toThrow(
       'Error al registrarse.'
     );
+  });
+});
+
+describe('isOperationalRole', () => {
+  it('returns true for ADMIN (idRole 1) and STAFF (idRole 3)', () => {
+    expect(isOperationalRole({ idRole: 1 })).toBe(true);
+    expect(isOperationalRole({ idRole: 3 })).toBe(true);
+  });
+
+  it('returns false for USER (idRole 2), unknown roles, and null', () => {
+    expect(isOperationalRole({ idRole: 2 })).toBe(false);
+    expect(isOperationalRole({ idRole: 0 })).toBe(false);
+    expect(isOperationalRole(null)).toBe(false);
   });
 });

@@ -1,0 +1,180 @@
+/* ============================================================
+   components/profile.css — Read-only self-profile (/profile)
+   Uses official DESIGN.md paper/ink semantic tokens only.
+   ============================================================ */
+
+.profile-shell {
+  max-width: 820px;
+  margin-inline: auto;
+  padding: var(--space-lg) var(--space-md) var(--space-2xl);
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.profile-content {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.profile-content[hidden],
+.profile-shell [hidden] {
+  display: none;
+}
+
+.profile-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.profile-card {
+  container-type: inline-size;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-surface);
+  overflow: hidden;
+  display: grid;
+}
+
+.profile-card__identity {
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: start;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-subtle, var(--surface));
+}
+
+.profile-card__avatar {
+  width: 72px;
+  height: 72px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.profile-card__heading {
+  min-width: 0;
+  display: grid;
+  justify-items: start;
+  gap: var(--space-sm);
+}
+
+.profile-card__name {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  line-height: var(--line-height-heading, 1.2);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.profile-card__body {
+  padding: var(--space-lg);
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.profile-section {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.profile-section__title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sys-text-muted);
+}
+
+.profile-details {
+  margin: 0;
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.profile-details__row {
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-details__row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.profile-details__row dt {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--sys-text-muted);
+}
+
+.profile-details__row dd {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.profile-scope-summary {
+  margin: 0;
+  max-width: var(--sys-prose-max, 75ch);
+  color: var(--fg);
+  line-height: 1.6;
+}
+
+.profile-readonly-note {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--sys-text-muted);
+}
+
+.profile-card__footer {
+  padding: var(--space-lg);
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: var(--space-md);
+}
+
+.profile-shortcuts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.profile-shortcuts li {
+  display: flex;
+}
+
+@container (min-width: 34rem) {
+  .profile-card__identity {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .profile-details__row {
+    grid-template-columns: 180px minmax(0, 1fr);
+    align-items: baseline;
+    gap: var(--space-md);
+  }
+}
+
+@media (min-width: 640px) {
+  .profile-shell {
+    padding: var(--space-xl) var(--space-lg) var(--space-2xl);
+  }
+}

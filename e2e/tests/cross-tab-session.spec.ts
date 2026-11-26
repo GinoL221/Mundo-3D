@@ -27,20 +27,26 @@ test.describe('Cross-tab session synchronization', () => {
     await expect(page).toHaveURL('/');
     await expect(page.locator('#navbar-greeting')).toContainText('Hola');
 
-    // Authenticated cart write: exercises CartService.syncToBackend's
-    // withCredentials() + X-CSRF-Token round trip against the real backend
-    // (Phase 8 of this change) — a wrong/missing CSRF token would 403 and
-    // the badge would never reach "1".
+    // Operational role separation: ADMIN sees the workshop panel on product
+    // detail instead of shopper add-to-cart controls.
     await page.goto('/product?id=1');
     await expect(page.locator('#product-name')).not.toBeEmpty();
-    await page.click('#add-to-cart-btn');
-    await expect(page.locator('#navbar-cart-badge')).toHaveText('1');
+    await expect(page.locator('#product-workshop-panel')).toBeVisible();
+    await expect(page.locator('#add-to-cart-btn')).toBeHidden();
 
-    // Admin page: gated by the m3d_user cookie's idRole (visual-admin-hiding
-    // spec's client-side gate), reachable only because login actually set it.
+    // Admin page + authenticated CSRF write: proves m3d_user gates admin UI
+    // and withCredentials() + X-CSRF-Token round-trips against the real backend.
     await page.goto('/admin/products');
     await expect(page.locator('#admin-products-content')).toBeVisible();
     await expect(page.locator('#admin-gate-denied')).toBeHidden();
+    const firstPlus = page.locator('.admin-product-stock-plus').first();
+    await expect(firstPlus).toBeVisible();
+    await Promise.all([
+      page.waitForResponse(
+        (res) => /\/api\/products\/\d+\/stock$/.test(res.url()) && res.status() === 200,
+      ),
+      firstPlus.click(),
+    ]);
 
     // Tab 2: opened in the SAME browser context, so it shares tab 1's
     // cookies — proving the session (not just the UI state) is genuinely

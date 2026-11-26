@@ -1,4 +1,4 @@
-import { API_URL, authFetch, getSessionUser } from '../../../config';
+import { API_URL, authFetch, getSessionUser, isOperationalRole } from '../../../config';
 import { cartItems, persistCart, type CartItem } from './cartState';
 import { flushCartSync, hasPendingSync, scheduleSync } from './cartSync';
 
@@ -29,7 +29,7 @@ export interface HydrationResult {
   items: CartItem[]; // state now in the store (or the untouched local state)
   priceDrifts: PriceDrift[]; // [] unless ok
   syncScheduled: boolean; // true only when a merge PUT was issued
-  reason?: 'guest' | 'network' | 'http' | 'superseded';
+  reason?: 'guest' | 'operational' | 'network' | 'http' | 'superseded';
 }
 
 // Maps a GET /api/cart DTO entry to the local CartItem shape. unitPrice comes
@@ -117,8 +117,12 @@ export async function hydrateFromServer(options?: { mergeLocal?: boolean }): Pro
   const initialLocal = cartItems.get();
 
   try {
-    if (!getSessionUser()) {
+    const sessionUser = getSessionUser();
+    if (!sessionUser) {
       return { ok: false, items: initialLocal, priceDrifts: [], syncScheduled: false, reason: 'guest' };
+    }
+    if (isOperationalRole(sessionUser)) {
+      return { ok: false, items: initialLocal, priceDrifts: [], syncScheduled: false, reason: 'operational' };
     }
 
     // Awaited: the GET below must observe this PUT's result, not race it.

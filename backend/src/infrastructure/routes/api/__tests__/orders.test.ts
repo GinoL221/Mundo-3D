@@ -144,6 +144,17 @@ describe('api/orders routes', () => {
       expect(res.status).toBe(403);
       expect(mockCreateOrderExecute).not.toHaveBeenCalled();
     });
+    it('returns 403 for STAFF and ADMIN (operational accounts cannot place orders)', async () => {
+      for (const actor of [staff, admin]) {
+        const res = await request(app)
+          .post('/api/orders')
+          .set('Cookie', actor.cookie)
+          .set('X-CSRF-Token', actor.csrfToken)
+          .set('Idempotency-Key', 'key-1');
+        expect(res.status).toBe(403);
+      }
+      expect(mockCreateOrderExecute).not.toHaveBeenCalled();
+    });
   });
 
   describe('GET /api/orders/:id', () => {
@@ -363,6 +374,16 @@ describe('api/orders routes', () => {
 
       expect(res.body.orders[0].idOrder).toBe(55);
       expect(res.body.orders[1].idOrder).toBe(41);
+    });
+
+    it('returns 403 for STAFF and ADMIN (operational accounts have no personal order history)', async () => {
+      for (const actor of [staff, admin]) {
+        const res = await request(app)
+          .get('/api/orders/mine')
+          .set('Cookie', actor.cookie);
+        expect(res.status).toBe(403);
+      }
+      expect(mockListMyOrdersExecute).not.toHaveBeenCalled();
     });
   });
 

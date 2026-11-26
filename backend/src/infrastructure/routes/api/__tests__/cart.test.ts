@@ -23,6 +23,7 @@ jest.mock('../../../../application/use-cases/SyncCartUseCase', () => {
 
 import errorHandler from '../../../middlewares/errorHandler';
 import { authAndCsrf } from '../../../../__tests__/helpers/apiAuthTestHelpers';
+import { Role } from '../../../../domain/Role';
 
 const buildApp = (): Express => {
   const cartRouter = require('../cart').default;
@@ -34,7 +35,9 @@ const buildApp = (): Express => {
   return app;
 };
 
-const auth = authAndCsrf({ userId: 5, email: 'user@test.com', category: 'User', idRole: 2 });
+const auth = authAndCsrf({ userId: 5, email: 'user@test.com', category: 'User', idRole: Role.USER });
+const staff = authAndCsrf({ userId: 8, email: 'staff@test.com', category: 'Staff', idRole: Role.STAFF });
+const admin = authAndCsrf({ userId: 1, email: 'admin@test.com', category: 'Admin', idRole: Role.ADMIN });
 
 describe('api/cart routes', () => {
   let app: Express;
@@ -49,6 +52,14 @@ describe('api/cart routes', () => {
       const res = await request(app).get('/api/cart');
 
       expect(res.status).toBe(401);
+      expect(mockGetCartByUserIdExecute).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 for STAFF and ADMIN (operational accounts do not hold a cart)', async () => {
+      for (const actor of [staff, admin]) {
+        const res = await request(app).get('/api/cart').set('Cookie', actor.cookie);
+        expect(res.status).toBe(403);
+      }
       expect(mockGetCartByUserIdExecute).not.toHaveBeenCalled();
     });
 
@@ -98,6 +109,18 @@ describe('api/cart routes', () => {
         .send({ items: [{ productId: 10, quantity: 1 }] });
 
       expect(res.status).toBe(403);
+      expect(mockSyncCartExecute).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 for STAFF and ADMIN even with valid CSRF', async () => {
+      for (const actor of [staff, admin]) {
+        const res = await request(app)
+          .put('/api/cart')
+          .set('Cookie', actor.cookie)
+          .set('X-CSRF-Token', actor.csrfToken)
+          .send({ items: [{ productId: 10, quantity: 1 }] });
+        expect(res.status).toBe(403);
+      }
       expect(mockSyncCartExecute).not.toHaveBeenCalled();
     });
 

@@ -44,6 +44,7 @@ describe('demoSessionModel', () => {
     expect(isDemoProtectedPath('/admin/commission-requests')).toBe(true);
     expect(isDemoProtectedPath('/orders')).toBe(true);
     expect(isDemoProtectedPath('/order')).toBe(true);
+    expect(isDemoProtectedPath('/profile')).toBe(true);
     expect(isDemoProtectedPath('/products')).toBe(false);
     expect(isDemoProtectedPath('/')).toBe(false);
   });

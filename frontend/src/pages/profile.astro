@@ -1,0 +1,155 @@
+---
+import Layout from '../layouts/Layout.astro';
+import '../styles/components/profile.css';
+---
+
+<Layout title="Mi perfil — Mundo 3D">
+  <main>
+    <div class="profile-shell">
+      <header class="ui-page-head">
+        <div class="ui-page-head__main">
+          <div class="ui-page-head__title-row">
+            <h1 class="ui-page-head__title">Mi perfil</h1>
+          </div>
+          <p class="ui-page-head__scope">
+            Información de tu cuenta, rol activo y accesos disponibles en Mundo 3D.
+          </p>
+        </div>
+      </header>
+
+      <div id="profile-loading" class="ui-state" aria-busy="true">
+        <p class="ui-state__title">Cargando tu perfil</p>
+        <p class="ui-state__text">Consultando los datos de tu cuenta y el rol de tu sesión.</p>
+        <div class="ui-skeleton-list" aria-hidden="true">
+          <span class="ui-skeleton"></span>
+          <span class="ui-skeleton ui-skeleton--medium"></span>
+          <span class="ui-skeleton ui-skeleton--short"></span>
+        </div>
+      </div>
+
+      <div id="profile-guest" class="ui-state ui-state--empty" hidden>
+        <p class="ui-state__title">Iniciá sesión para ver tu perfil</p>
+        <p class="ui-state__text">
+          Necesitás una cuenta activa o una sesión demo para consultar tus datos y permisos.
+        </p>
+        <div class="profile-state__actions">
+          <a href="/login?next=/profile" class="ui-btn ui-btn--primary">Iniciar sesión</a>
+          <a href="/" class="ui-btn ui-btn--secondary">Volver al catálogo</a>
+        </div>
+      </div>
+
+      <div id="profile-error" class="ui-callout ui-callout--danger" role="alert" hidden>
+        <svg
+          class="ui-callout__icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="m15 9-6 6"></path>
+          <path d="m9 9 6 6"></path>
+        </svg>
+        <div class="ui-callout__content">
+          <p class="ui-callout__title">No pudimos cargar tu perfil</p>
+          <p id="profile-error-text" class="ui-callout__text">
+            El servicio no respondió a tiempo. Volvé a intentar en unos segundos.
+          </p>
+          <div class="ui-callout__actions">
+            <button id="profile-retry" type="button" class="ui-btn ui-btn--secondary ui-btn--sm">
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="profile-content" class="profile-content" hidden>
+        <div id="profile-demo-note" class="ui-callout ui-callout--info" hidden>
+          <svg
+            class="ui-callout__icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 16v-4"></path>
+            <path d="M12 8h.01"></path>
+          </svg>
+          <div class="ui-callout__content">
+            <p class="ui-callout__title">Modo demo activo</p>
+            <p id="profile-demo-note-text" class="ui-callout__text"></p>
+          </div>
+        </div>
+
+        <article class="profile-card">
+          <header class="profile-card__identity">
+            <img
+              id="profile-avatar"
+              class="profile-card__avatar"
+              src="/img/users/default-avatar.png"
+              alt=""
+              width="72"
+              height="72"
+            />
+            <div class="profile-card__heading">
+              <h2 id="profile-full-name" class="profile-card__name"></h2>
+              <span id="profile-role-badge" class="ui-badge ui-badge--user"></span>
+            </div>
+          </header>
+
+          <div class="profile-card__body">
+            <div class="profile-section">
+              <h3 class="profile-section__title">Datos de la cuenta</h3>
+              <dl class="profile-details">
+                <div class="profile-details__row">
+                  <dt>Nombre</dt>
+                  <dd id="profile-detail-name"></dd>
+                </div>
+                <div class="profile-details__row">
+                  <dt>Correo electrónico</dt>
+                  <dd id="profile-detail-email"></dd>
+                </div>
+                <div class="profile-details__row">
+                  <dt>Rol activo</dt>
+                  <dd id="profile-detail-role"></dd>
+                </div>
+                <div class="profile-details__row">
+                  <dt>Tipo de cuenta</dt>
+                  <dd id="profile-detail-kind"></dd>
+                </div>
+              </dl>
+            </div>
+
+            <div class="profile-section">
+              <h3 class="profile-section__title">Alcance de tu rol</h3>
+              <p id="profile-scope-summary" class="profile-scope-summary"></p>
+              <p class="profile-readonly-note">
+                Vista de solo lectura. La edición de perfil todavía no está habilitada.
+              </p>
+            </div>
+          </div>
+
+          <footer class="profile-card__footer">
+            <h3 class="profile-section__title">Accesos rápidos</h3>
+            <nav aria-label="Accesos rápidos de tu cuenta">
+              <ul id="profile-shortcuts" class="profile-shortcuts"></ul>
+            </nav>
+          </footer>
+        </article>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  import { initializeProfilePage } from '../scripts/profilePage';
+
+  void initializeProfilePage(document);
+</script>

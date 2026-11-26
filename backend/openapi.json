@@ -989,6 +989,37 @@
         }
       }
     },
+    "/users/me": {
+      "get": {
+        "summary": "Get the authenticated caller's own profile (read-only)",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The authenticated user's profile (no password hash).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated."
+          },
+          "404": {
+            "description": "User not found."
+          }
+        }
+      }
+    },
     "/users/{id}": {
       "get": {
         "summary": "Get one user by id (admin only)",
@@ -1584,6 +1615,9 @@
           "401": {
             "description": "Not authenticated."
           },
+          "403": {
+            "description": "Authenticated as STAFF or ADMIN, or invalid/missing CSRF token."
+          },
           "409": {
             "description": "Empty cart, or insufficient stock for one or more items.",
             "content": {
@@ -1712,6 +1746,9 @@
           },
           "401": {
             "description": "Not authenticated."
+          },
+          "403": {
+            "description": "Authenticated as STAFF or ADMIN (operational accounts have no personal order history)."
           }
         }
       }
@@ -2440,6 +2477,9 @@
           },
           "401": {
             "description": "Not authenticated."
+          },
+          "403": {
+            "description": "Authenticated as STAFF or ADMIN (operational accounts do not hold a cart)."
           }
         }
       },
@@ -2507,6 +2547,9 @@
           },
           "401": {
             "description": "Not authenticated."
+          },
+          "403": {
+            "description": "Authenticated as STAFF or ADMIN, or invalid/missing CSRF token."
           }
         }
       }

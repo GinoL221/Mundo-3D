@@ -95,12 +95,28 @@ import SocialIcon from '../components/SocialIcon.astro';
           <p id="product-specs-inquiry" class="product-specs__inquiry" hidden>
             ¿Querés consultar medidas, material o pedir una variante? <a href="/help">Escribinos en Encargos</a>.
           </p>
-          <div class="product-detail__actions">
+          <div class="product-detail__actions" id="product-purchase-actions">
             <button id="add-to-cart-btn" type="button" class="product-detail__action product-detail__action--primary">Agregar al carrito</button>
             <a href="/cart" class="product-detail__action product-detail__action--secondary">Ir al carrito</a>
           </div>
-          <p class="product-detail__demo-note">Pedido simulado: no procesa cobros ni envíos reales.</p>
+          <p class="product-detail__demo-note" id="product-demo-note">Pedido simulado: no procesa cobros ni envíos reales.</p>
           <p id="cart-status" class="product-detail__status-copy" aria-live="polite"></p>
+          <div class="product-detail__workshop-panel" id="product-workshop-panel" hidden>
+            <div class="product-detail__workshop-head">
+              <span class="product-detail__workshop-label">Vista de taller</span>
+              <span id="product-workshop-stock" class="ui-badge" hidden></span>
+            </div>
+            <p class="product-detail__workshop-copy">
+              Las cuentas del taller no realizan compras. Podés editar esta pieza o ajustar su stock
+              desde el panel.
+            </p>
+            <div class="product-detail__workshop-actions">
+              <a id="product-workshop-edit" href="/admin/products" class="ui-btn ui-btn--primary">
+                Editar pieza en el taller
+              </a>
+              <a href="/admin/products" class="ui-btn ui-btn--secondary">Catálogo y stock</a>
+            </div>
+          </div>
         </section>
       </div>
 
@@ -124,7 +140,10 @@ import SocialIcon from '../components/SocialIcon.astro';
     formatProductDimensionsSummary,
     getCategoryImg,
     isPlaceholderImage,
+    type Product,
   } from '../domains/products';
+  import { getStockStatus } from '../domains/products/admin/productAdminHelpers';
+  import { DEMO_SESSION_EVENT, getSessionUser, isOperationalRole } from '../config';
   import { resolveImageUrl } from '../lib/imageUrl';
   import { fetchProductById } from '../domains/products/services/product.service';
   import { CartService } from '../domains/cart';
@@ -132,6 +151,36 @@ import SocialIcon from '../components/SocialIcon.astro';
 
   const priceFormatter = new Intl.NumberFormat('es-AR');
   let shareCleanup: (() => void) | undefined;
+  let currentProduct: Product | null = null;
+
+  function syncRoleActions(): void {
+    const purchaseActions = document.getElementById('product-purchase-actions');
+    const demoNote = document.getElementById('product-demo-note');
+    const cartStatus = document.getElementById('cart-status');
+    const workshopPanel = document.getElementById('product-workshop-panel');
+    const workshopEdit = document.getElementById('product-workshop-edit') as HTMLAnchorElement | null;
+    const workshopStock = document.getElementById('product-workshop-stock');
+
+    const operational = isOperationalRole(getSessionUser());
+    if (purchaseActions) purchaseActions.hidden = operational;
+    if (demoNote) demoNote.hidden = operational;
+    if (cartStatus && operational) cartStatus.textContent = '';
+    if (workshopPanel) workshopPanel.hidden = !operational;
+
+    if (operational && currentProduct) {
+      if (workshopEdit) workshopEdit.href = `/admin/products/edit?id=${currentProduct.id}`;
+      if (workshopStock) {
+        if (typeof currentProduct.stock === 'number' && Number.isFinite(currentProduct.stock)) {
+          const status = getStockStatus(currentProduct.stock);
+          workshopStock.textContent = `${status.label} · ${currentProduct.stock} u.`;
+          workshopStock.className = `ui-badge ${status.badgeClass}`;
+          workshopStock.hidden = false;
+        } else {
+          workshopStock.hidden = true;
+        }
+      }
+    }
+  }
 
   function formatPrice(value: number): string {
     return `$ ${priceFormatter.format(value)}`;
@@ -175,6 +224,7 @@ import SocialIcon from '../components/SocialIcon.astro';
     if (!result.ok) return showError(result.reason);
 
     const { product } = result;
+    currentProduct = product;
     const get = (id: string) => document.getElementById(id);
     const setText = (id: string, value: string) => {
       const node = get(id);
@@ -235,6 +285,7 @@ import SocialIcon from '../components/SocialIcon.astro';
       content.setAttribute('aria-busy', 'false');
     }
     if (shareButton) shareButton.hidden = false;
+    syncRoleActions();
 
     addButton?.addEventListener('click', () => {
       const status = get('cart-status');
@@ -322,5 +373,7 @@ import SocialIcon from '../components/SocialIcon.astro';
     loadProduct().catch(() => showError('network'));
   });
 
+  window.addEventListener('session-changed', syncRoleActions);
+  window.addEventListener(DEMO_SESSION_EVENT, syncRoleActions);
   loadProduct().catch(() => showError('network'));
 </script>

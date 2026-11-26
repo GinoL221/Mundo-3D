@@ -78,6 +78,16 @@ function makeSlotRepos(slotLabel: string) {
       Role.USER,
       'User',
     ),
+    new User(
+      2,
+      slotLabel === 'slot-1' ? 'Demo' : 'Otro',
+      slotLabel === 'slot-1' ? 'Staff' : 'Operador',
+      `demo.staff+${slotLabel}@sandbox.mundo3d.invalid`,
+      'hashed-staff-secret',
+      null,
+      Role.STAFF,
+      'Staff',
+    ),
   ];
   return {
     productRepo: {
@@ -169,6 +179,7 @@ function makeSlotRepos(slotLabel: string) {
       findById: jest.fn(async (id: number) => orders.find((o) => o.idOrder === id) ?? null),
     },
     userRepo: {
+      findById: jest.fn(async (id: number) => users.find((u) => u.idUser === id) ?? null),
       findByIds: jest.fn(async (ids: readonly number[]) =>
         users.filter((u) => ids.includes(u.idUser)),
       ),
@@ -248,6 +259,25 @@ describe('/api/demo/* STAFF endpoints and explicit 403 boundaries', () => {
     expect(JSON.stringify(ordersRes.body)).not.toContain('Visitante');
     expect(JSON.stringify(ordersRes.body)).not.toContain('hashed-secret');
 
+    const staffMe = await request(app).get(`${B}/users/me`).set('Cookie', STAFF1.cookies);
+    expect(staffMe.status).toBe(200);
+    expect(staffMe.body).toMatchObject({
+      idUser: 2,
+      firstName: 'Demo',
+      lastName: 'Staff',
+      idRole: Role.STAFF,
+    });
+    expect(staffMe.body).not.toHaveProperty('passwordUser');
+
+    const buyerMe = await request(app).get(`${B}/users/me`).set('Cookie', BUYER1.cookies);
+    expect(buyerMe.status).toBe(200);
+    expect(buyerMe.body).toMatchObject({
+      idUser: 1,
+      firstName: 'Demo',
+      lastName: 'Buyer',
+      idRole: Role.USER,
+    });
+
     const created = await request(app)
       .post(`${B}/products`)
       .set('Cookie', STAFF1.cookies)
@@ -312,6 +342,7 @@ describe('/api/demo/* STAFF endpoints and explicit 403 boundaries', () => {
     expect(slot2.productRepo.update).not.toHaveBeenCalled();
     expect(slot2.productRepo.adjustStock).not.toHaveBeenCalled();
     expect(slot2.orderRepo.findAll).not.toHaveBeenCalled();
+    expect(slot2.userRepo.findById).not.toHaveBeenCalled();
     expect(slot2.userRepo.findByIds).not.toHaveBeenCalled();
   });
 
@@ -350,6 +381,18 @@ describe('/api/demo/* STAFF endpoints and explicit 403 boundaries', () => {
         .post(`${B}/orders/1/cancel`)
         .set('Cookie', STAFF1.cookies)
         .set('x-csrf-token', STAFF1.csrf),
+      request(app).get(`${B}/cart`).set('Cookie', STAFF1.cookies),
+      request(app)
+        .put(`${B}/cart`)
+        .set('Cookie', STAFF1.cookies)
+        .set('x-csrf-token', STAFF1.csrf)
+        .send({ items: [{ productId: 1, quantity: 1 }] }),
+      request(app)
+        .post(`${B}/orders`)
+        .set('Cookie', STAFF1.cookies)
+        .set('x-csrf-token', STAFF1.csrf)
+        .set('Idempotency-Key', 'staff-forbidden-order'),
+      request(app).get(`${B}/orders/mine`).set('Cookie', STAFF1.cookies),
       request(app).get(`${B}/orders`).set('Cookie', BUYER1.cookies),
       request(app).get(`${B}/custom-commission-requests`).set('Cookie', BUYER1.cookies),
       request(app)
@@ -375,6 +418,9 @@ describe('/api/demo/* STAFF endpoints and explicit 403 boundaries', () => {
 
     const unauthOrders = await request(app).get(`${B}/orders`);
     expect(unauthOrders.status).toBe(401);
+
+    const unauthMe = await request(app).get(`${B}/users/me`);
+    expect(unauthMe.status).toBe(401);
 
     const staffOrderDetail = await request(app)
       .get(`${B}/orders/1`)

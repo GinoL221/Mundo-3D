@@ -37,6 +37,34 @@
     </div>
   </div>
 
+  <div id="my-orders-operational" class="ui-callout ui-callout--info" role="status" hidden>
+    <svg
+      class="ui-callout__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
+    </svg>
+    <div class="ui-callout__content">
+      <p class="ui-callout__title">Las cuentas del taller no tienen compras personales</p>
+      <p class="ui-callout__text">
+        Tu sesión actual es operativa (STAFF/ADMIN). Para revisar los pedidos de clientes entrá al
+        panel del Taller.
+      </p>
+      <div class="ui-callout__actions">
+        <a class="ui-btn ui-btn--primary ui-btn--sm" href="/admin/orders">Ir a Pedidos del taller</a>
+        <a class="ui-btn ui-btn--secondary ui-btn--sm" href="/admin/products">Ir a Catálogo y stock</a>
+      </div>
+    </div>
+  </div>
+
   <div id="my-orders-error" class="ui-callout ui-callout--danger" role="alert" hidden>
     <svg
       class="ui-callout__icon"
@@ -120,6 +148,7 @@
 </template>
 
 <script>
+  import { getSessionUser, isOperationalRole } from '../../../config';
   import { formatPrice } from '../../../lib/format/price';
   import { fetchMyOrders } from '../services/order.service';
   import type { MyOrdersPageViewModel } from '../services/order.service';
@@ -128,6 +157,7 @@
   const regionEl = document.getElementById('my-orders-region');
   const loadingEl = document.getElementById('my-orders-loading');
   const unauthEl = document.getElementById('my-orders-unauth');
+  const operationalEl = document.getElementById('my-orders-operational');
   const errorEl = document.getElementById('my-orders-error');
   const errorMessageEl = document.getElementById('my-orders-error-message');
   const emptyEl = document.getElementById('my-orders-empty');
@@ -145,6 +175,7 @@
   function hideAllStates(): void {
     setHidden(loadingEl, true);
     setHidden(unauthEl, true);
+    setHidden(operationalEl, true);
     setHidden(errorEl, true);
     setHidden(emptyEl, true);
     setHidden(contentEl, true);
@@ -230,13 +261,25 @@
     setHidden(contentEl, false);
   }
 
+  function showOperationalNotice(): void {
+    hideAllStates();
+    setBusy(false);
+    setHidden(operationalEl, false);
+  }
+
   async function loadMyOrders(): Promise<void> {
+    if (isOperationalRole(getSessionUser())) {
+      showOperationalNotice();
+      return;
+    }
     showLoading();
     const result = await fetchMyOrders(getPage());
     if (result.ok) {
       renderPage(result.page);
     } else if (result.code === 'UNAUTHENTICATED') {
       showUnauthenticated();
+    } else if (result.code === 'FORBIDDEN') {
+      showOperationalNotice();
     } else {
       showError(result.message);
     }

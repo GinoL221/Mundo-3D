@@ -77,29 +77,29 @@ test.describe('Refresh token rotation — cross-tab race and legacy-JWT cutover'
     // Both waiters are armed BEFORE navigation so neither can miss its
     // response. Matching on status 200 specifically (not just the URL)
     // skips over each tab's own initial 401 and only resolves once the
-    // authFetch-driven retry (order.service.ts, task 3.9) actually landed.
+    // authFetch-driven retry (profile.service.ts) actually landed.
     const tab1Refreshed = page.waitForResponse(
-      (res) => res.url().includes('/api/orders/mine') && res.status() === 200
+      (res) => res.url().includes('/api/users/me') && res.status() === 200
     );
     const tab2Refreshed = page2.waitForResponse(
-      (res) => res.url().includes('/api/orders/mine') && res.status() === 200
+      (res) => res.url().includes('/api/users/me') && res.status() === 200
     );
 
-    // /orders' OrderList.astro calls fetchMyOrders() (authFetch-wrapped) on
-    // load. Firing both navigations together, unawaited until Promise.all,
-    // is what makes this a genuine simultaneous race rather than two
-    // sequential refreshes.
-    await Promise.all([page.goto('/orders'), page2.goto('/orders')]);
+    // /profile calls fetchCurrentProfile() (authFetch-wrapped) on load for
+    // every authenticated role including ADMIN. Firing both navigations
+    // together makes this a genuine simultaneous cross-tab refresh race.
+    await Promise.all([page.goto('/profile'), page2.goto('/profile')]);
     await Promise.all([tab1Refreshed, tab2Refreshed]);
 
-    // Neither tab was bounced to /login, and both actually finished loading
-    // the authenticated order-history view — proving each independently
-    // ended up with a fresh, valid access cookie (rotation winner or grace
-    // hit), never a 401 surfaced to the user.
-    await expect(page).toHaveURL('/orders');
-    await expect(page2).toHaveURL('/orders');
-    await expect(page.locator('#my-orders-error')).toBeHidden();
-    await expect(page2.locator('#my-orders-error')).toBeHidden();
+    // Neither tab was bounced to /login, and both finished loading the
+    // read-only profile view — proving each independently ended up with a
+    // fresh, valid access cookie (rotation winner or grace hit).
+    await expect(page).toHaveURL('/profile');
+    await expect(page2).toHaveURL('/profile');
+    await expect(page.locator('#profile-content')).toBeVisible();
+    await expect(page2.locator('#profile-content')).toBeVisible();
+    await expect(page.locator('#profile-error')).toBeHidden();
+    await expect(page2.locator('#profile-error')).toBeHidden();
   });
 
   test('a legacy typ-less JWT is rejected, the transparent refresh fails (no session), and the tab lands cleanly on /login', async ({

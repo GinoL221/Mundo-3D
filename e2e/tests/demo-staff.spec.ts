@@ -237,6 +237,7 @@ test('switches Buyer <-> STAFF in demo sandbox, manages inbox & catalog without 
   await expect(page.locator('#demo-role-staff')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('#navbar-greeting')).toHaveText('Cuenta demo');
   await expect(page.locator('#navbar-workshop-trigger')).toBeVisible();
+  await expect(page.locator('#navbar-cart-trigger')).toBeHidden();
 
   await page.goto('/admin/commission-requests');
   await expect(page.locator('#admin-requests-list')).toContainText('Lucia Maker');

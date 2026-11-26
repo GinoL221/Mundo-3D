@@ -4,7 +4,7 @@ import { SequelizeProductRepository } from '../../repositories/SequelizeProductR
 import { GetCartByUserIdUseCase } from '../../../application/use-cases/GetCartByUserIdUseCase';
 import { SyncCartUseCase } from '../../../application/use-cases/SyncCartUseCase';
 import { CartApiController } from '../../controllers/CartApiController';
-import { apiAuthMiddleware } from '../../middlewares/auth';
+import { apiAuthMiddleware, buyerGuard } from '../../middlewares/auth';
 import { csrfGuard } from '../../middlewares/csrf';
 import { cartSyncValidation } from '../../middlewares/validators/cartValidators';
 
@@ -32,6 +32,7 @@ const controller = new CartApiController(getCartByUserIdUseCase, syncCartUseCase
  *           application/json:
  *             schema: { $ref: '#/components/schemas/CartResult' }
  *       '401': { description: Not authenticated. }
+ *       '403': { description: Authenticated as STAFF or ADMIN (operational accounts do not hold a cart). }
  *   put:
  *     summary: Full-replace sync the caller's cart
  *     tags: [Cart]
@@ -61,11 +62,12 @@ const controller = new CartApiController(getCartByUserIdUseCase, syncCartUseCase
  *             schema: { $ref: '#/components/schemas/CartSyncResponse' }
  *       '400': { description: Invalid cart items (CartValidationException). }
  *       '401': { description: Not authenticated. }
+ *       '403': { description: 'Authenticated as STAFF or ADMIN, or invalid/missing CSRF token.' }
  */
 // GET /api/cart
-router.get('/cart', apiAuthMiddleware, controller.getCart);
+router.get('/cart', apiAuthMiddleware, buyerGuard, controller.getCart);
 
 // PUT /api/cart
-router.put('/cart', apiAuthMiddleware, csrfGuard, cartSyncValidation, controller.syncCart);
+router.put('/cart', apiAuthMiddleware, buyerGuard, csrfGuard, cartSyncValidation, controller.syncCart);
 
 export default router;

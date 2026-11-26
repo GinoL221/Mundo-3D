@@ -11,6 +11,7 @@ export interface APIProduct {
   depth?: number | null;
   finish?: string | null;
   productionTime?: number | null;
+  stock?: number;
 }
 
 export interface Product {
@@ -27,6 +28,7 @@ export interface Product {
   hasDimensions: boolean;
   finish: string;
   productionTime: string;
+  stock?: number | null;
 }
 
 export const CATEGORY_IMAGES: Record<string, string> = {
@@ -81,6 +83,9 @@ export function adaptAPIProduct(apiProduct: APIProduct): Product {
     hasDimensions: dimensions.hasDimensions,
     finish: apiProduct.finish || 'A consultar',
     productionTime: apiProduct.productionTime ? `${apiProduct.productionTime} días` : 'A consultar',
+    ...(typeof apiProduct.stock === 'number' && Number.isFinite(apiProduct.stock)
+      ? { stock: apiProduct.stock }
+      : {}),
   };
 }
 

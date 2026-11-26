@@ -40,7 +40,8 @@ This section defines the intended experience, not the current implementation sta
 
 - **Immediate entry:** browse the catalogue, product details, and cart without registration.
 - **Interactive buyer access:** use a safe demo session to create a clearly simulated order and inspect its history, without registration friction or real payment.
-- **Interactive STAFF access:** inspect custom-commission requests and exercise permitted staff actions. ADMIN access is not publicly available.
+- **Interactive STAFF access:** inspect workshop orders (read-only) and custom-commission requests, and manage catalogue items and stock without deleting pieces or touching payments/users.
+- **Interactive ADMIN access (gated target):** once ADMIN operational screens (order payment confirmation and cancellation with restock, destructive catalogue deletion, categories/franchises management, and slot-scoped user inspection) and their per-slot isolation are implemented and verified, expose ADMIN inside the visitor's isolated sandbox so evaluators can experience all three roles end-to-end. Until those screens and isolation checks exist, public demo access must expose only Buyer and STAFF.
 - **Safe exploration:** use fictitious data, backend-enforced permissions and usage limits, isolation between visitors, and a recoverable demo state. Shared credentials that let visitors interfere with one another are not an acceptable shortcut.
 - **Visible engineering evidence:** provide discoverable links to the repository, architecture, and verification records while keeping shopping flows focused on the shopper.
 
@@ -50,12 +51,13 @@ The target demo is ready when an evaluator can:
 
 1. Open a public URL and browse without installing tools, configuring services, or registering.
 2. Complete a simulated buyer flow from catalogue to cart, order creation, and order history, with no real charge.
-3. Try the STAFF role and observe its permission boundaries without obtaining ADMIN access or affecting another visitor's session or data.
-4. Submit a fictitious custom-commission request and inspect it through the intended STAFF demo flow, without sending real email or implying a quote or order was created.
-5. Explore a usable, recoverable dataset with clear loading, empty, validation, and failure states, without exposing real personal data or secrets.
-6. Find the repository and supporting engineering evidence without following a mandatory guided tour.
+3. Try the STAFF role and observe its real backend-enforced permission boundaries (cannot delete products, touch payments, or view user accounts) without affecting another visitor's session or data.
+4. Once ADMIN screens are complete and verified, try the ADMIN role inside the same isolated slot to confirm payment or cancel an order (restocking items), delete catalogue items, and inspect slot-scoped users/categories/franchises without affecting any other visitor.
+5. Submit a fictitious custom-commission request and inspect it through the intended workshop flow, without sending real email or implying a quote or order was created.
+6. Explore a usable, recoverable dataset with clear loading, empty, validation, and failure states, without exposing real personal data or secrets.
+7. Find the repository and supporting engineering evidence without following a mandatory guided tour.
 
-Buyer interaction is the first delivery priority; public STAFF interaction follows only when its isolation and backend restrictions are verified. These criteria do not authorize deployment or database changes.
+Delivery priority: Buyer interaction first, public STAFF interaction second, and public ADMIN interaction only after ADMIN operational UI and per-slot isolation are fully built and verified. These criteria do not authorize deployment or database changes.
 
 ## Capabilities and Constraints
 
@@ -63,7 +65,8 @@ Buyer interaction is the first delivery priority; public STAFF interaction follo
 
 - Catalogue with categories and franchises (17 seeded products in `backend/src/database/data/products.json`), plus product detail pages with Web Share / link copy.
 - Registration and login with email confirmation (`confirm-email.astro`, Brevo HTTPS / SMTP via `MAIL_DRIVER`), JWT in an `httpOnly` cookie, signed double-submit CSRF, refresh-token rotation with family-wide reuse detection, and per-IP plus per-account login throttling.
-- Three-role model: `ADMIN` (1), `USER` (2), `STAFF` (3). See **Roles and responsibilities** below for each role's purpose, tools, and deliberate boundaries.
+- Three-role model: `ADMIN` (1), `USER` (2), `STAFF` (3). See **Roles and responsibilities** below for each role's purpose, tools, and deliberate boundaries. Shopper vs. operational separation is enforced on both backend (`403` for `STAFF`/`ADMIN` on cart, checkout, and `/orders/mine` in real and demo APIs) and frontend (hidden header cart and `Mis pedidos`, workshop stock/edit panel on `/product`, operational notices on `/cart` and `/orders`).
+- Read-only self-profile (`/profile`, backed by `GET /api/users/me` and `GET /api/demo/users/me`) for all authenticated roles, showing account details, active role, permitted scope, demo note when applicable, and role-appropriate shortcuts.
 - Product administration with stock and images (`frontend/src/pages/admin/products/`), read-only workshop order listing (`frontend/src/pages/admin/orders.astro`), and custom-commission request review (`frontend/src/pages/admin/commission-requests.astro`). Category and franchise CRUD endpoints plus user read endpoints (`GET /users`, `GET /users/:id`) exist on the backend API without dedicated admin frontend screens yet.
 - Local cart with Nanostores, synchronised to the API for authenticated users.
 - Orders and order history (simulated checkout; no payment processing).
@@ -85,13 +88,15 @@ Partial visitor-isolation persistence and lease primitives (`backend/src/.../Dem
 
 - **Custom commissions are part of the product.** The supported slice is request submission and staff review, not quoting, commission-order tracking, or payment. The catalogue contains pre-made franchise pieces and leads the home page; commissions follow as a secondary banner or featured section.
 - Orders demonstrate a simulated purchase flow. Payment processing is not implemented, and no real transaction occurs. Demo copy must make this explicit.
-- Standard account registration currently supports email confirmation when `MAIL_DRIVER` is configured. The target public demo (once visitor-isolated demo sessions are wired) must not require real registration, send real email to visitors, collect real personal data, or expose ADMIN access.
+- Standard account registration currently supports email confirmation when `MAIL_DRIVER` is configured. The target public demo must not require real registration, send real email to visitors, or collect real personal data; ADMIN access in the public demo stays disabled until ADMIN screens and per-slot isolation are verified.
 - Real commercial operations, live payment capture, automated commission email, and new quoting or tracking workflows are outside the agreed demo scope. They require separate product decisions.
 - Visitor-isolated demo-session wiring, reset automation, and operational verification for the target demo require finishing and mounting the sandbox design separately from basic hosting.
 
-**Pending future initiatives (not implemented yet):**
+**Pending future initiatives (not implemented yet, in planned order):**
 
-- **Sandbox/test payment gateway integration (engineering depth):** Planned for a later phase, not part of current shipped behavior. The goal is to integrate a payment gateway strictly in sandbox/test mode (for example Mercado Pago Sandbox or Stripe Test Mode) to demonstrate real-world payment engineering — idempotent payment initiation, webhook signature verification, asynchronous payment state transitions, and failure/retry handling — without processing real money. Until built and verified, storefront copy must continue stating clearly that checkout is simulated and no payment occurs.
+1. **Complete ADMIN operational UI and gated demo integration:** Build frontend screens/actions for existing ADMIN backend capabilities (order payment confirmation and cancellation with restock, category/franchise CRUD, user listing) and, once verified with per-slot isolation, expose `ADMIN` alongside `Buyer` and `STAFF` in the demo role switcher.
+2. **Profile editing (post-ADMIN):** Allow authenticated users to edit basic profile details/password after ADMIN integration is complete (with appropriate demo safeguards).
+3. **Sandbox/test payment gateway integration (engineering depth):** Integrate a payment gateway strictly in sandbox/test mode (for example Mercado Pago Sandbox or Stripe Test Mode) to demonstrate real-world payment engineering — idempotent payment initiation, webhook signature verification, asynchronous payment state transitions, and failure/retry handling — without processing real money. Until built and verified, storefront copy must continue stating clearly that checkout is simulated and no payment occurs.
 
 ## Brand Commitments
 
@@ -113,13 +118,14 @@ Partial visitor-isolation persistence and lease primitives (`backend/src/.../Dem
 
 ## Roles and responsibilities
 
-The three-role model (`ADMIN = 1`, `USER = 2`, `STAFF = 3`) is fixed product truth. Each role has a distinct operational purpose and deliberate limits enforced on the backend:
+The three-role model (`ADMIN = 1`, `USER = 2`, `STAFF = 3`) plus unauthenticated visitors is fixed product truth. Each role has a distinct purpose and backend-enforced limits. UI layout, navigation menus, and route structure for each role are specified in `DESIGN.md`.
 
-| Role | Purpose | Primary tools | Deliberate limits |
+| Role | Purpose | Capabilities | Deliberate limits |
 | --- | --- | --- | --- |
-| **USER (buyer)** | Browse collectibles, simulate purchases, track own orders, and submit custom commission requests. | Catalogue, cart, checkout simulation, My orders (`/orders`), custom commission form (`/help`). | Can read only own orders; no access to workshop tools or other users. |
-| **STAFF (workshop operator)** | Keep the catalogue and stock accurate, see what was sold so pieces can be prepared, and review incoming custom commission requests. | Workshop area (`Taller`): Orders (read-only, `/admin/orders`), Catalogue & stock (create, edit, stock adjustments & quick low/out-of-stock filters, `/admin/products`), Received commission requests (read-only, `/admin/commission-requests`). | Cannot delete products, confirm payments, cancel orders, or access user accounts (`/users`). In workshop orders, sees customers only as first name + last-name initial + id (never email or full last name). In the public demo, categories and franchises remain read-only. |
-| **ADMIN (owner)** | Full business ownership: everything STAFF does plus destructive catalogue management, payment confirmation, order cancellation, and user administration. | All workshop tools plus ADMIN-only backend capabilities (delete products/categories/franchises, confirm payment, cancel orders, list/inspect users). | Never exposed in the public demo. |
+| **Visitor (unauthenticated)** | Explore the storefront without registration friction. | Browse catalogue and product details, build a local cart, submit custom commission requests, enter the interactive demo. | Cannot complete checkout or view any orders or workshop data until signed in (or in a demo session). |
+| **USER (buyer)** | Shop collectibles, simulate purchases, and follow own orders. | All visitor browsing + synchronized cart, simulated checkout, own order history, custom commission requests, and read-only self-profile. | Only role intended to purchase. Can read only own orders; no access to workshop tools or other users. |
+| **STAFF (workshop operator)** | Keep the catalogue and stock accurate, know what was sold to prepare pieces, and review incoming custom commission requests. | Create/edit products, adjust stock and filter low/out-of-stock items, view customer orders in read-only mode, review incoming commission requests, and read-only self-profile. | Operational account — does not hold a shopping cart or place orders (backend `403`). Cannot delete products, confirm payments, cancel orders, or access user accounts. In workshop orders, sees customers only as first name + last-name initial + id (never email or full last name). In the public demo, categories and franchises remain read-only. |
+| **ADMIN (owner)** | Full business ownership: everything STAFF does plus destructive catalogue management, payment confirmation, order cancellation, and user administration. | All STAFF capabilities + read-only self-profile + delete products/categories/franchises, confirm order payment, cancel orders (restocking items), manage categories/franchises, list/inspect users; **[Target]** dedicated frontend operational views for payments, cancellations, categories/franchises, and users. | Operational account — does not hold a shopping cart or place orders (backend `403`). Excluded from the public demo until its operational views and per-slot isolation are implemented and verified. |
 
 ## Product Principles
 

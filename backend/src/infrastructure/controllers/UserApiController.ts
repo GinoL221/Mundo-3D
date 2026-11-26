@@ -206,6 +206,19 @@ export class UserApiController {
     }
   };
 
+  me = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const user = await this.getUserByIdUseCase.execute(req.user!.userId);
+      res.json(user);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'User not found') {
+        res.status(404).json({ error: 'Usuario no encontrado' });
+        return;
+      }
+      next(error);
+    }
+  };
+
   show = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const id = parseInt(req.params.id as string, 10);

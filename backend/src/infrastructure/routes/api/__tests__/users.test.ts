@@ -284,4 +284,46 @@ describe('api/users admin routes — guard matrix', () => {
       expect(mockRegisterExecute).not.toHaveBeenCalled();
     });
   });
+
+  describe('GET /api/users/me', () => {
+    const profileDto = {
+      idUser: 1,
+      firstName: 'Sam',
+      lastName: 'Taller',
+      email: 'sam@test.com',
+      image: null,
+      idRole: Role.STAFF,
+      category: 'Staff',
+    };
+
+    it('returns 401 when unauthenticated', async () => {
+      const res = await request(app).get('/api/users/me');
+
+      expect(res.status).toBe(401);
+      expect(mockGetByIdExecute).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['USER', userToken],
+      ['STAFF', staffToken],
+      ['ADMIN', adminToken],
+    ])('returns 200 with caller profile for %s without hitting /users/:id adminGuard', async (_label, token) => {
+      mockGetByIdExecute.mockResolvedValue(profileDto);
+
+      const res = await request(app).get('/api/users/me').set('Cookie', authCookie(token));
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(profileDto);
+      expect(res.body).not.toHaveProperty('passwordUser');
+      expect(mockGetByIdExecute).toHaveBeenCalledWith(1);
+    });
+
+    it('returns 404 when the authenticated user record no longer exists', async () => {
+      mockGetByIdExecute.mockRejectedValue(new Error('User not found'));
+
+      const res = await request(app).get('/api/users/me').set('Cookie', authCookie(userToken));
+
+      expect(res.status).toBe(404);
+    });
+  });
 });

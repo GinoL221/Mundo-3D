@@ -13,7 +13,7 @@ import { ConfirmOrderPaymentUseCase } from '../../../application/use-cases/Confi
 import { CancelOrderUseCase } from '../../../application/use-cases/CancelOrderUseCase';
 import { ListMyOrdersUseCase } from '../../../application/use-cases/ListMyOrdersUseCase';
 import { OrderApiController } from '../../controllers/OrderApiController';
-import { apiAuthMiddleware, adminGuard, requireRoles } from '../../middlewares/auth';
+import { apiAuthMiddleware, adminGuard, buyerGuard, requireRoles } from '../../middlewares/auth';
 import { Role } from '../../../domain/Role';
 import { csrfGuard } from '../../middlewares/csrf';
 import { orderCreateValidation, listMyOrdersValidation } from '../../middlewares/validators/orderValidators';
@@ -69,6 +69,7 @@ const controller = new OrderApiController(
  *           application/json:
  *             schema: { $ref: '#/components/schemas/ErrorWithCode' }
  *       '401': { description: Not authenticated. }
+ *       '403': { description: 'Authenticated as STAFF or ADMIN, or invalid/missing CSRF token.' }
  *       '409':
  *         description: Empty cart, or insufficient stock for one or more items.
  *         content:
@@ -126,6 +127,7 @@ const controller = new OrderApiController(
  *           application/json:
  *             schema: { $ref: '#/components/schemas/ErrorWithCode' }
  *       '401': { description: Not authenticated. }
+ *       '403': { description: Authenticated as STAFF or ADMIN (operational accounts have no personal order history). }
  * /orders/{id}:
  *   get:
  *     summary: Get one order by id
@@ -207,12 +209,12 @@ const controller = new OrderApiController(
 // compares the requester against the order's owner and returns 404 for a
 // non-owner (avoids order-id enumeration), with an ADMIN bypass — design.md
 // "Routes and the ADMIN guard".
-router.post('/orders', apiAuthMiddleware, csrfGuard, orderCreateValidation, controller.create);
+router.post('/orders', apiAuthMiddleware, buyerGuard, csrfGuard, orderCreateValidation, controller.create);
 // ORDER-SENSITIVE: MUST be registered before `/orders/:id` — otherwise
 // Express matches "mine" as the `:id` param, `parseInt('mine', 10)` is
 // `NaN`, and the buyer gets `show`'s 400 "Id de orden inválido" instead of
 // their order list (design.md, order-history change).
-router.get('/orders/mine', apiAuthMiddleware, listMyOrdersValidation, controller.listMine);
+router.get('/orders/mine', apiAuthMiddleware, buyerGuard, listMyOrdersValidation, controller.listMine);
 router.get('/orders/:id', apiAuthMiddleware, controller.show);
 router.get('/orders', apiAuthMiddleware, requireRoles(Role.ADMIN, Role.STAFF), controller.index);
 router.post('/orders/:id/confirm-payment', apiAuthMiddleware, csrfGuard, adminGuard, controller.confirmPayment);

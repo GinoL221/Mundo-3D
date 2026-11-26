@@ -303,6 +303,19 @@ const normalizeLoginBody = (req: Request, _res: Response, next: NextFunction) =>
  *             schema: { $ref: '#/components/schemas/UsersIndexResponse' }
  *       '401': { description: Not authenticated. }
  *       '403': { description: Authenticated but not ADMIN. }
+ * /users/me:
+ *   get:
+ *     summary: Get the authenticated caller's own profile (read-only)
+ *     tags: [Users]
+ *     security: [{ cookieAuth: [] }]
+ *     responses:
+ *       '200':
+ *         description: The authenticated user's profile (no password hash).
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/User' }
+ *       '401': { description: Not authenticated. }
+ *       '404': { description: User not found. }
  * /users/{id}:
  *   get:
  *     summary: Get one user by id (admin only)
@@ -390,6 +403,9 @@ router.post(
 );
 
 router.get('/users', apiAuthMiddleware, adminGuard, controller.index);
+// ORDER-SENSITIVE: MUST be registered before `/users/:id` so "me" is never
+// captured by `:id` and rejected by `adminGuard`.
+router.get('/users/me', apiAuthMiddleware, controller.me);
 router.get('/users/:id', apiAuthMiddleware, adminGuard, controller.show);
 
 export default router;
