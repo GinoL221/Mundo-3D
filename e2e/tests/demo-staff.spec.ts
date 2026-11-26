@@ -234,9 +234,9 @@ test('switches Buyer <-> STAFF in demo sandbox, manages inbox & catalog without 
   ]);
   await page.waitForLoadState('networkidle');
 
-  await expect(page.locator('#demo-bar-role-badge')).toHaveText('STAFF');
   await expect(page.locator('#demo-role-staff')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#navbar-greeting')).toHaveText('Demo STAFF');
+  await expect(page.locator('#navbar-greeting')).toHaveText('Cuenta demo');
+  await expect(page.locator('#navbar-workshop-trigger')).toBeVisible();
 
   await page.goto('/admin/commission-requests');
   await expect(page.locator('#admin-requests-list')).toContainText('Lucia Maker');
@@ -299,7 +299,7 @@ test('switches Buyer <-> STAFF in demo sandbox, manages inbox & catalog without 
     page.locator('#demo-role-buyer').click(),
   ]);
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.locator('#demo-bar-role-badge')).toHaveText('BUYER');
+  await expect(page.locator('#demo-role-buyer')).toHaveAttribute('aria-pressed', 'true');
 
   await Promise.all([
     page.waitForResponse((r) => r.url().includes('/api/demo/session') && r.request().method() === 'DELETE'),

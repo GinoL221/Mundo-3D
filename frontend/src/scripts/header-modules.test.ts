@@ -251,8 +251,10 @@ describe('Shared route shell', () => {
     }
 
     expect(header).toContain('id="navbar-user-menu-trigger"');
+    expect(header).toContain('id="navbar-workshop-trigger"');
     expect(header).toContain('aria-expanded="false"');
     expect(header).toContain('aria-controls="navbar-user-menu"');
+    expect(header).toContain('aria-controls="navbar-workshop-menu"');
     expect(header).not.toContain('aria-haspopup="menu"');
     expect(header).not.toContain('role="menu"');
     expect(header).not.toContain('role="menuitem"');
@@ -273,7 +275,9 @@ describe('Shared route shell', () => {
       '/login',
       '/register',
       '/orders',
+      '/admin/orders',
       '/admin/products',
+      '/admin/commission-requests',
       '/cart',
     ]) {
       expect(header).toContain(`href="${href}"`);
@@ -311,7 +315,12 @@ describe('Shared route shell', () => {
     expect(header).toContain('>Catálogo</a>');
     expect(header).toContain('>Encargos</a>');
     expect(header).toContain('>Cómo funciona</a>');
-    expect(header).toContain('Solicitudes de encargo');
+    expect(header).toContain('<span>Taller</span>');
+    expect(header).toContain('Pedidos');
+    expect(header).toContain('Catálogo y stock');
+    expect(header).toContain('Solicitudes recibidas');
+    expect(header).not.toContain('Administrar productos');
+    expect(header).not.toContain('Solicitudes de encargo');
     expect(header).toContain('>Ver el catálogo</a>');
     expect(header).not.toContain('>Encargos y ayuda</a>');
     expect(header).not.toContain('Guía de compra');
@@ -450,9 +459,6 @@ describe('Shared route shell', () => {
     expect(desktopStyles).not.toMatch(/\border:\s*\d+/);
     expect(desktopStyles).toMatch(
       /\.home-header__inner \{[^}]*?display: grid;[^}]*?grid-template-columns: minmax\(140px, 1fr\) auto minmax\(max-content, 1fr\);/,
-    );
-    expect(desktopStyles).toMatch(
-      /\.home-header__inner:has\(\.admin-only\[style\*='display: block'\]\) \.home-header__nav > ul \{[^}]*?gap: 14px;/,
     );
     expect(desktopStyles).toMatch(
       /\.home-header__inner:has\(\.user-only\[style\*='display: block'\]\) \.home-header__account-section \{[^}]*?display: none;/,

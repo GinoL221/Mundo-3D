@@ -254,6 +254,43 @@
   color: var(--link-text);
 }
 
+.home-header .nav-item--workshop {
+  position: relative;
+}
+
+.home-header__workshop-trigger {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  gap: 6px;
+}
+
+.home-header__chevron {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  transition: transform 150ms ease;
+}
+
+.home-header__workshop-trigger[aria-expanded='true'] .home-header__chevron {
+  transform: rotate(180deg);
+}
+
+.home-header .home-header__workshop-menu {
+  left: 0;
+  right: auto;
+  min-width: 210px;
+}
+
+.home-header .home-header__workshop-menu a[aria-current='page'],
+.home-header .home-header__workshop-menu a[aria-current='true'] {
+  background: var(--accent-tint);
+  color: var(--accent-tint-text);
+  font-weight: 600;
+}
+
 .mini-cart {
   position: absolute;
   top: calc(100% + 4px);

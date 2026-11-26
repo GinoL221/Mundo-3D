@@ -38,7 +38,25 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
     'navbar-user-menu-trigger',
   ) as HTMLButtonElement | null;
   const userMenu = document.getElementById('navbar-user-menu');
+  const workshopMenuTrigger = document.getElementById(
+    'navbar-workshop-trigger',
+  ) as HTMLButtonElement | null;
+  const workshopMenu = document.getElementById('navbar-workshop-menu');
   let userMenuOpen = false;
+  let workshopMenuOpen = false;
+
+  const setWorkshopMenuOpen = (open: boolean, restoreFocus = false) => {
+    if (!workshopMenuTrigger || !workshopMenu) return;
+    workshopMenuOpen = open;
+    workshopMenuTrigger.setAttribute('aria-expanded', String(open));
+    workshopMenu.hidden = !open;
+    if (open) {
+      if (userMenuOpen) setUserMenuOpen(false);
+      workshopMenu.querySelector('a')?.focus();
+    } else if (restoreFocus) {
+      workshopMenuTrigger.focus();
+    }
+  };
 
   const setUserMenuOpen = (open: boolean, restoreFocus = false) => {
     if (!userMenuTrigger || !userMenu) return;
@@ -46,6 +64,7 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
     userMenuTrigger.setAttribute('aria-expanded', String(open));
     userMenu.hidden = !open;
     if (open) {
+      if (workshopMenuOpen) setWorkshopMenuOpen(false);
       userMenu.querySelector('a')?.focus();
     } else if (restoreFocus) {
       userMenuTrigger.focus();
@@ -53,20 +72,35 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
   };
 
   const toggleUserMenu = () => setUserMenuOpen(!userMenuOpen);
-  const handleUserMenuKeydown = (event: KeyboardEvent) => {
-    if (event.key !== 'Escape' || !userMenuOpen) return;
-    event.preventDefault();
-    setUserMenuOpen(false, true);
+  const toggleWorkshopMenu = () => setWorkshopMenuOpen(!workshopMenuOpen);
+  const handleMenuKeydown = (event: KeyboardEvent) => {
+    if (event.key !== 'Escape') return;
+    if (userMenuOpen) {
+      event.preventDefault();
+      setUserMenuOpen(false, true);
+    } else if (workshopMenuOpen) {
+      event.preventDefault();
+      setWorkshopMenuOpen(false, true);
+    }
   };
   const handleDocumentClick = (event: MouseEvent) => {
     const target = event.target as Node | null;
     if (userMenuOpen && userMenu && target && !userMenu.parentElement?.contains(target)) {
       setUserMenuOpen(false);
     }
+    if (
+      workshopMenuOpen &&
+      workshopMenu &&
+      target &&
+      !workshopMenu.parentElement?.contains(target)
+    ) {
+      setWorkshopMenuOpen(false);
+    }
   };
 
   const resetToGuest = () => {
     setUserMenuOpen(false);
+    setWorkshopMenuOpen(false);
     setVisibility(document.querySelectorAll('.guest-only'), 'block');
     setVisibility(document.querySelectorAll('.user-only'), 'none');
     setVisibility(document.querySelectorAll('.admin-only'), 'none');
@@ -79,14 +113,13 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
     const demoSession = getDemoSession();
     if (demoSession) {
       const idRole = demoSession.role === 'STAFF' ? 3 : 2;
+      const showWorkshop = hasAdminAccess({ idRole });
+      if (!showWorkshop) setWorkshopMenuOpen(false);
       setVisibility(document.querySelectorAll('.guest-only'), 'none');
       setVisibility(document.querySelectorAll('.user-only'), 'block');
-      setVisibility(
-        document.querySelectorAll('.admin-only'),
-        hasAdminAccess({ idRole }) ? 'block' : 'none',
-      );
+      setVisibility(document.querySelectorAll('.admin-only'), showWorkshop ? 'block' : 'none');
       if (greeting) {
-        greeting.textContent = demoSession.role === 'STAFF' ? 'Demo STAFF' : 'Demo Buyer';
+        greeting.textContent = 'Cuenta demo';
       }
       if (avatar) avatar.src = '/img/users/default-avatar.png';
       return;
@@ -107,12 +140,11 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
         Image?: string;
         idRole: number;
       };
+      const showWorkshop = hasAdminAccess(user);
+      if (!showWorkshop) setWorkshopMenuOpen(false);
       setVisibility(document.querySelectorAll('.guest-only'), 'none');
       setVisibility(document.querySelectorAll('.user-only'), 'block');
-      setVisibility(
-        document.querySelectorAll('.admin-only'),
-        hasAdminAccess(user) ? 'block' : 'none',
-      );
+      setVisibility(document.querySelectorAll('.admin-only'), showWorkshop ? 'block' : 'none');
       if (greeting) greeting.textContent = `Hola ${user.firstName || user.FirstName || 'Usuario'}`;
       if (avatar && (user.image || user.Image))
         avatar.src = resolveImageUrl(user.image || user.Image, 'users');
@@ -147,8 +179,10 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
   const logoutListener = logoutButton ? logout : null;
   logoutButton?.addEventListener('click', logout);
   userMenuTrigger?.addEventListener('click', toggleUserMenu);
-  if (userMenuTrigger && userMenu) {
-    document.addEventListener('keydown', handleUserMenuKeydown);
+  workshopMenuTrigger?.addEventListener('click', toggleWorkshopMenu);
+  const hasAnyMenu = Boolean((userMenuTrigger && userMenu) || (workshopMenuTrigger && workshopMenu));
+  if (hasAnyMenu) {
+    document.addEventListener('keydown', handleMenuKeydown);
     document.addEventListener('click', handleDocumentClick);
   }
 
@@ -191,8 +225,9 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
     active = false;
     if (logoutListener) logoutButton?.removeEventListener('click', logoutListener);
     userMenuTrigger?.removeEventListener('click', toggleUserMenu);
-    if (userMenuTrigger && userMenu) {
-      document.removeEventListener('keydown', handleUserMenuKeydown);
+    workshopMenuTrigger?.removeEventListener('click', toggleWorkshopMenu);
+    if (hasAnyMenu) {
+      document.removeEventListener('keydown', handleMenuKeydown);
       document.removeEventListener('click', handleDocumentClick);
     }
     window.removeEventListener('session-changed', update);

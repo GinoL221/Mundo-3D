@@ -8,9 +8,15 @@ const currentPath = pathname === '/' ? pathname : pathname.replace(/\/+$/, '');
 const productsIsCurrent = currentPath === '/products';
 const helpIsCurrent = currentPath === '/help';
 const stepByStepIsCurrent = currentPath === '/step-by-step';
+const adminOrdersIsCurrent = currentPath === '/admin/orders';
 const adminProductsIsCurrent = currentPath === '/admin/products';
 const adminProductsSectionIsCurrent = currentPath.startsWith('/admin/products/');
 const adminRequestsIsCurrent = currentPath === '/admin/commission-requests';
+const adminSectionIsCurrent =
+  adminOrdersIsCurrent ||
+  adminProductsIsCurrent ||
+  adminProductsSectionIsCurrent ||
+  adminRequestsIsCurrent;
 const loginIsCurrent = currentPath === '/login';
 const registerIsCurrent = currentPath === '/register';
 ---
@@ -32,15 +38,63 @@ const registerIsCurrent = currentPath === '/register';
           <li><a class:list={["home-header__link", { "home-header__link--active": productsIsCurrent }]} href="/products" aria-current={productsIsCurrent ? 'page' : undefined}>Catálogo</a></li>
           <li><a class:list={["home-header__link", { "home-header__link--active": helpIsCurrent }]} href="/help" aria-current={helpIsCurrent ? 'page' : undefined}>Encargos</a></li>
           <li><a class:list={["home-header__link", { "home-header__link--active": stepByStepIsCurrent }]} href="/step-by-step" aria-current={stepByStepIsCurrent ? 'page' : undefined}>Cómo funciona</a></li>
-          <li class="admin-only" style="display: none;"><a class:list={["home-header__link", { "home-header__link--active": adminProductsIsCurrent || adminProductsSectionIsCurrent }]} href="/admin/products" aria-current={adminProductsIsCurrent ? 'page' : adminProductsSectionIsCurrent ? 'true' : undefined}>Administrar productos</a></li>
-          <li class="admin-only" style="display: none;">
-            <a
-              class:list={["home-header__link", { "home-header__link--active": adminRequestsIsCurrent }]}
-              href="/admin/commission-requests"
-              aria-current={adminRequestsIsCurrent ? 'page' : undefined}
+          <li class="nav-item nav-item--workshop admin-only" style="display: none;">
+            <button
+              class:list={[
+                'home-header__link',
+                'home-header__workshop-trigger',
+                { 'home-header__link--active': adminSectionIsCurrent },
+              ]}
+              id="navbar-workshop-trigger"
+              type="button"
+              aria-expanded="false"
+              aria-controls="navbar-workshop-menu"
             >
-              Solicitudes de encargo
-            </a>
+              <span>Taller</span>
+              <svg
+                class="home-header__chevron"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+            <ul class="nav-item__dropdown home-header__workshop-menu" id="navbar-workshop-menu" hidden>
+              <li>
+                <a
+                  href="/admin/orders"
+                  class:list={[{ 'home-header__sublink--active': adminOrdersIsCurrent }]}
+                  aria-current={adminOrdersIsCurrent ? 'page' : undefined}
+                >
+                  Pedidos
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/admin/products"
+                  class:list={[
+                    { 'home-header__sublink--active': adminProductsIsCurrent || adminProductsSectionIsCurrent },
+                  ]}
+                  aria-current={adminProductsIsCurrent ? 'page' : adminProductsSectionIsCurrent ? 'true' : undefined}
+                >
+                  Catálogo y stock
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/admin/commission-requests"
+                  class:list={[{ 'home-header__sublink--active': adminRequestsIsCurrent }]}
+                  aria-current={adminRequestsIsCurrent ? 'page' : undefined}
+                >
+                  Solicitudes recibidas
+                </a>
+              </li>
+            </ul>
           </li>
         </ul>
       </nav>

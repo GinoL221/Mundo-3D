@@ -1,5 +1,6 @@
 @media (prefers-reduced-motion: reduce) {
   .home-header__link,
+  .home-header__chevron,
   .home-header__theme,
   .home-header__menu-toggle,
   .home-button,
