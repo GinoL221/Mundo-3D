@@ -354,6 +354,49 @@ import ProductCard from './ProductCard.astro';
     }
   }
 
+  let retryOnVisibleArmed = false;
+
+  function armRetryOnVisible(container: HTMLElement): void {
+    if (retryOnVisibleArmed) return;
+    retryOnVisibleArmed = true;
+    const handleVisibilityChange = (): void => {
+      if (document.visibilityState !== 'visible') return;
+      retryOnVisibleArmed = false;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      showState('loading-state-template', container);
+      void loadProducts();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+  }
+
+  function applySleepingErrorState(container: HTMLElement, wakeUrl: string | null): void {
+    const title = container.querySelector('.ui-callout__title') as HTMLElement | null;
+    const text = container.querySelector('.ui-callout__text') as HTMLElement | null;
+    if (title) title.textContent = 'El servidor está dormido';
+    if (text) {
+      text.textContent =
+        'El backend gratuito se pausa tras 15 min sin uso (tarda ~30–60 s en despertar). Abrilo para reactivarlo y después volvé acá.';
+    }
+
+    if (!wakeUrl) return;
+    const actions = container.querySelector('.ui-callout__actions') as HTMLElement | null;
+    if (!actions) return;
+
+    const wakeLink = document.createElement('a');
+    wakeLink.id = 'product-search-wake';
+    wakeLink.className = 'ui-btn ui-btn--primary';
+    wakeLink.href = wakeUrl;
+    wakeLink.setAttribute('target', '_blank');
+    wakeLink.setAttribute('rel', 'noopener noreferrer');
+    wakeLink.textContent = 'Despertar servidor ↗';
+    wakeLink.addEventListener('click', () => {
+      armRetryOnVisible(container);
+    });
+
+    const existing = Array.from(actions.children);
+    actions.replaceChildren(wakeLink, ...existing);
+  }
+
   function bindRetryButton(container: HTMLElement): void {
     const retryButton = container.querySelector('#product-search-retry') as HTMLButtonElement | null;
     if (!retryButton) return;
@@ -376,6 +419,9 @@ import ProductCard from './ProductCard.astro';
     if (!result.ok) {
       showState('error-state-template', container);
       renderPagination('', null, null);
+      if (result.reason === 'sleeping') {
+        applySleepingErrorState(container, result.wakeUrl);
+      }
       bindRetryButton(container);
       return;
     }

@@ -8,6 +8,12 @@
 // change.
 export { API_URL } from './lib/http/apiBase';
 export {
+  BACKEND_SLEEPING_CODE,
+  readBackendSleepingInfo,
+  sanitizeExternalHttpUrl,
+} from './lib/http/backendWake';
+export type { BackendSleepingInfo } from './lib/http/backendWake';
+export {
   expireClientReadableSessionCookies,
   getSessionUser,
   parseApiResponse,

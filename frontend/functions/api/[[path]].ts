@@ -23,20 +23,55 @@ function extractSetCookieHeaders(headers: Headers): string[] {
 const COLD_START_STATUSES = new Set([502, 503, 504]);
 const COLD_START_ERROR_MESSAGE =
   'El servidor se está iniciando. Esperá unos segundos y volvé a intentarlo.';
+const BACKEND_SLEEPING_CODE = 'BACKEND_SLEEPING';
+const BACKEND_SLEEPING_ERROR_MESSAGE =
+  'El servidor gratuito está dormido por inactividad. Abrilo para reactivarlo y volvé a intentarlo en unos segundos.';
 
 function isJsonContentType(headers: Headers): boolean {
   const contentType = headers.get('content-type')?.toLowerCase() ?? '';
   return contentType.includes('application/json');
 }
 
-function jsonError(status: number, error: string, extraHeaders?: Record<string, string>): Response {
-  return new Response(JSON.stringify({ error }), {
+function isSleepingEdgeBlock(response: Response): boolean {
+  return response.status === 429 && !isJsonContentType(response.headers);
+}
+
+function jsonError(
+  status: number,
+  error: string,
+  extraHeaders?: Record<string, string>,
+  extraFields?: Record<string, unknown>,
+): Response {
+  return new Response(JSON.stringify({ error, ...extraFields }), {
     status,
     headers: {
       'Content-Type': 'application/json',
       ...extraHeaders,
     },
   });
+}
+
+function resolveWakeUrl(rawBaseUrl: string | undefined): string | null {
+  const trimmed = rawBaseUrl?.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const normalizedBase = trimmed.replace(/\/+$/, '');
+  try {
+    const parsedBase = new URL(normalizedBase);
+    if (parsedBase.protocol !== 'http:' && parsedBase.protocol !== 'https:') {
+      return null;
+    }
+    const basePath = parsedBase.pathname === '/' ? '' : parsedBase.pathname.replace(/\/+$/, '');
+    const wakeUrl = new URL(`${basePath}/health/ready`, parsedBase.origin);
+    if (wakeUrl.origin !== parsedBase.origin) {
+      return null;
+    }
+    return wakeUrl.href;
+  } catch {
+    return null;
+  }
 }
 
 function resolveUpstreamUrl(rawBaseUrl: string | undefined, requestUrl: string): string | null {
@@ -102,6 +137,23 @@ export async function onRequest(context: PagesFunctionContext): Promise<Response
     upstreamResponse = await fetch(targetUrl, init);
   } catch {
     return jsonError(502, 'Upstream service unavailable.');
+  }
+
+  if (isSleepingEdgeBlock(upstreamResponse)) {
+    await upstreamResponse.body?.cancel().catch(() => undefined);
+    const wakeUrl = resolveWakeUrl(env.BACKEND_API_URL);
+    return jsonError(
+      503,
+      BACKEND_SLEEPING_ERROR_MESSAGE,
+      {
+        'Cache-Control': 'no-store',
+        'Retry-After': '10',
+      },
+      {
+        code: BACKEND_SLEEPING_CODE,
+        ...(wakeUrl ? { wakeUrl } : {}),
+      },
+    );
   }
 
   if (

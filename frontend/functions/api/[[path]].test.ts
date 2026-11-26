@@ -397,5 +397,81 @@ describe('Cloudflare Pages /api/* reverse proxy', () => {
       expect(res.status).toBe(500);
       expect(await res.json()).toEqual({ error: 'Internal server error' });
     });
+
+    it('normalizes an upstream 429 Cloudflare HTML challenge into a 503 BACKEND_SLEEPING JSON with wakeUrl', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response('<!DOCTYPE html><title>Just a moment...</title>', {
+          status: 429,
+          headers: {
+            'Content-Type': 'text/html; charset=UTF-8',
+            'cf-mitigated': 'challenge',
+          },
+        }),
+      );
+
+      const req = new Request('https://mundo3d.pages.dev/api/products');
+      const res = await onRequest(
+        createContext(req, { BACKEND_API_URL: 'https://mundo3d-api.onrender.com/' }),
+      );
+
+      expect(res.status).toBe(503);
+      expect(res.headers.get('content-type')).toBe('application/json');
+      expect(res.headers.get('cache-control')).toBe('no-store');
+      expect(res.headers.get('retry-after')).toBe('10');
+      expect(await res.json()).toEqual({
+        error:
+          'El servidor gratuito está dormido por inactividad. Abrilo para reactivarlo y volvé a intentarlo en unos segundos.',
+        code: 'BACKEND_SLEEPING',
+        wakeUrl: 'https://mundo3d-api.onrender.com/health/ready',
+      });
+    });
+
+    it('normalizes an upstream 429 plain-text edge block and preserves base path in wakeUrl', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response('Too Many Requests', {
+          status: 429,
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        }),
+      );
+
+      const req = new Request('https://mundo3d.pages.dev/api/products');
+      const res = await onRequest(
+        createContext(req, { BACKEND_API_URL: 'https://api.example.com/backend/' }),
+      );
+
+      expect(res.status).toBe(503);
+      expect(await res.json()).toEqual({
+        error:
+          'El servidor gratuito está dormido por inactividad. Abrilo para reactivarlo y volvé a intentarlo en unos segundos.',
+        code: 'BACKEND_SLEEPING',
+        wakeUrl: 'https://api.example.com/backend/health/ready',
+      });
+    });
+
+    it('preserves upstream 429 application/json rate-limit responses untouched', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'RateLimit-Remaining': '0',
+          },
+        }),
+      );
+
+      const req = new Request('https://mundo3d.pages.dev/api/users/login', {
+        method: 'POST',
+        body: '{}',
+      });
+      const res = await onRequest(
+        createContext(req, { BACKEND_API_URL: 'https://mundo3d-api.onrender.com' }),
+      );
+
+      expect(res.status).toBe(429);
+      expect(res.headers.get('ratelimit-remaining')).toBe('0');
+      expect(await res.json()).toEqual({
+        error: 'Too many requests. Please try again later.',
+      });
+    });
   });
 });

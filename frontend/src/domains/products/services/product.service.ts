@@ -1,4 +1,4 @@
-import { API_URL, apiFetch } from '../../../config';
+import { API_URL, apiFetch, readBackendSleepingInfo } from '../../../config';
 import { adaptAPIProduct, adaptAPIProducts, isPlaceholderImage } from '../adapters/product.adapter';
 import type { APIProduct, Product } from '../adapters/product.adapter';
 
@@ -37,11 +37,13 @@ export async function fetchProductById(id: string): Promise<FetchProductByIdResu
 
 export type FetchProductsResult =
   | { ok: true; products: Product[] }
-  | { ok: false; reason: 'network' | 'server' };
+  | { ok: false; reason: 'network' | 'server' }
+  | { ok: false; reason: 'sleeping'; wakeUrl: string | null };
 
 export type FetchLatestProductResult =
   | { ok: true; product: Product }
-  | { ok: false; reason: 'not-found' | 'network' | 'server' };
+  | { ok: false; reason: 'not-found' | 'network' | 'server' }
+  | { ok: false; reason: 'sleeping'; wakeUrl: string | null };
 
 export function selectLatestPhotoProduct(products: readonly Product[]): Product | undefined {
   let latest: Product | undefined;
@@ -72,6 +74,10 @@ export async function fetchProducts(): Promise<FetchProductsResult> {
   }
 
   if (!res.ok) {
+    const sleeping = await readBackendSleepingInfo(res);
+    if (sleeping) {
+      return { ok: false, reason: 'sleeping', wakeUrl: sleeping.wakeUrl };
+    }
     return { ok: false, reason: 'server' };
   }
 
@@ -92,6 +98,8 @@ export async function fetchFeaturedProduct(
     if (catalog.ok) {
       const featured = selectLatestPhotoProduct(catalog.products);
       if (featured) return { ok: true, product: featured };
+    } else if (catalog.reason === 'sleeping') {
+      return { ok: false, reason: 'sleeping', wakeUrl: catalog.wakeUrl };
     }
   } catch {
     // Preserve the legacy latest-product fallback for an unexpected catalog failure.
@@ -117,6 +125,10 @@ export async function fetchLatestProduct(): Promise<FetchLatestProductResult> {
   }
 
   if (!res.ok) {
+    const sleeping = await readBackendSleepingInfo(res);
+    if (sleeping) {
+      return { ok: false, reason: 'sleeping', wakeUrl: sleeping.wakeUrl };
+    }
     return { ok: false, reason: 'server' };
   }
 

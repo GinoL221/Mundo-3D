@@ -126,6 +126,24 @@ describe('fetchProducts', () => {
 
     expect(result).toEqual({ ok: false, reason: 'network' });
   });
+
+  it('maps a 503 BACKEND_SLEEPING proxy payload to a sleeping reason with sanitized wakeUrl', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(503, {
+        error: 'El servidor gratuito está dormido',
+        code: 'BACKEND_SLEEPING',
+        wakeUrl: 'https://mundo-3d-backend.onrender.com/health/ready',
+      }),
+    );
+
+    const result = await fetchProducts();
+
+    expect(result).toEqual({
+      ok: false,
+      reason: 'sleeping',
+      wakeUrl: 'https://mundo-3d-backend.onrender.com/health/ready',
+    });
+  });
 });
 
 describe('fetchLatestProduct', () => {
@@ -290,5 +308,22 @@ describe('selectLatestPhotoProduct & fetchFeaturedProduct', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ ok: false, reason: 'not-found' });
+  });
+
+  it('short-circuits with sleeping reason without calling latest endpoint when catalog reports BACKEND_SLEEPING', async () => {
+    const result = await fetchFeaturedProduct(
+      Promise.resolve({
+        ok: false,
+        reason: 'sleeping',
+        wakeUrl: 'https://mundo-3d-backend.onrender.com/health/ready',
+      }),
+    );
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      ok: false,
+      reason: 'sleeping',
+      wakeUrl: 'https://mundo-3d-backend.onrender.com/health/ready',
+    });
   });
 });
