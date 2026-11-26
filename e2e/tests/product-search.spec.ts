@@ -3,13 +3,11 @@ import { test, expect } from '@playwright/test';
 // Real click-through for product-catalog-search (design.md "Testing
 // Strategy" / tasks.md 5.1-5.2), mirroring order-history.spec.ts's
 // precedent of a genuine click-through rather than a code-inspection
-// smoke test. Uses the real seeded catalog (17 products, backend/src/
-// database/data/products.json) for search/filter assertions. The seed has
-// too few products to ever produce a second page against the fixed
-// pageSize=20 default (design.md decision — no pageSize control exists in
-// the UI), so the pagination test below mocks only the network response,
-// while every click/type/URL assertion still exercises the real rendered
-// component and its real client script.
+// smoke test. Uses the real seeded catalog (26 products, backend/src/
+// database/data/products.json) for search/filter assertions. The default
+// pageSize=20 renders 20 cards on page 1 and 6 on page 2. The pagination
+// test below keeps its targeted mock to exercise a deterministic 2-page
+// filtered search flow with a real rendered `<a>` click.
 test.describe('Product Search & Filter E2E', () => {
   test.beforeEach(({ page }) => {
     page.on('console', (msg) => console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`));
@@ -17,7 +15,7 @@ test.describe('Product Search & Filter E2E', () => {
 
   test('typing a search term and submitting filters the grid to matching products only', async ({ page }) => {
     await page.goto('/products');
-    await expect(page.locator('#product-grid-container .product-card')).toHaveCount(17);
+    await expect(page.locator('#product-grid-container .product-card')).toHaveCount(20);
 
     await page.fill('#product-search-input', 'Llavero');
     await page.click('#product-search-form button[type="submit"]');
@@ -58,9 +56,9 @@ test.describe('Product Search & Filter E2E', () => {
   test('clicking "Siguiente" navigates to the next page, preserving the active search term in the URL', async ({
     page,
   }) => {
-    // The real seed only has 17 products against a fixed pageSize=20, so it
-    // can never produce a second page. Mock the search response to force a
-    // 2-page result while still driving a real rendered `<a>` click.
+    // Only one seeded product matches "goku", so mock a 2-page filtered search
+    // response to exercise a deterministic next-page `<a>` click with search
+    // query preservation.
     await page.route('**/api/products/search*', async (route) => {
       const url = new URL(route.request().url());
       const requestedPage = Number(url.searchParams.get('page') || '1');

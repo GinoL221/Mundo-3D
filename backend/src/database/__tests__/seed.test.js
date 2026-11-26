@@ -5,7 +5,13 @@
 // promise instead of being silently swallowed, since `backend/index.js`'s
 // boot chain relies on that rejection to fail fast.
 const path = require('node:path');
-const { seedInitialData, resolveSeedDataPath } = require('../seed');
+const {
+  seedInitialData,
+  syncCatalogData,
+  resolveSeedDataPath,
+  SEED_CATEGORIES,
+  SEED_FRANCHISES,
+} = require('../seed');
 
 function makeDb(overrides = {}) {
   return {
@@ -91,5 +97,69 @@ describe('seedInitialData', () => {
     const resolved = resolveSeedDataPath('products.json', fakeDistDbDir);
     expect(resolved).toBeTruthy();
     expect(resolved.endsWith(path.join('database', 'data', 'products.json'))).toBe(true);
+  });
+});
+
+describe('syncCatalogData', () => {
+  it('adds missing categories/franchises, updates existing products without clobbering positive stock, and inserts new products', async () => {
+    const existingUpdate = jest.fn().mockResolvedValue(undefined);
+    const zeroStockUpdate = jest.fn().mockResolvedValue(undefined);
+
+    const db = {
+      sequelize: {
+        transaction: jest.fn((cb) => cb({ id: 'tx-1' })),
+      },
+      Category: {
+        findAll: jest.fn().mockResolvedValue([
+          { idCategory: 1, nameCategory: 'Llavero' },
+          { idCategory: 2, nameCategory: 'Busto' },
+        ]),
+        create: jest.fn().mockImplementation((payload) => Promise.resolve(payload)),
+      },
+      Franchise: {
+        findAll: jest.fn().mockResolvedValue([
+          { idFranchise: 1, nameFranchise: 'Marvel' },
+        ]),
+        create: jest.fn().mockImplementation((payload) => Promise.resolve(payload)),
+      },
+      Product: {
+        findOne: jest.fn().mockImplementation(({ where }) => {
+          if (where.nameProduct === 'Mario Bros Coleccionable') {
+            return Promise.resolve({ stock: 12, update: existingUpdate });
+          }
+          if (where.nameProduct === 'Llavero Escudo Capitán América') {
+            return Promise.resolve({ stock: 0, update: zeroStockUpdate });
+          }
+          return Promise.resolve(null);
+        }),
+        create: jest.fn().mockResolvedValue({}),
+      },
+    };
+
+    const summary = await syncCatalogData(db);
+
+    expect(db.sequelize.transaction).toHaveBeenCalledTimes(1);
+    expect(summary).toEqual({
+      categoriesCreated: SEED_CATEGORIES.length - 2,
+      franchisesCreated: SEED_FRANCHISES.length - 1,
+      productsUpdated: 2,
+      productsCreated: 24,
+    });
+    expect(existingUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nameProduct: 'Mario Bros Coleccionable',
+        price: 26500,
+        stock: 12,
+      }),
+      { transaction: { id: 'tx-1' } },
+    );
+    expect(zeroStockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nameProduct: 'Llavero Escudo Capitán América',
+        price: 4200,
+        stock: 50,
+      }),
+      { transaction: { id: 'tx-1' } },
+    );
   });
 });

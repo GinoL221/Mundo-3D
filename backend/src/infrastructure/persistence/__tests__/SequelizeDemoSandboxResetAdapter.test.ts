@@ -90,7 +90,7 @@ describe('SequelizeDemoSandboxResetAdapter', () => {
   const slotId = 'slot-1';
   const attemptId = '11111111-1111-4111-8111-111111111111';
 
-  it('fences, deletes in FK order, seeds 17 products + USER/STAFF only, verifies, and writes receipt', async () => {
+  it('fences, deletes in FK order, seeds catalog products + USER/STAFF only, verifies, and writes receipt', async () => {
     const graph = makeMockSlotGraph(slotId);
     const adapter = createAdapter(graph);
 
@@ -107,10 +107,10 @@ describe('SequelizeDemoSandboxResetAdapter', () => {
       'destroy:User',
       'destroy:Category',
       'destroy:Franchise',
-      'bulkCreate:Category:10',
-      'bulkCreate:Franchise:10',
-      'bulkCreate:Product:17',
-      'bulkCreate:User:2',
+      `bulkCreate:Category:${DEMO_SANDBOX_EXPECTED_COUNTS.categories}`,
+      `bulkCreate:Franchise:${DEMO_SANDBOX_EXPECTED_COUNTS.franchises}`,
+      `bulkCreate:Product:${DEMO_SANDBOX_EXPECTED_COUNTS.products}`,
+      `bulkCreate:User:${DEMO_SANDBOX_EXPECTED_COUNTS.users}`,
       'receipt:insert',
     ]);
     expect(graph.models.OrderItem.destroy).toHaveBeenCalledWith({
