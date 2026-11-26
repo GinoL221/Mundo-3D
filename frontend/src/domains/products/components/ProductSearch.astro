@@ -216,7 +216,11 @@ import ProductCard from './ProductCard.astro';
   import { getCategoryImg, isPlaceholderImage } from '../adapters/product.adapter';
   import { resolveImageUrl } from '../../../lib/imageUrl';
   import type { APIProduct } from '../adapters/product.adapter';
-  import { fetchProductSearch, fetchFilterOptions } from '../services/product.search.service';
+  import {
+    CATALOG_PAGE_SIZE,
+    fetchFilterOptions,
+    fetchProductSearch,
+  } from '../services/product.search.service';
   import type { FilterOption, ProductSearchCriteria } from '../services/product.search.service';
   import {
     formatCatalogPrice,
@@ -414,7 +418,10 @@ import ProductCard from './ProductCard.astro';
     if (!container) return;
 
     const criteria = getCriteria();
-    const [, result] = await Promise.all([rehydrateForm(criteria), fetchProductSearch(criteria)]);
+    const [, result] = await Promise.all([
+      rehydrateForm(criteria),
+      fetchProductSearch({ ...criteria, pageSize: CATALOG_PAGE_SIZE }),
+    ]);
 
     if (!result.ok) {
       showState('error-state-template', container);

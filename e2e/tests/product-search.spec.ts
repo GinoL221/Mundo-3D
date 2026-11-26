@@ -4,8 +4,9 @@ import { test, expect } from '@playwright/test';
 // Strategy" / tasks.md 5.1-5.2), mirroring order-history.spec.ts's
 // precedent of a genuine click-through rather than a code-inspection
 // smoke test. Uses the real seeded catalog (26 products, backend/src/
-// database/data/products.json) for search/filter assertions. The default
-// pageSize=20 renders 20 cards on page 1 and 6 on page 2. The pagination
+// database/data/products.json) for search/filter assertions. The storefront
+// requests pageSize=18 (divisible by both 3 desktop and 2 mobile/tablet
+// columns), rendering 18 cards on page 1 and 8 on page 2. The pagination
 // test below keeps its targeted mock to exercise a deterministic 2-page
 // filtered search flow with a real rendered `<a>` click.
 test.describe('Product Search & Filter E2E', () => {
@@ -15,7 +16,7 @@ test.describe('Product Search & Filter E2E', () => {
 
   test('typing a search term and submitting filters the grid to matching products only', async ({ page }) => {
     await page.goto('/products');
-    await expect(page.locator('#product-grid-container .product-card')).toHaveCount(20);
+    await expect(page.locator('#product-grid-container .product-card')).toHaveCount(18);
 
     await page.fill('#product-search-input', 'Llavero');
     await page.click('#product-search-form button[type="submit"]');

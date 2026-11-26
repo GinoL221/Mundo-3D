@@ -1,6 +1,11 @@
 import { API_URL, apiFetch, readBackendSleepingInfo } from '../../../config';
 import type { ProductSearchPage } from '../adapters/product.adapter';
 
+// Storefront catalog grid uses 3 columns on desktop and 2 columns on
+// tablet/mobile; 18 is divisible by both (6 full rows of 3, 9 full rows of 2)
+// so full pages never end with orphan cards.
+export const CATALOG_PAGE_SIZE = 18;
+
 // Public, unauthenticated search endpoint (product-catalog-search spec) —
 // no `withCredentials`, unlike order.service.ts's buyer-scoped calls.
 export interface ProductSearchCriteria {
@@ -8,6 +13,7 @@ export interface ProductSearchCriteria {
   idCategory?: number;
   idFranchise?: number;
   page?: number;
+  pageSize?: number;
 }
 
 export type FetchProductSearchResult =
@@ -34,6 +40,7 @@ export async function fetchProductSearch(
   if (criteria.idCategory !== undefined) params.set('idCategory', String(criteria.idCategory));
   if (criteria.idFranchise !== undefined) params.set('idFranchise', String(criteria.idFranchise));
   if (criteria.page !== undefined) params.set('page', String(criteria.page));
+  if (criteria.pageSize !== undefined) params.set('pageSize', String(criteria.pageSize));
   const query = params.toString();
 
   let res: Response;
