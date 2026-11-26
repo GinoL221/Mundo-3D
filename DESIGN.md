@@ -51,14 +51,14 @@ This matrix translates `PRODUCT.md`'s role boundaries into concrete storefront a
 | Surface | Visitor | `USER` (buyer) | `STAFF` (workshop) | `ADMIN` (owner) |
 | --- | --- | --- | --- | --- |
 | **Primary nav** | Catálogo · Encargos · Cómo funciona | Catálogo · Encargos · Cómo funciona | Catálogo · Encargos · Cómo funciona · **Taller ▾** | Catálogo · Encargos · Cómo funciona · **Taller ▾** |
-| **Header cart** | Visible (local cart) | Visible (synced cart) | **(Target)** Hidden | **(Target)** Hidden |
-| **Account menu** | Iniciar sesión · Registrarse | **(Target)** Mi perfil · Mis pedidos · Cerrar sesión | **(Target)** Mi perfil · Cerrar sesión *(no Mis pedidos)* | **(Target)** Mi perfil · Cerrar sesión *(no Mis pedidos)* |
+| **Header cart** | Visible (local cart) | Visible (synced cart) | Hidden | Hidden |
+| **Account menu** | Iniciar sesión · Registrarse | Mi perfil · Mis pedidos · Cerrar sesión | Mi perfil · Cerrar sesión *(no Mis pedidos)* | Mi perfil · Cerrar sesión *(no Mis pedidos)* |
 | **`Taller ▾` menu** | — | — | Pedidos (`/admin/orders`) · Catálogo y stock (`/admin/products`) · Solicitudes recibidas (`/admin/commission-requests`) | Same as STAFF + **(Target)** Categorías y franquicias · Usuarios |
-| **Product detail (`/product`)** | `Agregar al carrito` · `Ir al carrito` | `Agregar al carrito` · `Ir al carrito` | **(Target)** Current stock badge + `Editar pieza en el taller` (`/admin/products/edit?id=X`), no purchase buttons | **(Target)** Current stock badge + `Editar pieza en el taller` (`/admin/products/edit?id=X`), no purchase buttons |
-| **`/cart` & `/orders`** | Local cart (login required to check out); `/orders` requires login | Full simulated purchase & order history flow | **(Target)** Clear operational-account notice with link back to Taller | **(Target)** Clear operational-account notice with link back to Taller |
+| **Product detail (`/product`)** | `Agregar al carrito` · `Ir al carrito` | `Agregar al carrito` · `Ir al carrito` | Current stock badge + `Editar pieza en el taller` (`/admin/products/edit?id=X`), no purchase buttons | Current stock badge + `Editar pieza en el taller` (`/admin/products/edit?id=X`), no purchase buttons |
+| **`/cart` & `/orders`** | Local cart (login required to check out); `/orders` requires login | Full simulated purchase & order history flow | Clear operational-account notice with link back to Taller | Clear operational-account notice with link back to Taller |
 | **Workshop orders (`/admin/orders`)** | Gate denied | Gate denied | Read-only (`Nombre I. · #id`, items, status, total; no email, no payment/cancel actions) | Same as STAFF + **(Target)** `Confirmar pago` and `Cancelar pedido` (with restock) |
 | **Workshop catalogue (`/admin/products`)** | Gate denied | Gate denied | Create, edit, live stock stepper, quick stock filters (`Todos / Stock bajo / Sin stock`); no Delete | Same as STAFF + `Eliminar` |
-| **Self-profile (`/profile`)** | Redirect to `/login` | **(Target)** Read-only account details, role badge, shortcut to `Mis pedidos` | **(Target)** Read-only account details, role badge, permitted scope, shortcuts to Taller | **(Target)** Read-only account details, role badge, permitted scope, shortcuts to Taller/Admin |
+| **Self-profile (`/profile`)** | Login CTA (`/login?next=/profile`) | Read-only account details, role badge, scope summary, shortcut to `Mis pedidos` | Read-only account details, role badge, permitted scope, shortcuts to Taller | Read-only account details, role badge, permitted scope, shortcuts to Taller/Admin |
 | **Demo bar switcher** | Demo entry CTA | `Buyer \| STAFF` **(Target final: `Buyer \| STAFF \| ADMIN` once ADMIN views are verified)** | Same | Same *(when enabled)* |
 
 ## Visual theme and atmosphere
@@ -158,7 +158,7 @@ The header (`HomeHeader.astro`) uses the horizontal isologotype as one responsiv
 ## CRT/JRPG legacy surface
 
 - `Layout.astro` and `HomeHeader.astro` do not read `localStorage['retro-theme-preference']`, toggle `html.crt-theme-active`, or render `.crt-overlay` or a CRT toggle button.
-- The legacy `crtToggle.ts` script, `--lcd-bg` / `--lcd-fg` tokens, and unused stylesheets (`carousel.css`, `feature-strip.css`, `forms.css`, `profile.css`, `users-list.css`, `error-pages.css`, `whatsapp-floating.css`) plus `WhatsAppFloating.astro` have been retired.
+- The legacy `crtToggle.ts` script, `--lcd-bg` / `--lcd-fg` tokens, and unused legacy stylesheets (`carousel.css`, `feature-strip.css`, `forms.css`, legacy `profile.css`, `users-list.css`, `error-pages.css`, `whatsapp-floating.css`) plus `WhatsAppFloating.astro` have been retired (read-only `/profile` now uses a new semantic-token `profile.css`).
 - The PICO-8 fallback art has been retired: `frontend/public/images/illustrations/*.svg` and `img/products/productoSinImagen.svg` are neutral outline placeholders (stroke `#8c857d`, transparent background) and no stylesheet sets `image-rendering: pixelated`.
 
 ## Do's and don'ts
