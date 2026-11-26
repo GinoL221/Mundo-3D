@@ -97,6 +97,18 @@ import '../../styles/components/admin-orders.css';
         </div>
 
         <div
+          id="admin-orders-feedback"
+          class="ui-callout ui-callout--info"
+          role="status"
+          aria-live="polite"
+          hidden
+        >
+          <div class="ui-callout__content">
+            <p id="admin-orders-feedback-text" class="ui-callout__text"></p>
+          </div>
+        </div>
+
+        <div
           id="admin-orders-table-wrap"
           class="ui-table-wrap admin-orders__table-wrap"
           role="region"
@@ -113,11 +125,41 @@ import '../../styles/components/admin-orders.css';
                 <th scope="col">Estado</th>
                 <th scope="col">Piezas</th>
                 <th scope="col" class="ui-table__num">Total</th>
+                <th id="admin-orders-actions-col" scope="col" hidden>Acciones</th>
               </tr>
             </thead>
             <tbody id="admin-orders-list"></tbody>
           </table>
         </div>
+
+        <dialog
+          id="admin-order-action-dialog"
+          class="ui-dialog"
+          aria-labelledby="admin-order-dialog-title"
+        >
+          <div class="ui-dialog__inner">
+            <h2 id="admin-order-dialog-title" class="ui-dialog__title"></h2>
+            <p id="admin-order-dialog-body" class="ui-dialog__body"></p>
+            <form method="dialog" class="ui-dialog__actions">
+              <button
+                type="submit"
+                value="cancel"
+                class="ui-btn ui-btn--secondary ui-btn--sm"
+                autofocus
+              >
+                Volver
+              </button>
+              <button
+                id="admin-order-dialog-confirm"
+                type="submit"
+                value="confirm"
+                class="ui-btn ui-btn--primary ui-btn--sm"
+              >
+                Confirmar
+              </button>
+            </form>
+          </div>
+        </dialog>
       </section>
     </div>
   </main>

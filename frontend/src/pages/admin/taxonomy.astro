@@ -1,0 +1,152 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AdminGateDenied from '../../domains/products/components/admin/AdminGateDenied.astro';
+import '../../styles/components/admin-products.css';
+import '../../styles/components/admin-taxonomy.css';
+---
+
+<Layout title="Categorías y franquicias — Mundo 3D">
+  <main>
+    <div class="admin-shell">
+      <AdminGateDenied />
+
+      <section id="admin-taxonomy-content" class="admin-taxonomy__content" hidden>
+        <header class="ui-page-head">
+          <div class="ui-page-head__main">
+            <div class="ui-page-head__title-row">
+              <h1 class="ui-page-head__title">Categorías y franquicias</h1>
+              <span class="ui-badge ui-badge--admin">ADMIN</span>
+            </div>
+            <p class="ui-page-head__scope">
+              Administrá las categorías y franquicias del catálogo. No se pueden eliminar registros
+              que todavía tengan piezas asociadas.
+            </p>
+          </div>
+          <div class="ui-page-head__actions">
+            <a href="/admin/products" class="ui-btn ui-btn--secondary">Volver al catálogo</a>
+          </div>
+        </header>
+
+        <div id="admin-taxonomy-loading" class="ui-state" aria-busy="true">
+          <p class="ui-state__title">Cargando categorías y franquicias</p>
+          <p class="ui-state__text">Consultando la taxonomía actual del catálogo.</p>
+          <div class="ui-skeleton-list" aria-hidden="true">
+            <span class="ui-skeleton"></span>
+            <span class="ui-skeleton ui-skeleton--medium"></span>
+            <span class="ui-skeleton ui-skeleton--short"></span>
+          </div>
+        </div>
+
+        <div id="admin-taxonomy-error" class="ui-callout ui-callout--danger" role="alert" hidden>
+          <div class="ui-callout__content">
+            <p class="ui-callout__title">No pudimos cargar la taxonomía</p>
+            <p id="admin-taxonomy-error-text" class="ui-callout__text">
+              El servicio no respondió a tiempo. Volvé a intentar en unos segundos.
+            </p>
+            <div class="ui-callout__actions">
+              <button
+                id="admin-taxonomy-retry"
+                type="button"
+                class="ui-btn ui-btn--secondary ui-btn--sm"
+              >
+                Reintentar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="admin-taxonomy-feedback"
+          class="ui-callout ui-callout--info"
+          role="status"
+          aria-live="polite"
+          hidden
+        >
+          <div class="ui-callout__content">
+            <p id="admin-taxonomy-feedback-text" class="ui-callout__text"></p>
+          </div>
+        </div>
+
+        <div id="admin-taxonomy-panels" class="admin-taxonomy__grid" hidden>
+          <article class="admin-taxonomy__panel">
+            <header class="admin-taxonomy__panel-head">
+              <h2 class="admin-taxonomy__panel-title">Categorías</h2>
+              <span id="categories-count" class="ui-badge ui-badge--user">0</span>
+            </header>
+
+            <form id="category-create-form" class="admin-taxonomy__create-form" novalidate>
+              <label for="category-create-input" class="sr-only">Nueva categoría</label>
+              <input
+                id="category-create-input"
+                type="text"
+                class="ui-input"
+                placeholder="Ej. Dioramas"
+                maxlength="60"
+                required
+              />
+              <button id="category-create-btn" type="submit" class="ui-btn ui-btn--primary ui-btn--sm">
+                Agregar
+              </button>
+            </form>
+
+            <ul id="categories-list" class="admin-taxonomy__list"></ul>
+          </article>
+
+          <article class="admin-taxonomy__panel">
+            <header class="admin-taxonomy__panel-head">
+              <h2 class="admin-taxonomy__panel-title">Franquicias</h2>
+              <span id="franchises-count" class="ui-badge ui-badge--user">0</span>
+            </header>
+
+            <form id="franchise-create-form" class="admin-taxonomy__create-form" novalidate>
+              <label for="franchise-create-input" class="sr-only">Nueva franquicia</label>
+              <input
+                id="franchise-create-input"
+                type="text"
+                class="ui-input"
+                placeholder="Ej. Studio Ghibli"
+                maxlength="60"
+                required
+              />
+              <button id="franchise-create-btn" type="submit" class="ui-btn ui-btn--primary ui-btn--sm">
+                Agregar
+              </button>
+            </form>
+
+            <ul id="franchises-list" class="admin-taxonomy__list"></ul>
+          </article>
+        </div>
+
+        <dialog
+          id="admin-taxonomy-delete-dialog"
+          class="ui-dialog"
+          aria-labelledby="admin-taxonomy-dialog-title"
+        >
+          <div class="ui-dialog__inner">
+            <h2 id="admin-taxonomy-dialog-title" class="ui-dialog__title"></h2>
+            <p id="admin-taxonomy-dialog-body" class="ui-dialog__body"></p>
+            <form method="dialog" class="ui-dialog__actions">
+              <button
+                type="submit"
+                value="cancel"
+                class="ui-btn ui-btn--secondary ui-btn--sm"
+                autofocus
+              >
+                Volver
+              </button>
+              <button type="submit" value="confirm" class="ui-btn ui-btn--danger ui-btn--sm">
+                Eliminar
+              </button>
+            </form>
+          </div>
+        </dialog>
+      </section>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  import { initializeAdminTaxonomy } from '../../scripts/adminTaxonomy';
+
+  void initializeAdminTaxonomy(document);
+</script>

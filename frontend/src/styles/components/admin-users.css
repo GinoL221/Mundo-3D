@@ -1,0 +1,78 @@
+/* ============================================================
+   components/admin-users.css — ADMIN Read-Only Users List
+   ============================================================ */
+
+.admin-users__content {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.admin-users__table-wrap {
+  container-type: inline-size;
+}
+
+.admin-users-table tbody th.admin-users__id {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.admin-users__name {
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.admin-users__email {
+  color: var(--sys-text-muted);
+  overflow-wrap: anywhere;
+}
+
+@container (max-width: 620px) {
+  .admin-users-table thead {
+    display: none;
+  }
+
+  .admin-users-table,
+  .admin-users-table tbody,
+  .admin-users-table tr,
+  .admin-users-table th,
+  .admin-users-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-users-table tbody tr {
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    gap: var(--space-xs);
+  }
+
+  .admin-users-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .admin-users-table tbody th,
+  .admin-users-table tbody td {
+    padding: 0;
+    border-bottom: 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    text-align: right;
+  }
+
+  .admin-users-table tbody th[data-label]::before,
+  .admin-users-table tbody td[data-label]::before {
+    content: attr(data-label);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--sys-text-muted);
+    flex: 0 0 auto;
+    text-align: left;
+  }
+}

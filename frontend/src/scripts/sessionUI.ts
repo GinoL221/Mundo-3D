@@ -5,7 +5,7 @@ import {
   isDemoSessionActive,
   isOperationalRole,
 } from '../config';
-import { hasAdminAccess, clearSession } from '../domains/auth/services/session.service';
+import { hasAdminAccess, isAdminOnly, clearSession } from '../domains/auth/services/session.service';
 import type { SessionChangedMessage } from '../domains/auth/services/session.service';
 import { CartService } from '../domains/cart/services/CartService';
 import { resolveImageUrl } from '../lib/imageUrl';
@@ -117,6 +117,7 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
     setVisibility(document.querySelectorAll('.guest-only'), 'block');
     setVisibility(document.querySelectorAll('.user-only'), 'none');
     setVisibility(document.querySelectorAll('.admin-only'), 'none');
+    setVisibility(document.querySelectorAll('.admin-strict-only'), 'none');
     setVisibility(document.querySelectorAll('.buyer-only'), '');
   };
 
@@ -128,12 +129,17 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
     if (demoSession) {
       const idRole = demoSession.role === 'STAFF' ? 3 : 2;
       const showWorkshop = hasAdminAccess({ idRole });
+      const showAdminOnly = isAdminOnly({ idRole });
       const operational = isOperationalRole({ idRole });
       if (!showWorkshop) setWorkshopMenuOpen(false);
       if (operational) closeMiniCart();
       setVisibility(document.querySelectorAll('.guest-only'), 'none');
       setVisibility(document.querySelectorAll('.user-only'), 'block');
       setVisibility(document.querySelectorAll('.admin-only'), showWorkshop ? 'block' : 'none');
+      setVisibility(
+        document.querySelectorAll('.admin-strict-only'),
+        showAdminOnly ? 'block' : 'none',
+      );
       setVisibility(document.querySelectorAll('.buyer-only'), operational ? 'none' : '');
       if (greeting) {
         greeting.textContent = 'Cuenta demo';
@@ -158,12 +164,17 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
         idRole: number;
       };
       const showWorkshop = hasAdminAccess(user);
+      const showAdminOnly = isAdminOnly(user);
       const operational = isOperationalRole(user);
       if (!showWorkshop) setWorkshopMenuOpen(false);
       if (operational) closeMiniCart();
       setVisibility(document.querySelectorAll('.guest-only'), 'none');
       setVisibility(document.querySelectorAll('.user-only'), 'block');
       setVisibility(document.querySelectorAll('.admin-only'), showWorkshop ? 'block' : 'none');
+      setVisibility(
+        document.querySelectorAll('.admin-strict-only'),
+        showAdminOnly ? 'block' : 'none',
+      );
       setVisibility(document.querySelectorAll('.buyer-only'), operational ? 'none' : '');
       if (greeting) greeting.textContent = `Hola ${user.firstName || user.FirstName || 'Usuario'}`;
       if (avatar && (user.image || user.Image))

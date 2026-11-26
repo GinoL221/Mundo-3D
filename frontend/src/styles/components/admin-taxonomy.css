@@ -1,0 +1,87 @@
+/* ============================================================
+   components/admin-taxonomy.css — ADMIN Categories & Franchises
+   ============================================================ */
+
+.admin-taxonomy__content {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.admin-taxonomy__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+.admin-taxonomy__panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-surface);
+  padding: var(--space-lg);
+  display: grid;
+  gap: var(--space-md);
+}
+
+.admin-taxonomy__panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.admin-taxonomy__panel-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.admin-taxonomy__create-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.admin-taxonomy__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.admin-taxonomy__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-xs);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border);
+}
+
+.admin-taxonomy__row-input {
+  font-size: 0.9375rem;
+}
+
+.admin-taxonomy__row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-xs);
+}
+
+@media (min-width: 640px) {
+  .admin-taxonomy__row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-taxonomy__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

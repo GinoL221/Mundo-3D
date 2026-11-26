@@ -12,11 +12,15 @@ const adminOrdersIsCurrent = currentPath === '/admin/orders';
 const adminProductsIsCurrent = currentPath === '/admin/products';
 const adminProductsSectionIsCurrent = currentPath.startsWith('/admin/products/');
 const adminRequestsIsCurrent = currentPath === '/admin/commission-requests';
+const adminTaxonomyIsCurrent = currentPath === '/admin/taxonomy';
+const adminUsersIsCurrent = currentPath === '/admin/users';
 const adminSectionIsCurrent =
   adminOrdersIsCurrent ||
   adminProductsIsCurrent ||
   adminProductsSectionIsCurrent ||
-  adminRequestsIsCurrent;
+  adminRequestsIsCurrent ||
+  adminTaxonomyIsCurrent ||
+  adminUsersIsCurrent;
 const loginIsCurrent = currentPath === '/login';
 const registerIsCurrent = currentPath === '/register';
 ---
@@ -92,6 +96,24 @@ const registerIsCurrent = currentPath === '/register';
                   aria-current={adminRequestsIsCurrent ? 'page' : undefined}
                 >
                   Solicitudes recibidas
+                </a>
+              </li>
+              <li class="admin-strict-only" style="display: none;">
+                <a
+                  href="/admin/taxonomy"
+                  class:list={[{ 'home-header__sublink--active': adminTaxonomyIsCurrent }]}
+                  aria-current={adminTaxonomyIsCurrent ? 'page' : undefined}
+                >
+                  Categorías y franquicias
+                </a>
+              </li>
+              <li class="admin-strict-only" style="display: none;">
+                <a
+                  href="/admin/users"
+                  class:list={[{ 'home-header__sublink--active': adminUsersIsCurrent }]}
+                  aria-current={adminUsersIsCurrent ? 'page' : undefined}
+                >
+                  Usuarios
                 </a>
               </li>
             </ul>

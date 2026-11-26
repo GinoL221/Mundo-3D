@@ -102,11 +102,14 @@ export type WorkshopOrderBadgeClass =
   | 'ui-badge--user';
 
 export interface WorkshopOrderRow {
+  idOrder: number;
   idOrderLabel: string;
   createdAtLabel: string;
   customerLabel: string;
+  status: string;
   statusLabel: string;
   statusBadgeClass: WorkshopOrderBadgeClass;
+  canMutate: boolean;
   itemsCountLabel: string;
   totalLabel: string;
   items: OrderItemRow[];
@@ -129,11 +132,14 @@ export function presentWorkshopOrders(
     const customerName = order.customer?.displayName?.trim() || 'Cliente';
     const customerId = order.customer?.idUser ?? order.idUser;
     return {
+      idOrder: order.idOrder,
       idOrderLabel: `#${order.idOrder}`,
       createdAtLabel: new Date(order.createdAt).toLocaleString('es-AR'),
       customerLabel: `${customerName} · #${customerId}`,
+      status: order.status,
       statusLabel: formatOrderStatus(order.status),
       statusBadgeClass: getOrderStatusBadgeClass(order.status),
+      canMutate: order.status === 'AWAITING_PAYMENT',
       itemsCountLabel,
       totalLabel: formatAmount(order.totalAmount),
       items: order.items.map((item) => ({

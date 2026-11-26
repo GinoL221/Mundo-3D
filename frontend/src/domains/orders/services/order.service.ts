@@ -179,3 +179,78 @@ export async function fetchWorkshopOrders(): Promise<FetchWorkshopOrdersResult> 
   const orders = (await res.json()) as WorkshopOrderViewModel[];
   return { ok: true, orders };
 }
+
+export type MutateWorkshopOrderErrorCode =
+  | 'UNAUTHENTICATED'
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'ILLEGAL_TRANSITION'
+  | 'NETWORK'
+  | 'UNKNOWN';
+
+export type MutateWorkshopOrderResult =
+  | { ok: true; order: OrderViewModel }
+  | { ok: false; code: MutateWorkshopOrderErrorCode; message: string };
+
+async function mutateWorkshopOrder(
+  idOrder: number,
+  action: 'confirm-payment' | 'cancel',
+): Promise<MutateWorkshopOrderResult> {
+  let res: Response;
+  try {
+    res = await authFetch(`${API_URL}/api/orders/${idOrder}/${action}`, { method: 'POST' });
+  } catch {
+    return {
+      ok: false,
+      code: 'NETWORK',
+      message: 'No pudimos conectar con el servidor. Intentá de nuevo.',
+    };
+  }
+
+  if (res.status === 401) {
+    return {
+      ok: false,
+      code: 'UNAUTHENTICATED',
+      message: 'Tu sesión expiró. Volvé a iniciar sesión para continuar.',
+    };
+  }
+
+  if (res.status === 403) {
+    return {
+      ok: false,
+      code: 'FORBIDDEN',
+      message: 'Solo una cuenta ADMIN puede modificar el estado de los pedidos.',
+    };
+  }
+
+  if (res.status === 404) {
+    return { ok: false, code: 'NOT_FOUND', message: 'No encontramos ese pedido.' };
+  }
+
+  if (res.status === 409) {
+    return {
+      ok: false,
+      code: 'ILLEGAL_TRANSITION',
+      message: 'Este pedido ya cambió de estado y no admite esa acción.',
+    };
+  }
+
+  if (!res.ok) {
+    return {
+      ok: false,
+      code: 'UNKNOWN',
+      message: 'No pudimos actualizar el pedido. Intentá nuevamente.',
+    };
+  }
+
+  const order = (await res.json()) as OrderViewModel;
+  return { ok: true, order };
+}
+
+export function confirmWorkshopOrderPayment(idOrder: number): Promise<MutateWorkshopOrderResult> {
+  return mutateWorkshopOrder(idOrder, 'confirm-payment');
+}
+
+export function cancelWorkshopOrder(idOrder: number): Promise<MutateWorkshopOrderResult> {
+  return mutateWorkshopOrder(idOrder, 'cancel');
+}
