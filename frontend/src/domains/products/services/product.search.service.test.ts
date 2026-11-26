@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchProductSearch, fetchFilterOptions } from './product.search.service';
+import {
+  CATALOG_PAGE_SIZE,
+  fetchFilterOptions,
+  fetchProductSearch,
+} from './product.search.service';
 
 function jsonResponse(status: number, body: unknown) {
   return {
@@ -72,6 +76,19 @@ describe('fetchProductSearch', () => {
 
     const [url] = fetchMock.mock.calls[0];
     expect(url.endsWith('/api/products/search')).toBe(true);
+  });
+
+  it('forwards pageSize when specified and keeps CATALOG_PAGE_SIZE divisible by 2 and 3', async () => {
+    expect(CATALOG_PAGE_SIZE).toBe(18);
+    expect(CATALOG_PAGE_SIZE % 2).toBe(0);
+    expect(CATALOG_PAGE_SIZE % 3).toBe(0);
+
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, SAMPLE_PAGE));
+    await fetchProductSearch({ page: 1, pageSize: CATALOG_PAGE_SIZE });
+
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toContain('page=1');
+    expect(url).toContain('pageSize=18');
   });
 
   it('maps a thrown fetch (network failure) to a network reason', async () => {
