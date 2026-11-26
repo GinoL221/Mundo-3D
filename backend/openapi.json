@@ -1616,8 +1616,7 @@
             "description": "Not authenticated."
           },
           "403": {
-            "description": "Authenticated as STAFF or ADMIN",
-            "or invalid/missing CSRF token.": null
+            "description": "Authenticated as STAFF or ADMIN, or invalid/missing CSRF token."
           },
           "409": {
             "description": "Empty cart, or insufficient stock for one or more items.",
@@ -2550,8 +2549,7 @@
             "description": "Not authenticated."
           },
           "403": {
-            "description": "Authenticated as STAFF or ADMIN",
-            "or invalid/missing CSRF token.": null
+            "description": "Authenticated as STAFF or ADMIN, or invalid/missing CSRF token."
           }
         }
       }

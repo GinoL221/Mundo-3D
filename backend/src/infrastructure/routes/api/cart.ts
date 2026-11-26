@@ -62,7 +62,7 @@ const controller = new CartApiController(getCartByUserIdUseCase, syncCartUseCase
  *             schema: { $ref: '#/components/schemas/CartSyncResponse' }
  *       '400': { description: Invalid cart items (CartValidationException). }
  *       '401': { description: Not authenticated. }
- *       '403': { description: Authenticated as STAFF or ADMIN, or invalid/missing CSRF token. }
+ *       '403': { description: 'Authenticated as STAFF or ADMIN, or invalid/missing CSRF token.' }
  */
 // GET /api/cart
 router.get('/cart', apiAuthMiddleware, buyerGuard, controller.getCart);

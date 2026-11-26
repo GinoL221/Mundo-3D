@@ -69,7 +69,7 @@ const controller = new OrderApiController(
  *           application/json:
  *             schema: { $ref: '#/components/schemas/ErrorWithCode' }
  *       '401': { description: Not authenticated. }
- *       '403': { description: Authenticated as STAFF or ADMIN, or invalid/missing CSRF token. }
+ *       '403': { description: 'Authenticated as STAFF or ADMIN, or invalid/missing CSRF token.' }
  *       '409':
  *         description: Empty cart, or insufficient stock for one or more items.
  *         content:
