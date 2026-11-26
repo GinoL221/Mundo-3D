@@ -1,4 +1,4 @@
-import { API_URL, apiFetch } from '../../../config';
+import { API_URL, apiFetch, readBackendSleepingInfo } from '../../../config';
 import type { ProductSearchPage } from '../adapters/product.adapter';
 
 // Public, unauthenticated search endpoint (product-catalog-search spec) —
@@ -12,7 +12,8 @@ export interface ProductSearchCriteria {
 
 export type FetchProductSearchResult =
   | { ok: true; page: ProductSearchPage }
-  | { ok: false; reason: 'network' | 'server' };
+  | { ok: false; reason: 'network' | 'server' }
+  | { ok: false; reason: 'sleeping'; wakeUrl: string | null };
 
 /**
  * `GET /api/products/search` — builds a query string with only the
@@ -43,6 +44,10 @@ export async function fetchProductSearch(
   }
 
   if (!res.ok) {
+    const sleeping = await readBackendSleepingInfo(res);
+    if (sleeping) {
+      return { ok: false, reason: 'sleeping', wakeUrl: sleeping.wakeUrl };
+    }
     return { ok: false, reason: 'server' };
   }
 

@@ -89,6 +89,24 @@ describe('fetchProductSearch', () => {
 
     expect(result).toEqual({ ok: false, reason: 'server' });
   });
+
+  it('maps a 503 BACKEND_SLEEPING proxy payload to a sleeping reason with sanitized wakeUrl', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(503, {
+        error: 'El servidor gratuito está dormido',
+        code: 'BACKEND_SLEEPING',
+        wakeUrl: 'https://mundo-3d-backend.onrender.com/health/ready',
+      }),
+    );
+
+    const result = await fetchProductSearch({});
+
+    expect(result).toEqual({
+      ok: false,
+      reason: 'sleeping',
+      wakeUrl: 'https://mundo-3d-backend.onrender.com/health/ready',
+    });
+  });
 });
 
 describe('fetchFilterOptions', () => {

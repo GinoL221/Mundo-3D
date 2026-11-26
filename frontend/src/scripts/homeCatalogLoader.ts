@@ -48,6 +48,53 @@ export interface HomeCatalogLoader {
 
 export function createHomeCatalogLoader(document: Document): HomeCatalogLoader {
   let activeAttempt = 0;
+  let retryOnVisibleArmed = false;
+
+  const armRetryOnVisible = (): void => {
+    if (retryOnVisibleArmed || typeof document.addEventListener !== 'function') return;
+    retryOnVisibleArmed = true;
+    const handleVisibilityChange = (): void => {
+      if (document.visibilityState !== 'visible') return;
+      retryOnVisibleArmed = false;
+      if (typeof document.removeEventListener === 'function') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+      void loadHomeCatalog();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+  };
+
+  const applySleepingCallout = (
+    root: ParentNode,
+    wakeUrl: string | null,
+    isFeatured = false,
+  ): void => {
+    const title = root.querySelector<HTMLElement>('.ui-callout__title');
+    const text = root.querySelector<HTMLElement>('.ui-callout__text');
+    if (title) title.textContent = 'El servidor está dormido';
+    if (text) {
+      text.textContent = isFeatured
+        ? 'El backend gratuito se pausa tras 15 min sin uso (tarda ~30–60 s en despertar).'
+        : 'El backend gratuito se pausa tras 15 min sin uso (tarda ~30–60 s en despertar). Abrilo para reactivarlo y después volvé acá.';
+    }
+
+    if (!wakeUrl) return;
+    const actions = root.querySelector<HTMLElement>('.ui-callout__actions');
+    if (!actions) return;
+
+    const wakeLink = document.createElement('a');
+    wakeLink.className = 'ui-btn ui-btn--primary home-state__wake';
+    wakeLink.href = wakeUrl;
+    wakeLink.setAttribute('target', '_blank');
+    wakeLink.setAttribute('rel', 'noopener noreferrer');
+    wakeLink.textContent = 'Despertar servidor ↗';
+    wakeLink.addEventListener('click', () => {
+      armRetryOnVisible();
+    });
+
+    const existing = Array.from(actions.children);
+    actions.replaceChildren(wakeLink, ...existing);
+  };
 
   const wireRetryButton = (root: ParentNode): void => {
     const retryButton = root.querySelector<HTMLButtonElement>('.home-state__retry');
@@ -123,7 +170,11 @@ export function createHomeCatalogLoader(document: Document): HomeCatalogLoader {
       }
     };
 
-    const showState = (id: string, suppressRetry = false): void => {
+    const showState = (
+      id: string,
+      suppressRetry = false,
+      sleeping?: { wakeUrl: string | null },
+    ): void => {
       const stateTemplate = document.getElementById(id) as HTMLTemplateElement | null;
       if (!stateTemplate) return;
       const clone = stateTemplate.content.cloneNode(true) as DocumentFragment;
@@ -135,6 +186,9 @@ export function createHomeCatalogLoader(document: Document): HomeCatalogLoader {
         }
       } else {
         wireRetryButton(clone);
+      }
+      if (sleeping) {
+        applySleepingCallout(clone, sleeping.wakeUrl, true);
       }
       content.replaceChildren(clone);
     };
@@ -155,6 +209,10 @@ export function createHomeCatalogLoader(document: Document): HomeCatalogLoader {
     if (!result.ok) {
       if ('reason' in result && result.reason === 'not-found') {
         showState('home-featured-empty-state-template');
+      } else if (result.reason === 'sleeping') {
+        const catalogOk = await isCatalogAvailable();
+        if (attempt !== activeAttempt) return;
+        showState('home-featured-error-state-template', !catalogOk, { wakeUrl: result.wakeUrl });
       } else {
         const catalogOk = await isCatalogAvailable();
         if (attempt !== activeAttempt) return;
@@ -229,13 +287,16 @@ export function createHomeCatalogLoader(document: Document): HomeCatalogLoader {
     const gridContainer = document.getElementById('home-product-grid');
     if (!stateEl || !contentEl || !gridContainer) return;
 
-    const showState = (id: string): void => {
+    const showState = (id: string, sleeping?: { wakeUrl: string | null }): void => {
       if (loadingMsg) loadingMsg.hidden = true;
       contentEl.hidden = true;
       const template = document.getElementById(id) as HTMLTemplateElement | null;
       if (!template) return;
       const clone = template.content.cloneNode(true) as DocumentFragment;
       wireRetryButton(clone);
+      if (sleeping) {
+        applySleepingCallout(clone, sleeping.wakeUrl, false);
+      }
       stateEl.replaceChildren(clone);
       stateEl.hidden = false;
     };
@@ -252,7 +313,11 @@ export function createHomeCatalogLoader(document: Document): HomeCatalogLoader {
     if (attempt !== activeAttempt) return;
 
     if (!result.ok) {
-      showState('home-error-state-template');
+      if (result.reason === 'sleeping') {
+        showState('home-error-state-template', { wakeUrl: result.wakeUrl });
+      } else {
+        showState('home-error-state-template');
+      }
       return;
     }
 

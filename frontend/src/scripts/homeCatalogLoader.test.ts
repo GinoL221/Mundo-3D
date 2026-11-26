@@ -213,6 +213,8 @@ class FakeTemplateElement extends FakeElement {
 
 class FakeDocument {
   private roots: FakeElement[] = [];
+  visibilityState: 'visible' | 'hidden' = 'visible';
+  private listeners = new Map<string, Array<(event: Event) => void>>();
 
   registerRoot(element: FakeElement) {
     this.roots.push(element);
@@ -233,6 +235,26 @@ class FakeDocument {
 
   createDocumentFragment(): FakeDocumentFragment {
     return new FakeDocumentFragment();
+  }
+
+  addEventListener(type: string, listener: (event: Event) => void) {
+    const list = this.listeners.get(type) ?? [];
+    list.push(listener);
+    this.listeners.set(type, list);
+  }
+
+  removeEventListener(type: string, listener: (event: Event) => void) {
+    const list = this.listeners.get(type) ?? [];
+    this.listeners.set(
+      type,
+      list.filter((entry) => entry !== listener),
+    );
+  }
+
+  dispatchEvent(type: string) {
+    for (const listener of [...(this.listeners.get(type) ?? [])]) {
+      listener({ type } as Event);
+    }
   }
 }
 
@@ -718,5 +740,62 @@ describe('homeCatalogLoader', () => {
       listener({ target: secondCardImage } as unknown as Event);
     }
     expect(secondCardImage.alt).toBe('Busto Darth Vader (sin foto disponible)');
+  });
+
+  it('shows sleeping callout with safe wake link and auto-retries once on tab return', async () => {
+    const fixture = createHomeFixture();
+    const wakeUrl = 'https://mundo-3d-backend.onrender.com/health/ready';
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse(503, {
+          error: 'El servidor gratuito está dormido',
+          code: 'BACKEND_SLEEPING',
+          wakeUrl,
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse(200, { products: [PORTAL_CUBE] }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await initializeHomeCatalog(fixture.document as unknown as Document);
+
+    // Sleeping catalog short-circuits without hitting /api/products/latest
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const heroWake = fixture.featuredContent.querySelector('.home-state__wake');
+    const catalogWake = fixture.productsState.querySelector('.home-state__wake');
+    expect(heroWake?.href).toBe(wakeUrl);
+    expect(heroWake?.getAttribute('target')).toBe('_blank');
+    expect(heroWake?.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(heroWake?.textContent).toBe('Despertar servidor ↗');
+    expect(catalogWake?.href).toBe(wakeUrl);
+    expect(fixture.productsState.querySelector('.ui-callout__title')?.textContent).toBe(
+      'El servidor está dormido',
+    );
+    expect(fixture.productsState.querySelector('.home-state__retry')?.textContent).toBe(
+      'Reintentar',
+    );
+
+    // Clicking the wake link arms a one-shot retry when the tab returns to visible
+    catalogWake!.click();
+    fixture.document.visibilityState = 'hidden';
+    fixture.document.dispatchEvent('visibilitychange');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    fixture.document.visibilityState = 'visible';
+    fixture.document.dispatchEvent('visibilitychange');
+    await flushMicrotasks();
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fixture.featuredContent.querySelector('.hero-specimen__name')?.textContent).toBe(
+      'Cubo de Compañía de Portal',
+    );
+    expect(fixture.productsState.hidden).toBe(true);
+    expect(fixture.productsContent.hidden).toBe(false);
+
+    // Listener was one-shot: subsequent visibility changes do not re-fetch
+    fixture.document.dispatchEvent('visibilitychange');
+    await flushMicrotasks();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
