@@ -27,6 +27,7 @@ function createFakeDom(initialCookie = '') {
   const guestEl = { style: { display: '' } };
   const userEl = { style: { display: 'none' } };
   const adminEl = { style: { display: 'none' } };
+  const buyerEl = { style: { display: '' } };
   const greeting = { textContent: 'Hola' };
   const avatar = { src: '' };
   const logoutListeners: Array<(ev: Event) => void> = [];
@@ -60,6 +61,7 @@ function createFakeDom(initialCookie = '') {
       if (sel === '.guest-only') return [guestEl];
       if (sel === '.user-only') return [userEl];
       if (sel === '.admin-only') return [adminEl];
+      if (sel === '.buyer-only') return [buyerEl];
       return [];
     },
     addEventListener: vi.fn(),
@@ -84,7 +86,7 @@ function createFakeDom(initialCookie = '') {
 
   vi.stubGlobal('document', doc);
   vi.stubGlobal('window', win);
-  return { doc, win, guestEl, userEl, adminEl, greeting, logoutBtn };
+  return { doc, win, guestEl, userEl, adminEl, buyerEl, greeting, logoutBtn };
 }
 
 describe('Demo shell integration (sessionUI + m3d_demo_cart)', () => {
@@ -121,7 +123,7 @@ describe('Demo shell integration (sessionUI + m3d_demo_cart)', () => {
   it('reflects Demo Buyer vs Demo STAFF in HomeHeader visibility and greeting', () => {
     const session = createMemoryStorage();
     vi.stubGlobal('sessionStorage', session);
-    const { doc, win, guestEl, userEl, adminEl, greeting } = createFakeDom(
+    const { doc, win, guestEl, userEl, adminEl, buyerEl, greeting } = createFakeDom(
       `${DEMO_CSRF_COOKIE_NAME}=demo.sig`,
     );
 
@@ -139,6 +141,7 @@ describe('Demo shell integration (sessionUI + m3d_demo_cart)', () => {
     expect(guestEl.style.display).toBe('none');
     expect(userEl.style.display).toBe('block');
     expect(adminEl.style.display).toBe('none');
+    expect(buyerEl.style.display).toBe('');
     expect(greeting.textContent).toBe('Cuenta demo');
 
     session.setItem(
@@ -153,6 +156,7 @@ describe('Demo shell integration (sessionUI + m3d_demo_cart)', () => {
     win.dispatchEvent(new Event('demo-session-changed'));
 
     expect(adminEl.style.display).toBe('block');
+    expect(buyerEl.style.display).toBe('none');
     expect(greeting.textContent).toBe('Cuenta demo');
     cleanup();
   });

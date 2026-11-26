@@ -477,6 +477,49 @@
   line-height: 1.4;
 }
 
+.product-detail__actions[hidden],
+.product-detail__demo-note[hidden],
+.product-detail__workshop-panel[hidden] {
+  display: none;
+}
+
+.product-detail__workshop-panel {
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-surface);
+  background: var(--surface-subtle);
+}
+
+.product-detail__workshop-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+}
+
+.product-detail__workshop-label {
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.product-detail__workshop-copy {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--sys-text-muted);
+  line-height: 1.45;
+}
+
+.product-detail__workshop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+}
+
 .product-detail__action:focus-visible,
 .product-detail__back-link:focus-visible,
 .product-detail__share-button:focus-visible,

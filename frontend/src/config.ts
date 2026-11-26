@@ -16,6 +16,7 @@ export type { BackendSleepingInfo } from './lib/http/backendWake';
 export {
   expireClientReadableSessionCookies,
   getSessionUser,
+  isOperationalRole,
   parseApiResponse,
   readApiErrorMessage,
   readCsrfToken,

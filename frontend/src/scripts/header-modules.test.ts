@@ -265,7 +265,9 @@ describe('Shared route shell', () => {
       /\.home-header \.nav-item__dropdown a \{[\s\S]*?min-height: 44px;/,
     );
 
-    expect(header).not.toContain('href="/profile"');
+    expect(header).toContain('href="/profile"');
+    expect(header).toContain('class="home-header__cart-wrap buyer-only"');
+    expect(header).toContain('<li class="buyer-only"><a href="/orders">Mis pedidos</a></li>');
     expect(header).not.toContain('href="/#catalogo"');
     expect(header).not.toContain('href="/#encargos"');
     for (const href of [

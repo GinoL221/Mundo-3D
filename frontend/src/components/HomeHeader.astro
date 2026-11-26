@@ -101,7 +101,7 @@ const registerIsCurrent = currentPath === '/register';
     </div>
 
     <div class="home-header__utility">
-      <div class="home-header__cart-wrap">
+      <div class="home-header__cart-wrap buyer-only">
         <button
           class="home-header__link home-header__cart"
           id="navbar-cart-trigger"
@@ -162,7 +162,8 @@ const registerIsCurrent = currentPath === '/register';
             <span class="navbar__greeting" id="navbar-greeting">Hola</span>
           </button>
           <ul class="nav-item__dropdown" id="navbar-user-menu" hidden>
-            <li><a href="/orders">Mis pedidos</a></li>
+            <li><a href="/profile">Mi perfil</a></li>
+            <li class="buyer-only"><a href="/orders">Mis pedidos</a></li>
             <li><a href="#" id="navbar-logout">Cerrar sesión</a></li>
           </ul>
         </li>

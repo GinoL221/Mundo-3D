@@ -80,7 +80,12 @@ export interface MyOrdersPageViewModel {
   totalPages: number;
 }
 
-export type FetchMyOrdersErrorCode = 'UNAUTHENTICATED' | 'INVALID_PAGINATION' | 'NETWORK' | 'UNKNOWN';
+export type FetchMyOrdersErrorCode =
+  | 'UNAUTHENTICATED'
+  | 'FORBIDDEN'
+  | 'INVALID_PAGINATION'
+  | 'NETWORK'
+  | 'UNKNOWN';
 
 export type FetchMyOrdersResult =
   | { ok: true; page: MyOrdersPageViewModel }
@@ -109,6 +114,14 @@ export async function fetchMyOrders(page?: number, pageSize?: number): Promise<F
 
   if (res.status === 401) {
     return { ok: false, code: 'UNAUTHENTICATED', message: 'Necesitás iniciar sesión para ver tus pedidos.' };
+  }
+
+  if (res.status === 403) {
+    return {
+      ok: false,
+      code: 'FORBIDDEN',
+      message: 'Las cuentas del taller no tienen historial personal de compras.',
+    };
   }
 
   if (res.status === 400) {

@@ -205,6 +205,14 @@ describe('fetchMyOrders', () => {
     expect(result).toEqual({ ok: false, code: 'NETWORK', message: expect.any(String) });
   });
 
+  it('maps 403 to FORBIDDEN (operational accounts do not have personal purchase history)', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(403, { error: 'Acceso restringido' }));
+
+    const result = await fetchMyOrders();
+
+    expect(result).toEqual({ ok: false, code: 'FORBIDDEN', message: expect.any(String) });
+  });
+
   it('maps any other non-ok status to UNKNOWN without exposing raw HTTP status text', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(500, {}));
 

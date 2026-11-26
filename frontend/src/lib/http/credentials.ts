@@ -291,3 +291,13 @@ export function getSessionUser(): SessionUser | null {
     return null;
   }
 }
+
+/**
+ * True for operational workshop/owner accounts (`ADMIN = 1`, `STAFF = 3`)
+ * that manage the store rather than hold a shopping cart or place orders.
+ * Lives here (and re-exported via `config.ts`) so `cart`, `orders`, `auth`,
+ * and pages share one rule without violating `frontend.domain.locality`.
+ */
+export function isOperationalRole(user: Pick<SessionUser, 'idRole'> | null): boolean {
+  return user?.idRole === 1 || user?.idRole === 3;
+}

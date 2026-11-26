@@ -292,6 +292,30 @@ describe('hydrateFromServer', () => {
       expect(fetchMock).not.toHaveBeenCalled();
     });
 
+    it.each([
+      ['STAFF', 3],
+      ['ADMIN', 1],
+    ])(
+      'resolves {ok:false, reason:"operational"} and never calls fetch for %s accounts',
+      async (_label, idRole) => {
+        stubCookie(`m3d_user=${encodeURIComponent(JSON.stringify({ idUser: 2, firstName: 'Op', idRole }))}`);
+        const local = [{ productId: 1, name: 'A', image: '', unitPrice: 100, quantity: 1 }];
+        cartItems.set(local);
+
+        const result = await drain(hydrateFromServer());
+
+        expect(result).toEqual({
+          ok: false,
+          items: local,
+          priceDrifts: [],
+          syncScheduled: false,
+          reason: 'operational',
+        });
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(cartItems.get()).toEqual(local);
+      }
+    );
+
     it('resolves {ok:false, reason:"network"} and leaves state untouched when fetch throws', async () => {
       stubCookie(LOGGED_IN_COOKIE);
       const local = [{ productId: 1, name: 'A', image: '', unitPrice: 100, quantity: 1 }];

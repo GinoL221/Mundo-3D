@@ -76,6 +76,7 @@ class FakeDocument {
       '.guest-only': 'guest',
       '.user-only': 'user',
       '.admin-only': 'admin',
+      '.buyer-only': 'buyer',
     };
     const element = this.elements.get(ids[selector]);
     return element ? [element] : [];
@@ -100,7 +101,7 @@ function createFixture() {
   vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
 
   const document = new FakeDocument();
-  for (const id of ['guest', 'user', 'admin', 'navbar-greeting', 'navbar-avatar', 'navbar-logout']) {
+  for (const id of ['guest', 'user', 'admin', 'buyer', 'navbar-greeting', 'navbar-avatar', 'navbar-logout']) {
     document.elements.set(id, new FakeElement());
   }
   const userMenuTrigger = new FakeElement();
@@ -369,13 +370,14 @@ describe('initializeSessionUI', () => {
       expect(fixture.visibility().admin).toBe('block');
     });
 
-    it('shows admin-only elements to STAFF', () => {
+    it('shows admin-only elements and hides buyer-only cart/orders for STAFF', () => {
       const fixture = createFixture();
       setUserCookie(fixture.document, { firstName: 'Sam', idRole: Role.STAFF });
 
       fixture.start();
 
       expect(fixture.visibility().admin).toBe('block');
+      expect(fixture.document.elements.get('buyer')!.style.display).toBe('none');
     });
 
     it('toggles the Taller workshop menu, coordinates with the user menu, and closes on Escape or outside click', () => {

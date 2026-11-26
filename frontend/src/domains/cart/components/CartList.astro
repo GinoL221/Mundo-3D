@@ -21,7 +21,26 @@
   </div>
 </div>
 
-<div class="cart__container">
+<div class="ui-callout ui-callout--info" id="cart-operational-notice" role="status" hidden>
+  <svg class="ui-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 16v-4" />
+    <path d="M12 8h.01" />
+  </svg>
+  <div class="ui-callout__content">
+    <p class="ui-callout__title">Las cuentas del taller no realizan compras</p>
+    <p class="ui-callout__text">
+      Tu sesión actual es operativa (STAFF/ADMIN) y no tiene carrito de compras. Para consultar
+      pedidos o ajustar stock, usá el panel del Taller.
+    </p>
+    <div class="ui-callout__actions">
+      <a href="/admin/orders" class="ui-btn ui-btn--primary ui-btn--sm">Ir a Pedidos del taller</a>
+      <a href="/admin/products" class="ui-btn ui-btn--secondary ui-btn--sm">Ir a Catálogo y stock</a>
+    </div>
+  </div>
+</div>
+
+<div class="cart__container" id="cart-container">
   <section class="cart__items system-section" id="cart-items-container" aria-label="Productos en el carrito" aria-busy="true">
     <p class="ui-state cart__loading" id="cart-loading" role="status">Cargando tu carrito…</p>
   </section>
@@ -102,6 +121,7 @@
   } from '../services/cartDisplay';
   import { resolveImageUrl } from '../../../lib/imageUrl';
   import { formatPrice } from '../../../lib/format/price';
+  import { getSessionUser, isOperationalRole } from '../../../config';
 
   const setHidden = (element: HTMLElement | null, hidden: boolean): void => {
     if (element) element.hidden = hidden;
@@ -225,16 +245,23 @@
     renderSyncError(formatSyncErrorMessage(detail?.message));
   });
 
-  CartService.loadCartFromStorage();
-  renderCart();
-  cartItems.subscribe(renderCart);
-  void CartService.hydrateFromServer().then((result) => {
-    renderPriceDrift(result.priceDrifts);
-    const hydrationError = getHydrationErrorMessage(result);
-    if (hydrationError) {
-      renderSyncError(hydrationError);
-    }
-  });
+  const operationalNoticeEl = document.getElementById('cart-operational-notice');
+  const cartContainerEl = document.getElementById('cart-container');
+  if (isOperationalRole(getSessionUser())) {
+    setHidden(cartContainerEl, true);
+    setHidden(operationalNoticeEl, false);
+  } else {
+    CartService.loadCartFromStorage();
+    renderCart();
+    cartItems.subscribe(renderCart);
+    void CartService.hydrateFromServer().then((result) => {
+      renderPriceDrift(result.priceDrifts);
+      const hydrationError = getHydrationErrorMessage(result);
+      if (hydrationError) {
+        renderSyncError(hydrationError);
+      }
+    });
+  }
 
   function setCheckoutBusy(busy: boolean): void {
     const button = document.querySelector('.cart__btn-checkout') as HTMLButtonElement | null;
