@@ -122,3 +122,47 @@ export async function fetchMyOrders(page?: number, pageSize?: number): Promise<F
   const page_ = (await res.json()) as MyOrdersPageViewModel;
   return { ok: true, page: page_ };
 }
+
+export interface OrderCustomerViewModel {
+  idUser: number;
+  displayName: string;
+}
+
+export interface WorkshopOrderViewModel extends OrderViewModel {
+  customer: OrderCustomerViewModel;
+}
+
+export type FetchWorkshopOrdersErrorCode = 'UNAUTHENTICATED' | 'FORBIDDEN' | 'NETWORK' | 'UNKNOWN';
+
+export type FetchWorkshopOrdersResult =
+  | { ok: true; orders: WorkshopOrderViewModel[] }
+  | { ok: false; code: FetchWorkshopOrdersErrorCode; message: string };
+
+/**
+ * `GET /api/orders` (routed to `/api/demo/orders` in demo mode by `authFetch`)
+ * — read-only workshop listing for ADMIN and STAFF with minimal customer
+ * identification (`firstName` + last-name initial + `idUser`).
+ */
+export async function fetchWorkshopOrders(): Promise<FetchWorkshopOrdersResult> {
+  let res: Response;
+  try {
+    res = await authFetch(`${API_URL}/api/orders`, { method: 'GET' });
+  } catch {
+    return { ok: false, code: 'NETWORK', message: 'No pudimos conectar con el servidor. Intentá de nuevo.' };
+  }
+
+  if (res.status === 401) {
+    return { ok: false, code: 'UNAUTHENTICATED', message: 'Necesitás iniciar sesión para ver los pedidos.' };
+  }
+
+  if (res.status === 403) {
+    return { ok: false, code: 'FORBIDDEN', message: 'No tenés permisos suficientes para consultar estos pedidos.' };
+  }
+
+  if (!res.ok) {
+    return { ok: false, code: 'UNKNOWN', message: 'No pudimos cargar los pedidos del taller. Intentá de nuevo.' };
+  }
+
+  const orders = (await res.json()) as WorkshopOrderViewModel[];
+  return { ok: true, orders };
+}

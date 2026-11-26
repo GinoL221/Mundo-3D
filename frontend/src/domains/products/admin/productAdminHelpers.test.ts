@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildProductFormData,
+  countProductsByStockFilter,
+  filterProductsByStock,
   formatAdminPrice,
   formatProductMeta,
   getStockStatus,
   parseAdminProductId,
   parseMaterialValue,
+  parseStockFilter,
   resolveFieldIdForApiKey,
   resolveMaterialInput,
   validateProductForm,
@@ -83,6 +86,31 @@ describe('getStockStatus', () => {
       badgeClass: 'ui-badge--success',
     });
     expect(getStockStatus(20).tier).toBe('ok');
+  });
+});
+
+describe('stock filter helpers', () => {
+  it('parses valid stock query parameters and defaults unknown values to all', () => {
+    expect(parseStockFilter('low')).toBe('low');
+    expect(parseStockFilter('out')).toBe('out');
+    expect(parseStockFilter('all')).toBe('all');
+    expect(parseStockFilter(null)).toBe('all');
+    expect(parseStockFilter('invalid')).toBe('all');
+  });
+
+  it('counts and filters products using getStockStatus thresholds', () => {
+    const products = [
+      { idProduct: 1, stock: 0 },
+      { idProduct: 2, stock: 1 },
+      { idProduct: 3, stock: 3 },
+      { idProduct: 4, stock: 4 },
+      { idProduct: 5, stock: 12 },
+    ];
+
+    expect(countProductsByStockFilter(products)).toEqual({ all: 5, low: 2, out: 1 });
+    expect(filterProductsByStock(products, 'all').map((p) => p.idProduct)).toEqual([1, 2, 3, 4, 5]);
+    expect(filterProductsByStock(products, 'low').map((p) => p.idProduct)).toEqual([2, 3]);
+    expect(filterProductsByStock(products, 'out').map((p) => p.idProduct)).toEqual([1]);
   });
 });
 

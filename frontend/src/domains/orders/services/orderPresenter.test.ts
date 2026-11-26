@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { formatPrice } from '../../../lib/format/price';
-import { formatOrderStatus, presentMyOrdersPage, presentOrder } from './orderPresenter';
-import type { MyOrdersPageViewModel, OrderViewModel } from './order.service';
+import {
+  formatOrderStatus,
+  presentMyOrdersPage,
+  presentOrder,
+  presentWorkshopOrders,
+} from './orderPresenter';
+import type { MyOrdersPageViewModel, OrderViewModel, WorkshopOrderViewModel } from './order.service';
 
 const SAMPLE_ORDER: OrderViewModel = {
   idOrder: 41,
@@ -135,5 +140,53 @@ describe('presentMyOrdersPage', () => {
     const lastPage = presentMyOrdersPage({ ...SAMPLE_MY_ORDERS_PAGE, page: 2 });
     expect(lastPage.prevHref).toBe('/orders?page=1');
     expect(lastPage.nextHref).toBeNull();
+  });
+});
+
+describe('presentWorkshopOrders', () => {
+  it('formats workshop rows with minimal customer label, status badge, item count, and never paymentReference', () => {
+    const orders: WorkshopOrderViewModel[] = [
+      {
+        ...SAMPLE_ORDER,
+        customer: { idUser: 7, displayName: 'María G.' },
+      },
+      {
+        ...SAMPLE_ORDER,
+        idOrder: 42,
+        status: 'PAID',
+        items: [
+          {
+            idOrderItem: 90,
+            idProduct: 5,
+            productName: 'Busto Batman',
+            quantity: 1,
+            unitPrice: 4500,
+            subtotal: 4500,
+          },
+        ],
+        totalAmount: 4500,
+        customer: { idUser: 1, displayName: 'Demo B.' },
+      },
+    ];
+
+    const rows = presentWorkshopOrders(orders, formatPrice);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({
+      idOrderLabel: '#41',
+      customerLabel: 'María G. · #7',
+      statusLabel: 'Pedido simulado',
+      statusBadgeClass: 'ui-badge--warning',
+      itemsCountLabel: '2 piezas',
+      totalLabel: '$ 3.000',
+    });
+    expect(rows[0]).not.toHaveProperty('paymentReference');
+    expect(rows[1]).toMatchObject({
+      idOrderLabel: '#42',
+      customerLabel: 'Demo B. · #1',
+      statusLabel: 'Confirmado (demo)',
+      statusBadgeClass: 'ui-badge--success',
+      itemsCountLabel: '1 pieza',
+      totalLabel: '$ 4.500',
+    });
   });
 });

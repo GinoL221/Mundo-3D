@@ -1,0 +1,130 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AdminGateDenied from '../../domains/products/components/admin/AdminGateDenied.astro';
+import '../../styles/components/admin-products.css';
+import '../../styles/components/admin-orders.css';
+---
+
+<Layout title="Pedidos del taller — Mundo 3D">
+  <main>
+    <div class="admin-shell">
+      <AdminGateDenied />
+
+      <section
+        id="admin-orders-content"
+        class="admin-orders__content"
+        aria-label="Pedidos del taller"
+        hidden
+      >
+        <header class="ui-page-head">
+          <div class="ui-page-head__main">
+            <div class="ui-page-head__title-row">
+              <h1 class="ui-page-head__title">Pedidos del taller</h1>
+              <span id="admin-role-badge" class="ui-badge" hidden></span>
+            </div>
+            <p id="admin-orders-scope" class="ui-page-head__scope" hidden>
+              Vista de solo lectura para preparar piezas. Confirmar pagos o cancelar pedidos
+              corresponde al administrador.
+            </p>
+          </div>
+          <div class="ui-page-head__actions">
+            <a href="/admin/products?stock=low" class="ui-btn ui-btn--secondary">
+              Revisar stock bajo
+            </a>
+          </div>
+        </header>
+
+        <div
+          id="admin-orders-loading"
+          class="ui-state"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <p class="ui-state__title">Cargando pedidos del taller</p>
+          <p class="ui-state__text">Consultando los pedidos registrados y tus permisos de sesión.</p>
+          <div class="ui-skeleton-list" aria-hidden="true">
+            <span class="ui-skeleton"></span>
+            <span class="ui-skeleton ui-skeleton--medium"></span>
+            <span class="ui-skeleton ui-skeleton--short"></span>
+          </div>
+        </div>
+
+        <div id="admin-orders-error" class="ui-callout ui-callout--danger" role="alert" hidden>
+          <svg
+            class="ui-callout__icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="m15 9-6 6"></path>
+            <path d="m9 9 6 6"></path>
+          </svg>
+          <div class="ui-callout__content">
+            <p class="ui-callout__title">No pudimos cargar los pedidos</p>
+            <p id="admin-orders-error-text" class="ui-callout__text">
+              El servicio no respondió a tiempo. Volvé a intentar en unos segundos.
+            </p>
+            <div class="ui-callout__actions">
+              <button
+                id="admin-orders-retry"
+                type="button"
+                class="ui-btn ui-btn--secondary ui-btn--sm"
+              >
+                Reintentar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="admin-orders-empty"
+          class="ui-state ui-state--empty"
+          role="status"
+          aria-live="polite"
+          hidden
+        >
+          <p class="ui-state__title">Todavía no hay pedidos registrados</p>
+          <p class="ui-state__text">
+            Cuando se registre un pedido desde la tienda va a aparecer acá con el detalle de piezas
+            para el taller.
+          </p>
+        </div>
+
+        <div
+          id="admin-orders-table-wrap"
+          class="ui-table-wrap admin-orders__table-wrap"
+          role="region"
+          aria-label="Listado de pedidos del taller"
+          tabindex="0"
+          hidden
+        >
+          <table class="ui-table admin-orders-table">
+            <thead>
+              <tr>
+                <th scope="col">Pedido</th>
+                <th scope="col">Fecha</th>
+                <th scope="col">Cliente</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Piezas</th>
+                <th scope="col" class="ui-table__num">Total</th>
+              </tr>
+            </thead>
+            <tbody id="admin-orders-list"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  import { initializeAdminOrders } from '../../scripts/adminOrders';
+
+  void initializeAdminOrders(document);
+</script>

@@ -5,9 +5,13 @@ import { ProductAdminApiError, ProductAdminService } from '../domains/products';
 import type { AdminProductDTO } from '../domains/products';
 import { getCategoryImg, isPlaceholderImage } from '../domains/products/adapters/product.adapter';
 import {
+  countProductsByStockFilter,
+  filterProductsByStock,
   formatAdminPrice,
   formatProductMeta,
   getStockStatus,
+  parseStockFilter,
+  type StockFilterValue,
 } from '../domains/products/admin/productAdminHelpers';
 import { resolveImageUrl } from '../lib/imageUrl';
 import { applyAdminRoleHeader } from './adminProductsForm';
@@ -56,8 +60,104 @@ export function initializeAdminProductsList(): void {
 
 function initAdminProductsListContent(isAdmin: boolean): void {
   const retryBtn = document.getElementById('admin-products-retry');
+  const filtersEl = document.getElementById('admin-stock-filters');
+  const filterButtons = filtersEl
+    ? Array.from(filtersEl.querySelectorAll<HTMLButtonElement>('[data-stock-filter]'))
+    : [];
+  const filterEmptyEl = document.getElementById('admin-filter-empty-state');
+  const filterEmptyTitleEl = document.getElementById('admin-filter-empty-title');
+  const filterResetBtn = document.getElementById('admin-filter-reset');
+
+  let loadedProducts: AdminProductDTO[] = [];
+  let activeFilter: StockFilterValue = parseStockFilter(
+    typeof window !== 'undefined' && window.location
+      ? new URLSearchParams(window.location.search).get('stock')
+      : null,
+  );
+
   retryBtn?.addEventListener('click', () => {
     void loadProducts();
+  });
+
+  function syncUrlFilter(filter: StockFilterValue): void {
+    if (typeof window === 'undefined' || !window.history?.replaceState || !window.location) return;
+    const url = new URL(window.location.href);
+    if (filter === 'all') url.searchParams.delete('stock');
+    else url.searchParams.set('stock', filter);
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+  }
+
+  function syncFilterBar(): void {
+    const counts = countProductsByStockFilter(loadedProducts);
+    for (const btn of filterButtons) {
+      const value = parseStockFilter(btn.getAttribute('data-stock-filter'));
+      btn.setAttribute('aria-pressed', String(value === activeFilter));
+      const countEl = btn.querySelector<HTMLElement>(`[data-stock-count="${value}"]`);
+      if (countEl) countEl.textContent = String(counts[value]);
+    }
+    if (filtersEl) filtersEl.hidden = loadedProducts.length === 0;
+  }
+
+  function renderVisibleProducts(): void {
+    const listEl = document.getElementById('admin-products-list');
+    const emptyEl = document.getElementById('admin-empty-state');
+    const tableWrapEl = document.getElementById('admin-table-wrap');
+    if (!listEl) return;
+
+    syncFilterBar();
+    listEl.replaceChildren();
+
+    if (loadedProducts.length === 0) {
+      if (tableWrapEl) tableWrapEl.hidden = true;
+      if (filterEmptyEl) filterEmptyEl.hidden = true;
+      if (emptyEl) emptyEl.hidden = false;
+      return;
+    }
+
+    if (emptyEl) emptyEl.hidden = true;
+    const visible = filterProductsByStock(loadedProducts, activeFilter);
+
+    if (visible.length === 0) {
+      if (tableWrapEl) tableWrapEl.hidden = true;
+      if (filterEmptyTitleEl) {
+        filterEmptyTitleEl.textContent =
+          activeFilter === 'out'
+            ? 'No hay piezas sin stock'
+            : 'No hay piezas con stock bajo (1 a 3 unidades)';
+      }
+      if (filterEmptyEl) filterEmptyEl.hidden = false;
+      return;
+    }
+
+    if (filterEmptyEl) filterEmptyEl.hidden = true;
+    const rowTemp = document.getElementById(
+      'admin-product-row-template',
+    ) as HTMLTemplateElement | null;
+    if (!rowTemp) return;
+
+    const fragment = document.createDocumentFragment();
+    for (const product of visible) {
+      const clone = rowTemp.content.cloneNode(true) as DocumentFragment;
+      renderRow(clone, product);
+      fragment.appendChild(clone);
+    }
+    listEl.appendChild(fragment);
+    if (tableWrapEl) tableWrapEl.hidden = false;
+  }
+
+  function setStockFilter(next: StockFilterValue): void {
+    activeFilter = next;
+    syncUrlFilter(next);
+    renderVisibleProducts();
+  }
+
+  for (const btn of filterButtons) {
+    btn.addEventListener('click', () => {
+      setStockFilter(parseStockFilter(btn.getAttribute('data-stock-filter')));
+    });
+  }
+  filterResetBtn?.addEventListener('click', () => {
+    setStockFilter('all');
   });
 
   function showInlineError(msg: string): void {
@@ -94,32 +194,16 @@ function initAdminProductsListContent(isAdmin: boolean): void {
     if (loadingEl) loadingEl.hidden = false;
     if (loadErrorEl) loadErrorEl.hidden = true;
     if (emptyEl) emptyEl.hidden = true;
+    if (filterEmptyEl) filterEmptyEl.hidden = true;
+    if (filtersEl) filtersEl.hidden = true;
     if (tableWrapEl) tableWrapEl.hidden = true;
     listEl.replaceChildren();
 
     const wasDemo = isDemoSessionActive();
     try {
-      const products = await ProductAdminService.list();
+      loadedProducts = await ProductAdminService.list();
       if (loadingEl) loadingEl.hidden = true;
-
-      if (products.length === 0) {
-        if (emptyEl) emptyEl.hidden = false;
-        return;
-      }
-
-      const rowTemp = document.getElementById(
-        'admin-product-row-template',
-      ) as HTMLTemplateElement | null;
-      if (!rowTemp) return;
-
-      const fragment = document.createDocumentFragment();
-      for (const product of products) {
-        const clone = rowTemp.content.cloneNode(true) as DocumentFragment;
-        renderRow(clone, product);
-        fragment.appendChild(clone);
-      }
-      listEl.appendChild(fragment);
-      if (tableWrapEl) tableWrapEl.hidden = false;
+      renderVisibleProducts();
     } catch (err) {
       if (err instanceof ProductAdminApiError && err.status === 401) {
         if (!wasDemo) {
@@ -206,7 +290,9 @@ function initAdminProductsListContent(isAdmin: boolean): void {
       try {
         const updated = await ProductAdminService.adjustStock(product.idProduct, delta);
         currentStock = updated.stock;
+        product.stock = updated.stock;
         syncStockUI();
+        syncFilterBar();
         showInlineStatus(`Stock de «${product.nameProduct}» actualizado a ${currentStock}.`);
       } catch (err) {
         if (err instanceof ProductAdminApiError && err.status === 401) {
@@ -252,15 +338,8 @@ function initAdminProductsListContent(isAdmin: boolean): void {
           const wasDemo = isDemoSessionActive();
           ProductAdminService.remove(product.idProduct)
             .then(() => {
-              const tr = deleteBtn.closest('tr');
-              tr?.remove();
-              const listEl = document.getElementById('admin-products-list');
-              if (listEl && listEl.children.length === 0) {
-                const tableWrapEl = document.getElementById('admin-table-wrap');
-                const emptyEl = document.getElementById('admin-empty-state');
-                if (tableWrapEl) tableWrapEl.hidden = true;
-                if (emptyEl) emptyEl.hidden = false;
-              }
+              loadedProducts = loadedProducts.filter((p) => p.idProduct !== product.idProduct);
+              renderVisibleProducts();
               showInlineStatus(`Pieza «${product.nameProduct}» eliminada del Catálogo.`);
             })
             .catch((err) => {

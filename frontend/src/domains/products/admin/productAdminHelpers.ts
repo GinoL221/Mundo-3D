@@ -77,6 +77,41 @@ export function getStockStatus(stock: number): StockStatusPresentation {
   return { tier: 'ok', label: 'En stock', badgeClass: 'ui-badge--success' };
 }
 
+export type StockFilterValue = 'all' | 'low' | 'out';
+
+export function parseStockFilter(raw: string | null): StockFilterValue {
+  if (raw === 'low' || raw === 'out') return raw;
+  return 'all';
+}
+
+export function countProductsByStockFilter(
+  products: readonly Pick<AdminProductDTO, 'stock'>[],
+): Record<StockFilterValue, number> {
+  const counts: Record<StockFilterValue, number> = {
+    all: products.length,
+    low: 0,
+    out: 0,
+  };
+  for (const product of products) {
+    const stock = Number.isFinite(product.stock) ? product.stock : 0;
+    const { tier } = getStockStatus(stock);
+    if (tier === 'low') counts.low += 1;
+    else if (tier === 'out') counts.out += 1;
+  }
+  return counts;
+}
+
+export function filterProductsByStock<T extends Pick<AdminProductDTO, 'stock'>>(
+  products: readonly T[],
+  filter: StockFilterValue,
+): T[] {
+  if (filter === 'all') return [...products];
+  return products.filter((product) => {
+    const stock = Number.isFinite(product.stock) ? product.stock : 0;
+    return getStockStatus(stock).tier === filter;
+  });
+}
+
 export function formatProductMeta(
   product: Pick<AdminProductDTO, 'category' | 'material' | 'height' | 'width' | 'depth'>,
 ): string {
