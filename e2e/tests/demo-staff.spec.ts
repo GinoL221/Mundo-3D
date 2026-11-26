@@ -211,8 +211,8 @@ test('switches Buyer <-> STAFF in demo sandbox, manages inbox & catalog without 
   await page.waitForLoadState('networkidle');
 
   await expect(page.locator('#demo-bar-role-controls')).toBeVisible();
-  await expect(page.locator('#demo-bar-role-controls button')).toHaveCount(2);
-  await expect(page.locator('#demo-bar-role-controls')).not.toContainText('ADMIN');
+  await expect(page.locator('#demo-bar-role-controls button')).toHaveCount(3);
+  await expect(page.locator('#demo-role-admin')).toBeVisible();
 
   await page.goto('/help');
   await page.locator('#commission-name').fill('Lucia Maker');

@@ -82,8 +82,17 @@ describe('demoSessionState', () => {
       `${API_URL}/api/demo/custom-commission-requests`,
     );
     expect(rewriteDemoApiUrl('/api/orders')).toBe('/api/demo/orders');
+    expect(rewriteDemoApiUrl(`${API_URL}/api/users`)).toBe(`${API_URL}/api/demo/users`);
+    expect(rewriteDemoApiUrl(`${API_URL}/api/users/me`)).toBe(`${API_URL}/api/demo/users/me`);
+    expect(rewriteDemoApiUrl(`${API_URL}/api/users/3`)).toBe(`${API_URL}/api/demo/users/3`);
     expect(rewriteDemoApiUrl(`${API_URL}/api/demo/cart`)).toBe(`${API_URL}/api/demo/cart`);
     expect(rewriteDemoApiUrl(`${API_URL}/api/users/login`)).toBe(`${API_URL}/api/users/login`);
+    expect(rewriteDemoApiUrl(`${API_URL}/api/users/register`)).toBe(`${API_URL}/api/users/register`);
+    expect(rewriteDemoApiUrl(`${API_URL}/api/users/logout`)).toBe(`${API_URL}/api/users/logout`);
+    expect(rewriteDemoApiUrl(`${API_URL}/api/users/refresh`)).toBe(`${API_URL}/api/users/refresh`);
+    expect(rewriteDemoApiUrl(`${API_URL}/api/users/email-confirmation`)).toBe(
+      `${API_URL}/api/users/email-confirmation`,
+    );
     expect(rewriteDemoApiUrl('https://other.example/api/products')).toBe(
       'https://other.example/api/products',
     );
@@ -122,7 +131,9 @@ describe('demoSessionState', () => {
     expect(getDemoSession()).toEqual(staffSession);
     expect(demoRoleToId('USER')).toBe(2);
     expect(demoRoleToId('STAFF')).toBe(3);
-    expect(isValidDemoSession({ ...sampleBuyer, role: 'ADMIN' })).toBe(false);
+    expect(demoRoleToId('ADMIN')).toBe(1);
+    expect(isValidDemoSession({ ...sampleBuyer, role: 'ADMIN' })).toBe(true);
+    expect(isValidDemoSession({ ...sampleBuyer, role: 'SUPERADMIN' })).toBe(false);
   });
 
   it('reports isDemoSessionPendingHydration across all 4 cookie/storage branches', () => {

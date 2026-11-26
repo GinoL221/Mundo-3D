@@ -40,6 +40,7 @@ export {
   clearDemoSession,
   DEMO_BROADCAST_CHANNEL,
   DEMO_SESSION_EVENT,
+  demoRoleToId,
   getDemoSession,
   isDemoSessionActive,
   saveDemoSession,

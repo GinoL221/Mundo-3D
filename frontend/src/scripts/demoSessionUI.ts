@@ -29,7 +29,7 @@ import {
   setDemoRoleSwitchBusy,
   showDemoNotice,
 } from './demoSessionDom';
-import { buildDemoNotice, isDemoProtectedPath } from './demoSessionModel';
+import { buildDemoNotice, isAdminOnlyPath, isDemoProtectedPath } from './demoSessionModel';
 
 type Cleanup = () => void;
 
@@ -133,7 +133,9 @@ export function initializeDemoSessionUI(
         renderDemoBar(document, els, result.session, demoAvailable);
         window.dispatchEvent(new Event('session-changed'));
         const pathname = window.location?.pathname ?? '/';
-        const leaveAdmin = targetRole === 'USER' && pathname.startsWith('/admin');
+        const leaveAdmin =
+          (targetRole === 'USER' && pathname.startsWith('/admin')) ||
+          (targetRole === 'STAFF' && isAdminOnlyPath(pathname));
         handleTransitionReload(leaveAdmin);
         return;
       }
@@ -225,6 +227,10 @@ export function initializeDemoSessionUI(
     event.preventDefault();
     void handleRoleSwitch('STAFF');
   };
+  const onAdminRoleClick = (event: Event): void => {
+    event.preventDefault();
+    void handleRoleSwitch('ADMIN');
+  };
   const onDismissClick = (): void => hideDemoNotice(els);
   const onDemoEvent = (event: Event): void => {
     const detail = (event as CustomEvent<{ reason?: DemoChangeReason }>).detail;
@@ -236,6 +242,7 @@ export function initializeDemoSessionUI(
   els.retryBtn?.addEventListener('click', onEntryClick);
   els.buyerBtn?.addEventListener('click', onBuyerRoleClick);
   els.staffBtn?.addEventListener('click', onStaffRoleClick);
+  els.adminBtn?.addEventListener('click', onAdminRoleClick);
   els.exitBtn?.addEventListener('click', onExitClick);
   els.dismissBtn?.addEventListener('click', onDismissClick);
   window.addEventListener(DEMO_SESSION_EVENT, onDemoEvent);
@@ -290,6 +297,7 @@ export function initializeDemoSessionUI(
     els.retryBtn?.removeEventListener('click', onEntryClick);
     els.buyerBtn?.removeEventListener('click', onBuyerRoleClick);
     els.staffBtn?.removeEventListener('click', onStaffRoleClick);
+    els.adminBtn?.removeEventListener('click', onAdminRoleClick);
     els.exitBtn?.removeEventListener('click', onExitClick);
     els.dismissBtn?.removeEventListener('click', onDismissClick);
     window.removeEventListener(DEMO_SESSION_EVENT, onDemoEvent);
