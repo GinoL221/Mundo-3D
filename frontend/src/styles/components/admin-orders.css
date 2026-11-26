@@ -95,6 +95,22 @@
   white-space: nowrap;
 }
 
+.admin-orders__actions {
+  white-space: nowrap;
+}
+
+.admin-orders__action-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  justify-content: flex-end;
+}
+
+.admin-orders__action-muted {
+  color: var(--sys-text-muted);
+  font-size: 0.875rem;
+}
+
 @container (max-width: 680px) {
   .admin-orders-table thead {
     display: none;

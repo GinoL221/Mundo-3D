@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchOrder, fetchMyOrders, fetchWorkshopOrders } from './order.service';
+import {
+  cancelWorkshopOrder,
+  confirmWorkshopOrderPayment,
+  fetchMyOrders,
+  fetchOrder,
+  fetchWorkshopOrders,
+} from './order.service';
 
 function stubCookie(cookie: string) {
   vi.stubGlobal('document', { cookie });
@@ -288,5 +294,69 @@ describe('fetchWorkshopOrders', () => {
     const unknown = await fetchWorkshopOrders();
     expect(unknown.ok).toBe(false);
     if (!unknown.ok) expect(unknown.code).toBe('UNKNOWN');
+  });
+});
+
+describe('confirmWorkshopOrderPayment & cancelWorkshopOrder', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    stubCookie('m3d_csrf=random.hmac');
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('POSTs /api/orders/:id/confirm-payment with credentials and CSRF token and returns updated order', async () => {
+    const paidOrder = { ...SAMPLE_ORDER_DTO, status: 'PAID' };
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, paidOrder));
+
+    const result = await confirmWorkshopOrderPayment(42);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toMatch(/\/api\/orders\/42\/confirm-payment$/);
+    expect(options.method).toBe('POST');
+    expect(options.credentials).toBe('include');
+    expect(new Headers(options.headers).get('X-CSRF-Token')).toBe('random.hmac');
+    expect(result).toEqual({ ok: true, order: paidOrder });
+  });
+
+  it('POSTs /api/orders/:id/cancel and maps 409/403/404/401/network errors', async () => {
+    const cancelledOrder = { ...SAMPLE_ORDER_DTO, status: 'CANCELLED' };
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, cancelledOrder));
+    expect(await cancelWorkshopOrder(42)).toEqual({ ok: true, order: cancelledOrder });
+
+    fetchMock.mockResolvedValueOnce(jsonResponse(409, { code: 'ILLEGAL_ORDER_TRANSITION' }));
+    expect(await cancelWorkshopOrder(42)).toEqual({
+      ok: false,
+      code: 'ILLEGAL_TRANSITION',
+      message: expect.any(String),
+    });
+
+    fetchMock.mockResolvedValueOnce(jsonResponse(403, {}));
+    expect(await confirmWorkshopOrderPayment(42)).toEqual({
+      ok: false,
+      code: 'FORBIDDEN',
+      message: expect.any(String),
+    });
+
+    fetchMock.mockResolvedValueOnce(jsonResponse(404, {}));
+    expect(await cancelWorkshopOrder(999)).toEqual({
+      ok: false,
+      code: 'NOT_FOUND',
+      message: expect.any(String),
+    });
+
+    fetchMock.mockRejectedValueOnce(new Error('offline'));
+    expect(await confirmWorkshopOrderPayment(42)).toEqual({
+      ok: false,
+      code: 'NETWORK',
+      message: expect.any(String),
+    });
   });
 });

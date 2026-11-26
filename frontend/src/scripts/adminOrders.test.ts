@@ -6,6 +6,8 @@ const mockHydrateDemoSession = vi.fn();
 const mockIsDemoSessionActive = vi.fn();
 const mockIsDemoSessionPendingHydration = vi.fn();
 const mockFetchWorkshopOrders = vi.fn();
+const mockConfirmWorkshopOrderPayment = vi.fn();
+const mockCancelWorkshopOrder = vi.fn();
 
 vi.mock('../domains/auth', () => ({
   getSessionUser: () => mockGetSessionUser(),
@@ -25,6 +27,8 @@ vi.mock('../lib/http/demoSessionState', () => ({
 
 vi.mock('../domains/orders/services/order.service', () => ({
   fetchWorkshopOrders: () => mockFetchWorkshopOrders(),
+  confirmWorkshopOrderPayment: (id: number) => mockConfirmWorkshopOrderPayment(id),
+  cancelWorkshopOrder: (id: number) => mockCancelWorkshopOrder(id),
 }));
 
 import { initializeAdminOrders } from './adminOrders';
@@ -36,6 +40,10 @@ class FakeEl {
   className = '';
   textContent = '';
   href = '';
+  type = '';
+  value = '';
+  returnValue = '';
+  open = false;
   attrs = new Map<string, string>();
   children: FakeEl[] = [];
   listeners = new Map<string, Set<EventListener>>();
@@ -44,6 +52,14 @@ class FakeEl {
     this.tagName = tagName.toUpperCase();
   }
 
+  showModal() {
+    this.open = true;
+  }
+  close(val = '') {
+    this.open = false;
+    this.returnValue = val;
+    this.listeners.get('close')?.forEach((fn) => fn({} as Event));
+  }
   setAttribute(name: string, value: string) {
     this.attrs.set(name, value);
   }
@@ -63,6 +79,10 @@ class FakeEl {
   }
   click() {
     this.listeners.get('click')?.forEach((fn) => fn({} as Event));
+  }
+  findButtons(): FakeEl[] {
+    const own = this.tagName === 'BUTTON' ? [this] : [];
+    return [...own, ...this.children.flatMap((c) => c.findButtons())];
   }
   collectText(): string {
     return [this.textContent, ...this.children.map((c) => c.collectText())]
@@ -86,13 +106,22 @@ function createFakeDocument() {
     ['admin-orders-retry', new FakeEl('button')],
     ['admin-orders-empty', new FakeEl('div')],
     ['admin-orders-table-wrap', new FakeEl('div')],
+    ['admin-orders-actions-col', new FakeEl('th')],
     ['admin-orders-list', new FakeEl('tbody')],
+    ['admin-orders-feedback', new FakeEl('div')],
+    ['admin-orders-feedback-text', new FakeEl('p')],
+    ['admin-order-action-dialog', new FakeEl('dialog')],
+    ['admin-order-dialog-title', new FakeEl('h2')],
+    ['admin-order-dialog-body', new FakeEl('p')],
+    ['admin-order-dialog-confirm', new FakeEl('button')],
   ]);
   byId.get('admin-gate-denied')!.hidden = true;
   byId.get('admin-orders-content')!.hidden = true;
   byId.get('admin-orders-error')!.hidden = true;
   byId.get('admin-orders-empty')!.hidden = true;
   byId.get('admin-orders-table-wrap')!.hidden = true;
+  byId.get('admin-orders-actions-col')!.hidden = true;
+  byId.get('admin-orders-feedback')!.hidden = true;
 
   const doc = {
     getElementById: (id: string) => byId.get(id) ?? null,
@@ -181,5 +210,62 @@ describe('initializeAdminOrders', () => {
     await controller.reload();
     expect(byId.get('admin-orders-error')!.hidden).toBe(true);
     expect(byId.get('admin-orders-empty')!.hidden).toBe(false);
+  });
+
+  it('shows confirm-payment and cancel actions only for ADMIN on AWAITING_PAYMENT orders and executes via dialog', async () => {
+    mockGetSessionUser.mockReturnValue({ idRole: Role.ADMIN });
+    mockIsDemoSessionPendingHydration.mockReturnValue(false);
+    mockIsDemoSessionActive.mockReturnValue(false);
+    const awaitingOrder = {
+      idOrder: 7,
+      idUser: 1,
+      status: 'AWAITING_PAYMENT',
+      totalAmount: 19500,
+      createdAt: '2026-01-01T12:00:00.000Z',
+      paymentReference: null,
+      customer: { idUser: 1, displayName: 'Gino L.' },
+      items: [
+        {
+          idOrderItem: 1,
+          idProduct: 1,
+          productName: 'Busto Batman',
+          quantity: 1,
+          unitPrice: 19500,
+          subtotal: 19500,
+        },
+      ],
+    };
+    const paidOrder = { ...awaitingOrder, idOrder: 8, status: 'PAID' };
+    mockFetchWorkshopOrders.mockResolvedValue({ ok: true, orders: [awaitingOrder, paidOrder] });
+    mockConfirmWorkshopOrderPayment.mockResolvedValue({
+      ok: true,
+      order: { ...awaitingOrder, status: 'PAID' },
+    });
+
+    const { doc, byId } = createFakeDocument();
+    await initializeAdminOrders(doc);
+
+    expect(byId.get('admin-role-badge')!.textContent).toBe('ADMIN');
+    expect(byId.get('admin-orders-actions-col')!.hidden).toBe(false);
+
+    const tbody = byId.get('admin-orders-list')!;
+    const buttons = tbody.findButtons();
+    expect(buttons.map((b) => b.textContent)).toEqual(['Confirmar pago', 'Cancelar pedido']);
+
+    const dialog = byId.get('admin-order-action-dialog')!;
+    buttons[0].click();
+    expect(dialog.open).toBe(true);
+    // Cancelling dialog does not call API
+    dialog.close('cancel');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(mockConfirmWorkshopOrderPayment).not.toHaveBeenCalled();
+
+    // Confirming calls confirmWorkshopOrderPayment and updates row state
+    buttons[0].click();
+    dialog.close('confirm');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(mockConfirmWorkshopOrderPayment).toHaveBeenCalledWith(7);
+    expect(byId.get('admin-orders-feedback')!.hidden).toBe(false);
+    expect(tbody.findButtons()).toHaveLength(0);
   });
 });
