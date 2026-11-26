@@ -50,13 +50,14 @@ test('switches to ADMIN in demo sandbox, manages orders/taxonomy/users, and redi
     {
       idOrder: 401,
       idUser: 1,
-      status: 'pending_payment',
-      total: 18500,
+      status: 'AWAITING_PAYMENT',
+      totalAmount: 18500,
       createdAt: '2026-11-26T18:00:00.000Z',
       paymentReference: null,
       customer: { idUser: 1, displayName: 'Demo B.' },
       items: [
         {
+          idOrderItem: 1,
           idProduct: 1,
           productName: 'Soporte Groot',
           unitPrice: 18500,
@@ -68,13 +69,14 @@ test('switches to ADMIN in demo sandbox, manages orders/taxonomy/users, and redi
     {
       idOrder: 402,
       idUser: 1,
-      status: 'pending_payment',
-      total: 12000,
+      status: 'AWAITING_PAYMENT',
+      totalAmount: 12000,
       createdAt: '2026-11-26T18:10:00.000Z',
       paymentReference: null,
       customer: { idUser: 1, displayName: 'Demo B.' },
       items: [
         {
+          idOrderItem: 2,
           idProduct: 2,
           productName: 'Busto Batman',
           unitPrice: 12000,
@@ -90,6 +92,7 @@ test('switches to ADMIN in demo sandbox, manages orders/taxonomy/users, and redi
       firstName: 'Demo',
       lastName: 'Buyer',
       email: 'demo.buyer+slot01@sandbox.mundo3d.invalid',
+      image: null,
       idRole: 2,
     },
     {
@@ -97,6 +100,7 @@ test('switches to ADMIN in demo sandbox, manages orders/taxonomy/users, and redi
       firstName: 'Demo',
       lastName: 'Staff',
       email: 'demo.staff+slot01@sandbox.mundo3d.invalid',
+      image: null,
       idRole: 3,
     },
     {
@@ -104,6 +108,7 @@ test('switches to ADMIN in demo sandbox, manages orders/taxonomy/users, and redi
       firstName: 'Demo',
       lastName: 'Admin',
       email: 'demo.admin+slot01@sandbox.mundo3d.invalid',
+      image: null,
       idRole: 1,
     },
   ];
@@ -193,7 +198,7 @@ test('switches to ADMIN in demo sandbox, manages orders/taxonomy/users, and redi
       const target = orders.find((o) => o.idOrder === id);
       if (!target) return json(route, 404, { error: 'Not found' });
       csrfEvents.push(`ORDER_${action.toUpperCase()}_${id}:${csrfHdr}`);
-      target.status = action === 'confirm-payment' ? 'paid' : 'cancelled';
+      target.status = action === 'confirm-payment' ? 'PAID' : 'CANCELLED';
       return json(route, 200, target);
     }
     if (pathname === '/api/demo/categories' && method === 'GET') {
