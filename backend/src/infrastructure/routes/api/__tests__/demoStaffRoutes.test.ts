@@ -164,7 +164,10 @@ function makeSlotRepos(slotLabel: string) {
     },
     franchiseRepo: { findAll: jest.fn(async () => [FRAN]) },
     cartRepo: {},
-    orderRepo: { findAll: jest.fn(async () => orders) },
+    orderRepo: {
+      findAll: jest.fn(async () => orders),
+      findById: jest.fn(async (id: number) => orders.find((o) => o.idOrder === id) ?? null),
+    },
     userRepo: {
       findByIds: jest.fn(async (ids: readonly number[]) =>
         users.filter((u) => ids.includes(u.idUser)),
@@ -369,6 +372,14 @@ describe('/api/demo/* STAFF endpoints and explicit 403 boundaries', () => {
     for (const reqPromise of adminChecks) {
       expect((await reqPromise).status).toBe(403);
     }
+
+    const unauthOrders = await request(app).get(`${B}/orders`);
+    expect(unauthOrders.status).toBe(401);
+
+    const staffOrderDetail = await request(app)
+      .get(`${B}/orders/1`)
+      .set('Cookie', STAFF1.cookies);
+    expect(staffOrderDetail.status).toBe(404);
   });
 
   it('rejects missing or invalid CSRF with 403 on STAFF write routes', async () => {

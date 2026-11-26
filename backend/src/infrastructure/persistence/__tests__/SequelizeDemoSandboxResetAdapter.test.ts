@@ -1,4 +1,5 @@
 import type { Sequelize, Transaction } from 'sequelize';
+import { OrderStatus } from '../../../domain/entities/Order';
 import { Role } from '../../../domain/Role';
 import {
   buildDemoSandboxSlotEmails,
@@ -28,7 +29,13 @@ function makeMockSlotGraph(slotId: string) {
     Order: {
       ...makeTable('Order', DEMO_SANDBOX_EXPECTED_COUNTS.orders),
       findAll: jest.fn(async () => [
-        { idOrder: 1, idUser: 1, idempotencyKey: 'demo-seed-order-1' },
+        {
+          idOrder: 1,
+          idUser: 1,
+          idempotencyKey: 'demo-seed-order-1',
+          orderStatus: OrderStatus.AWAITING_PAYMENT,
+          paymentReference: null as string | null,
+        },
       ]),
     },
     ShoppingCart: makeTable('ShoppingCart', 0),
@@ -181,13 +188,42 @@ describe('SequelizeDemoSandboxResetAdapter', () => {
     await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(true);
 
     graph.models.Order.findAll.mockResolvedValueOnce([
-      { idOrder: 1, idUser: 1, idempotencyKey: 'demo-seed-order-1' },
-      { idOrder: 2, idUser: 1, idempotencyKey: 'visitor-order' },
+      {
+        idOrder: 1,
+        idUser: 1,
+        idempotencyKey: 'demo-seed-order-1',
+        orderStatus: OrderStatus.AWAITING_PAYMENT,
+        paymentReference: null,
+      },
+      {
+        idOrder: 2,
+        idUser: 1,
+        idempotencyKey: 'visitor-order',
+        orderStatus: OrderStatus.AWAITING_PAYMENT,
+        paymentReference: null,
+      },
     ]);
     await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
 
     graph.models.Order.findAll.mockResolvedValueOnce([
-      { idOrder: 9, idUser: 1, idempotencyKey: 'visitor-order-only' },
+      {
+        idOrder: 9,
+        idUser: 1,
+        idempotencyKey: 'visitor-order-only',
+        orderStatus: OrderStatus.AWAITING_PAYMENT,
+        paymentReference: null,
+      },
+    ]);
+    await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
+
+    graph.models.Order.findAll.mockResolvedValueOnce([
+      {
+        idOrder: 1,
+        idUser: 1,
+        idempotencyKey: 'demo-seed-order-1',
+        orderStatus: OrderStatus.PAID,
+        paymentReference: 'MAN-1',
+      },
     ]);
     await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
 

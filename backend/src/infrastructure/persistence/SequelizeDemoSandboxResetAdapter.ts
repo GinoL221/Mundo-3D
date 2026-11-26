@@ -13,6 +13,7 @@ import {
   type DemoSandboxResetReceiptRecord,
 } from '../../database/models/DemoSandboxResetReceipt';
 import { initializeModelsForConnection } from '../../database/models/registerModels';
+import { OrderStatus } from '../../domain/entities/Order';
 import type { DemoSandboxResetPort } from '../../domain/ports/DemoSandboxResetPort';
 import type { TransactionContext } from '../../domain/ports/UnitOfWorkPort';
 import { Role } from '../../domain/Role';
@@ -211,7 +212,10 @@ export class SequelizeDemoSandboxResetAdapter implements DemoSandboxResetPort {
       models.Franchise.count(opts),
       models.Product.count(opts),
       models.User.findAll({ attributes: ['idRole', 'email', 'emailVerifiedAt'], ...opts }),
-      models.Order.findAll({ attributes: ['idOrder', 'idUser', 'idempotencyKey'], ...opts }),
+      models.Order.findAll({
+        attributes: ['idOrder', 'idUser', 'idempotencyKey', 'orderStatus', 'paymentReference'],
+        ...opts,
+      }),
       models.OrderItem.count(opts),
     ]);
 
@@ -231,7 +235,9 @@ export class SequelizeDemoSandboxResetAdapter implements DemoSandboxResetPort {
       !seededOrder ||
       Number(seededOrder.idOrder) !== 1 ||
       Number(seededOrder.idUser) !== 1 ||
-      seededOrder.idempotencyKey !== DEMO_SANDBOX_SEED_ORDER_IDEMPOTENCY_KEY
+      seededOrder.idempotencyKey !== DEMO_SANDBOX_SEED_ORDER_IDEMPOTENCY_KEY ||
+      seededOrder.orderStatus !== OrderStatus.AWAITING_PAYMENT ||
+      seededOrder.paymentReference !== null
     ) {
       return false;
     }
