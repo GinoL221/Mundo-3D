@@ -242,10 +242,6 @@ export class SequelizeDemoSandboxResetAdapter implements DemoSandboxResetPort {
       return false;
     }
 
-    if (users.some((user) => Number(user.idRole) === Number(Role.ADMIN))) {
-      return false;
-    }
-
     const expectedEmails = buildDemoSandboxSlotEmails(slotId);
     const isVerified = (value: unknown): boolean =>
       value instanceof Date && Number.isFinite(value.getTime());
@@ -261,6 +257,12 @@ export class SequelizeDemoSandboxResetAdapter implements DemoSandboxResetPort {
         user.email === expectedEmails.staff &&
         isVerified(user.emailVerifiedAt),
     );
-    return hasBuyer && hasStaff;
+    const hasAdmin = users.some(
+      (user) =>
+        Number(user.idRole) === Number(Role.ADMIN) &&
+        user.email === expectedEmails.admin &&
+        isVerified(user.emailVerifiedAt),
+    );
+    return hasBuyer && hasStaff && hasAdmin;
   }
 }

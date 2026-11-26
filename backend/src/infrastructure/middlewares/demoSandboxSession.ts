@@ -8,8 +8,8 @@ import * as ck from '../security/demoSandboxCookies';
 import { verifyDemoSandboxCsrfToken } from '../security/demoSandboxCsrfToken';
 import { JWT_ALGORITHM, JWT_ISSUER } from '../security/jwtOptions';
 
-export type AllowedDemoRole = Role.USER | Role.STAFF;
-const ALLOWED_DEMO_ROLES = new Set<Role>([Role.USER, Role.STAFF]);
+export type AllowedDemoRole = Role.USER | Role.STAFF | Role.ADMIN;
+const ALLOWED_DEMO_ROLES = new Set<Role>([Role.USER, Role.STAFF, Role.ADMIN]);
 
 export const isAllowedDemoRole = (role: Role): role is AllowedDemoRole =>
   ALLOWED_DEMO_ROLES.has(role);
@@ -114,13 +114,13 @@ export async function demoSandboxAuthMiddleware(
   const payload = typeof raw === 'string' ? verifyDemoSandboxAccessToken(raw, rt.jwtSecret) : null;
   if (!payload) return fail(res, 401, { error: 'Demo sandbox session invalid or expired' });
   if (!isAllowedDemoRole(payload.role)) {
-    return fail(res, 403, { error: 'Demo sandbox is restricted to Buyer and Staff roles' });
+    return fail(res, 403, { error: 'Demo sandbox role is not permitted' });
   }
   try {
     const lease = await validateActiveSandboxLease(rt, payload);
     if (!lease) return fail(res, 401, { error: 'Demo sandbox lease invalid or expired' });
     req.sandbox = payload.familyId ? { ...lease, familyId: payload.familyId } : lease;
-    req.user = { userId: payload.userId, role: payload.role };
+    req.user = { userId: payload.userId, role: payload.role, idRole: payload.role };
     next();
   } catch (error) {
     next(error);

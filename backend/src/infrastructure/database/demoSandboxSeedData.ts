@@ -6,14 +6,14 @@ import bcryptjs from 'bcryptjs';
 import { OrderStatus } from '../../domain/entities/Order';
 import { Role } from '../../domain/Role';
 
-export const DEMO_SANDBOX_SEED_VERSION = 'v3-catalog-26-user-staff-seed-order';
+export const DEMO_SANDBOX_SEED_VERSION = 'v4-catalog-26-user-staff-admin-seed-order';
 export const DEMO_SANDBOX_SEED_ORDER_IDEMPOTENCY_KEY = 'demo-seed-order-1';
 
 export const DEMO_SANDBOX_EXPECTED_COUNTS = {
   categories: 13,
   franchises: 14,
   products: 26,
-  users: 2,
+  users: 3,
   orders: 1,
   orderItems: 2,
 } as const;
@@ -52,8 +52,8 @@ export interface DemoSandboxUserSeed {
   email: string;
   image: string | null;
   passwordUser: string;
-  idRole: Role.USER | Role.STAFF;
-  category: 'User' | 'Staff';
+  idRole: Role.USER | Role.STAFF | Role.ADMIN;
+  category: 'User' | 'Staff' | 'Admin';
   emailVerifiedAt: Date;
 }
 
@@ -218,7 +218,11 @@ function getSyntheticPasswordHash(): string {
   return cachedPasswordHash;
 }
 
-export function buildDemoSandboxSlotEmails(slotId: string): { buyer: string; staff: string } {
+export function buildDemoSandboxSlotEmails(slotId: string): {
+  buyer: string;
+  staff: string;
+  admin: string;
+} {
   if (typeof slotId !== 'string' || !SLOT_ID_PATTERN.test(slotId)) {
     throw new Error('Invalid demo sandbox slot id');
   }
@@ -226,6 +230,7 @@ export function buildDemoSandboxSlotEmails(slotId: string): { buyer: string; sta
   return {
     buyer: `demo.buyer+${normalized}@sandbox.mundo3d.invalid`,
     staff: `demo.staff+${normalized}@sandbox.mundo3d.invalid`,
+    admin: `demo.admin+${normalized}@sandbox.mundo3d.invalid`,
   };
 }
 
@@ -261,6 +266,17 @@ export function buildDemoSandboxSeedData(
       passwordUser,
       idRole: Role.STAFF,
       category: 'Staff',
+      emailVerifiedAt: new Date(verifiedTimestamp.getTime()),
+    },
+    {
+      idUser: 3,
+      firstName: 'Demo',
+      lastName: 'Admin',
+      email: emails.admin,
+      image: null,
+      passwordUser,
+      idRole: Role.ADMIN,
+      category: 'Admin',
       emailVerifiedAt: new Date(verifiedTimestamp.getTime()),
     },
   ];

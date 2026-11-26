@@ -7,7 +7,7 @@ import {
 } from '../demoSandboxSeedData';
 
 describe('demoSandboxSeedData', () => {
-  it('builds deterministic catalog and slot-scoped USER/STAFF accounts without ADMIN', () => {
+  it('builds deterministic catalog and slot-scoped USER/STAFF/ADMIN synthetic accounts', () => {
     const seed = buildDemoSandboxSeedData('slot-1');
 
     expect(DEMO_SANDBOX_SEED_VERSION).toBeTruthy();
@@ -47,8 +47,7 @@ describe('demoSandboxSeedData', () => {
     ).toBe(true);
 
     const roles = seed.users.map((u) => u.idRole);
-    expect(roles).toEqual([Role.USER, Role.STAFF]);
-    expect(roles).not.toContain(Role.ADMIN);
+    expect(roles).toEqual([Role.USER, Role.STAFF, Role.ADMIN]);
     expect(seed.users.every((u) => u.email.endsWith('@sandbox.mundo3d.invalid'))).toBe(true);
     expect(seed.users.every((u) => u.emailVerifiedAt instanceof Date)).toBe(true);
     expect(seed.users.every((u) => u.passwordUser.startsWith('$2'))).toBe(true);
@@ -60,7 +59,9 @@ describe('demoSandboxSeedData', () => {
 
     expect(slot1.buyer).toBe('demo.buyer+slot-a@sandbox.mundo3d.invalid');
     expect(slot1.staff).toBe('demo.staff+slot-a@sandbox.mundo3d.invalid');
+    expect(slot1.admin).toBe('demo.admin+slot-a@sandbox.mundo3d.invalid');
     expect(slot1.buyer).not.toBe(slot2.buyer);
+    expect(slot1.admin).not.toBe(slot2.admin);
 
     for (const invalid of ['', '   ', 'slot 1', 'slot/1', 'a'.repeat(65)]) {
       expect(() => buildDemoSandboxSlotEmails(invalid)).toThrow('Invalid demo sandbox slot id');

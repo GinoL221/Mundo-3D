@@ -16,6 +16,7 @@ import { Sha256TokenHasher } from '../security/Sha256TokenHasher';
 
 const BUYER_ID = 1;
 const STAFF_ID = 2;
+const ADMIN_ID = 3;
 const BUSY = {
   code: 'DEMO_SANDBOX_BUSY',
   message: 'All demo sessions are currently in use. Please try again shortly.',
@@ -35,7 +36,7 @@ const fmt = (
   lease: Record<string, Date | undefined>,
 ) => ({
   active: true,
-  role: role === Role.STAFF ? 'STAFF' : 'USER',
+  role: role === Role.ADMIN ? 'ADMIN' : role === Role.STAFF ? 'STAFF' : 'USER',
   user: { idUser: u.idUser, firstName: u.firstName, lastName: u.lastName, email: u.email },
   lease,
 });
@@ -154,7 +155,7 @@ export class DemoSandboxSessionController {
     if (!sandbox || uid === undefined || role === undefined)
       return fail(res, 401, 'Demo sandbox session invalid or expired');
     if (!ses.isAllowedDemoRole(role))
-      return fail(res, 403, 'Demo sandbox is restricted to Buyer and Staff roles');
+      return fail(res, 403, 'Demo sandbox role is not permitted');
     try {
       const account = await rt.repositories.getUserRepository(sandbox.slotId).findById(uid);
       if (!account || Number(account.idRole) !== Number(role))
@@ -172,14 +173,15 @@ export class DemoSandboxSessionController {
     const { sandbox } = req;
     if (!sandbox || !req.user) return fail(res, 401, 'Demo sandbox session invalid or expired');
     if (req.user.role === undefined || !ses.isAllowedDemoRole(req.user.role))
-      return fail(res, 403, 'Demo sandbox is restricted to Buyer and Staff roles');
+      return fail(res, 403, 'Demo sandbox role is not permitted');
     const rawRole = typeof req.body?.role === 'string' ? req.body.role.trim().toUpperCase() : '';
-    if (rawRole === 'ADMIN') return fail(res, 403, 'ADMIN role is not permitted in demo sandbox');
-    if (rawRole !== 'USER' && rawRole !== 'STAFF') {
-      return fail(res, 400, 'Invalid demo role. Allowed roles: USER, STAFF');
+    if (rawRole !== 'USER' && rawRole !== 'STAFF' && rawRole !== 'ADMIN') {
+      return fail(res, 400, 'Invalid demo role. Allowed roles: USER, STAFF, ADMIN');
     }
-    const targetRole: ses.AllowedDemoRole = rawRole === 'STAFF' ? Role.STAFF : Role.USER;
-    const targetUserId = targetRole === Role.STAFF ? STAFF_ID : BUYER_ID;
+    const targetRole: ses.AllowedDemoRole =
+      rawRole === 'ADMIN' ? Role.ADMIN : rawRole === 'STAFF' ? Role.STAFF : Role.USER;
+    const targetUserId =
+      targetRole === Role.ADMIN ? ADMIN_ID : targetRole === Role.STAFF ? STAFF_ID : BUYER_ID;
     try {
       const account = await rt.repositories
         .getUserRepository(sandbox.slotId)
@@ -230,7 +232,7 @@ export class DemoSandboxSessionController {
     const p = typeof raw === 'string' ? ses.verifyDemoSandboxRefreshToken(raw, rt.jwtSecret) : null;
     if (!p) return fail(res, 401, 'Demo sandbox session expired', true);
     if (!ses.isAllowedDemoRole(p.role))
-      return fail(res, 403, 'Demo sandbox is restricted to Buyer and Staff roles', true);
+      return fail(res, 403, 'Demo sandbox role is not permitted', true);
     try {
       const l = await ses.validateActiveSandboxLease(rt, p);
       if (!l) return fail(res, 401, 'Demo sandbox lease invalid or expired', true);
@@ -241,7 +243,7 @@ export class DemoSandboxSessionController {
       if (r.outcome === 'rejected' || r.outcome === 'reuse-detected')
         return fail(res, 401, 'Demo sandbox session expired', true);
       if (Number(r.user.idRole) !== Number(p.role))
-        return fail(res, 403, 'Demo sandbox is restricted to Buyer and Staff roles', true);
+        return fail(res, 403, 'Demo sandbox role is not permitted', true);
       const ref = r.outcome === 'rotated' ? nextTok : undefined;
       setCk(
         res,
