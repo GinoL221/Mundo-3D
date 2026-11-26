@@ -73,5 +73,10 @@ export function buildDemoNotice(
 }
 
 export function isDemoProtectedPath(pathname: string): boolean {
-  return pathname.startsWith('/admin') || pathname === '/orders' || pathname === '/order';
+  return (
+    pathname.startsWith('/admin') ||
+    pathname === '/orders' ||
+    pathname === '/order' ||
+    pathname === '/profile'
+  );
 }
