@@ -267,7 +267,7 @@ test('switches to ADMIN in demo sandbox, manages orders/taxonomy/users, and redi
   await page.waitForLoadState('networkidle');
 
   await expect(page.locator('#demo-role-admin')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#demo-bar-role-badge')).toHaveText('ADMIN');
+  await expect(page.locator('#demo-bar-summary')).toContainText('acceso completo al taller');
   await expect(page.locator('#navbar-cart-trigger')).toBeHidden();
 
   await page.locator('#navbar-workshop-trigger').click();
