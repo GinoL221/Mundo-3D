@@ -64,3 +64,4 @@ export const requireRoles = (...roles: Role[]) => (
 };
 
 export const adminGuard = requireRoles(Role.ADMIN);
+export const buyerGuard = requireRoles(Role.USER);

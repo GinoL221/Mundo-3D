@@ -385,23 +385,48 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
     expect([created.status, created.body.image]).toEqual([201, null]);
     const pid = created.body.idProduct as number;
 
-    const [upd, stk, delProd, usrAdm] = await Promise.all([
-      send('put', `/api/demo/products/${pid}`, {
-        ck: ckStaff,
-        csrf: visitorA.csrf,
-        body: { nameProduct: 'Busto Staff Edit', price: 8200 },
-      }),
-      send('patch', `/api/demo/products/${pid}/stock`, {
-        ck: ckStaff,
-        csrf: visitorA.csrf,
-        body: { delta: 2 },
-      }),
-      send('delete', `/api/demo/products/${pid}`, { ck: ckStaff, csrf: visitorA.csrf }),
-      send('get', '/api/demo/users', { ck: ckStaff }),
-    ]);
-    expect([upd.status, stk.status, stk.body.stock, delProd.status, usrAdm.status]).toEqual([
-      200, 200, 5, 403, 403,
-    ]);
+    const [upd, stk, delProd, usrAdm, staffMe, staffCartGet, staffCartPut, staffOrdPost, staffMine] =
+      await Promise.all([
+        send('put', `/api/demo/products/${pid}`, {
+          ck: ckStaff,
+          csrf: visitorA.csrf,
+          body: { nameProduct: 'Busto Staff Edit', price: 8200 },
+        }),
+        send('patch', `/api/demo/products/${pid}/stock`, {
+          ck: ckStaff,
+          csrf: visitorA.csrf,
+          body: { delta: 2 },
+        }),
+        send('delete', `/api/demo/products/${pid}`, { ck: ckStaff, csrf: visitorA.csrf }),
+        send('get', '/api/demo/users', { ck: ckStaff }),
+        send('get', '/api/demo/users/me', { ck: ckStaff }),
+        send('get', '/api/demo/cart', { ck: ckStaff }),
+        send('put', '/api/demo/cart', {
+          ck: ckStaff,
+          csrf: visitorA.csrf,
+          body: { items: [{ productId: 1, quantity: 1 }] },
+        }),
+        send('post', '/api/demo/orders', {
+          ck: ckStaff,
+          csrf: visitorA.csrf,
+          idem: 'staff-blocked-order',
+        }),
+        send('get', '/api/demo/orders/mine', { ck: ckStaff }),
+      ]);
+    expect([
+      upd.status,
+      stk.status,
+      stk.body.stock,
+      delProd.status,
+      usrAdm.status,
+      staffMe.status,
+      staffMe.body.idUser,
+      staffMe.body.idRole,
+      staffCartGet.status,
+      staffCartPut.status,
+      staffOrdPost.status,
+      staffMine.status,
+    ]).toEqual([200, 200, 5, 403, 403, 200, 2, Role.STAFF, 403, 403, 403, 403]);
 
     const [connA, connB] = [connections.get(visitorA.slotId), connections.get(visitorB.slotId)];
     expect([await countRows(connA, 'Product'), await countRows(connB, 'Product')]).toEqual([

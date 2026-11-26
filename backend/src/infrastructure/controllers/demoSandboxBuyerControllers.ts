@@ -8,6 +8,7 @@ import { GetFranchiseByIdUseCase as GetFran } from '../../application/use-cases/
 import { GetLatestProductUseCase as GetLat } from '../../application/use-cases/GetLatestProductUseCase';
 import { GetOrderByIdUseCase as GetOrd } from '../../application/use-cases/GetOrderByIdUseCase';
 import { GetProductByIdUseCase as GetProd } from '../../application/use-cases/GetProductByIdUseCase';
+import { GetUserByIdUseCase as GetUsr } from '../../application/use-cases/GetUserByIdUseCase';
 import { ListCategoriesUseCase as ListCat } from '../../application/use-cases/ListCategoriesUseCase';
 import { ListCustomCommissionRequestsUseCase as ListComm } from '../../application/use-cases/ListCustomCommissionRequestsUseCase';
 import { ListFranchisesUseCase as ListFran } from '../../application/use-cases/ListFranchisesUseCase';
@@ -26,6 +27,7 @@ import { CustomCommissionRequestApiController } from './CustomCommissionRequestA
 import { FranchiseApiController } from './FranchiseApiController';
 import { OrderApiController } from './OrderApiController';
 import { ProductApiController } from './ProductApiController';
+import { UserApiController } from './UserApiController';
 
 export interface DemoSandboxBuyerControllers {
   products: Pick<
@@ -37,6 +39,7 @@ export interface DemoSandboxBuyerControllers {
   cart: Pick<CartApiController, 'getCart' | 'syncCart'>;
   orders: Pick<OrderApiController, 'create' | 'show' | 'index' | 'listMine'>;
   commissions: Pick<CustomCommissionRequestApiController, 'create' | 'list'>;
+  users: Pick<UserApiController, 'me'>;
 }
 
 const cache = new WeakMap<Repos, Map<string, DemoSandboxBuyerControllers>>();
@@ -75,6 +78,7 @@ function build(r: Repos, id: string): DemoSandboxBuyerControllers {
     new CreateComm(comm, undefined, p),
     new ListComm(comm),
   );
+  const us = new UserApiController(off, off, new GetUsr(usr));
   return {
     products: {
       index: pr.index,
@@ -90,6 +94,7 @@ function build(r: Repos, id: string): DemoSandboxBuyerControllers {
     cart: { getCart: ct.getCart, syncCart: ct.syncCart },
     orders: { create: or.create, show: or.show, index: or.index, listMine: or.listMine },
     commissions: { create: cm.create, list: cm.list },
+    users: { me: us.me },
   };
 }
 
