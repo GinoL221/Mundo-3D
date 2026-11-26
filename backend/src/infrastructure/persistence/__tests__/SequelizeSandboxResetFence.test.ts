@@ -1,5 +1,6 @@
 import type { ModelStatic, Sequelize, Transaction } from 'sequelize';
 import type { DemoSandboxFenceRecord } from '../../../database/models/DemoSandboxFence';
+import type { DemoSandboxResetReceiptRecord } from '../../../database/models/DemoSandboxResetReceipt';
 import { withScopedTransaction } from '../scopedTransactionContext';
 import { SequelizeSandboxResetFence } from '../SequelizeSandboxResetFence';
 
@@ -124,5 +125,76 @@ describe('SequelizeSandboxResetFence', () => {
     await expect(fence.fenceForReset({ ...identity, attemptId: '   ' })).resolves.toBe(false);
     await expect(fence.fenceForReset({ ...identity, generation: -1 })).resolves.toBe(false);
     expect(model.create).not.toHaveBeenCalled();
+  });
+
+  it('releases a fenced slot by advancing generation + 1 and reopening the fence', async () => {
+    const { connection, tx } = makeConnectionAndTx();
+    const update = jest.fn().mockResolvedValue(undefined);
+    const model = {
+      findOne: jest
+        .fn()
+        .mockResolvedValueOnce({
+          slotId: 'slot-1',
+          leaseId: null,
+          generation: 2,
+          state: 'fenced',
+          resetAttemptId: identity.attemptId,
+          update,
+        })
+        .mockResolvedValueOnce({
+          slotId: 'slot-1',
+          leaseId: null,
+          generation: 2,
+          state: 'open',
+          resetAttemptId: null,
+          update,
+        }),
+    } as unknown as ModelStatic<DemoSandboxFenceRecord>;
+    const fence = new SequelizeSandboxResetFence(connection, 'slot-1', model);
+
+    await expect(fence.releaseFence(identity)).resolves.toBe(true);
+    expect(update).toHaveBeenCalledWith(
+      { state: 'open', leaseId: null, generation: 3, resetAttemptId: null },
+      { transaction: tx },
+    );
+
+    await expect(fence.releaseFence(identity)).resolves.toBe(false);
+  });
+
+  it('heals an exact 1-generation lag only when a committed reset receipt proves the prior generation finished', async () => {
+    const { connection, tx } = makeConnectionAndTx();
+    const update = jest.fn().mockResolvedValue(undefined);
+    const model = {
+      findOne: jest
+        .fn()
+        .mockResolvedValueOnce({ slotId: 'slot-1', generation: 1, state: 'fenced', update })
+        .mockResolvedValueOnce({ slotId: 'slot-1', generation: 1, state: 'fenced', update })
+        .mockResolvedValueOnce({ slotId: 'slot-1', generation: 0, state: 'fenced', update }),
+    } as unknown as ModelStatic<DemoSandboxFenceRecord>;
+    const receiptModel = {
+      findOne: jest
+        .fn()
+        .mockResolvedValueOnce({ slotId: 'slot-1', generation: 1 })
+        .mockResolvedValueOnce(null),
+    } as unknown as ModelStatic<DemoSandboxResetReceiptRecord>;
+    const fence = new SequelizeSandboxResetFence(connection, 'slot-1', model, receiptModel);
+
+    // 1-generation lag with committed receipt -> heals cleanly
+    await expect(fence.fenceForReset(identity)).resolves.toBe(true);
+    expect(receiptModel.findOne).toHaveBeenCalledWith({
+      where: { slotId: 'slot-1', generation: 1 },
+      transaction: tx,
+    });
+    expect(update).toHaveBeenCalledWith(
+      { generation: 2, state: 'fenced', leaseId: null, resetAttemptId: identity.attemptId },
+      { transaction: tx },
+    );
+
+    // 1-generation lag WITHOUT committed receipt -> fails closed
+    await expect(fence.fenceForReset(identity)).resolves.toBe(false);
+
+    // 2-generation jump -> fails closed without consulting receipts
+    await expect(fence.fenceForReset(identity)).resolves.toBe(false);
+    expect(receiptModel.findOne).toHaveBeenCalledTimes(2);
   });
 });

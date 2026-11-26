@@ -75,6 +75,13 @@ export class ResetDemoSandboxSlotUseCase {
         verified,
       );
       if (completion === 'available') {
+        try {
+          await this.resetter.releaseFence?.(slot.id, slot.generation, resetAttemptId);
+        } catch {
+          // Control-plane completion already committed `generation + 1`; if slot-side
+          // fence advancement fails transiently, receipt-backed healing promotes it on
+          // the next reset instead of quarantining an already-verified available slot.
+        }
         return 'available';
       }
       if (completion === 'quarantined') {

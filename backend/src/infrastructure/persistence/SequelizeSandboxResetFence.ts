@@ -4,6 +4,7 @@ import type {
   SandboxResetIdentity,
 } from '../../application/use-cases/RunFencedSandboxReset';
 import type { DemoSandboxFenceRecord } from '../../database/models/DemoSandboxFence';
+import type { DemoSandboxResetReceiptRecord } from '../../database/models/DemoSandboxResetReceipt';
 import type { TransactionContext } from '../../domain/ports/UnitOfWorkPort';
 import { resolveScopedTransaction } from './scopedTransactionContext';
 
@@ -13,6 +14,7 @@ export class SequelizeSandboxResetFence implements SandboxResetFence {
     private readonly connection: Sequelize,
     private readonly slotId: string,
     private readonly model: ModelStatic<DemoSandboxFenceRecord>,
+    private readonly receiptModel?: ModelStatic<DemoSandboxResetReceiptRecord>,
   ) {}
 
   async fenceForReset(
@@ -48,11 +50,72 @@ export class SequelizeSandboxResetFence implements SandboxResetFence {
         );
         return true;
       }
-      if (row.generation !== identity.generation) {
+      if (row.generation === identity.generation) {
+        await row.update(
+          { state: 'fenced', leaseId: null, resetAttemptId: identity.attemptId },
+          { transaction },
+        );
+        return true;
+      }
+      // Heal an exact 1-generation lag only when a committed reset receipt proves the
+      // prior generation completed cleanly (e.g., crash between control-plane
+      // completeReset and slot-side releaseFence). Never accept stale or unverified jumps.
+      if (row.generation === identity.generation - 1 && this.receiptModel) {
+        const priorReceipt = await this.receiptModel.findOne({
+          where: { slotId: this.slotId, generation: row.generation },
+          transaction,
+        });
+        if (priorReceipt) {
+          await row.update(
+            {
+              generation: identity.generation,
+              state: 'fenced',
+              leaseId: null,
+              resetAttemptId: identity.attemptId,
+            },
+            { transaction },
+          );
+          return true;
+        }
+      }
+      return false;
+    });
+  }
+
+  async releaseFence(
+    identity: Pick<SandboxResetIdentity, 'slotId' | 'generation' | 'attemptId'>,
+  ): Promise<boolean> {
+    if (
+      identity.slotId !== this.slotId ||
+      !identity.attemptId.trim() ||
+      !Number.isSafeInteger(identity.generation) ||
+      identity.generation < 0 ||
+      identity.generation >= 0xffff_ffff
+    ) {
+      return false;
+    }
+    return this.connection.transaction(async (transaction) => {
+      const row = await this.model.findOne({
+        where: { slotId: this.slotId },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+      if (
+        !row ||
+        row.state !== 'fenced' ||
+        row.leaseId !== null ||
+        row.generation !== identity.generation ||
+        row.resetAttemptId !== identity.attemptId
+      ) {
         return false;
       }
       await row.update(
-        { state: 'fenced', leaseId: null, resetAttemptId: identity.attemptId },
+        {
+          state: 'open',
+          leaseId: null,
+          generation: identity.generation + 1,
+          resetAttemptId: null,
+        },
         { transaction },
       );
       return true;

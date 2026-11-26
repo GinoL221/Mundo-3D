@@ -328,10 +328,46 @@ describe('SequelizeDemoSandboxResetAdapter on disposable MySQL 8.0', () => {
     expect(availableSlots.map((s) => ({ id: s.id, generation: s.generation }))).toEqual([
       { id: 'slot-a', generation: 1 },
     ]);
+
+    // Second consecutive lease + expiry + reset cycle must advance DemoSandboxFence
+    // cleanly from generation 1 -> 2 instead of quarantining on generation drift.
+    const secondStart = new Date(expiredAt.getTime() + 10_000);
+    const secondLease = await slotRepo.claimAvailableSlot(
+      crypto.randomUUID(),
+      secondStart,
+      policy,
+    );
+    expect(secondLease).toMatchObject({ id: 'slot-a', generation: 1 });
+    const secondExpiredAt = new Date(secondStart.getTime() + 120_000);
+    const secondExpired = await new ExpireDemoSandboxLeasesUseCase(slotRepo, {
+      now: () => secondExpiredAt,
+    }).execute();
+    expect(secondExpired.map((s) => s.id)).toEqual(['slot-a']);
+
+    const attemptA2 = crypto.randomUUID();
+    const secondResetUseCase = new ResetDemoSandboxSlotUseCase(
+      slotRepo,
+      resetAdapter,
+      { now: () => secondExpiredAt },
+      { next: () => attemptA2 },
+    );
+    await expect(secondResetUseCase.execute('slot-a', secondLease!.leaseId!)).resolves.toBe(
+      'available',
+    );
+    const afterSecondReset = await slotRepo.listSlotsByStatus(['available']);
+    expect(afterSecondReset.map((s) => ({ id: s.id, generation: s.generation }))).toEqual([
+      { id: 'slot-a', generation: 2 },
+    ]);
+    const fenceRows = await connA.query<{ generation: number; state: string }>(
+      'SELECT generation, state FROM `DemoSandboxFence` WHERE slot_id = ?',
+      { replacements: ['slot-a'], type: QueryTypes.SELECT },
+    );
+    expect(fenceRows).toEqual([{ generation: 2, state: 'open' }]);
   }, 30_000);
 
   it('rejects stale generations fail-closed without mutating data or writing a receipt', async () => {
     const staleAttempt = crypto.randomUUID();
+    await expect(resetAdapter.reset('slot-a', 0, staleAttempt)).rejects.toThrow('fence');
     await expect(resetAdapter.reset('slot-a', 99, staleAttempt)).rejects.toThrow('fence');
     await expect(resetAdapter.verify('slot-a', 99, staleAttempt)).resolves.toBe(false);
     await expect(resetAdapter.verify('slot-a', 0, crypto.randomUUID())).resolves.toBe(false);

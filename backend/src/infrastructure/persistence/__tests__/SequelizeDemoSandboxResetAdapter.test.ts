@@ -48,9 +48,20 @@ function makeMockSlotGraph(slotId: string) {
     generation: 1,
     state: 'open' as 'open' | 'fenced',
     resetAttemptId: null as string | null,
-    update: jest.fn(async function (this: { state: string; leaseId: string | null; resetAttemptId: string | null }, patch: { state: 'fenced'; leaseId: null; resetAttemptId: string }) {
+    update: jest.fn(async function (
+      this: { state: string; leaseId: string | null; generation: number; resetAttemptId: string | null },
+      patch: {
+        state: 'open' | 'fenced';
+        leaseId: null;
+        generation?: number;
+        resetAttemptId: string | null;
+      },
+    ) {
       this.state = patch.state;
       this.leaseId = patch.leaseId;
+      if (patch.generation !== undefined) {
+        this.generation = patch.generation;
+      }
       this.resetAttemptId = patch.resetAttemptId;
     }),
   };
@@ -183,5 +194,27 @@ describe('SequelizeDemoSandboxResetAdapter', () => {
       ]);
       await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
     }
+  });
+
+  it('advances fence generation on releaseFence() so consecutive reset cycles succeed without quarantine', async () => {
+    const graph = makeMockSlotGraph(slotId);
+    const adapter = createAdapter(graph);
+
+    await adapter.reset(slotId, 1, attemptId);
+    await adapter.releaseFence(slotId, 1, attemptId);
+    expect(graph.fenceRow).toMatchObject({
+      generation: 2,
+      state: 'open',
+      leaseId: null,
+      resetAttemptId: null,
+    });
+
+    const secondAttempt = '22222222-2222-4222-8222-222222222222';
+    await expect(adapter.reset(slotId, 2, secondAttempt)).resolves.toBeUndefined();
+    expect(graph.fenceRow).toMatchObject({
+      generation: 2,
+      state: 'fenced',
+      resetAttemptId: secondAttempt,
+    });
   });
 });
