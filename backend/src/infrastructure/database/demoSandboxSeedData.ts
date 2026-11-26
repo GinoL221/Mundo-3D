@@ -5,12 +5,12 @@ import path from 'node:path';
 import bcryptjs from 'bcryptjs';
 import { Role } from '../../domain/Role';
 
-export const DEMO_SANDBOX_SEED_VERSION = 'v1-catalog-17-user-staff';
+export const DEMO_SANDBOX_SEED_VERSION = 'v2-catalog-26-user-staff';
 
 export const DEMO_SANDBOX_EXPECTED_COUNTS = {
-  categories: 10,
-  franchises: 10,
-  products: 17,
+  categories: 13,
+  franchises: 14,
+  products: 26,
   users: 2,
 } as const;
 
@@ -75,6 +75,9 @@ const CATEGORY_NAMES: readonly string[] = [
   'Terror/Fantasía',
   'Utilitarios',
   'Juguetes',
+  'Soportes y Setup',
+  'Macetas y Deco',
+  'Miniaturas y Rol',
 ];
 
 const FRANCHISE_NAMES: readonly string[] = [
@@ -88,6 +91,10 @@ const FRANCHISE_NAMES: readonly string[] = [
   'Pokemon',
   'Nintendo',
   'Terror/Fantasía',
+  'Anime',
+  'El Señor de los Anillos',
+  'Gaming',
+  'Diseño Original',
 ];
 
 let cachedProducts: readonly DemoSandboxProductSeed[] | null = null;

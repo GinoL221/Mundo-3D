@@ -25,6 +25,7 @@
     "db:migrate:status": "node src/database/migrate.js pending",
     "db:migrate:down": "node src/database/migrate.js down",
     "db:migrate:adopt-baseline": "node src/database/migrate.js adopt-baseline",
+    "db:catalog:sync": "node src/database/sync-catalog.js",
     "db:sandbox:bootstrap": "node scripts/sandbox-bootstrap-slots.cjs",
     "deploy:migrate-and-start": "node ../scripts/deploy/migrate-and-start.js",
     "deploy:smoke-test": "node ../scripts/deploy/smoke-test.js",

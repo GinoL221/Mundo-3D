@@ -16,14 +16,26 @@ describe('demoSandboxSeedData', () => {
     expect(seed.products).toHaveLength(DEMO_SANDBOX_EXPECTED_COUNTS.products);
     expect(seed.users).toHaveLength(DEMO_SANDBOX_EXPECTED_COUNTS.users);
 
-    expect(seed.categories.map((c) => c.idCategory)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-    expect(seed.franchises.map((f) => f.idFranchise)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(seed.categories.map((c) => c.idCategory)).toEqual(
+      Array.from({ length: DEMO_SANDBOX_EXPECTED_COUNTS.categories }, (_, index) => index + 1),
+    );
+    expect(seed.franchises.map((f) => f.idFranchise)).toEqual(
+      Array.from({ length: DEMO_SANDBOX_EXPECTED_COUNTS.franchises }, (_, index) => index + 1),
+    );
     expect(seed.products.map((p) => p.idProduct)).toEqual(
-      Array.from({ length: 17 }, (_, index) => index + 1),
+      Array.from({ length: DEMO_SANDBOX_EXPECTED_COUNTS.products }, (_, index) => index + 1),
     );
     expect(seed.products.every((p) => p.stock > 0)).toBe(true);
-    expect(seed.products.every((p) => p.idCategory >= 1 && p.idCategory <= 10)).toBe(true);
-    expect(seed.products.every((p) => p.idFranchise >= 1 && p.idFranchise <= 10)).toBe(true);
+    expect(
+      seed.products.every(
+        (p) => p.idCategory >= 1 && p.idCategory <= DEMO_SANDBOX_EXPECTED_COUNTS.categories,
+      ),
+    ).toBe(true);
+    expect(
+      seed.products.every(
+        (p) => p.idFranchise >= 1 && p.idFranchise <= DEMO_SANDBOX_EXPECTED_COUNTS.franchises,
+      ),
+    ).toBe(true);
 
     const roles = seed.users.map((u) => u.idRole);
     expect(roles).toEqual([Role.USER, Role.STAFF]);

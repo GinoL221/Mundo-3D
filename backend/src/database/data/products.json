@@ -1,7 +1,7 @@
 [
   {
     "NameProduct": "Mario Bros Coleccionable",
-    "Price": 1500.00,
+    "Price": 26500.00,
     "DescriptionProduct": "Figura de Mario Bros impresa en 3D con gran detalle, ideal para coleccionistas y fanáticos del fontanero más famoso.",
     "Image": "figura_mario.jpg",
     "IDCategory": 3,
@@ -15,7 +15,7 @@
   },
   {
     "NameProduct": "Llavero Escudo Capitán América",
-    "Price": 800.00,
+    "Price": 4200.00,
     "DescriptionProduct": "Llavero resistente del escudo del Capitán América, pintado a mano. Un accesorio épico para tus llaves.",
     "Image": "llavero_capitan_america.jpg",
     "IDCategory": 1,
@@ -29,7 +29,7 @@
   },
   {
     "NameProduct": "Llavero Batiseñal",
-    "Price": 850.00,
+    "Price": 4500.00,
     "DescriptionProduct": "Llavero con la clásica silueta de la batiseñal de Gotham. Fabricado en material de alta resistencia.",
     "Image": "llavero_batisenal.jpg",
     "IDCategory": 1,
@@ -43,7 +43,7 @@
   },
   {
     "NameProduct": "Busto de Iron Man (Mark 85)",
-    "Price": 4500.00,
+    "Price": 38000.00,
     "DescriptionProduct": "Busto sumamente detallado de Iron Man con la armadura Mark 85. Ideal para decorar tu setup o estantería.",
     "Image": "busto_iron_man.jpg",
     "IDCategory": 2,
@@ -57,7 +57,7 @@
   },
   {
     "NameProduct": "Busto de Joker (Heath Ledger)",
-    "Price": 4800.00,
+    "Price": 42000.00,
     "DescriptionProduct": "Busto tributo al Joker de Heath Ledger, capturando la locura y los detalles icónicos del personaje.",
     "Image": "busto_joker.jpg",
     "IDCategory": 2,
@@ -71,7 +71,7 @@
   },
   {
     "NameProduct": "Figura Spider-Man (Pose de Acción)",
-    "Price": 7500.00,
+    "Price": 34000.00,
     "DescriptionProduct": "Figura de acción de Spider-Man en plena pirueta urbana. Altura de 18cm, detalles pintados a mano.",
     "Image": "figura_spiderman.jpg",
     "IDCategory": 3,
@@ -85,7 +85,7 @@
   },
   {
     "NameProduct": "Figura Sonic the Hedgehog",
-    "Price": 6200.00,
+    "Price": 21500.00,
     "DescriptionProduct": "El erizo más rápido del mundo en una pose dinámica sobre una base temática de Green Hill Zone.",
     "Image": "figura_sonic.jpg",
     "IDCategory": 3,
@@ -99,7 +99,7 @@
   },
   {
     "NameProduct": "Máscara de Batman (Cosplay)",
-    "Price": 12000.00,
+    "Price": 68000.00,
     "DescriptionProduct": "Máscara rígida de Batman a escala real, ideal para cosplay o como pieza de colección y exposición.",
     "Image": "mascara_batman.jpg",
     "IDCategory": 4,
@@ -113,7 +113,7 @@
   },
   {
     "NameProduct": "Soporte Maceta Groot",
-    "Price": 3500.00,
+    "Price": 15500.00,
     "DescriptionProduct": "Maceta decorativa de Baby Groot que también sirve como portalápices o organizador de escritorio.",
     "Image": "soporte_maceta_groot.jpg",
     "IDCategory": 5,
@@ -127,7 +127,7 @@
   },
   {
     "NameProduct": "Llavero Escudo Hylian",
-    "Price": 900.00,
+    "Price": 5200.00,
     "DescriptionProduct": "Llavero del Escudo Hylian de Link (Zelda), con detalles grabados de alta definición y pintado con acabado metálico.",
     "Image": "llavero_escudo_hylian.jpg",
     "IDCategory": 1,
@@ -141,7 +141,7 @@
   },
   {
     "NameProduct": "Busto de Darth Vader",
-    "Price": 5200.00,
+    "Price": 31000.00,
     "DescriptionProduct": "Imponente busto de Darth Vader impreso en resina de alta resolución, ideal para coleccionistas de Star Wars.",
     "Image": "busto_darth_vader.jpg",
     "IDCategory": 2,
@@ -155,7 +155,7 @@
   },
   {
     "NameProduct": "Busto de Thanos",
-    "Price": 5500.00,
+    "Price": 46000.00,
     "DescriptionProduct": "Detallado busto del Titán Loco Thanos con el Guantelete del Infinito, esculpido e impreso en resina.",
     "Image": "busto_thanos.jpg",
     "IDCategory": 2,
@@ -169,7 +169,7 @@
   },
   {
     "NameProduct": "Figura de Pikachu Detective",
-    "Price": 4200.00,
+    "Price": 22000.00,
     "DescriptionProduct": "Figura de Pikachu con su sombrero de detective y lupa, modelado con gran carisma e impreso en 3D.",
     "Image": "figura_pikachu_detective.jpg",
     "IDCategory": 3,
@@ -183,7 +183,7 @@
   },
   {
     "NameProduct": "Figura de Batman en Gárgola",
-    "Price": 8500.00,
+    "Price": 52000.00,
     "DescriptionProduct": "Espectacular figura de Batman vigilando la ciudad sobre una gárgola gótica, pintada a mano con técnicas de sombreado.",
     "Image": "figura_batman_gargola.jpg",
     "IDCategory": 3,
@@ -197,7 +197,7 @@
   },
   {
     "NameProduct": "Casco de Iron Man (Máscara)",
-    "Price": 13500.00,
+    "Price": 85000.00,
     "DescriptionProduct": "Máscara de Iron Man a escala real con placas de sujeción magnética, ideal para exhibición o cosplay.",
     "Image": "mascara_ironman.jpg",
     "IDCategory": 4,
@@ -211,7 +211,7 @@
   },
   {
     "NameProduct": "Cubo de Compañía de Portal",
-    "Price": 3800.00,
+    "Price": 16800.00,
     "DescriptionProduct": "Lapicero o maceta con el diseño del Cubo de Compañía de Portal, fabricado en material térmico ultra resistente.",
     "Image": "cubo_compania_portal.jpg",
     "IDCategory": 9,
@@ -225,7 +225,7 @@
   },
   {
     "NameProduct": "Lámpara de Estrella de Mario",
-    "Price": 4900.00,
+    "Price": 27500.00,
     "DescriptionProduct": "Lámpara decorativa con la icónica Estrella de Mario Bros, con espacio interno para luz LED e impresa en filamento translúcido.",
     "Image": "lampara_estrella_mario.jpg",
     "IDCategory": 6,
@@ -236,5 +236,131 @@
     "Depth": 5.00,
     "Finish": "Monocromático",
     "ProductionTime": 3
+  },
+  {
+    "NameProduct": "Figura Goku Super Saiyajin (Kamehameha)",
+    "Price": 44500.00,
+    "DescriptionProduct": "Figura coleccionable en resina de Goku en pose de Kamehameha sobre base rocosa con efecto translúcido, pintada a mano.",
+    "Image": "figura_goku_ssj.jpg",
+    "IDCategory": 3,
+    "IDFranchise": 11,
+    "Material": "Resina",
+    "Height": 21.00,
+    "Width": 16.00,
+    "Depth": 14.00,
+    "Finish": "Pintado a mano",
+    "ProductionTime": 5
+  },
+  {
+    "NameProduct": "Soporte de Auriculares Barad-dûr (Ojo de Sauron)",
+    "Price": 29500.00,
+    "DescriptionProduct": "Soporte de escritorio para auriculares gamer inspirado en la torre de Barad-dûr, impreso en PETG estructural de alta rigidez.",
+    "Image": "soporte_auriculares_sauron.jpg",
+    "IDCategory": 11,
+    "IDFranchise": 12,
+    "Material": "PETG",
+    "Height": 26.00,
+    "Width": 12.00,
+    "Depth": 12.00,
+    "Finish": "Pintado a mano",
+    "ProductionTime": 5
+  },
+  {
+    "NameProduct": "Dragón Articulado Cristal (Flexible)",
+    "Price": 18900.00,
+    "DescriptionProduct": "Dragón articulado de cuerpo completo impreso en filamento flexible con terminación seda iridiscente, articulación suave sin ensamblado.",
+    "Image": "dragon_articulado_flex.jpg",
+    "IDCategory": 10,
+    "IDFranchise": 10,
+    "Material": "Flex",
+    "Height": 4.00,
+    "Width": 32.00,
+    "Depth": 6.00,
+    "Finish": "Multicolor seda",
+    "ProductionTime": 2
+  },
+  {
+    "NameProduct": "Organizador de Joystick Stitch",
+    "Price": 24500.00,
+    "DescriptionProduct": "Soporte de escritorio para joysticks de consola o celular con diseño de Stitch, fabricado en PETG resistente y pintado a mano.",
+    "Image": "soporte_joystick_stitch.jpg",
+    "IDCategory": 7,
+    "IDFranchise": 3,
+    "Material": "PETG",
+    "Height": 16.00,
+    "Width": 13.00,
+    "Depth": 14.00,
+    "Finish": "Pintado a mano",
+    "ProductionTime": 4
+  },
+  {
+    "NameProduct": "Miniatura Caballero de Hollow Knight (Escala Rol)",
+    "Price": 14800.00,
+    "DescriptionProduct": "Miniatura de exhibición y rol impresa en resina de alta definición con base de piedra agrietada, lista para pintar.",
+    "Image": "miniatura_hollow_knight.jpg",
+    "IDCategory": 13,
+    "IDFranchise": 13,
+    "Material": "Resina",
+    "Height": 9.00,
+    "Width": 6.00,
+    "Depth": 6.00,
+    "Finish": "Gris base",
+    "ProductionTime": 2
+  },
+  {
+    "NameProduct": "Calavera Gótica Portalápices",
+    "Price": 19500.00,
+    "DescriptionProduct": "Portalápices decorativo con relieves góticos y acabado envejecido a mano, ideal para escritorios con estética dark fantasy.",
+    "Image": "calavera_gotica_portalapices.jpg",
+    "IDCategory": 8,
+    "IDFranchise": 10,
+    "Material": "PLA",
+    "Height": 13.00,
+    "Width": 11.00,
+    "Depth": 15.00,
+    "Finish": "Pintado a mano",
+    "ProductionTime": 3
+  },
+  {
+    "NameProduct": "Maceta Geométrica Low-Poly (Terracota Mate)",
+    "Price": 13500.00,
+    "DescriptionProduct": "Maceta minimalista facetada con platillo de drenaje incluido, impresa en PETG resistente a la humedad para suculentas y cactus.",
+    "Image": "maceta_geometrica_lowpoly.jpg",
+    "IDCategory": 12,
+    "IDFranchise": 14,
+    "Material": "PETG",
+    "Height": 11.00,
+    "Width": 12.00,
+    "Depth": 12.00,
+    "Finish": "Monocromático",
+    "ProductionTime": 2
+  },
+  {
+    "NameProduct": "Bandeja Organizador Modular de Escritorio (EDC)",
+    "Price": 16200.00,
+    "DescriptionProduct": "Bandeja modular antideslizante en material flexible TPU para llaves, auriculares, reloj y accesorios de uso diario.",
+    "Image": "organizador_modular_edc.jpg",
+    "IDCategory": 9,
+    "IDFranchise": 14,
+    "Material": "Flex",
+    "Height": 3.50,
+    "Width": 22.00,
+    "Depth": 14.00,
+    "Finish": "Monocromático",
+    "ProductionTime": 2
+  },
+  {
+    "NameProduct": "Lámpara Luna de Totoro (LED)",
+    "Price": 32000.00,
+    "DescriptionProduct": "Lámpara de velador con luz LED cálida de Totoro bajo una luna creciente translúcida, con base de bosque pintada a mano.",
+    "Image": "lampara_totoro_led.jpg",
+    "IDCategory": 6,
+    "IDFranchise": 11,
+    "Material": "PLA",
+    "Height": 18.00,
+    "Width": 14.00,
+    "Depth": 14.00,
+    "Finish": "Pintado a mano",
+    "ProductionTime": 4
   }
 ]
