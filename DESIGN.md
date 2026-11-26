@@ -31,7 +31,8 @@ These guidelines translate the target in `PRODUCT.md`; they do not describe ship
 | Public entry         | Lead with the catalogue, not a login wall, portfolio pitch, or mandatory tutorial. Browsing catalogue, product details, and cart must not require registration.                                                           |
 | Optional orientation | Offer a short, skippable explanation of what to try and what each flow demonstrates. Keep repository and engineering-evidence links discoverable without interrupting shopping.                                           |
 | Buyer demo           | Provide a clearly labelled demo entry without registration friction. Identify simulated purchases before confirmation and in the resulting order state; never imply a real charge or fulfilment.                          |
-| STAFF demo           | Identify the active role and permitted actions without duplicating role indicators across header and demo bar. Group workshop tools under a single `Taller` area (`Pedidos`, `Catálogo y stock`, `Solicitudes recibidas`) separate from buyer navigation; orders and commission requests are read-only for STAFF. Public demo access must not offer ADMIN. Hiding controls is presentation, not backend authorization or visitor isolation. |
+| STAFF demo           | Identify the active role and permitted actions without duplicating role indicators across header and demo bar. Group workshop tools under a single `Taller` area (`Pedidos`, `Catálogo y stock`, `Solicitudes recibidas`) separate from buyer navigation; orders and commission requests are read-only for STAFF. Hide shopping chrome (cart, personal orders, add-to-cart) for operational roles as presentation complementing backend `403` enforcement. |
+| ADMIN demo *(gated target)* | Expose `ADMIN` in the demo switcher only after ADMIN operational views (payment confirmation, order cancellation with restock, product deletion, categories/franchises, and slot-scoped users) and per-slot isolation are implemented and verified. Never show an empty or near-duplicate ADMIN mode. |
 | Commission intake    | Ask visitors to use fictitious data. Explain that submitting a request does not create a quote, order, payment, or automated email. Demo STAFF review must not expose another visitor's requests.                         |
 | Session and recovery | Make session expiry, unavailable demo access, and any implemented reset understandable, including what data was lost or retained and the next available action. Do not promise recovery behavior that has not been built. |
 
@@ -40,8 +41,25 @@ These guidelines translate the target in `PRODUCT.md`; they do not describe ship
 - Distinguish loading, empty, validation, rate-limit, permission, expired-session, and service-unavailable states; an API failure must not masquerade as an empty dataset or a successful operation.
 - Preserve keyboard access, visible focus, labelled controls, readable feedback, responsive layouts, and reduced-motion behavior for every demo entry and role change.
 - Do not publish shared credentials or suggest that existing role checks alone make public STAFF access safe. Backend-enforced isolation, usage limits, fictitious data, and recoverability need implementation and verification.
-- Buyer interaction is the first demo delivery priority. Public STAFF interaction follows only after its safety boundaries are verified.
+- Buyer interaction is the first demo delivery priority. Public STAFF interaction follows once its safety boundaries are verified; public ADMIN interaction is gated on complete ADMIN operational views and verified per-slot isolation.
 - Existing application sessions, orders, and role-based screens are not evidence that a demo-session mechanism, visitor-isolated stock, or automatic reset exists. The specific mechanics and placement of new controls require a separate design; no new visual identity is introduced here.
+
+## Role-based interface architecture
+
+This matrix translates `PRODUCT.md`'s role boundaries into concrete storefront and workshop surfaces. Items marked **(Target)** are approved design direction not yet implemented in code; items without that marker reflect current repository behavior. Visual hiding is always presentation complementing backend authorization.
+
+| Surface | Visitor | `USER` (buyer) | `STAFF` (workshop) | `ADMIN` (owner) |
+| --- | --- | --- | --- | --- |
+| **Primary nav** | Catálogo · Encargos · Cómo funciona | Catálogo · Encargos · Cómo funciona | Catálogo · Encargos · Cómo funciona · **Taller ▾** | Catálogo · Encargos · Cómo funciona · **Taller ▾** |
+| **Header cart** | Visible (local cart) | Visible (synced cart) | **(Target)** Hidden | **(Target)** Hidden |
+| **Account menu** | Iniciar sesión · Registrarse | **(Target)** Mi perfil · Mis pedidos · Cerrar sesión | **(Target)** Mi perfil · Cerrar sesión *(no Mis pedidos)* | **(Target)** Mi perfil · Cerrar sesión *(no Mis pedidos)* |
+| **`Taller ▾` menu** | — | — | Pedidos (`/admin/orders`) · Catálogo y stock (`/admin/products`) · Solicitudes recibidas (`/admin/commission-requests`) | Same as STAFF + **(Target)** Categorías y franquicias · Usuarios |
+| **Product detail (`/product`)** | `Agregar al carrito` · `Ir al carrito` | `Agregar al carrito` · `Ir al carrito` | **(Target)** Current stock badge + `Editar pieza en el taller` (`/admin/products/edit?id=X`), no purchase buttons | **(Target)** Current stock badge + `Editar pieza en el taller` (`/admin/products/edit?id=X`), no purchase buttons |
+| **`/cart` & `/orders`** | Local cart (login required to check out); `/orders` requires login | Full simulated purchase & order history flow | **(Target)** Clear operational-account notice with link back to Taller | **(Target)** Clear operational-account notice with link back to Taller |
+| **Workshop orders (`/admin/orders`)** | Gate denied | Gate denied | Read-only (`Nombre I. · #id`, items, status, total; no email, no payment/cancel actions) | Same as STAFF + **(Target)** `Confirmar pago` and `Cancelar pedido` (with restock) |
+| **Workshop catalogue (`/admin/products`)** | Gate denied | Gate denied | Create, edit, live stock stepper, quick stock filters (`Todos / Stock bajo / Sin stock`); no Delete | Same as STAFF + `Eliminar` |
+| **Self-profile (`/profile`)** | Redirect to `/login` | **(Target)** Read-only account details, role badge, shortcut to `Mis pedidos` | **(Target)** Read-only account details, role badge, permitted scope, shortcuts to Taller | **(Target)** Read-only account details, role badge, permitted scope, shortcuts to Taller/Admin |
+| **Demo bar switcher** | Demo entry CTA | `Buyer \| STAFF` **(Target final: `Buyer \| STAFF \| ADMIN` once ADMIN views are verified)** | Same | Same *(when enabled)* |
 
 ## Visual theme and atmosphere
 
