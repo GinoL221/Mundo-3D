@@ -63,8 +63,8 @@ Buyer interaction is the first delivery priority; public STAFF interaction follo
 
 - Catalogue with categories and franchises (17 seeded products in `backend/src/database/data/products.json`), plus product detail pages with Web Share / link copy.
 - Registration and login with email confirmation (`confirm-email.astro`, Brevo HTTPS / SMTP via `MAIL_DRIVER`), JWT in an `httpOnly` cookie, signed double-submit CSRF, refresh-token rotation with family-wide reuse detection, and per-IP plus per-account login throttling.
-- Three-role model: `ADMIN` (1), `USER` (2), `STAFF` (3). STAFF can create and update products but not delete them.
-- Product administration with stock and images (`frontend/src/pages/admin/products/`) and custom-commission request review (`frontend/src/pages/admin/commission-requests.astro`). Category and franchise CRUD endpoints plus user read endpoints (`GET /users`, `GET /users/:id`) exist on the backend API without dedicated admin frontend screens yet.
+- Three-role model: `ADMIN` (1), `USER` (2), `STAFF` (3). See **Roles and responsibilities** below for each role's purpose, tools, and deliberate boundaries.
+- Product administration with stock and images (`frontend/src/pages/admin/products/`), read-only workshop order listing (`frontend/src/pages/admin/orders.astro`), and custom-commission request review (`frontend/src/pages/admin/commission-requests.astro`). Category and franchise CRUD endpoints plus user read endpoints (`GET /users`, `GET /users/:id`) exist on the backend API without dedicated admin frontend screens yet.
 - Local cart with Nanostores, synchronised to the API for authenticated users.
 - Orders and order history (simulated checkout; no payment processing).
 - Informational pages: about, FAQ, help, step-by-step, terms, privacy.
@@ -110,6 +110,16 @@ Partial visitor-isolation persistence and lease primitives (`backend/src/.../Dem
 - `README.md` documents setup, architecture, and testing strategy; `docs/RUNBOOKS.md` documents the free-tier deployment stack and operational checks.
 
 **Absences that must not be fabricated:** no customers, no testimonials, no sales figures, no press, no case studies, no pricing tiers, no delivery guarantees, no payment processing. Prices exist on catalogue items as seed data only.
+
+## Roles and responsibilities
+
+The three-role model (`ADMIN = 1`, `USER = 2`, `STAFF = 3`) is fixed product truth. Each role has a distinct operational purpose and deliberate limits enforced on the backend:
+
+| Role | Purpose | Primary tools | Deliberate limits |
+| --- | --- | --- | --- |
+| **USER (buyer)** | Browse collectibles, simulate purchases, track own orders, and submit custom commission requests. | Catalogue, cart, checkout simulation, My orders (`/orders`), custom commission form (`/help`). | Can read only own orders; no access to workshop tools or other users. |
+| **STAFF (workshop operator)** | Keep the catalogue and stock accurate, see what was sold so pieces can be prepared, and review incoming custom commission requests. | Workshop area (`Taller`): Orders (read-only, `/admin/orders`), Catalogue & stock (create, edit, stock adjustments & quick low/out-of-stock filters, `/admin/products`), Received commission requests (read-only, `/admin/commission-requests`). | Cannot delete products, confirm payments, cancel orders, or access user accounts (`/users`). In workshop orders, sees customers only as first name + last-name initial + id (never email or full last name). In the public demo, categories and franchises remain read-only. |
+| **ADMIN (owner)** | Full business ownership: everything STAFF does plus destructive catalogue management, payment confirmation, order cancellation, and user administration. | All workshop tools plus ADMIN-only backend capabilities (delete products/categories/franchises, confirm payment, cancel orders, list/inspect users). | Never exposed in the public demo. |
 
 ## Product Principles
 
