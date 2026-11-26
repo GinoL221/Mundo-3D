@@ -279,6 +279,9 @@
       if (outcome === 'confirmed') {
         isConfirmed = true;
         confirmationForm.hidden = true;
+        if (resendForm) {
+          resendForm.hidden = true;
+        }
         if (confirmBtn) {
           confirmBtn.disabled = true;
         }

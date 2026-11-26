@@ -84,6 +84,7 @@ test.describe('email confirmation', () => {
       'Tu correo fue confirmado.',
     );
     await expect(page.getByRole('button', { name: 'Confirmar correo' })).toBeHidden();
+    await expect(page.locator('#resend-confirmation-form')).toBeHidden();
     await expect(page.getByRole('link', { name: 'Ir al catálogo' })).toHaveAttribute(
       'href',
       '/products',
@@ -118,6 +119,7 @@ test.describe('email confirmation', () => {
         'Tu correo fue confirmado.',
       );
       await expect(guestPage.getByRole('button', { name: 'Confirmar correo' })).toBeHidden();
+      await expect(guestPage.locator('#resend-confirmation-form')).toBeHidden();
       const exitLink = guestPage.locator('#email-confirmation-exit-link');
       await expect(exitLink).toBeVisible();
       await expect(exitLink).toHaveText('Iniciar sesión');
@@ -146,6 +148,7 @@ test.describe('email confirmation', () => {
     await expect(page.locator('#email-confirmation-feedback-text')).toHaveText(
       'El enlace no es válido o ya venció. Podés solicitar otro.',
     );
+    await expect(page.locator('#resend-confirmation-form')).toBeVisible();
     await expect(page.locator('#email-confirmation-feedback')).not.toContainText(invalidToken);
   });
 

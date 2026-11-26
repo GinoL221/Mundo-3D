@@ -53,4 +53,12 @@ describe('EmailConfirmationForm source contract', () => {
     expect(componentSource).not.toContain('Te enviamos un correo');
     expect(componentSource).not.toMatch(/cuenta inexistente|cuenta verificada|límite alcanzado/i);
   });
+
+  it('hides the resend form once confirmation succeeds', () => {
+    const confirmedBlock = componentSource.match(
+      /if \(outcome === 'confirmed'\) \{([\s\S]*?)\} else if \(outcome === 'rate-limited'\)/,
+    );
+    expect(confirmedBlock?.[1]).toContain('confirmationForm.hidden = true');
+    expect(confirmedBlock?.[1]).toContain('resendForm.hidden = true');
+  });
 });
