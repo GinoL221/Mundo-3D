@@ -11,7 +11,7 @@ test.describe('Product 3D Specs Panel', () => {
     await expect(page.locator('#product-name')).not.toBeEmpty();
 
     await expect(page.locator('#product-material')).toHaveText('PLA');
-    await expect(page.locator('#product-dimensions')).toHaveText('H: 15 cm | W: 10 cm | D: 10 cm');
+    await expect(page.locator('#product-dimensions')).toHaveText('Alto: 15 cm · Ancho: 10 cm · Profundidad: 10 cm');
     await expect(page.locator('#product-finish')).not.toHaveText('-');
     await expect(page.locator('#product-production')).toHaveText('3 días');
   });
@@ -42,7 +42,7 @@ test.describe('Product 3D Specs Panel', () => {
     await expect(page.locator('#product-name')).toHaveText('Producto Parcial');
 
     await expect(page.locator('#product-material')).toHaveText('Resina');
-    await expect(page.locator('#product-dimensions')).toHaveText('H: 20 cm | W: no definida | D: no definida');
+    await expect(page.locator('#product-dimensions')).toHaveText('Alto: 20 cm · Ancho: no definida · Profundidad: no definida');
     await expect(page.locator('#product-finish')).toHaveText('Mate');
     await expect(page.locator('#product-production')).toHaveText('5 días');
   });

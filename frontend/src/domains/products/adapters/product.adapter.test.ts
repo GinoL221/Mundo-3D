@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { adaptAPIProduct, type APIProduct } from './product.adapter';
+import {
+  adaptAPIProduct,
+  formatProductDimensionsSummary,
+  type APIProduct,
+} from './product.adapter';
 
 function buildAPIProduct(overrides: Partial<APIProduct> = {}): APIProduct {
   return {
@@ -112,5 +116,29 @@ describe('adaptAPIProduct — productionTime formatting', () => {
   it('defaults productionTime to "A consultar" when not provided', () => {
     const product = adaptAPIProduct(buildAPIProduct());
     expect(product.productionTime).toBe('A consultar');
+  });
+});
+
+describe('formatProductDimensionsSummary', () => {
+  it('formats full dimensions in Spanish with explicit labels', () => {
+    const product = adaptAPIProduct(buildAPIProduct({ height: 15, width: 10, depth: 10 }));
+
+    expect(formatProductDimensionsSummary(product)).toBe(
+      'Alto: 15 cm · Ancho: 10 cm · Profundidad: 10 cm',
+    );
+  });
+
+  it('preserves per-dimension fallback labels for partial dimensions', () => {
+    const product = adaptAPIProduct(buildAPIProduct({ height: 20, width: null, depth: null }));
+
+    expect(formatProductDimensionsSummary(product)).toBe(
+      'Alto: 20 cm · Ancho: no definida · Profundidad: no definida',
+    );
+  });
+
+  it('returns "A consultar" when no dimensions are defined', () => {
+    const product = adaptAPIProduct(buildAPIProduct({ height: null, width: null, depth: null }));
+
+    expect(formatProductDimensionsSummary(product)).toBe('A consultar');
   });
 });

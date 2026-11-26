@@ -120,7 +120,11 @@ import SocialIcon from '../components/SocialIcon.astro';
 </Layout>
 
 <script>
-  import { getCategoryImg, isPlaceholderImage } from '../domains/products';
+  import {
+    formatProductDimensionsSummary,
+    getCategoryImg,
+    isPlaceholderImage,
+  } from '../domains/products';
   import { resolveImageUrl } from '../lib/imageUrl';
   import { fetchProductById } from '../domains/products/services/product.service';
   import { CartService } from '../domains/cart';
@@ -190,7 +194,7 @@ import SocialIcon from '../components/SocialIcon.astro';
     setText('product-material', product.material);
     setText('product-finish', product.finish);
     setText('product-production', product.productionTime);
-    setText('product-dimensions', product.hasDimensions ? `H: ${product.height} | W: ${product.width} | D: ${product.depth}` : 'A consultar');
+    setText('product-dimensions', formatProductDimensionsSummary(product));
 
     if (inquiryEl) {
       const hasConsultSpec = [
