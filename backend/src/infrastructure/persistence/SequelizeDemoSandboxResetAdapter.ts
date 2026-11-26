@@ -68,7 +68,12 @@ export class SequelizeDemoSandboxResetAdapter implements DemoSandboxResetPort {
       seedVersion: DEMO_SANDBOX_SEED_VERSION,
     };
 
-    const fence = new SequelizeSandboxResetFence(connection, slotId, graph.fenceModel);
+    const fence = new SequelizeSandboxResetFence(
+      connection,
+      slotId,
+      graph.fenceModel,
+      graph.receiptModel,
+    );
     if (!(await fence.fenceForReset(identity))) {
       throw new Error('Sandbox reset fence transition rejected');
     }
@@ -125,6 +130,26 @@ export class SequelizeDemoSandboxResetAdapter implements DemoSandboxResetPort {
       return false;
     }
     return this.verifyCleanState(graph.models, slotId);
+  }
+
+  async releaseFence(
+    slotId: string,
+    completedGeneration: number,
+    resetAttemptId: string,
+  ): Promise<void> {
+    const connection = this.connections.get(slotId);
+    const graph = this.getGraph(connection);
+    const fence = new SequelizeSandboxResetFence(
+      connection,
+      slotId,
+      graph.fenceModel,
+      graph.receiptModel,
+    );
+    await fence.releaseFence({
+      slotId,
+      generation: completedGeneration,
+      attemptId: resetAttemptId,
+    });
   }
 
   private getGraph(connection: Sequelize): SandboxSlotModelGraph {
