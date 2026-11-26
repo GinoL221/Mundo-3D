@@ -325,14 +325,14 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
     expect([xCart.status, xOrd.status]).toEqual([403, 403]);
 
     const absExp = new Date(Date.now() + 60_000);
-    const adminCl = {
+    const badRoleCl = {
       userId: 2,
       slotId: visitorA.slotId,
       leaseId: visitorA.leaseId,
-      role: Role.ADMIN,
+      role: 99 as Role,
     };
-    const acc = ses.signDemoSandboxAccessToken(adminCl, SANDBOX_SECRET);
-    const ref = ses.signDemoSandboxRefreshToken(adminCl, SANDBOX_SECRET, absExp);
+    const acc = ses.signDemoSandboxAccessToken(badRoleCl, SANDBOX_SECRET);
+    const ref = ses.signDemoSandboxRefreshToken(badRoleCl, SANDBOX_SECRET, absExp);
     const [gRes, rRes] = await Promise.all([
       send('get', '/api/demo/products', { ck: `${A}=${acc}` }),
       send('post', '/api/demo/session/refresh', { ck: `${R}=${ref}` }),
@@ -431,6 +431,83 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
     const [connA, connB] = [connections.get(visitorA.slotId), connections.get(visitorB.slotId)];
     expect([await countRows(connA, 'Product'), await countRows(connB, 'Product')]).toEqual([
       COUNTS.products + 1,
+      COUNTS.products,
+    ]);
+
+    // Switch visitor A to ADMIN inside the same lease and verify slot-scoped
+    // ADMIN capabilities (users, taxonomy CRUD, order payment/cancel, delete product)
+    // while buyer-only routes still return 403 and slot B stays untouched.
+    const toAdmin = await send('post', '/api/demo/session/role', {
+      ck: ckStaff,
+      csrf: visitorA.csrf,
+      body: { role: 'ADMIN' },
+    });
+    expect([toAdmin.status, toAdmin.body.role, toAdmin.body.user.idUser]).toEqual([200, 'ADMIN', 3]);
+    const adminCk = parseCk(toAdmin.headers['set-cookie']);
+    visitorA = {
+      ...visitorA,
+      auth: adminCk[A],
+      refresh: adminCk[R],
+      csrf: adminCk[C],
+    };
+    const ckAdmin = [`${A}=${visitorA.auth}`, `${C}=${visitorA.csrf}`];
+
+    const [
+      adminUsers,
+      adminMe,
+      adminCartGet,
+      adminOrdPost,
+      adminCatCreate,
+      adminFranCreate,
+      adminConfirmOrd,
+      adminDeleteProd,
+    ] = await Promise.all([
+      send('get', '/api/demo/users', { ck: ckAdmin }),
+      send('get', '/api/demo/users/me', { ck: ckAdmin }),
+      send('get', '/api/demo/cart', { ck: ckAdmin }),
+      send('post', '/api/demo/orders', {
+        ck: ckAdmin,
+        csrf: visitorA.csrf,
+        idem: 'admin-blocked-order',
+      }),
+      send('post', '/api/demo/categories', {
+        ck: ckAdmin,
+        csrf: visitorA.csrf,
+        body: { nameCategory: 'Dioramas Demo' },
+      }),
+      send('post', '/api/demo/franchises', {
+        ck: ckAdmin,
+        csrf: visitorA.csrf,
+        body: { nameFranchise: 'Ghibli Demo' },
+      }),
+      send('post', '/api/demo/orders/1/confirm-payment', { ck: ckAdmin, csrf: visitorA.csrf }),
+      send('delete', `/api/demo/products/${pid}`, { ck: ckAdmin, csrf: visitorA.csrf }),
+    ]);
+
+    expect([
+      adminUsers.status,
+      adminUsers.body.count,
+      adminMe.status,
+      adminMe.body.idRole,
+      adminCartGet.status,
+      adminOrdPost.status,
+      adminCatCreate.status,
+      adminFranCreate.status,
+      adminConfirmOrd.status,
+      adminConfirmOrd.body.status,
+      adminDeleteProd.status,
+    ]).toEqual([200, COUNTS.users, 200, Role.ADMIN, 403, 403, 201, 201, 200, 'PAID', 204]);
+    expect(JSON.stringify(adminUsers.body)).not.toContain(visitorB.slotId.toLowerCase());
+    expect([await countRows(connA, 'Category'), await countRows(connB, 'Category')]).toEqual([
+      COUNTS.categories + 1,
+      COUNTS.categories,
+    ]);
+    expect([await countRows(connA, 'Franchise'), await countRows(connB, 'Franchise')]).toEqual([
+      COUNTS.franchises + 1,
+      COUNTS.franchises,
+    ]);
+    expect([await countRows(connA, 'Product'), await countRows(connB, 'Product')]).toEqual([
+      COUNTS.products,
       COUNTS.products,
     ]);
   }, 30_000);

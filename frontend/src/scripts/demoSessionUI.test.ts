@@ -52,6 +52,7 @@ function setupDom(initialCookie = '') {
   const roleControls = new FakeEl(true);
   const buyerBtn = new FakeEl(false);
   const staffBtn = new FakeEl(false);
+  const adminBtn = new FakeEl(false);
   const exitBtn = new FakeEl(false);
   const noticeWrap = new FakeEl(true);
   const noticeEl = new FakeEl(false);
@@ -68,6 +69,7 @@ function setupDom(initialCookie = '') {
     ['demo-bar-role-controls', roleControls],
     ['demo-role-buyer', buyerBtn],
     ['demo-role-staff', staffBtn],
+    ['demo-role-admin', adminBtn],
     ['demo-bar-exit', exitBtn],
     ['demo-session-notice-wrap', noticeWrap],
     ['demo-session-notice', noticeEl],
@@ -129,6 +131,7 @@ function setupDom(initialCookie = '') {
     roleControls,
     buyerBtn,
     staffBtn,
+    adminBtn,
     exitBtn,
     noticeWrap,
     noticeTitle,
@@ -242,6 +245,45 @@ describe('initializeDemoSessionUI', () => {
     dom.buyerBtn.click();
     await flush();
     expect(dom.roleBadge.textContent).toBe('BUYER');
+    expect(dom.assign).toHaveBeenCalledWith('/');
+    cleanup();
+  });
+
+  it('switches to ADMIN and redirects home when stepping down to STAFF from an ADMIN-only page', async () => {
+    const dom = setupDom(`${DEMO_CSRF_COOKIE_NAME}=demo.sig`);
+    dom.win.location.pathname = '/admin/users';
+    const adminSession: DemoSessionState = {
+      ...buyerSession,
+      role: 'ADMIN',
+      user: { idUser: 3, firstName: 'Demo', lastName: 'Admin', email: 'admin@demo.invalid' },
+    };
+    const staffSession: DemoSessionState = {
+      ...buyerSession,
+      role: 'STAFF',
+      user: { idUser: 2, firstName: 'Demo', lastName: 'Staff', email: 'staff@demo.invalid' },
+    };
+    dom.store.set(DEMO_STORAGE_KEY, JSON.stringify(buyerSession));
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(new Response(JSON.stringify(buyerSession), { status: 200 }))
+        .mockResolvedValueOnce(new Response(JSON.stringify(adminSession), { status: 200 }))
+        .mockResolvedValueOnce(new Response(JSON.stringify(staffSession), { status: 200 })),
+    );
+
+    const cleanup = initializeDemoSessionUI(dom.doc, dom.win, { reloadOnTransition: true });
+    await flush();
+
+    dom.adminBtn.click();
+    await flush();
+    expect(dom.roleBadge.textContent).toBe('ADMIN');
+    expect(dom.adminBtn.attrs.get('aria-pressed')).toBe('true');
+    expect(dom.reload).toHaveBeenCalledTimes(1);
+
+    dom.staffBtn.click();
+    await flush();
+    expect(dom.roleBadge.textContent).toBe('STAFF');
     expect(dom.assign).toHaveBeenCalledWith('/');
     cleanup();
   });

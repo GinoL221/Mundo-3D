@@ -1,7 +1,7 @@
 import type { DemoRole } from '../config';
 
 export interface DemoBarPresentation {
-  roleLabel: 'BUYER' | 'STAFF';
+  roleLabel: 'BUYER' | 'STAFF' | 'ADMIN';
   roleBadgeClass: string;
   summaryText: string;
 }
@@ -16,6 +16,14 @@ export interface DemoNoticePresentation {
 export type DemoNoticeKind = 'disabled' | 'busy' | 'rate-limit' | 'error' | 'expired';
 
 export function buildDemoBarPresentation(role: DemoRole): DemoBarPresentation {
+  if (role === 'ADMIN') {
+    return {
+      roleLabel: 'ADMIN',
+      roleBadgeClass: 'ui-badge ui-badge--admin',
+      summaryText:
+        'Sesión aislada · acceso completo al taller: confirmar/cancelar pedidos, eliminar piezas, categorías/franquicias y usuarios del slot.',
+    };
+  }
   if (role === 'STAFF') {
     return {
       roleLabel: 'STAFF',
@@ -70,6 +78,10 @@ export function buildDemoNotice(
         retryLabel: 'Reintentar',
       };
   }
+}
+
+export function isAdminOnlyPath(pathname: string): boolean {
+  return pathname === '/admin/taxonomy' || pathname === '/admin/users';
 }
 
 export function isDemoProtectedPath(pathname: string): boolean {

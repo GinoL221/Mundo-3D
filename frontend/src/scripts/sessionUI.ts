@@ -1,5 +1,6 @@
 import {
   DEMO_SESSION_EVENT,
+  demoRoleToId,
   endDemoSession,
   getDemoSession,
   isDemoSessionActive,
@@ -127,7 +128,7 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
 
     const demoSession = getDemoSession();
     if (demoSession) {
-      const idRole = demoSession.role === 'STAFF' ? 3 : 2;
+      const idRole = demoRoleToId(demoSession.role);
       const showWorkshop = hasAdminAccess({ idRole });
       const showAdminOnly = isAdminOnly({ idRole });
       const operational = isOperationalRole({ idRole });

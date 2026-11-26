@@ -27,6 +27,7 @@ function createFakeDom(initialCookie = '') {
   const guestEl = { style: { display: '' } };
   const userEl = { style: { display: 'none' } };
   const adminEl = { style: { display: 'none' } };
+  const adminStrictEl = { style: { display: 'none' } };
   const buyerEl = { style: { display: '' } };
   const greeting = { textContent: 'Hola' };
   const avatar = { src: '' };
@@ -61,6 +62,7 @@ function createFakeDom(initialCookie = '') {
       if (sel === '.guest-only') return [guestEl];
       if (sel === '.user-only') return [userEl];
       if (sel === '.admin-only') return [adminEl];
+      if (sel === '.admin-strict-only') return [adminStrictEl];
       if (sel === '.buyer-only') return [buyerEl];
       return [];
     },
@@ -86,7 +88,7 @@ function createFakeDom(initialCookie = '') {
 
   vi.stubGlobal('document', doc);
   vi.stubGlobal('window', win);
-  return { doc, win, guestEl, userEl, adminEl, buyerEl, greeting, logoutBtn };
+  return { doc, win, guestEl, userEl, adminEl, adminStrictEl, buyerEl, greeting, logoutBtn };
 }
 
 describe('Demo shell integration (sessionUI + m3d_demo_cart)', () => {
@@ -120,10 +122,10 @@ describe('Demo shell integration (sessionUI + m3d_demo_cart)', () => {
     expect(cartItems.get()[0]?.productId).toBe(1);
   });
 
-  it('reflects Demo Buyer vs Demo STAFF in HomeHeader visibility and greeting', () => {
+  it('reflects Demo Buyer vs Demo STAFF vs Demo ADMIN in HomeHeader visibility and greeting', () => {
     const session = createMemoryStorage();
     vi.stubGlobal('sessionStorage', session);
-    const { doc, win, guestEl, userEl, adminEl, buyerEl, greeting } = createFakeDom(
+    const { doc, win, guestEl, userEl, adminEl, adminStrictEl, buyerEl, greeting } = createFakeDom(
       `${DEMO_CSRF_COOKIE_NAME}=demo.sig`,
     );
 
@@ -141,6 +143,7 @@ describe('Demo shell integration (sessionUI + m3d_demo_cart)', () => {
     expect(guestEl.style.display).toBe('none');
     expect(userEl.style.display).toBe('block');
     expect(adminEl.style.display).toBe('none');
+    expect(adminStrictEl.style.display).toBe('none');
     expect(buyerEl.style.display).toBe('');
     expect(greeting.textContent).toBe('Cuenta demo');
 
@@ -156,6 +159,23 @@ describe('Demo shell integration (sessionUI + m3d_demo_cart)', () => {
     win.dispatchEvent(new Event('demo-session-changed'));
 
     expect(adminEl.style.display).toBe('block');
+    expect(adminStrictEl.style.display).toBe('none');
+    expect(buyerEl.style.display).toBe('none');
+    expect(greeting.textContent).toBe('Cuenta demo');
+
+    session.setItem(
+      DEMO_STORAGE_KEY,
+      JSON.stringify({
+        active: true,
+        role: 'ADMIN',
+        user: { idUser: 3, firstName: 'Demo', lastName: 'Admin', email: 'admin@demo.invalid' },
+        lease: {},
+      }),
+    );
+    win.dispatchEvent(new Event('demo-session-changed'));
+
+    expect(adminEl.style.display).toBe('block');
+    expect(adminStrictEl.style.display).toBe('block');
     expect(buyerEl.style.display).toBe('none');
     expect(greeting.textContent).toBe('Cuenta demo');
     cleanup();

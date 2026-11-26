@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { buildDemoBarPresentation, buildDemoNotice, isDemoProtectedPath } from './demoSessionModel';
+import {
+  buildDemoBarPresentation,
+  buildDemoNotice,
+  isAdminOnlyPath,
+  isDemoProtectedPath,
+} from './demoSessionModel';
 
 describe('demoSessionModel', () => {
-  it('maps USER and STAFF roles to Taller Maker badges and rioplatense copy', () => {
+  it('maps USER, STAFF, and ADMIN roles to Taller Maker badges and rioplatense copy', () => {
     expect(buildDemoBarPresentation('USER')).toEqual({
       roleLabel: 'BUYER',
       roleBadgeClass: 'ui-badge ui-badge--user',
@@ -13,6 +18,12 @@ describe('demoSessionModel', () => {
       roleBadgeClass: 'ui-badge ui-badge--staff',
       summaryText:
         'Sesión aislada · podés ver pedidos, ajustar stock, editar el catálogo y revisar solicitudes. Sin eliminar piezas ni tocar pagos.',
+    });
+    expect(buildDemoBarPresentation('ADMIN')).toEqual({
+      roleLabel: 'ADMIN',
+      roleBadgeClass: 'ui-badge ui-badge--admin',
+      summaryText:
+        'Sesión aislada · acceso completo al taller: confirmar/cancelar pedidos, eliminar piezas, categorías/franquicias y usuarios del slot.',
     });
   });
 
@@ -39,13 +50,21 @@ describe('demoSessionModel', () => {
     expect(error.retryLabel).toBe('Reintentar');
   });
 
-  it('identifies protected paths that must redirect home on demo exit', () => {
+  it('identifies protected and admin-only paths for demo navigation guards', () => {
     expect(isDemoProtectedPath('/admin/products')).toBe(true);
     expect(isDemoProtectedPath('/admin/commission-requests')).toBe(true);
+    expect(isDemoProtectedPath('/admin/taxonomy')).toBe(true);
+    expect(isDemoProtectedPath('/admin/users')).toBe(true);
     expect(isDemoProtectedPath('/orders')).toBe(true);
     expect(isDemoProtectedPath('/order')).toBe(true);
     expect(isDemoProtectedPath('/profile')).toBe(true);
     expect(isDemoProtectedPath('/products')).toBe(false);
     expect(isDemoProtectedPath('/')).toBe(false);
+
+    expect(isAdminOnlyPath('/admin/taxonomy')).toBe(true);
+    expect(isAdminOnlyPath('/admin/users')).toBe(true);
+    expect(isAdminOnlyPath('/admin/orders')).toBe(false);
+    expect(isAdminOnlyPath('/admin/products')).toBe(false);
+    expect(isAdminOnlyPath('/profile')).toBe(false);
   });
 });

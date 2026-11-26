@@ -48,6 +48,7 @@ function makeMockSlotGraph(slotId: string) {
       findAll: jest.fn(async () => [
         { idRole: Role.USER, email: emails.buyer, emailVerifiedAt: new Date() },
         { idRole: Role.STAFF, email: emails.staff, emailVerifiedAt: new Date() },
+        { idRole: Role.ADMIN, email: emails.admin, emailVerifiedAt: new Date() },
       ]),
     },
     Category: makeTable('Category', DEMO_SANDBOX_EXPECTED_COUNTS.categories),
@@ -160,15 +161,16 @@ describe('SequelizeDemoSandboxResetAdapter', () => {
     await expect(createAdapter(staleGraph).reset(slotId, 1, attemptId)).rejects.toThrow('fence');
     expect(staleGraph.receiptModel.create).not.toHaveBeenCalled();
 
-    const adminGraph = makeMockSlotGraph(slotId);
-    adminGraph.models.User.findAll.mockResolvedValueOnce([
-      { idRole: Role.ADMIN, email: 'demo.buyer+slot-1@sandbox.mundo3d.invalid', emailVerifiedAt: new Date() },
+    const rogueGraph = makeMockSlotGraph(slotId);
+    rogueGraph.models.User.findAll.mockResolvedValueOnce([
+      { idRole: Role.USER, email: 'demo.buyer+slot-1@sandbox.mundo3d.invalid', emailVerifiedAt: new Date() },
       { idRole: Role.STAFF, email: 'demo.staff+slot-1@sandbox.mundo3d.invalid', emailVerifiedAt: new Date() },
+      { idRole: Role.ADMIN, email: 'rogue.admin@sandbox.mundo3d.invalid', emailVerifiedAt: new Date() },
     ]);
-    await expect(createAdapter(adminGraph).reset(slotId, 1, attemptId)).rejects.toThrow(
+    await expect(createAdapter(rogueGraph).reset(slotId, 1, attemptId)).rejects.toThrow(
       'verification failed',
     );
-    expect(adminGraph.receiptModel.create).not.toHaveBeenCalled();
+    expect(rogueGraph.receiptModel.create).not.toHaveBeenCalled();
   });
 
   it('verify() requires valid slotId, matching committed receipt, and clean verified non-ADMIN state', async () => {
@@ -243,6 +245,11 @@ describe('SequelizeDemoSandboxResetAdapter', () => {
         {
           idRole: Role.STAFF,
           email: 'demo.staff+slot-1@sandbox.mundo3d.invalid',
+          emailVerifiedAt: new Date(),
+        },
+        {
+          idRole: Role.ADMIN,
+          email: 'demo.admin+slot-1@sandbox.mundo3d.invalid',
           emailVerifiedAt: new Date(),
         },
       ]);

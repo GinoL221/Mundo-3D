@@ -9,7 +9,7 @@ export const DEMO_TAB_ID =
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-export type DemoRole = 'USER' | 'STAFF';
+export type DemoRole = 'USER' | 'STAFF' | 'ADMIN';
 export type DemoChangeReason =
   | 'started'
   | 'updated'
@@ -45,7 +45,7 @@ export interface DemoSessionChangedMessage {
 }
 
 const DEMO_ROUTE_RE =
-  /^(\/api)(\/(?:products|product|categories|franchises|cart|orders|custom-commission-requests)(?:$|[/?]))/;
+  /^(\/api)(\/(?:products|product|categories|franchises|cart|orders|custom-commission-requests)(?:$|[/?])|\/users(?:\/(?:me|\d+))?(?:$|[?]))/;
 
 function readRawCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
@@ -87,13 +87,20 @@ export function isDemoSessionActive(): boolean {
 }
 
 export function demoRoleToId(role: DemoRole): number {
-  return role === 'STAFF' ? 3 : 2;
+  if (role === 'ADMIN') return 1;
+  if (role === 'STAFF') return 3;
+  return 2;
 }
 
 export function isValidDemoSession(value: unknown): value is DemoSessionState {
   if (typeof value !== 'object' || value === null) return false;
   const record = value as Record<string, unknown>;
-  if (record.active !== true || (record.role !== 'USER' && record.role !== 'STAFF')) return false;
+  if (
+    record.active !== true ||
+    (record.role !== 'USER' && record.role !== 'STAFF' && record.role !== 'ADMIN')
+  ) {
+    return false;
+  }
   if (typeof record.user !== 'object' || record.user === null) return false;
   const user = record.user as Record<string, unknown>;
   return typeof user.idUser === 'number' && typeof user.firstName === 'string';

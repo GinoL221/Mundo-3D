@@ -65,8 +65,17 @@ function makeRuntime(busy = false) {
       return rows.length;
     }),
   };
+  const ADMIN = {
+    idUser: 3,
+    firstName: 'Demo',
+    lastName: 'Admin',
+    email: 'demo.admin+slot-1@sandbox.mundo3d.invalid',
+    idRole: Role.ADMIN,
+  };
   const uRepo = {
-    findById: jest.fn(async (id: number) => (id === 1 ? BUYER : id === 2 ? STAFF : null)),
+    findById: jest.fn(async (id: number) =>
+      id === 1 ? BUYER : id === 2 ? STAFF : id === 3 ? ADMIN : null,
+    ),
   };
   const uow = { runInTransaction: jest.fn(async <T>(w: (tx: unknown) => Promise<T>) => w({})) };
   const repositories = {
@@ -206,15 +215,20 @@ describe('/api/demo/session routes', () => {
     const badAud = jwt.sign({ ...b, typ: 'sandbox-access' }, S_SEC, o);
     const [g1, g2] = [await get(`${A}=${prod}`), await get(`${A}=${badAud}`)];
     expect([g1.status, g2.status]).toEqual([401, 401]);
-    const admPayload = { userId: 9, slotId: slot.id, leaseId: slot.leaseId!, role: Role.ADMIN };
-    const aTok = ses.signDemoSandboxAccessToken(admPayload, S_SEC);
-    const rTok = ses.signDemoSandboxRefreshToken(admPayload, S_SEC, slot.absoluteExpiresAt!);
+    const badRolePayload = {
+      userId: 9,
+      slotId: slot.id,
+      leaseId: slot.leaseId!,
+      role: 99 as Role,
+    };
+    const aTok = ses.signDemoSandboxAccessToken(badRolePayload, S_SEC);
+    const rTok = ses.signDemoSandboxRefreshToken(badRolePayload, S_SEC, slot.absoluteExpiresAt!);
     const [ga, rr] = [await get(`${A}=${aTok}`), await ref(`${R}=${rTok}`)];
     expect([ga.status, rr.status]).toEqual([403, 403]);
     expectClr(rr.headers['set-cookie']);
   });
 
-  it('switches USER <-> STAFF within the same lease, rotates CSRF/refresh, and rejects ADMIN with 403', async () => {
+  it('switches USER <-> STAFF <-> ADMIN within the same lease, rotates CSRF/refresh, and rejects invalid roles with 400', async () => {
     const { runtime, slotRepository, rememberTokenRepo } = makeRuntime();
     rtMod.setActiveDemoSandboxRuntime(runtime);
     const { app, post, get, ref } = buildApp();
@@ -228,8 +242,6 @@ describe('/api/demo/session routes', () => {
         .set('x-csrf-token', csrf)
         .send({ role });
 
-    const admRes = await switchRole(c1, 'ADMIN');
-    expect(admRes.status).toBe(403);
     expect((await switchRole(c1, 'SUPERUSER')).status).toBe(400);
 
     const toStaff = await switchRole(c1, 'STAFF');
@@ -246,11 +258,19 @@ describe('/api/demo/session routes', () => {
     const getStaff = await get(`${A}=${cStaff[A]}`);
     expect([getStaff.status, getStaff.body.role]).toEqual([200, 'STAFF']);
 
-    const refStaff = await ref(`${R}=${cStaff[R]}`);
-    expect([refStaff.status, refStaff.body.role]).toEqual([200, 'STAFF']);
-    const cStaffRef = parseCk(refStaff.headers['set-cookie']);
+    const toAdmin = await switchRole(cStaff, 'ADMIN');
+    expect([toAdmin.status, toAdmin.body.role, toAdmin.body.user.idUser]).toEqual([200, 'ADMIN', 3]);
+    const cAdmin = parseCk(toAdmin.headers['set-cookie']);
+    expect(cAdmin[C]).not.toBe(cStaff[C]);
 
-    const backBuyer = await switchRole(cStaffRef, 'USER');
+    const getAdmin = await get(`${A}=${cAdmin[A]}`);
+    expect([getAdmin.status, getAdmin.body.role]).toEqual([200, 'ADMIN']);
+
+    const refAdmin = await ref(`${R}=${cAdmin[R]}`);
+    expect([refAdmin.status, refAdmin.body.role]).toEqual([200, 'ADMIN']);
+    const cAdminRef = parseCk(refAdmin.headers['set-cookie']);
+
+    const backBuyer = await switchRole(cAdminRef, 'USER');
     expect([backBuyer.status, backBuyer.body.role, backBuyer.body.user.idUser]).toEqual([
       200,
       'USER',

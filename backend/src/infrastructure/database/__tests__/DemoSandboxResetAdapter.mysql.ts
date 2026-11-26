@@ -301,8 +301,12 @@ describe('SequelizeDemoSandboxResetAdapter on disposable MySQL 8.0', () => {
       type: QueryTypes.SELECT,
     });
     const expectedEmails = buildDemoSandboxSlotEmails('slot-a');
-    expect(usersA.map((u) => Number(u.id_role))).toEqual([Role.USER, Role.STAFF]);
-    expect(usersA.map((u) => u.email)).toEqual([expectedEmails.buyer, expectedEmails.staff]);
+    expect(usersA.map((u) => Number(u.id_role))).toEqual([Role.USER, Role.STAFF, Role.ADMIN]);
+    expect(usersA.map((u) => u.email)).toEqual([
+      expectedEmails.buyer,
+      expectedEmails.staff,
+      expectedEmails.admin,
+    ]);
     expect(usersA.every((u) => u.email_verified_at !== null)).toBe(true);
 
     const receiptsA = await connA.query<{

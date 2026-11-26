@@ -16,7 +16,15 @@ import {
 } from '../../middlewares/demoSandboxUpload';
 import handleValidationErrors from '../../middlewares/handleValidationErrors';
 import { cartSyncValidation as cartVal } from '../../middlewares/validators/cartValidators';
+import {
+  categoryCreateValidators as catCreVal,
+  categoryUpdateValidators as catUpdVal,
+} from '../../middlewares/validators/categoryValidators';
 import { customCommissionRequestValidators as commVal } from '../../middlewares/validators/customCommissionRequestValidators';
+import {
+  franchiseCreateValidators as franCreVal,
+  franchiseUpdateValidators as franUpdVal,
+} from '../../middlewares/validators/franchiseValidators';
 import {
   listMyOrdersValidation as myOrdVal,
   orderCreateValidation as ordVal,
@@ -40,12 +48,12 @@ export interface DemoRouterOptions {
   staffWriteLimiterMax?: number;
 }
 
-const makeLim = (windowMs: number, limit: number, error: string, skipFailedRequests = false) =>
+const makeLim = (windowMs: number, max: number, error: string, skipFailedRequests = false) =>
   rateLimit({
     windowMs,
-    limit,
+    max,
     skipFailedRequests,
-    standardHeaders: true,
+    standardHeaders: 'draft-7',
     legacyHeaders: false,
     keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
     message: { error },
@@ -86,12 +94,11 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   const [w, auth] = [15 * 60 * 1000, ses.demoSandboxAuthMiddleware];
   const write = [auth, ses.demoSandboxCsrfMiddleware];
   const buyerOnly = ses.requireDemoRole(Role.USER);
-  const staffOnly = ses.requireDemoRole(Role.STAFF);
-  const staffRead = [auth, staffOnly];
-  const staffWrite = [...write, staffOnly];
-  const denyAdmin: RequestHandler = (_req, res) => {
-    res.status(403).json({ error: 'ADMIN operations are forbidden in demo sandbox' });
-  };
+  const workshopRole = ses.requireDemoRole(Role.STAFF, Role.ADMIN);
+  const adminOnly = ses.requireDemoRole(Role.ADMIN);
+  const workshopRead = [auth, workshopRole];
+  const workshopWrite = [...write, workshopRole];
+  const adminRead = [auth, adminOnly];
   const cMsg = 'Too many demo session requests. Please try again later.';
   const rMsg = 'Too many demo session refresh requests. Please try again later.';
   const cmMsg = 'Too many requests. Please try again later.';
@@ -107,6 +114,7 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   );
   const roleLim = makeLim(o.roleSwitchLimiterWindowMs ?? w, o.roleSwitchLimiterMax ?? 30, roleMsg);
   const swLim = makeLim(o.staffWriteLimiterWindowMs ?? w, o.staffWriteLimiterMax ?? 60, swMsg);
+  const adminWrite = [...write, adminOnly, swLim];
   const [hSearch, hMine] = [run((b) => b.products.search), run((b) => b.orders.listMine)];
   const [hCart, hOrd, hComm] = [
     run((b) => b.cart.syncCart),
@@ -132,12 +140,12 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   router.post('/custom-commission-requests', ...write, cmLim, ...commVal, commErr, hComm);
   router.get(
     '/custom-commission-requests',
-    ...staffRead,
+    ...workshopRead,
     run((b) => b.commissions.list),
   );
   router.post(
     '/products',
-    ...staffWrite,
+    ...workshopWrite,
     swLim,
     demoProductUpload,
     demoProductCreateValidators,
@@ -147,7 +155,7 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   );
   router.put(
     '/products/:id',
-    ...staffWrite,
+    ...workshopWrite,
     swLim,
     demoProductUpload,
     stripDemoUploadedFile,
@@ -157,32 +165,33 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   );
   router.patch(
     '/products/:id/stock',
-    ...staffWrite,
+    ...workshopWrite,
     swLim,
     run((b) => b.products.adjustStock),
   );
-  router.delete('/products/:id', ...write, denyAdmin);
+  router.delete('/products/:id', ...adminWrite, run((b) => b.products.destroy));
+  // ORDER-SENSITIVE: `/users/me` MUST stay before `/users/:id`.
   router.get('/users/me', auth, run((b) => b.users.me));
-  router.all('/users', auth, denyAdmin);
-  router.all(
+  router.get('/users', ...adminRead, run((b) => b.users.index));
+  router.get(
     '/users/:id',
     (req, _res, next) => (/^\d+$/.test(String(req.params.id)) ? next() : next('route')),
-    auth,
-    denyAdmin,
+    ...adminRead,
+    run((b) => b.users.show),
   );
-  router.post('/categories', ...write, denyAdmin);
-  router.put('/categories/:id', ...write, denyAdmin);
-  router.delete('/categories/:id', ...write, denyAdmin);
-  router.post('/franchises', ...write, denyAdmin);
-  router.put('/franchises/:id', ...write, denyAdmin);
-  router.delete('/franchises/:id', ...write, denyAdmin);
+  router.post('/categories', ...adminWrite, catCreVal, handleValidationErrors, run((b) => b.categories.create));
+  router.put('/categories/:id', ...adminWrite, catUpdVal, handleValidationErrors, run((b) => b.categories.update));
+  router.delete('/categories/:id', ...adminWrite, run((b) => b.categories.destroy));
+  router.post('/franchises', ...adminWrite, franCreVal, handleValidationErrors, run((b) => b.franchises.create));
+  router.put('/franchises/:id', ...adminWrite, franUpdVal, handleValidationErrors, run((b) => b.franchises.update));
+  router.delete('/franchises/:id', ...adminWrite, run((b) => b.franchises.destroy));
   router.get(
     '/orders',
-    ...staffRead,
+    ...workshopRead,
     run((b) => b.orders.index),
   );
-  router.post('/orders/:id/confirm-payment', ...write, denyAdmin);
-  router.post('/orders/:id/cancel', ...write, denyAdmin);
+  router.post('/orders/:id/confirm-payment', ...adminWrite, run((b) => b.orders.confirmPayment));
+  router.post('/orders/:id/cancel', ...adminWrite, run((b) => b.orders.cancel));
   return router;
 }
 
