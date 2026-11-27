@@ -39,7 +39,25 @@ function makeMockSlotGraph(slotId: string) {
       ]),
     },
     ShoppingCart: makeTable('ShoppingCart', 0),
-    CustomCommissionRequest: makeTable('CustomCommissionRequest', 0),
+    CustomCommissionRequest: {
+      ...makeTable('CustomCommissionRequest', DEMO_SANDBOX_EXPECTED_COUNTS.customCommissionRequests),
+      findAll: jest.fn(async () => [
+        {
+          idCustomCommissionRequest: 1,
+          idUser: 1,
+          idProduct: 1,
+          email: emails.buyer,
+          phone: '+54 9 11 0000-0101',
+        },
+        {
+          idCustomCommissionRequest: 2,
+          idUser: null,
+          idProduct: null,
+          email: emails.visitor,
+          phone: null,
+        },
+      ]),
+    },
     EmailConfirmationToken: makeTable('EmailConfirmationToken', 0),
     RememberToken: makeTable('RememberToken', 0),
     Product: makeTable('Product', DEMO_SANDBOX_EXPECTED_COUNTS.products),
@@ -137,6 +155,7 @@ describe('SequelizeDemoSandboxResetAdapter', () => {
       `bulkCreate:User:${DEMO_SANDBOX_EXPECTED_COUNTS.users}`,
       `bulkCreate:Order:${DEMO_SANDBOX_EXPECTED_COUNTS.orders}`,
       `bulkCreate:OrderItem:${DEMO_SANDBOX_EXPECTED_COUNTS.orderItems}`,
+      `bulkCreate:CustomCommissionRequest:${DEMO_SANDBOX_EXPECTED_COUNTS.customCommissionRequests}`,
       'receipt:insert',
     ]);
     expect(graph.models.OrderItem.destroy).toHaveBeenCalledWith({

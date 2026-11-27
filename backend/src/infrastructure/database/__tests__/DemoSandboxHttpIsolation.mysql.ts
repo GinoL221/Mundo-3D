@@ -258,7 +258,13 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
       await send('post', '/api/demo/custom-commission-requests', {
         ck: ckA,
         csrf: visitorA.csrf,
-        body: { name: 'Ana', email: 'ana@example.invalid', idea: 'Figura 15cm', idProduct: 1 },
+        body: {
+          name: 'Ana',
+          email: 'ana@example.invalid',
+          phone: '+54 9 11 0000-8888',
+          idea: 'Figura 15cm',
+          idProduct: 1,
+        },
       }),
     ];
     expect([cA.status, oA.status, mA.status, mA.body.orders.length, cmA.status]).toEqual([
@@ -272,17 +278,23 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
     visitorB = await openVisitor('198.51.100.12');
     expect(visitorB.slotId).not.toBe(visitorA.slotId);
     const ckB = [`${A}=${visitorB.auth}`, `${C}=${visitorB.csrf}`];
-    const [pB, cB, mB, cA2] = await Promise.all([
+    const [pB, cB, mB, cA2, cmMineA, cmMineB] = await Promise.all([
       send('get', '/api/demo/products', { ck: ckB }),
       send('get', '/api/demo/cart', { ck: ckB }),
       send('get', '/api/demo/orders/mine', { ck: ckB }),
       send('get', '/api/demo/cart', { ck: ckA }),
+      send('get', '/api/demo/custom-commission-requests/mine', { ck: ckA }),
+      send('get', '/api/demo/custom-commission-requests/mine', { ck: ckB }),
     ]);
-    expect([pB.body.products.length, cB.body.items.length, mB.body.orders.length]).toEqual([
-      COUNTS.products,
-      0,
-      COUNTS.orders,
-    ]);
+    expect([
+      pB.body.products.length,
+      cB.body.items.length,
+      mB.body.orders.length,
+      cmMineA.status,
+      cmMineA.body.length,
+      cmMineB.status,
+      cmMineB.body.length,
+    ]).toEqual([COUNTS.products, 0, COUNTS.orders, 200, 2, 200, 1]);
     expect(cA2.body.items.length).toBe(0);
 
     const [connA, connB] = [connections.get(visitorA.slotId), connections.get(visitorB.slotId)];
@@ -292,7 +304,13 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
       await countRows(connA, 'ShoppingCart', "cart_status = 'ACTIVE'"),
       await countRows(connB, 'Order'),
       await countRows(connB, 'CustomCommissionRequest'),
-    ]).toEqual([COUNTS.orders + 1, 1, 0, COUNTS.orders, 0]);
+    ]).toEqual([
+      COUNTS.orders + 1,
+      COUNTS.customCommissionRequests + 1,
+      0,
+      COUNTS.orders,
+      COUNTS.customCommissionRequests,
+    ]);
     const ctrlTables = await sel<Record<string, string>>(controlDb, 'SHOW TABLES');
     expect(ctrlTables.map((row) => Object.values(row)[0])).toEqual(['DemoSandboxSlot']);
   }, 30_000);
@@ -365,7 +383,15 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
       ordersA.body.length,
       ordersA.body[0]?.customer?.displayName,
       buyerOrdersB.status,
-    ]).toEqual([200, 1, 403, 200, COUNTS.orders + 1, 'Demo B.', 403]);
+    ]).toEqual([
+      200,
+      COUNTS.customCommissionRequests + 1,
+      403,
+      200,
+      COUNTS.orders + 1,
+      'Demo B.',
+      403,
+    ]);
     expect(JSON.stringify(ordersA.body)).not.toContain('sandbox.mundo3d.invalid');
 
     const created = await request(app)
@@ -385,8 +411,18 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
     expect([created.status, created.body.image]).toEqual([201, null]);
     const pid = created.body.idProduct as number;
 
-    const [upd, stk, delProd, usrAdm, staffMe, staffCartGet, staffCartPut, staffOrdPost, staffMine] =
-      await Promise.all([
+    const [
+      upd,
+      stk,
+      delProd,
+      usrAdm,
+      staffMe,
+      staffCartGet,
+      staffCartPut,
+      staffOrdPost,
+      staffMine,
+      staffCommMine,
+    ] = await Promise.all([
         send('put', `/api/demo/products/${pid}`, {
           ck: ckStaff,
           csrf: visitorA.csrf,
@@ -412,6 +448,7 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
           idem: 'staff-blocked-order',
         }),
         send('get', '/api/demo/orders/mine', { ck: ckStaff }),
+        send('get', '/api/demo/custom-commission-requests/mine', { ck: ckStaff }),
       ]);
     expect([
       upd.status,
@@ -426,7 +463,8 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
       staffCartPut.status,
       staffOrdPost.status,
       staffMine.status,
-    ]).toEqual([200, 200, 5, 403, 403, 200, 2, Role.STAFF, 403, 403, 403, 403]);
+      staffCommMine.status,
+    ]).toEqual([200, 200, 5, 403, 403, 200, 2, Role.STAFF, 403, 403, 403, 403, 403]);
 
     const [connA, connB] = [connections.get(visitorA.slotId), connections.get(visitorB.slotId)];
     expect([await countRows(connA, 'Product'), await countRows(connB, 'Product')]).toEqual([

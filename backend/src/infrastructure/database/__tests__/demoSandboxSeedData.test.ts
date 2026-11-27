@@ -17,6 +17,26 @@ describe('demoSandboxSeedData', () => {
     expect(seed.users).toHaveLength(DEMO_SANDBOX_EXPECTED_COUNTS.users);
     expect(seed.orders).toHaveLength(DEMO_SANDBOX_EXPECTED_COUNTS.orders);
     expect(seed.orderItems).toHaveLength(DEMO_SANDBOX_EXPECTED_COUNTS.orderItems);
+    expect(seed.customCommissionRequests).toHaveLength(
+      DEMO_SANDBOX_EXPECTED_COUNTS.customCommissionRequests,
+    );
+    expect(seed.customCommissionRequests[0]).toMatchObject({
+      idCustomCommissionRequest: 1,
+      idUser: 1,
+      idProduct: 1,
+      phone: '+54 9 11 0000-0101',
+    });
+    expect(seed.customCommissionRequests[1]).toMatchObject({
+      idCustomCommissionRequest: 2,
+      idUser: null,
+      idProduct: null,
+      phone: null,
+    });
+    expect(
+      seed.customCommissionRequests.every(
+        (c) => c.expiresAt.getTime() > c.createdAt.getTime() && c.email.endsWith('@sandbox.mundo3d.invalid'),
+      ),
+    ).toBe(true);
     expect(seed.orders[0]).toMatchObject({
       idOrder: 1,
       idUser: 1,

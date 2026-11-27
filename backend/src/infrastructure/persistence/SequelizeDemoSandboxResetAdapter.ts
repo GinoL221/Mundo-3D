@@ -22,6 +22,7 @@ import {
   buildDemoSandboxSeedData,
   buildDemoSandboxSlotEmails,
   DEMO_SANDBOX_EXPECTED_COUNTS,
+  DEMO_SANDBOX_SEED_BUYER_COMMISSION_PHONE,
   DEMO_SANDBOX_SEED_ORDER_IDEMPOTENCY_KEY,
   DEMO_SANDBOX_SEED_VERSION,
 } from '../database/demoSandboxSeedData';
@@ -189,6 +190,7 @@ export class SequelizeDemoSandboxResetAdapter implements DemoSandboxResetPort {
     await models.User.bulkCreate(seed.users, { transaction });
     await models.Order.bulkCreate(seed.orders, { transaction });
     await models.OrderItem.bulkCreate(seed.orderItems, { transaction });
+    await models.CustomCommissionRequest.bulkCreate(seed.customCommissionRequests, { transaction });
   }
 
   private async verifyCleanState(
@@ -199,7 +201,6 @@ export class SequelizeDemoSandboxResetAdapter implements DemoSandboxResetPort {
     const opts = transaction ? { transaction } : {};
     const residualCounts = await Promise.all([
       models.ShoppingCart.count(opts),
-      models.CustomCommissionRequest.count(opts),
       models.EmailConfirmationToken.count(opts),
       models.RememberToken.count(opts),
     ]);
@@ -207,17 +208,22 @@ export class SequelizeDemoSandboxResetAdapter implements DemoSandboxResetPort {
       return false;
     }
 
-    const [categories, franchises, products, users, orders, orderItems] = await Promise.all([
-      models.Category.count(opts),
-      models.Franchise.count(opts),
-      models.Product.count(opts),
-      models.User.findAll({ attributes: ['idRole', 'email', 'emailVerifiedAt'], ...opts }),
-      models.Order.findAll({
-        attributes: ['idOrder', 'idUser', 'idempotencyKey', 'orderStatus', 'paymentReference'],
-        ...opts,
-      }),
-      models.OrderItem.count(opts),
-    ]);
+    const [categories, franchises, products, users, orders, orderItems, commissions] =
+      await Promise.all([
+        models.Category.count(opts),
+        models.Franchise.count(opts),
+        models.Product.count(opts),
+        models.User.findAll({ attributes: ['idRole', 'email', 'emailVerifiedAt'], ...opts }),
+        models.Order.findAll({
+          attributes: ['idOrder', 'idUser', 'idempotencyKey', 'orderStatus', 'paymentReference'],
+          ...opts,
+        }),
+        models.OrderItem.count(opts),
+        models.CustomCommissionRequest.findAll({
+          attributes: ['idCustomCommissionRequest', 'idUser', 'idProduct', 'email', 'phone'],
+          ...opts,
+        }),
+      ]);
 
     if (
       categories !== DEMO_SANDBOX_EXPECTED_COUNTS.categories ||
@@ -225,7 +231,8 @@ export class SequelizeDemoSandboxResetAdapter implements DemoSandboxResetPort {
       products !== DEMO_SANDBOX_EXPECTED_COUNTS.products ||
       users.length !== DEMO_SANDBOX_EXPECTED_COUNTS.users ||
       orders.length !== DEMO_SANDBOX_EXPECTED_COUNTS.orders ||
-      orderItems !== DEMO_SANDBOX_EXPECTED_COUNTS.orderItems
+      orderItems !== DEMO_SANDBOX_EXPECTED_COUNTS.orderItems ||
+      commissions.length !== DEMO_SANDBOX_EXPECTED_COUNTS.customCommissionRequests
     ) {
       return false;
     }
@@ -243,6 +250,25 @@ export class SequelizeDemoSandboxResetAdapter implements DemoSandboxResetPort {
     }
 
     const expectedEmails = buildDemoSandboxSlotEmails(slotId);
+    const hasSeedBuyerCommission = commissions.some(
+      (item) =>
+        Number(item.idCustomCommissionRequest) === 1 &&
+        Number(item.idUser) === 1 &&
+        Number(item.idProduct) === 1 &&
+        item.email === expectedEmails.buyer &&
+        item.phone === DEMO_SANDBOX_SEED_BUYER_COMMISSION_PHONE,
+    );
+    const hasSeedVisitorCommission = commissions.some(
+      (item) =>
+        Number(item.idCustomCommissionRequest) === 2 &&
+        item.idUser === null &&
+        item.idProduct === null &&
+        item.email === expectedEmails.visitor &&
+        item.phone === null,
+    );
+    if (!hasSeedBuyerCommission || !hasSeedVisitorCommission) {
+      return false;
+    }
     const isVerified = (value: unknown): boolean =>
       value instanceof Date && Number.isFinite(value.getTime());
     const hasBuyer = users.some(

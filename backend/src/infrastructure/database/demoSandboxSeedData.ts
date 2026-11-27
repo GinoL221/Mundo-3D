@@ -6,8 +6,9 @@ import bcryptjs from 'bcryptjs';
 import { OrderStatus } from '../../domain/entities/Order';
 import { Role } from '../../domain/Role';
 
-export const DEMO_SANDBOX_SEED_VERSION = 'v4-catalog-26-user-staff-admin-seed-order';
+export const DEMO_SANDBOX_SEED_VERSION = 'v5-catalog-26-user-staff-admin-orders-commissions';
 export const DEMO_SANDBOX_SEED_ORDER_IDEMPOTENCY_KEY = 'demo-seed-order-1';
+export const DEMO_SANDBOX_SEED_BUYER_COMMISSION_PHONE = '+54 9 11 0000-0101';
 
 export const DEMO_SANDBOX_EXPECTED_COUNTS = {
   categories: 13,
@@ -16,6 +17,7 @@ export const DEMO_SANDBOX_EXPECTED_COUNTS = {
   users: 3,
   orders: 1,
   orderItems: 2,
+  customCommissionRequests: 2,
 } as const;
 
 export interface DemoSandboxCategorySeed {
@@ -75,6 +77,18 @@ export interface DemoSandboxOrderItemSeed {
   unitPrice: number;
 }
 
+export interface DemoSandboxCommissionSeed {
+  idCustomCommissionRequest: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  idea: string;
+  idProduct: number | null;
+  idUser: number | null;
+  createdAt: Date;
+  expiresAt: Date;
+}
+
 export interface DemoSandboxSeedBundle {
   readonly seedVersion: string;
   categories: DemoSandboxCategorySeed[];
@@ -83,6 +97,7 @@ export interface DemoSandboxSeedBundle {
   users: DemoSandboxUserSeed[];
   orders: DemoSandboxOrderSeed[];
   orderItems: DemoSandboxOrderItemSeed[];
+  customCommissionRequests: DemoSandboxCommissionSeed[];
 }
 
 const SLOT_ID_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
@@ -222,6 +237,7 @@ export function buildDemoSandboxSlotEmails(slotId: string): {
   buyer: string;
   staff: string;
   admin: string;
+  visitor: string;
 } {
   if (typeof slotId !== 'string' || !SLOT_ID_PATTERN.test(slotId)) {
     throw new Error('Invalid demo sandbox slot id');
@@ -231,15 +247,22 @@ export function buildDemoSandboxSlotEmails(slotId: string): {
     buyer: `demo.buyer+${normalized}@sandbox.mundo3d.invalid`,
     staff: `demo.staff+${normalized}@sandbox.mundo3d.invalid`,
     admin: `demo.admin+${normalized}@sandbox.mundo3d.invalid`,
+    visitor: `demo.visitor+${normalized}@sandbox.mundo3d.invalid`,
   };
 }
+
+const COMMISSION_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 
 export function buildDemoSandboxSeedData(
   slotId: string,
   verifiedAt: Date = new Date(DEFAULT_VERIFIED_AT_MS),
+  now: Date = new Date(),
 ): DemoSandboxSeedBundle {
   if (!(verifiedAt instanceof Date) || !Number.isFinite(verifiedAt.getTime())) {
     throw new Error('Invalid demo sandbox verification timestamp');
+  }
+  if (!(now instanceof Date) || !Number.isFinite(now.getTime())) {
+    throw new Error('Invalid demo sandbox clock timestamp');
   }
   const emails = buildDemoSandboxSlotEmails(slotId);
   const passwordUser = getSyntheticPasswordHash();
@@ -301,6 +324,32 @@ export function buildDemoSandboxSeedData(
     quantity: 1,
     unitPrice: product.price,
   }));
+  const firstCommissionCreatedAt = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+  const secondCommissionCreatedAt = new Date(now.getTime() - 60 * 60 * 1000);
+  const customCommissionRequests: DemoSandboxCommissionSeed[] = [
+    {
+      idCustomCommissionRequest: 1,
+      name: 'Demo Buyer',
+      email: emails.buyer,
+      phone: DEMO_SANDBOX_SEED_BUYER_COMMISSION_PHONE,
+      idea: 'Versión en escala 22 cm con base personalizada y acabado mate.',
+      idProduct: sampleProducts[0]?.idProduct ?? 1,
+      idUser: 1,
+      createdAt: firstCommissionCreatedAt,
+      expiresAt: new Date(firstCommissionCreatedAt.getTime() + COMMISSION_RETENTION_MS),
+    },
+    {
+      idCustomCommissionRequest: 2,
+      name: 'Lucía Demo',
+      email: emails.visitor,
+      phone: null,
+      idea: 'Organizador de escritorio modular en PLA gris grafito con ranura para auriculares.',
+      idProduct: null,
+      idUser: null,
+      createdAt: secondCommissionCreatedAt,
+      expiresAt: new Date(secondCommissionCreatedAt.getTime() + COMMISSION_RETENTION_MS),
+    },
+  ];
 
   return {
     seedVersion: DEMO_SANDBOX_SEED_VERSION,
@@ -316,5 +365,6 @@ export function buildDemoSandboxSeedData(
     users,
     orders,
     orderItems,
+    customCommissionRequests,
   };
 }

@@ -284,9 +284,11 @@ describe('SequelizeDemoSandboxResetAdapter on disposable MySQL 8.0', () => {
     expect(await countTable(connA, 'User')).toBe(DEMO_SANDBOX_EXPECTED_COUNTS.users);
     expect(await countTable(connA, 'Order')).toBe(DEMO_SANDBOX_EXPECTED_COUNTS.orders);
     expect(await countTable(connA, 'OrderItem')).toBe(DEMO_SANDBOX_EXPECTED_COUNTS.orderItems);
+    expect(await countTable(connA, 'CustomCommissionRequest')).toBe(
+      DEMO_SANDBOX_EXPECTED_COUNTS.customCommissionRequests,
+    );
     for (const emptyTable of [
       'ShoppingCart',
-      'CustomCommissionRequest',
       'RememberToken',
       'EmailConfirmationToken',
     ]) {
