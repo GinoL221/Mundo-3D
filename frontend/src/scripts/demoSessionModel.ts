@@ -89,6 +89,7 @@ export function isDemoProtectedPath(pathname: string): boolean {
     pathname.startsWith('/admin') ||
     pathname === '/orders' ||
     pathname === '/order' ||
+    pathname === '/my-commissions' ||
     pathname === '/profile'
   );
 }

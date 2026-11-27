@@ -26,7 +26,12 @@ describe('buildProfilePresentation', () => {
     expect(view.accountKindLabel).toBe('Cuenta de compra');
     expect(view.scopeSummary).toMatch(/carrito|pedidos/i);
     expect(view.demoNote).toBeNull();
-    expect(view.shortcuts.map((s) => s.href)).toEqual(['/orders', '/', '/help#encargos']);
+    expect(view.shortcuts.map((s) => s.href)).toEqual([
+      '/orders',
+      '/my-commissions',
+      '/',
+      '/help#encargos',
+    ]);
   });
 
   it('builds STAFF presentation with workshop shortcuts, custom image resolution, and demo note', () => {

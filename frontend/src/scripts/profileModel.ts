@@ -26,6 +26,7 @@ const DEMO_NOTE_TEXT =
 
 const SHOPPER_SHORTCUTS: ProfileShortcut[] = [
   { href: '/orders', label: 'Mis pedidos', variant: 'primary' },
+  { href: '/my-commissions', label: 'Mis encargos', variant: 'secondary' },
   { href: '/', label: 'Explorar catálogo', variant: 'secondary' },
   { href: '/help#encargos', label: 'Pedir un encargo', variant: 'secondary' },
 ];

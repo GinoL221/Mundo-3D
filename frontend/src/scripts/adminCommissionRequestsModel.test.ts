@@ -137,13 +137,14 @@ describe('adminCommissionRequestsModel', () => {
       idCustomCommissionRequest: 42,
       name: '  Lucía Fernández  ',
       email: 'lucia.fernandez@ejemplo.com',
+      phone: '  +54 9 11 0000-0101  ',
       idea: 'Necesito dos unidades en escala de 18 cm con base lisa.',
       idProduct: 1,
       createdAt: '2026-04-12T12:00:00.000Z',
       expiresAt: '2026-05-12T12:00:00.000Z',
     };
 
-    it('combines requester, mailto, dates, idea, and resolved catalog piece', () => {
+    it('combines requester, mailto, plain-text phone, dates, idea, and resolved catalog piece', () => {
       const catalog = new Map<number, string>([[1, 'Mario Bros Coleccionable']]);
       expect(
         buildCommissionRequestItemViewModel(baseRequest, catalog, { timeZone: 'UTC' }),
@@ -152,6 +153,7 @@ describe('adminCommissionRequestsModel', () => {
         requesterName: 'Lucía Fernández',
         emailLabel: 'lucia.fernandez@ejemplo.com',
         mailtoHref: 'mailto:lucia.fernandez@ejemplo.com',
+        phoneLabel: '+54 9 11 0000-0101',
         datesLabel: 'Recibida el 12/04/2026 · Vence el 12/05/2026',
         idea: 'Necesito dos unidades en escala de 18 cm con base lisa.',
         piece: {

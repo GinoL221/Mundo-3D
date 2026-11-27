@@ -24,6 +24,7 @@ export interface CommissionRequestItemViewModel {
   requesterName: string;
   emailLabel: string;
   mailtoHref: string | null;
+  phoneLabel: string | null;
   datesLabel: string;
   idea: string;
   piece: CommissionPieceReference;
@@ -126,6 +127,7 @@ export function buildCommissionRequestItemViewModel(
   dateOptions?: DateFormatOptions,
 ): CommissionRequestItemViewModel {
   const emailLabel = request.email.trim();
+  const rawPhone = typeof request.phone === 'string' ? request.phone.trim() : '';
   const productName =
     request.idProduct !== null ? (catalogById?.get(request.idProduct) ?? null) : null;
 
@@ -134,6 +136,7 @@ export function buildCommissionRequestItemViewModel(
     requesterName: request.name.trim() || 'Sin nombre',
     emailLabel,
     mailtoHref: buildSafeMailtoHref(emailLabel),
+    phoneLabel: rawPhone || null,
     datesLabel: formatCommissionDatesLabel(request.createdAt, request.expiresAt, dateOptions),
     idea: request.idea.trim() || 'Sin detalle',
     piece: buildCommissionPieceReference(request.idProduct, productName),
