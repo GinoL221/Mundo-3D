@@ -261,6 +261,31 @@ describe('POST /api/custom-commission-requests', () => {
     expect(mockRepositoryCreate).toHaveBeenLastCalledWith(
       expect.objectContaining({ idUser: null, phone: null }),
     );
+
+    // STAFF and ADMIN with valid JWT + CSRF must still submit anonymously (idUser: null)
+    for (const [role, category] of [
+      [Role.STAFF, 'Staff'],
+      [Role.ADMIN, 'Admin'],
+    ] as const) {
+      const op = authAndCsrf({ userId: 31, email: 'op@example.test', category, idRole: role });
+      const opRes = await request(app)
+        .post('/api/custom-commission-requests')
+        .set('X-Forwarded-For', nextTestIp())
+        .set('Cookie', op.cookie)
+        .set('X-CSRF-Token', op.csrfToken)
+        .send(validSubmission);
+      expect(opRes.status).toBe(201);
+      expect(mockRepositoryCreate).toHaveBeenLastCalledWith(
+        expect.objectContaining({ idUser: null }),
+      );
+    }
+
+    // Multiline phone values must be rejected with 400
+    const multilinePhone = await postSubmission(app, {
+      ...validSubmission,
+      phone: '+54 9 11\n0000-0101',
+    });
+    expect(multilinePhone.status).toBe(400);
   });
 
   it('serves GET /mine only to authenticated USER (401 guest, 403 STAFF/ADMIN)', async () => {

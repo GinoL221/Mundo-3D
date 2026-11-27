@@ -26,7 +26,7 @@ const EXEMPT_PATHS = new Set([
 export function hasValidCsrfForUser(req: Request, userId: number): boolean {
   const headerToken = req.headers[CSRF_HEADER];
   const cookieToken = req.cookies?.[CSRF_COOKIE];
-  if (typeof headerToken !== 'string' || !cookieToken) {
+  if (typeof headerToken !== 'string' || typeof cookieToken !== 'string' || !cookieToken) {
     return false;
   }
   if (!verifyCsrfToken(headerToken, userId)) {

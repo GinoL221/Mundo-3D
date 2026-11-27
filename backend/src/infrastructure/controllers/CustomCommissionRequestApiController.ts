@@ -16,9 +16,13 @@ export class CustomCommissionRequestApiController {
   create = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     try {
       const principalRole = req.user?.idRole ?? req.user?.role;
+      const principalUserId = req.user?.userId;
       const idUser =
-        principalRole === Role.USER && typeof req.user?.userId === 'number'
-          ? req.user.userId
+        principalRole === Role.USER &&
+        typeof principalUserId === 'number' &&
+        Number.isSafeInteger(principalUserId) &&
+        principalUserId > 0
+          ? principalUserId
           : null;
       const created = await this.createUseCase.execute({
         name: req.body.name,
@@ -57,7 +61,12 @@ export class CustomCommissionRequestApiController {
   listMine = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user?.userId;
-      if (typeof userId !== 'number' || !this.listMineUseCase) {
+      if (
+        typeof userId !== 'number' ||
+        !Number.isSafeInteger(userId) ||
+        userId <= 0 ||
+        !this.listMineUseCase
+      ) {
         res.status(401).json({ error: 'Autenticación requerida' });
         return;
       }

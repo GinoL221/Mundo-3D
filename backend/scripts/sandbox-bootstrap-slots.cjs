@@ -18,6 +18,7 @@ const BUSINESS_MIGRATIONS = Object.freeze([
   '20260901000000-refresh-token-rotation.js',
   '20260902000000-email-confirmation.js',
   '20260927000000-custom-commission-requests.js',
+  '20261127000000-custom-commission-requests-user-and-phone.js',
 ]);
 const isSqlIdentifier = (v, max) => typeof v === 'string' && v.length <= max && /^[a-zA-Z0-9_]+$/.test(v);
 const isSqlUsername = (v, max) =>

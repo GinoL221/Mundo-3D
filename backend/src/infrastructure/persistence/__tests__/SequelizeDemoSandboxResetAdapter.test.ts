@@ -251,6 +251,49 @@ describe('SequelizeDemoSandboxResetAdapter', () => {
     graph.models.OrderItem.count.mockResolvedValueOnce(0);
     await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
 
+    graph.models.CustomCommissionRequest.findAll.mockResolvedValueOnce([
+      {
+        idCustomCommissionRequest: 1,
+        idUser: 1,
+        idProduct: 1,
+        email: 'demo.buyer+slot-1@sandbox.mundo3d.invalid',
+        phone: '+54 9 11 0000-0101',
+      },
+      {
+        idCustomCommissionRequest: 2,
+        idUser: null,
+        idProduct: null,
+        email: 'demo.visitor+slot-1@sandbox.mundo3d.invalid',
+        phone: null,
+      },
+      {
+        idCustomCommissionRequest: 3,
+        idUser: null,
+        idProduct: null,
+        email: 'extra@example.test',
+        phone: null,
+      },
+    ]);
+    await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
+
+    graph.models.CustomCommissionRequest.findAll.mockResolvedValueOnce([
+      {
+        idCustomCommissionRequest: 1,
+        idUser: 1,
+        idProduct: 1,
+        email: 'tampered@example.test',
+        phone: '+54 9 11 0000-0101',
+      },
+      {
+        idCustomCommissionRequest: 2,
+        idUser: null,
+        idProduct: null,
+        email: 'demo.visitor+slot-1@sandbox.mundo3d.invalid',
+        phone: null,
+      },
+    ]);
+    await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
+
     graph.models.Product.count.mockResolvedValueOnce(16);
     await expect(adapter.verify(slotId, 1, attemptId)).resolves.toBe(false);
 

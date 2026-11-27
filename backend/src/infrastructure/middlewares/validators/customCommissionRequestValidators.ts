@@ -7,7 +7,7 @@ const requiredText = (field: string, label: string, maxLength: number) =>
     .bail().trim().notEmpty().withMessage(`${label} is required`)
     .bail().isLength({ max: maxLength }).withMessage(`${label} is too long`);
 
-const PHONE_ALLOWED_CHARS = /^[+\d\s()-]+$/;
+const PHONE_ALLOWED_CHARS = /^[+\d ()-]+$/;
 
 export const customCommissionRequestValidators = [
   body().custom((_value, { req }) =>

@@ -90,7 +90,8 @@ export const optionalBuyerAuthMiddleware = (
     if (
       decoded.typ === 'access' &&
       decoded.idRole === Role.USER &&
-      typeof decoded.userId === 'number' &&
+      Number.isSafeInteger(decoded.userId) &&
+      decoded.userId > 0 &&
       hasValidCsrfForUser(req, decoded.userId)
     ) {
       req.user = decoded;

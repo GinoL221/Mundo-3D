@@ -55,6 +55,13 @@ test('keeps creation, expiry boundaries, purge counts and errors on the injected
   const fk = new ForeignKeyConstraintError({ message: 'fk failure' });
   create.mockRejectedValueOnce(fk);
   await expect(repository.create(input)).rejects.toBeInstanceOf(SelectedProductNotFoundException);
+  const userFk = new ForeignKeyConstraintError({
+    message: 'user fk failure',
+    index: 'fk_custom_commission_request_user',
+    fields: { id_user: 'id_user' },
+  });
+  create.mockRejectedValueOnce(userFk);
+  await expect(repository.create(input)).rejects.toBe(userFk);
   create.mockRejectedValueOnce(fk);
   await expect(repository.create({ ...input, idProduct: null })).rejects.toBe(fk);
   const failure = new Error('persistence unavailable');
@@ -64,7 +71,7 @@ test('keeps creation, expiry boundaries, purge counts and errors on the injected
   await expect(repository.listActive(expiresAt)).rejects.toBe(failure);
   destroy.mockRejectedValueOnce(failure);
   await expect(repository.purgeExpired(expiresAt)).rejects.toBe(failure);
-  expect(create).toHaveBeenCalledTimes(4);
+  expect(create).toHaveBeenCalledTimes(5);
   expect(findAll).toHaveBeenCalledTimes(3);
   expect(destroy).toHaveBeenCalledTimes(2);
 });

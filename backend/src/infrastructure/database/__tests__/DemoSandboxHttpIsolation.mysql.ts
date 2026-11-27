@@ -49,6 +49,7 @@ const SLOT_MIGRATIONS: readonly Mig[] = [
   require('../../../database/migrations/20260901000000-refresh-token-rotation'),
   require('../../../database/migrations/20260902000000-email-confirmation'),
   require('../../../database/migrations/20260927000000-custom-commission-requests'),
+  require('../../../database/migrations/20261127000000-custom-commission-requests-user-and-phone'),
   require('../../../database/slot-migrations/20261102000000-demo-sandbox-fence'),
   require('../../../database/slot-migrations/20261103000000-demo-sandbox-reset-receipt'),
 ];
@@ -589,7 +590,14 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
       await countRows(connA, 'OrderItem'),
       await countRows(connA, 'CustomCommissionRequest'),
       await countRows(connA, 'ShoppingCart'),
-    ]).toEqual([COUNTS.products, COUNTS.users, COUNTS.orders, COUNTS.orderItems, 0, 0]);
+    ]).toEqual([
+      COUNTS.products,
+      COUNTS.users,
+      COUNTS.orders,
+      COUNTS.orderItems,
+      COUNTS.customCommissionRequests,
+      0,
+    ]);
 
     const sesB = await send('get', '/api/demo/session', { ck: `${A}=${visitorB.auth}` });
     expect(sesB.status).toBe(200);

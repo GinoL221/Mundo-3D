@@ -45,7 +45,13 @@ export class ScopedSequelizeCustomCommissionRequestRepository implements CustomC
       return this.toEntity(instance);
     } catch (error) {
       if (request.idProduct != null && error instanceof ForeignKeyConstraintError) {
-        throw new SelectedProductNotFoundException();
+        const fields = error.fields as string[] | Record<string, string> | undefined;
+        const isUserFk =
+          error.index === 'fk_custom_commission_request_user' ||
+          (Array.isArray(fields) ? fields.includes('id_user') : Boolean(fields && 'id_user' in fields));
+        if (!isUserFk) {
+          throw new SelectedProductNotFoundException();
+        }
       }
       throw error;
     }
