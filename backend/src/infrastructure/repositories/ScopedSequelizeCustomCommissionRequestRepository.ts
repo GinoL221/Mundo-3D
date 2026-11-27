@@ -23,6 +23,8 @@ export class ScopedSequelizeCustomCommissionRequestRepository implements CustomC
       instance.idProduct ?? null,
       new Date(instance.createdAt),
       new Date(instance.expiresAt),
+      instance.phone ?? null,
+      instance.idUser ?? null,
     );
   }
 
@@ -33,8 +35,10 @@ export class ScopedSequelizeCustomCommissionRequestRepository implements CustomC
       const instance = await this.db.CustomCommissionRequest.create({
         name: request.name,
         email: request.email,
+        phone: request.phone,
         idea: request.idea,
         idProduct: request.idProduct,
+        idUser: request.idUser,
         createdAt: request.createdAt,
         expiresAt: request.expiresAt,
       } as Partial<CustomCommissionRequestAttributes>);
@@ -50,6 +54,14 @@ export class ScopedSequelizeCustomCommissionRequestRepository implements CustomC
   async listActive(now: Date): Promise<CustomCommissionRequest[]> {
     const instances = await this.db.CustomCommissionRequest.findAll({
       where: { expiresAt: { [Op.gt]: now } },
+      order: [['createdAt', 'DESC']],
+    });
+    return instances.map((instance) => this.toEntity(instance));
+  }
+
+  async listActiveByUser(idUser: number, now: Date): Promise<CustomCommissionRequest[]> {
+    const instances = await this.db.CustomCommissionRequest.findAll({
+      where: { idUser, expiresAt: { [Op.gt]: now } },
       order: [['createdAt', 'DESC']],
     });
     return instances.map((instance) => this.toEntity(instance));

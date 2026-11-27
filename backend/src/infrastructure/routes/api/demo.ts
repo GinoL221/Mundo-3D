@@ -139,6 +139,12 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   router.post('/orders', ...write, buyerOnly, ordVal, hOrd);
   router.post('/custom-commission-requests', ...write, cmLim, ...commVal, commErr, hComm);
   router.get(
+    '/custom-commission-requests/mine',
+    auth,
+    buyerOnly,
+    run((b) => b.commissions.listMine),
+  );
+  router.get(
     '/custom-commission-requests',
     ...workshopRead,
     run((b) => b.commissions.list),

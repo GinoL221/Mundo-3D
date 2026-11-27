@@ -6,8 +6,10 @@ import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort'
 export interface CreateCustomCommissionRequestInput {
   name: string;
   email: string;
+  phone?: string | null;
   idea: string;
   idProduct?: number | null;
+  idUser?: number | null;
 }
 
 const RETENTION_DAYS = 30;
@@ -26,11 +28,14 @@ export class CreateCustomCommissionRequestUseCase {
     }
 
     const createdAt = this.clock();
+    const normalizedPhone = typeof input.phone === 'string' && input.phone.trim() ? input.phone.trim() : null;
     return this.repository.create({
       name: input.name,
       email: input.email,
+      phone: normalizedPhone,
       idea: input.idea,
       idProduct: input.idProduct ?? null,
+      idUser: input.idUser ?? null,
       createdAt,
       expiresAt: new Date(createdAt.getTime() + RETENTION_DAYS * MILLISECONDS_PER_DAY),
     });

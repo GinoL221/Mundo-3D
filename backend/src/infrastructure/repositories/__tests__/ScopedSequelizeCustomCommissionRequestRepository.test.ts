@@ -21,8 +21,10 @@ test('keeps creation, expiry boundaries, purge counts and errors on the injected
   const input = {
     name: 'Ari',
     email: 'ari@example.com',
+    phone: '+54 9 11 0000-0101',
     idea: 'Dragon',
     idProduct: 44,
+    idUser: 1,
     createdAt,
     expiresAt,
   };
@@ -36,6 +38,14 @@ test('keeps creation, expiry boundaries, purge counts and errors on the injected
   ]);
   expect(findAll).toHaveBeenCalledWith({
     where: { expiresAt: { [Op.gt]: expiresAt } },
+    order: [['createdAt', 'DESC']],
+  });
+  findAll.mockResolvedValueOnce([row]);
+  expect(await repository.listActiveByUser(1, expiresAt)).toEqual([
+    { ...input, idCustomCommissionRequest: 8 },
+  ]);
+  expect(findAll).toHaveBeenCalledWith({
+    where: { idUser: 1, expiresAt: { [Op.gt]: expiresAt } },
     order: [['createdAt', 'DESC']],
   });
   destroy.mockResolvedValueOnce(3);
@@ -55,6 +65,6 @@ test('keeps creation, expiry boundaries, purge counts and errors on the injected
   destroy.mockRejectedValueOnce(failure);
   await expect(repository.purgeExpired(expiresAt)).rejects.toBe(failure);
   expect(create).toHaveBeenCalledTimes(4);
-  expect(findAll).toHaveBeenCalledTimes(2);
+  expect(findAll).toHaveBeenCalledTimes(3);
   expect(destroy).toHaveBeenCalledTimes(2);
 });

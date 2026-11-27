@@ -54,6 +54,7 @@ const EXPECTED_ENDPOINTS: Array<[path: string, method: string]> = [
   ['/orders/{id}/cancel', 'post'],
   // customCommissionRequests.ts
   ['/custom-commission-requests', 'get'],
+  ['/custom-commission-requests/mine', 'get'],
   ['/custom-commission-requests', 'post'],
   // products.ts
   ['/products', 'get'],

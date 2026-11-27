@@ -23,6 +23,18 @@ const EXEMPT_PATHS = new Set([
   '/users/refresh',
 ]);
 
+export function hasValidCsrfForUser(req: Request, userId: number): boolean {
+  const headerToken = req.headers[CSRF_HEADER];
+  const cookieToken = req.cookies?.[CSRF_COOKIE];
+  if (typeof headerToken !== 'string' || !cookieToken) {
+    return false;
+  }
+  if (!verifyCsrfToken(headerToken, userId)) {
+    return false;
+  }
+  return timingSafeStringEqual(headerToken, cookieToken);
+}
+
 /**
  * Signed double-submit CSRF check (design.md "Decision: CSRF = signed
  * double-submit cookie"). Must run AFTER `apiAuthMiddleware` — it verifies
@@ -39,19 +51,8 @@ export const csrfGuard = (req: Request, res: Response, next: NextFunction): void
     return next();
   }
 
-  const headerToken = req.headers[CSRF_HEADER];
-  const cookieToken = req.cookies?.[CSRF_COOKIE];
   const userId = req.user?.userId;
-
-  if (typeof headerToken !== 'string' || !cookieToken || userId === undefined) {
-    return res.status(403).json({ error: 'CSRF token inválido' });
-  }
-
-  if (!verifyCsrfToken(headerToken, userId)) {
-    return res.status(403).json({ error: 'CSRF token inválido' });
-  }
-
-  if (!timingSafeStringEqual(headerToken, cookieToken)) {
+  if (userId === undefined || !hasValidCsrfForUser(req, userId)) {
     return res.status(403).json({ error: 'CSRF token inválido' });
   }
 

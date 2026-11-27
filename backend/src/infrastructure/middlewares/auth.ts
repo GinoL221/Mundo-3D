@@ -4,6 +4,7 @@ import { getJwtSecret } from '../security/JwtSecret';
 import { AUTH_COOKIE } from '../security/cookieOptions';
 import { accessTokenVerifyOptions } from '../security/jwtOptions';
 import { Role } from '../../domain/Role';
+import { hasValidCsrfForUser } from './csrf';
 
 interface DecodedToken {
   userId: number;
@@ -65,3 +66,38 @@ export const requireRoles = (...roles: Role[]) => (
 
 export const adminGuard = requireRoles(Role.ADMIN);
 export const buyerGuard = requireRoles(Role.USER);
+
+/**
+ * Optional buyer session binder for public intake endpoints that also support
+ * authenticated buyers (`POST /api/custom-commission-requests`). Only attaches
+ * `req.user` when the request carries BOTH a valid `Role.USER` access JWT AND a
+ * matching signed double-submit CSRF token — preventing cross-site CSRF from
+ * injecting requests into a victim's buyer history while never blocking
+ * anonymous submissions when cookies are absent or expired.
+ */
+export const optionalBuyerAuthMiddleware = (
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+): void => {
+  const token = req.cookies?.[AUTH_COOKIE];
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, getJwtSecret(), accessTokenVerifyOptions()) as DecodedToken;
+    if (
+      decoded.typ === 'access' &&
+      decoded.idRole === Role.USER &&
+      typeof decoded.userId === 'number' &&
+      hasValidCsrfForUser(req, decoded.userId)
+    ) {
+      req.user = decoded;
+    }
+  } catch {
+    // Expired or invalid cookies on public intake fall through as anonymous.
+  }
+
+  next();
+};

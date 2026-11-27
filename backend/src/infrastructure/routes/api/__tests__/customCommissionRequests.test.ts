@@ -6,6 +6,7 @@ import { CustomCommissionRequest } from '../../../../domain/entities/CustomCommi
 import { Product } from '../../../../domain/entities/Product';
 
 const mockListExecute = jest.fn();
+const mockListMineExecute = jest.fn();
 const mockRepositoryCreate = jest.fn();
 const mockProductFindById = jest.fn();
 
@@ -15,10 +16,17 @@ jest.mock('../../../../application/use-cases/ListCustomCommissionRequestsUseCase
     .mockImplementation(() => ({ execute: mockListExecute })),
 }));
 
+jest.mock('../../../../application/use-cases/ListMyCustomCommissionRequestsUseCase', () => ({
+  ListMyCustomCommissionRequestsUseCase: jest
+    .fn()
+    .mockImplementation(() => ({ execute: mockListMineExecute })),
+}));
+
 jest.mock('../../../repositories/SequelizeCustomCommissionRequestRepository', () => ({
   SequelizeCustomCommissionRequestRepository: jest.fn().mockImplementation(() => ({
     create: mockRepositoryCreate,
     listActive: jest.fn(),
+    listActiveByUser: jest.fn(),
     purgeExpired: jest.fn(),
   })),
 }));
@@ -179,6 +187,11 @@ const invalidSubmissions: Array<[string, Record<string, unknown>]> = [
   ['blank idea', { ...validSubmission, idea: '   ' }],
   ['overlong idea', { ...validSubmission, idea: `${PII_CANARY}${'I'.repeat(5001)}` }],
   ['unexpected field', { ...validSubmission, attachment: PII_CANARY }],
+  ['forged idUser field', { ...validSubmission, idUser: 99 }],
+  ['non-text phone', { ...validSubmission, phone: 1122334455 }],
+  ['invalid phone chars', { ...validSubmission, phone: `${PII_CANARY}<script>` }],
+  ['too short phone', { ...validSubmission, phone: '12345' }],
+  ['overlong phone', { ...validSubmission, phone: '+54 9 11 1234567890123456789012345' }],
   ['zero product id', { ...validSubmission, idProduct: 0 }],
   ['fractional product id', { ...validSubmission, idProduct: 1.5 }],
   ['string product id', { ...validSubmission, idProduct: '7' }],
@@ -208,8 +221,77 @@ describe('POST /api/custom-commission-requests', () => {
     expect(response.body).toEqual({ idCustomCommissionRequest: 17, createdAt: '2026-10-01T12:00:00.000Z', expiresAt: '2026-10-31T12:00:00.000Z' });
     expect(mockProductFindById).toHaveBeenCalledWith(7);
     expect(mockRepositoryCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Ari', email: 'ari@example.test', idea: 'A dragon', idProduct: 7 }),
+      expect.objectContaining({
+        name: 'Ari',
+        email: 'ari@example.test',
+        phone: null,
+        idea: 'A dragon',
+        idProduct: 7,
+        idUser: null,
+      }),
     );
+  });
+
+  it('binds idUser only when authenticated USER sends valid CSRF, and saves optional phone', async () => {
+    const buyer = authAndCsrf({
+      userId: 23,
+      email: 'buyer@example.test',
+      category: 'User',
+      idRole: Role.USER,
+    });
+
+    const withCsrf = await request(app)
+      .post('/api/custom-commission-requests')
+      .set('X-Forwarded-For', nextTestIp())
+      .set('Cookie', buyer.cookie)
+      .set('X-CSRF-Token', buyer.csrfToken)
+      .send({ ...validSubmission, phone: ' +54 9 11 5555-1234 ' });
+    expect(withCsrf.status).toBe(201);
+    expect(mockRepositoryCreate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ idUser: 23, phone: '+54 9 11 5555-1234' }),
+    );
+
+    // Without CSRF header, cookie must NOT bind idUser (prevents cross-site injection)
+    const withoutCsrf = await request(app)
+      .post('/api/custom-commission-requests')
+      .set('X-Forwarded-For', nextTestIp())
+      .set('Cookie', buyer.cookie)
+      .send(validSubmission);
+    expect(withoutCsrf.status).toBe(201);
+    expect(mockRepositoryCreate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ idUser: null, phone: null }),
+    );
+  });
+
+  it('serves GET /mine only to authenticated USER (401 guest, 403 STAFF/ADMIN)', async () => {
+    expect((await request(app).get('/api/custom-commission-requests/mine')).status).toBe(401);
+
+    for (const [role, category] of [
+      [Role.STAFF, 'Staff'],
+      [Role.ADMIN, 'Admin'],
+    ] as const) {
+      const op = authAndCsrf({ userId: 31, email: 'op@example.test', category, idRole: role });
+      const res = await request(app)
+        .get('/api/custom-commission-requests/mine')
+        .set('Cookie', op.cookie);
+      expect(res.status).toBe(403);
+    }
+
+    const buyer = authAndCsrf({
+      userId: 23,
+      email: 'buyer@example.test',
+      category: 'User',
+      idRole: Role.USER,
+    });
+    mockListMineExecute.mockResolvedValueOnce([{ ...activeRequest, idUser: 23, phone: '+54 9 11 0000-0101' }]);
+    const ok = await request(app)
+      .get('/api/custom-commission-requests/mine')
+      .set('Cookie', buyer.cookie);
+    expect(ok.status).toBe(200);
+    expect(ok.headers['cache-control']).toBe('no-store');
+    expect(mockListMineExecute).toHaveBeenCalledWith(23);
+    expect(ok.body).toHaveLength(1);
+    expect(ok.body[0].phone).toBe('+54 9 11 0000-0101');
   });
 
   it('rejects a selected product that does not exist', async () => {
