@@ -18,6 +18,7 @@ import { GetProductByIdUseCase as GetProd } from '../../application/use-cases/Ge
 import { GetUserByIdUseCase as GetUsr } from '../../application/use-cases/GetUserByIdUseCase';
 import { ListCategoriesUseCase as ListCat } from '../../application/use-cases/ListCategoriesUseCase';
 import { ListCustomCommissionRequestsUseCase as ListComm } from '../../application/use-cases/ListCustomCommissionRequestsUseCase';
+import { ListMyCustomCommissionRequestsUseCase as ListMyComm } from '../../application/use-cases/ListMyCustomCommissionRequestsUseCase';
 import { ListFranchisesUseCase as ListFran } from '../../application/use-cases/ListFranchisesUseCase';
 import { ListMyOrdersUseCase as ListMyOrd } from '../../application/use-cases/ListMyOrdersUseCase';
 import { ListOrdersUseCase as ListOrd } from '../../application/use-cases/ListOrdersUseCase';
@@ -51,7 +52,7 @@ export interface DemoSandboxBuyerControllers {
     OrderApiController,
     'create' | 'show' | 'index' | 'confirmPayment' | 'cancel' | 'listMine'
   >;
-  commissions: Pick<CustomCommissionRequestApiController, 'create' | 'list'>;
+  commissions: Pick<CustomCommissionRequestApiController, 'create' | 'list' | 'listMine'>;
   users: Pick<UserApiController, 'index' | 'show' | 'me'>;
 }
 
@@ -102,6 +103,7 @@ function build(r: Repos, id: string): DemoSandboxBuyerControllers {
   const cm = new CustomCommissionRequestApiController(
     new CreateComm(comm, undefined, p),
     new ListComm(comm),
+    new ListMyComm(comm),
   );
   const us = new UserApiController(off, new ListUsr(usr), new GetUsr(usr));
   return {
@@ -138,7 +140,7 @@ function build(r: Repos, id: string): DemoSandboxBuyerControllers {
       cancel: or.cancel,
       listMine: or.listMine,
     },
-    commissions: { create: cm.create, list: cm.list },
+    commissions: { create: cm.create, list: cm.list, listMine: cm.listMine },
     users: { index: us.index, show: us.show, me: us.me },
   };
 }

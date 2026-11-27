@@ -23,6 +23,8 @@ export class ScopedSequelizeCustomCommissionRequestRepository implements CustomC
       instance.idProduct ?? null,
       new Date(instance.createdAt),
       new Date(instance.expiresAt),
+      instance.phone ?? null,
+      instance.idUser ?? null,
     );
   }
 
@@ -33,15 +35,23 @@ export class ScopedSequelizeCustomCommissionRequestRepository implements CustomC
       const instance = await this.db.CustomCommissionRequest.create({
         name: request.name,
         email: request.email,
+        phone: request.phone,
         idea: request.idea,
         idProduct: request.idProduct,
+        idUser: request.idUser,
         createdAt: request.createdAt,
         expiresAt: request.expiresAt,
       } as Partial<CustomCommissionRequestAttributes>);
       return this.toEntity(instance);
     } catch (error) {
       if (request.idProduct != null && error instanceof ForeignKeyConstraintError) {
-        throw new SelectedProductNotFoundException();
+        const fields = error.fields as string[] | Record<string, string> | undefined;
+        const isUserFk =
+          error.index === 'fk_custom_commission_request_user' ||
+          (Array.isArray(fields) ? fields.includes('id_user') : Boolean(fields && 'id_user' in fields));
+        if (!isUserFk) {
+          throw new SelectedProductNotFoundException();
+        }
       }
       throw error;
     }
@@ -50,6 +60,14 @@ export class ScopedSequelizeCustomCommissionRequestRepository implements CustomC
   async listActive(now: Date): Promise<CustomCommissionRequest[]> {
     const instances = await this.db.CustomCommissionRequest.findAll({
       where: { expiresAt: { [Op.gt]: now } },
+      order: [['createdAt', 'DESC']],
+    });
+    return instances.map((instance) => this.toEntity(instance));
+  }
+
+  async listActiveByUser(idUser: number, now: Date): Promise<CustomCommissionRequest[]> {
+    const instances = await this.db.CustomCommissionRequest.findAll({
+      where: { idUser, expiresAt: { [Op.gt]: now } },
       order: [['createdAt', 'DESC']],
     });
     return instances.map((instance) => this.toEntity(instance));

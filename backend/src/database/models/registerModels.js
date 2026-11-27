@@ -81,6 +81,12 @@ function initializeModelsForConnection(sequelize) {
     onDelete: 'SET NULL',
     as: 'Product',
   });
+  UserModel.hasMany(CustomCommissionRequestModel, { foreignKey: 'idUser' });
+  CustomCommissionRequestModel.belongsTo(UserModel, {
+    foreignKey: 'idUser',
+    onDelete: 'SET NULL',
+    as: 'User',
+  });
 
   db.sequelize = sequelize;
   db.Sequelize = Sequelize;

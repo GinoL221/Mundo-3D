@@ -38,6 +38,7 @@ const BUSINESS_MIGRATIONS: readonly MigrationModule[] = [
   require('../../../database/migrations/20260901000000-refresh-token-rotation'),
   require('../../../database/migrations/20260902000000-email-confirmation'),
   require('../../../database/migrations/20260927000000-custom-commission-requests'),
+  require('../../../database/migrations/20261127000000-custom-commission-requests-user-and-phone'),
 ];
 const CONTROL_MIGRATION: MigrationModule = require('../../../database/migrations/20261026000000-demo-sandbox-slots');
 const SLOT_CONTROL_MIGRATIONS: readonly MigrationModule[] = [
@@ -284,9 +285,11 @@ describe('SequelizeDemoSandboxResetAdapter on disposable MySQL 8.0', () => {
     expect(await countTable(connA, 'User')).toBe(DEMO_SANDBOX_EXPECTED_COUNTS.users);
     expect(await countTable(connA, 'Order')).toBe(DEMO_SANDBOX_EXPECTED_COUNTS.orders);
     expect(await countTable(connA, 'OrderItem')).toBe(DEMO_SANDBOX_EXPECTED_COUNTS.orderItems);
+    expect(await countTable(connA, 'CustomCommissionRequest')).toBe(
+      DEMO_SANDBOX_EXPECTED_COUNTS.customCommissionRequests,
+    );
     for (const emptyTable of [
       'ShoppingCart',
-      'CustomCommissionRequest',
       'RememberToken',
       'EmailConfirmationToken',
     ]) {

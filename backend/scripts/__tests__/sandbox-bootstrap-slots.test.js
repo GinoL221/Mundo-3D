@@ -134,6 +134,7 @@ describe('sandbox-bootstrap-slots', () => {
       '20260901000000-refresh-token-rotation.js',
       '20260902000000-email-confirmation.js',
       '20260927000000-custom-commission-requests.js',
+      '20261127000000-custom-commission-requests-user-and-phone.js',
     ]);
     assert.equal(names.includes('20261026000000-demo-sandbox-slots.js'), false);
     assert.deepEqual(names.slice(BUSINESS_MIGRATIONS.length), [

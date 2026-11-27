@@ -2,9 +2,15 @@ import { NextFunction, Request, Response, Router } from 'express';
 import { validationResult } from 'express-validator';
 import { CreateCustomCommissionRequestUseCase } from '../../../application/use-cases/CreateCustomCommissionRequestUseCase';
 import { ListCustomCommissionRequestsUseCase } from '../../../application/use-cases/ListCustomCommissionRequestsUseCase';
+import { ListMyCustomCommissionRequestsUseCase } from '../../../application/use-cases/ListMyCustomCommissionRequestsUseCase';
 import { Role } from '../../../domain/Role';
 import { CustomCommissionRequestApiController } from '../../controllers/CustomCommissionRequestApiController';
-import { apiAuthMiddleware, requireRoles } from '../../middlewares/auth';
+import {
+  apiAuthMiddleware,
+  buyerGuard,
+  optionalBuyerAuthMiddleware,
+  requireRoles,
+} from '../../middlewares/auth';
 import customCommissionRequestLimiter from '../../middlewares/customCommissionRequestLimiter';
 import { customCommissionRequestValidators } from '../../middlewares/validators/customCommissionRequestValidators';
 import { SequelizeCustomCommissionRequestRepository } from '../../repositories/SequelizeCustomCommissionRequestRepository';
@@ -16,6 +22,7 @@ const products = new SequelizeProductRepository();
 const controller = new CustomCommissionRequestApiController(
   new CreateCustomCommissionRequestUseCase(repository, undefined, products),
   new ListCustomCommissionRequestsUseCase(repository),
+  new ListMyCustomCommissionRequestsUseCase(repository),
 );
 
 const handleCommissionValidationErrors = (req: Request, res: Response, next: NextFunction): void => {
@@ -56,14 +63,32 @@ const handleCommissionValidationErrors = (req: Request, res: Response, next: Nex
  *             schema: { type: array, items: { $ref: '#/components/schemas/CustomCommissionRequest' } }
  *       '401': { description: Not authenticated. }
  *       '403': { description: Authenticated but not ADMIN or STAFF. }
+ * /custom-commission-requests/mine:
+ *   get:
+ *     summary: List authenticated buyer's unexpired custom commission requests
+ *     tags: [Custom commission requests]
+ *     security: [{ cookieAuth: [] }]
+ *     responses:
+ *       '200':
+ *         description: Newest unexpired requests owned by the authenticated buyer; non-cacheable.
+ *         headers:
+ *           Cache-Control:
+ *             schema: { type: string, enum: [no-store] }
+ *         content:
+ *           application/json:
+ *             schema: { type: array, items: { $ref: '#/components/schemas/CustomCommissionRequest' } }
+ *       '401': { description: Not authenticated. }
+ *       '403': { description: "Operational accounts (STAFF or ADMIN) cannot access buyer commission history." }
  */
 router.post(
   '/',
   customCommissionRequestLimiter,
+  optionalBuyerAuthMiddleware,
   customCommissionRequestValidators,
   handleCommissionValidationErrors,
   controller.create,
 );
+router.get('/mine', apiAuthMiddleware, buyerGuard, controller.listMine);
 router.get('/', apiAuthMiddleware, requireRoles(Role.ADMIN, Role.STAFF), controller.list);
 
 export default router;

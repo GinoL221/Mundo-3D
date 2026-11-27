@@ -27,9 +27,9 @@ describe('SequelizeCustomCommissionRequestRepository', () => {
     const createdAt = new Date('2026-09-01T00:00:00Z');
     const expiresAt = new Date('2026-10-01T00:00:00Z');
     jest.mocked(db.CustomCommissionRequest.create).mockResolvedValue({
-      idCustomCommissionRequest: 8, name: 'Ari', email: 'ari@example.com', idea: 'Dragon', idProduct: null, createdAt, expiresAt,
+      idCustomCommissionRequest: 8, name: 'Ari', email: 'ari@example.com', phone: null, idea: 'Dragon', idProduct: null, idUser: null, createdAt, expiresAt,
     } as any);
-    const result = await repository.create({ name: 'Ari', email: 'ari@example.com', idea: 'Dragon', idProduct: null, createdAt, expiresAt });
+    const result = await repository.create({ name: 'Ari', email: 'ari@example.com', phone: null, idea: 'Dragon', idProduct: null, idUser: null, createdAt, expiresAt });
     expect(result.idCustomCommissionRequest).toBe(8);
     expect(db.CustomCommissionRequest.create).toHaveBeenCalledWith(expect.objectContaining({ idProduct: null, expiresAt }));
   });

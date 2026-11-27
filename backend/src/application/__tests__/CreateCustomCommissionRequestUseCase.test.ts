@@ -6,8 +6,9 @@ describe('CreateCustomCommissionRequestUseCase', () => {
   it('sets expiresAt exactly 30 days after the injected creation time', async () => {
     const now = new Date('2026-09-01T12:34:56.789Z');
     const repo: jest.Mocked<CustomCommissionRequestRepositoryPort> = {
-      create: jest.fn(async (request) => new CustomCommissionRequest(4, request.name, request.email, request.idea, request.idProduct, request.createdAt, request.expiresAt)),
+      create: jest.fn(async (request) => new CustomCommissionRequest(4, request.name, request.email, request.idea, request.idProduct, request.createdAt, request.expiresAt, request.phone, request.idUser)),
       listActive: jest.fn(),
+      listActiveByUser: jest.fn(),
       purgeExpired: jest.fn(),
     };
     const useCase = new CreateCustomCommissionRequestUseCase(repo, () => now);

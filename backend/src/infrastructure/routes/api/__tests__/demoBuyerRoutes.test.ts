@@ -52,8 +52,18 @@ function makeSlotRepos(slotId: string) {
     return (orders.push(ord), ord);
   };
   const mkComm: CommP['create'] = async (x) => {
-    const { name, email, idea, idProduct, createdAt, expiresAt } = x;
-    const r = new Comm(comms.length + 1, name, email, idea, idProduct, createdAt, expiresAt);
+    const { name, email, idea, idProduct, createdAt, expiresAt, phone, idUser } = x;
+    const r = new Comm(
+      comms.length + 1,
+      name,
+      email,
+      idea,
+      idProduct,
+      createdAt,
+      expiresAt,
+      phone,
+      idUser,
+    );
     return (comms.push(r), r);
   };
   const byKey = async (_u: number, k: string) => orders.find((o) => o.idempotencyKey === k) ?? null;
@@ -78,7 +88,10 @@ function makeSlotRepos(slotId: string) {
       findById: jest.fn(async (id: number) => orders.find((o) => o.idOrder === id) ?? null),
       findByUserId: jest.fn(async () => ({ orders, total: orders.length })),
     },
-    commRepo: { create: jest.fn(mkComm) },
+    commRepo: {
+      create: jest.fn(mkComm),
+      listActiveByUser: jest.fn(async (u: number) => comms.filter((c) => c.idUser === u)),
+    },
     uow: { runInTransaction: jest.fn(async <T>(w: (tx: unknown) => Promise<T>) => w({ slotId })) },
   };
 }
@@ -167,8 +180,22 @@ describe('/api/demo/* Buyer routes', () => {
     const show = await send('get', `/orders/${ord.body.idOrder}`, S1);
     const [o1, o2] = [m1.body.orders.length, m2.body.orders.length];
     expect([ord.status, o1, o2, show.status]).toEqual([201, 1, 0, 200]);
-    const body = { name: 'Ana', email: 'ana@test.com', idea: 'Figura 15cm', idProduct: 1 };
+    const body = {
+      name: 'Ana',
+      email: 'ana@test.com',
+      phone: '+54 9 11 0000-9999',
+      idea: 'Figura 15cm',
+      idProduct: 1,
+    };
     const cm = await send('post', '/custom-commission-requests', S1, S1.csrf, body);
+    const [cmMine1, cmMine2] = [
+      await send('get', '/custom-commission-requests/mine', S1),
+      await send('get', '/custom-commission-requests/mine', S2),
+    ];
+    expect([cmMine1.status, cmMine1.body.length, cmMine2.status, cmMine2.body.length]).toEqual([
+      200, 1, 200, 0,
+    ]);
+    expect(cmMine1.body[0]).toMatchObject({ phone: '+54 9 11 0000-9999', idUser: 1 });
     const r2 = perSlot.get('slot-2')!;
     const calls = [r2.cartRepo.syncCart, r2.orderRepo.createWithItems, r2.commRepo.create];
     expect([cm.status, ...calls.map((fn) => fn.mock.calls.length)]).toEqual([201, 0, 0, 0]);

@@ -424,6 +424,11 @@
             "format": "email",
             "maxLength": 254
           },
+          "phone": {
+            "type": "string",
+            "maxLength": 30,
+            "nullable": true
+          },
           "idea": {
             "type": "string",
             "minLength": 1,
@@ -454,10 +459,18 @@
             "type": "string",
             "format": "email"
           },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
           "idea": {
             "type": "string"
           },
           "idProduct": {
+            "type": "integer",
+            "nullable": true
+          },
+          "idUser": {
             "type": "integer",
             "nullable": true
           },
@@ -474,8 +487,10 @@
           "idCustomCommissionRequest",
           "name",
           "email",
+          "phone",
           "idea",
           "idProduct",
+          "idUser",
           "createdAt",
           "expiresAt"
         ]
@@ -2221,6 +2236,50 @@
           },
           "403": {
             "description": "Authenticated but not ADMIN or STAFF."
+          }
+        }
+      }
+    },
+    "/custom-commission-requests/mine": {
+      "get": {
+        "summary": "List authenticated buyer's unexpired custom commission requests",
+        "tags": [
+          "Custom commission requests"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Newest unexpired requests owned by the authenticated buyer; non-cacheable.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomCommissionRequest"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated."
+          },
+          "403": {
+            "description": "Operational accounts (STAFF or ADMIN) cannot access buyer commission history."
           }
         }
       }

@@ -21,8 +21,10 @@ test('keeps creation, expiry boundaries, purge counts and errors on the injected
   const input = {
     name: 'Ari',
     email: 'ari@example.com',
+    phone: '+54 9 11 0000-0101',
     idea: 'Dragon',
     idProduct: 44,
+    idUser: 1,
     createdAt,
     expiresAt,
   };
@@ -38,6 +40,14 @@ test('keeps creation, expiry boundaries, purge counts and errors on the injected
     where: { expiresAt: { [Op.gt]: expiresAt } },
     order: [['createdAt', 'DESC']],
   });
+  findAll.mockResolvedValueOnce([row]);
+  expect(await repository.listActiveByUser(1, expiresAt)).toEqual([
+    { ...input, idCustomCommissionRequest: 8 },
+  ]);
+  expect(findAll).toHaveBeenCalledWith({
+    where: { idUser: 1, expiresAt: { [Op.gt]: expiresAt } },
+    order: [['createdAt', 'DESC']],
+  });
   destroy.mockResolvedValueOnce(3);
   await expect(repository.purgeExpired(expiresAt)).resolves.toBe(3);
   expect(destroy).toHaveBeenCalledWith({ where: { expiresAt: { [Op.lte]: expiresAt } } });
@@ -45,6 +55,13 @@ test('keeps creation, expiry boundaries, purge counts and errors on the injected
   const fk = new ForeignKeyConstraintError({ message: 'fk failure' });
   create.mockRejectedValueOnce(fk);
   await expect(repository.create(input)).rejects.toBeInstanceOf(SelectedProductNotFoundException);
+  const userFk = new ForeignKeyConstraintError({
+    message: 'user fk failure',
+    index: 'fk_custom_commission_request_user',
+    fields: { id_user: 'id_user' },
+  });
+  create.mockRejectedValueOnce(userFk);
+  await expect(repository.create(input)).rejects.toBe(userFk);
   create.mockRejectedValueOnce(fk);
   await expect(repository.create({ ...input, idProduct: null })).rejects.toBe(fk);
   const failure = new Error('persistence unavailable');
@@ -54,7 +71,7 @@ test('keeps creation, expiry boundaries, purge counts and errors on the injected
   await expect(repository.listActive(expiresAt)).rejects.toBe(failure);
   destroy.mockRejectedValueOnce(failure);
   await expect(repository.purgeExpired(expiresAt)).rejects.toBe(failure);
-  expect(create).toHaveBeenCalledTimes(4);
-  expect(findAll).toHaveBeenCalledTimes(2);
+  expect(create).toHaveBeenCalledTimes(5);
+  expect(findAll).toHaveBeenCalledTimes(3);
   expect(destroy).toHaveBeenCalledTimes(2);
 });

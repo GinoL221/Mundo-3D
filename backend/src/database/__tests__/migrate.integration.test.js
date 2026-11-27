@@ -34,6 +34,8 @@ const ORDERS_MIGRATION_NAME = '20260828000000-orders.js';
 const REFRESH_ROTATION_MIGRATION_NAME = '20260901000000-refresh-token-rotation.js';
 const CUSTOM_COMMISSION_REQUEST_MIGRATION_NAME = '20260927000000-custom-commission-requests.js';
 const DEMO_SANDBOX_SLOTS_MIGRATION_NAME = '20261026000000-demo-sandbox-slots.js';
+const CUSTOM_COMMISSION_USER_PHONE_MIGRATION_NAME =
+  '20261127000000-custom-commission-requests-user-and-phone.js';
 const EMAIL_CONFIRMATION_TOKEN_TABLE = 'EmailConfirmationToken';
 const CUSTOM_COMMISSION_REQUEST_TABLE = 'CustomCommissionRequest';
 const DEMO_SANDBOX_SLOT_TABLE = 'DemoSandboxSlot';
@@ -118,6 +120,7 @@ describe('migrate CLI — real scratch DB', () => {
       '20260902000000-email-confirmation.js',
       CUSTOM_COMMISSION_REQUEST_MIGRATION_NAME,
       DEMO_SANDBOX_SLOTS_MIGRATION_NAME,
+      CUSTOM_COMMISSION_USER_PHONE_MIGRATION_NAME,
     ]);
   });
 
@@ -223,11 +226,22 @@ describe('migrate CLI — real scratch DB', () => {
     expect(tables.filter((t) => t === 'Product')).toHaveLength(1);
   });
 
-  it('down six times removes each migration in order and restores the baseline shape', async () => {
+  it('down seven times removes each migration in order and restores the baseline shape', async () => {
     // Umzug's `down` with no args reverts only the most recently applied migration.
+    const commissionUserPhoneDown = await run(['down']);
+    expect(commissionUserPhoneDown).toBe(true);
+    let tables = await showTables();
+    expect(tables).toContain(DEMO_SANDBOX_SLOT_TABLE);
+    expect(tables).toContain(CUSTOM_COMMISSION_REQUEST_TABLE);
+    const columnsAfterCommissionUserPhoneDown = await db.sequelize
+      .getQueryInterface()
+      .describeTable(CUSTOM_COMMISSION_REQUEST_TABLE);
+    expect(columnsAfterCommissionUserPhoneDown).not.toHaveProperty('id_user');
+    expect(columnsAfterCommissionUserPhoneDown).not.toHaveProperty('phone');
+
     const firstDown = await run(['down']);
     expect(firstDown).toBe(true);
-    let tables = await showTables();
+    tables = await showTables();
     expect(tables).not.toContain(DEMO_SANDBOX_SLOT_TABLE);
     expect(tables).toContain(CUSTOM_COMMISSION_REQUEST_TABLE);
 
