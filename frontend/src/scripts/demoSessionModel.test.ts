@@ -7,20 +7,20 @@ import {
 } from './demoSessionModel';
 
 describe('demoSessionModel', () => {
-  it('maps USER, STAFF, and ADMIN roles to Taller Maker badges and rioplatense copy', () => {
+  it('maps USER, STAFF, and ADMIN roles to Spanish Taller Maker badges and rioplatense copy', () => {
     expect(buildDemoBarPresentation('USER')).toEqual({
-      roleLabel: 'BUYER',
+      roleLabel: 'Comprador',
       roleBadgeClass: 'ui-badge ui-badge--user',
       summaryText: 'Sesión temporal aislada · los cambios se reinician al salir.',
     });
     expect(buildDemoBarPresentation('STAFF')).toEqual({
-      roleLabel: 'STAFF',
+      roleLabel: 'Taller',
       roleBadgeClass: 'ui-badge ui-badge--staff',
       summaryText:
         'Sesión aislada · podés ver pedidos, ajustar stock, editar el catálogo y revisar solicitudes. Sin eliminar piezas ni tocar pagos.',
     });
     expect(buildDemoBarPresentation('ADMIN')).toEqual({
-      roleLabel: 'ADMIN',
+      roleLabel: 'Admin',
       roleBadgeClass: 'ui-badge ui-badge--admin',
       summaryText:
         'Sesión aislada · acceso completo al taller: confirmar/cancelar pedidos, eliminar piezas, categorías/franquicias y usuarios del slot.',

@@ -54,7 +54,8 @@ function initAdminProductsCreateContent(
 ): void {
   applyAdminRoleHeader(roleBadgeEl, scopeEl, {
     adminScope: 'Cargá una nueva pieza en el Catálogo con clasificación y stock inicial opcional.',
-    staffScope: 'Cargá una nueva pieza en el Catálogo. Como STAFF podés crearla y ajustar stock, pero no eliminarla.',
+    staffScope:
+      'Cargá una nueva pieza en el Catálogo. Como Taller podés crearla y ajustar stock, pero no eliminarla.',
   });
 
   if (contentEl) contentEl.hidden = false;

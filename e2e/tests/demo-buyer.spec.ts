@@ -144,6 +144,23 @@ test('completes full Buyer demo flow over /api/demo/* with m3d_demo_csrf and cle
       const orders = createdOrder ? [createdOrder] : [];
       return json(route, 200, { orders, total: orders.length, page: 1, pageSize: 10 });
     }
+    if (pathname === '/api/demo/custom-commission-requests/mine' && method === 'GET') {
+      const list = commissionSubmitted
+        ? [
+            {
+              idCustomCommissionRequest: 501,
+              name: 'Demo Evaluator',
+              email: 'eval@sandbox.invalid',
+              phone: '+54 9 11 0000-0101',
+              idea: 'Una pieza de prueba dentro del slot demo.',
+              idProduct: null,
+              createdAt: '2026-11-27T01:00:00.000Z',
+              expiresAt: '2026-12-27T01:00:00.000Z',
+            },
+          ]
+        : [];
+      return json(route, 200, list);
+    }
     if (pathname === '/api/demo/custom-commission-requests' && method === 'POST') {
       const hdr = req.headers()['x-csrf-token'] ?? '';
       if (hdr !== DEMO_CSRF) return json(route, 403, { error: 'Invalid demo CSRF' });
@@ -165,6 +182,9 @@ test('completes full Buyer demo flow over /api/demo/* with m3d_demo_csrf and cle
 
   await expect(page.locator('#demo-session-bar')).toBeVisible();
   await expect(page.locator('#demo-role-buyer')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#demo-role-buyer')).toHaveText('Comprador');
+  await expect(page.locator('#demo-role-staff')).toHaveText('Taller');
+  await expect(page.locator('#demo-role-admin')).toHaveText('Admin');
   await expect(page.locator('#navbar-greeting')).toHaveText('Cuenta demo');
 
   await page.goto('/product?id=1');
@@ -187,9 +207,16 @@ test('completes full Buyer demo flow over /api/demo/* with m3d_demo_csrf and cle
   await page.goto('/help');
   await page.locator('#commission-name').fill('Demo Evaluator');
   await page.locator('#commission-email').fill('eval@sandbox.invalid');
+  await page.locator('#commission-phone').fill('+54 9 11 0000-0101');
   await page.locator('#commission-idea').fill('Una pieza de prueba dentro del slot demo.');
   await page.getByRole('button', { name: 'Enviar idea' }).click();
   await expect(page.locator('#commission-feedback')).toContainText('tu solicitud quedó guardada');
+
+  await page.goto('/my-commissions');
+  await expect(page.locator('#my-commissions-list')).toContainText(
+    'Una pieza de prueba dentro del slot demo.',
+  );
+  await expect(page.locator('#my-commissions-list')).toContainText('Tel: +54 9 11 0000-0101');
 
   await page.locator('#demo-bar-exit').click();
   await expect(page.locator('#demo-session-bar')).toBeHidden();

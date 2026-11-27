@@ -25,7 +25,7 @@ export function applyAdminRoleHeader(
   const isAdmin = sessionUser?.idRole === Role.ADMIN;
 
   if (badgeEl) {
-    badgeEl.textContent = isAdmin ? 'ADMIN' : 'STAFF';
+    badgeEl.textContent = isAdmin ? 'Admin' : 'Taller';
     badgeEl.className = `ui-badge ${isAdmin ? 'ui-badge--admin' : 'ui-badge--staff'}`;
   }
 

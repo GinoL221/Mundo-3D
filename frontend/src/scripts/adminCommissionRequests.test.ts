@@ -265,7 +265,7 @@ describe('initializeAdminCommissionRequests', () => {
 
     const badge = doc.getElementById('admin-role-badge')!;
     expect(badge.hidden).toBe(false);
-    expect(badge.textContent).toBe('STAFF');
+    expect(badge.textContent).toBe('Taller');
     expect(badge.classList.contains('ui-badge--staff')).toBe(true);
 
     expect(doc.getElementById('admin-requests-scope')?.hidden).toBe(false);
@@ -311,7 +311,7 @@ describe('initializeAdminCommissionRequests', () => {
     );
 
     const badge = doc.getElementById('admin-role-badge')!;
-    expect(badge.textContent).toBe('ADMIN');
+    expect(badge.textContent).toBe('Admin');
     expect(badge.classList.contains('ui-badge--admin')).toBe(true);
     expect(doc.getElementById('admin-requests-empty')?.hidden).toBe(false);
     expect(doc.getElementById('admin-requests-list')?.hidden).toBe(true);

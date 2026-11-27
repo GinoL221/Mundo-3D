@@ -20,6 +20,7 @@ test.describe('Custom Commission Requests - Real Backend E2E', () => {
     const withPieceRequest = {
       name: `Encargo Pieza ${runTag}`,
       email: `pieza-${runTag}@example.test`,
+      phone: '+54 9 11 0000-0101',
       idea: `Quiero una variante pintada a mano basada en la pieza del catálogo (${runTag}).`,
     };
     const withoutPieceRequest = {
@@ -48,6 +49,7 @@ test.describe('Custom Commission Requests - Real Backend E2E', () => {
     // 2. Submit Request A associated with catalog product #1 against the real backend.
     await page.fill('#commission-name', withPieceRequest.name);
     await page.fill('#commission-email', withPieceRequest.email);
+    await page.fill('#commission-phone', withPieceRequest.phone);
     await page.fill('#commission-idea', withPieceRequest.idea);
     await productSelect.selectOption('1');
 
@@ -87,13 +89,14 @@ test.describe('Custom Commission Requests - Real Backend E2E', () => {
 
       await expect(staffPage.locator('#admin-requests-content')).toBeVisible();
       await expect(staffPage.locator('#admin-gate-denied')).toBeHidden();
-      await expect(staffPage.locator('#admin-role-badge')).toHaveText('STAFF');
+      await expect(staffPage.locator('#admin-role-badge')).toHaveText('Taller');
 
       const withPieceItem = staffPage
         .locator('#admin-requests-list .ui-inbox__item')
         .filter({ hasText: withPieceRequest.name });
       await expect(withPieceItem).toBeVisible();
       await expect(withPieceItem).toContainText(withPieceRequest.idea);
+      await expect(withPieceItem).toContainText(`Tel: ${withPieceRequest.phone}`);
       await expect(withPieceItem.locator(`a[href="mailto:${withPieceRequest.email}"]`)).toBeVisible();
       await expect(withPieceItem.locator('a[href="/product?id=1"]')).toHaveText(
         `Pieza: ${selectedProductName}`,
@@ -117,7 +120,7 @@ test.describe('Custom Commission Requests - Real Backend E2E', () => {
       await adminPage.goto('/admin/commission-requests');
 
       await expect(adminPage.locator('#admin-requests-content')).toBeVisible();
-      await expect(adminPage.locator('#admin-role-badge')).toHaveText('ADMIN');
+      await expect(adminPage.locator('#admin-role-badge')).toHaveText('Admin');
       await expect(adminPage.locator('#admin-requests-list')).toContainText(withPieceRequest.name);
       await expect(adminPage.locator('#admin-requests-list')).toContainText(
         withoutPieceRequest.name,

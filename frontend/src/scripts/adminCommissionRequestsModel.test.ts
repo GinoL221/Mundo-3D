@@ -12,13 +12,13 @@ import {
 
 describe('adminCommissionRequestsModel', () => {
   describe('resolveAdminRoleBadge', () => {
-    it('maps ADMIN and STAFF roles to their 4px monospace badge modifiers', () => {
+    it('maps ADMIN and STAFF roles to their Spanish 4px monospace badge modifiers', () => {
       expect(resolveAdminRoleBadge({ idRole: Role.ADMIN })).toEqual({
-        label: 'ADMIN',
+        label: 'Admin',
         modifierClass: 'ui-badge--admin',
       });
       expect(resolveAdminRoleBadge({ idRole: Role.STAFF })).toEqual({
-        label: 'STAFF',
+        label: 'Taller',
         modifierClass: 'ui-badge--staff',
       });
     });

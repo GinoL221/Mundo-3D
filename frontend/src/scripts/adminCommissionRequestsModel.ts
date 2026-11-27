@@ -3,7 +3,7 @@ import { Role } from '../domains/auth/adapters/auth.adapter';
 import type { CustomCommissionRequestDTO } from '../domains/commissions/services/customCommissionRequest.admin.service';
 
 export interface AdminRoleBadge {
-  label: 'ADMIN' | 'STAFF';
+  label: 'Admin' | 'Taller';
   modifierClass: 'ui-badge--admin' | 'ui-badge--staff';
 }
 
@@ -36,10 +36,10 @@ export interface DateFormatOptions {
 
 export function resolveAdminRoleBadge(user: SessionUser | null): AdminRoleBadge | null {
   if (user?.idRole === Role.ADMIN) {
-    return { label: 'ADMIN', modifierClass: 'ui-badge--admin' };
+    return { label: 'Admin', modifierClass: 'ui-badge--admin' };
   }
   if (user?.idRole === Role.STAFF) {
-    return { label: 'STAFF', modifierClass: 'ui-badge--staff' };
+    return { label: 'Taller', modifierClass: 'ui-badge--staff' };
   }
   return null;
 }

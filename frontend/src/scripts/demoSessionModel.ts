@@ -1,7 +1,7 @@
 import type { DemoRole } from '../config';
 
 export interface DemoBarPresentation {
-  roleLabel: 'BUYER' | 'STAFF' | 'ADMIN';
+  roleLabel: 'Comprador' | 'Taller' | 'Admin';
   roleBadgeClass: string;
   summaryText: string;
 }
@@ -18,7 +18,7 @@ export type DemoNoticeKind = 'disabled' | 'busy' | 'rate-limit' | 'error' | 'exp
 export function buildDemoBarPresentation(role: DemoRole): DemoBarPresentation {
   if (role === 'ADMIN') {
     return {
-      roleLabel: 'ADMIN',
+      roleLabel: 'Admin',
       roleBadgeClass: 'ui-badge ui-badge--admin',
       summaryText:
         'Sesión aislada · acceso completo al taller: confirmar/cancelar pedidos, eliminar piezas, categorías/franquicias y usuarios del slot.',
@@ -26,14 +26,14 @@ export function buildDemoBarPresentation(role: DemoRole): DemoBarPresentation {
   }
   if (role === 'STAFF') {
     return {
-      roleLabel: 'STAFF',
+      roleLabel: 'Taller',
       roleBadgeClass: 'ui-badge ui-badge--staff',
       summaryText:
         'Sesión aislada · podés ver pedidos, ajustar stock, editar el catálogo y revisar solicitudes. Sin eliminar piezas ni tocar pagos.',
     };
   }
   return {
-    roleLabel: 'BUYER',
+    roleLabel: 'Comprador',
     roleBadgeClass: 'ui-badge ui-badge--user',
     summaryText: 'Sesión temporal aislada · los cambios se reinician al salir.',
   };

@@ -163,7 +163,7 @@ describe('initializeAdminUsers', () => {
     const text = tbody.collectText();
     expect(text).toContain('Demo Admin');
     expect(text).toContain('demo.buyer+s1@sandbox.mundo3d.invalid');
-    expect(text).toContain('STAFF');
+    expect(text).toContain('Taller');
     expect(text).toContain('Comprador');
     expect(tbody.collectTags()).not.toContain('BUTTON');
   });
