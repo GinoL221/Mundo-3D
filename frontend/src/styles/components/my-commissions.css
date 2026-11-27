@@ -1,0 +1,45 @@
+/* Page-specific layout for /my-commissions.
+   Shared .ui-* primitives live in styles/base/ui-kit.css. */
+
+.my-commissions {
+  display: grid;
+  gap: var(--space-lg);
+  align-content: start;
+  width: min(var(--sys-frame-max), calc(100% - (var(--sys-frame-gutter) * 2)));
+  max-width: var(--sys-frame-max);
+  margin-inline: auto;
+  padding-inline: 0;
+  min-width: 0;
+}
+
+.my-commissions [hidden] {
+  display: none;
+}
+
+.my-commissions__region {
+  display: grid;
+  gap: var(--space-md);
+  min-width: 0;
+}
+
+.my-commissions__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  justify-content: center;
+  margin-block-start: var(--space-sm);
+}
+
+.my-commissions__region .ui-inbox__requester {
+  overflow-wrap: anywhere;
+}
+
+.my-commissions__region .ui-inbox__idea {
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.my-commissions__region .ui-inbox__phone {
+  color: var(--sys-text-secondary);
+  font-variant-numeric: tabular-nums;
+}

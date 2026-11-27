@@ -181,6 +181,7 @@ describe('initializeProfilePage', () => {
     expect(byId.get('profile-content')!.hidden).toBe(false);
     expect(byId.get('profile-shortcuts')!.collectHrefs()).toEqual([
       '/orders',
+      '/my-commissions',
       '/',
       '/help#encargos',
     ]);

@@ -180,7 +180,7 @@ describe('initializeAdminOrders', () => {
 
     await initializeAdminOrders(doc);
 
-    expect(byId.get('admin-role-badge')!.textContent).toBe('STAFF');
+    expect(byId.get('admin-role-badge')!.textContent).toBe('Taller');
     expect(byId.get('admin-orders-table-wrap')!.hidden).toBe(false);
     const tbody = byId.get('admin-orders-list')!;
     expect(tbody.children).toHaveLength(1);
@@ -245,7 +245,7 @@ describe('initializeAdminOrders', () => {
     const { doc, byId } = createFakeDocument();
     await initializeAdminOrders(doc);
 
-    expect(byId.get('admin-role-badge')!.textContent).toBe('ADMIN');
+    expect(byId.get('admin-role-badge')!.textContent).toBe('Admin');
     expect(byId.get('admin-orders-actions-col')!.hidden).toBe(false);
 
     const tbody = byId.get('admin-orders-list')!;

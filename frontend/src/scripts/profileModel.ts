@@ -26,6 +26,7 @@ const DEMO_NOTE_TEXT =
 
 const SHOPPER_SHORTCUTS: ProfileShortcut[] = [
   { href: '/orders', label: 'Mis pedidos', variant: 'primary' },
+  { href: '/my-commissions', label: 'Mis encargos', variant: 'secondary' },
   { href: '/', label: 'Explorar catálogo', variant: 'secondary' },
   { href: '/help#encargos', label: 'Pedir un encargo', variant: 'secondary' },
 ];
@@ -53,7 +54,7 @@ export function buildProfilePresentation(user: User, isDemo: boolean): ProfilePr
       fullName,
       email: user.email,
       avatarSrc,
-      roleLabel: 'ADMIN · Administración',
+      roleLabel: 'Admin · Administración',
       roleBadgeClass: 'ui-badge ui-badge--admin',
       accountKindLabel: 'Cuenta de administración',
       scopeSummary:
@@ -68,7 +69,7 @@ export function buildProfilePresentation(user: User, isDemo: boolean): ProfilePr
       fullName,
       email: user.email,
       avatarSrc,
-      roleLabel: 'STAFF · Taller',
+      roleLabel: 'Taller · Operador',
       roleBadgeClass: 'ui-badge ui-badge--staff',
       accountKindLabel: 'Cuenta operativa del taller',
       scopeSummary:
@@ -86,7 +87,7 @@ export function buildProfilePresentation(user: User, isDemo: boolean): ProfilePr
     roleBadgeClass: 'ui-badge ui-badge--user',
     accountKindLabel: 'Cuenta de compra',
     scopeSummary:
-      'Podés armar tu carrito, simular pedidos y seguir tu historial de compras. Esta cuenta no tiene acceso a las herramientas del taller ni a datos de otros usuarios.',
+      'Podés armar tu carrito, simular pedidos, seguir tu historial de compras y consultar tus encargos enviados. Esta cuenta no tiene acceso a las herramientas del taller ni a datos de otros usuarios.',
     demoNote,
     shortcuts: SHOPPER_SHORTCUTS,
   };

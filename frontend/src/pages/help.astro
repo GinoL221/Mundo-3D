@@ -18,7 +18,7 @@ import Layout from '../layouts/Layout.astro';
           </p>
         </header>
 
-        <section class="editorial-section" aria-labelledby="commission-form-title">
+        <section class="editorial-section" id="encargos" aria-labelledby="commission-form-title">
           <h2 id="commission-form-title">Solicitud de encargo</h2>
 
           <div class="editorial-form-surface">
@@ -57,9 +57,34 @@ import Layout from '../layouts/Layout.astro';
                   name="email"
                   type="email"
                   autocomplete="email"
+                  autocorrect="off"
+                  autocapitalize="none"
+                  spellcheck="false"
                   required
                   maxlength="254"
                 />
+              </div>
+              <div class="commission-form__field">
+                <label class="commission-form__label" for="commission-phone"
+                  >Teléfono (opcional)</label
+                >
+                <input
+                  class="commission-form__control"
+                  id="commission-phone"
+                  name="phone"
+                  type="tel"
+                  inputmode="tel"
+                  autocomplete="tel"
+                  autocorrect="off"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  maxlength="30"
+                  aria-describedby="commission-phone-hint"
+                />
+                <span class="commission-form__hint" id="commission-phone-hint">
+                  Solo si querés dejar un número de contacto ficticio o de prueba (7 a 20 dígitos,
+                  ej. +54 9 11 0000-0101).
+                </span>
               </div>
               <div class="commission-form__field">
                 <label class="commission-form__label" for="commission-idea">Tu idea</label>
@@ -86,8 +111,9 @@ import Layout from '../layouts/Layout.astro';
                 </select>
               </div>
               <p class="commission-form__disclosure">
-                La solicitud se guarda en esta demo para revisión por personas con rol{' '}
-                <code>STAFF</code> o <code>ADMIN</code>. Se oculta a los 30 días y se elimina
+                La solicitud se guarda en esta demo para revisión por el equipo del taller (Taller o
+                Admin). Si tenés sesión iniciada como Comprador, también vas a poder verla en{' '}
+                <a href="/my-commissions">Mis encargos</a>. Se oculta a los 30 días y se elimina
                 físicamente cada hora mientras el backend está activo; si estuvo detenido, se
                 elimina en el próximo inicio. <a href="/privacy">Leé la política de privacidad</a>.
               </p>
@@ -107,16 +133,82 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <script>
+  import {
+    getDemoSession,
+    getSessionUser,
+    hydrateDemoSession,
+    isDemoSessionActive,
+    isOperationalRole,
+  } from '../config';
+  import { fetchCurrentProfile } from '../domains/auth/services/profile.service';
+  import { isDemoSessionPendingHydration } from '../lib/http/demoSessionState';
   import { fetchProducts } from '../domains/products/services/product.service';
   import { submitCustomCommissionRequest } from '../domains/commissions/services/customCommissionRequest.service';
 
+  const PHONE_ALLOWED_RE = /^[+\d ()-]+$/;
   const form = document.querySelector<HTMLFormElement>('#commission-form');
+  const nameInput = document.querySelector<HTMLInputElement>('#commission-name');
+  const emailInput = document.querySelector<HTMLInputElement>('#commission-email');
+  const phoneInput = document.querySelector<HTMLInputElement>('#commission-phone');
   const productSelect = document.querySelector<HTMLSelectElement>('#commission-product');
   const submitButton = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
   const productStatus = document.querySelector<HTMLElement>('#product-status');
   const submitLabel = submitButton?.textContent ?? 'Enviar idea';
   const productUnavailable = document.querySelector<HTMLElement>('#product-unavailable');
   const feedback = document.querySelector<HTMLElement>('#commission-feedback');
+
+  function validateOptionalPhone(input: HTMLInputElement | null): void {
+    if (!input) return;
+    const trimmed = input.value.trim();
+    if (!trimmed) {
+      input.setCustomValidity('');
+      input.removeAttribute('aria-invalid');
+      return;
+    }
+    const digits = trimmed.replace(/\D/g, '').length;
+    if (!PHONE_ALLOWED_RE.test(trimmed) || digits < 7 || digits > 20 || trimmed.length > 30) {
+      input.setCustomValidity(
+        'Ingresá un teléfono válido (entre 7 y 20 dígitos, usando números, +, espacios, guiones o paréntesis).',
+      );
+      input.setAttribute('aria-invalid', 'true');
+      return;
+    }
+    input.setCustomValidity('');
+    input.removeAttribute('aria-invalid');
+  }
+
+  phoneInput?.addEventListener('blur', () => {
+    validateOptionalPhone(phoneInput);
+  });
+  phoneInput?.addEventListener('input', () => {
+    phoneInput.setCustomValidity('');
+    phoneInput.removeAttribute('aria-invalid');
+  });
+
+  async function prefillBuyerContact(): Promise<void> {
+    if (!nameInput || !emailInput) return;
+    if (isDemoSessionPendingHydration()) {
+      await hydrateDemoSession();
+    }
+    const sessionUser = getSessionUser();
+    if (!sessionUser || isOperationalRole(sessionUser)) return;
+
+    if (isDemoSessionActive()) {
+      const demo = getDemoSession();
+      if (demo && demo.role === 'USER') {
+        const fullName = `${demo.user.firstName} ${demo.user.lastName}`.trim();
+        if (!nameInput.value && fullName) nameInput.value = fullName;
+        if (!emailInput.value && demo.user.email) emailInput.value = demo.user.email;
+      }
+      return;
+    }
+
+    const profile = await fetchCurrentProfile();
+    if (!profile.ok) return;
+    const fullName = `${profile.user.firstName} ${profile.user.lastName}`.trim();
+    if (!nameInput.value && fullName) nameInput.value = fullName;
+    if (!emailInput.value && profile.user.email) emailInput.value = profile.user.email;
+  }
 
   async function loadProductChoices(): Promise<void> {
     if (!productSelect || !submitButton || !productStatus || !productUnavailable) return;
@@ -144,9 +236,11 @@ import Layout from '../layouts/Layout.astro';
 
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
+    validateOptionalPhone(phoneInput);
     if (!form || !submitButton || !feedback || !form.reportValidity()) return;
     const data = new FormData(form);
     const idProduct = String(data.get('idProduct') ?? '');
+    const phone = String(data.get('phone') ?? '').trim();
     form.setAttribute('aria-busy', 'true');
     submitButton.disabled = true;
     submitButton.textContent = 'Enviando…';
@@ -158,6 +252,7 @@ import Layout from '../layouts/Layout.astro';
       result = await submitCustomCommissionRequest({
         name: String(data.get('name')),
         email: String(data.get('email')),
+        ...(phone ? { phone } : {}),
         idea: String(data.get('idea')),
         ...(idProduct ? { idProduct: Number(idProduct) } : {}),
       });
@@ -168,10 +263,21 @@ import Layout from '../layouts/Layout.astro';
     }
     if (result.ok) {
       form.reset();
+      phoneInput?.removeAttribute('aria-invalid');
       feedback.setAttribute('role', 'status');
       feedback.dataset.state = 'success';
-      feedback.textContent =
-        'Listo: tu solicitud quedó guardada en esta demo para revisión. No es un pedido, presupuesto ni pago; no enviamos un correo ni prometemos una respuesta. Se oculta a los 30 días y se purga cada hora mientras el backend está activo o al próximo inicio si estuvo detenido.';
+      feedback.replaceChildren(
+        document.createTextNode(
+          'Listo: tu solicitud quedó guardada en esta demo para revisión. No es un pedido, presupuesto ni pago; no enviamos un correo ni prometemos una respuesta. Se oculta a los 30 días y se purga cada hora mientras el backend está activo o al próximo inicio si estuvo detenido.',
+        ),
+      );
+      const sessionUser = getSessionUser();
+      if (sessionUser && !isOperationalRole(sessionUser)) {
+        const link = document.createElement('a');
+        link.href = '/my-commissions';
+        link.textContent = 'Ver en Mis encargos';
+        feedback.append(document.createTextNode(' '), link);
+      }
       return;
     }
     feedback.setAttribute('role', 'alert');
@@ -186,6 +292,7 @@ import Layout from '../layouts/Layout.astro';
 
   if (form && submitButton) submitButton.disabled = false;
   void loadProductChoices();
+  void prefillBuyerContact();
 </script>
 
 <style>
@@ -217,10 +324,20 @@ import Layout from '../layouts/Layout.astro';
     border-radius: var(--radius-control);
     background: var(--input-bg);
     color: var(--input-fg);
-    font: 400 0.9375rem / 1.4 var(--font-body);
+    font: 400 max(1rem, 0.9375rem) / 1.4 var(--font-body);
     transition:
       border-color 150ms ease,
       box-shadow 150ms ease;
+  }
+
+  .commission-form__hint {
+    color: var(--editorial-muted);
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+
+  .commission-form__control:user-invalid {
+    border-color: var(--danger-border);
   }
 
   select.commission-form__control {

@@ -208,7 +208,7 @@ describe('initializeDemoSessionUI', () => {
     dom.retryBtn.click();
     await flush();
     expect(dom.bar.hidden).toBe(false);
-    expect(dom.roleBadge.textContent).toBe('BUYER');
+    expect(dom.roleBadge.textContent).toBe('Comprador');
     expect(dom.entryBtn.hidden).toBe(true);
     cleanup();
   });
@@ -238,13 +238,13 @@ describe('initializeDemoSessionUI', () => {
 
     dom.staffBtn.click();
     await flush();
-    expect(dom.roleBadge.textContent).toBe('STAFF');
+    expect(dom.roleBadge.textContent).toBe('Taller');
     expect(dom.staffBtn.attrs.get('aria-pressed')).toBe('true');
     expect(dom.reload).toHaveBeenCalledTimes(1);
 
     dom.buyerBtn.click();
     await flush();
-    expect(dom.roleBadge.textContent).toBe('BUYER');
+    expect(dom.roleBadge.textContent).toBe('Comprador');
     expect(dom.assign).toHaveBeenCalledWith('/');
     cleanup();
   });
@@ -277,13 +277,13 @@ describe('initializeDemoSessionUI', () => {
 
     dom.adminBtn.click();
     await flush();
-    expect(dom.roleBadge.textContent).toBe('ADMIN');
+    expect(dom.roleBadge.textContent).toBe('Admin');
     expect(dom.adminBtn.attrs.get('aria-pressed')).toBe('true');
     expect(dom.reload).toHaveBeenCalledTimes(1);
 
     dom.staffBtn.click();
     await flush();
-    expect(dom.roleBadge.textContent).toBe('STAFF');
+    expect(dom.roleBadge.textContent).toBe('Taller');
     expect(dom.assign).toHaveBeenCalledWith('/');
     cleanup();
   });
@@ -342,7 +342,7 @@ describe('initializeDemoSessionUI', () => {
 
     channels[0].onmessage?.({ data: { type: 'demo-session-changed', reason: 'role-changed' } } as MessageEvent);
     await flush();
-    expect(dom.roleBadge.textContent).toBe('STAFF');
+    expect(dom.roleBadge.textContent).toBe('Taller');
     expect(dom.staffBtn.attrs.get('aria-pressed')).toBe('true');
     expect(sessionChanged).toHaveBeenCalledTimes(1);
 

@@ -31,7 +31,7 @@ export function initializeAdminProductsList(): void {
     applyAdminRoleHeader(roleBadgeEl, scopeEl, {
       adminScope: 'Podés crear, editar, ajustar stock y eliminar piezas del Catálogo.',
       staffScope:
-        'Podés crear y editar piezas y ajustar su stock en el Catálogo. El rol STAFF nunca puede eliminar piezas.',
+        'Podés crear y editar piezas y ajustar su stock en el Catálogo. El rol Taller nunca puede eliminar piezas.',
     });
 
     if (contentEl) contentEl.hidden = false;

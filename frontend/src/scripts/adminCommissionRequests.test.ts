@@ -232,6 +232,7 @@ describe('initializeAdminCommissionRequests', () => {
         idCustomCommissionRequest: 10,
         name: 'Lucía Fernández',
         email: 'lucia@ejemplo.com',
+        phone: '+54 9 11 0000-0101',
         idea: 'Quiero dos figuras de 18 cm.',
         idProduct: 1,
         createdAt: '2026-04-12T12:00:00.000Z',
@@ -241,6 +242,7 @@ describe('initializeAdminCommissionRequests', () => {
         idCustomCommissionRequest: 11,
         name: 'Tomás Roldán',
         email: 'tomas@ejemplo.com',
+        phone: null,
         idea: 'Soporte para dos joysticks.',
         idProduct: null,
         createdAt: '2026-04-08T12:00:00.000Z',
@@ -263,7 +265,7 @@ describe('initializeAdminCommissionRequests', () => {
 
     const badge = doc.getElementById('admin-role-badge')!;
     expect(badge.hidden).toBe(false);
-    expect(badge.textContent).toBe('STAFF');
+    expect(badge.textContent).toBe('Taller');
     expect(badge.classList.contains('ui-badge--staff')).toBe(true);
 
     expect(doc.getElementById('admin-requests-scope')?.hidden).toBe(false);
@@ -281,6 +283,11 @@ describe('initializeAdminCommissionRequests', () => {
       'mailto:tomas@ejemplo.com',
     ]);
     expect(links[1]?.textContent).toBe('Pieza: Mario Bros Coleccionable');
+
+    const phones = list.findAll((el) => el.classList.contains('ui-inbox__phone'));
+    expect(phones).toHaveLength(1);
+    expect(phones[0]?.tagName).toBe('span');
+    expect(phones[0]?.textContent).toBe('Tel: +54 9 11 0000-0101');
 
     const muted = list.findAll((el) => el.classList.contains('ui-inbox__muted'));
     expect(muted.map((el) => el.textContent)).toEqual(['Sin pieza asociada']);
@@ -304,7 +311,7 @@ describe('initializeAdminCommissionRequests', () => {
     );
 
     const badge = doc.getElementById('admin-role-badge')!;
-    expect(badge.textContent).toBe('ADMIN');
+    expect(badge.textContent).toBe('Admin');
     expect(badge.classList.contains('ui-badge--admin')).toBe(true);
     expect(doc.getElementById('admin-requests-empty')?.hidden).toBe(false);
     expect(doc.getElementById('admin-requests-list')?.hidden).toBe(true);

@@ -32,3 +32,8 @@
   overflow-wrap: anywhere;
   white-space: pre-line;
 }
+
+.admin-inbox__content .ui-inbox__phone {
+  color: var(--sys-text-secondary);
+  font-variant-numeric: tabular-nums;
+}

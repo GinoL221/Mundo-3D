@@ -15,8 +15,8 @@ describe('commission intake privacy contract', () => {
     expect(page.indexOf('submitButton.disabled = false')).toBeGreaterThan(handler);
   });
   it('lists collected fields in product documentation', () => {
-    expect(product.match(/^- Public custom commission request intake[^\n]*/m)?.[0]).toMatch(
-      /name.*email.*idea/,
+    expect(product.match(/^- Hybrid custom commission request intake[^\n]*/m)?.[0]).toMatch(
+      /name.*email.*phone.*idea/,
     );
   });
 });

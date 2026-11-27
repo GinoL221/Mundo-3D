@@ -4,6 +4,7 @@ export interface CustomCommissionRequestDTO {
   idCustomCommissionRequest: number;
   name: string;
   email: string;
+  phone?: string | null;
   idea: string;
   idProduct: number | null;
   createdAt: string;

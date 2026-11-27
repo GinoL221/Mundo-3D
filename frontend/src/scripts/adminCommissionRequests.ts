@@ -65,6 +65,13 @@ function renderInboxItem(
     meta.append(emailText);
   }
 
+  if (viewModel.phoneLabel) {
+    const phoneText = document.createElement('span');
+    phoneText.className = 'ui-inbox__phone';
+    phoneText.textContent = `Tel: ${viewModel.phoneLabel}`;
+    meta.append(phoneText);
+  }
+
   let pendingPiece: PendingPieceLink | null = null;
   if (viewModel.piece.kind === 'link') {
     const pieceLink = document.createElement('a');

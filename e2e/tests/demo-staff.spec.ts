@@ -59,6 +59,7 @@ test('switches Buyer <-> STAFF in demo sandbox, manages inbox & catalog without 
     idCustomCommissionRequest: number;
     name: string;
     email: string;
+    phone: string | null;
     idea: string;
     idProduct: number | null;
     createdAt: string;
@@ -175,11 +176,17 @@ test('switches Buyer <-> STAFF in demo sandbox, manages inbox & catalog without 
     if (pathname === '/api/demo/custom-commission-requests' && method === 'POST') {
       if (csrfHdr !== activeCsrf) return json(route, 403, { error: 'Invalid demo CSRF' });
       csrfEvents.push(`CREATE_COMM:${csrfHdr}`);
-      const body = req.postDataJSON() as { name: string; email: string; idea: string };
+      const body = req.postDataJSON() as {
+        name: string;
+        email: string;
+        phone?: string | null;
+        idea: string;
+      };
       const created = {
         idCustomCommissionRequest: 701,
         name: body.name,
         email: body.email,
+        phone: body.phone ?? null,
         idea: body.idea,
         idProduct: null,
         createdAt: '2026-11-24T01:05:00.000Z',

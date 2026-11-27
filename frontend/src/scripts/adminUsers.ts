@@ -13,8 +13,8 @@ function setHidden(element: HTMLElement | null, hidden: boolean): void {
 }
 
 function resolveRolePresentation(idRole: number): { label: string; badgeClass: string } {
-  if (idRole === Role.ADMIN) return { label: 'ADMIN', badgeClass: 'ui-badge ui-badge--admin' };
-  if (idRole === Role.STAFF) return { label: 'STAFF', badgeClass: 'ui-badge ui-badge--staff' };
+  if (idRole === Role.ADMIN) return { label: 'Admin', badgeClass: 'ui-badge ui-badge--admin' };
+  if (idRole === Role.STAFF) return { label: 'Taller', badgeClass: 'ui-badge ui-badge--staff' };
   return { label: 'Comprador', badgeClass: 'ui-badge ui-badge--user' };
 }
 

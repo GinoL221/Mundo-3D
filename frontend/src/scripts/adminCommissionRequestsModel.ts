@@ -3,7 +3,7 @@ import { Role } from '../domains/auth/adapters/auth.adapter';
 import type { CustomCommissionRequestDTO } from '../domains/commissions/services/customCommissionRequest.admin.service';
 
 export interface AdminRoleBadge {
-  label: 'ADMIN' | 'STAFF';
+  label: 'Admin' | 'Taller';
   modifierClass: 'ui-badge--admin' | 'ui-badge--staff';
 }
 
@@ -24,6 +24,7 @@ export interface CommissionRequestItemViewModel {
   requesterName: string;
   emailLabel: string;
   mailtoHref: string | null;
+  phoneLabel: string | null;
   datesLabel: string;
   idea: string;
   piece: CommissionPieceReference;
@@ -35,10 +36,10 @@ export interface DateFormatOptions {
 
 export function resolveAdminRoleBadge(user: SessionUser | null): AdminRoleBadge | null {
   if (user?.idRole === Role.ADMIN) {
-    return { label: 'ADMIN', modifierClass: 'ui-badge--admin' };
+    return { label: 'Admin', modifierClass: 'ui-badge--admin' };
   }
   if (user?.idRole === Role.STAFF) {
-    return { label: 'STAFF', modifierClass: 'ui-badge--staff' };
+    return { label: 'Taller', modifierClass: 'ui-badge--staff' };
   }
   return null;
 }
@@ -126,6 +127,7 @@ export function buildCommissionRequestItemViewModel(
   dateOptions?: DateFormatOptions,
 ): CommissionRequestItemViewModel {
   const emailLabel = request.email.trim();
+  const rawPhone = typeof request.phone === 'string' ? request.phone.trim() : '';
   const productName =
     request.idProduct !== null ? (catalogById?.get(request.idProduct) ?? null) : null;
 
@@ -134,6 +136,7 @@ export function buildCommissionRequestItemViewModel(
     requesterName: request.name.trim() || 'Sin nombre',
     emailLabel,
     mailtoHref: buildSafeMailtoHref(emailLabel),
+    phoneLabel: rawPhone || null,
     datesLabel: formatCommissionDatesLabel(request.createdAt, request.expiresAt, dateOptions),
     idea: request.idea.trim() || 'Sin detalle',
     piece: buildCommissionPieceReference(request.idProduct, productName),

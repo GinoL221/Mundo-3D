@@ -26,7 +26,12 @@ describe('buildProfilePresentation', () => {
     expect(view.accountKindLabel).toBe('Cuenta de compra');
     expect(view.scopeSummary).toMatch(/carrito|pedidos/i);
     expect(view.demoNote).toBeNull();
-    expect(view.shortcuts.map((s) => s.href)).toEqual(['/orders', '/', '/help#encargos']);
+    expect(view.shortcuts.map((s) => s.href)).toEqual([
+      '/orders',
+      '/my-commissions',
+      '/',
+      '/help#encargos',
+    ]);
   });
 
   it('builds STAFF presentation with workshop shortcuts, custom image resolution, and demo note', () => {
@@ -44,7 +49,7 @@ describe('buildProfilePresentation', () => {
 
     expect(view.fullName).toBe('Lucía Taller');
     expect(view.avatarSrc).toBe('/img/users/staff-avatar.png');
-    expect(view.roleLabel).toBe('STAFF · Taller');
+    expect(view.roleLabel).toBe('Taller · Operador');
     expect(view.roleBadgeClass).toBe('ui-badge ui-badge--staff');
     expect(view.accountKindLabel).toBe('Cuenta operativa del taller');
     expect(view.scopeSummary).toMatch(/no podés comprar/i);
@@ -69,7 +74,7 @@ describe('buildProfilePresentation', () => {
     );
 
     expect(view.avatarSrc).toBe('https://cdn.example.com/admin.webp');
-    expect(view.roleLabel).toBe('ADMIN · Administración');
+    expect(view.roleLabel).toBe('Admin · Administración');
     expect(view.roleBadgeClass).toBe('ui-badge ui-badge--admin');
     expect(view.accountKindLabel).toBe('Cuenta de administración');
     expect(view.demoNote).toBeNull();
