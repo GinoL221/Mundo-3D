@@ -12,12 +12,14 @@
 // broken image is the acceptable failure mode; an attacker-chosen scheme
 // reaching an `<img src>` is not.
 const ABSOLUTE_URL_PATTERN = /^https?:\/\//i;
+const LEGACY_MISSING_USER_AVATARS = new Set(['usuarioSinImagen.jpg']);
 
 export function resolveImageUrl(
   image: string | null | undefined,
   kind: 'products' | 'users',
 ): string {
   if (!image || !image.trim()) return '';
+  if (kind === 'users' && LEGACY_MISSING_USER_AVATARS.has(image.trim())) return '';
   if (ABSOLUTE_URL_PATTERN.test(image)) return image;
   return `/img/${kind}/${image}`;
 }

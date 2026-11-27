@@ -427,6 +427,25 @@ describe('initializeSessionUI', () => {
 
       expect(fixture.visibility()).toEqual({ guest: 'none', user: 'block', admin: 'none' });
     });
+
+    it('falls back to default-avatar.png for missing legacy avatars and on image load error', () => {
+      const fixture = createFixture();
+      const avatar = fixture.document.elements.get('navbar-avatar')!;
+      avatar.src = '/img/users/default-avatar.png';
+      setUserCookie(fixture.document, {
+        firstName: 'Admin',
+        idRole: Role.ADMIN,
+        image: 'usuarioSinImagen.jpg',
+      });
+
+      fixture.start();
+
+      expect(avatar.src).toBe('/img/users/default-avatar.png');
+
+      avatar.src = '/img/users/broken-custom.jpg';
+      avatar.listeners.get('error')?.({} as Event);
+      expect(avatar.src).toBe('/img/users/default-avatar.png');
+    });
   });
 
   describe('cleanup', () => {

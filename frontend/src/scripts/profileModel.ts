@@ -36,6 +36,12 @@ const WORKSHOP_SHORTCUTS: ProfileShortcut[] = [
   { href: '/admin/commission-requests', label: 'Solicitudes recibidas', variant: 'secondary' },
 ];
 
+const ADMIN_SHORTCUTS: ProfileShortcut[] = [
+  ...WORKSHOP_SHORTCUTS,
+  { href: '/admin/taxonomy', label: 'Categorías y franquicias', variant: 'secondary' },
+  { href: '/admin/users', label: 'Usuarios', variant: 'secondary' },
+];
+
 export function buildProfilePresentation(user: User, isDemo: boolean): ProfilePresentation {
   const combinedName = `${user.firstName} ${user.lastName}`.trim();
   const fullName = combinedName || user.email;
@@ -53,7 +59,7 @@ export function buildProfilePresentation(user: User, isDemo: boolean): ProfilePr
       scopeSummary:
         'Tenés acceso completo al taller y a la operación de la tienda. Como cuenta operativa, no usa carrito ni realiza compras personales.',
       demoNote,
-      shortcuts: WORKSHOP_SHORTCUTS,
+      shortcuts: ADMIN_SHORTCUTS,
     };
   }
 
