@@ -686,14 +686,16 @@ select.ui-input {
   white-space: nowrap;
 }
 
-.ui-table tbody td {
+.ui-table tbody td,
+.ui-table tbody th {
   padding: 14px 16px;
   border-bottom: 1px solid var(--border);
   color: var(--fg);
   vertical-align: middle;
 }
 
-.ui-table tbody tr:last-child td {
+.ui-table tbody tr:last-child td,
+.ui-table tbody tr:last-child th {
   border-bottom: 0;
 }
 

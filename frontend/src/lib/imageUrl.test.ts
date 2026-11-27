@@ -31,6 +31,10 @@ describe('resolveImageUrl', () => {
     expect(resolveImageUrl('avatar.jpg', 'users')).toBe('/img/users/avatar.jpg');
   });
 
+  it('returns an empty string for the retired legacy user placeholder usuarioSinImagen.jpg', () => {
+    expect(resolveImageUrl('usuarioSinImagen.jpg', 'users')).toBe('');
+  });
+
   it('returns an empty string for null', () => {
     expect(resolveImageUrl(null, 'products')).toBe('');
   });

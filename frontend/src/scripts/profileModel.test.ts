@@ -77,6 +77,8 @@ describe('buildProfilePresentation', () => {
       '/admin/orders',
       '/admin/products',
       '/admin/commission-requests',
+      '/admin/taxonomy',
+      '/admin/users',
     ]);
   });
 });

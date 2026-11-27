@@ -16,6 +16,7 @@ type Cleanup = () => void;
 const cleanups = new WeakMap<Document, Cleanup>();
 const USER_COOKIE_NAME = 'm3d_user';
 const SESSION_BROADCAST_CHANNEL = 'm3d-session';
+const DEFAULT_AVATAR_URL = '/img/users/default-avatar.png';
 
 function setVisibility(elements: NodeListOf<Element> | Element[], display: string) {
   elements.forEach((element) => {
@@ -145,7 +146,7 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
       if (greeting) {
         greeting.textContent = 'Cuenta demo';
       }
-      if (avatar) avatar.src = '/img/users/default-avatar.png';
+      if (avatar) avatar.src = DEFAULT_AVATAR_URL;
       return;
     }
 
@@ -178,8 +179,14 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
       );
       setVisibility(document.querySelectorAll('.buyer-only'), operational ? 'none' : '');
       if (greeting) greeting.textContent = `Hola ${user.firstName || user.FirstName || 'Usuario'}`;
-      if (avatar && (user.image || user.Image))
-        avatar.src = resolveImageUrl(user.image || user.Image, 'users');
+      if (avatar) {
+        const resolvedAvatar = resolveImageUrl(user.image || user.Image, 'users');
+        if (resolvedAvatar) {
+          avatar.src = resolvedAvatar;
+        } else if (avatar.src && !avatar.src.endsWith(DEFAULT_AVATAR_URL)) {
+          avatar.src = DEFAULT_AVATAR_URL;
+        }
+      }
     } catch {
       resetToGuest();
     }
@@ -209,6 +216,13 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
   };
   const logoutButton = document.getElementById('navbar-logout');
   const logoutListener = logoutButton ? logout : null;
+  const avatarElement = document.getElementById('navbar-avatar') as HTMLImageElement | null;
+  const handleAvatarError = () => {
+    if (avatarElement && avatarElement.src && !avatarElement.src.endsWith(DEFAULT_AVATAR_URL)) {
+      avatarElement.src = DEFAULT_AVATAR_URL;
+    }
+  };
+  avatarElement?.addEventListener?.('error', handleAvatarError);
   logoutButton?.addEventListener('click', logout);
   userMenuTrigger?.addEventListener('click', toggleUserMenu);
   workshopMenuTrigger?.addEventListener('click', toggleWorkshopMenu);
@@ -256,6 +270,7 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
     if (!active) return;
     active = false;
     if (logoutListener) logoutButton?.removeEventListener('click', logoutListener);
+    avatarElement?.removeEventListener?.('error', handleAvatarError);
     userMenuTrigger?.removeEventListener('click', toggleUserMenu);
     workshopMenuTrigger?.removeEventListener('click', toggleWorkshopMenu);
     if (hasAnyMenu) {
