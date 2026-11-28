@@ -233,7 +233,9 @@ describe('Shared route shell', () => {
     )?.[0];
     expect(homeEmptyTemplate).toContain('href="/help"');
 
-    expect(homePage).toContain("import { initializeHomeCatalog } from '../scripts/homeCatalogLoader';");
+    expect(homePage).toContain(
+      "import { initializeHomeCatalog } from '../scripts/homeCatalogLoader';",
+    );
     expect(homePage).toContain('initializeHomeCatalog(document);');
     expect(homePage).toContain('id="home-products-content"');
     expect(homePage).toContain('id="home-product-grid"');
@@ -243,7 +245,9 @@ describe('Shared route shell', () => {
 
     expect(homeStyles).toMatch(/\.hero-specimen__state \{[\s\S]*?min-height: 180px;/);
     expect(productsStyles).toMatch(/\.home-products__loading \{[\s\S]*?margin: 0;/);
-    expect(homeStyles).toMatch(/\.home-text-link:focus-visible \{[\s\S]*?outline: 3px solid var\(--home-blue\);/);
+    expect(homeStyles).toMatch(
+      /\.home-text-link:focus-visible \{[\s\S]*?outline: 3px solid var\(--home-blue\);/,
+    );
     for (const route of routeSources) {
       expect(route).toContain("import Layout from '../layouts/Layout.astro'");
       expect(route).toMatch(/<Layout(?:\s|>)/);
@@ -287,7 +291,9 @@ describe('Shared route shell', () => {
     expect(header).toContain('pathname: string;');
     expect(header).toContain('const { pathname } = Astro.props;');
     expect(header).toContain("currentPath.startsWith('/admin/products/')");
-    expect(header).toContain("aria-current={adminProductsIsCurrent ? 'page' : adminProductsSectionIsCurrent ? 'true' : undefined}");
+    expect(header).toContain(
+      "aria-current={adminProductsIsCurrent ? 'page' : adminProductsSectionIsCurrent ? 'true' : undefined}",
+    );
     expect(header).not.toContain('theme-toggle-label');
     expect(header).not.toContain('theme-toggle-btn__label');
     expect(header).not.toContain('<span>Carrito</span>');
@@ -345,8 +351,12 @@ describe('Shared route shell', () => {
     expect(brandStyles).toContain('--home-line: var(--border);');
     expect(brandStyles).not.toContain(retiredToken);
     expect(productsStyles).toContain('border-color: var(--border-hover);');
-    expect(productsStyles).toMatch(/\.home-product-card \{[\s\S]*?border-radius: var\(--radius-surface\);/);
-    expect(homeStyles).toMatch(/\.hero-specimen__media \{[\s\S]*?border-radius: var\(--radius-surface\);/);
+    expect(productsStyles).toMatch(
+      /\.home-product-card \{[\s\S]*?border-radius: var\(--radius-surface\);/,
+    );
+    expect(homeStyles).toMatch(
+      /\.hero-specimen__media \{[\s\S]*?border-radius: var\(--radius-surface\);/,
+    );
     expect(productsStyles).toMatch(/\.home-product-card__footer \{[\s\S]*?align-items: baseline;/);
     expect(productsStyles).toMatch(
       /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.home-product-card__image/,
@@ -392,7 +402,9 @@ describe('Shared route shell', () => {
     expect(footer).not.toContain('<h2 class="home-footer__col-title">');
     expect(footer).toContain('<nav class="home-footer__columns" aria-label="Navegación del pie">');
     expect(
-      footer.match(/<nav class="home-footer__columns"[\s\S]*?<\/nav>/)?.[0].match(/<a[\s\S]*?href="/g),
+      footer
+        .match(/<nav class="home-footer__columns"[\s\S]*?<\/nav>/)?.[0]
+        .match(/<a[\s\S]*?href="/g),
     ).toHaveLength(9);
     expect(footer).not.toContain('openspec');
     expect(footer).not.toContain('instagram.com');
@@ -405,7 +417,9 @@ describe('Shared route shell', () => {
     expect(footer).toContain('id="ayuda"');
     expect(footer).toContain('<div class="home-footer__bottom">');
     expect(footer).toContain('Código fuente en GitHub');
-    expect(footer).toContain('Mundo 3D · Proyecto de portfolio (demo interactiva, sin operación comercial real).');
+    expect(footer).toContain(
+      'Mundo 3D · Proyecto de portfolio (demo interactiva, sin operación comercial real).',
+    );
 
     expect(headerStyles).toMatch(
       /\.home-header \.cart-link__badge \{[^}]*?background: var\(--sys-action-bg\);/,
@@ -427,7 +441,9 @@ describe('Shared route shell', () => {
     expect(indexPage).toContain(
       '<a class="ui-btn ui-btn--primary home-commission__cta" href="/help">',
     );
-    expect(header).toContain('<div class="home-header__primary" id="home-primary-navigation" hidden>');
+    expect(header).toContain(
+      '<div class="home-header__primary" id="home-primary-navigation" hidden>',
+    );
     expect(header).toContain('<nav class="home-header__nav" aria-label="Navegación principal">');
     expect(header).toContain('class="home-header__link home-header__register" href="/register"');
     expect(header).not.toContain('home-header__account-heading');
@@ -441,9 +457,7 @@ describe('Shared route shell', () => {
     expect(header.indexOf('id="navbar-cart-trigger"')).toBeLessThan(
       header.indexOf('href="/login"'),
     );
-    expect(header.indexOf('href="/register"')).toBeLessThan(
-      header.indexOf('id="theme-toggle"'),
-    );
+    expect(header.indexOf('href="/register"')).toBeLessThan(header.indexOf('id="theme-toggle"'));
     expect(headerStyles).toMatch(
       /\.home-header \{[^}]*?border-bottom: 1px solid var\(--home-brand-line\);/,
     );
@@ -472,7 +486,9 @@ describe('Shared route shell', () => {
     expect(header).toContain('id="navbar-cart-menu"');
     expect(header).toContain('initializeMiniCart(document)');
     expect(headerStyles).toMatch(/\.mini-cart \{/);
-    expect(headerStyles).toMatch(/\.home-header \.cart-link__badge \{[\s\S]*?font-size: var\(--text-xs\);/);
+    expect(headerStyles).toMatch(
+      /\.home-header \.cart-link__badge \{[\s\S]*?font-size: var\(--text-xs\);/,
+    );
     expect(desktopStyles).toMatch(
       /\.home-header__account-section,\s*\.home-header__account \{[^}]*?margin-inline-start: 14px;[^}]*?padding-inline-start: 14px;[^}]*?border-inline-start: 1px solid var\(--home-brand-line\);/,
     );
@@ -592,8 +608,16 @@ describe('Header browser modules', () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls.some((call) => typeof call[0] === 'string' && call[0].includes('/api/users/logout'))).toBe(true);
-    expect(fetchMock.mock.calls.some((call) => typeof call[0] === 'string' && call[0].includes('/api/users/refresh/revoke'))).toBe(true);
+    expect(
+      fetchMock.mock.calls.some(
+        (call) => typeof call[0] === 'string' && call[0].includes('/api/users/logout'),
+      ),
+    ).toBe(true);
+    expect(
+      fetchMock.mock.calls.some(
+        (call) => typeof call[0] === 'string' && call[0].includes('/api/users/refresh/revoke'),
+      ),
+    ).toBe(true);
   });
 
   it('closes the BroadcastChannel and removes all listeners on cleanup', () => {
@@ -647,13 +671,17 @@ describe('Header browser modules', () => {
     expect(fixture.storage.setItem).toHaveBeenCalledWith('theme', 'light');
     expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('light');
     expect(fixture.document.documentElement.getAttribute('data-theme-preference')).toBe('light');
-    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe('Tema: claro');
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe(
+      'Tema: claro',
+    );
 
     fixture.document.elements.get('theme-toggle')!.click();
     expect(fixture.storage.setItem).toHaveBeenCalledWith('theme', 'dark');
     expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('dark');
     expect(fixture.document.documentElement.getAttribute('data-theme-preference')).toBe('dark');
-    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe('Tema: oscuro');
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe(
+      'Tema: oscuro',
+    );
 
     cleanup();
     cleanup();
@@ -720,7 +748,9 @@ describe('Header browser modules', () => {
     expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
       'Tema: claro. Cambiar a tema oscuro',
     );
-    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe('Tema: claro');
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe(
+      'Tema: claro',
+    );
     expect(fixture.document.elements.get('theme-icon')!.textContent).toBe('');
 
     // System media change does not override explicit light preference
@@ -802,7 +832,9 @@ describe('Header browser modules', () => {
     expect(fixture.document.elements.get('theme-toggle')!.getAttribute('aria-label')).toBe(
       'Tema: claro. Cambiar a tema oscuro',
     );
-    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe('Tema: claro');
+    expect(fixture.document.elements.get('theme-toggle')!.getAttribute('title')).toBe(
+      'Tema: claro',
+    );
 
     expect(() => fixture.document.elements.get('theme-toggle')!.click()).not.toThrow();
     expect(fixture.document.documentElement.getAttribute('data-theme')).toBe('dark');

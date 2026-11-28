@@ -1,4 +1,7 @@
-import { AuthenticateUserUseCase, AuthenticateUserInput } from '../use-cases/AuthenticateUserUseCase';
+import {
+  AuthenticateUserUseCase,
+  AuthenticateUserInput,
+} from '../use-cases/AuthenticateUserUseCase';
 import { UserRepositoryPort } from '../../domain/ports/UserRepositoryPort';
 import { PasswordHasherPort } from '../../domain/ports/PasswordHasherPort';
 import { InvalidCredentialsException } from '../../domain/exceptions/InvalidCredentialsException';
@@ -39,7 +42,7 @@ describe('AuthenticateUserUseCase', () => {
       'hashedPassword',
       'bob.jpg',
       1,
-      'Admin'
+      'Admin',
     );
 
     mockUserRepo.findByEmail.mockResolvedValue(existingUser);
@@ -75,7 +78,7 @@ describe('AuthenticateUserUseCase', () => {
       'hashedPassword',
       'bob.jpg',
       null,
-      null
+      null,
     );
 
     mockUserRepo.findByEmail.mockResolvedValue(existingUser);
@@ -110,7 +113,7 @@ describe('AuthenticateUserUseCase', () => {
     mockUserRepo.findByEmail.mockResolvedValue(null);
 
     await expect(
-      useCase.execute({ email: 'notfound@example.com', password: 'password' })
+      useCase.execute({ email: 'notfound@example.com', password: 'password' }),
     ).rejects.toThrow(InvalidCredentialsException);
 
     expect(mockPasswordHasher.compareAgainstDecoy).toHaveBeenCalledWith('password');
@@ -124,19 +127,28 @@ describe('AuthenticateUserUseCase', () => {
     mockUserRepo.findByEmail.mockResolvedValue(null);
 
     await expect(useCase.execute({ email: 'notfound@example.com' })).rejects.toThrow(
-      InvalidCredentialsException
+      InvalidCredentialsException,
     );
 
     expect(mockPasswordHasher.compareAgainstDecoy).not.toHaveBeenCalled();
   });
 
   it('never spends a decoy comparison when the user exists', async () => {
-    const existingUser = new User(7, 'Bob', 'Builder', 'test@example.com', 'hashedPassword', null, null, null);
+    const existingUser = new User(
+      7,
+      'Bob',
+      'Builder',
+      'test@example.com',
+      'hashedPassword',
+      null,
+      null,
+      null,
+    );
     mockUserRepo.findByEmail.mockResolvedValue(existingUser);
     mockPasswordHasher.compare.mockResolvedValue(false);
 
     await expect(
-      useCase.execute({ email: 'test@example.com', password: 'wrongPassword' })
+      useCase.execute({ email: 'test@example.com', password: 'wrongPassword' }),
     ).rejects.toThrow(InvalidCredentialsException);
 
     expect(mockPasswordHasher.compare).toHaveBeenCalledWith('wrongPassword', 'hashedPassword');
@@ -157,7 +169,7 @@ describe('AuthenticateUserUseCase', () => {
       'hashedPassword',
       'bob.jpg',
       null,
-      null
+      null,
     );
 
     mockUserRepo.findByEmail.mockResolvedValue(existingUser);
@@ -183,7 +195,7 @@ describe('AuthenticateUserUseCase', () => {
       'hashedPassword',
       'bob.jpg',
       null,
-      null
+      null,
     );
 
     mockUserRepo.findByEmail.mockResolvedValue(existingUser);

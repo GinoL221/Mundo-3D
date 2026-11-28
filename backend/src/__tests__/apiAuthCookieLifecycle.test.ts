@@ -163,7 +163,7 @@ describe('Auth cookie lifecycle (login -> protected read -> CSRF write -> logout
     expect(loginRes.status).toBe(200);
     const csrfToken = cookieValue(
       loginRes.headers['set-cookie'] as unknown as string[],
-      CSRF_COOKIE
+      CSRF_COOKIE,
     );
     expect(csrfToken).toBeTruthy();
 

@@ -182,7 +182,9 @@ export function readProductFormValues(
   mode: 'create' | 'edit',
 ): ProductFormValues {
   const valueOf = (id: string): string => {
-    const el = form.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(`#${id}`);
+    const el = form.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
+      `#${id}`,
+    );
     return el?.value ?? '';
   };
 

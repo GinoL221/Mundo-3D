@@ -38,7 +38,11 @@ describe('RememberToken Use Cases', () => {
 
   describe('CreateRememberTokenUseCase', () => {
     it('should create a remember token and return the DTO', async () => {
-      const useCase = new CreateRememberTokenUseCase(mockRememberTokenRepo, mockTokenHasher, mockIdGenerator);
+      const useCase = new CreateRememberTokenUseCase(
+        mockRememberTokenRepo,
+        mockTokenHasher,
+        mockIdGenerator,
+      );
 
       mockTokenHasher.hash.mockReturnValue('hashedPlainToken123');
       mockIdGenerator.generate.mockReturnValue('family-99');
@@ -50,7 +54,7 @@ describe('RememberToken Use Cases', () => {
         10,
         expectedDate,
         expectedDate,
-        'family-99'
+        'family-99',
       );
 
       mockRememberTokenRepo.create.mockResolvedValue(mockCreated);
@@ -77,7 +81,7 @@ describe('RememberToken Use Cases', () => {
           idUser: 10,
           expiryDate: expect.any(Date),
           familyId: 'family-99',
-        })
+        }),
       );
     });
 
@@ -88,11 +92,15 @@ describe('RememberToken Use Cases', () => {
     // use case only needs to prove it delegates to the injected port and
     // persists whatever it returns, never a hardcoded value of its own.
     it('persists whatever the injected IdGeneratorPort returns as familyId, per call', async () => {
-      const useCase = new CreateRememberTokenUseCase(mockRememberTokenRepo, mockTokenHasher, mockIdGenerator);
+      const useCase = new CreateRememberTokenUseCase(
+        mockRememberTokenRepo,
+        mockTokenHasher,
+        mockIdGenerator,
+      );
       mockTokenHasher.hash.mockReturnValue('hashedPlainToken123');
       mockIdGenerator.generate.mockReturnValueOnce('family-a').mockReturnValueOnce('family-b');
       mockRememberTokenRepo.create.mockResolvedValue(
-        new RememberToken(99, 'hashedPlainToken123', 10, new Date(), new Date(), 'family-a')
+        new RememberToken(99, 'hashedPlainToken123', 10, new Date(), new Date(), 'family-a'),
       );
 
       await useCase.execute({ idUser: 10, plainToken: 'myPlainToken', durationSeconds: 3600 });
@@ -111,7 +119,7 @@ describe('RememberToken Use Cases', () => {
       useCase = new VerifyRememberTokenUseCase(
         mockRememberTokenRepo,
         mockUserRepo,
-        mockTokenHasher
+        mockTokenHasher,
       );
     });
 
@@ -129,10 +137,10 @@ describe('RememberToken Use Cases', () => {
 
     it('should delete token and return null if token is expired', async () => {
       mockTokenHasher.hash.mockReturnValue('hashedPlainToken');
-      
+
       const expiredDate = new Date(Date.now() - 10000); // 10s in the past
       const expiredToken = new RememberToken(1, 'hashedPlainToken', 5, expiredDate);
-      
+
       mockRememberTokenRepo.findByHash.mockResolvedValue(expiredToken);
       mockRememberTokenRepo.deleteByHash.mockResolvedValue(true);
 
@@ -145,11 +153,20 @@ describe('RememberToken Use Cases', () => {
 
     it('should return user DTO if token is valid and user exists', async () => {
       mockTokenHasher.hash.mockReturnValue('hashedPlainToken');
-      
+
       const futureDate = new Date(Date.now() + 10000); // 10s in the future
       const validToken = new RememberToken(1, 'hashedPlainToken', 5, futureDate);
-      
-      const user = new User(5, 'Alice', 'Smith', 'alice@example.com', 'hashedPass', 'alice.png', 2, 'VIP');
+
+      const user = new User(
+        5,
+        'Alice',
+        'Smith',
+        'alice@example.com',
+        'hashedPass',
+        'alice.png',
+        2,
+        'VIP',
+      );
 
       mockRememberTokenRepo.findByHash.mockResolvedValue(validToken);
       mockUserRepo.findById.mockResolvedValue(user);
@@ -192,7 +209,17 @@ describe('RememberToken Use Cases', () => {
       mockTokenHasher.hash.mockReturnValue('hashedPlainToken');
 
       const futureDate = new Date(Date.now() + 10000); // unexpired
-      const revokedToken = new RememberToken(1, 'hashedPlainToken', 5, futureDate, null, 'family-1', null, null, new Date());
+      const revokedToken = new RememberToken(
+        1,
+        'hashedPlainToken',
+        5,
+        futureDate,
+        null,
+        'family-1',
+        null,
+        null,
+        new Date(),
+      );
 
       mockRememberTokenRepo.findByHash.mockResolvedValue(revokedToken);
 

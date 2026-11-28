@@ -145,7 +145,10 @@ describe('initializeHomeMenu', () => {
     expect(fixture.menu.classList.contains('is-open')).toBe(true);
 
     const preventDefault = vi.fn();
-    fixture.document.listeners.get('keydown')?.({ key: 'Escape', preventDefault } as unknown as Event);
+    fixture.document.listeners.get('keydown')?.({
+      key: 'Escape',
+      preventDefault,
+    } as unknown as Event);
 
     expect(preventDefault).toHaveBeenCalledOnce();
     expect(fixture.menu.classList.contains('is-open')).toBe(false);

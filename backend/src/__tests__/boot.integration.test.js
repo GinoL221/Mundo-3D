@@ -52,58 +52,54 @@ function waitFor(getValue, timeoutMs) {
 }
 
 describe('boot.integration: real `node index.js` process', () => {
-  it(
-    'boots via the real ts-node/register path, serves GET /health/ready with 200, and exits cleanly on SIGTERM',
-    async () => {
-      const env = { ...process.env };
-      delete env.JEST_WORKER_ID;
-      env.NODE_ENV = 'test';
-      env.PORT = '0';
-      // logger.ts defaults to `silent` under NODE_ENV=test; force structured
-      // output for this one spawn so the OS-assigned ephemeral port
-      // (PORT=0) can be read back from the boot log line.
-      env.LOG_LEVEL = 'info';
+  it('boots via the real ts-node/register path, serves GET /health/ready with 200, and exits cleanly on SIGTERM', async () => {
+    const env = { ...process.env };
+    delete env.JEST_WORKER_ID;
+    env.NODE_ENV = 'test';
+    env.PORT = '0';
+    // logger.ts defaults to `silent` under NODE_ENV=test; force structured
+    // output for this one spawn so the OS-assigned ephemeral port
+    // (PORT=0) can be read back from the boot log line.
+    env.LOG_LEVEL = 'info';
 
-      const child = spawn('node', ['index.js'], {
-        cwd: BACKEND_ROOT,
-        env,
-        shell: false,
-      });
+    const child = spawn('node', ['index.js'], {
+      cwd: BACKEND_ROOT,
+      env,
+      shell: false,
+    });
 
-      let stdout = '';
-      let stderr = '';
-      child.stdout.on('data', (chunk) => {
-        stdout += chunk.toString();
-      });
-      child.stderr.on('data', (chunk) => {
-        stderr += chunk.toString();
-      });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
 
-      let port;
-      try {
-        port = await waitFor(() => extractPort(stdout), 10000);
-      } catch (waitErr) {
-        child.kill('SIGKILL');
-        throw new Error(
-          `Boot log never reported a listening port.\n--- stdout ---\n${stdout}\n--- stderr ---\n${stderr}\n${waitErr.message}`,
-          { cause: waitErr }
-        );
-      }
+    let port;
+    try {
+      port = await waitFor(() => extractPort(stdout), 10000);
+    } catch (waitErr) {
+      child.kill('SIGKILL');
+      throw new Error(
+        `Boot log never reported a listening port.\n--- stdout ---\n${stdout}\n--- stderr ---\n${stderr}\n${waitErr.message}`,
+        { cause: waitErr },
+      );
+    }
 
-      expect(port).toEqual(expect.any(Number));
-      expect(port).toBeGreaterThan(0);
+    expect(port).toEqual(expect.any(Number));
+    expect(port).toBeGreaterThan(0);
 
-      const response = await fetch(`http://127.0.0.1:${port}/health/ready`);
-      expect(response.status).toBe(200);
-      expect(await response.json()).toEqual({ status: 'ok' });
+    const response = await fetch(`http://127.0.0.1:${port}/health/ready`);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: 'ok' });
 
-      const exitCode = await new Promise((resolve) => {
-        child.once('exit', (code) => resolve(code));
-        child.kill('SIGTERM');
-      });
+    const exitCode = await new Promise((resolve) => {
+      child.once('exit', (code) => resolve(code));
+      child.kill('SIGTERM');
+    });
 
-      expect(exitCode).toBe(0);
-    },
-    20000
-  );
+    expect(exitCode).toBe(0);
+  }, 20000);
 });

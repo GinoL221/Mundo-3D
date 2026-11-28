@@ -9,7 +9,10 @@ import { CategoryApiController } from '../../controllers/CategoryApiController';
 import { apiAuthMiddleware, adminGuard, requireRoles } from '../../middlewares/auth';
 import { csrfGuard } from '../../middlewares/csrf';
 import { Role } from '../../../domain/Role';
-import { categoryCreateValidators, categoryUpdateValidators } from '../../middlewares/validators/categoryValidators';
+import {
+  categoryCreateValidators,
+  categoryUpdateValidators,
+} from '../../middlewares/validators/categoryValidators';
 import handleValidationErrors from '../../middlewares/handleValidationErrors';
 
 const router = Router();
@@ -27,7 +30,7 @@ const controller = new CategoryApiController(
   getCategoryByIdUseCase,
   createCategoryUseCase,
   updateCategoryUseCase,
-  deleteCategoryUseCase
+  deleteCategoryUseCase,
 );
 
 /**
@@ -136,7 +139,7 @@ router.post(
   requireRoles(Role.ADMIN, Role.STAFF),
   categoryCreateValidators,
   handleValidationErrors,
-  controller.create
+  controller.create,
 );
 
 router.put(
@@ -146,7 +149,7 @@ router.put(
   requireRoles(Role.ADMIN, Role.STAFF),
   categoryUpdateValidators,
   handleValidationErrors,
-  controller.update
+  controller.update,
 );
 
 router.delete('/categories/:id', apiAuthMiddleware, csrfGuard, adminGuard, controller.destroy);

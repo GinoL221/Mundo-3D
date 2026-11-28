@@ -53,7 +53,7 @@ describe('accountLoginLimiter middleware', () => {
         standardHeaders: true,
         legacyHeaders: false,
         statusCode: 429,
-      })
+      }),
     );
   });
 
@@ -68,7 +68,7 @@ describe('accountLoginLimiter middleware', () => {
       expect.objectContaining({
         windowMs: 60000,
         max: 20,
-      })
+      }),
     );
   });
 

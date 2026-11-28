@@ -24,7 +24,14 @@ const SAMPLE_ORDER_DTO = {
   idUser: 7,
   status: 'AWAITING_PAYMENT',
   items: [
-    { idOrderItem: 88, idProduct: 12, productName: 'Maceta Groot', quantity: 2, unitPrice: 1500, subtotal: 3000 },
+    {
+      idOrderItem: 88,
+      idProduct: 12,
+      productName: 'Maceta Groot',
+      quantity: 2,
+      unitPrice: 1500,
+      subtotal: 3000,
+    },
   ],
   totalAmount: 3000,
   createdAt: '2026-08-28T14:03:11.000Z',
@@ -73,11 +80,17 @@ describe('fetchOrder', () => {
   });
 
   it('maps a 404 to NOT_FOUND (covers both a missing order and a non-owner)', async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse(404, { error: 'Orden no encontrada', code: 'ORDER_NOT_FOUND' }));
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(404, { error: 'Orden no encontrada', code: 'ORDER_NOT_FOUND' }),
+    );
 
     const result = await fetchOrder(999);
 
-    expect(result).toEqual({ ok: false, code: 'NOT_FOUND', message: 'No encontramos este pedido.' });
+    expect(result).toEqual({
+      ok: false,
+      code: 'NOT_FOUND',
+      message: 'No encontramos este pedido.',
+    });
   });
 
   it('maps a thrown fetch (network failure) to NETWORK', async () => {
@@ -195,7 +208,10 @@ describe('fetchMyOrders', () => {
 
   it('maps a 400 to INVALID_PAGINATION', async () => {
     fetchMock.mockResolvedValueOnce(
-      jsonResponse(400, { error: 'Parámetros de paginación inválidos', code: 'INVALID_PAGINATION' }),
+      jsonResponse(400, {
+        error: 'Parámetros de paginación inválidos',
+        code: 'INVALID_PAGINATION',
+      }),
     );
 
     const result = await fetchMyOrders(0, 999);

@@ -17,7 +17,7 @@ const IDEMPOTENCY_KEY_HEADER = 'idempotency-key';
 export const orderCreateValidation = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void | Response => {
   const key = req.headers[IDEMPOTENCY_KEY_HEADER];
 

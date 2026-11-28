@@ -18,14 +18,17 @@ describe('Request-path isolation from the OpenAPI generator', () => {
     require('../../../app');
 
     const loadedSwaggerJsdoc = Object.keys(require.cache).some((modulePath) =>
-      modulePath.includes('swagger-jsdoc')
+      modulePath.includes('swagger-jsdoc'),
     );
 
     expect(loadedSwaggerJsdoc).toBe(false);
   });
 
   it('routes/api/index.ts source contains no swagger-jsdoc or openapiSpec import (static fallback check)', () => {
-    const source = fs.readFileSync(path.join(__dirname, '..', '..', 'routes', 'api', 'index.ts'), 'utf-8');
+    const source = fs.readFileSync(
+      path.join(__dirname, '..', '..', 'routes', 'api', 'index.ts'),
+      'utf-8',
+    );
 
     expect(source).not.toMatch(/swagger-jsdoc/);
     expect(source).not.toMatch(/openapiSpec/);

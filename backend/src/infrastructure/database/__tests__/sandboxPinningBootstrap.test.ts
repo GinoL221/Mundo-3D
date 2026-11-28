@@ -14,7 +14,8 @@ test('rejects a foreign server before schema inspection or mutation', async () =
 });
 
 test('refuses an existing schema without deleting or changing it', async () => {
-  const query = jest.fn()
+  const query = jest
+    .fn()
     .mockResolvedValueOnce([[{ serverUuid: uuid }], {}])
     .mockResolvedValueOnce([[{ SCHEMA_NAME: database }], {}]);
   await expect(bootstrapPinningDatabase({ query }, database, uuid)).rejects.toThrow(
@@ -24,10 +25,15 @@ test('refuses an existing schema without deleting or changing it', async () => {
 });
 
 test('creates only a fresh schema on the verified server, without IF NOT EXISTS', async () => {
-  const query = jest.fn()
+  const query = jest
+    .fn()
     .mockResolvedValueOnce([[{ serverUuid: uuid }], {}])
     .mockResolvedValueOnce([[], {}])
     .mockResolvedValueOnce([[], {}]);
   await expect(bootstrapPinningDatabase({ query }, database, uuid)).resolves.toBeUndefined();
-  expect(query.mock.calls).toEqual([[uuidQuery], [schemaQuery], [`CREATE DATABASE \`${database}\``]]);
+  expect(query.mock.calls).toEqual([
+    [uuidQuery],
+    [schemaQuery],
+    [`CREATE DATABASE \`${database}\``],
+  ]);
 });

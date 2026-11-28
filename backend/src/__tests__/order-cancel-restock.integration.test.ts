@@ -30,8 +30,17 @@ import { TransactionContext } from '../domain/ports/UnitOfWorkPort';
 import { OrderStatus } from '../domain/entities/Order';
 import { IllegalOrderTransitionException } from '../domain/exceptions/IllegalOrderTransitionException';
 import { LoggerPort } from '../domain/ports/LoggerPort';
-import { bootstrapTestDatabase, closeTestDatabase, readProductStock, getTestDb } from './helpers/testDb';
-import { seedCheckoutFixture, cleanupCheckoutFixture, CheckoutFixture } from './helpers/orderTestDb';
+import {
+  bootstrapTestDatabase,
+  closeTestDatabase,
+  readProductStock,
+  getTestDb,
+} from './helpers/testDb';
+import {
+  seedCheckoutFixture,
+  cleanupCheckoutFixture,
+  CheckoutFixture,
+} from './helpers/orderTestDb';
 
 jest.setTimeout(30000);
 
@@ -48,12 +57,18 @@ function buildCreateOrderUseCase(): CreateOrderUseCase {
     new SequelizeShoppingCartRepository(),
     new SequelizeProductRepository(),
     new ManualPaymentGateway(),
-    new NoopLogger()
+    new NoopLogger(),
   );
 }
 
-function buildCancelUseCase(productRepo: SequelizeProductRepository = new SequelizeProductRepository()): CancelOrderUseCase {
-  return new CancelOrderUseCase(new SequelizeUnitOfWork(), new SequelizeOrderRepository(), productRepo);
+function buildCancelUseCase(
+  productRepo: SequelizeProductRepository = new SequelizeProductRepository(),
+): CancelOrderUseCase {
+  return new CancelOrderUseCase(
+    new SequelizeUnitOfWork(),
+    new SequelizeOrderRepository(),
+    productRepo,
+  );
 }
 
 async function readOrderStatus(idOrder: number): Promise<string | null> {
@@ -79,7 +94,10 @@ describe('CancelOrderUseCase — real DB, real adapters', () => {
       // Two line items so a mid-transaction failure on the second item can
       // prove the first item's already-applied restock is also rolled back.
       fixture = await seedCheckoutFixture([5, 8], [2, 3]);
-      const dto = await buildCreateOrderUseCase().execute(fixture.userId, 'cancel-restock-checkout-key');
+      const dto = await buildCreateOrderUseCase().execute(
+        fixture.userId,
+        'cancel-restock-checkout-key',
+      );
       idOrder = dto.idOrder;
     });
 
@@ -105,7 +123,9 @@ describe('CancelOrderUseCase — real DB, real adapters', () => {
       expect(await readProductStock(fixture.productIds[0])).toBe(5);
       expect(await readProductStock(fixture.productIds[1])).toBe(8);
 
-      await expect(buildCancelUseCase().execute(idOrder)).rejects.toThrow(IllegalOrderTransitionException);
+      await expect(buildCancelUseCase().execute(idOrder)).rejects.toThrow(
+        IllegalOrderTransitionException,
+      );
 
       expect(await readOrderStatus(idOrder)).toBe(OrderStatus.CANCELLED);
       expect(await readProductStock(fixture.productIds[0])).toBe(5);
@@ -124,13 +144,15 @@ describe('CancelOrderUseCase — real DB, real adapters', () => {
       const realAdjustStock = productRepo.adjustStock.bind(productRepo);
       const adjustStockSpy = jest
         .spyOn(productRepo, 'adjustStock')
-        .mockImplementationOnce((id: number, delta: number, tx?: TransactionContext) => realAdjustStock(id, delta, tx))
+        .mockImplementationOnce((id: number, delta: number, tx?: TransactionContext) =>
+          realAdjustStock(id, delta, tx),
+        )
         .mockImplementationOnce(() => {
           throw new Error('simulated mid-transaction failure (e.g. a dropped connection)');
         });
 
       await expect(buildCancelUseCase(productRepo).execute(idOrder)).rejects.toThrow(
-        'simulated mid-transaction failure'
+        'simulated mid-transaction failure',
       );
 
       // Whole transaction rolled back: the order stays AWAITING_PAYMENT AND

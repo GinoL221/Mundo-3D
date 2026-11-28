@@ -1,5 +1,9 @@
 import { randomBytes } from 'crypto';
-import { PaymentGatewayPort, PaymentIntent, InitiatePaymentInput } from '../../domain/ports/PaymentGatewayPort';
+import {
+  PaymentGatewayPort,
+  PaymentIntent,
+  InitiatePaymentInput,
+} from '../../domain/ports/PaymentGatewayPort';
 
 // No real payment processor exists yet (proposal's already-resolved
 // decision). `initiate` synchronously mints a reference and reports

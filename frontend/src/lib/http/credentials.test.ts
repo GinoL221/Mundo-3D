@@ -229,10 +229,10 @@ describe('parseApiResponse', () => {
     });
 
     await expect(parseApiResponse(html200, 'Error al iniciar sesión.')).rejects.toThrow(
-      'Error al iniciar sesión.'
+      'Error al iniciar sesión.',
     );
     await expect(parseApiResponse(empty200, 'Error al iniciar sesión.')).rejects.toThrow(
-      'Error al iniciar sesión.'
+      'Error al iniciar sesión.',
     );
   });
 
@@ -266,7 +266,7 @@ describe('parseApiResponse', () => {
       {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
-      }
+      },
     );
 
     try {
@@ -321,10 +321,10 @@ describe('parseApiResponse', () => {
     const empty400 = new Response('', { status: 400 });
 
     await expect(parseApiResponse(html500, 'Error al iniciar sesión.')).rejects.toThrow(
-      'Error al iniciar sesión.'
+      'Error al iniciar sesión.',
     );
     await expect(parseApiResponse(empty400, 'Error al registrarse.')).rejects.toThrow(
-      'Error al registrarse.'
+      'Error al registrarse.',
     );
   });
 });

@@ -8,7 +8,7 @@ import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
 export class RevokeRefreshTokenUseCase {
   constructor(
     private readonly rememberTokenRepo: RememberTokenRepositoryPort,
-    private readonly tokenHasher?: TokenHasherPort
+    private readonly tokenHasher?: TokenHasherPort,
   ) {}
 
   async execute(familyId: string): Promise<number> {
@@ -27,4 +27,3 @@ export class RevokeRefreshTokenUseCase {
     return this.rememberTokenRepo.revokeFamily(token.familyId);
   }
 }
-

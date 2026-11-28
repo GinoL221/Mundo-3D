@@ -19,7 +19,7 @@ export class CancelOrderUseCase {
   constructor(
     private readonly uow: UnitOfWorkPort,
     private readonly orderRepo: OrderRepositoryPort,
-    private readonly productRepo: ProductRepositoryPort
+    private readonly productRepo: ProductRepositoryPort,
   ) {}
 
   async execute(idOrder: number): Promise<OrderDTO> {
@@ -30,7 +30,7 @@ export class CancelOrderUseCase {
         idOrder,
         OrderStatus.AWAITING_PAYMENT,
         OrderStatus.CANCELLED,
-        tx
+        tx,
       );
 
       if (!transitioned || !existing) {
@@ -50,7 +50,7 @@ export class CancelOrderUseCase {
         OrderStatus.CANCELLED,
         existing.items,
         existing.createdAt,
-        existing.paymentReference
+        existing.paymentReference,
       );
 
       return mapToOrderDTO(cancelled);

@@ -95,7 +95,7 @@ export class R2StorageEngine {
             // payloads in the public media bucket.
             ContentType: resolveSafeImageMime(file.originalname, file.mimetype),
             ContentLength: body.length,
-          })
+          }),
         )
         .then(() => {
           if (settled) return;

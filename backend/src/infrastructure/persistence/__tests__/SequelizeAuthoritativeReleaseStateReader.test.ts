@@ -35,8 +35,7 @@ function connectionWith(handlers: Array<(sql: string) => unknown>): Harness {
   const log: QueryLog = [];
   const queue = [...handlers];
   const connection = {
-    transaction: async (work: (tx: object) => Promise<unknown>) =>
-      work({ marker: 'tx' }),
+    transaction: async (work: (tx: object) => Promise<unknown>) => work({ marker: 'tx' }),
     query: async (sql: string, options?: unknown) => {
       log.push({ sql, options });
       const next = queue.shift();
@@ -98,33 +97,39 @@ describe('SequelizeAuthoritativeReleaseStateReader', () => {
       () => [[{ current: session.serverUuid }], []],
       () => [[], []],
       () => [
-        [{
-          slot_id: identity.slotId,
-          status: 'available',
-          generation: identity.generation + 1,
-          lease_id: null,
-          reset_attempt_id: null,
-        }],
+        [
+          {
+            slot_id: identity.slotId,
+            status: 'available',
+            generation: identity.generation + 1,
+            lease_id: null,
+            reset_attempt_id: null,
+          },
+        ],
         [],
       ],
       () => [
-        [{
-          slot_id: identity.slotId,
-          state: 'open',
-          generation: identity.generation + 1,
-          lease_id: null,
-          reset_attempt_id: null,
-        }],
+        [
+          {
+            slot_id: identity.slotId,
+            state: 'open',
+            generation: identity.generation + 1,
+            lease_id: null,
+            reset_attempt_id: null,
+          },
+        ],
         [],
       ],
       () => [
-        [{
-          slot_id: identity.slotId,
-          generation: identity.generation,
-          attempt_id: identity.attemptId,
-          seed_version: identity.seedVersion,
-          consumed: 1,
-        }],
+        [
+          {
+            slot_id: identity.slotId,
+            generation: identity.generation,
+            attempt_id: identity.attemptId,
+            seed_version: identity.seedVersion,
+            consumed: 1,
+          },
+        ],
         [],
       ],
       () => [[releaseRow], []],
@@ -152,33 +157,39 @@ describe('SequelizeAuthoritativeReleaseStateReader', () => {
       () => [[{ current: session.serverUuid }], []],
       () => [[], []],
       () => [
-        [{
-          slot_id: identity.slotId,
-          status: 'resetting',
-          generation: identity.generation,
-          lease_id: identity.leaseId,
-          reset_attempt_id: identity.attemptId,
-        }],
+        [
+          {
+            slot_id: identity.slotId,
+            status: 'resetting',
+            generation: identity.generation,
+            lease_id: identity.leaseId,
+            reset_attempt_id: identity.attemptId,
+          },
+        ],
         [],
       ],
       () => [
-        [{
-          slot_id: identity.slotId,
-          state: 'fenced',
-          generation: identity.generation,
-          lease_id: null,
-          reset_attempt_id: identity.attemptId,
-        }],
+        [
+          {
+            slot_id: identity.slotId,
+            state: 'fenced',
+            generation: identity.generation,
+            lease_id: null,
+            reset_attempt_id: identity.attemptId,
+          },
+        ],
         [],
       ],
       () => [
-        [{
-          slot_id: identity.slotId,
-          generation: identity.generation,
-          attempt_id: identity.attemptId,
-          seed_version: identity.seedVersion,
-          consumed: 0,
-        }],
+        [
+          {
+            slot_id: identity.slotId,
+            generation: identity.generation,
+            attempt_id: identity.attemptId,
+            seed_version: identity.seedVersion,
+            consumed: 0,
+          },
+        ],
         [],
       ],
       () => [[], []],
@@ -223,12 +234,8 @@ describe('SequelizeAuthoritativeReleaseStateReader', () => {
     await expect(
       reader.readState(identity, { ...session, attemptId: 'other' }),
     ).resolves.toBeNull();
-    await expect(
-      reader.readState(identity, { ...session, slotId: 'slot-b' }),
-    ).resolves.toBeNull();
-    await expect(
-      reader.readState(identity, { ...session, generation: 9 }),
-    ).resolves.toBeNull();
+    await expect(reader.readState(identity, { ...session, slotId: 'slot-b' })).resolves.toBeNull();
+    await expect(reader.readState(identity, { ...session, generation: 9 })).resolves.toBeNull();
     expect(log).toHaveLength(0);
   });
 

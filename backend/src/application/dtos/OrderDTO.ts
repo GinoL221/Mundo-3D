@@ -36,9 +36,7 @@ export interface WorkshopOrderDTO extends OrderDTO {
   customer: OrderCustomerDTO;
 }
 
-export function toCustomerDisplayName(
-  user: Pick<User, 'firstName' | 'lastName'> | null,
-): string {
+export function toCustomerDisplayName(user: Pick<User, 'firstName' | 'lastName'> | null): string {
   if (!user) return 'Cliente eliminado';
   const first = user.firstName.trim();
   const initial = user.lastName.trim().charAt(0).toUpperCase();

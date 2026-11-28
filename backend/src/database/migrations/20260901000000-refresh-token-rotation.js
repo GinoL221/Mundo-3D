@@ -80,12 +80,12 @@ async function runStatements(queryInterface, statements, transaction, direction)
 module.exports = {
   async up({ context: queryInterface }) {
     await queryInterface.sequelize.transaction((transaction) =>
-      runStatements(queryInterface, UP_STATEMENTS, transaction, 'up')
+      runStatements(queryInterface, UP_STATEMENTS, transaction, 'up'),
     );
   },
   async down({ context: queryInterface }) {
     await queryInterface.sequelize.transaction((transaction) =>
-      runStatements(queryInterface, DOWN_STATEMENTS, transaction, 'down')
+      runStatements(queryInterface, DOWN_STATEMENTS, transaction, 'down'),
     );
   },
 };

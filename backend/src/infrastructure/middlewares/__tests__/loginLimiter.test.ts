@@ -44,7 +44,7 @@ describe('loginLimiter middleware', () => {
         standardHeaders: true,
         legacyHeaders: false,
         statusCode: 429,
-      })
+      }),
     );
 
     // Verify it behaves as a middleware function
@@ -77,7 +77,7 @@ describe('loginLimiter middleware', () => {
         standardHeaders: true,
         legacyHeaders: false,
         statusCode: 429,
-      })
+      }),
     );
 
     // Verify it behaves as a middleware function

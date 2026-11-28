@@ -422,9 +422,7 @@ describe('/api/demo/* STAFF endpoints and explicit 403 boundaries', () => {
     const unauthMe = await request(app).get(`${B}/users/me`);
     expect(unauthMe.status).toBe(401);
 
-    const staffOrderDetail = await request(app)
-      .get(`${B}/orders/1`)
-      .set('Cookie', STAFF1.cookies);
+    const staffOrderDetail = await request(app).get(`${B}/orders/1`).set('Cookie', STAFF1.cookies);
     expect(staffOrderDetail.status).toBe(404);
   });
 
@@ -432,7 +430,10 @@ describe('/api/demo/* STAFF endpoints and explicit 403 boundaries', () => {
     rtMod.setActiveDemoSandboxRuntime(makeRuntime().runtime);
     const app = buildApp();
     const checks = [
-      request(app).post(`${B}/products`).set('Cookie', STAFF1.cookies).send({ nameProduct: 'Test 3D' }),
+      request(app)
+        .post(`${B}/products`)
+        .set('Cookie', STAFF1.cookies)
+        .send({ nameProduct: 'Test 3D' }),
       request(app)
         .post(`${B}/products`)
         .set('Cookie', STAFF1.cookies)

@@ -154,8 +154,7 @@ export class DemoSandboxSessionController {
     const role = req.user?.role;
     if (!sandbox || uid === undefined || role === undefined)
       return fail(res, 401, 'Demo sandbox session invalid or expired');
-    if (!ses.isAllowedDemoRole(role))
-      return fail(res, 403, 'Demo sandbox role is not permitted');
+    if (!ses.isAllowedDemoRole(role)) return fail(res, 403, 'Demo sandbox role is not permitted');
     try {
       const account = await rt.repositories.getUserRepository(sandbox.slotId).findById(uid);
       if (!account || Number(account.idRole) !== Number(role))

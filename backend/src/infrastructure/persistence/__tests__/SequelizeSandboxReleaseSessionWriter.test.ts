@@ -14,9 +14,10 @@ const identity: SandboxReleaseIdentity = {
 
 type QueryLog = Array<{ sql: string; options?: unknown }>;
 
-function connectionWith(
-  handlers: Array<(sql: string, options?: unknown) => unknown>,
-): { writer: SequelizeSandboxReleaseSessionWriter; log: QueryLog } {
+function connectionWith(handlers: Array<(sql: string, options?: unknown) => unknown>): {
+  writer: SequelizeSandboxReleaseSessionWriter;
+  log: QueryLog;
+} {
   const log: QueryLog = [];
   const queue = [...handlers];
   const connection = {
@@ -72,10 +73,7 @@ describe('SequelizeSandboxReleaseSessionWriter', () => {
   });
 
   it('records another attempt of the bound slot; identity mismatches are reconciliation concerns', async () => {
-    const { writer } = connectionWith([
-      () => [[{ id: 13, uuid: 'uuid-2' }], []],
-      () => [[], []],
-    ]);
+    const { writer } = connectionWith([() => [[{ id: 13, uuid: 'uuid-2' }], []], () => [[], []]]);
     const recorded = await writer.recordSession({
       ...identity,
       attemptId: '99999999-9999-9999-9999-999999999999',

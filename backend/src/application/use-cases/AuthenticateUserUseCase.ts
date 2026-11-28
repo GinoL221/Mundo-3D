@@ -12,7 +12,7 @@ export interface AuthenticateUserInput {
 export class AuthenticateUserUseCase {
   constructor(
     private readonly userRepo: UserRepositoryPort,
-    private readonly passwordHasher: PasswordHasherPort
+    private readonly passwordHasher: PasswordHasherPort,
   ) {}
 
   async execute(input: AuthenticateUserInput): Promise<UserDTO> {

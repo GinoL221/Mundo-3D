@@ -11,7 +11,10 @@ export interface DemoSandboxReleaseSessionAttributes {
 export interface DemoSandboxReleaseSessionRecord
   extends Model<DemoSandboxReleaseSessionAttributes>, DemoSandboxReleaseSessionAttributes {}
 
-const releaseSessionModelCache = new WeakMap<Sequelize, ModelStatic<DemoSandboxReleaseSessionRecord>>();
+const releaseSessionModelCache = new WeakMap<
+  Sequelize,
+  ModelStatic<DemoSandboxReleaseSessionRecord>
+>();
 
 /**
  * Isolated model definition; no table is created or connected here. The record

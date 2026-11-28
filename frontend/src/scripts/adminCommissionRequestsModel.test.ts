@@ -47,20 +47,18 @@ describe('adminCommissionRequestsModel', () => {
 
     it('builds the received and expiration label with fallback handling', () => {
       expect(
-        formatCommissionDatesLabel(
-          '2026-04-12T12:00:00.000Z',
-          '2026-05-12T12:00:00.000Z',
-          { timeZone: 'UTC' },
-        ),
+        formatCommissionDatesLabel('2026-04-12T12:00:00.000Z', '2026-05-12T12:00:00.000Z', {
+          timeZone: 'UTC',
+        }),
       ).toBe('Recibida el 12/04/2026 · Vence el 12/05/2026');
 
-      expect(
-        formatCommissionDatesLabel('2026-04-12T12:00:00.000Z', '', { timeZone: 'UTC' }),
-      ).toBe('Recibida el 12/04/2026');
+      expect(formatCommissionDatesLabel('2026-04-12T12:00:00.000Z', '', { timeZone: 'UTC' })).toBe(
+        'Recibida el 12/04/2026',
+      );
 
-      expect(
-        formatCommissionDatesLabel('', '2026-05-12T12:00:00.000Z', { timeZone: 'UTC' }),
-      ).toBe('Vence el 12/05/2026');
+      expect(formatCommissionDatesLabel('', '2026-05-12T12:00:00.000Z', { timeZone: 'UTC' })).toBe(
+        'Vence el 12/05/2026',
+      );
 
       expect(formatCommissionDatesLabel('invalid', 'invalid')).toBe('Fecha no disponible');
     });
@@ -192,9 +190,9 @@ describe('adminCommissionRequestsModel', () => {
         ...baseRequest,
         idea: '   \n  ',
       };
-      expect(
-        buildCommissionRequestItemViewModel(blank, undefined, { timeZone: 'UTC' }).idea,
-      ).toBe('Sin detalle');
+      expect(buildCommissionRequestItemViewModel(blank, undefined, { timeZone: 'UTC' }).idea).toBe(
+        'Sin detalle',
+      );
     });
   });
 });

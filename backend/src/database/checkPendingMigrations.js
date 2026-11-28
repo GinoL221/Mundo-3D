@@ -6,17 +6,45 @@ const { buildMigrator } = require('./migrator');
 // JS property names. Kept in sync with
 // `migrations/20260724000000-baseline.js`'s `TABLES_IN_ORDER`.
 const REQUIRED_SCHEMA = {
-  User: ['id_user', 'first_name', 'last_name', 'email', 'image', 'password_user', 'id_role', 'category'],
+  User: [
+    'id_user',
+    'first_name',
+    'last_name',
+    'email',
+    'image',
+    'password_user',
+    'id_role',
+    'category',
+  ],
   Category: ['id_category', 'name_category'],
   Franchise: ['id_franchise', 'name_franchise'],
   Product: [
-    'id_product', 'id_category', 'id_franchise', 'name_product', 'price', 'description_product',
-    'image', 'material', 'height', 'width', 'depth', 'finish', 'production_time', 'stock',
+    'id_product',
+    'id_category',
+    'id_franchise',
+    'name_product',
+    'price',
+    'description_product',
+    'image',
+    'material',
+    'height',
+    'width',
+    'depth',
+    'finish',
+    'production_time',
+    'stock',
   ],
   ShoppingCart: ['id_cart', 'id_user', 'id_product', 'quantity', 'unit_price', 'cart_status'],
   RememberToken: [
-    'id_remember_token', 'id_user', 'token_hash', 'expiry_date', 'created_at',
-    'family_id', 'superseded_at', 'successor_hash', 'revoked_at',
+    'id_remember_token',
+    'id_user',
+    'token_hash',
+    'expiry_date',
+    'created_at',
+    'family_id',
+    'superseded_at',
+    'successor_hash',
+    'revoked_at',
   ],
 };
 
@@ -25,30 +53,54 @@ const REQUIRED_SCHEMA = {
 // boot-time gate.
 const REQUIRED_COLUMN_DEFINITIONS = {
   User: {
-    id_user: 'INT(11)!', first_name: 'VARCHAR(255)!', last_name: 'VARCHAR(255)!',
-    email: 'VARCHAR(255)!', image: 'VARCHAR(255)', password_user: 'VARCHAR(255)!',
-    id_role: 'INT(11)!', category: 'VARCHAR(255)!',
+    id_user: 'INT(11)!',
+    first_name: 'VARCHAR(255)!',
+    last_name: 'VARCHAR(255)!',
+    email: 'VARCHAR(255)!',
+    image: 'VARCHAR(255)',
+    password_user: 'VARCHAR(255)!',
+    id_role: 'INT(11)!',
+    category: 'VARCHAR(255)!',
   },
   Category: { id_category: 'INT(11)!', name_category: 'VARCHAR(255)!' },
   Franchise: { id_franchise: 'INT(11)!', name_franchise: 'VARCHAR(255)!' },
   Product: {
-    id_product: 'INT(11)!', id_category: 'INT(11)!', id_franchise: 'INT(11)!',
-    name_product: 'VARCHAR(255)!', price: 'DECIMAL(10,2)!', description_product: 'TEXT',
-    image: 'VARCHAR(255)', material: 'VARCHAR(255)', height: 'DECIMAL(6,2)',
-    width: 'DECIMAL(6,2)', depth: 'DECIMAL(6,2)', finish: 'VARCHAR(255)',
-    production_time: 'INT(11)', stock: 'INT(11)!',
+    id_product: 'INT(11)!',
+    id_category: 'INT(11)!',
+    id_franchise: 'INT(11)!',
+    name_product: 'VARCHAR(255)!',
+    price: 'DECIMAL(10,2)!',
+    description_product: 'TEXT',
+    image: 'VARCHAR(255)',
+    material: 'VARCHAR(255)',
+    height: 'DECIMAL(6,2)',
+    width: 'DECIMAL(6,2)',
+    depth: 'DECIMAL(6,2)',
+    finish: 'VARCHAR(255)',
+    production_time: 'INT(11)',
+    stock: 'INT(11)!',
   },
   ShoppingCart: {
-    id_cart: 'INT(11)!', id_user: 'INT(11)!', id_product: 'INT(11)!', quantity: 'INT(11)!',
-    unit_price: 'DECIMAL(10,2)!', cart_status: 'VARCHAR(50)!',
+    id_cart: 'INT(11)!',
+    id_user: 'INT(11)!',
+    id_product: 'INT(11)!',
+    quantity: 'INT(11)!',
+    unit_price: 'DECIMAL(10,2)!',
+    cart_status: 'VARCHAR(50)!',
   },
   RememberToken: {
-    id_remember_token: 'INT(11)!', id_user: 'INT(11)!', token_hash: 'VARCHAR(64)!',
-    expiry_date: 'DATETIME!', created_at: 'DATETIME!',
+    id_remember_token: 'INT(11)!',
+    id_user: 'INT(11)!',
+    token_hash: 'VARCHAR(64)!',
+    expiry_date: 'DATETIME!',
+    created_at: 'DATETIME!',
     // Added by 20260901000000-refresh-token-rotation.js (HIGH-1 PR1). Zero
     // production callers today, so this table is safe to alter without a
     // backfill — see that migration's header comment.
-    family_id: 'CHAR(36)!', superseded_at: 'DATETIME', successor_hash: 'VARCHAR(64)', revoked_at: 'DATETIME',
+    family_id: 'CHAR(36)!',
+    superseded_at: 'DATETIME',
+    successor_hash: 'VARCHAR(64)',
+    revoked_at: 'DATETIME',
   },
 };
 
@@ -71,7 +123,7 @@ async function checkNoPendingMigrations(migrator = buildMigrator()) {
   const pending = await migrator.pending();
   if (pending.length > 0) {
     throw new Error(
-      `Database schema is not fully migrated: ${pending.length} pending migration(s) — run \`pnpm db:migrate\` before starting the server.`
+      `Database schema is not fully migrated: ${pending.length} pending migration(s) — run \`pnpm db:migrate\` before starting the server.`,
     );
   }
 
@@ -100,7 +152,7 @@ async function checkPhysicalSchema(queryInterface) {
   for (const [table, requiredColumns] of Object.entries(REQUIRED_SCHEMA)) {
     if (!existingTables.has(table)) {
       throw new Error(
-        `Database schema is missing required table "${table}" even though no migrations are pending — the physical schema does not match the tracked migration state. Verify the database manually before starting the server.`
+        `Database schema is missing required table "${table}" even though no migrations are pending — the physical schema does not match the tracked migration state. Verify the database manually before starting the server.`,
       );
     }
 
@@ -108,7 +160,7 @@ async function checkPhysicalSchema(queryInterface) {
     for (const column of requiredColumns) {
       if (!columns[column]) {
         throw new Error(
-          `Database schema is missing required column "${column}" on table "${table}" even though no migrations are pending — the physical schema does not match the tracked migration state. Verify the database manually before starting the server.`
+          `Database schema is missing required column "${column}" on table "${table}" even though no migrations are pending — the physical schema does not match the tracked migration state. Verify the database manually before starting the server.`,
         );
       }
 
@@ -116,9 +168,12 @@ async function checkPhysicalSchema(queryInterface) {
       const expectedType = expected.replace(/!$/, '');
       const expectedAllowNull = !expected.endsWith('!');
       const actualType = String(columns[column].type).toUpperCase().replace(/\s+/g, '');
-      if (!typesAreCompatible(actualType, expectedType) || columns[column].allowNull !== expectedAllowNull) {
+      if (
+        !typesAreCompatible(actualType, expectedType) ||
+        columns[column].allowNull !== expectedAllowNull
+      ) {
         throw new Error(
-          `Database schema has incompatible definition for column "${column}" on table "${table}": expected type ${expectedType} with allowNull=${expectedAllowNull}, got type ${actualType} with allowNull=${columns[column].allowNull}. Verify the database manually before starting the server.`
+          `Database schema has incompatible definition for column "${column}" on table "${table}": expected type ${expectedType} with allowNull=${expectedAllowNull}, got type ${actualType} with allowNull=${columns[column].allowNull}. Verify the database manually before starting the server.`,
         );
       }
     }

@@ -68,6 +68,13 @@ const controller = new CartApiController(getCartByUserIdUseCase, syncCartUseCase
 router.get('/cart', apiAuthMiddleware, buyerGuard, controller.getCart);
 
 // PUT /api/cart
-router.put('/cart', apiAuthMiddleware, buyerGuard, csrfGuard, cartSyncValidation, controller.syncCart);
+router.put(
+  '/cart',
+  apiAuthMiddleware,
+  buyerGuard,
+  csrfGuard,
+  cartSyncValidation,
+  controller.syncCart,
+);
 
 export default router;

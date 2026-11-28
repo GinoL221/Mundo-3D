@@ -145,7 +145,12 @@ describe('demoSessionClient', () => {
     const staffSession: DemoSessionState = {
       ...buyerSession,
       role: 'STAFF',
-      user: { idUser: 2, firstName: 'Demo', lastName: 'Staff', email: 'demo.staff@sandbox.invalid' },
+      user: {
+        idUser: 2,
+        firstName: 'Demo',
+        lastName: 'Staff',
+        email: 'demo.staff@sandbox.invalid',
+      },
     };
     const fetchMock = vi
       .fn()
@@ -192,7 +197,10 @@ describe('demoSessionClient', () => {
       vi.fn().mockResolvedValueOnce(new Response(JSON.stringify(buyerSession), { status: 200 })),
     );
 
-    await expect(hydrateDemoSession()).resolves.toEqual({ status: 'active', session: buyerSession });
+    await expect(hydrateDemoSession()).resolves.toEqual({
+      status: 'active',
+      session: buyerSession,
+    });
     expect(postMessage).not.toHaveBeenCalled();
   });
 

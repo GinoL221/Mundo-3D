@@ -42,7 +42,9 @@ export async function seedBuyerWithOrders(itemCounts: number[]): Promise<OrderHi
   const userId = await seedTestUser();
   const categoryId = await createTestCategory();
   const franchiseId = await createTestFranchise();
-  const productId = await createTestProduct(categoryId, franchiseId, { nameProduct: 'Order History Fixture Product' });
+  const productId = await createTestProduct(categoryId, franchiseId, {
+    nameProduct: 'Order History Fixture Product',
+  });
 
   const uow = new SequelizeUnitOfWork();
   const orderRepo = new SequelizeOrderRepository();
@@ -56,7 +58,10 @@ export async function seedBuyerWithOrders(itemCounts: number[]): Promise<OrderHi
       unitPrice: 10,
     }));
     const order = await uow.runInTransaction((tx) =>
-      orderRepo.createWithItems({ idUser: userId, idempotencyKey: `order-history-fixture-${userId}-${i}`, items }, tx)
+      orderRepo.createWithItems(
+        { idUser: userId, idempotencyKey: `order-history-fixture-${userId}-${i}`, items },
+        tx,
+      ),
     );
     orderIds.push(order.idOrder);
   }

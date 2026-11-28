@@ -48,5 +48,8 @@ export interface AuthoritativeReleaseStateReaderPort {
  * declaration alone does not.
  */
 export interface AuthoritativeReleaseSessionReaderPort {
-  readState(identity: SandboxReleaseIdentity, session: RecordedReleaseSession): Promise<AuthoritativeReleaseState | null>;
+  readState(
+    identity: SandboxReleaseIdentity,
+    session: RecordedReleaseSession,
+  ): Promise<AuthoritativeReleaseState | null>;
 }

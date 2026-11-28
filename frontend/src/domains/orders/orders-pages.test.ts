@@ -24,7 +24,9 @@ describe('Orders pages design-system contract', () => {
     expect(component).toContain('href="/products"');
     expect(component).toContain('id="my-orders-error" class="ui-callout ui-callout--danger"');
     expect(component).toContain('id="my-orders-retry"');
-    expect(component).toContain('id="my-orders-empty" class="ui-state ui-state--empty ui-state--open"');
+    expect(component).toContain(
+      'id="my-orders-empty" class="ui-state ui-state--empty ui-state--open"',
+    );
     expect(component).toContain('Ver catálogo');
     expect(component).not.toContain('Ver productos');
     expect(component).toContain('class="ui-table-wrap orders-table-wrap"');

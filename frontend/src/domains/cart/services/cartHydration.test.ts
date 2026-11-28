@@ -59,7 +59,9 @@ function buildDto(overrides: Partial<ServerCartItemDTO> = {}): ServerCartItemDTO
 
 describe('mapServerCart', () => {
   it('maps a null product.image to an empty string', () => {
-    const dto = buildDto({ product: { idProduct: 1, nameProduct: 'Figura Mario', price: 1500, image: null } });
+    const dto = buildDto({
+      product: { idProduct: 1, nameProduct: 'Figura Mario', price: 1500, image: null },
+    });
 
     const [item] = mapServerCart([dto]);
 
@@ -67,7 +69,10 @@ describe('mapServerCart', () => {
   });
 
   it('takes unitPrice from product.price, not the row-level unitPrice', () => {
-    const dto = buildDto({ unitPrice: 999, product: { idProduct: 1, nameProduct: 'Figura Mario', price: 1500, image: 'a.jpg' } });
+    const dto = buildDto({
+      unitPrice: 999,
+      product: { idProduct: 1, nameProduct: 'Figura Mario', price: 1500, image: 'a.jpg' },
+    });
 
     const [item] = mapServerCart([dto]);
 
@@ -75,7 +80,11 @@ describe('mapServerCart', () => {
   });
 
   it('maps productId, name, and quantity straight through', () => {
-    const dto = buildDto({ idProduct: 42, quantity: 3, product: { idProduct: 42, nameProduct: 'Figura Sonic', price: 800, image: 'b.jpg' } });
+    const dto = buildDto({
+      idProduct: 42,
+      quantity: 3,
+      product: { idProduct: 42, nameProduct: 'Figura Sonic', price: 800, image: 'b.jpg' },
+    });
 
     const [item] = mapServerCart([dto]);
 
@@ -96,8 +105,24 @@ describe('mergeCartItems', () => {
   });
 
   it('server wins on name/image/unitPrice for an overlapping item', () => {
-    const local = [buildItem({ productId: 1, name: 'Local Name', image: 'local.jpg', unitPrice: 100, quantity: 1 })];
-    const server = [buildItem({ productId: 1, name: 'Server Name', image: 'server.jpg', unitPrice: 200, quantity: 1 })];
+    const local = [
+      buildItem({
+        productId: 1,
+        name: 'Local Name',
+        image: 'local.jpg',
+        unitPrice: 100,
+        quantity: 1,
+      }),
+    ];
+    const server = [
+      buildItem({
+        productId: 1,
+        name: 'Server Name',
+        image: 'server.jpg',
+        unitPrice: 200,
+        quantity: 1,
+      }),
+    ];
 
     const [merged] = mergeCartItems(local, server);
 
@@ -223,15 +248,15 @@ describe('hydrateFromServer', () => {
 
   // One fetch mock serves both verbs, discriminated on init.method — never
   // chained mockResolvedValueOnce for two different verbs (design's gotcha #1).
-  function stubFetch(handlers: {
-    get?: () => Promise<unknown>;
-    put?: () => Promise<unknown>;
-  }) {
+  function stubFetch(handlers: { get?: () => Promise<unknown>; put?: () => Promise<unknown> }) {
     fetchMock.mockImplementation((_url: string, init: RequestInit = {}) => {
       if (init.method === 'PUT') {
         return (handlers.put ?? (() => Promise.resolve({ ok: true })))();
       }
-      return (handlers.get ?? (() => Promise.resolve({ ok: true, json: () => Promise.resolve({ items: [], total: 0 }) })))();
+      return (
+        handlers.get ??
+        (() => Promise.resolve({ ok: true, json: () => Promise.resolve({ items: [], total: 0 }) }))
+      )();
     });
   }
 
@@ -257,7 +282,7 @@ describe('hydrateFromServer', () => {
           this.type = type;
           this.detail = params?.detail;
         }
-      }
+      },
     );
     vi.stubGlobal('fetch', fetchMock);
     stubCookie(''); // default: guest
@@ -298,7 +323,9 @@ describe('hydrateFromServer', () => {
     ])(
       'resolves {ok:false, reason:"operational"} and never calls fetch for %s accounts',
       async (_label, idRole) => {
-        stubCookie(`m3d_user=${encodeURIComponent(JSON.stringify({ idUser: 2, firstName: 'Op', idRole }))}`);
+        stubCookie(
+          `m3d_user=${encodeURIComponent(JSON.stringify({ idUser: 2, firstName: 'Op', idRole }))}`,
+        );
         const local = [{ productId: 1, name: 'A', image: '', unitPrice: 100, quantity: 1 }];
         cartItems.set(local);
 
@@ -313,7 +340,7 @@ describe('hydrateFromServer', () => {
         });
         expect(fetchMock).not.toHaveBeenCalled();
         expect(cartItems.get()).toEqual(local);
-      }
+      },
     );
 
     it('resolves {ok:false, reason:"network"} and leaves state untouched when fetch throws', async () => {
@@ -324,7 +351,13 @@ describe('hydrateFromServer', () => {
 
       const result = await drain(hydrateFromServer());
 
-      expect(result).toEqual({ ok: false, items: local, priceDrifts: [], syncScheduled: false, reason: 'network' });
+      expect(result).toEqual({
+        ok: false,
+        items: local,
+        priceDrifts: [],
+        syncScheduled: false,
+        reason: 'network',
+      });
       expect(cartItems.get()).toEqual(local);
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
     });
@@ -337,7 +370,13 @@ describe('hydrateFromServer', () => {
 
       const result = await drain(hydrateFromServer());
 
-      expect(result).toEqual({ ok: false, items: local, priceDrifts: [], syncScheduled: false, reason: 'http' });
+      expect(result).toEqual({
+        ok: false,
+        items: local,
+        priceDrifts: [],
+        syncScheduled: false,
+        reason: 'http',
+      });
       expect(cartItems.get()).toEqual(local);
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
     });
@@ -352,7 +391,13 @@ describe('hydrateFromServer', () => {
 
       const result = await drain(hydrateFromServer());
 
-      expect(result).toEqual({ ok: false, items: local, priceDrifts: [], syncScheduled: false, reason: 'http' });
+      expect(result).toEqual({
+        ok: false,
+        items: local,
+        priceDrifts: [],
+        syncScheduled: false,
+        reason: 'http',
+      });
       expect(cartItems.get()).toEqual(local);
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
     });
@@ -362,12 +407,22 @@ describe('hydrateFromServer', () => {
       const local = [{ productId: 1, name: 'A', image: '', unitPrice: 100, quantity: 1 }];
       cartItems.set(local);
       stubFetch({
-        get: () => Promise.resolve({ ok: true, json: () => Promise.resolve({ items: 'not-an-array', total: 0 }) }),
+        get: () =>
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ items: 'not-an-array', total: 0 }),
+          }),
       });
 
       const result = await drain(hydrateFromServer());
 
-      expect(result).toEqual({ ok: false, items: local, priceDrifts: [], syncScheduled: false, reason: 'http' });
+      expect(result).toEqual({
+        ok: false,
+        items: local,
+        priceDrifts: [],
+        syncScheduled: false,
+        reason: 'http',
+      });
       expect(cartItems.get()).toEqual(local);
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
     });
@@ -395,7 +450,13 @@ describe('hydrateFromServer', () => {
       resolveGet(await okGetResponse([buildDto({ idProduct: 1, quantity: 5 })]));
       const result = await drain(resultPromise);
 
-      expect(result).toEqual({ ok: false, items: local, priceDrifts: [], syncScheduled: false, reason: 'superseded' });
+      expect(result).toEqual({
+        ok: false,
+        items: local,
+        priceDrifts: [],
+        syncScheduled: false,
+        reason: 'superseded',
+      });
       expect(cartItems.get()).toEqual(local);
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
     });
@@ -452,7 +513,9 @@ describe('hydrateFromServer', () => {
 
     it('writes the store and localStorage with the server cart and issues zero PUTs', async () => {
       stubCookie(LOGGED_IN_COOKIE);
-      const local = [{ productId: 1, name: 'Local Mario', image: 'local.jpg', unitPrice: 1500, quantity: 1 }];
+      const local = [
+        { productId: 1, name: 'Local Mario', image: 'local.jpg', unitPrice: 1500, quantity: 1 },
+      ];
       cartItems.set(local);
       const serverDto = buildDto({
         idProduct: 1,
@@ -468,16 +531,23 @@ describe('hydrateFromServer', () => {
       ];
       expect(result.ok).toBe(true);
       expect(result.items).toEqual(expectedServerItems);
-      expect(result.priceDrifts).toEqual([{ name: 'Server Mario', oldPrice: 1500, newPrice: 1800 }]);
+      expect(result.priceDrifts).toEqual([
+        { name: 'Server Mario', oldPrice: 1500, newPrice: 1800 },
+      ]);
       expect(result.syncScheduled).toBe(false);
       expect(cartItems.get()).toEqual(expectedServerItems);
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('cart', JSON.stringify(expectedServerItems));
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        'cart',
+        JSON.stringify(expectedServerItems),
+      );
       expect(fetchMock).toHaveBeenCalledTimes(1); // GET only, zero PUT
     });
 
     it('arms no debounce or max-wait timer as a side effect of the replace write (nano-stores-cart: hydration bypasses the scheduler)', async () => {
       stubCookie(LOGGED_IN_COOKIE);
-      cartItems.set([{ productId: 1, name: 'Local Mario', image: 'local.jpg', unitPrice: 1500, quantity: 1 }]);
+      cartItems.set([
+        { productId: 1, name: 'Local Mario', image: 'local.jpg', unitPrice: 1500, quantity: 1 },
+      ]);
       stubFetch({ get: () => okGetResponse([buildDto({ idProduct: 1, quantity: 2 })]) });
 
       await drain(hydrateFromServer());
@@ -540,7 +610,7 @@ describe('hydrateFromServer', () => {
       expect(putBody).toEqual({ items: [{ productId: 1, quantity: 5 }] });
     });
 
-    it('does not strand an already-open burst\'s rollback baseline when the merge PUT is issued', async () => {
+    it("does not strand an already-open burst's rollback baseline when the merge PUT is issued", async () => {
       stubCookie(LOGGED_IN_COOKIE);
       const local = [{ productId: 1, name: 'Local', image: 'l.jpg', unitPrice: 100, quantity: 2 }];
       cartItems.set(local);
@@ -563,8 +633,13 @@ describe('hydrateFromServer', () => {
       // step runs — its rollback baseline must survive the merge's own
       // scheduleSync() call (which must not clobber an already-open burst's
       // baseline).
-      const midFlightBaseline = [{ productId: 2, name: 'Mid', image: '', unitPrice: 10, quantity: 1 }];
-      scheduleSync([{ productId: 1, name: 'Local', image: 'l.jpg', unitPrice: 100, quantity: 9 }], midFlightBaseline);
+      const midFlightBaseline = [
+        { productId: 2, name: 'Mid', image: '', unitPrice: 10, quantity: 1 },
+      ];
+      scheduleSync(
+        [{ productId: 1, name: 'Local', image: 'l.jpg', unitPrice: 100, quantity: 9 }],
+        midFlightBaseline,
+      );
 
       const serverDto = buildDto({
         idProduct: 1,

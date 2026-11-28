@@ -22,9 +22,11 @@ export async function bootstrapPinningDatabase(
   if (server.length !== 1 || server[0]?.serverUuid !== expectedUuid) {
     throw new Error('Disposable sandbox server identity mismatch');
   }
-  const schemas = rows(await connection.query(
-    `SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '${database}'`,
-  ));
+  const schemas = rows(
+    await connection.query(
+      `SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '${database}'`,
+    ),
+  );
   if (schemas.length !== 0) {
     throw new Error('Disposable sandbox schema already exists; preserve it for inspection');
   }

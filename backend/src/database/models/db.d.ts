@@ -135,7 +135,8 @@ export interface RememberTokenInstance
 }
 
 export interface CustomCommissionRequestInstance
-  extends Model<CustomCommissionRequestAttributes, Partial<CustomCommissionRequestAttributes>>,
+  extends
+    Model<CustomCommissionRequestAttributes, Partial<CustomCommissionRequestAttributes>>,
     CustomCommissionRequestAttributes {
   Product?: ProductInstance | null;
 }

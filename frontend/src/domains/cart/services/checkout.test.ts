@@ -43,7 +43,14 @@ const SAMPLE_ORDER_DTO = {
   idUser: 7,
   status: 'AWAITING_PAYMENT',
   items: [
-    { idOrderItem: 88, idProduct: 12, productName: 'Maceta Groot', quantity: 2, unitPrice: 1500, subtotal: 3000 },
+    {
+      idOrderItem: 88,
+      idProduct: 12,
+      productName: 'Maceta Groot',
+      quantity: 2,
+      unitPrice: 1500,
+      subtotal: 3000,
+    },
   ],
   totalAmount: 3000,
   createdAt: '2026-08-28T14:03:11.000Z',
@@ -71,7 +78,7 @@ describe('checkout', () => {
           this.type = type;
           this.detail = params?.detail;
         }
-      }
+      },
     );
     vi.stubGlobal('fetch', fetchMock);
     stubCookie('');
@@ -127,13 +134,15 @@ describe('checkout', () => {
 
   it('does not clear the local cart when the server rejects with INSUFFICIENT_STOCK', async () => {
     stubCookie(LOGGED_IN_COOKIE);
-    seedCart([{ productId: 12, name: 'Maceta Groot', image: 'a.jpg', unitPrice: 1500, quantity: 3 }]);
+    seedCart([
+      { productId: 12, name: 'Maceta Groot', image: 'a.jpg', unitPrice: 1500, quantity: 3 },
+    ]);
     fetchMock.mockResolvedValueOnce(
       jsonResponse(409, {
         error: 'Stock insuficiente para uno o más productos',
         code: 'INSUFFICIENT_STOCK',
         shortages: [{ idProduct: 12, productName: 'Maceta Groot', requested: 3, available: 1 }],
-      })
+      }),
     );
 
     const result = await checkout();
@@ -152,18 +161,25 @@ describe('checkout', () => {
     stubCookie(LOGGED_IN_COOKIE);
     seedCart([{ productId: 1, name: 'X', image: 'a.jpg', unitPrice: 100, quantity: 1 }]);
     fetchMock.mockResolvedValueOnce(
-      jsonResponse(409, { error: 'El carrito está vacío', code: 'EMPTY_CART' })
+      jsonResponse(409, { error: 'El carrito está vacío', code: 'EMPTY_CART' }),
     );
 
     const result = await checkout();
 
-    expect(result).toEqual({ ok: false, code: 'EMPTY_CART', message: 'El carrito está vacío', shortages: undefined });
+    expect(result).toEqual({
+      ok: false,
+      code: 'EMPTY_CART',
+      message: 'El carrito está vacío',
+      shortages: undefined,
+    });
     expect(cartItems.get()).toHaveLength(1);
   });
 
   it('clears the local cart WITHOUT scheduling a background sync on success', async () => {
     stubCookie(LOGGED_IN_COOKIE);
-    seedCart([{ productId: 12, name: 'Maceta Groot', image: 'a.jpg', unitPrice: 1500, quantity: 2 }]);
+    seedCart([
+      { productId: 12, name: 'Maceta Groot', image: 'a.jpg', unitPrice: 1500, quantity: 2 },
+    ]);
     fetchMock.mockResolvedValueOnce(jsonResponse(201, SAMPLE_ORDER_DTO));
 
     const result = await checkout();

@@ -2,24 +2,35 @@ import { body } from 'express-validator';
 
 const requiredText = (field: string, label: string, maxLength: number) =>
   body(field)
-    .exists().withMessage(`${label} is required`)
-    .bail().isString().withMessage(`${label} must be text`)
-    .bail().trim().notEmpty().withMessage(`${label} is required`)
-    .bail().isLength({ max: maxLength }).withMessage(`${label} is too long`);
+    .exists()
+    .withMessage(`${label} is required`)
+    .bail()
+    .isString()
+    .withMessage(`${label} must be text`)
+    .bail()
+    .trim()
+    .notEmpty()
+    .withMessage(`${label} is required`)
+    .bail()
+    .isLength({ max: maxLength })
+    .withMessage(`${label} is too long`);
 
 const PHONE_ALLOWED_CHARS = /^[+\d ()-]+$/;
 
 export const customCommissionRequestValidators = [
-  body().custom((_value, { req }) =>
-    Object.keys(req.body ?? {}).every((key) =>
-      ['name', 'email', 'phone', 'idea', 'idProduct'].includes(key),
-    ),
-  ).withMessage('Unexpected request field'),
+  body()
+    .custom((_value, { req }) =>
+      Object.keys(req.body ?? {}).every((key) =>
+        ['name', 'email', 'phone', 'idea', 'idProduct'].includes(key),
+      ),
+    )
+    .withMessage('Unexpected request field'),
   requiredText('name', 'Name', 100),
   requiredText('email', 'Email', 254).bail().isEmail().withMessage('Email is invalid'),
   body('phone')
     .optional({ values: 'null' })
-    .isString().withMessage('Phone must be text')
+    .isString()
+    .withMessage('Phone must be text')
     .bail()
     .trim()
     .custom((value: string) => {

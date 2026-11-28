@@ -28,7 +28,9 @@ describe('isolated slot fence migration', () => {
 
   it('refuses rollback without dropping the fence table', async () => {
     const context = { dropTable: jest.fn() };
-    await expect(migration.down({ context })).rejects.toThrow('Fence rollback requires an explicit safe plan');
+    await expect(migration.down({ context })).rejects.toThrow(
+      'Fence rollback requires an explicit safe plan',
+    );
     expect(context.dropTable).not.toHaveBeenCalled();
   });
 });

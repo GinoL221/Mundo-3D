@@ -2,7 +2,16 @@ import { Order, OrderStatus } from './Order';
 import { OrderItem } from './OrderItem';
 import { OrderValidationException } from '../exceptions/OrderValidationException';
 
-function buildItem(overrides: Partial<{ idOrderItem: number; idOrder: number; idProduct: number | null; productName: string; quantity: number; unitPrice: number }> = {}): OrderItem {
+function buildItem(
+  overrides: Partial<{
+    idOrderItem: number;
+    idOrder: number;
+    idProduct: number | null;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+  }> = {},
+): OrderItem {
   return new OrderItem(
     overrides.idOrderItem ?? 1,
     overrides.idOrder ?? 1,
@@ -16,7 +25,14 @@ function buildItem(overrides: Partial<{ idOrderItem: number; idOrder: number; id
 describe('Order', () => {
   it('is constructed with status AWAITING_PAYMENT and a derived totalAmount', () => {
     const item = buildItem({ quantity: 2, unitPrice: 150 });
-    const order = new Order(1, 7, 'key-1', OrderStatus.AWAITING_PAYMENT, [item], new Date('2026-08-28T00:00:00Z'));
+    const order = new Order(
+      1,
+      7,
+      'key-1',
+      OrderStatus.AWAITING_PAYMENT,
+      [item],
+      new Date('2026-08-28T00:00:00Z'),
+    );
 
     expect(order.status).toBe(OrderStatus.AWAITING_PAYMENT);
     expect(order.totalAmount).toBe(300);
@@ -31,11 +47,16 @@ describe('Order', () => {
   });
 
   it('rejects construction with zero items', () => {
-    expect(() => new Order(1, 7, 'key-1', OrderStatus.AWAITING_PAYMENT, [], new Date())).toThrow(OrderValidationException);
+    expect(() => new Order(1, 7, 'key-1', OrderStatus.AWAITING_PAYMENT, [], new Date())).toThrow(
+      OrderValidationException,
+    );
   });
 
   it('computes totalAmount as the sum of item subtotals', () => {
-    const items = [buildItem({ quantity: 2, unitPrice: 50 }), buildItem({ idOrderItem: 2, quantity: 1, unitPrice: 30 })];
+    const items = [
+      buildItem({ quantity: 2, unitPrice: 50 }),
+      buildItem({ idOrderItem: 2, quantity: 1, unitPrice: 30 }),
+    ];
     const order = new Order(1, 7, 'key-1', OrderStatus.AWAITING_PAYMENT, items, new Date());
 
     expect(order.totalAmount).toBe(130);
@@ -61,7 +82,14 @@ describe('Order', () => {
     });
 
     it('canTransitionTo delegates to the instance status', () => {
-      const order = new Order(1, 7, 'key-1', OrderStatus.AWAITING_PAYMENT, [buildItem()], new Date());
+      const order = new Order(
+        1,
+        7,
+        'key-1',
+        OrderStatus.AWAITING_PAYMENT,
+        [buildItem()],
+        new Date(),
+      );
 
       expect(order.canTransitionTo(OrderStatus.PAID)).toBe(true);
       expect(order.canTransitionTo(OrderStatus.CANCELLED)).toBe(true);

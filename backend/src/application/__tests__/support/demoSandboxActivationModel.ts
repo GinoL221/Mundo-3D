@@ -7,32 +7,53 @@ export class ActivationModel {
   private interrupted = false;
 
   reserve(lease: string): boolean {
-    if (this.interrupted || this.control !== 'closed' || this.slot !== 'fenced' || !lease) return false;
+    if (this.interrupted || this.control !== 'closed' || this.slot !== 'fenced' || !lease)
+      return false;
     this.control = 'reserved';
     this.lease = lease;
     return true;
   }
 
   prepare(lease: string): boolean {
-    if (this.interrupted || this.control !== 'reserved' || this.slot !== 'fenced' || this.lease !== lease) return false;
+    if (
+      this.interrupted ||
+      this.control !== 'reserved' ||
+      this.slot !== 'fenced' ||
+      this.lease !== lease
+    )
+      return false;
     this.slot = 'prepared';
     return true;
   }
 
   publish(lease: string): boolean {
-    if (this.interrupted || this.control !== 'reserved' || this.slot !== 'prepared' || this.lease !== lease) return false;
+    if (
+      this.interrupted ||
+      this.control !== 'reserved' ||
+      this.slot !== 'prepared' ||
+      this.lease !== lease
+    )
+      return false;
     this.control = 'active';
     return true;
   }
 
   open(lease: string): boolean {
-    if (this.interrupted || this.control !== 'active' || this.slot !== 'prepared' || this.lease !== lease) return false;
+    if (
+      this.interrupted ||
+      this.control !== 'active' ||
+      this.slot !== 'prepared' ||
+      this.lease !== lease
+    )
+      return false;
     this.slot = 'open';
     return true;
   }
 
   admit(lease: string): boolean {
-    return !this.interrupted && this.control === 'active' && this.slot === 'open' && this.lease === lease;
+    return (
+      !this.interrupted && this.control === 'active' && this.slot === 'open' && this.lease === lease
+    );
   }
 
   interrupt(): void {

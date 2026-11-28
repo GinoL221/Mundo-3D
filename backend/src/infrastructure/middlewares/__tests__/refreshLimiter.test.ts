@@ -43,7 +43,7 @@ describe('refreshLimiter middleware', () => {
         standardHeaders: true,
         legacyHeaders: false,
         statusCode: 429,
-      })
+      }),
     );
 
     const req = {} as Request;
@@ -72,7 +72,7 @@ describe('refreshLimiter middleware', () => {
         standardHeaders: true,
         legacyHeaders: false,
         statusCode: 429,
-      })
+      }),
     );
 
     const req = {} as Request;

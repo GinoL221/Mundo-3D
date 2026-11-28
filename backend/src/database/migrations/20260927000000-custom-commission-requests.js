@@ -43,7 +43,12 @@ module.exports = {
                   created_at: { type: DataTypes.DATE, allowNull: false },
                   expires_at: { type: DataTypes.DATE, allowNull: false },
                 },
-                { transaction, engine: 'InnoDB', charset: 'utf8mb4', collate: 'utf8mb4_unicode_ci' },
+                {
+                  transaction,
+                  engine: 'InnoDB',
+                  charset: 'utf8mb4',
+                  collate: 'utf8mb4_unicode_ci',
+                },
               ),
           },
           {
@@ -75,7 +80,15 @@ module.exports = {
 
   async down({ context: queryInterface }) {
     await queryInterface.sequelize.transaction((transaction) =>
-      runSteps([{ name: 'drop request table', run: () => queryInterface.dropTable(TABLE, { transaction }) }], 'down'),
+      runSteps(
+        [
+          {
+            name: 'drop request table',
+            run: () => queryInterface.dropTable(TABLE, { transaction }),
+          },
+        ],
+        'down',
+      ),
     );
   },
 };

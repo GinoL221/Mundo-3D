@@ -48,7 +48,7 @@ describe('OrderApiController', () => {
       mockListOrdersUseCase,
       mockConfirmOrderPaymentUseCase,
       mockCancelOrderUseCase,
-      mockListMyOrdersUseCase
+      mockListMyOrdersUseCase,
     );
 
     req = { params: {}, body: {}, headers: {}, user: { userId: 7, idRole: Role.USER } };
@@ -80,9 +80,7 @@ describe('OrderApiController', () => {
       await controller.create(req as Request, res as Response, next);
 
       expect(res.status).toHaveBeenCalledWith(409);
-      expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ code: 'EMPTY_CART' })
-      );
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'EMPTY_CART' }));
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -98,7 +96,7 @@ describe('OrderApiController', () => {
 
       expect(res.status).toHaveBeenCalledWith(409);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ code: 'INSUFFICIENT_STOCK', shortages })
+        expect.objectContaining({ code: 'INSUFFICIENT_STOCK', shortages }),
       );
       expect(next).not.toHaveBeenCalled();
     });
@@ -144,9 +142,7 @@ describe('OrderApiController', () => {
       await controller.show(req as Request, res as Response, next);
 
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ code: 'ORDER_NOT_FOUND' })
-      );
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'ORDER_NOT_FOUND' }));
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -194,7 +190,10 @@ describe('OrderApiController', () => {
   describe('confirmPayment', () => {
     it('returns 200 and the confirmed order on success', async () => {
       req.params = { id: '41' };
-      mockConfirmOrderPaymentUseCase.execute.mockResolvedValue({ ...sampleOrder, status: 'PAID' } as any);
+      mockConfirmOrderPaymentUseCase.execute.mockResolvedValue({
+        ...sampleOrder,
+        status: 'PAID',
+      } as any);
 
       await controller.confirmPayment(req as Request, res as Response, next);
 
@@ -205,13 +204,15 @@ describe('OrderApiController', () => {
 
     it('returns 409 ILLEGAL_ORDER_TRANSITION when the use case throws', async () => {
       req.params = { id: '41' };
-      mockConfirmOrderPaymentUseCase.execute.mockRejectedValue(new IllegalOrderTransitionException());
+      mockConfirmOrderPaymentUseCase.execute.mockRejectedValue(
+        new IllegalOrderTransitionException(),
+      );
 
       await controller.confirmPayment(req as Request, res as Response, next);
 
       expect(res.status).toHaveBeenCalledWith(409);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ code: 'ILLEGAL_ORDER_TRANSITION' })
+        expect.objectContaining({ code: 'ILLEGAL_ORDER_TRANSITION' }),
       );
       expect(next).not.toHaveBeenCalled();
     });
@@ -239,7 +240,10 @@ describe('OrderApiController', () => {
   describe('cancel', () => {
     it('returns 200 and the cancelled order on success', async () => {
       req.params = { id: '41' };
-      mockCancelOrderUseCase.execute.mockResolvedValue({ ...sampleOrder, status: 'CANCELLED' } as any);
+      mockCancelOrderUseCase.execute.mockResolvedValue({
+        ...sampleOrder,
+        status: 'CANCELLED',
+      } as any);
 
       await controller.cancel(req as Request, res as Response, next);
 
@@ -256,7 +260,7 @@ describe('OrderApiController', () => {
 
       expect(res.status).toHaveBeenCalledWith(409);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ code: 'ILLEGAL_ORDER_TRANSITION' })
+        expect.objectContaining({ code: 'ILLEGAL_ORDER_TRANSITION' }),
       );
       expect(next).not.toHaveBeenCalled();
     });

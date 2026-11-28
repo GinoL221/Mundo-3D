@@ -11,7 +11,7 @@ type RequestWithFile = Request & { file?: { key?: string } };
 export default function handleValidationErrors(
   req: RequestWithFile,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

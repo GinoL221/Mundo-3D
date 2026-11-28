@@ -43,7 +43,9 @@ describe('SequelizeProductRepository', () => {
           Franchise: { idFranchise: 20, nameFranchise: 'Franchise A' },
         },
       ];
-      jest.mocked(db.Product.findAll).mockResolvedValue(mockInstances as unknown as ProductInstance[]);
+      jest
+        .mocked(db.Product.findAll)
+        .mockResolvedValue(mockInstances as unknown as ProductInstance[]);
 
       const result = await repository.findAll();
 
@@ -76,7 +78,9 @@ describe('SequelizeProductRepository', () => {
         Category: { idCategory: 10, nameCategory: 'Category A' },
         Franchise: { idFranchise: 20, nameFranchise: 'Franchise A' },
       };
-      jest.mocked(db.Product.findByPk).mockResolvedValue(mockInstance as unknown as ProductInstance);
+      jest
+        .mocked(db.Product.findByPk)
+        .mockResolvedValue(mockInstance as unknown as ProductInstance);
 
       const result = await repository.findById(1);
 
@@ -108,7 +112,9 @@ describe('SequelizeProductRepository', () => {
         Category: null,
         Franchise: null,
       };
-      jest.mocked(db.Product.findByPk).mockResolvedValue(mockInstance as unknown as ProductInstance);
+      jest
+        .mocked(db.Product.findByPk)
+        .mockResolvedValue(mockInstance as unknown as ProductInstance);
 
       const result = await repository.findById(1);
 
@@ -169,8 +175,12 @@ describe('SequelizeProductRepository', () => {
         Franchise: { idFranchise: 20, nameFranchise: 'Franchise A' },
       };
 
-      jest.mocked(db.Product.create).mockResolvedValue(mockCreatedInstance as unknown as ProductInstance);
-      jest.mocked(db.Product.findByPk).mockResolvedValue(mockFetchedInstance as unknown as ProductInstance);
+      jest
+        .mocked(db.Product.create)
+        .mockResolvedValue(mockCreatedInstance as unknown as ProductInstance);
+      jest
+        .mocked(db.Product.findByPk)
+        .mockResolvedValue(mockFetchedInstance as unknown as ProductInstance);
 
       const result = await repository.create({
         nameProduct: 'Product C',
@@ -201,7 +211,9 @@ describe('SequelizeProductRepository', () => {
         idFranchise: 20,
       };
 
-      jest.mocked(db.Product.create).mockResolvedValue(mockCreatedInstance as unknown as ProductInstance);
+      jest
+        .mocked(db.Product.create)
+        .mockResolvedValue(mockCreatedInstance as unknown as ProductInstance);
       jest.mocked(db.Product.findByPk).mockResolvedValue(null);
 
       const result = await repository.create({
@@ -242,8 +254,12 @@ describe('SequelizeProductRepository', () => {
         Franchise: { idFranchise: 2, nameFranchise: 'Zelda' },
       };
 
-      jest.mocked(db.Product.create).mockResolvedValue(mockCreatedInstance as unknown as ProductInstance);
-      jest.mocked(db.Product.findByPk).mockResolvedValue(mockFetchedInstance as unknown as ProductInstance);
+      jest
+        .mocked(db.Product.create)
+        .mockResolvedValue(mockCreatedInstance as unknown as ProductInstance);
+      jest
+        .mocked(db.Product.findByPk)
+        .mockResolvedValue(mockFetchedInstance as unknown as ProductInstance);
 
       const result = await repository.create({
         nameProduct: '3D Product',
@@ -268,14 +284,16 @@ describe('SequelizeProductRepository', () => {
       expect(result.Depth).toBe(5.5);
       expect(result.Finish).toBe('Pintado');
       expect(result.ProductionTime).toBe(4);
-      expect(jest.mocked(db.Product.create)).toHaveBeenCalledWith(expect.objectContaining({
-        material: 'PLA',
-        height: 10.5,
-        width: 8.0,
-        depth: 5.5,
-        finish: 'Pintado',
-        productionTime: 4,
-      }));
+      expect(jest.mocked(db.Product.create)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          material: 'PLA',
+          height: 10.5,
+          width: 8.0,
+          depth: 5.5,
+          finish: 'Pintado',
+          productionTime: 4,
+        }),
+      );
     });
   });
 
@@ -301,7 +319,8 @@ describe('SequelizeProductRepository', () => {
         Franchise: { idFranchise: 20, nameFranchise: 'Franchise A' },
       };
 
-      jest.mocked(db.Product.findByPk)
+      jest
+        .mocked(db.Product.findByPk)
         .mockResolvedValueOnce(mockInstance as unknown as ProductInstance)
         .mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
 
@@ -333,7 +352,8 @@ describe('SequelizeProductRepository', () => {
         idFranchise: 21,
       };
 
-      jest.mocked(db.Product.findByPk)
+      jest
+        .mocked(db.Product.findByPk)
         .mockResolvedValueOnce(mockInstance as unknown as ProductInstance)
         .mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
 
@@ -375,7 +395,9 @@ describe('SequelizeProductRepository', () => {
         Category: { idCategory: 10, nameCategory: 'Category A' },
         Franchise: { idFranchise: 20, nameFranchise: 'Franchise A' },
       };
-      jest.mocked(db.Product.findByPk).mockResolvedValue(mockInstance as unknown as ProductInstance);
+      jest
+        .mocked(db.Product.findByPk)
+        .mockResolvedValue(mockInstance as unknown as ProductInstance);
 
       const result = await repository.findById(1);
 
@@ -396,8 +418,12 @@ describe('SequelizeProductRepository', () => {
       };
       const mockFetchedInstance = { ...mockCreatedInstance };
 
-      jest.mocked(db.Product.create).mockResolvedValue(mockCreatedInstance as unknown as ProductInstance);
-      jest.mocked(db.Product.findByPk).mockResolvedValue(mockFetchedInstance as unknown as ProductInstance);
+      jest
+        .mocked(db.Product.create)
+        .mockResolvedValue(mockCreatedInstance as unknown as ProductInstance);
+      jest
+        .mocked(db.Product.findByPk)
+        .mockResolvedValue(mockFetchedInstance as unknown as ProductInstance);
 
       const result = await repository.create({
         nameProduct: 'Product E',
@@ -410,7 +436,9 @@ describe('SequelizeProductRepository', () => {
       });
 
       expect(result.stock).toBe(12);
-      expect(jest.mocked(db.Product.create)).toHaveBeenCalledWith(expect.objectContaining({ stock: 12 }));
+      expect(jest.mocked(db.Product.create)).toHaveBeenCalledWith(
+        expect.objectContaining({ stock: 12 }),
+      );
     });
 
     it('should NOT accept stock through update — persisted stock must be unchanged (spec: Product Update)', async () => {
@@ -423,7 +451,8 @@ describe('SequelizeProductRepository', () => {
         stock: 5,
       };
 
-      jest.mocked(db.Product.findByPk)
+      jest
+        .mocked(db.Product.findByPk)
         .mockResolvedValueOnce(mockInstance as unknown as ProductInstance)
         .mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
 
@@ -434,7 +463,9 @@ describe('SequelizeProductRepository', () => {
       });
 
       expect(mockUpdate).toHaveBeenCalledWith({ nameProduct: 'Product A' });
-      expect(mockUpdate).not.toHaveBeenCalledWith(expect.objectContaining({ stock: expect.anything() }));
+      expect(mockUpdate).not.toHaveBeenCalledWith(
+        expect.objectContaining({ stock: expect.anything() }),
+      );
       expect(result?.stock).toBe(5);
     });
   });
@@ -459,16 +490,20 @@ describe('SequelizeProductRepository', () => {
         idFranchise: 20,
         stock: 8,
       };
-      jest.mocked(db.Product.findByPk).mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
+      jest
+        .mocked(db.Product.findByPk)
+        .mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
 
       const result = await repository.adjustStock(1, 3);
 
       expect(mockSequelizeQuery).toHaveBeenCalledWith(
-        expect.stringMatching(/UPDATE.*SET.*stock.*=.*stock.*\+.*:delta.*WHERE.*:id.*AND.*stock.*\+.*:delta.*>=\s*0/is),
+        expect.stringMatching(
+          /UPDATE.*SET.*stock.*=.*stock.*\+.*:delta.*WHERE.*:id.*AND.*stock.*\+.*:delta.*>=\s*0/is,
+        ),
         expect.objectContaining({
           replacements: { id: 1, delta: 3 },
           type: QueryTypes.UPDATE,
-        })
+        }),
       );
       expect(result?.stock).toBe(8);
     });
@@ -485,7 +520,9 @@ describe('SequelizeProductRepository', () => {
         idFranchise: 20,
         stock: 3,
       };
-      jest.mocked(db.Product.findByPk).mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
+      jest
+        .mocked(db.Product.findByPk)
+        .mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
 
       const result = await repository.adjustStock(1, -2);
 
@@ -494,7 +531,7 @@ describe('SequelizeProductRepository', () => {
         expect.objectContaining({
           replacements: { id: 1, delta: -2 },
           type: QueryTypes.UPDATE,
-        })
+        }),
       );
       expect(result?.stock).toBe(3);
     });
@@ -511,7 +548,9 @@ describe('SequelizeProductRepository', () => {
         idFranchise: 20,
         stock: 0,
       };
-      jest.mocked(db.Product.findByPk).mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
+      jest
+        .mocked(db.Product.findByPk)
+        .mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
 
       const result = await repository.adjustStock(1, -2);
 
@@ -520,7 +559,9 @@ describe('SequelizeProductRepository', () => {
 
     it('should throw "Insufficient stock" and NOT persist when the atomic floor condition rejects the update on an existing product', async () => {
       mockSequelizeQuery.mockResolvedValueOnce([undefined, 0]);
-      jest.mocked(db.Product.findByPk).mockResolvedValueOnce({ idProduct: 1, stock: 2 } as unknown as ProductInstance);
+      jest
+        .mocked(db.Product.findByPk)
+        .mockResolvedValueOnce({ idProduct: 1, stock: 2 } as unknown as ProductInstance);
 
       await expect(repository.adjustStock(1, -5)).rejects.toThrow('Insufficient stock');
     });
@@ -535,17 +576,23 @@ describe('SequelizeProductRepository', () => {
     });
 
     it('should reject a non-integer delta before attempting the update', async () => {
-      await expect(repository.adjustStock(1, 2.5)).rejects.toThrow('Delta must be a non-zero integer');
+      await expect(repository.adjustStock(1, 2.5)).rejects.toThrow(
+        'Delta must be a non-zero integer',
+      );
       expect(mockSequelizeQuery).not.toHaveBeenCalled();
     });
 
     it('should reject a non-finite (NaN) delta before attempting the update', async () => {
-      await expect(repository.adjustStock(1, NaN)).rejects.toThrow('Delta must be a non-zero integer');
+      await expect(repository.adjustStock(1, NaN)).rejects.toThrow(
+        'Delta must be a non-zero integer',
+      );
       expect(mockSequelizeQuery).not.toHaveBeenCalled();
     });
 
     it('should reject a delta of exactly 0 before attempting the update (spec: Zero or non-integer delta rejected)', async () => {
-      await expect(repository.adjustStock(1, 0)).rejects.toThrow('Delta must be a non-zero integer');
+      await expect(repository.adjustStock(1, 0)).rejects.toThrow(
+        'Delta must be a non-zero integer',
+      );
       expect(mockSequelizeQuery).not.toHaveBeenCalled();
     });
 
@@ -558,7 +605,7 @@ describe('SequelizeProductRepository', () => {
       it('passes the transaction through to the atomic UPDATE and the tx-scoped follow-up read when provided', async () => {
         const mockTx = { id: 'fake-tx', sequelize: db.sequelize };
         (db.sequelize.transaction as jest.Mock).mockImplementation(
-          async (work: (tx: object) => Promise<unknown>) => work(mockTx)
+          async (work: (tx: object) => Promise<unknown>) => work(mockTx),
         );
         mockSequelizeQuery.mockResolvedValueOnce([undefined, 1]);
         const mockFetchedInstance = {
@@ -571,30 +618,42 @@ describe('SequelizeProductRepository', () => {
           idFranchise: 20,
           stock: 8,
         };
-        jest.mocked(db.Product.findByPk).mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
+        jest
+          .mocked(db.Product.findByPk)
+          .mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
 
         const result = await new SequelizeUnitOfWork().runInTransaction((tx) =>
-          repository.adjustStock(1, 3, tx)
+          repository.adjustStock(1, 3, tx),
         );
 
         expect(mockSequelizeQuery).toHaveBeenCalledWith(
           expect.any(String),
-          expect.objectContaining({ transaction: mockTx })
+          expect.objectContaining({ transaction: mockTx }),
         );
-        expect(db.Product.findByPk).toHaveBeenCalledWith(1, expect.objectContaining({ transaction: mockTx }));
+        expect(db.Product.findByPk).toHaveBeenCalledWith(
+          1,
+          expect.objectContaining({ transaction: mockTx }),
+        );
         expect(result?.stock).toBe(8);
       });
 
       it('leaves standalone (no-tx) behavior identical to today — transaction is undefined, not omitted', async () => {
         mockSequelizeQuery.mockResolvedValueOnce([undefined, 1]);
-        const mockFetchedInstance = { idProduct: 1, nameProduct: 'Product A', price: '100.50', stock: 8 };
-        jest.mocked(db.Product.findByPk).mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
+        const mockFetchedInstance = {
+          idProduct: 1,
+          nameProduct: 'Product A',
+          price: '100.50',
+          stock: 8,
+        };
+        jest
+          .mocked(db.Product.findByPk)
+          .mockResolvedValueOnce(mockFetchedInstance as unknown as ProductInstance);
 
         await repository.adjustStock(1, 3);
 
         expect(mockSequelizeQuery).toHaveBeenCalledWith(
           expect.any(String),
-          expect.objectContaining({ transaction: undefined })
+          expect.objectContaining({ transaction: undefined }),
         );
       });
     });
@@ -625,16 +684,24 @@ describe('SequelizeProductRepository', () => {
               },
             ],
           },
-        })
+        }),
       );
     });
 
     it('AND-combines search, idCategory, and idFranchise when all are supplied', async () => {
       mockSearchResult();
 
-      await repository.searchPaged({ search: 'goku', idCategory: 3, idFranchise: 5, limit: 20, offset: 0 });
+      await repository.searchPaged({
+        search: 'goku',
+        idCategory: 3,
+        idFranchise: 5,
+        limit: 20,
+        offset: 0,
+      });
 
-      const callArgs = jest.mocked(db.Product.findAndCountAll).mock.calls[0][0] as { where: WhereOptions };
+      const callArgs = jest.mocked(db.Product.findAndCountAll).mock.calls[0][0] as {
+        where: WhereOptions;
+      };
       const andConditions = (callArgs.where as Record<symbol, Record<string, unknown>[]>)[Op.and];
       expect(andConditions).toHaveLength(3);
       expect(andConditions).toContainEqual({ idCategory: 3 });
@@ -655,7 +722,7 @@ describe('SequelizeProductRepository', () => {
       expect(db.Product.findAndCountAll).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { [Op.and]: [{ idCategory: 3 }] },
-        })
+        }),
       );
     });
 
@@ -665,7 +732,7 @@ describe('SequelizeProductRepository', () => {
       await repository.searchPaged({ limit: 20, offset: 0 });
 
       expect(db.Product.findAndCountAll).toHaveBeenCalledWith(
-        expect.objectContaining({ where: {} })
+        expect.objectContaining({ where: {} }),
       );
     });
 
@@ -674,9 +741,14 @@ describe('SequelizeProductRepository', () => {
 
       await repository.searchPaged({ search: '50%_a\\b', limit: 20, offset: 0 });
 
-      const callArgs = jest.mocked(db.Product.findAndCountAll).mock.calls[0][0] as { where: WhereOptions };
+      const callArgs = jest.mocked(db.Product.findAndCountAll).mock.calls[0][0] as {
+        where: WhereOptions;
+      };
       const andConditions = (callArgs.where as Record<symbol, Record<symbol, unknown>[]>)[Op.and];
-      const orClause = andConditions[0] as Record<symbol, { nameProduct: Record<symbol, string> }[]>;
+      const orClause = andConditions[0] as Record<
+        symbol,
+        { nameProduct: Record<symbol, string> }[]
+      >;
       const [nameCondition] = orClause[Op.or];
       expect(nameCondition.nameProduct[Op.like]).toBe('%50\\%\\_a\\\\b%');
     });
@@ -686,7 +758,10 @@ describe('SequelizeProductRepository', () => {
 
       await repository.searchPaged({ limit: 20, offset: 0 });
 
-      const callArgs = jest.mocked(db.Product.findAndCountAll).mock.calls[0][0] as Record<string, unknown>;
+      const callArgs = jest.mocked(db.Product.findAndCountAll).mock.calls[0][0] as Record<
+        string,
+        unknown
+      >;
       expect(callArgs.order).toEqual([['idProduct', 'ASC']]);
       expect(callArgs).not.toHaveProperty('distinct');
     });
@@ -697,7 +772,7 @@ describe('SequelizeProductRepository', () => {
       await repository.searchPaged({ limit: 10, offset: 30 });
 
       expect(db.Product.findAndCountAll).toHaveBeenCalledWith(
-        expect.objectContaining({ limit: 10, offset: 30 })
+        expect.objectContaining({ limit: 10, offset: 30 }),
       );
     });
 
@@ -727,7 +802,7 @@ describe('SequelizeProductRepository', () => {
             expect.objectContaining({ model: db.Category, as: 'Category' }),
             expect.objectContaining({ model: db.Franchise, as: 'Franchise' }),
           ],
-        })
+        }),
       );
       expect(result.total).toBe(1);
       expect(result.products).toHaveLength(1);

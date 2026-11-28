@@ -28,7 +28,8 @@ export class CreateCustomCommissionRequestUseCase {
     }
 
     const createdAt = this.clock();
-    const normalizedPhone = typeof input.phone === 'string' && input.phone.trim() ? input.phone.trim() : null;
+    const normalizedPhone =
+      typeof input.phone === 'string' && input.phone.trim() ? input.phone.trim() : null;
     return this.repository.create({
       name: input.name,
       email: input.email,

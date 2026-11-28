@@ -38,7 +38,14 @@ describe('mapToOrderDTO', () => {
   });
 
   it('does not leak idempotencyKey onto the DTO', () => {
-    const order = new Order(1, 7, 'secret-key', OrderStatus.AWAITING_PAYMENT, [new OrderItem(1, 1, 1, 'X', 1, 10)], new Date());
+    const order = new Order(
+      1,
+      7,
+      'secret-key',
+      OrderStatus.AWAITING_PAYMENT,
+      [new OrderItem(1, 1, 1, 'X', 1, 10)],
+      new Date(),
+    );
 
     const dto = mapToOrderDTO(order);
 
@@ -46,7 +53,14 @@ describe('mapToOrderDTO', () => {
   });
 
   it('reports a null idProduct for a line item whose product was deleted', () => {
-    const order = new Order(1, 7, 'key', OrderStatus.AWAITING_PAYMENT, [new OrderItem(1, 1, null, 'Maceta Groot', 1, 10)], new Date());
+    const order = new Order(
+      1,
+      7,
+      'key',
+      OrderStatus.AWAITING_PAYMENT,
+      [new OrderItem(1, 1, null, 'Maceta Groot', 1, 10)],
+      new Date(),
+    );
 
     const dto = mapToOrderDTO(order);
 

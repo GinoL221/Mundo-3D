@@ -15,16 +15,22 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../domains/auth', () => ({
   getSessionUser: mocks.getSessionUser,
-  hasAdminAccess: (u: { idRole: number } | null) => u?.idRole === Role.ADMIN || u?.idRole === Role.STAFF,
+  hasAdminAccess: (u: { idRole: number } | null) =>
+    u?.idRole === Role.ADMIN || u?.idRole === Role.STAFF,
   isAdminOnly: (u: { idRole: number } | null) => u?.idRole === Role.ADMIN,
 }));
 vi.mock('../domains/products', async () => {
-  const { ProductAdminApiError: ApiErr } = await import('../domains/products/services/product.admin.service');
+  const { ProductAdminApiError: ApiErr } =
+    await import('../domains/products/services/product.admin.service');
   return {
     ProductAdminApiError: ApiErr,
     ProductAdminService: {
-      list: mocks.list, adjustStock: mocks.adjustStock, create: mocks.create,
-      getById: mocks.getById, update: mocks.update, remove: mocks.remove,
+      list: mocks.list,
+      adjustStock: mocks.adjustStock,
+      create: mocks.create,
+      getById: mocks.getById,
+      update: mocks.update,
+      remove: mocks.remove,
     },
   };
 });
@@ -34,12 +40,21 @@ vi.mock('../domains/products/admin/productAdminHelpers', async (importOriginal) 
   buildProductFormData: () => new FormData(),
 }));
 vi.mock('./adminProductsForm', () => ({
-  applyAdminRoleHeader: vi.fn(), applyFormFieldErrors: vi.fn(), clearFormFieldErrors: vi.fn(),
-  hideFormErrorBanner: (el: HTMLElement | null) => { if (el) el.hidden = true; },
+  applyAdminRoleHeader: vi.fn(),
+  applyFormFieldErrors: vi.fn(),
+  clearFormFieldErrors: vi.fn(),
+  hideFormErrorBanner: (el: HTMLElement | null) => {
+    if (el) el.hidden = true;
+  },
   loadClassificationOptions: vi.fn().mockResolvedValue(undefined),
   navigateToInternalRoute: vi.fn(),
   readProductFormValues: () => ({}),
-  showFormErrorBanner: (el: HTMLElement | null, msg: string) => { if (el) { el.hidden = false; el.textContent = msg; } },
+  showFormErrorBanner: (el: HTMLElement | null, msg: string) => {
+    if (el) {
+      el.hidden = false;
+      el.textContent = msg;
+    }
+  },
   wireImagePickerPreview: () => () => undefined,
   wireMaterialToggle: () => () => undefined,
 }));
@@ -54,9 +69,15 @@ class FakeNode {
   textContent = '';
   attrs = new Map<string, string>();
   listeners = new Map<string, Array<(ev: Event) => void>>();
-  setAttribute(k: string, v: string) { this.attrs.set(k, v); }
-  removeAttribute(k: string) { this.attrs.delete(k); }
-  getAttribute(k: string) { return this.attrs.get(k) ?? null; }
+  setAttribute(k: string, v: string) {
+    this.attrs.set(k, v);
+  }
+  removeAttribute(k: string) {
+    this.attrs.delete(k);
+  }
+  getAttribute(k: string) {
+    return this.attrs.get(k) ?? null;
+  }
   addEventListener(type: string, fn: (ev: Event) => void) {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), fn]);
   }
@@ -68,8 +89,19 @@ class FakeNode {
 }
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
-const DEMO_STAFF = { idUser: 2, firstName: 'Demo', lastName: 'Staff', idRole: Role.STAFF, isDemo: true };
-const STAFF_SESSION = { active: true, role: 'STAFF', user: { idUser: 2, firstName: 'Demo', lastName: 'Staff', email: 's@d.invalid' }, lease: {} };
+const DEMO_STAFF = {
+  idUser: 2,
+  firstName: 'Demo',
+  lastName: 'Staff',
+  idRole: Role.STAFF,
+  isDemo: true,
+};
+const STAFF_SESSION = {
+  active: true,
+  role: 'STAFF',
+  user: { idUser: 2, firstName: 'Demo', lastName: 'Staff', email: 's@d.invalid' },
+  lease: {},
+};
 
 function stubBrowser(ids: string[], cookie = '', search = '') {
   const byId = new Map(ids.map((id) => [id, new FakeNode()]));
@@ -90,12 +122,27 @@ describe('admin products demo hydration (S3) and 401 expiry recovery (S4)', () =
 
   it('hydrates pending demo STAFF on new-tab /admin/products and keeps non-demo USER denied', async () => {
     const env = stubBrowser(
-      ['admin-gate-denied', 'admin-products-content', 'admin-products-list', 'admin-loading-state', 'admin-empty-state'],
+      [
+        'admin-gate-denied',
+        'admin-products-content',
+        'admin-products-list',
+        'admin-loading-state',
+        'admin-empty-state',
+      ],
       `${DEMO_CSRF_COOKIE_NAME}=demo.tok`,
     );
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(new Response(JSON.stringify(STAFF_SESSION), { status: 200 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValueOnce(new Response(JSON.stringify(STAFF_SESSION), { status: 200 })),
+    );
     mocks.getSessionUser
-      .mockReturnValueOnce({ idUser: 1, firstName: 'Demo', lastName: 'Buyer', idRole: Role.USER, isDemo: true })
+      .mockReturnValueOnce({
+        idUser: 1,
+        firstName: 'Demo',
+        lastName: 'Buyer',
+        idRole: Role.USER,
+        isDemo: true,
+      })
       .mockReturnValueOnce(DEMO_STAFF);
     mocks.list.mockResolvedValueOnce([]);
 
@@ -105,16 +152,35 @@ describe('admin products demo hydration (S3) and 401 expiry recovery (S4)', () =
     expect(env.byId.get('admin-products-content')?.hidden).toBe(false);
 
     const env2 = stubBrowser(['admin-gate-denied', 'admin-products-content'], '');
-    mocks.getSessionUser.mockReturnValueOnce({ idUser: 5, firstName: 'Ana', lastName: 'U', idRole: Role.USER });
+    mocks.getSessionUser.mockReturnValueOnce({
+      idUser: 5,
+      firstName: 'Ana',
+      lastName: 'U',
+      idRole: Role.USER,
+    });
     initializeAdminProductsList();
     expect(env2.byId.get('admin-gate-denied')?.hidden).toBe(false);
     expect(env2.byId.get('admin-products-content')?.hidden).toBe(true);
   });
 
   it('denies confirmed Demo Buyer immediately without fetching /api/demo/session and denies pending hydration resolving to USER or inactive', async () => {
-    const buyerSession = { active: true, role: 'USER', user: { idUser: 1, firstName: 'Demo', lastName: 'Buyer', email: 'b@d.invalid' }, lease: {} };
-    const demoBuyer = { idUser: 1, firstName: 'Demo', lastName: 'Buyer', idRole: Role.USER, isDemo: true };
-    const confirmedEnv = stubBrowser(['admin-gate-denied', 'admin-products-content'], `${DEMO_CSRF_COOKIE_NAME}=demo.tok`);
+    const buyerSession = {
+      active: true,
+      role: 'USER',
+      user: { idUser: 1, firstName: 'Demo', lastName: 'Buyer', email: 'b@d.invalid' },
+      lease: {},
+    };
+    const demoBuyer = {
+      idUser: 1,
+      firstName: 'Demo',
+      lastName: 'Buyer',
+      idRole: Role.USER,
+      isDemo: true,
+    };
+    const confirmedEnv = stubBrowser(
+      ['admin-gate-denied', 'admin-products-content'],
+      `${DEMO_CSRF_COOKIE_NAME}=demo.tok`,
+    );
     confirmedEnv.store.set(DEMO_STORAGE_KEY, JSON.stringify(buyerSession));
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
@@ -125,15 +191,24 @@ describe('admin products demo hydration (S3) and 401 expiry recovery (S4)', () =
     expect(confirmedEnv.byId.get('admin-products-content')?.hidden).toBe(true);
     expect(fetchMock).not.toHaveBeenCalled();
 
-    const pendingUserEnv = stubBrowser(['admin-gate-denied', 'admin-products-content'], `${DEMO_CSRF_COOKIE_NAME}=demo.tok`);
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(new Response(JSON.stringify(buyerSession), { status: 200 })));
+    const pendingUserEnv = stubBrowser(
+      ['admin-gate-denied', 'admin-products-content'],
+      `${DEMO_CSRF_COOKIE_NAME}=demo.tok`,
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValueOnce(new Response(JSON.stringify(buyerSession), { status: 200 })),
+    );
     mocks.getSessionUser.mockReturnValue(demoBuyer);
     initializeAdminProductsList();
     await flush();
     expect(pendingUserEnv.byId.get('admin-gate-denied')?.hidden).toBe(false);
     expect(pendingUserEnv.byId.get('admin-products-content')?.hidden).toBe(true);
 
-    const pendingInactiveEnv = stubBrowser(['admin-gate-denied', 'admin-products-content'], `${DEMO_CSRF_COOKIE_NAME}=demo.tok`);
+    const pendingInactiveEnv = stubBrowser(
+      ['admin-gate-denied', 'admin-products-content'],
+      `${DEMO_CSRF_COOKIE_NAME}=demo.tok`,
+    );
     vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(new Response(null, { status: 404 })));
     mocks.getSessionUser.mockReturnValueOnce(demoBuyer).mockReturnValueOnce(null);
     initializeAdminProductsList();
@@ -145,7 +220,14 @@ describe('admin products demo hydration (S3) and 401 expiry recovery (S4)', () =
   it('unfreezes list, create, and edit UIs with Spanish error on demo 401', async () => {
     mocks.getSessionUser.mockReturnValue(DEMO_STAFF);
     const listEnv = stubBrowser(
-      ['admin-gate-denied', 'admin-products-content', 'admin-products-list', 'admin-loading-state', 'admin-error', 'admin-error-text'],
+      [
+        'admin-gate-denied',
+        'admin-products-content',
+        'admin-products-list',
+        'admin-loading-state',
+        'admin-error',
+        'admin-error-text',
+      ],
       `${DEMO_CSRF_COOKIE_NAME}=demo.tok`,
     );
     listEnv.store.set(DEMO_STORAGE_KEY, JSON.stringify(STAFF_SESSION));
@@ -156,7 +238,13 @@ describe('admin products demo hydration (S3) and 401 expiry recovery (S4)', () =
     expect(listEnv.byId.get('admin-error-text')?.textContent).toMatch(/sesión demo expiró/i);
 
     const createEnv = stubBrowser(
-      ['admin-gate-denied', 'admin-create-content', 'create-product-form', 'create-error', 'create-btn'],
+      [
+        'admin-gate-denied',
+        'admin-create-content',
+        'create-product-form',
+        'create-error',
+        'create-btn',
+      ],
       `${DEMO_CSRF_COOKIE_NAME}=demo.tok`,
     );
     createEnv.byId.get('create-btn')!.textContent = 'Crear pieza';
@@ -169,7 +257,17 @@ describe('admin products demo hydration (S3) and 401 expiry recovery (S4)', () =
     expect(createEnv.byId.get('create-error')?.textContent).toMatch(/sesión demo expiró/i);
 
     const editEnv = stubBrowser(
-      ['admin-gate-denied', 'admin-edit-shell', 'admin-edit-loading', 'admin-edit-load-error', 'admin-edit-load-error-text', 'admin-edit-content', 'edit-product-form', 'edit-error', 'edit-btn'],
+      [
+        'admin-gate-denied',
+        'admin-edit-shell',
+        'admin-edit-loading',
+        'admin-edit-load-error',
+        'admin-edit-load-error-text',
+        'admin-edit-content',
+        'edit-product-form',
+        'edit-error',
+        'edit-btn',
+      ],
       `${DEMO_CSRF_COOKIE_NAME}=demo.tok`,
       '?id=7',
     );
@@ -179,7 +277,9 @@ describe('admin products demo hydration (S3) and 401 expiry recovery (S4)', () =
     initializeAdminProductsEdit();
     await flush();
     expect(editEnv.byId.get('admin-edit-loading')?.hidden).toBe(true);
-    expect(editEnv.byId.get('admin-edit-load-error-text')?.textContent).toMatch(/sesión demo expiró/i);
+    expect(editEnv.byId.get('admin-edit-load-error-text')?.textContent).toMatch(
+      /sesión demo expiró/i,
+    );
     editEnv.byId.get('edit-product-form')!.dispatch('submit');
     await flush();
     expect(editEnv.byId.get('edit-product-form')?.getAttribute('aria-busy')).toBeNull();

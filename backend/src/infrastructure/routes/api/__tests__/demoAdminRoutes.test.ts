@@ -109,19 +109,29 @@ function makeSlot(slotId: string) {
   };
   const categoryRepo = {
     findAll: jest.fn(async () => [{ idCategory: 1, nameCategory: 'Busto' }]),
-    findById: jest.fn(async (id: number) => (id === 1 ? { idCategory: 1, nameCategory: 'Busto' } : null)),
+    findById: jest.fn(async (id: number) =>
+      id === 1 ? { idCategory: 1, nameCategory: 'Busto' } : null,
+    ),
     findByName: jest.fn(async () => null),
     create: jest.fn(async (data: { nameCategory: string }) => ({ idCategory: 2, ...data })),
-    update: jest.fn(async (id: number, data: { nameCategory: string }) => ({ idCategory: id, ...data })),
+    update: jest.fn(async (id: number, data: { nameCategory: string }) => ({
+      idCategory: id,
+      ...data,
+    })),
     delete: jest.fn(async (id: number) => id === 2),
     countProducts: jest.fn(async () => 0),
   };
   const franchiseRepo = {
     findAll: jest.fn(async () => [{ idFranchise: 1, nameFranchise: 'DC' }]),
-    findById: jest.fn(async (id: number) => (id === 1 ? { idFranchise: 1, nameFranchise: 'DC' } : null)),
+    findById: jest.fn(async (id: number) =>
+      id === 1 ? { idFranchise: 1, nameFranchise: 'DC' } : null,
+    ),
     findByName: jest.fn(async () => null),
     create: jest.fn(async (data: { nameFranchise: string }) => ({ idFranchise: 2, ...data })),
-    update: jest.fn(async (id: number, data: { nameFranchise: string }) => ({ idFranchise: id, ...data })),
+    update: jest.fn(async (id: number, data: { nameFranchise: string }) => ({
+      idFranchise: id,
+      ...data,
+    })),
     delete: jest.fn(async (id: number) => id === 2),
     countProducts: jest.fn(async () => 0),
   };

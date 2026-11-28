@@ -29,17 +29,15 @@ describe('demoSandboxScheduler', () => {
   it('expires due leases, resets draining slots, and leaves resetting slots untouched by default on boot', async () => {
     const logger = makeLogger();
     const expireDueLeases = jest.fn().mockResolvedValue([]);
-    const listPendingSlots = jest
-      .fn()
-      .mockResolvedValue([
-        slotSnapshot({ id: 'slot-1', status: 'draining', leaseId: 'lease-1' }),
-        slotSnapshot({
-          id: 'slot-2',
-          status: 'resetting',
-          leaseId: 'lease-2',
-          resetAttemptId: 'attempt-2',
-        }),
-      ]);
+    const listPendingSlots = jest.fn().mockResolvedValue([
+      slotSnapshot({ id: 'slot-1', status: 'draining', leaseId: 'lease-1' }),
+      slotSnapshot({
+        id: 'slot-2',
+        status: 'resetting',
+        leaseId: 'lease-2',
+        resetAttemptId: 'attempt-2',
+      }),
+    ]);
     const resetSlot = jest.fn().mockResolvedValue('available');
     const recoverInterruptedSlot = jest.fn().mockResolvedValue('available');
 

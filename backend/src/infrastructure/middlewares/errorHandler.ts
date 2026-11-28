@@ -24,7 +24,10 @@ const errorHandler = (err: unknown, req: Request, res: Response, _next: NextFunc
 
   if (error.name === 'CartValidationException') {
     statusCode = 400;
-  } else if (error.name === 'MulterError' || error.message === 'Invalid file format or size limit exceeded') {
+  } else if (
+    error.name === 'MulterError' ||
+    error.message === 'Invalid file format or size limit exceeded'
+  ) {
     statusCode = 400;
     message = 'Invalid file format or size limit exceeded';
   } else if (process.env.NODE_ENV === 'production' && statusCode >= 500) {

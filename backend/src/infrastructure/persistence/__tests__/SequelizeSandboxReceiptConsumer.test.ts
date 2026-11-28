@@ -32,10 +32,12 @@ describe('SequelizeSandboxReceiptConsumer', () => {
           generation: 3,
           seedVersion: 'seed-v1',
           consumed: false,
-          [Op.and]: [Sequelize.where(
-            Sequelize.cast(Sequelize.col('seed_version'), 'BINARY'),
-            identity.seedVersion,
-          )],
+          [Op.and]: [
+            Sequelize.where(
+              Sequelize.cast(Sequelize.col('seed_version'), 'BINARY'),
+              identity.seedVersion,
+            ),
+          ],
         },
         transaction: tx,
       },

@@ -250,9 +250,7 @@ describe('migrate CLI — real scratch DB', () => {
     tables = await showTables();
     expect(tables).not.toContain(CUSTOM_COMMISSION_REQUEST_TABLE);
     expect(tables).toContain(EMAIL_CONFIRMATION_TOKEN_TABLE);
-    const columnsAfterCommissionDown = await db.sequelize
-      .getQueryInterface()
-      .describeTable('User');
+    const columnsAfterCommissionDown = await db.sequelize.getQueryInterface().describeTable('User');
     expect(columnsAfterCommissionDown).toHaveProperty('email_verified_at');
 
     const thirdDown = await run(['down']);
@@ -273,8 +271,12 @@ describe('migrate CLI — real scratch DB', () => {
     for (const column of REFRESH_ROTATION_COLUMNS) {
       expect(columnsAfterRefreshRotationDown).not.toHaveProperty(column);
     }
-    const [indexesAfterRefreshRotationDown] = await db.sequelize.query('SHOW INDEX FROM `RememberToken`');
-    const indexNamesAfterRefreshRotationDown = new Set(indexesAfterRefreshRotationDown.map((row) => row.Key_name));
+    const [indexesAfterRefreshRotationDown] = await db.sequelize.query(
+      'SHOW INDEX FROM `RememberToken`',
+    );
+    const indexNamesAfterRefreshRotationDown = new Set(
+      indexesAfterRefreshRotationDown.map((row) => row.Key_name),
+    );
     for (const restoredIndex of [
       'token_hash',
       'token_hash_2',

@@ -6,14 +6,25 @@ import {
   presentOrder,
   presentWorkshopOrders,
 } from './orderPresenter';
-import type { MyOrdersPageViewModel, OrderViewModel, WorkshopOrderViewModel } from './order.service';
+import type {
+  MyOrdersPageViewModel,
+  OrderViewModel,
+  WorkshopOrderViewModel,
+} from './order.service';
 
 const SAMPLE_ORDER: OrderViewModel = {
   idOrder: 41,
   idUser: 7,
   status: 'AWAITING_PAYMENT',
   items: [
-    { idOrderItem: 88, idProduct: 12, productName: 'Maceta Groot', quantity: 2, unitPrice: 1500.0, subtotal: 3000.0 },
+    {
+      idOrderItem: 88,
+      idProduct: 12,
+      productName: 'Maceta Groot',
+      quantity: 2,
+      unitPrice: 1500.0,
+      subtotal: 3000.0,
+    },
   ],
   totalAmount: 3000.0,
   createdAt: '2026-08-28T14:03:11.000Z',
@@ -57,7 +68,14 @@ describe('presentOrder', () => {
     const twoItemOrder: OrderViewModel = {
       ...SAMPLE_ORDER,
       items: [
-        { idOrderItem: 1, idProduct: 1, productName: 'A', quantity: 1, unitPrice: 10, subtotal: 10 },
+        {
+          idOrderItem: 1,
+          idProduct: 1,
+          productName: 'A',
+          quantity: 1,
+          unitPrice: 10,
+          subtotal: 10,
+        },
         {
           idOrderItem: 2,
           idProduct: null,
@@ -126,7 +144,12 @@ describe('presentMyOrdersPage', () => {
   });
 
   it('flags an empty page and produces no rows when there are no orders yet', () => {
-    const presentation = presentMyOrdersPage({ ...SAMPLE_MY_ORDERS_PAGE, orders: [], total: 0, totalPages: 0 });
+    const presentation = presentMyOrdersPage({
+      ...SAMPLE_MY_ORDERS_PAGE,
+      orders: [],
+      total: 0,
+      totalPages: 0,
+    });
 
     expect(presentation.isEmpty).toBe(true);
     expect(presentation.rows).toEqual([]);

@@ -43,7 +43,14 @@ describe('SequelizeUserRepository Integration Tests', () => {
   describe('create', () => {
     it('should insert a new user and return user entity', async () => {
       if (isSqliteAvailable) {
-        const userData = new User(0, 'John', 'Doe', 'john.doe@example.com', 'hashedpassword', 'image.png');
+        const userData = new User(
+          0,
+          'John',
+          'Doe',
+          'john.doe@example.com',
+          'hashedpassword',
+          'image.png',
+        );
         const created = await repository.create(userData);
 
         expect(created.idUser).toBeGreaterThan(0);
@@ -63,7 +70,14 @@ describe('SequelizeUserRepository Integration Tests', () => {
         };
         jest.mocked(db.User.create).mockResolvedValue(mockInstance as any);
 
-        const userData = new User(0, 'John', 'Doe', 'john.doe@example.com', 'hashedpassword', 'image.png');
+        const userData = new User(
+          0,
+          'John',
+          'Doe',
+          'john.doe@example.com',
+          'hashedpassword',
+          'image.png',
+        );
         const created = await repository.create(userData);
 
         expect(created.idUser).toBe(1);
@@ -88,7 +102,9 @@ describe('SequelizeUserRepository Integration Tests', () => {
       try {
         const userData = new User(0, 'Jane', 'Doe', 'jane.doe@example.com', 'hashedpassword', null);
 
-        await expect(repository.create(userData)).rejects.toBeInstanceOf(UserAlreadyExistsException);
+        await expect(repository.create(userData)).rejects.toBeInstanceOf(
+          UserAlreadyExistsException,
+        );
         await expect(repository.create(userData)).rejects.toThrow('Este email ya está registrado');
       } finally {
         (db.User as any).create = originalCreate;
@@ -244,7 +260,7 @@ describe('SequelizeUserRepository Integration Tests', () => {
             email: 'bob@example.com',
             passwordUser: 'securepwd',
             image: null,
-          }
+          },
         ];
         (db.User as any).findAll = jest.fn().mockResolvedValue(mockInstances);
 

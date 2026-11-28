@@ -57,10 +57,7 @@ export function initializeThemeToggle(document: Document, storage: Storage): Cle
       ? window.matchMedia('(prefers-color-scheme: dark)')
       : null;
 
-  const resolveTheme = (
-    preference: ThemePreference,
-    matchesOverride?: boolean,
-  ): ResolvedTheme => {
+  const resolveTheme = (preference: ThemePreference, matchesOverride?: boolean): ResolvedTheme => {
     if (preference !== 'system') return preference;
     const isDark = matchesOverride ?? mediaQuery?.matches ?? false;
     return isDark ? 'dark' : 'light';

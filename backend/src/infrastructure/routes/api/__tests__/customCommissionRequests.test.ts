@@ -59,15 +59,8 @@ const validSubmission: Record<string, unknown> = {
 
 let nextIpOctet = 10;
 const nextTestIp = (): string => `198.51.100.${nextIpOctet++}`;
-const postSubmission = (
-  app: Express,
-  body: Record<string, unknown>,
-  ip = nextTestIp(),
-) =>
-  request(app)
-    .post('/api/custom-commission-requests')
-    .set('X-Forwarded-For', ip)
-    .send(body);
+const postSubmission = (app: Express, body: Record<string, unknown>, ip = nextTestIp()) =>
+  request(app).post('/api/custom-commission-requests').set('X-Forwarded-For', ip).send(body);
 
 const submittedRequest = new CustomCommissionRequest(
   17,
@@ -207,18 +200,32 @@ describe('POST /api/custom-commission-requests', () => {
     app = buildApp();
   });
 
-  it.each(invalidSubmissions)('rejects %s without persistence or data echo', async (_label, body) => {
-    const response = await postSubmission(app, body);
-    expect(response.status).toBe(400);
-    expect(response.body.errors).toEqual(expect.arrayContaining([expect.objectContaining({ msg: expect.any(String) })]));
-    expect(response.text).not.toContain(PII_CANARY);
-    expect(mockRepositoryCreate).not.toHaveBeenCalled();
-  });
+  it.each(invalidSubmissions)(
+    'rejects %s without persistence or data echo',
+    async (_label, body) => {
+      const response = await postSubmission(app, body);
+      expect(response.status).toBe(400);
+      expect(response.body.errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ msg: expect.any(String) })]),
+      );
+      expect(response.text).not.toContain(PII_CANARY);
+      expect(mockRepositoryCreate).not.toHaveBeenCalled();
+    },
+  );
 
   it('accepts an existing product and returns only a trimmed receipt', async () => {
-    const response = await postSubmission(app, { name: ' Ari ', email: 'ari@example.test', idea: ' A dragon ', idProduct: 7 });
+    const response = await postSubmission(app, {
+      name: ' Ari ',
+      email: 'ari@example.test',
+      idea: ' A dragon ',
+      idProduct: 7,
+    });
     expect(response.status).toBe(201);
-    expect(response.body).toEqual({ idCustomCommissionRequest: 17, createdAt: '2026-10-01T12:00:00.000Z', expiresAt: '2026-10-31T12:00:00.000Z' });
+    expect(response.body).toEqual({
+      idCustomCommissionRequest: 17,
+      createdAt: '2026-10-01T12:00:00.000Z',
+      expiresAt: '2026-10-31T12:00:00.000Z',
+    });
     expect(mockProductFindById).toHaveBeenCalledWith(7);
     expect(mockRepositoryCreate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -308,7 +315,9 @@ describe('POST /api/custom-commission-requests', () => {
       category: 'User',
       idRole: Role.USER,
     });
-    mockListMineExecute.mockResolvedValueOnce([{ ...activeRequest, idUser: 23, phone: '+54 9 11 0000-0101' }]);
+    mockListMineExecute.mockResolvedValueOnce([
+      { ...activeRequest, idUser: 23, phone: '+54 9 11 0000-0101' },
+    ]);
     const ok = await request(app)
       .get('/api/custom-commission-requests/mine')
       .set('Cookie', buyer.cookie);
@@ -329,14 +338,23 @@ describe('POST /api/custom-commission-requests', () => {
 
   it('sanitizes persistence and product-lookup failures', async () => {
     mockRepositoryCreate.mockRejectedValueOnce(new Error(PII_CANARY));
-    const persistence = await postSubmission(app, { ...validSubmission, email: `${PII_CANARY}@example.test` });
-    expect(persistence).toMatchObject({ status: 500, body: { error: 'Unable to submit custom commission request' } });
+    const persistence = await postSubmission(app, {
+      ...validSubmission,
+      email: `${PII_CANARY}@example.test`,
+    });
+    expect(persistence).toMatchObject({
+      status: 500,
+      body: { error: 'Unable to submit custom commission request' },
+    });
     expect(persistence.text).not.toContain(PII_CANARY);
     expect(mockProductFindById).not.toHaveBeenCalled();
 
     mockProductFindById.mockRejectedValueOnce(new Error(PII_CANARY));
     const lookup = await postSubmission(app, { ...validSubmission, idProduct: 7 });
-    expect(lookup).toMatchObject({ status: 500, body: { error: 'Unable to submit custom commission request' } });
+    expect(lookup).toMatchObject({
+      status: 500,
+      body: { error: 'Unable to submit custom commission request' },
+    });
     expect(lookup.text).not.toContain(PII_CANARY);
     expect(mockRepositoryCreate).toHaveBeenCalledTimes(1);
   });
@@ -347,8 +365,15 @@ describe('POST /api/custom-commission-requests', () => {
       expect((await postSubmission(app, validSubmission, limitedIp)).status).toBe(201);
     }
     expect(mockProductFindById).not.toHaveBeenCalled();
-    const limited = await postSubmission(app, { ...validSubmission, email: `${PII_CANARY}@example.test` }, limitedIp);
-    expect(limited).toMatchObject({ status: 429, body: { error: 'Too many requests. Please try again later.' } });
+    const limited = await postSubmission(
+      app,
+      { ...validSubmission, email: `${PII_CANARY}@example.test` },
+      limitedIp,
+    );
+    expect(limited).toMatchObject({
+      status: 429,
+      body: { error: 'Too many requests. Please try again later.' },
+    });
     expect(limited.text).not.toContain(PII_CANARY);
     expect((await postSubmission(app, validSubmission, '198.51.100.201')).status).toBe(201);
     expect(mockRepositoryCreate).toHaveBeenCalledTimes(6);

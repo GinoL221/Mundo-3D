@@ -29,7 +29,7 @@ export interface AuthTokenPayload {
  */
 export function signAuthToken(
   payload: AuthTokenPayload,
-  expiresIn: SignOptions['expiresIn'] = '1h'
+  expiresIn: SignOptions['expiresIn'] = '1h',
 ): string {
   return jwt.sign({ ...payload, typ: 'access' }, getJwtSecret(), accessTokenSignOptions(expiresIn));
 }

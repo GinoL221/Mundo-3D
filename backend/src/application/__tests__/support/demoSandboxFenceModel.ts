@@ -13,7 +13,8 @@ export class FenceModel {
   private data: string[] = [];
 
   begin(lease: string, generation: number): Operation | null {
-    if (this.state !== 'open' || lease !== this.lease || generation !== this.generation) return null;
+    if (this.state !== 'open' || lease !== this.lease || generation !== this.generation)
+      return null;
     const operation = Symbol('operation');
     this.active.add(operation);
     return operation;
@@ -30,7 +31,8 @@ export class FenceModel {
   }
 
   fence(attempt: string): boolean {
-    if (this.state !== 'open' || !attempt || this.attempts.has(attempt) || this.active.size !== 0) return false;
+    if (this.state !== 'open' || !attempt || this.attempts.has(attempt) || this.active.size !== 0)
+      return false;
     this.attempts.add(attempt);
     this.attempt = attempt;
     this.state = 'fenced';
@@ -38,7 +40,14 @@ export class FenceModel {
   }
 
   recover(expected: string, next: string, previousWorkerStopped: boolean): boolean {
-    if (this.state === 'open' || this.attempt !== expected || !next || this.attempts.has(next) || !previousWorkerStopped) return false;
+    if (
+      this.state === 'open' ||
+      this.attempt !== expected ||
+      !next ||
+      this.attempts.has(next) ||
+      !previousWorkerStopped
+    )
+      return false;
     this.attempts.add(next);
     this.attempt = next;
     this.state = 'fenced';
@@ -53,7 +62,14 @@ export class FenceModel {
   }
 
   activate(attempt: string, lease: string, generation: number): boolean {
-    if (this.state !== 'verified' || this.attempt !== attempt || !lease || this.leases.has(lease) || generation !== this.generation + 1) return false;
+    if (
+      this.state !== 'verified' ||
+      this.attempt !== attempt ||
+      !lease ||
+      this.leases.has(lease) ||
+      generation !== this.generation + 1
+    )
+      return false;
     this.leases.add(lease);
     this.generation = generation;
     this.lease = lease;

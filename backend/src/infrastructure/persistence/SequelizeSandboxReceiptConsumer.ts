@@ -36,10 +36,12 @@ export class SequelizeSandboxReceiptConsumer implements SandboxResetReceiptConsu
           consumed: false,
           // Byte-exact even when the schema uses a case-insensitive collation.
           // Keep the ordinary predicate for indexing; the binary predicate is authoritative.
-          [Op.and]: [Sequelize.where(
-            Sequelize.cast(Sequelize.col('seed_version'), 'BINARY'),
-            identity.seedVersion,
-          )],
+          [Op.and]: [
+            Sequelize.where(
+              Sequelize.cast(Sequelize.col('seed_version'), 'BINARY'),
+              identity.seedVersion,
+            ),
+          ],
         },
         transaction,
       },

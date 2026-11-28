@@ -31,7 +31,24 @@ describe('AdjustProductStockUseCase', () => {
 
   it('increases stock and maps the updated product to a ProductDTO on a valid positive delta', async () => {
     const category = new Category(1, 'Figures');
-    const updated = new Product(10, 'Product A', 100, 'Desc', 'a.jpg', 1, 2, category, undefined, null, null, null, null, null, null, 8);
+    const updated = new Product(
+      10,
+      'Product A',
+      100,
+      'Desc',
+      'a.jpg',
+      1,
+      2,
+      category,
+      undefined,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      8,
+    );
     mockProductRepo.adjustStock.mockResolvedValue(updated);
 
     const result = await useCase.execute(10, 3);
@@ -46,7 +63,7 @@ describe('AdjustProductStockUseCase', () => {
         resultingStock: 8,
         timestamp: expect.any(String),
       }),
-      expect.stringContaining('Stock adjustment succeeded')
+      expect.stringContaining('Stock adjustment succeeded'),
     );
     expect(result).toEqual({
       idProduct: 10,
@@ -68,7 +85,24 @@ describe('AdjustProductStockUseCase', () => {
   });
 
   it('decreases stock on a valid negative delta', async () => {
-    const updated = new Product(10, 'Product A', 100, 'Desc', 'a.jpg', 1, 2, undefined, undefined, null, null, null, null, null, null, 3);
+    const updated = new Product(
+      10,
+      'Product A',
+      100,
+      'Desc',
+      'a.jpg',
+      1,
+      2,
+      undefined,
+      undefined,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      3,
+    );
     mockProductRepo.adjustStock.mockResolvedValue(updated);
 
     const result = await useCase.execute(10, -2);
@@ -92,7 +126,7 @@ describe('AdjustProductStockUseCase', () => {
         reason: 'not_found',
         timestamp: expect.any(String),
       }),
-      expect.stringContaining('Stock adjustment rejected')
+      expect.stringContaining('Stock adjustment rejected'),
     );
   });
 
@@ -110,7 +144,7 @@ describe('AdjustProductStockUseCase', () => {
         reason: 'Insufficient stock',
         timestamp: expect.any(String),
       }),
-      expect.stringContaining('Stock adjustment rejected')
+      expect.stringContaining('Stock adjustment rejected'),
     );
   });
 
@@ -128,7 +162,7 @@ describe('AdjustProductStockUseCase', () => {
         reason: 'Delta must be a non-zero integer',
         timestamp: expect.any(String),
       }),
-      expect.stringContaining('Stock adjustment rejected')
+      expect.stringContaining('Stock adjustment rejected'),
     );
   });
 });

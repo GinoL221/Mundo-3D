@@ -321,6 +321,8 @@ describe('myCommissions', () => {
     await initializeMyCommissions(doc as unknown as Document);
 
     expect(doc.getElementById('my-commissions-error')?.hidden).toBe(false);
-    expect(doc.getElementById('my-commissions-error-text')?.textContent).toMatch(/sesión demo expiró/i);
+    expect(doc.getElementById('my-commissions-error-text')?.textContent).toMatch(
+      /sesión demo expiró/i,
+    );
   });
 });

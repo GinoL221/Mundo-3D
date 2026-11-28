@@ -16,7 +16,7 @@ export class ConfirmOrderPaymentUseCase {
     const transitioned = await this.orderRepo.transitionStatus(
       idOrder,
       OrderStatus.AWAITING_PAYMENT,
-      OrderStatus.PAID
+      OrderStatus.PAID,
     );
 
     if (!transitioned) {

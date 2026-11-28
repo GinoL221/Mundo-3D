@@ -28,7 +28,7 @@ class InMemoryRememberTokenRepository implements RememberTokenRepositoryPort {
       token.familyId,
       token.supersededAt,
       token.successorHash,
-      token.revokedAt
+      token.revokedAt,
     );
     this.tokens.set(token.tokenHash, created);
     return created;
@@ -60,7 +60,7 @@ class InMemoryRememberTokenRepository implements RememberTokenRepositoryPort {
       row.familyId,
       new Date(),
       input.successorHash,
-      row.revokedAt
+      row.revokedAt,
     );
     this.tokens.set(input.presentedHash, updated);
     return true;
@@ -76,7 +76,7 @@ class InMemoryRememberTokenRepository implements RememberTokenRepositoryPort {
       row.familyId,
       row.supersededAt,
       row.successorHash,
-      row.revokedAt
+      row.revokedAt,
     );
     this.tokens.set(row.tokenHash, created);
     return created;
@@ -95,7 +95,7 @@ class InMemoryRememberTokenRepository implements RememberTokenRepositoryPort {
           token.familyId,
           token.supersededAt,
           token.successorHash,
-          new Date()
+          new Date(),
         );
         this.tokens.set(hash, revoked);
         count++;
@@ -104,7 +104,11 @@ class InMemoryRememberTokenRepository implements RememberTokenRepositoryPort {
     return count;
   }
 
-  async reapFamily(_familyId: string, _retentionSeconds: number, _tx: TransactionContext): Promise<number> {
+  async reapFamily(
+    _familyId: string,
+    _retentionSeconds: number,
+    _tx: TransactionContext,
+  ): Promise<number> {
     return 0;
   }
 }
@@ -148,7 +152,7 @@ describe('Session revocation on logout — public HTTP interface', () => {
       mockUserRepo,
       tokenHasher,
       rotateRefreshTokenUseCase,
-      logger
+      logger,
     );
     revokeRefreshTokenUseCase = new RevokeRefreshTokenUseCase(repo, tokenHasher);
 
@@ -159,7 +163,7 @@ describe('Session revocation on logout — public HTTP interface', () => {
       jest.fn() as any,
       jest.fn() as any,
       refreshSessionUseCase,
-      revokeRefreshTokenUseCase
+      revokeRefreshTokenUseCase,
     );
 
     app = express();
@@ -189,7 +193,7 @@ describe('Session revocation on logout — public HTTP interface', () => {
     const counterpartAccessToken = jwt.sign(
       { userId: 1, email: 'test@example.com', familyId: counterpartFamily, typ: 'access' },
       getJwtSecret(),
-      accessTokenSignOptions('30m')
+      accessTokenSignOptions('30m'),
     );
 
     const counterpartLogoutRes = await request(app)
@@ -320,7 +324,7 @@ describe('Session revocation on logout — public HTTP interface', () => {
         expect.stringContaining('m3d_refresh=;'),
         expect.stringContaining('m3d_csrf=;'),
         expect.stringContaining('m3d_user=;'),
-      ])
+      ]),
     );
   });
 
@@ -333,7 +337,7 @@ describe('Session revocation on logout — public HTTP interface', () => {
     const expiredToken = jwt.sign(
       { userId: 1, email: 'test@example.com', familyId: 'family-exp', typ: 'access' },
       getJwtSecret(),
-      accessTokenSignOptions('0s')
+      accessTokenSignOptions('0s'),
     );
     const resExpired = await request(app)
       .post('/api/users/logout')
@@ -359,7 +363,11 @@ describe('Session revocation on logout — public HTTP interface', () => {
   });
 
   it('fails closed instead of reporting success when the revoke use case is not injected', async () => {
-    const controllerWithoutRevoke = new UserApiController(jest.fn() as any, jest.fn() as any, jest.fn() as any);
+    const controllerWithoutRevoke = new UserApiController(
+      jest.fn() as any,
+      jest.fn() as any,
+      jest.fn() as any,
+    );
     const isolatedApp = express();
     isolatedApp.use(express.json());
     isolatedApp.use(cookieParser());
@@ -373,12 +381,14 @@ describe('Session revocation on logout — public HTTP interface', () => {
   });
 
   it('clears session cookies even when revocation encounters a database error on logout', async () => {
-    jest.spyOn(revokeRefreshTokenUseCase, 'execute').mockRejectedValueOnce(new Error('DB connection dropped'));
+    jest
+      .spyOn(revokeRefreshTokenUseCase, 'execute')
+      .mockRejectedValueOnce(new Error('DB connection dropped'));
 
     const activeToken = jwt.sign(
       { userId: 1, email: 'test@example.com', familyId: 'family-error', typ: 'access' },
       getJwtSecret(),
-      accessTokenSignOptions('30m')
+      accessTokenSignOptions('30m'),
     );
 
     const res = await request(app)
@@ -386,7 +396,9 @@ describe('Session revocation on logout — public HTTP interface', () => {
       .set('Cookie', `${AUTH_COOKIE}=${activeToken}`);
 
     expect(res.status).toBe(500);
-    const setCookies: string[] = Array.isArray(res.headers['set-cookie']) ? res.headers['set-cookie'] : [];
+    const setCookies: string[] = Array.isArray(res.headers['set-cookie'])
+      ? res.headers['set-cookie']
+      : [];
     expect(setCookies.some((c: string) => c.startsWith(`${AUTH_COOKIE}=;`))).toBe(true);
     expect(setCookies.some((c: string) => c.startsWith(`${REFRESH_COOKIE}=;`))).toBe(true);
   });

@@ -45,7 +45,10 @@ describe('issueAccessCookie', () => {
   // only drift apart here, and this is where that shows up.
   it('issues a token that apiAuthMiddleware accepts', () => {
     const req = { cookies: { [AUTH_COOKIE]: issueToken() } } as unknown as Request;
-    const res = { status: jest.fn().mockReturnThis(), json: jest.fn().mockReturnThis() } as unknown as Response;
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis(),
+    } as unknown as Response;
     const next = jest.fn() as NextFunction;
 
     apiAuthMiddleware(req, res, next);
@@ -70,7 +73,7 @@ describe('readFamilyIdFromAccessToken', () => {
     const expired = jwt.sign(
       { ...basePayload, familyId: 'fam-expired', typ: 'access' },
       getJwtSecret(),
-      accessTokenSignOptions(-60)
+      accessTokenSignOptions(-60),
     );
 
     expect(readFamilyIdFromAccessToken(expired)).toBe('fam-expired');
@@ -106,7 +109,7 @@ describe('readFamilyIdFromAccessToken', () => {
     const forged = jwt.sign(
       { ...basePayload, typ: 'access' },
       'a-different-secret-that-is-long-enough',
-      accessTokenSignOptions('30m')
+      accessTokenSignOptions('30m'),
     );
 
     expect(readFamilyIdFromAccessToken(forged)).toBeUndefined();

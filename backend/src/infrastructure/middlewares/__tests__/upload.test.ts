@@ -24,7 +24,7 @@ jest.mock('multer', () => {
         path: '/abs/public/img/products/gen-uuid.png',
         destination: '/abs/public/img/products',
         size: 1234,
-      })
+      }),
     ),
     _removeFile: jest.fn((_req, _file, cb) => cb(null)),
   }));
@@ -35,7 +35,9 @@ jest.mock('../../storage/r2StorageEngine', () => ({
   createR2StorageEngine: jest.fn((dest: string) => ({
     __r2Engine: true,
     dest,
-    _handleFile: jest.fn((_req, _file, cb) => cb(null, { key: `${dest}/r2.png`, location: 'https://r2/r2.png' })),
+    _handleFile: jest.fn((_req, _file, cb) =>
+      cb(null, { key: `${dest}/r2.png`, location: 'https://r2/r2.png' }),
+    ),
     _removeFile: jest.fn((_req, _file, cb) => cb(null)),
   })),
 }));
@@ -45,7 +47,10 @@ jest.mock('../../storage/cloudinaryStorageEngine', () => ({
     __cloudinaryEngine: true,
     dest,
     _handleFile: jest.fn((_req, _file, cb) =>
-      cb(null, { key: `${dest}/cld`, location: 'https://res.cloudinary.com/demo/image/upload/v1/cld.png' })
+      cb(null, {
+        key: `${dest}/cld`,
+        location: 'https://res.cloudinary.com/demo/image/upload/v1/cld.png',
+      }),
     ),
     _removeFile: jest.fn((_req, _file, cb) => cb(null)),
   })),
@@ -90,7 +95,7 @@ describe('createUpload factory', () => {
     expect((multer as unknown as { diskStorage: jest.Mock }).diskStorage).toHaveBeenCalledTimes(1);
     expect(cb).toHaveBeenCalledWith(
       null,
-      expect.objectContaining({ key: 'products/gen-uuid.png', location: 'gen-uuid.png' })
+      expect.objectContaining({ key: 'products/gen-uuid.png', location: 'gen-uuid.png' }),
     );
   });
 
@@ -108,7 +113,7 @@ describe('createUpload factory', () => {
     // `/img/products/gen-uuid.png` — not a doubled `/img/products//img/...`.
     expect(cb).toHaveBeenCalledWith(
       null,
-      expect.objectContaining({ key: 'products/gen-uuid.png', location: 'gen-uuid.png' })
+      expect.objectContaining({ key: 'products/gen-uuid.png', location: 'gen-uuid.png' }),
     );
     expect(file.key).toBe('products/gen-uuid.png');
     expect(file.path).toBe('/abs/public/img/products/gen-uuid.png');
@@ -155,7 +160,10 @@ describe('createUpload factory', () => {
     engine._removeFile({}, { key: 'products/r2.png' }, removeCb);
 
     expect(createR2StorageEngine).toHaveBeenCalledWith('products');
-    expect(handleCb).toHaveBeenCalledWith(null, expect.objectContaining({ key: 'products/r2.png' }));
+    expect(handleCb).toHaveBeenCalledWith(
+      null,
+      expect.objectContaining({ key: 'products/r2.png' }),
+    );
     expect(removeCb).toHaveBeenCalledWith(null);
   });
 
@@ -171,10 +179,7 @@ describe('createUpload factory', () => {
     engine._removeFile({}, { key: 'products/cld' }, removeCb);
 
     expect(createCloudinaryStorageEngine).toHaveBeenCalledWith('products');
-    expect(handleCb).toHaveBeenCalledWith(
-      null,
-      expect.objectContaining({ key: 'products/cld' })
-    );
+    expect(handleCb).toHaveBeenCalledWith(null, expect.objectContaining({ key: 'products/cld' }));
     expect(removeCb).toHaveBeenCalledWith(null);
   });
 
@@ -251,7 +256,11 @@ describe('createUpload factory', () => {
     const multerOptions = (multer as unknown as jest.Mock).mock.calls[0][0];
     const callback = jest.fn();
 
-    multerOptions.fileFilter({}, { originalname: 'avatar.htmlpng', mimetype: 'image/png' }, callback);
+    multerOptions.fileFilter(
+      {},
+      { originalname: 'avatar.htmlpng', mimetype: 'image/png' },
+      callback,
+    );
 
     expect(callback).toHaveBeenCalledWith(expect.any(Error), false);
     expect(callback.mock.calls[0][0].message).toBe('Invalid file format or size limit exceeded');
@@ -265,7 +274,7 @@ describe('createUpload factory', () => {
     multerOptions.fileFilter(
       {},
       { originalname: 'avatar.png', mimetype: 'text/html; charset=utf-8; x=png' },
-      callback
+      callback,
     );
 
     expect(callback).toHaveBeenCalledWith(expect.any(Error), false);

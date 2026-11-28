@@ -15,10 +15,22 @@ const {
 
 function makeDb(overrides = {}) {
   return {
-    Category: { count: jest.fn().mockResolvedValue(0), bulkCreate: jest.fn().mockResolvedValue(undefined) },
-    Franchise: { count: jest.fn().mockResolvedValue(0), bulkCreate: jest.fn().mockResolvedValue(undefined) },
-    User: { count: jest.fn().mockResolvedValue(0), bulkCreate: jest.fn().mockResolvedValue(undefined) },
-    Product: { count: jest.fn().mockResolvedValue(0), bulkCreate: jest.fn().mockResolvedValue(undefined) },
+    Category: {
+      count: jest.fn().mockResolvedValue(0),
+      bulkCreate: jest.fn().mockResolvedValue(undefined),
+    },
+    Franchise: {
+      count: jest.fn().mockResolvedValue(0),
+      bulkCreate: jest.fn().mockResolvedValue(undefined),
+    },
+    User: {
+      count: jest.fn().mockResolvedValue(0),
+      bulkCreate: jest.fn().mockResolvedValue(undefined),
+    },
+    Product: {
+      count: jest.fn().mockResolvedValue(0),
+      bulkCreate: jest.fn().mockResolvedValue(undefined),
+    },
     ...overrides,
   };
 }
@@ -117,9 +129,7 @@ describe('syncCatalogData', () => {
         create: jest.fn().mockImplementation((payload) => Promise.resolve(payload)),
       },
       Franchise: {
-        findAll: jest.fn().mockResolvedValue([
-          { idFranchise: 1, nameFranchise: 'Marvel' },
-        ]),
+        findAll: jest.fn().mockResolvedValue([{ idFranchise: 1, nameFranchise: 'Marvel' }]),
         create: jest.fn().mockImplementation((payload) => Promise.resolve(payload)),
       },
       Product: {

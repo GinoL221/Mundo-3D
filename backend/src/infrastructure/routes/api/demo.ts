@@ -132,7 +132,12 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
   router.post('/session/refresh', rLim, c.refresh);
   router.delete('/session', ...write, c.destroy);
   router.get('/products/search', auth, searchVal, hSearch);
-  router.get('/cart', auth, buyerOnly, run((b) => b.cart.getCart));
+  router.get(
+    '/cart',
+    auth,
+    buyerOnly,
+    run((b) => b.cart.getCart),
+  );
   router.get('/orders/mine', auth, buyerOnly, myOrdVal, hMine);
   for (const [path, pick] of READS) router.get(path, auth, run(pick));
   router.put('/cart', ...write, buyerOnly, cartVal, hCart);
@@ -175,29 +180,81 @@ export function createDemoRouter(o: DemoRouterOptions = {}): Router {
     swLim,
     run((b) => b.products.adjustStock),
   );
-  router.delete('/products/:id', ...adminWrite, run((b) => b.products.destroy));
+  router.delete(
+    '/products/:id',
+    ...adminWrite,
+    run((b) => b.products.destroy),
+  );
   // ORDER-SENSITIVE: `/users/me` MUST stay before `/users/:id`.
-  router.get('/users/me', auth, run((b) => b.users.me));
-  router.get('/users', ...adminRead, run((b) => b.users.index));
+  router.get(
+    '/users/me',
+    auth,
+    run((b) => b.users.me),
+  );
+  router.get(
+    '/users',
+    ...adminRead,
+    run((b) => b.users.index),
+  );
   router.get(
     '/users/:id',
     (req, _res, next) => (/^\d+$/.test(String(req.params.id)) ? next() : next('route')),
     ...adminRead,
     run((b) => b.users.show),
   );
-  router.post('/categories', ...adminWrite, catCreVal, handleValidationErrors, run((b) => b.categories.create));
-  router.put('/categories/:id', ...adminWrite, catUpdVal, handleValidationErrors, run((b) => b.categories.update));
-  router.delete('/categories/:id', ...adminWrite, run((b) => b.categories.destroy));
-  router.post('/franchises', ...adminWrite, franCreVal, handleValidationErrors, run((b) => b.franchises.create));
-  router.put('/franchises/:id', ...adminWrite, franUpdVal, handleValidationErrors, run((b) => b.franchises.update));
-  router.delete('/franchises/:id', ...adminWrite, run((b) => b.franchises.destroy));
+  router.post(
+    '/categories',
+    ...adminWrite,
+    catCreVal,
+    handleValidationErrors,
+    run((b) => b.categories.create),
+  );
+  router.put(
+    '/categories/:id',
+    ...adminWrite,
+    catUpdVal,
+    handleValidationErrors,
+    run((b) => b.categories.update),
+  );
+  router.delete(
+    '/categories/:id',
+    ...adminWrite,
+    run((b) => b.categories.destroy),
+  );
+  router.post(
+    '/franchises',
+    ...adminWrite,
+    franCreVal,
+    handleValidationErrors,
+    run((b) => b.franchises.create),
+  );
+  router.put(
+    '/franchises/:id',
+    ...adminWrite,
+    franUpdVal,
+    handleValidationErrors,
+    run((b) => b.franchises.update),
+  );
+  router.delete(
+    '/franchises/:id',
+    ...adminWrite,
+    run((b) => b.franchises.destroy),
+  );
   router.get(
     '/orders',
     ...workshopRead,
     run((b) => b.orders.index),
   );
-  router.post('/orders/:id/confirm-payment', ...adminWrite, run((b) => b.orders.confirmPayment));
-  router.post('/orders/:id/cancel', ...adminWrite, run((b) => b.orders.cancel));
+  router.post(
+    '/orders/:id/confirm-payment',
+    ...adminWrite,
+    run((b) => b.orders.confirmPayment),
+  );
+  router.post(
+    '/orders/:id/cancel',
+    ...adminWrite,
+    run((b) => b.orders.cancel),
+  );
   return router;
 }
 

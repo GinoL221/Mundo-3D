@@ -61,7 +61,12 @@ describe('SequelizeSandboxReleaseControl', () => {
   function control(handlers: Array<(sql: string) => unknown>) {
     const harness = connectionWith(handlers);
     return {
-      port: new SequelizeSandboxReleaseControl(harness.connection, identity.slotId, 'control', 'slot'),
+      port: new SequelizeSandboxReleaseControl(
+        harness.connection,
+        identity.slotId,
+        'control',
+        'slot',
+      ),
       log: harness.log,
       run: harness.run,
     };
@@ -115,7 +120,12 @@ describe('SequelizeSandboxReleaseControl', () => {
     expect(controlUpdate.sql).toContain("status = 'available'");
     expect(controlUpdate.sql).toContain('lease_id = NULL');
     expect(controlUpdate.sql).toContain('reset_attempt_id = NULL');
-    for (const column of ['allocated_at', 'last_activity_at', 'idle_expires_at', 'absolute_expires_at']) {
+    for (const column of [
+      'allocated_at',
+      'last_activity_at',
+      'idle_expires_at',
+      'absolute_expires_at',
+    ]) {
       expect(controlUpdate.sql).toContain(`${column} = NULL`);
     }
     expect(fenceUpdate.sql).toContain('UPDATE `slot`.`DemoSandboxFence`');
@@ -166,10 +176,7 @@ describe('SequelizeSandboxReleaseFence', () => {
     ['another attempt', { ...fencedRow, reset_attempt_id: 'other' }],
     ['no row', null],
   ])('rejects %s and only that field decides', async (_label, row) => {
-    const { port, run } = fence([
-      () => [[fencedRow], []],
-      () => [[row === null ? [] : [row]], []],
-    ]);
+    const { port, run } = fence([() => [[fencedRow], []], () => [[row === null ? [] : [row]], []]]);
     await run(async (tx) => {
       await expect(port.lockAndCheck(identity, tx)).resolves.toBe(true);
       await expect(port.lockAndCheck(identity, tx)).resolves.toBe(false);

@@ -87,7 +87,9 @@ describe('demoSessionState', () => {
     expect(rewriteDemoApiUrl(`${API_URL}/api/users/3`)).toBe(`${API_URL}/api/demo/users/3`);
     expect(rewriteDemoApiUrl(`${API_URL}/api/demo/cart`)).toBe(`${API_URL}/api/demo/cart`);
     expect(rewriteDemoApiUrl(`${API_URL}/api/users/login`)).toBe(`${API_URL}/api/users/login`);
-    expect(rewriteDemoApiUrl(`${API_URL}/api/users/register`)).toBe(`${API_URL}/api/users/register`);
+    expect(rewriteDemoApiUrl(`${API_URL}/api/users/register`)).toBe(
+      `${API_URL}/api/users/register`,
+    );
     expect(rewriteDemoApiUrl(`${API_URL}/api/users/logout`)).toBe(`${API_URL}/api/users/logout`);
     expect(rewriteDemoApiUrl(`${API_URL}/api/users/refresh`)).toBe(`${API_URL}/api/users/refresh`);
     expect(rewriteDemoApiUrl(`${API_URL}/api/users/email-confirmation`)).toBe(

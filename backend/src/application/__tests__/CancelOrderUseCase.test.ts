@@ -6,8 +6,19 @@ import { Order, OrderStatus } from '../../domain/entities/Order';
 import { OrderItem } from '../../domain/entities/OrderItem';
 import { IllegalOrderTransitionException } from '../../domain/exceptions/IllegalOrderTransitionException';
 
-function makeOrder(idOrder: number, items: OrderItem[], status: OrderStatus = OrderStatus.AWAITING_PAYMENT): Order {
-  return new Order(idOrder, 7, `key-${idOrder}`, status, items, new Date('2026-08-28T14:03:11.000Z'));
+function makeOrder(
+  idOrder: number,
+  items: OrderItem[],
+  status: OrderStatus = OrderStatus.AWAITING_PAYMENT,
+): Order {
+  return new Order(
+    idOrder,
+    7,
+    `key-${idOrder}`,
+    status,
+    items,
+    new Date('2026-08-28T14:03:11.000Z'),
+  );
 }
 
 describe('CancelOrderUseCase', () => {
@@ -18,7 +29,9 @@ describe('CancelOrderUseCase', () => {
 
   beforeEach(() => {
     uow = {
-      runInTransaction: jest.fn((work: (tx: TransactionContext) => Promise<unknown>) => work({} as TransactionContext)),
+      runInTransaction: jest.fn((work: (tx: TransactionContext) => Promise<unknown>) =>
+        work({} as TransactionContext),
+      ),
     } as unknown as jest.Mocked<UnitOfWorkPort>;
     orderRepo = {
       createWithItems: jest.fn(),
@@ -52,7 +65,12 @@ describe('CancelOrderUseCase', () => {
 
     const dto = await useCase.execute(41);
 
-    expect(orderRepo.transitionStatus).toHaveBeenCalledWith(41, OrderStatus.AWAITING_PAYMENT, OrderStatus.CANCELLED, {});
+    expect(orderRepo.transitionStatus).toHaveBeenCalledWith(
+      41,
+      OrderStatus.AWAITING_PAYMENT,
+      OrderStatus.CANCELLED,
+      {},
+    );
     expect(productRepo.adjustStock).toHaveBeenCalledTimes(2);
     expect(productRepo.adjustStock).toHaveBeenCalledWith(10, 3, {});
     expect(productRepo.adjustStock).toHaveBeenCalledWith(20, 1, {});

@@ -50,7 +50,7 @@ describe('ShoppingCart Model Definition', () => {
       expect.objectContaining({
         tableName: 'ShoppingCart',
         timestamps: false,
-      })
+      }),
     );
   });
 });

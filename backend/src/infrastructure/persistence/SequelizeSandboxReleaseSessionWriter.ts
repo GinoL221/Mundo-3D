@@ -1,6 +1,9 @@
 import type { Sequelize } from 'sequelize';
 import { UniqueConstraintError } from 'sequelize';
-import type { RecordedReleaseSession, SandboxReleaseSessionRecorderPort } from '../../domain/ports/SandboxReleaseSessionRecorderPort';
+import type {
+  RecordedReleaseSession,
+  SandboxReleaseSessionRecorderPort,
+} from '../../domain/ports/SandboxReleaseSessionRecorderPort';
 import type { SandboxReleaseIdentity } from '../../domain/ports/AuthoritativeReleaseStateReaderPort';
 import { ReleaseSessionAlreadyRecordedException } from '../../domain/exceptions/ReleaseSessionAlreadyRecordedException';
 
@@ -16,8 +19,12 @@ const SESSION_UNIQUE_INDEX = 'uq_release_session_attempt';
 function isSessionUniquenessRejection(error: unknown): error is UniqueConstraintError {
   if (!(error instanceof UniqueConstraintError)) return false;
   const rejected = Object.keys(error.fields ?? {});
-  if (rejected.length === 1 && (rejected[0] === SESSION_UNIQUE_INDEX || rejected[0] === 'PRIMARY')) return true;
-  return rejected.length > 0 && ['slot_id', 'generation', 'attempt_id'].every((field) => rejected.includes(field));
+  if (rejected.length === 1 && (rejected[0] === SESSION_UNIQUE_INDEX || rejected[0] === 'PRIMARY'))
+    return true;
+  return (
+    rejected.length > 0 &&
+    ['slot_id', 'generation', 'attempt_id'].every((field) => rejected.includes(field))
+  );
 }
 
 /**

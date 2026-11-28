@@ -1,4 +1,9 @@
-import { UniqueConstraintError, type ModelStatic, type Sequelize, type Transaction } from 'sequelize';
+import {
+  UniqueConstraintError,
+  type ModelStatic,
+  type Sequelize,
+  type Transaction,
+} from 'sequelize';
 import type { DemoSandboxReleaseOperationRecord } from '../../database/models/DemoSandboxReleaseOperation';
 import type { SandboxReleaseIdentity } from '../../domain/ports/AuthoritativeReleaseStateReaderPort';
 import type { SandboxReleaseOperationRecorderPort } from '../../domain/ports/SandboxReleaseOperationRecorderPort';

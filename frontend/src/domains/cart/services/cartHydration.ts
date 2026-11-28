@@ -110,7 +110,9 @@ export function detectPriceDrift(local: CartItem[], server: CartItem[]): PriceDr
 // debounce burst before the GET so a just-made local edit reaches the server
 // before we read it back (checkout's own scheduleSync+flushCartSync pattern
 // is reused, never bypassed, for the merge write itself).
-export async function hydrateFromServer(options?: { mergeLocal?: boolean }): Promise<HydrationResult> {
+export async function hydrateFromServer(options?: {
+  mergeLocal?: boolean;
+}): Promise<HydrationResult> {
   // Read at call time, before any await — this is the guest/pre-hydration
   // snapshot used for the merge/shouldMerge decision and for drift
   // detection, per design's "mode is an explicit flag" decision.
@@ -119,10 +121,22 @@ export async function hydrateFromServer(options?: { mergeLocal?: boolean }): Pro
   try {
     const sessionUser = getSessionUser();
     if (!sessionUser) {
-      return { ok: false, items: initialLocal, priceDrifts: [], syncScheduled: false, reason: 'guest' };
+      return {
+        ok: false,
+        items: initialLocal,
+        priceDrifts: [],
+        syncScheduled: false,
+        reason: 'guest',
+      };
     }
     if (isOperationalRole(sessionUser)) {
-      return { ok: false, items: initialLocal, priceDrifts: [], syncScheduled: false, reason: 'operational' };
+      return {
+        ok: false,
+        items: initialLocal,
+        priceDrifts: [],
+        syncScheduled: false,
+        reason: 'operational',
+      };
     }
 
     // Awaited: the GET below must observe this PUT's result, not race it.
@@ -136,20 +150,39 @@ export async function hydrateFromServer(options?: { mergeLocal?: boolean }): Pro
     try {
       res = await authFetch(`${API_URL}/api/cart`, { method: 'GET' });
     } catch {
-      return { ok: false, items: cartItems.get(), priceDrifts: [], syncScheduled: false, reason: 'network' };
+      return {
+        ok: false,
+        items: cartItems.get(),
+        priceDrifts: [],
+        syncScheduled: false,
+        reason: 'network',
+      };
     }
 
     if (!res.ok) {
-      return { ok: false, items: cartItems.get(), priceDrifts: [], syncScheduled: false, reason: 'http' };
+      return {
+        ok: false,
+        items: cartItems.get(),
+        priceDrifts: [],
+        syncScheduled: false,
+        reason: 'http',
+      };
     }
 
     let server: CartItem[];
     try {
       const body = (await res.json()) as ServerCartResponse;
-      if (!Array.isArray(body.items)) throw new Error('malformed cart response: items is not an array');
+      if (!Array.isArray(body.items))
+        throw new Error('malformed cart response: items is not an array');
       server = mapServerCart(body.items);
     } catch {
-      return { ok: false, items: cartItems.get(), priceDrifts: [], syncScheduled: false, reason: 'http' };
+      return {
+        ok: false,
+        items: cartItems.get(),
+        priceDrifts: [],
+        syncScheduled: false,
+        reason: 'http',
+      };
     }
 
     const shouldMerge = options?.mergeLocal === true && initialLocal.length > 0;
@@ -188,6 +221,12 @@ export async function hydrateFromServer(options?: { mergeLocal?: boolean }): Pro
     void flushCartSync();
     return { ok: true, items: merged, priceDrifts: [], syncScheduled: true };
   } catch {
-    return { ok: false, items: cartItems.get(), priceDrifts: [], syncScheduled: false, reason: 'network' };
+    return {
+      ok: false,
+      items: cartItems.get(),
+      priceDrifts: [],
+      syncScheduled: false,
+      reason: 'network',
+    };
   }
 }

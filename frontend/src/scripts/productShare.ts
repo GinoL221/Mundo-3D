@@ -104,9 +104,11 @@ export function setupProductShare(
   const nav: ShareNavigatorLike | undefined = env.navigator ?? globalThis.navigator;
   const doc: ShareDocumentLike | undefined = env.document ?? globalThis.document;
   const scheduleTimer =
-    env.setTimeout ?? ((handler: () => void, delayMs: number) => globalThis.setTimeout(handler, delayMs));
+    env.setTimeout ??
+    ((handler: () => void, delayMs: number) => globalThis.setTimeout(handler, delayMs));
   const cancelTimer =
-    env.clearTimeout ?? ((timerId: ReturnType<typeof globalThis.setTimeout>) => globalThis.clearTimeout(timerId));
+    env.clearTimeout ??
+    ((timerId: ReturnType<typeof globalThis.setTimeout>) => globalThis.clearTimeout(timerId));
 
   let copyResetTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
 

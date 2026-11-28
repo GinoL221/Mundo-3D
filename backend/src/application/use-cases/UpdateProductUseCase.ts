@@ -20,7 +20,7 @@ export interface UpdateProductInput {
 export class UpdateProductUseCase {
   constructor(
     private readonly productRepo: ProductRepositoryPort,
-    private readonly categoryRepo?: CategoryRepositoryPort
+    private readonly categoryRepo?: CategoryRepositoryPort,
   ) {}
 
   async execute(id: number, input: UpdateProductInput): Promise<ProductDTO | null> {

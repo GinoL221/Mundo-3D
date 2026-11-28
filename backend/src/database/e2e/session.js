@@ -15,8 +15,12 @@ function parseIdentity(result) {
     throw new Error('Invalid MySQL server UUID');
   }
   const rawId = row.connectionId;
-  if (!(typeof rawId === 'number' && Number.isSafeInteger(rawId) ||
-        typeof rawId === 'string' && /^[1-9][0-9]*$/.test(rawId))) {
+  if (
+    !(
+      (typeof rawId === 'number' && Number.isSafeInteger(rawId)) ||
+      (typeof rawId === 'string' && /^[1-9][0-9]*$/.test(rawId))
+    )
+  ) {
     throw new Error('Invalid MySQL connection ID');
   }
   const connectionId = Number(rawId);
@@ -32,18 +36,26 @@ async function readIdentity(connection) {
 
 async function withPinnedSession(connection, work, expectedIdentity) {
   if (!connection || typeof connection.end !== 'function') {
-    throw new TypeError('A dedicated queryable connection, end method, and work callback are required');
+    throw new TypeError(
+      'A dedicated queryable connection, end method, and work callback are required',
+    );
   }
   let result;
   let failure;
   let failed = false;
   try {
     if (typeof connection.query !== 'function' || typeof work !== 'function') {
-      throw new TypeError('A dedicated queryable connection, end method, and work callback are required');
+      throw new TypeError(
+        'A dedicated queryable connection, end method, and work callback are required',
+      );
     }
     const before = await readIdentity(connection);
-    if (expectedIdentity && (before.uuid !== expectedIdentity.uuid.toLowerCase() ||
-        expectedIdentity.connectionId !== undefined && before.connectionId !== Number(expectedIdentity.connectionId))) {
+    if (
+      expectedIdentity &&
+      (before.uuid !== expectedIdentity.uuid.toLowerCase() ||
+        (expectedIdentity.connectionId !== undefined &&
+          before.connectionId !== Number(expectedIdentity.connectionId)))
+    ) {
       throw new Error('MySQL session identity did not match verified endpoint');
     }
     result = await work(connection);
