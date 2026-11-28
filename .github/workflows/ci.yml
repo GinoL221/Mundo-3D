@@ -55,6 +55,9 @@ jobs:
       - name: Check OpenAPI spec is up to date
         run: pnpm run check:openapi
 
+      - name: Check formatting (Prettier)
+        run: pnpm run format:check
+
       - name: Run linter
         run: pnpm run lint
 
