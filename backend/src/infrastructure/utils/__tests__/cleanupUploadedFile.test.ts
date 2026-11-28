@@ -95,7 +95,7 @@ describe('cleanupUploadedFile', () => {
           key: 'products/missing.png',
           bucket: 'test-bucket',
         }),
-        expect.stringContaining('missing.png')
+        expect.stringContaining('missing.png'),
       );
     });
   });
@@ -106,24 +106,20 @@ describe('cleanupUploadedFile', () => {
     });
 
     it('unlinks the file resolved under public/img and never touches R2', async () => {
-      const unlinkSpy = jest
-        .spyOn(fs.promises, 'unlink')
-        .mockResolvedValue(undefined as never);
+      const unlinkSpy = jest.spyOn(fs.promises, 'unlink').mockResolvedValue(undefined as never);
 
       cleanupUploadedFile('users/xyz-789.webp');
       await flush();
 
       expect(sendMock).not.toHaveBeenCalled();
       expect(unlinkSpy).toHaveBeenCalledWith(
-        path.join(process.cwd(), 'public', 'img', 'users/xyz-789.webp')
+        path.join(process.cwd(), 'public', 'img', 'users/xyz-789.webp'),
       );
       unlinkSpy.mockRestore();
     });
 
     it('logs an upload_cleanup_failed warning and never throws when the unlink rejects', async () => {
-      const unlinkSpy = jest
-        .spyOn(fs.promises, 'unlink')
-        .mockRejectedValue(new Error('ENOENT'));
+      const unlinkSpy = jest.spyOn(fs.promises, 'unlink').mockRejectedValue(new Error('ENOENT'));
 
       expect(() => cleanupUploadedFile('products/missing.png')).not.toThrow();
       await flush();
@@ -133,16 +129,14 @@ describe('cleanupUploadedFile', () => {
           event: 'upload_cleanup_failed',
           key: 'products/missing.png',
         }),
-        expect.stringContaining('missing.png')
+        expect.stringContaining('missing.png'),
       );
       unlinkSpy.mockRestore();
     });
 
     it('respects UPLOAD_DIR environment override when unlinking local disk files', async () => {
       process.env.UPLOAD_DIR = '/custom/isolated/uploads';
-      const unlinkSpy = jest
-        .spyOn(fs.promises, 'unlink')
-        .mockResolvedValue(undefined as never);
+      const unlinkSpy = jest.spyOn(fs.promises, 'unlink').mockResolvedValue(undefined as never);
 
       cleanupUploadedFile('products/sample.png');
       await flush();
@@ -177,7 +171,7 @@ describe('cleanupUploadedFile', () => {
           event: 'upload_cleanup_failed',
           key: 'products/cld-fail',
         }),
-        expect.stringContaining('cld-fail')
+        expect.stringContaining('cld-fail'),
       );
     });
   });
@@ -207,7 +201,7 @@ describe('cleanupUploadedFile', () => {
           event: 'upload_cleanup_failed',
           key: 'products/anything.png',
         }),
-        expect.stringContaining('anything.png')
+        expect.stringContaining('anything.png'),
       );
     });
   });

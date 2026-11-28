@@ -28,7 +28,10 @@ export class ListMyOrdersUseCase {
   // reject-with-400 contract enforced upstream.
   async execute(idUser: number, page: number, pageSize: number): Promise<MyOrdersPageDTO> {
     const offset = (page - 1) * pageSize;
-    const { orders, total } = await this.orderRepo.findByUserId(idUser, { limit: pageSize, offset });
+    const { orders, total } = await this.orderRepo.findByUserId(idUser, {
+      limit: pageSize,
+      offset,
+    });
 
     return {
       orders: orders.map(mapToOrderSummaryDTO),

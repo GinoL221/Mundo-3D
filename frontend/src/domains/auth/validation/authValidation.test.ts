@@ -104,7 +104,7 @@ describe('validateRegisterInput', () => {
         email: '',
         password: '',
         confirmPassword: '',
-      })
+      }),
     ).toEqual({
       firstName: 'Ingresá tu nombre',
       lastName: 'Ingresá tu apellido',
@@ -123,7 +123,7 @@ describe('validateRegisterInput', () => {
         password: 'password123!',
         confirmPassword: 'Password123!',
         imageName: 'foto.webp',
-      })
+      }),
     ).toEqual({
       firstName: 'Tiene que tener entre 2 y 10 caracteres',
       lastName: 'Tiene que tener entre 2 y 10 caracteres',
@@ -135,14 +135,16 @@ describe('validateRegisterInput', () => {
   });
 
   it('checks password length, number, and special character in backend order', () => {
-    expect(validateRegisterInput({ ...validInput, password: 'Ab1!', confirmPassword: 'Ab1!' }).password).toBe(
-      'Tiene que tener entre 8 y 32 caracteres'
-    );
     expect(
-      validateRegisterInput({ ...validInput, password: 'Password!', confirmPassword: 'Password!' }).password
+      validateRegisterInput({ ...validInput, password: 'Ab1!', confirmPassword: 'Ab1!' }).password,
+    ).toBe('Tiene que tener entre 8 y 32 caracteres');
+    expect(
+      validateRegisterInput({ ...validInput, password: 'Password!', confirmPassword: 'Password!' })
+        .password,
     ).toBe('Tiene que contener al menos un número');
     expect(
-      validateRegisterInput({ ...validInput, password: 'Password1', confirmPassword: 'Password1' }).password
+      validateRegisterInput({ ...validInput, password: 'Password1', confirmPassword: 'Password1' })
+        .password,
     ).toBe('Tiene que contener al menos un carácter especial');
   });
 });
@@ -195,13 +197,13 @@ describe('extractApiFieldErrors & summarizeFieldErrors', () => {
 
   it('returns the single message for 1 error and the summary for multiple errors', () => {
     expect(summarizeFieldErrors({ email: 'Ingresá un correo válido' }, 'Revisá los campos.')).toBe(
-      'Ingresá un correo válido'
+      'Ingresá un correo válido',
     );
     expect(
       summarizeFieldErrors(
         { firstName: 'Ingresá tu nombre', email: 'Ingresá un correo válido' },
-        'Revisá los campos marcados antes de crear tu cuenta.'
-      )
+        'Revisá los campos marcados antes de crear tu cuenta.',
+      ),
     ).toBe('Revisá los campos marcados antes de crear tu cuenta.');
   });
 });
@@ -215,11 +217,15 @@ describe('validateImageFile', () => {
   });
 
   it('rejects files over 5 MB with a Spanish message', () => {
-    expect(validateImageFile('a.jpg', FIVE_MB + 1)).toBe('La imagen pesa más de 5 MB. Elegí una más liviana.');
+    expect(validateImageFile('a.jpg', FIVE_MB + 1)).toBe(
+      'La imagen pesa más de 5 MB. Elegí una más liviana.',
+    );
   });
 
   it('reports the extension error before the size error', () => {
-    expect(validateImageFile('a.gif', FIVE_MB + 1)).toBe('Las extensiones de archivos permitidas son .jpg, .png');
+    expect(validateImageFile('a.gif', FIVE_MB + 1)).toBe(
+      'Las extensiones de archivos permitidas son .jpg, .png',
+    );
   });
 
   it('blocks register submit for an oversized image', () => {
@@ -239,7 +245,7 @@ describe('validateImageFile', () => {
 describe('uploadRejectionMessage', () => {
   it('maps the backend upload-filter rejection to a Spanish field message', () => {
     expect(uploadRejectionMessage(new Error('Invalid file format or size limit exceeded'))).toBe(
-      'No pudimos aceptar la imagen: tiene que ser JPG o PNG y pesar hasta 5 MB.'
+      'No pudimos aceptar la imagen: tiene que ser JPG o PNG y pesar hasta 5 MB.',
     );
   });
 

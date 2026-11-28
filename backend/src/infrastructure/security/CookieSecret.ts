@@ -26,7 +26,7 @@ export function getCookieSecret(): string {
   if (!secret) {
     throw new Error(
       'COOKIE_SECRET environment variable is required but was not set. ' +
-        'The application cannot start without it.'
+        'The application cannot start without it.',
     );
   }
 
@@ -34,7 +34,7 @@ export function getCookieSecret(): string {
     throw new Error(
       `COOKIE_SECRET must be at least ${MIN_SECRET_LENGTH} characters long, ` +
         `but the value provided is ${secret.length}. ` +
-        'The application cannot start with a weak signing secret.'
+        'The application cannot start with a weak signing secret.',
     );
   }
 

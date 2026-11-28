@@ -32,7 +32,10 @@ export class SequelizeSandboxReleaseControl implements SandboxReleaseControl {
     return transaction;
   }
 
-  async lockAndCheck(identity: SandboxReleaseIdentity, context: TransactionContext): Promise<boolean> {
+  async lockAndCheck(
+    identity: SandboxReleaseIdentity,
+    context: TransactionContext,
+  ): Promise<boolean> {
     if (identity.slotId !== this.slotId) return false;
     const transaction = this.transaction(identity, context);
     const [rows] = (await this.connection.query(
@@ -85,7 +88,10 @@ export class SequelizeSandboxReleaseFence implements SandboxReleaseFence {
     private readonly slotSchema: string,
   ) {}
 
-  async lockAndCheck(identity: SandboxReleaseIdentity, context: TransactionContext): Promise<boolean> {
+  async lockAndCheck(
+    identity: SandboxReleaseIdentity,
+    context: TransactionContext,
+  ): Promise<boolean> {
     if (identity.slotId !== this.slotId) return false;
     const transaction = resolveScopedTransaction(context, this.connection);
     if (!transaction) throw new Error('Transaction context is required');

@@ -34,7 +34,9 @@ describe('demoSandboxSeedData', () => {
     });
     expect(
       seed.customCommissionRequests.every(
-        (c) => c.expiresAt.getTime() > c.createdAt.getTime() && c.email.endsWith('@sandbox.mundo3d.invalid'),
+        (c) =>
+          c.expiresAt.getTime() > c.createdAt.getTime() &&
+          c.email.endsWith('@sandbox.mundo3d.invalid'),
       ),
     ).toBe(true);
     expect(seed.orders[0]).toMatchObject({

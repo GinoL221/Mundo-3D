@@ -1,4 +1,7 @@
-import { RotateRefreshTokenUseCase, RefreshTokenRotationLostRaceError } from '../use-cases/RotateRefreshTokenUseCase';
+import {
+  RotateRefreshTokenUseCase,
+  RefreshTokenRotationLostRaceError,
+} from '../use-cases/RotateRefreshTokenUseCase';
 import { UnitOfWorkPort, TransactionContext } from '../../domain/ports/UnitOfWorkPort';
 import { RememberTokenRepositoryPort } from '../../domain/ports/RememberTokenRepositoryPort';
 import { TokenHasherPort } from '../../domain/ports/TokenHasherPort';
@@ -58,8 +61,13 @@ describe('RotateRefreshTokenUseCase', () => {
       tx: fakeTx,
     });
     expect(mockRepo.insertSuccessor).toHaveBeenCalledWith(
-      expect.objectContaining({ idUser: 7, tokenHash: 'new-hash', expiryDate: expiry, familyId: 'family-1' }),
-      fakeTx
+      expect.objectContaining({
+        idUser: 7,
+        tokenHash: 'new-hash',
+        expiryDate: expiry,
+        familyId: 'family-1',
+      }),
+      fakeTx,
     );
     expect(mockRepo.reapFamily).toHaveBeenCalledWith('family-1', 86400, fakeTx);
   });
@@ -88,7 +96,7 @@ describe('RotateRefreshTokenUseCase', () => {
     const useCase = new RotateRefreshTokenUseCase(uow, mockRepo, mockHasher, 86400);
 
     await expect(useCase.execute(current, 'new-plain-token')).rejects.toBeInstanceOf(
-      RefreshTokenRotationLostRaceError
+      RefreshTokenRotationLostRaceError,
     );
     expect(mockRepo.insertSuccessor).not.toHaveBeenCalled();
     expect(mockRepo.reapFamily).not.toHaveBeenCalled();

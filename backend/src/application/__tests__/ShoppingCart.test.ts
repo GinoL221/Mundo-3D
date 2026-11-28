@@ -1,5 +1,9 @@
 import { CartValidationException } from '../../domain/exceptions/CartValidationException';
-import { ShoppingCart, CartStatus, MAX_CART_ITEM_QUANTITY } from '../../domain/entities/ShoppingCart';
+import {
+  ShoppingCart,
+  CartStatus,
+  MAX_CART_ITEM_QUANTITY,
+} from '../../domain/entities/ShoppingCart';
 
 describe('CartValidationException', () => {
   it('should extend Error and set name property correctly', () => {
@@ -12,55 +16,54 @@ describe('CartValidationException', () => {
 
 describe('ShoppingCart Entity', () => {
   it('should successfully create a valid domain entity with ACTIVE status', () => {
-    const cart = new ShoppingCart(1, 10, 100, 2, 150.00, CartStatus.ACTIVE);
+    const cart = new ShoppingCart(1, 10, 100, 2, 150.0, CartStatus.ACTIVE);
     expect(cart.idCart).toBe(1);
     expect(cart.idUser).toBe(10);
     expect(cart.idProduct).toBe(100);
     expect(cart.quantity).toBe(2);
-    expect(cart.unitPrice).toBe(150.00);
+    expect(cart.unitPrice).toBe(150.0);
     expect(cart.status).toBe(CartStatus.ACTIVE);
   });
 
   it('should throw CartValidationException when quantity is 0', () => {
     expect(() => {
-      new ShoppingCart(1, 10, 100, 0, 150.00, CartStatus.ACTIVE);
+      new ShoppingCart(1, 10, 100, 0, 150.0, CartStatus.ACTIVE);
     }).toThrow(CartValidationException);
   });
 
   it('should throw CartValidationException when quantity is negative', () => {
     expect(() => {
-      new ShoppingCart(1, 10, 100, -5, 150.00, CartStatus.ACTIVE);
+      new ShoppingCart(1, 10, 100, -5, 150.0, CartStatus.ACTIVE);
     }).toThrow(CartValidationException);
   });
 
   it('should successfully create a valid domain entity when quantity is at the ceiling boundary of 99', () => {
-    const cart = new ShoppingCart(1, 10, 100, 99, 150.00, CartStatus.ACTIVE);
+    const cart = new ShoppingCart(1, 10, 100, 99, 150.0, CartStatus.ACTIVE);
     expect(cart.quantity).toBe(99);
   });
 
   it('should throw CartValidationException when quantity is greater than 99', () => {
     expect(() => {
-      new ShoppingCart(1, 10, 100, 100, 150.00, CartStatus.ACTIVE);
+      new ShoppingCart(1, 10, 100, 100, 150.0, CartStatus.ACTIVE);
     }).toThrow(CartValidationException);
   });
 
   it('should throw CartValidationException when quantity is not an integer', () => {
     expect(() => {
-      new ShoppingCart(1, 10, 100, 2.5, 150.00, CartStatus.ACTIVE);
+      new ShoppingCart(1, 10, 100, 2.5, 150.0, CartStatus.ACTIVE);
     }).toThrow(CartValidationException);
   });
 
   it('should return true for hasPriceDrift when active product price differs from unitPrice', () => {
-    const cart = new ShoppingCart(1, 10, 100, 2, 100.00, CartStatus.ACTIVE);
-    expect(cart.hasPriceDrift(120.00)).toBe(true);
-    expect(cart.hasPriceDrift(80.00)).toBe(true);
+    const cart = new ShoppingCart(1, 10, 100, 2, 100.0, CartStatus.ACTIVE);
+    expect(cart.hasPriceDrift(120.0)).toBe(true);
+    expect(cart.hasPriceDrift(80.0)).toBe(true);
   });
 
   it('should return false for hasPriceDrift when active product price matches unitPrice', () => {
-    const cart = new ShoppingCart(1, 10, 100, 2, 100.00, CartStatus.ACTIVE);
-    expect(cart.hasPriceDrift(100.00)).toBe(false);
+    const cart = new ShoppingCart(1, 10, 100, 2, 100.0, CartStatus.ACTIVE);
+    expect(cart.hasPriceDrift(100.0)).toBe(false);
   });
-
 });
 
 describe('ShoppingCart.assertValidQuantity', () => {
@@ -84,5 +87,3 @@ describe('ShoppingCart.assertValidQuantity', () => {
     expect(() => ShoppingCart.assertValidQuantity(100)).toThrow(CartValidationException);
   });
 });
-
-

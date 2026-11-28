@@ -1,6 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import type { Request } from 'express';
-import { getCloudinaryConfig, signCloudinaryParams, destroyCloudinaryImage } from './cloudinaryClient';
+import {
+  getCloudinaryConfig,
+  signCloudinaryParams,
+  destroyCloudinaryImage,
+} from './cloudinaryClient';
 import { resolveSafeImageMime } from './r2StorageEngine';
 
 interface EngineFile {
@@ -76,7 +80,11 @@ export class CloudinaryStorageEngine {
     const safeMime = resolveSafeImageMime(file.originalname, file.mimetype);
 
     const formData = new FormData();
-    formData.append('file', new Blob([new Uint8Array(body)], { type: safeMime }), file.originalname);
+    formData.append(
+      'file',
+      new Blob([new Uint8Array(body)], { type: safeMime }),
+      file.originalname,
+    );
     formData.append('api_key', apiKey);
     formData.append('timestamp', String(timestamp));
     formData.append('public_id', publicId);

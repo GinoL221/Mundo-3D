@@ -6,7 +6,11 @@ import {
   isDemoSessionActive,
   isOperationalRole,
 } from '../config';
-import { hasAdminAccess, isAdminOnly, clearSession } from '../domains/auth/services/session.service';
+import {
+  hasAdminAccess,
+  isAdminOnly,
+  clearSession,
+} from '../domains/auth/services/session.service';
 import type { SessionChangedMessage } from '../domains/auth/services/session.service';
 import { CartService } from '../domains/cart/services/CartService';
 import { resolveImageUrl } from '../lib/imageUrl';
@@ -226,7 +230,9 @@ export function initializeSessionUI(document: Document, window: Window): Cleanup
   logoutButton?.addEventListener('click', logout);
   userMenuTrigger?.addEventListener('click', toggleUserMenu);
   workshopMenuTrigger?.addEventListener('click', toggleWorkshopMenu);
-  const hasAnyMenu = Boolean((userMenuTrigger && userMenu) || (workshopMenuTrigger && workshopMenu));
+  const hasAnyMenu = Boolean(
+    (userMenuTrigger && userMenu) || (workshopMenuTrigger && workshopMenu),
+  );
   if (hasAnyMenu) {
     document.addEventListener('keydown', handleMenuKeydown);
     document.addEventListener('click', handleDocumentClick);

@@ -17,7 +17,10 @@ export class RunFencedSandboxTransaction {
     private readonly fence: SandboxFenceCheck,
   ) {}
 
-  execute<T>(lease: SandboxFenceLease, work: (transaction: TransactionContext) => Promise<T>): Promise<T> {
+  execute<T>(
+    lease: SandboxFenceLease,
+    work: (transaction: TransactionContext) => Promise<T>,
+  ): Promise<T> {
     return this.uow.runInTransaction(async (transaction) => {
       if (!(await this.fence.check(lease, transaction))) throw new Error('Sandbox fence rejected');
       return work(transaction);

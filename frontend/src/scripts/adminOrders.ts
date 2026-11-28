@@ -161,9 +161,7 @@ function renderOrderRow(
   return tr;
 }
 
-export async function initializeAdminOrders(
-  document: Document,
-): Promise<AdminOrdersController> {
+export async function initializeAdminOrders(document: Document): Promise<AdminOrdersController> {
   const roleBadge = document.getElementById('admin-role-badge');
   const scopeNote = document.getElementById('admin-orders-scope');
   const deniedEl = document.getElementById('admin-gate-denied');
@@ -247,11 +245,7 @@ export async function initializeAdminOrders(
     }
   };
 
-  const openActionDialog = (
-    orderId: number,
-    orderLabel: string,
-    kind: OrderActionKind,
-  ): void => {
+  const openActionDialog = (orderId: number, orderLabel: string, kind: OrderActionKind): void => {
     if (!adminCanMutate || inFlightOrderIds.has(orderId)) return;
     pendingDialogAction = { orderId, orderLabel, kind };
 

@@ -141,7 +141,10 @@ describe('authFetch', () => {
     stubCookie('');
     const unauthorized = new Response(null, { status: 401 });
     const stillUnauthorized = new Response(null, { status: 401 });
-    const fetchMock = vi.fn().mockResolvedValueOnce(unauthorized).mockResolvedValueOnce(stillUnauthorized);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(unauthorized)
+      .mockResolvedValueOnce(stillUnauthorized);
     vi.stubGlobal('fetch', fetchMock);
     ensureRefreshedMock.mockResolvedValue(true);
 
@@ -160,12 +163,15 @@ describe('authFetch', () => {
     const { win } = stubWindowLocation('');
     const unauthorized = new Response(null, { status: 401 });
     const settles: Array<() => void> = [];
-    const fetchMock = vi.fn().mockImplementationOnce(() => Promise.resolve(unauthorized)).mockImplementation(
-      () =>
-        new Promise<Response>((resolve) => {
-          settles.push(() => resolve(new Response(null, { status: 204 })));
-        })
-    );
+    const fetchMock = vi
+      .fn()
+      .mockImplementationOnce(() => Promise.resolve(unauthorized))
+      .mockImplementation(
+        () =>
+          new Promise<Response>((resolve) => {
+            settles.push(() => resolve(new Response(null, { status: 204 })));
+          }),
+      );
     vi.stubGlobal('fetch', fetchMock);
     ensureRefreshedMock.mockResolvedValue(false);
 
@@ -320,9 +326,7 @@ describe('authFetch', () => {
     const secondRefreshPromise = new Promise<boolean>((resolve) => {
       resolveSecondRefresh = resolve;
     });
-    ensureRefreshedMock
-      .mockResolvedValueOnce(false)
-      .mockReturnValueOnce(secondRefreshPromise);
+    ensureRefreshedMock.mockResolvedValueOnce(false).mockReturnValueOnce(secondRefreshPromise);
 
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       if (String(url).includes('/api/users/')) {

@@ -75,7 +75,7 @@ module.exports = (sequelize) => {
           return this.createdAt;
         },
       },
-    }
+    },
   );
 
   return RememberToken;

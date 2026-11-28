@@ -117,7 +117,16 @@ function createFixture() {
   const outsideTarget = new FakeNode();
   const doc = new FakeDocument();
 
-  panel.append(closeButton, summaryEl, urlInput, copyButton, whatsappLink, emailLink, nativeButton, statusEl);
+  panel.append(
+    closeButton,
+    summaryEl,
+    urlInput,
+    copyButton,
+    whatsappLink,
+    emailLink,
+    nativeButton,
+    statusEl,
+  );
   anchor.append(triggerButton, panel);
 
   const elements: ShareElements = {

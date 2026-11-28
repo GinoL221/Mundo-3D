@@ -36,7 +36,9 @@ const JWT_SECRET = getJwtSecret();
 const mockAuthenticateExecute = jest.fn();
 
 jest.mock('../../../../application/use-cases/AuthenticateUserUseCase', () => ({
-  AuthenticateUserUseCase: jest.fn().mockImplementation(() => ({ execute: mockAuthenticateExecute })),
+  AuthenticateUserUseCase: jest
+    .fn()
+    .mockImplementation(() => ({ execute: mockAuthenticateExecute })),
 }));
 
 // This is the integration-level guard-matrix test for the user admin
@@ -62,7 +64,7 @@ const signToken = (idRole: number) =>
   jwt.sign(
     { userId: 1, email: 'principal@test.com', category: 'test', idRole, typ: 'access' },
     JWT_SECRET,
-    accessTokenSignOptions('1h')
+    accessTokenSignOptions('1h'),
   );
 
 const adminToken = signToken(Role.ADMIN);
@@ -86,7 +88,9 @@ describe('api/users admin routes — guard matrix', () => {
     });
 
     it('returns 401 with a bad/malformed Bearer token', async () => {
-      const res = await request(app).get('/api/users').set('Cookie', authCookie('not-a-real-token'));
+      const res = await request(app)
+        .get('/api/users')
+        .set('Cookie', authCookie('not-a-real-token'));
 
       expect(res.status).toBe(401);
       expect(mockListExecute).not.toHaveBeenCalled();
@@ -126,7 +130,9 @@ describe('api/users admin routes — guard matrix', () => {
     });
 
     it('returns 401 with a bad/malformed Bearer token', async () => {
-      const res = await request(app).get('/api/users/1').set('Cookie', authCookie('not-a-real-token'));
+      const res = await request(app)
+        .get('/api/users/1')
+        .set('Cookie', authCookie('not-a-real-token'));
 
       expect(res.status).toBe(401);
       expect(mockGetByIdExecute).not.toHaveBeenCalled();
@@ -276,10 +282,28 @@ describe('api/users admin routes — guard matrix', () => {
       expect(res.status).toBe(400);
       expect(res.body.errors).toEqual([
         { type: 'field', value: '', msg: 'Ingresá tu nombre', path: 'firstName', location: 'body' },
-        { type: 'field', value: '', msg: 'Ingresá tu apellido', path: 'lastName', location: 'body' },
+        {
+          type: 'field',
+          value: '',
+          msg: 'Ingresá tu apellido',
+          path: 'lastName',
+          location: 'body',
+        },
         { type: 'field', value: '', msg: 'Ingresá tu correo', path: 'email', location: 'body' },
-        { type: 'field', value: '', msg: 'Ingresá tu contraseña', path: 'password', location: 'body' },
-        { type: 'field', value: '', msg: 'Confirmá tu contraseña', path: 'confirmPassword', location: 'body' },
+        {
+          type: 'field',
+          value: '',
+          msg: 'Ingresá tu contraseña',
+          path: 'password',
+          location: 'body',
+        },
+        {
+          type: 'field',
+          value: '',
+          msg: 'Confirmá tu contraseña',
+          path: 'confirmPassword',
+          location: 'body',
+        },
       ]);
       expect(mockRegisterExecute).not.toHaveBeenCalled();
     });
@@ -307,16 +331,19 @@ describe('api/users admin routes — guard matrix', () => {
       ['USER', userToken],
       ['STAFF', staffToken],
       ['ADMIN', adminToken],
-    ])('returns 200 with caller profile for %s without hitting /users/:id adminGuard', async (_label, token) => {
-      mockGetByIdExecute.mockResolvedValue(profileDto);
+    ])(
+      'returns 200 with caller profile for %s without hitting /users/:id adminGuard',
+      async (_label, token) => {
+        mockGetByIdExecute.mockResolvedValue(profileDto);
 
-      const res = await request(app).get('/api/users/me').set('Cookie', authCookie(token));
+        const res = await request(app).get('/api/users/me').set('Cookie', authCookie(token));
 
-      expect(res.status).toBe(200);
-      expect(res.body).toEqual(profileDto);
-      expect(res.body).not.toHaveProperty('passwordUser');
-      expect(mockGetByIdExecute).toHaveBeenCalledWith(1);
-    });
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual(profileDto);
+        expect(res.body).not.toHaveProperty('passwordUser');
+        expect(mockGetByIdExecute).toHaveBeenCalledWith(1);
+      },
+    );
 
     it('returns 404 when the authenticated user record no longer exists', async () => {
       mockGetByIdExecute.mockRejectedValue(new Error('User not found'));

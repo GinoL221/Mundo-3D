@@ -11,7 +11,8 @@ import type {
 export type AmountFormatter = (amount: number) => string;
 
 const fallbackPriceFormatter = new Intl.NumberFormat('es-AR');
-const defaultFormatAmount: AmountFormatter = (amount) => `$ ${fallbackPriceFormatter.format(amount)}`;
+const defaultFormatAmount: AmountFormatter = (amount) =>
+  `$ ${fallbackPriceFormatter.format(amount)}`;
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
   AWAITING_PAYMENT: 'Pedido simulado',

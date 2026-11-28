@@ -16,16 +16,19 @@ vi.mock('../domains/auth', () => ({
     user?.idRole === Role.ADMIN || user?.idRole === Role.STAFF,
 }));
 
-vi.mock('../domains/commissions/services/customCommissionRequest.admin.service', async (importOriginal) => {
-  const actual =
-    await importOriginal<
-      typeof import('../domains/commissions/services/customCommissionRequest.admin.service')
-    >();
-  return {
-    CustomCommissionRequestAdminApiError: actual.CustomCommissionRequestAdminApiError,
-    listCustomCommissionRequests: mocks.listCustomCommissionRequests,
-  };
-});
+vi.mock(
+  '../domains/commissions/services/customCommissionRequest.admin.service',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../domains/commissions/services/customCommissionRequest.admin.service')
+      >();
+    return {
+      CustomCommissionRequestAdminApiError: actual.CustomCommissionRequestAdminApiError,
+      listCustomCommissionRequests: mocks.listCustomCommissionRequests,
+    };
+  },
+);
 
 vi.mock('../domains/products/services/product.service', () => ({
   fetchProducts: mocks.fetchProducts,
@@ -163,7 +166,18 @@ class FakeDocument {
     const list = new FakeElement('ul', 'admin-requests-list', 'ui-inbox');
     list.hidden = true;
 
-    for (const el of [badge, scope, denied, content, loading, error, errorText, retry, empty, list]) {
+    for (const el of [
+      badge,
+      scope,
+      denied,
+      content,
+      loading,
+      error,
+      errorText,
+      retry,
+      empty,
+      list,
+    ]) {
       this.byId.set(el.id, el);
     }
   }
@@ -206,10 +220,7 @@ describe('initializeAdminCommissionRequests', () => {
       const doc = new FakeDocument();
       const win = createWindowMock();
 
-      await initializeAdminCommissionRequests(
-        doc as unknown as Document,
-        win as unknown as Window,
-      );
+      await initializeAdminCommissionRequests(doc as unknown as Document, win as unknown as Window);
 
       expect(doc.getElementById('admin-gate-denied')?.hidden).toBe(false);
       expect(doc.getElementById('admin-requests-content')?.hidden).toBe(true);
@@ -257,10 +268,7 @@ describe('initializeAdminCommissionRequests', () => {
     const doc = new FakeDocument();
     const win = createWindowMock();
 
-    await initializeAdminCommissionRequests(
-      doc as unknown as Document,
-      win as unknown as Window,
-    );
+    await initializeAdminCommissionRequests(doc as unknown as Document, win as unknown as Window);
     await Promise.resolve();
 
     const badge = doc.getElementById('admin-role-badge')!;
@@ -305,10 +313,7 @@ describe('initializeAdminCommissionRequests', () => {
     const doc = new FakeDocument();
     const win = createWindowMock();
 
-    await initializeAdminCommissionRequests(
-      doc as unknown as Document,
-      win as unknown as Window,
-    );
+    await initializeAdminCommissionRequests(doc as unknown as Document, win as unknown as Window);
 
     const badge = doc.getElementById('admin-role-badge')!;
     expect(badge.textContent).toBe('Admin');
@@ -331,10 +336,7 @@ describe('initializeAdminCommissionRequests', () => {
     const doc = new FakeDocument();
     const win = createWindowMock();
 
-    await initializeAdminCommissionRequests(
-      doc as unknown as Document,
-      win as unknown as Window,
-    );
+    await initializeAdminCommissionRequests(doc as unknown as Document, win as unknown as Window);
 
     expect(doc.getElementById('admin-requests-error')?.hidden).toBe(false);
     expect(doc.getElementById('admin-requests-loading')?.hidden).toBe(true);
@@ -361,10 +363,7 @@ describe('initializeAdminCommissionRequests', () => {
     const doc = new FakeDocument();
     const win = createWindowMock();
 
-    await initializeAdminCommissionRequests(
-      doc as unknown as Document,
-      win as unknown as Window,
-    );
+    await initializeAdminCommissionRequests(doc as unknown as Document, win as unknown as Window);
 
     expect(mocks.clearSession).not.toHaveBeenCalled();
     expect(win.location.href).toBe('/admin/commission-requests');
@@ -394,10 +393,7 @@ describe('initializeAdminCommissionRequests', () => {
     const doc = new FakeDocument();
     const win = createWindowMock();
 
-    await initializeAdminCommissionRequests(
-      doc as unknown as Document,
-      win as unknown as Window,
-    );
+    await initializeAdminCommissionRequests(doc as unknown as Document, win as unknown as Window);
 
     expect(doc.getElementById('admin-requests-list')?.hidden).toBe(false);
     expect(mocks.fetchProducts).not.toHaveBeenCalled();
@@ -415,10 +411,7 @@ describe('initializeAdminCommissionRequests', () => {
     const doc = new FakeDocument();
     const win = createWindowMock();
 
-    await initializeAdminCommissionRequests(
-      doc as unknown as Document,
-      win as unknown as Window,
-    );
+    await initializeAdminCommissionRequests(doc as unknown as Document, win as unknown as Window);
 
     expect(doc.getElementById('admin-requests-error')?.hidden).toBe(false);
     expect(doc.getElementById('admin-requests-error-text')?.textContent).toBe(
@@ -458,19 +451,14 @@ describe('initializeAdminCommissionRequests', () => {
     const doc = new FakeDocument();
     const win = createWindowMock();
 
-    await initializeAdminCommissionRequests(
-      doc as unknown as Document,
-      win as unknown as Window,
-    );
+    await initializeAdminCommissionRequests(doc as unknown as Document, win as unknown as Window);
 
     const list = doc.getElementById('admin-requests-list')!;
     const links = list.findAll((el) => el.tagName === 'a');
     expect(links.map((el) => el.href)).toEqual(['mailto:ana.perez+taller@ejemplo.com']);
 
     const muted = list.findAll((el) => el.classList.contains('ui-inbox__muted'));
-    expect(muted.map((el) => el.textContent)).toContain(
-      'a?cc=evil%40x.com&body=hi@ejemplo.com',
-    );
+    expect(muted.map((el) => el.textContent)).toContain('a?cc=evil%40x.com&body=hi@ejemplo.com');
   });
 
   it('hydrates pending demo STAFF session in a new tab instead of locking on denied', async () => {
@@ -496,8 +484,20 @@ describe('initializeAdminCommissionRequests', () => {
       ),
     );
     mocks.getSessionUser
-      .mockReturnValueOnce({ idUser: 1, firstName: 'Demo', lastName: 'Buyer', idRole: Role.USER, isDemo: true })
-      .mockReturnValueOnce({ idUser: 2, firstName: 'Demo', lastName: 'Staff', idRole: Role.STAFF, isDemo: true });
+      .mockReturnValueOnce({
+        idUser: 1,
+        firstName: 'Demo',
+        lastName: 'Buyer',
+        idRole: Role.USER,
+        isDemo: true,
+      })
+      .mockReturnValueOnce({
+        idUser: 2,
+        firstName: 'Demo',
+        lastName: 'Staff',
+        idRole: Role.STAFF,
+        isDemo: true,
+      });
     mocks.listCustomCommissionRequests.mockResolvedValue([]);
 
     const doc = new FakeDocument();

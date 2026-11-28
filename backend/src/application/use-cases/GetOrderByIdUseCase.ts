@@ -11,7 +11,11 @@ import { OrderDTO, mapToOrderDTO } from '../dtos/OrderDTO';
 export class GetOrderByIdUseCase {
   constructor(private readonly orderRepo: OrderRepositoryPort) {}
 
-  async execute(idOrder: number, requestingUserId: number, isAdmin: boolean): Promise<OrderDTO | null> {
+  async execute(
+    idOrder: number,
+    requestingUserId: number,
+    isAdmin: boolean,
+  ): Promise<OrderDTO | null> {
     const order = await this.orderRepo.findById(idOrder);
     if (!order) {
       return null;

@@ -4,7 +4,10 @@ import { GetOrderByIdUseCase } from '../../application/use-cases/GetOrderByIdUse
 import { ListOrdersUseCase } from '../../application/use-cases/ListOrdersUseCase';
 import { ConfirmOrderPaymentUseCase } from '../../application/use-cases/ConfirmOrderPaymentUseCase';
 import { CancelOrderUseCase } from '../../application/use-cases/CancelOrderUseCase';
-import { ListMyOrdersUseCase, DEFAULT_PAGE_SIZE } from '../../application/use-cases/ListMyOrdersUseCase';
+import {
+  ListMyOrdersUseCase,
+  DEFAULT_PAGE_SIZE,
+} from '../../application/use-cases/ListMyOrdersUseCase';
 import { EmptyCartException } from '../../domain/exceptions/EmptyCartException';
 import { InsufficientStockException } from '../../domain/exceptions/InsufficientStockException';
 import { IllegalOrderTransitionException } from '../../domain/exceptions/IllegalOrderTransitionException';
@@ -21,7 +24,7 @@ export class OrderApiController {
     private readonly listOrdersUseCase: ListOrdersUseCase,
     private readonly confirmOrderPaymentUseCase: ConfirmOrderPaymentUseCase,
     private readonly cancelOrderUseCase: CancelOrderUseCase,
-    private readonly listMyOrdersUseCase: ListMyOrdersUseCase
+    private readonly listMyOrdersUseCase: ListMyOrdersUseCase,
   ) {}
 
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

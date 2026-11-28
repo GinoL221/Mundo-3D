@@ -33,7 +33,7 @@ describe('GetCartByUserIdUseCase', () => {
     const productB = new Product(20, 'Product B', 50.0, 'Desc B', 'imgB.png', 1, 2);
 
     const itemA = new ShoppingCart(1, 5, 10, 2, 100.0, CartStatus.ACTIVE, productA); // Active: 2 * 100 = 200
-    const itemB = new ShoppingCart(2, 5, 20, 3, 50.0, CartStatus.ACTIVE, productB);  // Active: 3 * 50 = 150
+    const itemB = new ShoppingCart(2, 5, 20, 3, 50.0, CartStatus.ACTIVE, productB); // Active: 3 * 50 = 150
     const itemC = new ShoppingCart(3, 5, 30, 1, 25.0, CartStatus.ORDERED, productB); // Ordered: should be ignored
 
     repositoryMock.findByUserId.mockResolvedValue([itemA, itemB, itemC]);

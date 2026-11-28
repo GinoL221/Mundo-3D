@@ -11,16 +11,24 @@ const PORT = /^[1-9][0-9]{0,4}(?![\s\S])/;
 function readE2EDatabaseContext(env, { required = false } = {}) {
   const present = Object.keys(env).some((key) => key.startsWith('M3D_E2E_'));
   if (!required && !present) return null;
-  if (env.NODE_ENV !== 'test' || !RUN_ID.test(env.M3D_E2E_RUN_ID || '') ||
-      !UUID.test(env.M3D_E2E_EXPECTED_SERVER_UUID || '') ||
-      env.DB_HOST !== '127.0.0.1' || !PORT.test(env.DB_PORT || '') ||
-      Number(env.DB_PORT) > 65535) {
-    throw Object.assign(new Error('E2E database context rejected'), { code: 'E2E_CONTEXT_REJECTED' });
+  if (
+    env.NODE_ENV !== 'test' ||
+    !RUN_ID.test(env.M3D_E2E_RUN_ID || '') ||
+    !UUID.test(env.M3D_E2E_EXPECTED_SERVER_UUID || '') ||
+    env.DB_HOST !== '127.0.0.1' ||
+    !PORT.test(env.DB_PORT || '') ||
+    Number(env.DB_PORT) > 65535
+  ) {
+    throw Object.assign(new Error('E2E database context rejected'), {
+      code: 'E2E_CONTEXT_REJECTED',
+    });
   }
   return Object.freeze({
-    NODE_ENV: 'test', M3D_E2E_RUN_ID: env.M3D_E2E_RUN_ID,
+    NODE_ENV: 'test',
+    M3D_E2E_RUN_ID: env.M3D_E2E_RUN_ID,
     M3D_E2E_EXPECTED_SERVER_UUID: env.M3D_E2E_EXPECTED_SERVER_UUID,
-    DB_HOST: env.DB_HOST, DB_PORT: env.DB_PORT,
+    DB_HOST: env.DB_HOST,
+    DB_PORT: env.DB_PORT,
   });
 }
 

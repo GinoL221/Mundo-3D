@@ -10,7 +10,10 @@ describe('commission request retention', () => {
     const retention = startCommissionRequestRetention(purge, logger, 60 * 60 * 1000);
     await retention.ready;
     expect(purge).toHaveBeenCalledTimes(1);
-    expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ err: expect.any(Error) }), expect.any(String));
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error) }),
+      expect.any(String),
+    );
     await jest.advanceTimersByTimeAsync(60 * 60 * 1000);
     expect(purge).toHaveBeenCalledTimes(2);
     retention.stop();

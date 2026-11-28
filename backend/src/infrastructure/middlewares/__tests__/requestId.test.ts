@@ -8,10 +8,10 @@ describe('requestId middleware', () => {
 
   beforeEach(() => {
     req = {
-      headers: {}
+      headers: {},
     };
     res = {
-      setHeader: jest.fn()
+      setHeader: jest.fn(),
     } as unknown as Partial<Response>;
     next = jest.fn();
   });
@@ -29,7 +29,7 @@ describe('requestId middleware', () => {
   it('should reuse the existing x-request-id header if present', () => {
     const existingId = 'existing-correlation-id-12345';
     req.headers = {
-      'x-request-id': existingId
+      'x-request-id': existingId,
     };
 
     requestIdMiddleware(req as Request, res as Response, next);

@@ -17,7 +17,7 @@ export function issueCsrfToken(userId: UserIdLike): string {
 
 export function verifyCsrfToken(
   token: string | undefined | null,
-  userId: UserIdLike | undefined | null
+  userId: UserIdLike | undefined | null,
 ): boolean {
   if (!token || userId === undefined || userId === null) {
     return false;
@@ -43,5 +43,8 @@ export function verifyCsrfToken(
 }
 
 function signCsrfPayload(userId: UserIdLike, random: string): string {
-  return crypto.createHmac('sha256', getCookieSecret()).update(`${userId}.${random}`).digest('base64url');
+  return crypto
+    .createHmac('sha256', getCookieSecret())
+    .update(`${userId}.${random}`)
+    .digest('base64url');
 }

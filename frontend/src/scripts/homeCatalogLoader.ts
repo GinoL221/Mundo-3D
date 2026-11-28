@@ -25,11 +25,7 @@ function formatSpecimenDimensions(product: Product): string | null {
   return parts.join(' × ');
 }
 
-function setSpecCell(
-  container: ParentNode,
-  selector: string,
-  value: string | null,
-): boolean {
+function setSpecCell(container: ParentNode, selector: string, value: string | null): boolean {
   const cell = container.querySelector<HTMLElement>(selector);
   if (!cell) return false;
   if (!value) {

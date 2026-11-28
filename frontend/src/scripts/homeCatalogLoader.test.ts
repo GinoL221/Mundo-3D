@@ -136,7 +136,9 @@ class FakeElement {
   matches(selector: string): boolean {
     if (selector.startsWith('.')) {
       const targetClass = selector.slice(1);
-      return this.classList.contains(targetClass) || this.className.split(/\s+/).includes(targetClass);
+      return (
+        this.classList.contains(targetClass) || this.className.split(/\s+/).includes(targetClass)
+      );
     }
     if (selector.startsWith('#')) {
       return this.id === selector.slice(1);
@@ -305,19 +307,28 @@ function createHomeFixture() {
   productsState.hidden = true;
 
   const productGrid = el('div', { id: 'home-product-grid', className: 'home-products__grid' });
-  const productsContent = document.registerRoot(el('div', { id: 'home-products-content' }, [productGrid]));
+  const productsContent = document.registerRoot(
+    el('div', { id: 'home-products-content' }, [productGrid]),
+  );
   productsContent.hidden = true;
 
   document.registerRoot(
     new FakeTemplateElement('home-empty-state-template', [
       el('div', { className: 'ui-state ui-state--empty home-state' }, [
-        el('h3', { className: 'ui-state__title', textContent: 'Todavía no hay piezas en el catálogo.' }),
+        el('h3', {
+          className: 'ui-state__title',
+          textContent: 'Todavía no hay piezas en el catálogo.',
+        }),
         el('p', {
           className: 'ui-state__text',
           textContent:
             'Si buscás algo puntual, podés enviar una solicitud de encargo para que la revisemos.',
         }),
-        el('a', { className: 'home-text-link', href: '/help', textContent: 'Enviar solicitud de encargo' }),
+        el('a', {
+          className: 'home-text-link',
+          href: '/help',
+          textContent: 'Enviar solicitud de encargo',
+        }),
       ]),
     ]),
   );
@@ -326,13 +337,19 @@ function createHomeFixture() {
     new FakeTemplateElement('home-error-state-template', [
       el('div', { className: 'ui-callout ui-callout--danger home-state home-state--error' }, [
         el('div', { className: 'ui-callout__content' }, [
-          el('h3', { className: 'ui-callout__title', textContent: 'No se pudo cargar el catálogo' }),
+          el('h3', {
+            className: 'ui-callout__title',
+            textContent: 'No se pudo cargar el catálogo',
+          }),
           el('p', {
             className: 'ui-callout__text',
             textContent: 'Verificá la conexión e intentá de nuevo.',
           }),
           el('div', { className: 'ui-callout__actions' }, [
-            el('button', { className: 'ui-btn ui-btn--secondary home-state__retry', textContent: 'Reintentar' }),
+            el('button', {
+              className: 'ui-btn ui-btn--secondary home-state__retry',
+              textContent: 'Reintentar',
+            }),
           ]),
         ]),
       ]),
@@ -346,7 +363,10 @@ function createHomeFixture() {
           el('img', { className: 'hero-specimen__image' }),
         ]),
         el('figcaption', { className: 'hero-specimen__sheet' }, [
-          el('p', { className: 'hero-specimen__reason', textContent: 'La última pieza que salió del taller.' }),
+          el('p', {
+            className: 'hero-specimen__reason',
+            textContent: 'La última pieza que salió del taller.',
+          }),
           el('div', { className: 'hero-specimen__head' }, [
             el('h2', { className: 'hero-specimen__name' }),
             el('p', { className: 'hero-specimen__price' }),
@@ -376,7 +396,10 @@ function createHomeFixture() {
   document.registerRoot(
     new FakeTemplateElement('home-featured-empty-state-template', [
       el('div', { className: 'ui-state ui-state--empty hero-specimen__state' }, [
-        el('h3', { className: 'ui-state__title', textContent: 'Todavía no hay una pieza destacada.' }),
+        el('h3', {
+          className: 'ui-state__title',
+          textContent: 'Todavía no hay una pieza destacada.',
+        }),
         el('a', { className: 'home-text-link', href: '/products', textContent: 'Ver el catálogo' }),
       ]),
     ]),
@@ -384,19 +407,36 @@ function createHomeFixture() {
 
   document.registerRoot(
     new FakeTemplateElement('home-featured-error-state-template', [
-      el('div', { className: 'ui-callout ui-callout--danger hero-specimen__state hero-specimen__state--error' }, [
-        el('div', { className: 'ui-callout__content' }, [
-          el('h3', { className: 'ui-callout__title', textContent: 'No se pudo cargar la pieza destacada' }),
-          el('p', {
-            className: 'ui-callout__text',
-            textContent: 'Verificá la conexión e intentá de nuevo.',
-          }),
-          el('div', { className: 'ui-callout__actions' }, [
-            el('button', { className: 'ui-btn ui-btn--secondary home-state__retry', textContent: 'Reintentar' }),
-            el('a', { className: 'home-text-link', href: '/products', textContent: 'Ver el catálogo' }),
+      el(
+        'div',
+        {
+          className:
+            'ui-callout ui-callout--danger hero-specimen__state hero-specimen__state--error',
+        },
+        [
+          el('div', { className: 'ui-callout__content' }, [
+            el('h3', {
+              className: 'ui-callout__title',
+              textContent: 'No se pudo cargar la pieza destacada',
+            }),
+            el('p', {
+              className: 'ui-callout__text',
+              textContent: 'Verificá la conexión e intentá de nuevo.',
+            }),
+            el('div', { className: 'ui-callout__actions' }, [
+              el('button', {
+                className: 'ui-btn ui-btn--secondary home-state__retry',
+                textContent: 'Reintentar',
+              }),
+              el('a', {
+                className: 'home-text-link',
+                href: '/products',
+                textContent: 'Ver el catálogo',
+              }),
+            ]),
           ]),
-        ]),
-      ]),
+        ],
+      ),
     ]),
   );
 
@@ -506,7 +546,9 @@ describe('homeCatalogLoader', () => {
     expect(productsRetry!.disabled).toBe(true);
     const featuredSkeleton = fixture.document.getElementById('home-featured-loading');
     expect(featuredSkeleton?.getAttribute('aria-busy')).toBe('true');
-    expect(featuredSkeleton?.querySelector('.sr-only')?.textContent).toBe('Cargando pieza destacada…');
+    expect(featuredSkeleton?.querySelector('.sr-only')?.textContent).toBe(
+      'Cargando pieza destacada…',
+    );
     expect(fixture.loadingMsg.hidden).toBe(false);
     expect(fixture.productsState.hidden).toBe(true);
     expect(fixture.productsState.children).toHaveLength(0);
@@ -556,7 +598,9 @@ describe('homeCatalogLoader', () => {
       width: null,
       depth: null,
     });
-    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse(200, { products: [sparseProduct] }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(200, { products: [sparseProduct] }));
     vi.stubGlobal('fetch', fetchMock);
 
     await initializeHomeCatalog(fixture.document as unknown as Document);

@@ -63,7 +63,7 @@ export class RefreshSessionUseCase {
     private readonly userRepo: UserRepositoryPort,
     private readonly tokenHasher: TokenHasherPort,
     private readonly rotateRefreshTokenUseCase: RefreshTokenRotatorPort,
-    private readonly logger: LoggerPort
+    private readonly logger: LoggerPort,
   ) {}
 
   async execute(input: RefreshSessionInput): Promise<RefreshSessionResult> {
@@ -89,7 +89,10 @@ export class RefreshSessionUseCase {
       // between our read and the claim; re-read OUTSIDE the aborted
       // transaction (design.md D1) to resolve grace vs. reject on fresh data.
       try {
-        const successor = await this.rotateRefreshTokenUseCase.execute(current, input.newPlainToken);
+        const successor = await this.rotateRefreshTokenUseCase.execute(
+          current,
+          input.newPlainToken,
+        );
         const user = await this.userRepo.findById(current.idUser);
         if (!user || !current.familyId) {
           return { outcome: 'rejected' };
@@ -115,7 +118,7 @@ export class RefreshSessionUseCase {
 
   private async resolveGraceOrReject(
     presentedHash: string,
-    alreadyRead?: RememberToken
+    alreadyRead?: RememberToken,
   ): Promise<RefreshSessionResult> {
     const row = alreadyRead ?? (await this.rememberTokenRepo.findByHash(presentedHash));
 
@@ -145,7 +148,7 @@ export class RefreshSessionUseCase {
           revokedRows,
           timestamp: new Date().toISOString(),
         },
-        `Refresh token reuse detected for family ${row.familyId}`
+        `Refresh token reuse detected for family ${row.familyId}`,
       );
 
       return { outcome: 'reuse-detected' };

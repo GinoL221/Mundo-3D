@@ -32,10 +32,11 @@ describe('buildProductSearchWhere', () => {
   });
 
   it('AND-combines search, idCategory, and idFranchise when all are supplied', () => {
-    const where = buildProductSearchWhere({ search: 'goku', idCategory: 3, idFranchise: 5 }) as Record<
-      symbol,
-      unknown[]
-    >;
+    const where = buildProductSearchWhere({
+      search: 'goku',
+      idCategory: 3,
+      idFranchise: 5,
+    }) as Record<symbol, unknown[]>;
     const andConditions = where[Op.and];
 
     expect(andConditions).toHaveLength(3);

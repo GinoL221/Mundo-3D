@@ -15,7 +15,7 @@ export class SequelizeRememberTokenRepository implements RememberTokenRepository
       instance.familyId ?? null,
       instance.supersededAt ? new Date(instance.supersededAt) : null,
       instance.successorHash ?? null,
-      instance.revokedAt ? new Date(instance.revokedAt) : null
+      instance.revokedAt ? new Date(instance.revokedAt) : null,
     );
   }
 
@@ -66,7 +66,7 @@ export class SequelizeRememberTokenRepository implements RememberTokenRepository
         replacements: { presentedHash: input.presentedHash, successorHash: input.successorHash },
         type: QueryTypes.UPDATE,
         transaction,
-      }
+      },
     );
 
     return affectedRows === 1;
@@ -83,7 +83,7 @@ export class SequelizeRememberTokenRepository implements RememberTokenRepository
         familyId: row.familyId,
         createdAt: new Date(),
       } as Partial<RememberTokenAttributes>,
-      { transaction }
+      { transaction },
     );
 
     return this.toEntity(instance);
@@ -94,7 +94,7 @@ export class SequelizeRememberTokenRepository implements RememberTokenRepository
   async revokeFamily(familyId: string): Promise<number> {
     const [affectedRows] = await db.RememberToken.update(
       { revokedAt: new Date() } as Partial<RememberTokenAttributes>,
-      { where: { familyId, revokedAt: null } }
+      { where: { familyId, revokedAt: null } },
     );
     return affectedRows;
   }
@@ -126,9 +126,15 @@ export class SequelizeRememberTokenRepository implements RememberTokenRepository
   // rows reuse detection reads. It is interpolated into the interval, so it is
   // coerced to a non-negative integer first: a truncated finite number cannot
   // carry SQL.
-  async reapFamily(familyId: string, retentionSeconds: number, tx: TransactionContext): Promise<number> {
+  async reapFamily(
+    familyId: string,
+    retentionSeconds: number,
+    tx: TransactionContext,
+  ): Promise<number> {
     const transaction = tx as unknown as Transaction;
-    const cutoff = Number.isFinite(retentionSeconds) ? Math.max(0, Math.trunc(retentionSeconds)) : 0;
+    const cutoff = Number.isFinite(retentionSeconds)
+      ? Math.max(0, Math.trunc(retentionSeconds))
+      : 0;
 
     return db.RememberToken.destroy({
       where: {

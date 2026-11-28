@@ -288,11 +288,7 @@ describe('SequelizeDemoSandboxResetAdapter on disposable MySQL 8.0', () => {
     expect(await countTable(connA, 'CustomCommissionRequest')).toBe(
       DEMO_SANDBOX_EXPECTED_COUNTS.customCommissionRequests,
     );
-    for (const emptyTable of [
-      'ShoppingCart',
-      'RememberToken',
-      'EmailConfirmationToken',
-    ]) {
+    for (const emptyTable of ['ShoppingCart', 'RememberToken', 'EmailConfirmationToken']) {
       expect(await countTable(connA, emptyTable)).toBe(0);
     }
 
@@ -341,11 +337,7 @@ describe('SequelizeDemoSandboxResetAdapter on disposable MySQL 8.0', () => {
     // Second consecutive lease + expiry + reset cycle must advance DemoSandboxFence
     // cleanly from generation 1 -> 2 instead of quarantining on generation drift.
     const secondStart = new Date(expiredAt.getTime() + 10_000);
-    const secondLease = await slotRepo.claimAvailableSlot(
-      crypto.randomUUID(),
-      secondStart,
-      policy,
-    );
+    const secondLease = await slotRepo.claimAvailableSlot(crypto.randomUUID(), secondStart, policy);
     expect(secondLease).toMatchObject({ id: 'slot-a', generation: 1 });
     const secondExpiredAt = new Date(secondStart.getTime() + 120_000);
     const secondExpired = await new ExpireDemoSandboxLeasesUseCase(slotRepo, {

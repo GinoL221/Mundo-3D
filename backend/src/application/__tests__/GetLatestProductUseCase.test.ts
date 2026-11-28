@@ -29,7 +29,16 @@ describe('GetLatestProductUseCase', () => {
 
   it('should fetch the latest product and map to ProductDTO', async () => {
     const category = new Category(2, 'Figures');
-    const product = new Product(10, 'Latest Figures', 120, 'Awesome figures', 'fig.jpg', 2, 5, category);
+    const product = new Product(
+      10,
+      'Latest Figures',
+      120,
+      'Awesome figures',
+      'fig.jpg',
+      2,
+      5,
+      category,
+    );
     mockProductRepo.findLatest.mockResolvedValue(product);
 
     const result = await useCase.execute();

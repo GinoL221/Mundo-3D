@@ -30,7 +30,9 @@ describe('EmailConfirmationForm source contract', () => {
     expect(componentSource).toContain('class="ui-form"');
     expect(componentSource).toContain('novalidate');
     expect(componentSource).toContain('ui-state ui-state--open');
-    expect(componentSource).toContain('Abrí el enlace que te mandamos por correo o pedí uno nuevo.');
+    expect(componentSource).toContain(
+      'Abrí el enlace que te mandamos por correo o pedí uno nuevo.',
+    );
     expect(componentSource).toContain('ui-callout--success');
     expect(componentSource).toContain('ui-callout--danger');
     expect(componentSource).toContain('ui-callout--info');

@@ -94,15 +94,30 @@ describe('CreateProductUseCase', () => {
       idFranchise: 2,
     };
 
-    const createdProduct = new Product(10, 'New Product', 100, 'Brand new', 'new.jpg', 1, 2, undefined, undefined, null, null, null, null, null, null, 0);
+    const createdProduct = new Product(
+      10,
+      'New Product',
+      100,
+      'Brand new',
+      'new.jpg',
+      1,
+      2,
+      undefined,
+      undefined,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      0,
+    );
     mockProductRepo.create.mockResolvedValue(createdProduct);
 
     const result = await useCase.execute(input);
 
     expect(result.stock).toBe(0);
-    expect(mockProductRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ stock: 0 })
-    );
+    expect(mockProductRepo.create).toHaveBeenCalledWith(expect.objectContaining({ stock: 0 }));
   });
 
   it('should propagate an explicit stock value into the DTO and repository call', async () => {
@@ -116,15 +131,30 @@ describe('CreateProductUseCase', () => {
       stock: 15,
     };
 
-    const createdProduct = new Product(10, 'New Product', 100, 'Brand new', 'new.jpg', 1, 2, undefined, undefined, null, null, null, null, null, null, 15);
+    const createdProduct = new Product(
+      10,
+      'New Product',
+      100,
+      'Brand new',
+      'new.jpg',
+      1,
+      2,
+      undefined,
+      undefined,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      15,
+    );
     mockProductRepo.create.mockResolvedValue(createdProduct);
 
     const result = await useCase.execute(input);
 
     expect(result.stock).toBe(15);
-    expect(mockProductRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ stock: 15 })
-    );
+    expect(mockProductRepo.create).toHaveBeenCalledWith(expect.objectContaining({ stock: 15 }));
   });
 
   it('should use Category name from relation if already populated', async () => {
@@ -138,7 +168,16 @@ describe('CreateProductUseCase', () => {
     };
 
     const mockCategory = new Category(1, 'Figures');
-    const createdProduct = new Product(10, 'New Product', 100, 'Brand new', 'new.jpg', 1, 2, mockCategory);
+    const createdProduct = new Product(
+      10,
+      'New Product',
+      100,
+      'Brand new',
+      'new.jpg',
+      1,
+      2,
+      mockCategory,
+    );
 
     mockProductRepo.create.mockResolvedValue(createdProduct);
 

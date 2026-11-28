@@ -168,8 +168,7 @@ export function initializeMiniCart(document: Document): Cleanup {
     const items = cartItems.get();
     const isEmpty = items.length === 0;
     const focusedInsideList =
-      typeof listEl?.contains === 'function' &&
-      listEl.contains(document.activeElement ?? null);
+      typeof listEl?.contains === 'function' && listEl.contains(document.activeElement ?? null);
 
     if (countEl) {
       countEl.textContent = isEmpty
@@ -216,9 +215,7 @@ export function initializeMiniCart(document: Document): Cleanup {
     if (!isOpen) return;
     const target = event.target as Node | null;
     if (!target) return;
-    const inside = wrap
-      ? wrap.contains(target)
-      : trigger.contains(target) || menu.contains(target);
+    const inside = wrap ? wrap.contains(target) : trigger.contains(target) || menu.contains(target);
     if (!inside) {
       setOpen(false);
     }
@@ -228,9 +225,7 @@ export function initializeMiniCart(document: Document): Cleanup {
     if (!isOpen) return;
     const target = event.target as Node | null;
     if (!target) return;
-    const inside = wrap
-      ? wrap.contains(target)
-      : trigger.contains(target) || menu.contains(target);
+    const inside = wrap ? wrap.contains(target) : trigger.contains(target) || menu.contains(target);
     if (!inside) {
       setOpen(false);
     }

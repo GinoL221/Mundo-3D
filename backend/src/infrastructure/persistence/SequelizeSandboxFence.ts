@@ -1,6 +1,9 @@
 import type { Sequelize, Transaction } from 'sequelize';
 import type { TransactionContext } from '../../domain/ports/UnitOfWorkPort';
-import type { SandboxFenceCheck, SandboxFenceLease } from '../../application/use-cases/RunFencedSandboxTransaction';
+import type {
+  SandboxFenceCheck,
+  SandboxFenceLease,
+} from '../../application/use-cases/RunFencedSandboxTransaction';
 import { resolveScopedTransaction } from './scopedTransactionContext';
 
 interface FenceRow {
@@ -11,7 +14,11 @@ interface FenceRow {
 }
 
 interface FenceModel {
-  findOne(options: { where: { slotId: string }; transaction: Transaction; lock: Transaction['LOCK']['SHARE'] }): Promise<FenceRow | null>;
+  findOne(options: {
+    where: { slotId: string };
+    transaction: Transaction;
+    lock: Transaction['LOCK']['SHARE'];
+  }): Promise<FenceRow | null>;
 }
 
 /** Isolated adapter; its model and storage schema are not yet wired or verified. */
@@ -31,6 +38,12 @@ export class SequelizeSandboxFence implements SandboxFenceCheck {
       transaction,
       lock: transaction.LOCK.SHARE,
     });
-    return row !== null && row.slotId === this.slotId && row.leaseId === lease.leaseId && row.generation === lease.generation && row.state === 'open';
+    return (
+      row !== null &&
+      row.slotId === this.slotId &&
+      row.leaseId === lease.leaseId &&
+      row.generation === lease.generation &&
+      row.state === 'open'
+    );
   }
 }

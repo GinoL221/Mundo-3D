@@ -41,11 +41,19 @@ export async function fetchOrder(idOrder: number): Promise<FetchOrderResult> {
   try {
     res = await authFetch(`${API_URL}/api/orders/${idOrder}`, { method: 'GET' });
   } catch {
-    return { ok: false, code: 'NETWORK', message: 'No pudimos conectar con el servidor. Intentá de nuevo.' };
+    return {
+      ok: false,
+      code: 'NETWORK',
+      message: 'No pudimos conectar con el servidor. Intentá de nuevo.',
+    };
   }
 
   if (res.status === 401) {
-    return { ok: false, code: 'UNAUTHENTICATED', message: 'Necesitás iniciar sesión para ver este pedido.' };
+    return {
+      ok: false,
+      code: 'UNAUTHENTICATED',
+      message: 'Necesitás iniciar sesión para ver este pedido.',
+    };
   }
 
   if (res.status === 404) {
@@ -53,7 +61,11 @@ export async function fetchOrder(idOrder: number): Promise<FetchOrderResult> {
   }
 
   if (!res.ok) {
-    return { ok: false, code: 'UNKNOWN', message: 'No pudimos cargar este pedido. Intentá de nuevo.' };
+    return {
+      ok: false,
+      code: 'UNKNOWN',
+      message: 'No pudimos cargar este pedido. Intentá de nuevo.',
+    };
   }
 
   const order = (await res.json()) as OrderViewModel;
@@ -99,7 +111,10 @@ export type FetchMyOrdersResult =
  * attempts a transparent refresh on a 401 (refresh-token-rotation spec) —
  * UNAUTHENTICATED here means that refresh itself failed too.
  */
-export async function fetchMyOrders(page?: number, pageSize?: number): Promise<FetchMyOrdersResult> {
+export async function fetchMyOrders(
+  page?: number,
+  pageSize?: number,
+): Promise<FetchMyOrdersResult> {
   const params = new URLSearchParams();
   if (page !== undefined) params.set('page', String(page));
   if (pageSize !== undefined) params.set('pageSize', String(pageSize));
@@ -107,13 +122,23 @@ export async function fetchMyOrders(page?: number, pageSize?: number): Promise<F
 
   let res: Response;
   try {
-    res = await authFetch(`${API_URL}/api/orders/mine${query ? `?${query}` : ''}`, { method: 'GET' });
+    res = await authFetch(`${API_URL}/api/orders/mine${query ? `?${query}` : ''}`, {
+      method: 'GET',
+    });
   } catch {
-    return { ok: false, code: 'NETWORK', message: 'No pudimos conectar con el servidor. Intentá de nuevo.' };
+    return {
+      ok: false,
+      code: 'NETWORK',
+      message: 'No pudimos conectar con el servidor. Intentá de nuevo.',
+    };
   }
 
   if (res.status === 401) {
-    return { ok: false, code: 'UNAUTHENTICATED', message: 'Necesitás iniciar sesión para ver tus pedidos.' };
+    return {
+      ok: false,
+      code: 'UNAUTHENTICATED',
+      message: 'Necesitás iniciar sesión para ver tus pedidos.',
+    };
   }
 
   if (res.status === 403) {
@@ -125,11 +150,19 @@ export async function fetchMyOrders(page?: number, pageSize?: number): Promise<F
   }
 
   if (res.status === 400) {
-    return { ok: false, code: 'INVALID_PAGINATION', message: 'Los parámetros de paginación no son válidos.' };
+    return {
+      ok: false,
+      code: 'INVALID_PAGINATION',
+      message: 'Los parámetros de paginación no son válidos.',
+    };
   }
 
   if (!res.ok) {
-    return { ok: false, code: 'UNKNOWN', message: 'No pudimos cargar tus pedidos. Intentá de nuevo.' };
+    return {
+      ok: false,
+      code: 'UNKNOWN',
+      message: 'No pudimos cargar tus pedidos. Intentá de nuevo.',
+    };
   }
 
   const page_ = (await res.json()) as MyOrdersPageViewModel;
@@ -161,19 +194,35 @@ export async function fetchWorkshopOrders(): Promise<FetchWorkshopOrdersResult> 
   try {
     res = await authFetch(`${API_URL}/api/orders`, { method: 'GET' });
   } catch {
-    return { ok: false, code: 'NETWORK', message: 'No pudimos conectar con el servidor. Intentá de nuevo.' };
+    return {
+      ok: false,
+      code: 'NETWORK',
+      message: 'No pudimos conectar con el servidor. Intentá de nuevo.',
+    };
   }
 
   if (res.status === 401) {
-    return { ok: false, code: 'UNAUTHENTICATED', message: 'Necesitás iniciar sesión para ver los pedidos.' };
+    return {
+      ok: false,
+      code: 'UNAUTHENTICATED',
+      message: 'Necesitás iniciar sesión para ver los pedidos.',
+    };
   }
 
   if (res.status === 403) {
-    return { ok: false, code: 'FORBIDDEN', message: 'No tenés permisos suficientes para consultar estos pedidos.' };
+    return {
+      ok: false,
+      code: 'FORBIDDEN',
+      message: 'No tenés permisos suficientes para consultar estos pedidos.',
+    };
   }
 
   if (!res.ok) {
-    return { ok: false, code: 'UNKNOWN', message: 'No pudimos cargar los pedidos del taller. Intentá de nuevo.' };
+    return {
+      ok: false,
+      code: 'UNKNOWN',
+      message: 'No pudimos cargar los pedidos del taller. Intentá de nuevo.',
+    };
   }
 
   const orders = (await res.json()) as WorkshopOrderViewModel[];

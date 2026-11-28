@@ -8,7 +8,9 @@ jest.mock('dotenv', () => {
 
 jest.mock('../../../database/models/db', () => ({
   __esModule: true,
-  default: { CustomCommissionRequest: { create: jest.fn(), findAll: jest.fn(), destroy: jest.fn() } },
+  default: {
+    CustomCommissionRequest: { create: jest.fn(), findAll: jest.fn(), destroy: jest.fn() },
+  },
 }));
 
 describe('SequelizeCustomCommissionRequestRepository', () => {
@@ -27,11 +29,30 @@ describe('SequelizeCustomCommissionRequestRepository', () => {
     const createdAt = new Date('2026-09-01T00:00:00Z');
     const expiresAt = new Date('2026-10-01T00:00:00Z');
     jest.mocked(db.CustomCommissionRequest.create).mockResolvedValue({
-      idCustomCommissionRequest: 8, name: 'Ari', email: 'ari@example.com', phone: null, idea: 'Dragon', idProduct: null, idUser: null, createdAt, expiresAt,
+      idCustomCommissionRequest: 8,
+      name: 'Ari',
+      email: 'ari@example.com',
+      phone: null,
+      idea: 'Dragon',
+      idProduct: null,
+      idUser: null,
+      createdAt,
+      expiresAt,
     } as any);
-    const result = await repository.create({ name: 'Ari', email: 'ari@example.com', phone: null, idea: 'Dragon', idProduct: null, idUser: null, createdAt, expiresAt });
+    const result = await repository.create({
+      name: 'Ari',
+      email: 'ari@example.com',
+      phone: null,
+      idea: 'Dragon',
+      idProduct: null,
+      idUser: null,
+      createdAt,
+      expiresAt,
+    });
     expect(result.idCustomCommissionRequest).toBe(8);
-    expect(db.CustomCommissionRequest.create).toHaveBeenCalledWith(expect.objectContaining({ idProduct: null, expiresAt }));
+    expect(db.CustomCommissionRequest.create).toHaveBeenCalledWith(
+      expect.objectContaining({ idProduct: null, expiresAt }),
+    );
   });
 
   it('filters expired rows and physically purges at the exact expiry boundary', async () => {
@@ -44,8 +65,10 @@ describe('SequelizeCustomCommissionRequestRepository', () => {
       expect.objectContaining({
         where: { expiresAt: { [Op.gt]: now } },
         order: [['createdAt', 'DESC']],
-      })
+      }),
     );
-    expect(db.CustomCommissionRequest.destroy).toHaveBeenCalledWith(expect.objectContaining({ where: { expiresAt: { [Op.lte]: now } } }));
+    expect(db.CustomCommissionRequest.destroy).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { expiresAt: { [Op.lte]: now } } }),
+    );
   });
 });

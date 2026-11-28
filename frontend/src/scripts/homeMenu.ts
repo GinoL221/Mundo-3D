@@ -13,7 +13,8 @@ export function initializeHomeMenu(document: Document): Cleanup {
 
   const compactViewport = document.defaultView?.matchMedia?.('(max-width: 1023px)');
   const isCompactViewport = () => compactViewport?.matches ?? true;
-  const accountSection = document.querySelector?.<HTMLElement>('.home-header__account-section') ?? null;
+  const accountSection =
+    document.querySelector?.<HTMLElement>('.home-header__account-section') ?? null;
   const utility = document.querySelector?.<HTMLElement>('.home-header__utility') ?? null;
   const cartWrap = document.querySelector?.<HTMLElement>('.home-header__cart-wrap') ?? null;
   let menuOpen = false;

@@ -6,7 +6,8 @@ const customCommissionRequestLimiter = rateLimit({
   standardHeaders: false,
   legacyHeaders: false,
   keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
-  handler: (_req, res) => res.status(429).json({ error: 'Too many requests. Please try again later.' }),
+  handler: (_req, res) =>
+    res.status(429).json({ error: 'Too many requests. Please try again later.' }),
 });
 
 export default customCommissionRequestLimiter;

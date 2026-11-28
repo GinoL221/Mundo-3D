@@ -424,33 +424,33 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
       staffMine,
       staffCommMine,
     ] = await Promise.all([
-        send('put', `/api/demo/products/${pid}`, {
-          ck: ckStaff,
-          csrf: visitorA.csrf,
-          body: { nameProduct: 'Busto Staff Edit', price: 8200 },
-        }),
-        send('patch', `/api/demo/products/${pid}/stock`, {
-          ck: ckStaff,
-          csrf: visitorA.csrf,
-          body: { delta: 2 },
-        }),
-        send('delete', `/api/demo/products/${pid}`, { ck: ckStaff, csrf: visitorA.csrf }),
-        send('get', '/api/demo/users', { ck: ckStaff }),
-        send('get', '/api/demo/users/me', { ck: ckStaff }),
-        send('get', '/api/demo/cart', { ck: ckStaff }),
-        send('put', '/api/demo/cart', {
-          ck: ckStaff,
-          csrf: visitorA.csrf,
-          body: { items: [{ productId: 1, quantity: 1 }] },
-        }),
-        send('post', '/api/demo/orders', {
-          ck: ckStaff,
-          csrf: visitorA.csrf,
-          idem: 'staff-blocked-order',
-        }),
-        send('get', '/api/demo/orders/mine', { ck: ckStaff }),
-        send('get', '/api/demo/custom-commission-requests/mine', { ck: ckStaff }),
-      ]);
+      send('put', `/api/demo/products/${pid}`, {
+        ck: ckStaff,
+        csrf: visitorA.csrf,
+        body: { nameProduct: 'Busto Staff Edit', price: 8200 },
+      }),
+      send('patch', `/api/demo/products/${pid}/stock`, {
+        ck: ckStaff,
+        csrf: visitorA.csrf,
+        body: { delta: 2 },
+      }),
+      send('delete', `/api/demo/products/${pid}`, { ck: ckStaff, csrf: visitorA.csrf }),
+      send('get', '/api/demo/users', { ck: ckStaff }),
+      send('get', '/api/demo/users/me', { ck: ckStaff }),
+      send('get', '/api/demo/cart', { ck: ckStaff }),
+      send('put', '/api/demo/cart', {
+        ck: ckStaff,
+        csrf: visitorA.csrf,
+        body: { items: [{ productId: 1, quantity: 1 }] },
+      }),
+      send('post', '/api/demo/orders', {
+        ck: ckStaff,
+        csrf: visitorA.csrf,
+        idem: 'staff-blocked-order',
+      }),
+      send('get', '/api/demo/orders/mine', { ck: ckStaff }),
+      send('get', '/api/demo/custom-commission-requests/mine', { ck: ckStaff }),
+    ]);
     expect([
       upd.status,
       stk.status,
@@ -481,7 +481,11 @@ describe('Demo Sandbox HTTP & MySQL 8.0 isolation', () => {
       csrf: visitorA.csrf,
       body: { role: 'ADMIN' },
     });
-    expect([toAdmin.status, toAdmin.body.role, toAdmin.body.user.idUser]).toEqual([200, 'ADMIN', 3]);
+    expect([toAdmin.status, toAdmin.body.role, toAdmin.body.user.idUser]).toEqual([
+      200,
+      'ADMIN',
+      3,
+    ]);
     const adminCk = parseCk(toAdmin.headers['set-cookie']);
     visitorA = {
       ...visitorA,

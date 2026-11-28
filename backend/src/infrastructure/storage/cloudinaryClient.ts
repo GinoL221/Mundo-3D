@@ -25,7 +25,7 @@ export function getCloudinaryConfig(env: NodeJS.ProcessEnv = process.env): Cloud
 
 export function signCloudinaryParams(
   params: Record<string, string | number>,
-  apiSecret: string
+  apiSecret: string,
 ): string {
   const serialized = Object.keys(params)
     .sort()

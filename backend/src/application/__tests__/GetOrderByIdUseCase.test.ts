@@ -5,7 +5,14 @@ import { OrderItem } from '../../domain/entities/OrderItem';
 
 function makeOrder(idOrder: number, idUser: number): Order {
   const items = [new OrderItem(1, idOrder, 10, 'Figure A', 2, 1500)];
-  return new Order(idOrder, idUser, `key-${idOrder}`, OrderStatus.AWAITING_PAYMENT, items, new Date('2026-08-28T14:03:11.000Z'));
+  return new Order(
+    idOrder,
+    idUser,
+    `key-${idOrder}`,
+    OrderStatus.AWAITING_PAYMENT,
+    items,
+    new Date('2026-08-28T14:03:11.000Z'),
+  );
 }
 
 describe('GetOrderByIdUseCase', () => {

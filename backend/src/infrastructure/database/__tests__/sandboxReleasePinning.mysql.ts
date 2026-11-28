@@ -102,7 +102,9 @@ describe('release pinning on a disposable MySQL server', () => {
     const slot = connection(adminPassword, database);
     const ids: number[] = [];
     for (let i = 0; i < 4; i += 1) {
-      const rows = (await slot.query('SELECT CONNECTION_ID() AS id', { type: QueryTypes.SELECT })) as Array<{ id: number }>;
+      const rows = (await slot.query('SELECT CONNECTION_ID() AS id', {
+        type: QueryTypes.SELECT,
+      })) as Array<{ id: number }>;
       ids.push(rows[0].id);
     }
     expect(new Set(ids).size).toBe(1);
@@ -128,7 +130,10 @@ describe('release pinning on a disposable MySQL server', () => {
       control: { lockAndCheck: jest.fn(async () => true), release: jest.fn(async () => true) },
       fence: { lockAndCheck: jest.fn(async () => true) },
       receipts: { consume: jest.fn(async () => true) },
-      releaseRecorder: { record: jest.fn(async () => undefined), exists: jest.fn(async () => false) },
+      releaseRecorder: {
+        record: jest.fn(async () => undefined),
+        exists: jest.fn(async () => false),
+      },
       reader: { readState: jest.fn(async () => null) },
     });
     await expect(coordinator.execute(identity)).resolves.toMatchObject({
@@ -174,7 +179,11 @@ describe('release pinning on a disposable MySQL server', () => {
   it('rolls the release transaction back when its raw connection is killed mid-transaction', async () => {
     const admin = connection(adminPassword);
     const victim = connection(adminPassword, database);
-    const victimId = ((await victim.query('SELECT CONNECTION_ID() AS id', { type: QueryTypes.SELECT })) as Array<{ id: number }>)[0].id;
+    const victimId = (
+      (await victim.query('SELECT CONNECTION_ID() AS id', { type: QueryTypes.SELECT })) as Array<{
+        id: number;
+      }>
+    )[0].id;
     await expect(
       victim.transaction(async (tx) => {
         await victim.query(

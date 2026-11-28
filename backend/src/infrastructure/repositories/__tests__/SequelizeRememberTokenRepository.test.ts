@@ -14,7 +14,7 @@ try {
   sequelize = new Sequelize('sqlite::memory:', { logging: false });
   const UserDefine = require('../../../database/models/User');
   const RememberTokenDefine = require('../../../database/models/RememberToken');
-  
+
   sqliteUserModel = UserDefine(sequelize);
   sqliteRememberTokenModel = RememberTokenDefine(sequelize);
 
@@ -155,7 +155,9 @@ describe('SequelizeRememberTokenRepository Integration Tests', () => {
         const found = await repository.findByHash('my_unique_hash');
         expect(found).not.toBeNull();
         expect(found?.tokenHash).toBe('my_unique_hash');
-        expect(db.RememberToken.findOne).toHaveBeenCalledWith({ where: { tokenHash: 'my_unique_hash' } });
+        expect(db.RememberToken.findOne).toHaveBeenCalledWith({
+          where: { tokenHash: 'my_unique_hash' },
+        });
       }
     });
 
@@ -235,7 +237,9 @@ describe('SequelizeRememberTokenRepository Integration Tests', () => {
 
         const deleted = await repository.deleteByHash('to_delete');
         expect(deleted).toBe(true);
-        expect(db.RememberToken.destroy).toHaveBeenCalledWith({ where: { tokenHash: 'to_delete' } });
+        expect(db.RememberToken.destroy).toHaveBeenCalledWith({
+          where: { tokenHash: 'to_delete' },
+        });
       }
     });
 
@@ -285,13 +289,13 @@ describe('SequelizeRememberTokenRepository Integration Tests', () => {
         expect(claimed).toBe(true);
         expect(mockQuery).toHaveBeenCalledWith(
           expect.stringMatching(
-            /UPDATE.*RememberToken.*SET.*superseded_at.*successor_hash.*WHERE.*token_hash.*superseded_at.*IS NULL.*revoked_at.*IS NULL.*expiry_date/is
+            /UPDATE.*RememberToken.*SET.*superseded_at.*successor_hash.*WHERE.*token_hash.*superseded_at.*IS NULL.*revoked_at.*IS NULL.*expiry_date/is,
           ),
           expect.objectContaining({
             replacements: { presentedHash: 'current-hash', successorHash: 'new-hash' },
             type: QueryTypes.UPDATE,
             transaction: fakeTx,
-          })
+          }),
         );
       });
 
@@ -323,15 +327,27 @@ describe('SequelizeRememberTokenRepository Integration Tests', () => {
         jest.mocked(db.RememberToken.create).mockResolvedValueOnce(createdInstance as any);
 
         const predecessor = new RememberToken(1, 'old-hash', 7, expiry, null, 'family-1');
-        const successorSeed = new RememberToken(0, 'new-hash', predecessor.idUser, predecessor.expiryDate, undefined, predecessor.familyId);
+        const successorSeed = new RememberToken(
+          0,
+          'new-hash',
+          predecessor.idUser,
+          predecessor.expiryDate,
+          undefined,
+          predecessor.familyId,
+        );
 
         const successor = await repository.insertSuccessor(successorSeed, fakeTx);
 
         expect(successor.idRememberToken).toBe(42);
         expect(successor.familyId).toBe('family-1');
         expect(db.RememberToken.create).toHaveBeenCalledWith(
-          expect.objectContaining({ idUser: 7, tokenHash: 'new-hash', expiryDate: expiry, familyId: 'family-1' }),
-          expect.objectContaining({ transaction: fakeTx })
+          expect.objectContaining({
+            idUser: 7,
+            tokenHash: 'new-hash',
+            expiryDate: expiry,
+            familyId: 'family-1',
+          }),
+          expect.objectContaining({ transaction: fakeTx }),
         );
       });
     });
@@ -345,7 +361,7 @@ describe('SequelizeRememberTokenRepository Integration Tests', () => {
         expect(revoked).toBe(2);
         expect(db.RememberToken.update).toHaveBeenCalledWith(
           expect.objectContaining({ revokedAt: expect.any(Date) }),
-          expect.objectContaining({ where: { familyId: 'family-1', revokedAt: null } })
+          expect.objectContaining({ where: { familyId: 'family-1', revokedAt: null } }),
         );
       });
 
@@ -369,7 +385,7 @@ describe('SequelizeRememberTokenRepository Integration Tests', () => {
           expect.objectContaining({
             where: expect.objectContaining({ familyId: 'family-1' }),
             transaction: fakeTx,
-          })
+          }),
         );
       });
 

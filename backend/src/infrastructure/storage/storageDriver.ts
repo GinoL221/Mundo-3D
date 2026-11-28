@@ -9,9 +9,7 @@ export function resolveStorageDriver(env: NodeJS.ProcessEnv = process.env): Stor
     if (EXPLICIT_DRIVERS.has(normalized)) {
       return normalized as 'r2' | 'cloudinary' | 'disabled';
     }
-    throw new Error(
-      `Invalid STORAGE_DRIVER "${raw}". Expected one of: r2, cloudinary, disabled.`
-    );
+    throw new Error(`Invalid STORAGE_DRIVER "${raw}". Expected one of: r2, cloudinary, disabled.`);
   }
 
   return env.NODE_ENV === 'production' ? 'r2' : 'local';

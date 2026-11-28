@@ -42,10 +42,13 @@ function setup(options?: {
 }): Harness {
   const order: string[] = [];
   const sessions = {
-    recordSession: jest.fn(options?.recordSession ?? (async () => {
-      order.push('record');
-      return recorded;
-    })),
+    recordSession: jest.fn(
+      options?.recordSession ??
+        (async () => {
+          order.push('record');
+          return recorded;
+        }),
+    ),
   };
   const connectionId = {
     snapshot: jest.fn(async () => ({
@@ -130,7 +133,9 @@ describe('CoordinateSandboxRelease', () => {
     const coordinator = new CoordinateSandboxRelease({
       uow: observing,
       sessions: { recordSession: async () => recorded },
-      connectionId: { snapshot: async () => ({ connectionId: '99', serverUuid: recorded.serverUuid }) },
+      connectionId: {
+        snapshot: async () => ({ connectionId: '99', serverUuid: recorded.serverUuid }),
+      },
       control: { lockAndCheck: jest.fn(), release: jest.fn() },
       fence: { lockAndCheck: jest.fn() },
       receipts: { consume: jest.fn() },
@@ -160,7 +165,10 @@ describe('CoordinateSandboxRelease', () => {
       uow: observing,
       sessions: { recordSession: async () => recorded },
       connectionId: {
-        snapshot: async () => ({ connectionId: recorded.connectionId, serverUuid: 'uuid-after-restart' }),
+        snapshot: async () => ({
+          connectionId: recorded.connectionId,
+          serverUuid: 'uuid-after-restart',
+        }),
       },
       control: { lockAndCheck: jest.fn(), release: jest.fn() },
       fence: { lockAndCheck: jest.fn() },
@@ -199,7 +207,10 @@ describe('CoordinateSandboxRelease', () => {
       uow: observing,
       sessions: { recordSession: async () => ({ ...recorded, ...patch }) },
       connectionId: {
-        snapshot: async () => ({ connectionId: recorded.connectionId, serverUuid: recorded.serverUuid }),
+        snapshot: async () => ({
+          connectionId: recorded.connectionId,
+          serverUuid: recorded.serverUuid,
+        }),
       },
       control,
       fence: { lockAndCheck: jest.fn() },
@@ -228,7 +239,10 @@ describe('CoordinateSandboxRelease', () => {
       uow: observing,
       sessions: { recordSession: async () => recorded },
       connectionId: {
-        snapshot: async () => ({ connectionId: 'not-a-thread-id', serverUuid: recorded.serverUuid }),
+        snapshot: async () => ({
+          connectionId: 'not-a-thread-id',
+          serverUuid: recorded.serverUuid,
+        }),
       },
       control: { lockAndCheck: jest.fn(), release: jest.fn() },
       fence: { lockAndCheck: jest.fn() },
@@ -258,7 +272,12 @@ describe('CoordinateSandboxRelease', () => {
       new CoordinateSandboxRelease({
         uow: passThroughUow,
         sessions: { recordSession: jest.fn() },
-        connectionId: { snapshot: jest.fn(async () => ({ connectionId: recorded.connectionId, serverUuid: recorded.serverUuid })) },
+        connectionId: {
+          snapshot: jest.fn(async () => ({
+            connectionId: recorded.connectionId,
+            serverUuid: recorded.serverUuid,
+          })),
+        },
         control: { lockAndCheck: jest.fn(), release: jest.fn() },
         fence: { lockAndCheck: jest.fn() },
         receipts: { consume: jest.fn() },

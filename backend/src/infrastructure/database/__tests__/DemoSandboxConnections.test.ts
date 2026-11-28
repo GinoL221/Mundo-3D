@@ -238,8 +238,18 @@ describe('loadDemoSandboxConfigFromEnv', () => {
 
   it('accepts TiDB Cloud Starter prefixed slot usernames up to 32 chars', () => {
     const prefixedSlots = [
-      { slotId: 'slot-1', database: 'demo_slot_1', username: '2abcde123456789.m3d_s1', password: 'p1' },
-      { slotId: 'slot-2', database: 'demo_slot_2', username: '2abcde123456789.m3d_s2', password: 'p2' },
+      {
+        slotId: 'slot-1',
+        database: 'demo_slot_1',
+        username: '2abcde123456789.m3d_s1',
+        password: 'p1',
+      },
+      {
+        slotId: 'slot-2',
+        database: 'demo_slot_2',
+        username: '2abcde123456789.m3d_s2',
+        password: 'p2',
+      },
       {
         slotId: 'slot-3',
         database: 'demo_slot_3',

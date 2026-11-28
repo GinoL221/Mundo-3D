@@ -50,7 +50,10 @@ export function startDemoSandboxScheduler(
           if (result === 'available') {
             deps.logger.info({ slotId: slot.id, result }, 'Demo sandbox slot reset completed');
           } else {
-            deps.logger.warn({ slotId: slot.id, result }, 'Demo sandbox slot reset did not restore availability');
+            deps.logger.warn(
+              { slotId: slot.id, result },
+              'Demo sandbox slot reset did not restore availability',
+            );
           }
         } catch (err) {
           deps.logger.error({ err, slotId: slot.id }, 'Failed to reset draining demo sandbox slot');
@@ -74,7 +77,10 @@ export function startDemoSandboxScheduler(
             true,
           );
           if (result === 'available') {
-            deps.logger.info({ slotId: slot.id, result }, 'Recovered interrupted demo sandbox slot on boot');
+            deps.logger.info(
+              { slotId: slot.id, result },
+              'Recovered interrupted demo sandbox slot on boot',
+            );
           } else {
             deps.logger.warn(
               { slotId: slot.id, result },
@@ -82,7 +88,10 @@ export function startDemoSandboxScheduler(
             );
           }
         } catch (err) {
-          deps.logger.error({ err, slotId: slot.id }, 'Failed to recover interrupted demo sandbox slot');
+          deps.logger.error(
+            { err, slotId: slot.id },
+            'Failed to recover interrupted demo sandbox slot',
+          );
         }
       }
     }

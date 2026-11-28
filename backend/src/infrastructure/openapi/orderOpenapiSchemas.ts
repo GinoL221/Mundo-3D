@@ -25,7 +25,15 @@ const orderSchema = {
     createdAt: { type: 'string', format: 'date-time' },
     paymentReference: { type: 'string', nullable: true },
   },
-  required: ['idOrder', 'idUser', 'status', 'items', 'totalAmount', 'createdAt', 'paymentReference'],
+  required: [
+    'idOrder',
+    'idUser',
+    'status',
+    'items',
+    'totalAmount',
+    'createdAt',
+    'paymentReference',
+  ],
 };
 
 // Mirrors `OrderSummaryDTO` (application/dtos/OrderDTO.ts): the scalar

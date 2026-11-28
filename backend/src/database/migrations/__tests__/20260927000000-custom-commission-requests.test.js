@@ -28,14 +28,27 @@ describe('custom commission request migration', () => {
       }),
       expect.any(Object),
     );
-    expect(context.addIndex).toHaveBeenCalledWith('CustomCommissionRequest', ['expires_at'], expect.objectContaining({ name: 'idx_custom_commission_request_expires_at' }));
-    expect(context.addConstraint).toHaveBeenCalledWith('CustomCommissionRequest', expect.objectContaining({ fields: ['id_product'], onDelete: 'SET NULL', type: 'foreign key' }));
+    expect(context.addIndex).toHaveBeenCalledWith(
+      'CustomCommissionRequest',
+      ['expires_at'],
+      expect.objectContaining({ name: 'idx_custom_commission_request_expires_at' }),
+    );
+    expect(context.addConstraint).toHaveBeenCalledWith(
+      'CustomCommissionRequest',
+      expect.objectContaining({
+        fields: ['id_product'],
+        onDelete: 'SET NULL',
+        type: 'foreign key',
+      }),
+    );
   });
 
   it('drops the table on rollback and attributes DDL failures', async () => {
     const context = makeContext();
     await migration.down({ context });
-    expect(context.dropTable).toHaveBeenCalledWith('CustomCommissionRequest', { transaction: 'transaction' });
+    expect(context.dropTable).toHaveBeenCalledWith('CustomCommissionRequest', {
+      transaction: 'transaction',
+    });
     context.dropTable.mockRejectedValueOnce(new Error('boom'));
     await expect(migration.down({ context })).rejects.toThrow(/auto-commits per statement/);
   });

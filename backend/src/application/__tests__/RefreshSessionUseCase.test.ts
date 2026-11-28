@@ -47,9 +47,15 @@ describe('RefreshSessionUseCase', () => {
     } as unknown as jest.Mocked<RememberTokenRepositoryPort>;
 
     mockUserRepo = { findById: jest.fn() } as unknown as jest.Mocked<UserRepositoryPort>;
-    mockHasher = { hash: jest.fn((t: string) => `hash(${t})`) } as unknown as jest.Mocked<TokenHasherPort>;
+    mockHasher = {
+      hash: jest.fn((t: string) => `hash(${t})`),
+    } as unknown as jest.Mocked<TokenHasherPort>;
     mockRotate = { execute: jest.fn() } as unknown as jest.Mocked<RefreshTokenRotatorPort>;
-    mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() } as unknown as jest.Mocked<LoggerPort>;
+    mockLogger = {
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    } as unknown as jest.Mocked<LoggerPort>;
 
     mockUserRepo.findById.mockResolvedValue(fakeUser);
     mockRepo.revokeFamily.mockResolvedValue(1);
@@ -74,7 +80,17 @@ describe('RefreshSessionUseCase', () => {
   });
 
   it('row 2: revoked token -> rejected (logout beats grace, even if still within grace)', async () => {
-    const revoked = new RememberToken(1, 'hash(revoked)', 7, future, null, 'fam-1', now, 'succ-hash', now);
+    const revoked = new RememberToken(
+      1,
+      'hash(revoked)',
+      7,
+      future,
+      null,
+      'fam-1',
+      now,
+      'succ-hash',
+      now,
+    );
     mockRepo.findByHash.mockResolvedValue(revoked);
 
     const result = await useCase.execute({ presentedPlainToken: 'revoked', newPlainToken: 'new' });
@@ -98,7 +114,16 @@ describe('RefreshSessionUseCase', () => {
   });
 
   it('guard: a superseded row with no familyId -> rejected, no revocation (cannot name a family to revoke)', async () => {
-    const noFamily = new RememberToken(1, 'hash(nofamily)', 7, future, null, null, now, 'succ-hash');
+    const noFamily = new RememberToken(
+      1,
+      'hash(nofamily)',
+      7,
+      future,
+      null,
+      null,
+      now,
+      'succ-hash',
+    );
     mockRepo.findByHash.mockResolvedValue(noFamily);
 
     const result = await useCase.execute({ presentedPlainToken: 'nofamily', newPlainToken: 'new' });
@@ -127,7 +152,16 @@ describe('RefreshSessionUseCase', () => {
 
   it('row 5: grace hit (superseded < 30s ago, successor exists unrevoked/unexpired) -> grace, no rotation', async () => {
     const supersededAt = new Date(now.getTime() - 10 * 1000); // 10s ago, within 30s grace
-    const current = new RememberToken(1, 'hash(current)', 7, future, null, 'fam-1', supersededAt, 'hash(succ)');
+    const current = new RememberToken(
+      1,
+      'hash(current)',
+      7,
+      future,
+      null,
+      'fam-1',
+      supersededAt,
+      'hash(succ)',
+    );
     const successorRow = new RememberToken(2, 'hash(succ)', 7, future, null, 'fam-1');
     mockRepo.findByHash.mockImplementation(async (hash: string) => {
       if (hash === 'hash(current)') return current;
@@ -159,7 +193,16 @@ describe('RefreshSessionUseCase', () => {
 
   it('row 6: replay past grace (superseded 30+s ago) -> revokes the whole family, logs once, and reports reuse-detected', async () => {
     const supersededAt = new Date(now.getTime() - 45 * 1000); // 45s ago, past 30s grace
-    const current = new RememberToken(1, 'hash(current)', 7, future, null, 'fam-1', supersededAt, 'hash(succ)');
+    const current = new RememberToken(
+      1,
+      'hash(current)',
+      7,
+      future,
+      null,
+      'fam-1',
+      supersededAt,
+      'hash(succ)',
+    );
     mockRepo.findByHash.mockResolvedValue(current);
 
     const result = await useCase.execute({ presentedPlainToken: 'current', newPlainToken: 'new' });
@@ -172,7 +215,16 @@ describe('RefreshSessionUseCase', () => {
 
   it('row 6: the log entry carries familyId, userId, ageSeconds and the REAL revokedRows (revoke runs before log), and excludes tokenHash/successorHash', async () => {
     const supersededAt = new Date(now.getTime() - 45 * 1000); // 45s ago
-    const current = new RememberToken(1, 'hash(current)', 7, future, null, 'fam-1', supersededAt, 'hash(succ)');
+    const current = new RememberToken(
+      1,
+      'hash(current)',
+      7,
+      future,
+      null,
+      'fam-1',
+      supersededAt,
+      'hash(succ)',
+    );
     mockRepo.findByHash.mockResolvedValue(current);
     mockRepo.revokeFamily.mockResolvedValue(2);
 
@@ -195,20 +247,38 @@ describe('RefreshSessionUseCase', () => {
 
   it('row 6: a revokeFamily rejection propagates — not swallowed into a 401-shaped rejected outcome', async () => {
     const supersededAt = new Date(now.getTime() - 45 * 1000);
-    const current = new RememberToken(1, 'hash(current)', 7, future, null, 'fam-1', supersededAt, 'hash(succ)');
+    const current = new RememberToken(
+      1,
+      'hash(current)',
+      7,
+      future,
+      null,
+      'fam-1',
+      supersededAt,
+      'hash(succ)',
+    );
     mockRepo.findByHash.mockResolvedValue(current);
     mockRepo.revokeFamily.mockRejectedValue(new Error('DB unavailable'));
 
-    await expect(useCase.execute({ presentedPlainToken: 'current', newPlainToken: 'new' })).rejects.toThrow(
-      'DB unavailable'
-    );
+    await expect(
+      useCase.execute({ presentedPlainToken: 'current', newPlainToken: 'new' }),
+    ).rejects.toThrow('DB unavailable');
     expect(mockLogger.warn).not.toHaveBeenCalled();
   });
 
   it('a lost rotation race re-reads outside the aborted transaction and resolves grace/reject from fresh data', async () => {
     const current = new RememberToken(1, 'hash(current)', 7, future, null, 'fam-1');
     const supersededAt = new Date(now.getTime() - 5 * 1000);
-    const refreshedRow = new RememberToken(1, 'hash(current)', 7, future, null, 'fam-1', supersededAt, 'hash(succ)');
+    const refreshedRow = new RememberToken(
+      1,
+      'hash(current)',
+      7,
+      future,
+      null,
+      'fam-1',
+      supersededAt,
+      'hash(succ)',
+    );
     const successorRow = new RememberToken(2, 'hash(succ)', 7, future, null, 'fam-1');
 
     mockRepo.findByHash

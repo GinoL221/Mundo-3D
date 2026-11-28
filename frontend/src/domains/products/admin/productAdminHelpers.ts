@@ -132,9 +132,10 @@ export function formatProductMeta(
   return parts.join(' · ');
 }
 
-export function parseMaterialValue(
-  material: string | null | undefined,
-): { selectValue: string; customDetail: string } {
+export function parseMaterialValue(material: string | null | undefined): {
+  selectValue: string;
+  customDetail: string;
+} {
   const trimmed = material?.trim() ?? '';
   if (!trimmed) {
     return { selectValue: '', customDetail: '' };
@@ -236,11 +237,12 @@ export function validateProductForm(
     errors.materialCustom = materialResult.error;
   }
 
-  const dimensionFields: Array<{ key: 'height' | 'width' | 'depth'; raw: string; label: string }> = [
-    { key: 'height', raw: values.height, label: 'El alto' },
-    { key: 'width', raw: values.width, label: 'El ancho' },
-    { key: 'depth', raw: values.depth, label: 'La profundidad' },
-  ];
+  const dimensionFields: Array<{ key: 'height' | 'width' | 'depth'; raw: string; label: string }> =
+    [
+      { key: 'height', raw: values.height, label: 'El alto' },
+      { key: 'width', raw: values.width, label: 'El ancho' },
+      { key: 'depth', raw: values.depth, label: 'La profundidad' },
+    ];
   for (const dim of dimensionFields) {
     const trimmed = dim.raw.trim();
     if (trimmed !== '') {
@@ -276,17 +278,18 @@ export function validateProductForm(
     } else if (!isSupportedImageFile(values.imageFile)) {
       errors.image = 'Solo se permiten archivos .jpg o .png.';
     }
-  } else if (values.imageFile && values.imageFile.size > 0 && !isSupportedImageFile(values.imageFile)) {
+  } else if (
+    values.imageFile &&
+    values.imageFile.size > 0 &&
+    !isSupportedImageFile(values.imageFile)
+  ) {
     errors.image = 'Solo se permiten archivos .jpg o .png.';
   }
 
   return errors;
 }
 
-export function buildProductFormData(
-  values: ProductFormValues,
-  mode: 'create' | 'edit',
-): FormData {
+export function buildProductFormData(values: ProductFormValues, mode: 'create' | 'edit'): FormData {
   const formData = new FormData();
   formData.append('nameProduct', values.nameProduct.trim());
   formData.append('price', values.price.trim());

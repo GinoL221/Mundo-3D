@@ -37,7 +37,24 @@ describe('UpdateProductUseCase', () => {
     };
 
     const mockCategory = new Category(1, 'Figures');
-    const updatedProduct = new Product(10, 'Updated Product', 150, 'Desc', 'img.jpg', 1, 2, mockCategory, undefined, null, null, null, null, null, null, 7);
+    const updatedProduct = new Product(
+      10,
+      'Updated Product',
+      150,
+      'Desc',
+      'img.jpg',
+      1,
+      2,
+      mockCategory,
+      undefined,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      7,
+    );
 
     mockProductRepo.update.mockResolvedValue(updatedProduct);
 
@@ -79,8 +96,28 @@ describe('UpdateProductUseCase', () => {
     // signature). This test proves the runtime behavior: even if a caller smuggles a
     // `stock` value into the input via an unsafe cast, the use case's output DTO reflects
     // only what the repository actually persisted/returned — never the attempted input value.
-    const maliciousInput = { nameProduct: 'Updated Product', stock: 999 } as unknown as UpdateProductInput;
-    const updatedProduct = new Product(10, 'Updated Product', 150, 'Desc', 'img.jpg', 1, 2, undefined, undefined, null, null, null, null, null, null, 3);
+    const maliciousInput = {
+      nameProduct: 'Updated Product',
+      stock: 999,
+    } as unknown as UpdateProductInput;
+    const updatedProduct = new Product(
+      10,
+      'Updated Product',
+      150,
+      'Desc',
+      'img.jpg',
+      1,
+      2,
+      undefined,
+      undefined,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      3,
+    );
 
     mockProductRepo.update.mockResolvedValue(updatedProduct);
 

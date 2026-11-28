@@ -30,7 +30,7 @@ describe('Domain Entities', () => {
       1,
       2,
       category,
-      franchise
+      franchise,
     );
 
     expect(product.idProduct).toBe(10);
@@ -54,7 +54,16 @@ describe('Domain Entities', () => {
   });
 
   it('should create a User entity correctly with camelCase properties', () => {
-    const user = new User(1, 'John', 'Doe', 'john@example.com', 'hashedpassword', 'john.jpg', 2, 'Admin');
+    const user = new User(
+      1,
+      'John',
+      'Doe',
+      'john@example.com',
+      'hashedpassword',
+      'john.jpg',
+      2,
+      'Admin',
+    );
     expect(user.idUser).toBe(1);
     expect(user.firstName).toBe('John');
     expect(user.lastName).toBe('Doe');
@@ -76,7 +85,7 @@ describe('Domain Entities', () => {
       'john.jpg',
       2,
       'Admin',
-      verifiedAt
+      verifiedAt,
     );
 
     expect(user.emailVerifiedAt).toBe(verifiedAt);
@@ -94,7 +103,7 @@ describe('Domain Entities', () => {
       null,
       null,
       1,
-      createdAt
+      createdAt,
     );
 
     expect(token).toMatchObject({
@@ -122,11 +131,11 @@ describe('Domain Entities', () => {
 
   it('should throw an error when price is less than or equal to 0.00', () => {
     expect(() => {
-      new Product(10, 'Action Figure', 0.00, 'Detailed figure', 'figure.jpg', 1, 2);
+      new Product(10, 'Action Figure', 0.0, 'Detailed figure', 'figure.jpg', 1, 2);
     }).toThrow('Price must be greater than 0.00');
 
     expect(() => {
-      new Product(10, 'Action Figure', -5.00, 'Detailed figure', 'figure.jpg', 1, 2);
+      new Product(10, 'Action Figure', -5.0, 'Detailed figure', 'figure.jpg', 1, 2);
     }).toThrow('Price must be greater than 0.00');
   });
 
@@ -146,7 +155,7 @@ describe('Domain Entities', () => {
       8.0,
       5.5,
       'Pintado a mano',
-      3
+      3,
     );
 
     expect(product.material).toBe('PLA');
@@ -170,21 +179,59 @@ describe('Domain Entities', () => {
     }).toThrow('Invalid material');
 
     expect(() => {
-      new Product(10, 'Action Figure', 10, 'Desc', 'img.jpg', 1, 2, undefined, undefined, 'Otros Madera');
+      new Product(
+        10,
+        'Action Figure',
+        10,
+        'Desc',
+        'img.jpg',
+        1,
+        2,
+        undefined,
+        undefined,
+        'Otros Madera',
+      );
     }).toThrow('Invalid material');
   });
 
   it('should accept valid materials, including the "Otros: " prefix', () => {
     for (const material of ['PLA', 'Resina', 'PETG', 'Flex', 'Otros: ABS']) {
       expect(() => {
-        new Product(10, 'Action Figure', 10, 'Desc', 'img.jpg', 1, 2, undefined, undefined, material);
+        new Product(
+          10,
+          'Action Figure',
+          10,
+          'Desc',
+          'img.jpg',
+          1,
+          2,
+          undefined,
+          undefined,
+          material,
+        );
       }).not.toThrow();
     }
   });
 
   it('should throw an error when productionTime exceeds 30 days', () => {
     expect(() => {
-      new Product(10, 'Action Figure', 10, 'Desc', 'img.jpg', 1, 2, undefined, undefined, 'PLA', 5, 5, 5, 'Finish', 31);
+      new Product(
+        10,
+        'Action Figure',
+        10,
+        'Desc',
+        'img.jpg',
+        1,
+        2,
+        undefined,
+        undefined,
+        'PLA',
+        5,
+        5,
+        5,
+        'Finish',
+        31,
+      );
     }).toThrow('Production time must not exceed 30 days');
   });
 
@@ -205,7 +252,7 @@ describe('Domain Entities', () => {
       undefined,
       undefined,
       undefined,
-      7
+      7,
     );
 
     expect(product.stock).toBe(7);
@@ -214,41 +261,165 @@ describe('Domain Entities', () => {
 
   it('should throw an error when stock is negative', () => {
     expect(() => {
-      new Product(10, 'Action Figure', 10, 'Desc', 'img.jpg', 1, 2, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, -1);
+      new Product(
+        10,
+        'Action Figure',
+        10,
+        'Desc',
+        'img.jpg',
+        1,
+        2,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        -1,
+      );
     }).toThrow('Stock must be a non-negative integer');
   });
 
   it('should throw an error when stock is non-integer', () => {
     expect(() => {
-      new Product(10, 'Action Figure', 10, 'Desc', 'img.jpg', 1, 2, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 2.5);
+      new Product(
+        10,
+        'Action Figure',
+        10,
+        'Desc',
+        'img.jpg',
+        1,
+        2,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        2.5,
+      );
     }).toThrow('Stock must be a non-negative integer');
   });
 
   it('should throw an error when dimension attributes are negative', () => {
     expect(() => {
-      new Product(10, 'Action Figure', 10, 'Desc', 'img.jpg', 1, 2, undefined, undefined, 'PLA', -1, 5, 5);
+      new Product(
+        10,
+        'Action Figure',
+        10,
+        'Desc',
+        'img.jpg',
+        1,
+        2,
+        undefined,
+        undefined,
+        'PLA',
+        -1,
+        5,
+        5,
+      );
     }).toThrow('Height must be greater than or equal to 0');
 
     expect(() => {
-      new Product(10, 'Action Figure', 10, 'Desc', 'img.jpg', 1, 2, undefined, undefined, 'PLA', 5, -1, 5);
+      new Product(
+        10,
+        'Action Figure',
+        10,
+        'Desc',
+        'img.jpg',
+        1,
+        2,
+        undefined,
+        undefined,
+        'PLA',
+        5,
+        -1,
+        5,
+      );
     }).toThrow('Width must be greater than or equal to 0');
 
     expect(() => {
-      new Product(10, 'Action Figure', 10, 'Desc', 'img.jpg', 1, 2, undefined, undefined, 'PLA', 5, 5, -1);
+      new Product(
+        10,
+        'Action Figure',
+        10,
+        'Desc',
+        'img.jpg',
+        1,
+        2,
+        undefined,
+        undefined,
+        'PLA',
+        5,
+        5,
+        -1,
+      );
     }).toThrow('Depth must be greater than or equal to 0');
   });
 
   it('should throw an error when productionTime is negative or non-integer', () => {
     expect(() => {
-      new Product(10, 'Action Figure', 10, 'Desc', 'img.jpg', 1, 2, undefined, undefined, 'PLA', 5, 5, 5, 'Finish', -3);
+      new Product(
+        10,
+        'Action Figure',
+        10,
+        'Desc',
+        'img.jpg',
+        1,
+        2,
+        undefined,
+        undefined,
+        'PLA',
+        5,
+        5,
+        5,
+        'Finish',
+        -3,
+      );
     }).toThrow('Production time must be a positive integer');
 
     expect(() => {
-      new Product(10, 'Action Figure', 10, 'Desc', 'img.jpg', 1, 2, undefined, undefined, 'PLA', 5, 5, 5, 'Finish', 0);
+      new Product(
+        10,
+        'Action Figure',
+        10,
+        'Desc',
+        'img.jpg',
+        1,
+        2,
+        undefined,
+        undefined,
+        'PLA',
+        5,
+        5,
+        5,
+        'Finish',
+        0,
+      );
     }).toThrow('Production time must be a positive integer');
 
     expect(() => {
-      new Product(10, 'Action Figure', 10, 'Desc', 'img.jpg', 1, 2, undefined, undefined, 'PLA', 5, 5, 5, 'Finish', 2.5);
+      new Product(
+        10,
+        'Action Figure',
+        10,
+        'Desc',
+        'img.jpg',
+        1,
+        2,
+        undefined,
+        undefined,
+        'PLA',
+        5,
+        5,
+        5,
+        'Finish',
+        2.5,
+      );
     }).toThrow('Production time must be a positive integer');
   });
 });

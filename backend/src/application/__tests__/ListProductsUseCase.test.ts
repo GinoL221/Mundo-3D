@@ -79,9 +79,7 @@ describe('ListProductsUseCase', () => {
   });
 
   it('should handle products without category', async () => {
-    const products = [
-      new Product(1, 'No Cat Product', 15, 'No category', 'x.jpg', 99, 99),
-    ];
+    const products = [new Product(1, 'No Cat Product', 15, 'No category', 'x.jpg', 99, 99)];
 
     mockProductRepo.findAll.mockResolvedValue(products);
 

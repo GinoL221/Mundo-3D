@@ -89,20 +89,25 @@ export class SequelizeAuthoritativeReleaseStateReader implements AuthoritativeRe
           { transaction: transaction as unknown as never },
         )) as unknown as [Array<LifecycleRow>, unknown];
         const releaseRow = releaseRows[0] ?? null;
-        if (releaseRows.length > 1 || (releaseRow !== null && (
-          releaseRow.release_id !== identity.releaseId ||
-          releaseRow.slot_id !== identity.slotId ||
-          releaseRow.generation !== identity.generation ||
-          releaseRow.attempt_id !== identity.attemptId ||
-          releaseRow.seed_version !== identity.seedVersion ||
-          releaseRow.lease_id !== identity.leaseId
-        ))) {
+        if (
+          releaseRows.length > 1 ||
+          (releaseRow !== null &&
+            (releaseRow.release_id !== identity.releaseId ||
+              releaseRow.slot_id !== identity.slotId ||
+              releaseRow.generation !== identity.generation ||
+              releaseRow.attempt_id !== identity.attemptId ||
+              releaseRow.seed_version !== identity.seedVersion ||
+              releaseRow.lease_id !== identity.leaseId))
+        ) {
           return null;
         }
         return {
           transactionEnded: true,
           authoritativeSnapshot: true,
-          releaseEvidence: { identity, outcome: releaseRow === null ? 'not_committed' : 'committed' },
+          releaseEvidence: {
+            identity,
+            outcome: releaseRow === null ? 'not_committed' : 'committed',
+          },
           control: projectControl(control),
           fence: projectFence(fence),
           receipt: projectReceipt(receipt),

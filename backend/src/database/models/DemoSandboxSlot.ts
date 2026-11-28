@@ -34,7 +34,9 @@ const statuses: DemoSandboxSlotRecordStatus[] = [
   'quarantined',
 ];
 
-export function createDemoSandboxSlotModel(sequelize: Sequelize): ModelStatic<DemoSandboxSlotRecord> {
+export function createDemoSandboxSlotModel(
+  sequelize: Sequelize,
+): ModelStatic<DemoSandboxSlotRecord> {
   return sequelize.define<DemoSandboxSlotRecord>(
     'DemoSandboxSlot',
     {

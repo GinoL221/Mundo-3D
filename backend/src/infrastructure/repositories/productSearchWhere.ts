@@ -6,7 +6,8 @@ import { ProductSearchOptions } from '../../domain/ports/ProductRepositoryPort';
 // `\`, `%` and `_` in one pass (so the backslash case is handled before
 // the wildcards it would otherwise re-escape). MySQL's default LIKE
 // escape character is `\`, so no ESCAPE clause is needed.
-export const escapeLikePattern = (term: string): string => term.replace(/[\\%_]/g, (ch) => `\\${ch}`);
+export const escapeLikePattern = (term: string): string =>
+  term.replace(/[\\%_]/g, (ch) => `\\${ch}`);
 
 // Builds the `WHERE` clause for `SequelizeProductRepository.searchPaged`:
 // search (Op.or across name_product/description_product) AND idCategory

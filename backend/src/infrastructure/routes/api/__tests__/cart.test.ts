@@ -35,9 +35,24 @@ const buildApp = (): Express => {
   return app;
 };
 
-const auth = authAndCsrf({ userId: 5, email: 'user@test.com', category: 'User', idRole: Role.USER });
-const staff = authAndCsrf({ userId: 8, email: 'staff@test.com', category: 'Staff', idRole: Role.STAFF });
-const admin = authAndCsrf({ userId: 1, email: 'admin@test.com', category: 'Admin', idRole: Role.ADMIN });
+const auth = authAndCsrf({
+  userId: 5,
+  email: 'user@test.com',
+  category: 'User',
+  idRole: Role.USER,
+});
+const staff = authAndCsrf({
+  userId: 8,
+  email: 'staff@test.com',
+  category: 'Staff',
+  idRole: Role.STAFF,
+});
+const admin = authAndCsrf({
+  userId: 1,
+  email: 'admin@test.com',
+  category: 'Admin',
+  idRole: Role.ADMIN,
+});
 
 describe('api/cart routes', () => {
   let app: Express;
@@ -190,7 +205,7 @@ describe('api/cart routes', () => {
       // The removed product must not be part of the synced payload.
       expect(mockSyncCartExecute).not.toHaveBeenCalledWith(
         5,
-        expect.arrayContaining([expect.objectContaining({ productId: 10 })])
+        expect.arrayContaining([expect.objectContaining({ productId: 10 })]),
       );
     });
 

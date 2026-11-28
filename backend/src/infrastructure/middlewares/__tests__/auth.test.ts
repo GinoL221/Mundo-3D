@@ -21,7 +21,7 @@ describe('apiAuthMiddleware', () => {
     req = { headers: {}, cookies: {} };
     res = {
       status: jest.fn().mockReturnThis() as any,
-      json: jest.fn().mockReturnThis() as any
+      json: jest.fn().mockReturnThis() as any,
     };
     next = jest.fn();
   });
@@ -50,7 +50,7 @@ describe('apiAuthMiddleware', () => {
     const expired = jwt.sign(
       { userId: 1, email: 'user@test.com', category: 'User', idRole: 2, typ: 'access' },
       JWT_SECRET,
-      accessTokenSignOptions(-60)
+      accessTokenSignOptions(-60),
     );
     req.cookies = { [AUTH_COOKIE]: expired };
 
@@ -69,7 +69,13 @@ describe('apiAuthMiddleware', () => {
   });
 
   it('attaches payload to req.user and calls next() on a valid auth cookie carrying typ: "access"', () => {
-    const payload = { userId: 1, email: 'user@test.com', category: 'User', idRole: 2, typ: 'access' };
+    const payload = {
+      userId: 1,
+      email: 'user@test.com',
+      category: 'User',
+      idRole: 2,
+      typ: 'access',
+    };
     const token = jwt.sign(payload, JWT_SECRET, accessTokenSignOptions('2h'));
     req.cookies = { [AUTH_COOKIE]: token };
 
@@ -93,7 +99,13 @@ describe('apiAuthMiddleware', () => {
   });
 
   it('returns 401 when typ carries a value other than "access" (e.g. a refresh-typed token confused for access)', () => {
-    const payload = { userId: 1, email: 'user@test.com', category: 'User', idRole: 2, typ: 'refresh' };
+    const payload = {
+      userId: 1,
+      email: 'user@test.com',
+      category: 'User',
+      idRole: 2,
+      typ: 'refresh',
+    };
     const token = jwt.sign(payload, JWT_SECRET, accessTokenSignOptions('2h'));
     req.cookies = { [AUTH_COOKIE]: token };
 
@@ -107,7 +119,13 @@ describe('apiAuthMiddleware', () => {
   // API's own secret — the only thing wrong with it is a claim, and the claim
   // alone must be enough to reject it.
   describe('registered-claim and algorithm pinning', () => {
-    const payload = { userId: 1, email: 'user@test.com', category: 'User', idRole: 2, typ: 'access' };
+    const payload = {
+      userId: 1,
+      email: 'user@test.com',
+      category: 'User',
+      idRole: 2,
+      typ: 'access',
+    };
 
     // The pre-deploy-token case: every access token minted before this change
     // carries no `iss`/`aud` at all. Without this assertion, verification
@@ -119,7 +137,9 @@ describe('apiAuthMiddleware', () => {
       apiAuthMiddleware(req as Request, res as Response, next);
 
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Token de autenticación inválido o expirado' });
+      expect(res.json).toHaveBeenCalledWith({
+        error: 'Token de autenticación inválido o expirado',
+      });
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -186,7 +206,7 @@ describe('requireRoles', () => {
     req = { path: '/api/products' };
     res = {
       status: jest.fn().mockReturnThis() as any,
-      json: jest.fn().mockReturnThis() as any
+      json: jest.fn().mockReturnThis() as any,
     };
     next = jest.fn();
   });
@@ -234,7 +254,7 @@ describe('adminGuard (alias for requireRoles(Role.ADMIN))', () => {
     req = { path: '/api/users' };
     res = {
       status: jest.fn().mockReturnThis() as any,
-      json: jest.fn().mockReturnThis() as any
+      json: jest.fn().mockReturnThis() as any,
     };
     next = jest.fn();
   });

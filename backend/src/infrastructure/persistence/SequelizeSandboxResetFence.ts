@@ -122,7 +122,10 @@ export class SequelizeSandboxResetFence implements SandboxResetFence {
     });
   }
 
-  async lockAndCheck(identity: SandboxResetIdentity, context: TransactionContext): Promise<boolean> {
+  async lockAndCheck(
+    identity: SandboxResetIdentity,
+    context: TransactionContext,
+  ): Promise<boolean> {
     const transaction = resolveScopedTransaction(context, this.connection);
     if (!transaction) {
       throw new Error('Transaction context is required');

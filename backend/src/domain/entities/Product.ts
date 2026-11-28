@@ -22,9 +22,9 @@ export class Product {
     public readonly depth?: number | null,
     public readonly finish?: string | null,
     public readonly productionTime?: number | null,
-    public readonly stock?: number | null
+    public readonly stock?: number | null,
   ) {
-    if (price <= 0.00) {
+    if (price <= 0.0) {
       throw new Error('Price must be greater than 0.00');
     }
     if (material !== null && material !== undefined) {

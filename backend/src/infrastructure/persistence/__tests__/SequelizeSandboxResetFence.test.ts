@@ -51,13 +51,39 @@ describe('SequelizeSandboxResetFence', () => {
     const { connection, tx } = makeConnectionAndTx();
     const cases = [
       null,
-      { slotId: 'slot-1', leaseId: null, generation: 2, state: 'open', resetAttemptId: identity.attemptId },
-      { slotId: 'slot-1', leaseId: 'lease-1', generation: 2, state: 'fenced', resetAttemptId: identity.attemptId },
-      { slotId: 'slot-1', leaseId: null, generation: 1, state: 'fenced', resetAttemptId: identity.attemptId },
-      { slotId: 'slot-1', leaseId: null, generation: 2, state: 'fenced', resetAttemptId: 'other-attempt' },
+      {
+        slotId: 'slot-1',
+        leaseId: null,
+        generation: 2,
+        state: 'open',
+        resetAttemptId: identity.attemptId,
+      },
+      {
+        slotId: 'slot-1',
+        leaseId: 'lease-1',
+        generation: 2,
+        state: 'fenced',
+        resetAttemptId: identity.attemptId,
+      },
+      {
+        slotId: 'slot-1',
+        leaseId: null,
+        generation: 1,
+        state: 'fenced',
+        resetAttemptId: identity.attemptId,
+      },
+      {
+        slotId: 'slot-1',
+        leaseId: null,
+        generation: 2,
+        state: 'fenced',
+        resetAttemptId: 'other-attempt',
+      },
     ];
     for (const row of cases) {
-      const model = { findOne: jest.fn().mockResolvedValue(row) } as unknown as ModelStatic<DemoSandboxFenceRecord>;
+      const model = {
+        findOne: jest.fn().mockResolvedValue(row),
+      } as unknown as ModelStatic<DemoSandboxFenceRecord>;
       const fence = new SequelizeSandboxResetFence(connection, 'slot-1', model);
       const ok = await withScopedTransaction(connection, tx, (ctx) =>
         fence.lockAndCheck(identity, ctx),
@@ -118,7 +144,10 @@ describe('SequelizeSandboxResetFence', () => {
     const fence = new SequelizeSandboxResetFence(connection, 'slot-1', model);
 
     await expect(
-      fence.lockAndCheck(identity, undefined as unknown as Parameters<typeof fence.lockAndCheck>[1]),
+      fence.lockAndCheck(
+        identity,
+        undefined as unknown as Parameters<typeof fence.lockAndCheck>[1],
+      ),
     ).rejects.toThrow('Transaction context is required');
 
     await expect(fence.fenceForReset({ ...identity, generation: 1 })).resolves.toBe(false);

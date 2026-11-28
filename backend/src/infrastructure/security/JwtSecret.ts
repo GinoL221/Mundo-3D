@@ -27,15 +27,15 @@ export function getJwtSecret(): string {
   if (!secret) {
     throw new Error(
       'JWT_SECRET environment variable is required but was not set. ' +
-      'The application cannot start without it.'
+        'The application cannot start without it.',
     );
   }
 
   if (secret.length < MIN_SECRET_LENGTH) {
     throw new Error(
       `JWT_SECRET must be at least ${MIN_SECRET_LENGTH} characters long, ` +
-      `but the value provided is ${secret.length}. ` +
-      'The application cannot start with a weak signing secret.'
+        `but the value provided is ${secret.length}. ` +
+        'The application cannot start with a weak signing secret.',
     );
   }
 

@@ -25,7 +25,11 @@ const controller = new CustomCommissionRequestApiController(
   new ListMyCustomCommissionRequestsUseCase(repository),
 );
 
-const handleCommissionValidationErrors = (req: Request, res: Response, next: NextFunction): void => {
+const handleCommissionValidationErrors = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
   const errors = validationResult(req);
   if (errors.isEmpty()) return next();
   res.status(400).json({ errors: errors.array().map(({ msg }) => ({ msg })) });

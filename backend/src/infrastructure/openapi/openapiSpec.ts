@@ -47,7 +47,8 @@ const definition = {
         type: 'apiKey',
         in: 'header',
         name: 'x-csrf-token',
-        description: 'Required by csrfGuard on unsafe methods (POST/PUT/PATCH/DELETE) for authenticated routes.',
+        description:
+          'Required by csrfGuard on unsafe methods (POST/PUT/PATCH/DELETE) for authenticated routes.',
       },
     },
   },

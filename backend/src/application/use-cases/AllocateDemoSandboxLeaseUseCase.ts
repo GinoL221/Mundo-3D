@@ -14,10 +14,6 @@ export class AllocateDemoSandboxLeaseUseCase {
   ) {}
 
   execute() {
-    return this.repository.claimAvailableSlot(
-      this.leaseIds.next(),
-      this.clock.now(),
-      this.policy,
-    );
+    return this.repository.claimAvailableSlot(this.leaseIds.next(), this.clock.now(), this.policy);
   }
 }

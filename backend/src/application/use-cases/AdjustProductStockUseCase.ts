@@ -5,7 +5,7 @@ import { ProductDTO } from '../dtos/ProductDTO';
 export class AdjustProductStockUseCase {
   constructor(
     private readonly productRepo: ProductRepositoryPort,
-    private readonly logger: LoggerPort
+    private readonly logger: LoggerPort,
   ) {}
 
   // Delegates the atomic delta math and invariant enforcement entirely to
@@ -39,7 +39,7 @@ export class AdjustProductStockUseCase {
           reason,
           timestamp: new Date().toISOString(),
         },
-        `Stock adjustment rejected for product ${id}: ${reason}`
+        `Stock adjustment rejected for product ${id}: ${reason}`,
       );
       throw error;
     }
@@ -54,7 +54,7 @@ export class AdjustProductStockUseCase {
           reason: 'not_found',
           timestamp: new Date().toISOString(),
         },
-        `Stock adjustment rejected for product ${id}: product not found`
+        `Stock adjustment rejected for product ${id}: product not found`,
       );
       return null;
     }
@@ -68,7 +68,7 @@ export class AdjustProductStockUseCase {
         resultingStock: updated.Stock,
         timestamp: new Date().toISOString(),
       },
-      `Stock adjustment succeeded for product ${id}`
+      `Stock adjustment succeeded for product ${id}`,
     );
 
     const categoryName = updated.Category ? updated.Category.nameCategory : 'Sin categoría';

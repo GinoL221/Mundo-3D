@@ -6,7 +6,10 @@ import { PaymentGatewayPort } from '../../domain/ports/PaymentGatewayPort';
 import { LoggerPort } from '../../domain/ports/LoggerPort';
 import { Order } from '../../domain/entities/Order';
 import { EmptyCartException } from '../../domain/exceptions/EmptyCartException';
-import { InsufficientStockException, StockShortage } from '../../domain/exceptions/InsufficientStockException';
+import {
+  InsufficientStockException,
+  StockShortage,
+} from '../../domain/exceptions/InsufficientStockException';
 import { ProductInsufficientStockException } from '../../domain/exceptions/ProductInsufficientStockException';
 import { DuplicateIdempotencyKeyException } from '../../domain/exceptions/DuplicateIdempotencyKeyException';
 import { OrderDTO, mapToOrderDTO } from '../dtos/OrderDTO';
@@ -28,7 +31,7 @@ export class CreateOrderUseCase {
     private readonly cartRepo: ShoppingCartRepositoryPort,
     private readonly productRepo: ProductRepositoryPort,
     private readonly paymentGateway: PaymentGatewayPort,
-    private readonly logger: LoggerPort
+    private readonly logger: LoggerPort,
   ) {}
 
   async execute(userId: number, idempotencyKey: string): Promise<OrderDTO> {
@@ -56,7 +59,11 @@ export class CreateOrderUseCase {
     return mapToOrderDTO(finalOrder);
   }
 
-  private async checkout(userId: number, idempotencyKey: string, tx: TransactionContext): Promise<Order> {
+  private async checkout(
+    userId: number,
+    idempotencyKey: string,
+    tx: TransactionContext,
+  ): Promise<Order> {
     const cartRows = await this.cartRepo.findActiveForUpdate(userId, tx);
     if (cartRows.length === 0) {
       throw new EmptyCartException();
@@ -94,7 +101,10 @@ export class CreateOrderUseCase {
       unitPrice: row.unitPrice,
     }));
 
-    const order = await this.orderRepo.createWithItems({ idUser: userId, idempotencyKey, items }, tx);
+    const order = await this.orderRepo.createWithItems(
+      { idUser: userId, idempotencyKey, items },
+      tx,
+    );
 
     const cartIds = cartRows.map((row) => row.idCart);
     const affected = await this.cartRepo.markOrdered(userId, cartIds, tx);
@@ -115,8 +125,12 @@ export class CreateOrderUseCase {
       await this.orderRepo.attachPaymentReference(order.idOrder, intent.reference);
     } catch (error) {
       this.logger.warn(
-        { event: 'payment_initiate_failed', orderId: order.idOrder, error: (error as Error).message },
-        'Payment gateway initiation failed after order commit; order remains AWAITING_PAYMENT'
+        {
+          event: 'payment_initiate_failed',
+          orderId: order.idOrder,
+          error: (error as Error).message,
+        },
+        'Payment gateway initiation failed after order commit; order remains AWAITING_PAYMENT',
       );
     }
   }

@@ -48,7 +48,9 @@ export class ScopedSequelizeCustomCommissionRequestRepository implements CustomC
         const fields = error.fields as string[] | Record<string, string> | undefined;
         const isUserFk =
           error.index === 'fk_custom_commission_request_user' ||
-          (Array.isArray(fields) ? fields.includes('id_user') : Boolean(fields && 'id_user' in fields));
+          (Array.isArray(fields)
+            ? fields.includes('id_user')
+            : Boolean(fields && 'id_user' in fields));
         if (!isUserFk) {
           throw new SelectedProductNotFoundException();
         }

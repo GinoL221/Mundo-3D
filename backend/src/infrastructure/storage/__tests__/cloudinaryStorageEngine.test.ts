@@ -19,10 +19,10 @@ const handle = (
     _handleFile: (
       req: Request,
       file: EngineFile,
-      cb: (err: unknown, info?: Record<string, unknown>) => void
+      cb: (err: unknown, info?: Record<string, unknown>) => void,
     ) => void;
   },
-  file: EngineFile
+  file: EngineFile,
 ): Promise<{ err: unknown; info?: Record<string, unknown> }> =>
   new Promise((resolve) => {
     engine._handleFile(req, file, (err, info) => resolve({ err, info }));
@@ -32,7 +32,7 @@ const remove = (
   engine: {
     _removeFile: (req: Request, file: EngineFile, cb: (err: unknown) => void) => void;
   },
-  file: EngineFile
+  file: EngineFile,
 ): Promise<unknown> =>
   new Promise((resolve) => {
     engine._removeFile(req, file, (err) => resolve(err));
@@ -65,7 +65,7 @@ describe('signCloudinaryParams', () => {
   it('sorts parameters alphabetically, joins with &, appends apiSecret, and hashes with SHA-1', () => {
     const sig = signCloudinaryParams(
       { timestamp: 1700000000, public_id: 'products/abc', folder: 'ignored-order' },
-      'my-secret'
+      'my-secret',
     );
     const expected = createHash('sha1')
       .update('folder=ignored-order&public_id=products/abc&timestamp=1700000000my-secret')
@@ -273,7 +273,7 @@ describe('cloudinaryStorageEngine', () => {
     expect(err).toBeNull();
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.cloudinary.com/v1_1/demo-cloud/image/destroy',
-      expect.objectContaining({ method: 'POST' })
+      expect.objectContaining({ method: 'POST' }),
     );
   });
 

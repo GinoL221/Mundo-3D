@@ -19,7 +19,9 @@ async function main() {
 
 if (require.main === module) {
   main().catch((err) => {
-    process.stderr.write(`Catalog sync failed: ${err instanceof Error ? err.message : String(err)}\n`);
+    process.stderr.write(
+      `Catalog sync failed: ${err instanceof Error ? err.message : String(err)}\n`,
+    );
     process.exit(1);
   });
 }

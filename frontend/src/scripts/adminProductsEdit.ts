@@ -68,7 +68,8 @@ function initAdminProductsEditContent(): void {
   if (editShellEl) editShellEl.hidden = false;
 
   applyAdminRoleHeader(roleBadgeEl, scopeEl, {
-    adminScope: 'Actualizá los datos de la pieza en el Catálogo. El stock se ajusta desde el listado.',
+    adminScope:
+      'Actualizá los datos de la pieza en el Catálogo. El stock se ajusta desde el listado.',
     staffScope: 'Actualizá los datos de la pieza como Taller. El stock se ajusta desde el listado.',
   });
 

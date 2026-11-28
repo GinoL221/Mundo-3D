@@ -259,7 +259,11 @@ describe('/api/demo/session routes', () => {
     expect([getStaff.status, getStaff.body.role]).toEqual([200, 'STAFF']);
 
     const toAdmin = await switchRole(cStaff, 'ADMIN');
-    expect([toAdmin.status, toAdmin.body.role, toAdmin.body.user.idUser]).toEqual([200, 'ADMIN', 3]);
+    expect([toAdmin.status, toAdmin.body.role, toAdmin.body.user.idUser]).toEqual([
+      200,
+      'ADMIN',
+      3,
+    ]);
     const cAdmin = parseCk(toAdmin.headers['set-cookie']);
     expect(cAdmin[C]).not.toBe(cStaff[C]);
 

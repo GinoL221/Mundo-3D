@@ -42,11 +42,15 @@ const IMAGE_EXTENSION_MESSAGE = `Las extensiones de archivos permitidas son ${AL
 const IMAGE_TOO_LARGE_MESSAGE = 'La imagen pesa más de 5 MB. Elegí una más liviana.';
 // The backend upload filter answers `{ error }` (no field path) for format or size rejections.
 const BACKEND_UPLOAD_REJECTION = 'Invalid file format or size limit exceeded';
-const UPLOAD_REJECTION_MESSAGE = 'No pudimos aceptar la imagen: tiene que ser JPG o PNG y pesar hasta 5 MB.';
+const UPLOAD_REJECTION_MESSAGE =
+  'No pudimos aceptar la imagen: tiene que ser JPG o PNG y pesar hasta 5 MB.';
 
 const SIMPLE_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function evaluatePasswordRules(password: string, confirmPassword: string): PasswordRuleStatus {
+export function evaluatePasswordRules(
+  password: string,
+  confirmPassword: string,
+): PasswordRuleStatus {
   const trimmedPassword = password.trim();
   const trimmedConfirm = confirmPassword.trim();
   return {
@@ -68,18 +72,24 @@ export function isAllowedImageFileName(fileName: string): boolean {
   return (ALLOWED_IMAGE_EXTENSIONS as readonly string[]).includes(fileName.slice(lastDot));
 }
 
-export function validateImageFile(fileName: string, sizeInBytes: number | null | undefined): string | null {
+export function validateImageFile(
+  fileName: string,
+  sizeInBytes: number | null | undefined,
+): string | null {
   if (!isAllowedImageFileName(fileName)) return IMAGE_EXTENSION_MESSAGE;
-  if (typeof sizeInBytes === 'number' && sizeInBytes > IMAGE_MAX_BYTES) return IMAGE_TOO_LARGE_MESSAGE;
+  if (typeof sizeInBytes === 'number' && sizeInBytes > IMAGE_MAX_BYTES)
+    return IMAGE_TOO_LARGE_MESSAGE;
   return null;
 }
 
 export function uploadRejectionMessage(err: unknown): string | null {
-  return err instanceof Error && err.message === BACKEND_UPLOAD_REJECTION ? UPLOAD_REJECTION_MESSAGE : null;
+  return err instanceof Error && err.message === BACKEND_UPLOAD_REJECTION
+    ? UPLOAD_REJECTION_MESSAGE
+    : null;
 }
 
 export function validateRegisterInput(
-  input: RegisterValidationInput
+  input: RegisterValidationInput,
 ): Partial<Record<RegisterFieldName, string>> {
   const errors: Partial<Record<RegisterFieldName, string>> = {};
 
@@ -189,7 +199,7 @@ export function extractApiFieldErrors(err: unknown): Record<string, string> {
 
 export function summarizeFieldErrors(
   fieldErrors: Record<string, string>,
-  multiErrorSummary: string
+  multiErrorSummary: string,
 ): string {
   const messages = Object.values(fieldErrors).filter((msg) => msg.trim().length > 0);
   if (messages.length === 1) {

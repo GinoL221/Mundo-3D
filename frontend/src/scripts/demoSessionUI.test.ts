@@ -320,16 +320,25 @@ describe('initializeDemoSessionUI', () => {
       role: 'STAFF',
       user: { idUser: 2, firstName: 'Demo', lastName: 'Staff', email: 'staff@demo.invalid' },
     };
-    const channels: Array<{ onmessage: ((ev: MessageEvent) => void) | null; postMessage: ReturnType<typeof vi.fn> }> = [];
-    vi.stubGlobal('BroadcastChannel', class {
-      onmessage: ((ev: MessageEvent) => void) | null = null;
-      postMessage = vi.fn();
-      close = vi.fn();
-      constructor() { channels.push(this); }
-    });
+    const channels: Array<{
+      onmessage: ((ev: MessageEvent) => void) | null;
+      postMessage: ReturnType<typeof vi.fn>;
+    }> = [];
+    vi.stubGlobal(
+      'BroadcastChannel',
+      class {
+        onmessage: ((ev: MessageEvent) => void) | null = null;
+        postMessage = vi.fn();
+        close = vi.fn();
+        constructor() {
+          channels.push(this);
+        }
+      },
+    );
     vi.stubGlobal(
       'fetch',
-      vi.fn()
+      vi
+        .fn()
         .mockResolvedValueOnce(new Response(JSON.stringify(buyerSession), { status: 200 }))
         .mockResolvedValueOnce(new Response(JSON.stringify(staffSession), { status: 200 })),
     );
@@ -340,13 +349,17 @@ describe('initializeDemoSessionUI', () => {
     await flush();
     sessionChanged.mockClear();
 
-    channels[0].onmessage?.({ data: { type: 'demo-session-changed', reason: 'role-changed' } } as MessageEvent);
+    channels[0].onmessage?.({
+      data: { type: 'demo-session-changed', reason: 'role-changed' },
+    } as MessageEvent);
     await flush();
     expect(dom.roleBadge.textContent).toBe('Taller');
     expect(dom.staffBtn.attrs.get('aria-pressed')).toBe('true');
     expect(sessionChanged).toHaveBeenCalledTimes(1);
 
-    channels[0].onmessage?.({ data: { type: 'demo-session-changed', reason: 'expired' } } as MessageEvent);
+    channels[0].onmessage?.({
+      data: { type: 'demo-session-changed', reason: 'expired' },
+    } as MessageEvent);
     expect(dom.store.has(DEMO_STORAGE_KEY)).toBe(false);
     expect(dom.store.has('m3d_demo_cart')).toBe(false);
     expect(dom.bar.hidden).toBe(true);
@@ -362,13 +375,19 @@ describe('initializeDemoSessionUI', () => {
     let resolveCart!: (res: Response) => void;
     vi.stubGlobal(
       'fetch',
-      vi.fn()
+      vi
+        .fn()
         .mockResolvedValueOnce(new Response(JSON.stringify({ enabled: true }), { status: 200 }))
         .mockImplementationOnce(async () => {
           dom.doc.cookie = `${DEMO_CSRF_COOKIE_NAME}=demo.sig; path=/`;
           return new Response(JSON.stringify(buyerSession), { status: 201 });
         })
-        .mockImplementationOnce(() => new Promise<Response>((r) => { resolveCart = r; })),
+        .mockImplementationOnce(
+          () =>
+            new Promise<Response>((r) => {
+              resolveCart = r;
+            }),
+        ),
     );
     const cleanup = initializeDemoSessionUI(dom.doc, dom.win, { reloadOnTransition: true });
     await flush();
@@ -387,7 +406,8 @@ describe('initializeDemoSessionUI', () => {
     const dom = setupDom();
     vi.stubGlobal(
       'fetch',
-      vi.fn()
+      vi
+        .fn()
         .mockResolvedValueOnce(new Response(JSON.stringify({ enabled: true }), { status: 200 }))
         .mockImplementationOnce(async () => {
           dom.doc.cookie = `${DEMO_CSRF_COOKIE_NAME}=demo.sig; path=/`;
@@ -397,7 +417,10 @@ describe('initializeDemoSessionUI', () => {
     );
     const sessionChanged = vi.fn();
     dom.win.addEventListener('session-changed', sessionChanged);
-    const cleanup = initializeDemoSessionUI(dom.doc, dom.win, { reloadOnTransition: true, cartHydrationTimeoutMs: 20 });
+    const cleanup = initializeDemoSessionUI(dom.doc, dom.win, {
+      reloadOnTransition: true,
+      cartHydrationTimeoutMs: 20,
+    });
     await flush();
     dom.entryBtn.click();
     await flush();
@@ -412,21 +435,36 @@ describe('initializeDemoSessionUI', () => {
   it('ignores stale broadcast hydration after ended and preserves active bar on transient 500', async () => {
     const dom = setupDom(`${DEMO_CSRF_COOKIE_NAME}=demo.sig`);
     dom.store.set(DEMO_STORAGE_KEY, JSON.stringify(buyerSession));
-    const staffSession: DemoSessionState = { ...buyerSession, role: 'STAFF', user: { idUser: 2, firstName: 'Demo', lastName: 'Staff', email: 'staff@demo.invalid' } };
+    const staffSession: DemoSessionState = {
+      ...buyerSession,
+      role: 'STAFF',
+      user: { idUser: 2, firstName: 'Demo', lastName: 'Staff', email: 'staff@demo.invalid' },
+    };
     const channels: Array<{ onmessage: ((ev: MessageEvent) => void) | null }> = [];
-    vi.stubGlobal('BroadcastChannel', class {
-      onmessage: ((ev: MessageEvent) => void) | null = null;
-      postMessage = vi.fn();
-      close = vi.fn();
-      constructor() { channels.push(this); }
-    });
+    vi.stubGlobal(
+      'BroadcastChannel',
+      class {
+        onmessage: ((ev: MessageEvent) => void) | null = null;
+        postMessage = vi.fn();
+        close = vi.fn();
+        constructor() {
+          channels.push(this);
+        }
+      },
+    );
     let resolveStale!: (res: Response) => void;
     vi.stubGlobal(
       'fetch',
-      vi.fn()
+      vi
+        .fn()
         .mockResolvedValueOnce(new Response(JSON.stringify(buyerSession), { status: 200 }))
         .mockResolvedValueOnce(new Response(null, { status: 500 }))
-        .mockImplementationOnce(() => new Promise<Response>((r) => { resolveStale = r; })),
+        .mockImplementationOnce(
+          () =>
+            new Promise<Response>((r) => {
+              resolveStale = r;
+            }),
+        ),
     );
     const sessionChanged = vi.fn();
     dom.win.addEventListener('session-changed', sessionChanged);
@@ -434,14 +472,20 @@ describe('initializeDemoSessionUI', () => {
     await flush();
     sessionChanged.mockClear();
 
-    channels[0].onmessage?.({ data: { type: 'demo-session-changed', reason: 'role-changed' } } as MessageEvent);
+    channels[0].onmessage?.({
+      data: { type: 'demo-session-changed', reason: 'role-changed' },
+    } as MessageEvent);
     await flush();
     expect(dom.bar.hidden).toBe(false);
     expect(dom.store.has(DEMO_STORAGE_KEY)).toBe(true);
     expect(sessionChanged).not.toHaveBeenCalled();
 
-    channels[0].onmessage?.({ data: { type: 'demo-session-changed', reason: 'role-changed' } } as MessageEvent);
-    channels[0].onmessage?.({ data: { type: 'demo-session-changed', reason: 'ended' } } as MessageEvent);
+    channels[0].onmessage?.({
+      data: { type: 'demo-session-changed', reason: 'role-changed' },
+    } as MessageEvent);
+    channels[0].onmessage?.({
+      data: { type: 'demo-session-changed', reason: 'ended' },
+    } as MessageEvent);
     expect(dom.bar.hidden).toBe(true);
     expect(dom.store.has(DEMO_STORAGE_KEY)).toBe(false);
     expect(sessionChanged).toHaveBeenCalledTimes(1);
@@ -458,7 +502,8 @@ describe('initializeDemoSessionUI', () => {
     const dom1 = setupDom(`${DEMO_CSRF_COOKIE_NAME}=demo.sig`);
     vi.stubGlobal(
       'fetch',
-      vi.fn()
+      vi
+        .fn()
         .mockResolvedValueOnce(new Response(null, { status: 500 }))
         .mockResolvedValueOnce(new Response(JSON.stringify({ enabled: true }), { status: 200 })),
     );
@@ -473,9 +518,15 @@ describe('initializeDemoSessionUI', () => {
     let resolveDel!: (res: Response) => void;
     vi.stubGlobal(
       'fetch',
-      vi.fn()
+      vi
+        .fn()
         .mockResolvedValueOnce(new Response(JSON.stringify(buyerSession), { status: 200 }))
-        .mockImplementationOnce(() => new Promise<Response>((r) => { resolveDel = r; })),
+        .mockImplementationOnce(
+          () =>
+            new Promise<Response>((r) => {
+              resolveDel = r;
+            }),
+        ),
     );
     const c2 = initializeDemoSessionUI(dom2.doc, dom2.win, { reloadOnTransition: false });
     await flush();

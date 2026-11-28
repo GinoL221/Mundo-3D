@@ -1,4 +1,8 @@
-import { SearchProductsUseCase, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../use-cases/SearchProductsUseCase';
+import {
+  SearchProductsUseCase,
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+} from '../use-cases/SearchProductsUseCase';
 import { ProductRepositoryPort } from '../../domain/ports/ProductRepositoryPort';
 import { Product } from '../../domain/entities/Product';
 import { Category } from '../../domain/entities/Category';
@@ -21,7 +25,7 @@ function makeProduct(idProduct: number, overrides: Partial<{ category: Category 
     5,
     'Mate',
     3,
-    7
+    7,
   );
 }
 
@@ -54,7 +58,7 @@ describe('SearchProductsUseCase', () => {
     await useCase.execute({ page: 1, pageSize: 20 });
 
     expect(productRepo.searchPaged).toHaveBeenCalledWith(
-      expect.objectContaining({ limit: 20, offset: 0 })
+      expect.objectContaining({ limit: 20, offset: 0 }),
     );
   });
 
@@ -64,14 +68,20 @@ describe('SearchProductsUseCase', () => {
     await useCase.execute({ page: 3, pageSize: 10 });
 
     expect(productRepo.searchPaged).toHaveBeenCalledWith(
-      expect.objectContaining({ limit: 10, offset: 20 })
+      expect.objectContaining({ limit: 10, offset: 20 }),
     );
   });
 
   it('trims a search term and forwards idCategory/idFranchise untouched', async () => {
     productRepo.searchPaged.mockResolvedValue({ products: [], total: 0 });
 
-    await useCase.execute({ search: '  goku  ', idCategory: 3, idFranchise: 5, page: 1, pageSize: 20 });
+    await useCase.execute({
+      search: '  goku  ',
+      idCategory: 3,
+      idFranchise: 5,
+      page: 1,
+      pageSize: 20,
+    });
 
     expect(productRepo.searchPaged).toHaveBeenCalledWith({
       search: 'goku',
@@ -88,7 +98,7 @@ describe('SearchProductsUseCase', () => {
     await useCase.execute({ search: '   ', page: 1, pageSize: 20 });
 
     expect(productRepo.searchPaged).toHaveBeenCalledWith(
-      expect.objectContaining({ search: undefined })
+      expect.objectContaining({ search: undefined }),
     );
   });
 
@@ -98,7 +108,7 @@ describe('SearchProductsUseCase', () => {
     await useCase.execute({ page: 1, pageSize: 20 });
 
     expect(productRepo.searchPaged).toHaveBeenCalledWith(
-      expect.objectContaining({ search: undefined })
+      expect.objectContaining({ search: undefined }),
     );
   });
 
@@ -137,9 +147,7 @@ describe('SearchProductsUseCase', () => {
     // itself must not silently clamp it.
     await useCase.execute({ page: 1, pageSize: 999 });
 
-    expect(productRepo.searchPaged).toHaveBeenCalledWith(
-      expect.objectContaining({ limit: 999 })
-    );
+    expect(productRepo.searchPaged).toHaveBeenCalledWith(expect.objectContaining({ limit: 999 }));
   });
 
   it('maps products to the existing ProductDTO shape, matching ListProductsUseCase', async () => {

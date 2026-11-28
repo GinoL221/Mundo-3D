@@ -10,7 +10,7 @@ interface CartSyncItem {
 export class CartApiController {
   constructor(
     private readonly getCartByUserIdUseCase: GetCartByUserIdUseCase,
-    private readonly syncCartUseCase: SyncCartUseCase
+    private readonly syncCartUseCase: SyncCartUseCase,
   ) {}
 
   getCart = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

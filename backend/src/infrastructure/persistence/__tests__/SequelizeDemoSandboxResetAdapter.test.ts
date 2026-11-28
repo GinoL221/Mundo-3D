@@ -40,7 +40,10 @@ function makeMockSlotGraph(slotId: string) {
     },
     ShoppingCart: makeTable('ShoppingCart', 0),
     CustomCommissionRequest: {
-      ...makeTable('CustomCommissionRequest', DEMO_SANDBOX_EXPECTED_COUNTS.customCommissionRequests),
+      ...makeTable(
+        'CustomCommissionRequest',
+        DEMO_SANDBOX_EXPECTED_COUNTS.customCommissionRequests,
+      ),
       findAll: jest.fn(async () => [
         {
           idCustomCommissionRequest: 1,
@@ -80,7 +83,12 @@ function makeMockSlotGraph(slotId: string) {
     state: 'open' as 'open' | 'fenced',
     resetAttemptId: null as string | null,
     update: jest.fn(async function (
-      this: { state: string; leaseId: string | null; generation: number; resetAttemptId: string | null },
+      this: {
+        state: string;
+        leaseId: string | null;
+        generation: number;
+        resetAttemptId: string | null;
+      },
       patch: {
         state: 'open' | 'fenced';
         leaseId: null;
@@ -182,9 +190,21 @@ describe('SequelizeDemoSandboxResetAdapter', () => {
 
     const rogueGraph = makeMockSlotGraph(slotId);
     rogueGraph.models.User.findAll.mockResolvedValueOnce([
-      { idRole: Role.USER, email: 'demo.buyer+slot-1@sandbox.mundo3d.invalid', emailVerifiedAt: new Date() },
-      { idRole: Role.STAFF, email: 'demo.staff+slot-1@sandbox.mundo3d.invalid', emailVerifiedAt: new Date() },
-      { idRole: Role.ADMIN, email: 'rogue.admin@sandbox.mundo3d.invalid', emailVerifiedAt: new Date() },
+      {
+        idRole: Role.USER,
+        email: 'demo.buyer+slot-1@sandbox.mundo3d.invalid',
+        emailVerifiedAt: new Date(),
+      },
+      {
+        idRole: Role.STAFF,
+        email: 'demo.staff+slot-1@sandbox.mundo3d.invalid',
+        emailVerifiedAt: new Date(),
+      },
+      {
+        idRole: Role.ADMIN,
+        email: 'rogue.admin@sandbox.mundo3d.invalid',
+        emailVerifiedAt: new Date(),
+      },
     ]);
     await expect(createAdapter(rogueGraph).reset(slotId, 1, attemptId)).rejects.toThrow(
       'verification failed',

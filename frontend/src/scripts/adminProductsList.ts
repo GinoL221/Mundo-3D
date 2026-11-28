@@ -328,7 +328,9 @@ function initAdminProductsListContent(isAdmin: boolean): void {
         deleteBtn.setAttribute('aria-label', `Eliminar ${product.nameProduct}`);
         const originalLabel = deleteBtn.textContent ?? 'Eliminar';
         deleteBtn.addEventListener('click', () => {
-          if (!window.confirm(`¿Eliminar "${product.nameProduct}"? Esta acción no se puede deshacer.`)) {
+          if (
+            !window.confirm(`¿Eliminar "${product.nameProduct}"? Esta acción no se puede deshacer.`)
+          ) {
             return;
           }
           hideInlineError();

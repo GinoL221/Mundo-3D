@@ -14,7 +14,7 @@ export class CreateRememberTokenUseCase {
   constructor(
     private readonly rememberTokenRepo: RememberTokenRepositoryPort,
     private readonly tokenHasher: TokenHasherPort,
-    private readonly idGenerator: IdGeneratorPort
+    private readonly idGenerator: IdGeneratorPort,
   ) {}
 
   async execute(input: CreateRememberTokenInput): Promise<RememberTokenDTO> {
@@ -30,7 +30,7 @@ export class CreateRememberTokenUseCase {
       input.idUser,
       expiryDate,
       undefined,
-      familyId
+      familyId,
     );
 
     const createdToken = await this.rememberTokenRepo.create(tokenEntity);

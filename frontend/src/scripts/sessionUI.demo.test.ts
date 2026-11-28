@@ -37,7 +37,8 @@ function createFakeDom(initialCookie = '') {
       if (type === 'click') logoutListeners.push(fn);
     },
     removeEventListener: vi.fn(),
-    click: () => logoutListeners.forEach((fn) => fn({ preventDefault: vi.fn() } as unknown as Event)),
+    click: () =>
+      logoutListeners.forEach((fn) => fn({ preventDefault: vi.fn() } as unknown as Event)),
   };
   const elements = new Map<string, unknown>([
     ['navbar-greeting', greeting],
@@ -188,7 +189,10 @@ describe('Demo shell integration (sessionUI + m3d_demo_cart)', () => {
     vi.stubGlobal('sessionStorage', session);
     const { doc, win, logoutBtn } = createFakeDom(`${DEMO_CSRF_COOKIE_NAME}=demo.nav`);
     win.location.href = '/cart';
-    local.setItem(DEMO_CART_STORAGE_KEY, JSON.stringify([{ productId: 9, name: 'Demo', image: '', unitPrice: 10, quantity: 1 }]));
+    local.setItem(
+      DEMO_CART_STORAGE_KEY,
+      JSON.stringify([{ productId: 9, name: 'Demo', image: '', unitPrice: 10, quantity: 1 }]),
+    );
     let resolveDelete!: (res: Response) => void;
     vi.stubGlobal(
       'fetch',

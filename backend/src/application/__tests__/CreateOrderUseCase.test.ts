@@ -1,12 +1,17 @@
 import { CreateOrderUseCase } from '../use-cases/CreateOrderUseCase';
-import {
-  UnitOfWorkPort,
-  TransactionContext,
-} from '../../domain/ports/UnitOfWorkPort';
+import { UnitOfWorkPort, TransactionContext } from '../../domain/ports/UnitOfWorkPort';
 import { OrderRepositoryPort, NewOrderItemInput } from '../../domain/ports/OrderRepositoryPort';
 import { ShoppingCartRepositoryPort } from '../../domain/ports/ShoppingCartRepositoryPort';
-import { ProductRepositoryPort, ProductSearchOptions, PagedProducts } from '../../domain/ports/ProductRepositoryPort';
-import { PaymentGatewayPort, PaymentIntent, InitiatePaymentInput } from '../../domain/ports/PaymentGatewayPort';
+import {
+  ProductRepositoryPort,
+  ProductSearchOptions,
+  PagedProducts,
+} from '../../domain/ports/ProductRepositoryPort';
+import {
+  PaymentGatewayPort,
+  PaymentIntent,
+  InitiatePaymentInput,
+} from '../../domain/ports/PaymentGatewayPort';
 import { LoggerPort } from '../../domain/ports/LoggerPort';
 import { Order, OrderStatus } from '../../domain/entities/Order';
 import { OrderItem } from '../../domain/entities/OrderItem';
@@ -58,21 +63,37 @@ class FakeOrderRepository implements OrderRepositoryPort {
 
   async createWithItems(
     input: { idUser: number; idempotencyKey: string; items: NewOrderItemInput[] },
-    _tx: TransactionContext
+    _tx: TransactionContext,
   ): Promise<Order> {
     this.createWithItemsCalls += 1;
     const idOrder = this.nextId++;
     const items = input.items.map(
       (item, index) =>
-        new OrderItem(idOrder * 100 + index, idOrder, item.idProduct, item.productName, item.quantity, item.unitPrice)
+        new OrderItem(
+          idOrder * 100 + index,
+          idOrder,
+          item.idProduct,
+          item.productName,
+          item.quantity,
+          item.unitPrice,
+        ),
     );
-    const order = new Order(idOrder, input.idUser, input.idempotencyKey, OrderStatus.AWAITING_PAYMENT, items, new Date());
+    const order = new Order(
+      idOrder,
+      input.idUser,
+      input.idempotencyKey,
+      OrderStatus.AWAITING_PAYMENT,
+      items,
+      new Date(),
+    );
     this.orders.push(order);
     return order;
   }
 
   async findByIdempotencyKey(idUser: number, idempotencyKey: string): Promise<Order | null> {
-    return this.orders.find((o) => o.idUser === idUser && o.idempotencyKey === idempotencyKey) ?? null;
+    return (
+      this.orders.find((o) => o.idUser === idUser && o.idempotencyKey === idempotencyKey) ?? null
+    );
   }
 
   async findById(idOrder: number): Promise<Order | null> {
@@ -83,16 +104,30 @@ class FakeOrderRepository implements OrderRepositoryPort {
     return [...this.orders];
   }
 
-  async findByUserId(idUser: number, options: { limit: number; offset: number }): Promise<{ orders: Order[]; total: number }> {
+  async findByUserId(
+    idUser: number,
+    options: { limit: number; offset: number },
+  ): Promise<{ orders: Order[]; total: number }> {
     const scoped = this.orders.filter((o) => o.idUser === idUser);
-    return { orders: scoped.slice(options.offset, options.offset + options.limit), total: scoped.length };
+    return {
+      orders: scoped.slice(options.offset, options.offset + options.limit),
+      total: scoped.length,
+    };
   }
 
   async transitionStatus(idOrder: number, from: OrderStatus, to: OrderStatus): Promise<boolean> {
     const index = this.orders.findIndex((o) => o.idOrder === idOrder && o.status === from);
     if (index === -1) return false;
     const current = this.orders[index];
-    this.orders[index] = new Order(current.idOrder, current.idUser, current.idempotencyKey, to, current.items, current.createdAt, current.paymentReference);
+    this.orders[index] = new Order(
+      current.idOrder,
+      current.idUser,
+      current.idempotencyKey,
+      to,
+      current.items,
+      current.createdAt,
+      current.paymentReference,
+    );
     return true;
   }
 
@@ -101,7 +136,15 @@ class FakeOrderRepository implements OrderRepositoryPort {
     const index = this.orders.findIndex((o) => o.idOrder === idOrder);
     if (index === -1) return;
     const current = this.orders[index];
-    this.orders[index] = new Order(current.idOrder, current.idUser, current.idempotencyKey, current.status, current.items, current.createdAt, reference);
+    this.orders[index] = new Order(
+      current.idOrder,
+      current.idUser,
+      current.idempotencyKey,
+      current.status,
+      current.items,
+      current.createdAt,
+      reference,
+    );
   }
 }
 
@@ -141,7 +184,15 @@ class FakeShoppingCartRepository implements ShoppingCartRepositoryPort {
     this.rows = this.rows.map((r) => {
       if (r.idUser === userId && cartIds.includes(r.idCart) && r.status === CartStatus.ACTIVE) {
         affected += 1;
-        return new ShoppingCart(r.idCart, r.idUser, r.idProduct, r.quantity, r.unitPrice, CartStatus.ORDERED, r.product);
+        return new ShoppingCart(
+          r.idCart,
+          r.idUser,
+          r.idProduct,
+          r.quantity,
+          r.unitPrice,
+          CartStatus.ORDERED,
+          r.product,
+        );
       }
       return r;
     });
@@ -215,7 +266,7 @@ class FakeProductRepository implements ProductRepositoryPort {
       product.depth,
       product.finish,
       product.productionTime,
-      nextStock
+      nextStock,
     );
     this.products.set(id, updated);
     return updated;
@@ -254,11 +305,42 @@ class FakeLogger implements LoggerPort {
 }
 
 function makeProduct(id: number, name: string, stock: number): Product {
-  return new Product(id, name, 100, 'desc', 'img.png', 1, 1, undefined, undefined, null, null, null, null, null, null, stock);
+  return new Product(
+    id,
+    name,
+    100,
+    'desc',
+    'img.png',
+    1,
+    1,
+    undefined,
+    undefined,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    stock,
+  );
 }
 
-function makeCartRow(idCart: number, idUser: number, product: Product, quantity: number, unitPrice = product.price): ShoppingCart {
-  return new ShoppingCart(idCart, idUser, product.idProduct, quantity, unitPrice, CartStatus.ACTIVE, product);
+function makeCartRow(
+  idCart: number,
+  idUser: number,
+  product: Product,
+  quantity: number,
+  unitPrice = product.price,
+): ShoppingCart {
+  return new ShoppingCart(
+    idCart,
+    idUser,
+    product.idProduct,
+    quantity,
+    unitPrice,
+    CartStatus.ACTIVE,
+    product,
+  );
 }
 
 describe('CreateOrderUseCase', () => {
@@ -275,7 +357,14 @@ describe('CreateOrderUseCase', () => {
     const uow = new FakeUnitOfWork([cartRepo, productRepo, orderRepo]);
     const paymentGateway = new FakePaymentGateway();
     const logger = new FakeLogger();
-    const useCase = new CreateOrderUseCase(uow, orderRepo, cartRepo, productRepo, paymentGateway, logger);
+    const useCase = new CreateOrderUseCase(
+      uow,
+      orderRepo,
+      cartRepo,
+      productRepo,
+      paymentGateway,
+      logger,
+    );
     return { useCase, uow, orderRepo, cartRepo, productRepo, paymentGateway, logger };
   }
 
@@ -293,7 +382,9 @@ describe('CreateOrderUseCase', () => {
     expect(cartRepo.markOrderedCalls).toEqual([{ userId, cartIds: [1, 2] }]);
     expect(orderRepo.createWithItemsCalls).toBe(1);
     expect(paymentGateway.initiateCalls).toHaveLength(1);
-    expect(orderRepo.attachPaymentReferenceCalls).toEqual([{ idOrder: dto.idOrder, reference: `pay-${dto.idOrder}` }]);
+    expect(orderRepo.attachPaymentReferenceCalls).toEqual([
+      { idOrder: dto.idOrder, reference: `pay-${dto.idOrder}` },
+    ]);
     expect(dto.paymentReference).toBe(`pay-${dto.idOrder}`);
   });
 
@@ -315,7 +406,11 @@ describe('CreateOrderUseCase', () => {
       makeCartRow(2, userId, productB, 2),
       makeCartRow(3, userId, productC, 2),
     ];
-    const { useCase, productRepo, cartRepo, orderRepo, paymentGateway } = build(cartRows, [productA, productB, productC]);
+    const { useCase, productRepo, cartRepo, orderRepo, paymentGateway } = build(cartRows, [
+      productA,
+      productB,
+      productC,
+    ]);
 
     let caught: InsufficientStockException | undefined;
     try {
@@ -369,7 +464,7 @@ describe('CreateOrderUseCase', () => {
     expect(callLog).toEqual(['transaction:commit', 'gateway:initiate']);
   });
 
-  it('(f) freezes the order line item price at the cart row\'s own unit_price, never re-reading the product\'s current price', async () => {
+  it("(f) freezes the order line item price at the cart row's own unit_price, never re-reading the product's current price", async () => {
     // Product is priced 100 (see `makeProduct`), but the cart row carries a
     // deliberately different, stale price (80) — simulating a product price
     // change that happened after the item was added to the cart. The order
@@ -406,8 +501,12 @@ describe('CreateOrderUseCase', () => {
     const cartRows = [makeCartRow(1, userId, productA, 1)];
     const { useCase, productRepo } = build(cartRows, [productA]);
 
-    jest.spyOn(productRepo, 'adjustStock').mockRejectedValueOnce(new Error('Connection lost to MySQL server'));
+    jest
+      .spyOn(productRepo, 'adjustStock')
+      .mockRejectedValueOnce(new Error('Connection lost to MySQL server'));
 
-    await expect(useCase.execute(userId, 'key-db-error')).rejects.toThrow('Connection lost to MySQL server');
+    await expect(useCase.execute(userId, 'key-db-error')).rejects.toThrow(
+      'Connection lost to MySQL server',
+    );
   });
 });

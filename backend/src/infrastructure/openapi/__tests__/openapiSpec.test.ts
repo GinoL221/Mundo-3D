@@ -12,7 +12,7 @@ process.env.SMTP_SECURE = 'false';
 process.env.SMTP_FROM = 'noreply@example.test';
 
 const { version } = JSON.parse(
-  fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', 'package.json'), 'utf-8')
+  fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', 'package.json'), 'utf-8'),
 ) as { version: string };
 
 interface OpenApiDocument {
@@ -125,14 +125,31 @@ describe('buildOpenApiSpec', () => {
       const schemas = spec.components.schemas;
       expect(operation).toMatchObject({
         security: [],
-        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CustomCommissionRequestInput' } } } },
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/CustomCommissionRequestInput' },
+            },
+          },
+        },
         responses: {
-          '201': { content: { 'application/json': { schema: { $ref: '#/components/schemas/CustomCommissionRequestReceipt' } } } },
-          '400': expect.any(Object), '429': expect.any(Object), '500': expect.any(Object),
+          '201': {
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/CustomCommissionRequestReceipt' },
+              },
+            },
+          },
+          '400': expect.any(Object),
+          '429': expect.any(Object),
+          '500': expect.any(Object),
         },
       });
       expect(schemas.CustomCommissionRequestInput).toMatchObject({
-        type: 'object', additionalProperties: false, required: ['name', 'email', 'idea'],
+        type: 'object',
+        additionalProperties: false,
+        required: ['name', 'email', 'idea'],
         properties: {
           name: { type: 'string', minLength: 1, maxLength: 100 },
           email: { type: 'string', format: 'email', maxLength: 254 },
@@ -140,16 +157,27 @@ describe('buildOpenApiSpec', () => {
           idProduct: { type: 'integer', minimum: 1, nullable: true },
         },
       });
-      const receipt = schemas.CustomCommissionRequestReceipt as { required: string[]; properties: Record<string, unknown> };
+      const receipt = schemas.CustomCommissionRequestReceipt as {
+        required: string[];
+        properties: Record<string, unknown>;
+      };
       expect(receipt.required).toEqual(['idCustomCommissionRequest', 'createdAt', 'expiresAt']);
-      expect(Object.keys(receipt.properties).sort()).toEqual(['createdAt', 'expiresAt', 'idCustomCommissionRequest']);
+      expect(Object.keys(receipt.properties).sort()).toEqual([
+        'createdAt',
+        'expiresAt',
+        'idCustomCommissionRequest',
+      ]);
     });
 
     it('covers exactly the endpoints mounted by the 7 route groups (no missing, no stale)', () => {
       const actual = Object.entries(spec.paths)
-        .flatMap(([path, methods]) => Object.keys(methods).map((method) => `${method.toUpperCase()} ${path}`))
+        .flatMap(([path, methods]) =>
+          Object.keys(methods).map((method) => `${method.toUpperCase()} ${path}`),
+        )
         .sort();
-      const expected = EXPECTED_ENDPOINTS.map(([path, method]) => `${method.toUpperCase()} ${path}`).sort();
+      const expected = EXPECTED_ENDPOINTS.map(
+        ([path, method]) => `${method.toUpperCase()} ${path}`,
+      ).sort();
       expect(actual).toEqual(expected);
     });
 
@@ -206,17 +234,32 @@ describe('buildOpenApiSpec', () => {
       const { schemas } = spec.components;
       expect(Object.keys(schemas)).toEqual(
         expect.arrayContaining([
-          'Order', 'OrderItem', 'Product', 'Category', 'Franchise', 'User', 'CartResult', 'ShoppingCartLine',
-        ])
+          'Order',
+          'OrderItem',
+          'Product',
+          'Category',
+          'Franchise',
+          'User',
+          'CartResult',
+          'ShoppingCartLine',
+        ]),
       );
 
       // OrderDTO.ts / OrderItemDTO — the DTOs this change was explicitly
       // required to mirror.
       expect(Object.keys((schemas.Order as { properties: object }).properties).sort()).toEqual(
-        ['idOrder', 'idUser', 'status', 'items', 'totalAmount', 'createdAt', 'paymentReference'].sort()
+        [
+          'idOrder',
+          'idUser',
+          'status',
+          'items',
+          'totalAmount',
+          'createdAt',
+          'paymentReference',
+        ].sort(),
       );
       expect(Object.keys((schemas.OrderItem as { properties: object }).properties).sort()).toEqual(
-        ['idOrderItem', 'idProduct', 'productName', 'quantity', 'unitPrice', 'subtotal'].sort()
+        ['idOrderItem', 'idProduct', 'productName', 'quantity', 'unitPrice', 'subtotal'].sort(),
       );
     });
   });
@@ -232,16 +275,20 @@ describe('buildOpenApiSpec', () => {
 const APP_BOOT_TIMEOUT_MS = 20_000;
 
 describe('GET /api/openapi.json (real app wiring)', () => {
-  it('serves the committed backend/openapi.json artifact unchanged, unauthenticated, through the actual app.js mount point', async () => {
-    const fullApp = require('../../../app');
-    const committedArtifact = JSON.parse(
-      fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', 'openapi.json'), 'utf-8')
-    ) as OpenApiDocument;
+  it(
+    'serves the committed backend/openapi.json artifact unchanged, unauthenticated, through the actual app.js mount point',
+    async () => {
+      const fullApp = require('../../../app');
+      const committedArtifact = JSON.parse(
+        fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', 'openapi.json'), 'utf-8'),
+      ) as OpenApiDocument;
 
-    // Unauthenticated: no cookie/header sent at all.
-    const res = await request(fullApp).get('/api/openapi.json');
+      // Unauthenticated: no cookie/header sent at all.
+      const res = await request(fullApp).get('/api/openapi.json');
 
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual(committedArtifact);
-  }, APP_BOOT_TIMEOUT_MS);
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(committedArtifact);
+    },
+    APP_BOOT_TIMEOUT_MS,
+  );
 });

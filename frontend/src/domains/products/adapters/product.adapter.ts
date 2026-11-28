@@ -44,7 +44,11 @@ export function getCategoryImg(categoryName: string): string {
 }
 
 export function isPlaceholderImage(imageFilename: string | null | undefined): boolean {
-  return !imageFilename || imageFilename === 'productoSinImagen.png' || imageFilename === 'productoSinImagen.svg';
+  return (
+    !imageFilename ||
+    imageFilename === 'productoSinImagen.png' ||
+    imageFilename === 'productoSinImagen.svg'
+  );
 }
 
 function formatDimensions(
@@ -55,7 +59,12 @@ function formatDimensions(
   const hasAnyDimension = height != null || width != null || depth != null;
 
   if (!hasAnyDimension) {
-    return { height: 'A consultar', width: 'A consultar', depth: 'A consultar', hasDimensions: false };
+    return {
+      height: 'A consultar',
+      width: 'A consultar',
+      depth: 'A consultar',
+      hasDimensions: false,
+    };
   }
 
   return {

@@ -52,7 +52,7 @@ export async function syncToBackend(items: CartItem[], previousItems: CartItem[]
       window.dispatchEvent(
         new CustomEvent('cart-sync-error', {
           detail: { message: 'No se pudo sincronizar el carrito con el servidor.' },
-        })
+        }),
       );
     }
   } catch {
@@ -74,7 +74,7 @@ export async function syncToBackend(items: CartItem[], previousItems: CartItem[]
     window.dispatchEvent(
       new CustomEvent('cart-sync-error', {
         detail: { message: 'No se pudo sincronizar el carrito con el servidor.' },
-      })
+      }),
     );
   }
 }
@@ -160,7 +160,7 @@ let teardownFlushListeners: (() => void) | null = null;
 // return-cleanup convention. `beforeunload` is deliberately not used.
 export function registerCartFlushListeners(
   win: Window = window,
-  doc: Document = document
+  doc: Document = document,
 ): () => void {
   if (teardownFlushListeners) return teardownFlushListeners;
 

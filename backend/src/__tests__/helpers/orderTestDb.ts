@@ -39,7 +39,7 @@ export interface CheckoutFixture {
 export async function seedCheckoutFixture(
   productStocks: number[],
   quantities: number[] = productStocks.map(() => 1),
-  cartPriceOverrides: (number | undefined)[] = []
+  cartPriceOverrides: (number | undefined)[] = [],
 ): Promise<CheckoutFixture> {
   const db = getTestDb();
   const userId = await seedTestUser();
@@ -93,7 +93,9 @@ export async function readActiveCartCount(userId: number): Promise<number> {
 }
 
 /** Reads a single cart row (any status) directly by id, bypassing any cache. */
-export async function readCartRowById(idCart: number): Promise<{ idCart: number; cartStatus: string } | null> {
+export async function readCartRowById(
+  idCart: number,
+): Promise<{ idCart: number; cartStatus: string } | null> {
   const db = getTestDb();
   const instance = await db.ShoppingCart.findByPk(idCart);
   return instance ? { idCart: instance.idCart, cartStatus: instance.cartStatus } : null;

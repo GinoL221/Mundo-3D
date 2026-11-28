@@ -3,9 +3,20 @@ import { OrderRepositoryPort } from '../../domain/ports/OrderRepositoryPort';
 import { Order, OrderStatus } from '../../domain/entities/Order';
 import { OrderItem } from '../../domain/entities/OrderItem';
 
-function makeOrder(idOrder: number, idUser: number, status: OrderStatus = OrderStatus.AWAITING_PAYMENT): Order {
+function makeOrder(
+  idOrder: number,
+  idUser: number,
+  status: OrderStatus = OrderStatus.AWAITING_PAYMENT,
+): Order {
   const items = [new OrderItem(idOrder * 10, idOrder, 10, 'Figure A', 1, 1500)];
-  return new Order(idOrder, idUser, `key-${idOrder}`, status, items, new Date('2026-08-28T14:03:11.000Z'));
+  return new Order(
+    idOrder,
+    idUser,
+    `key-${idOrder}`,
+    status,
+    items,
+    new Date('2026-08-28T14:03:11.000Z'),
+  );
 }
 
 describe('ListMyOrdersUseCase', () => {

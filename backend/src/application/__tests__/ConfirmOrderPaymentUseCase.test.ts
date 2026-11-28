@@ -6,7 +6,14 @@ import { IllegalOrderTransitionException } from '../../domain/exceptions/Illegal
 
 function makeOrder(idOrder: number, status: OrderStatus): Order {
   const items = [new OrderItem(1, idOrder, 10, 'Figure A', 1, 1500)];
-  return new Order(idOrder, 7, `key-${idOrder}`, status, items, new Date('2026-08-28T14:03:11.000Z'));
+  return new Order(
+    idOrder,
+    7,
+    `key-${idOrder}`,
+    status,
+    items,
+    new Date('2026-08-28T14:03:11.000Z'),
+  );
 }
 
 describe('ConfirmOrderPaymentUseCase', () => {
@@ -32,7 +39,11 @@ describe('ConfirmOrderPaymentUseCase', () => {
 
     const dto = await useCase.execute(41);
 
-    expect(orderRepo.transitionStatus).toHaveBeenCalledWith(41, OrderStatus.AWAITING_PAYMENT, OrderStatus.PAID);
+    expect(orderRepo.transitionStatus).toHaveBeenCalledWith(
+      41,
+      OrderStatus.AWAITING_PAYMENT,
+      OrderStatus.PAID,
+    );
     expect(dto.status).toBe(OrderStatus.PAID);
   });
 

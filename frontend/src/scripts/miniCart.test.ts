@@ -96,7 +96,11 @@ class FakeElement {
   querySelector(selector: string): FakeElement | null {
     const targetClass = selector.startsWith('.') ? selector.slice(1) : null;
     for (const child of this.children) {
-      if (targetClass ? child.className.split(/\s+/).includes(targetClass) : child.tagName === selector) {
+      if (
+        targetClass
+          ? child.className.split(/\s+/).includes(targetClass)
+          : child.tagName === selector
+      ) {
         return child;
       }
       const nested = child.querySelector(selector);
@@ -109,7 +113,11 @@ class FakeElement {
     const targetClass = selector.startsWith('.') ? selector.slice(1) : null;
     const matches: FakeElement[] = [];
     for (const child of this.children) {
-      if (targetClass ? child.className.split(/\s+/).includes(targetClass) : child.tagName === selector) {
+      if (
+        targetClass
+          ? child.className.split(/\s+/).includes(targetClass)
+          : child.tagName === selector
+      ) {
         matches.push(child);
       }
       matches.push(...child.querySelectorAll(selector));
@@ -207,7 +215,11 @@ class FakeDocument {
 function createMiniCartFixture() {
   const document = new FakeDocument();
   const wrap = new FakeElement('div', '', 'home-header__cart-wrap');
-  const trigger = new FakeElement('button', 'navbar-cart-trigger', 'home-header__link home-header__cart');
+  const trigger = new FakeElement(
+    'button',
+    'navbar-cart-trigger',
+    'home-header__link home-header__cart',
+  );
   const menu = new FakeElement('div', 'navbar-cart-menu', 'mini-cart');
   const count = new FakeElement('span', 'mini-cart-count', 'mini-cart__count');
   const empty = new FakeElement('div', 'mini-cart-empty', 'mini-cart__empty');
@@ -269,7 +281,10 @@ describe('initializeMiniCart', () => {
     // Open and press Escape -> closes and restores focus
     fixture.trigger.dispatchClick(fixture.document);
     const preventDefault = vi.fn();
-    fixture.document.dispatchEvent('keydown', { key: 'Escape', preventDefault } as unknown as Event);
+    fixture.document.dispatchEvent('keydown', {
+      key: 'Escape',
+      preventDefault,
+    } as unknown as Event);
     expect(preventDefault).toHaveBeenCalledOnce();
     expect(fixture.menu.hidden).toBe(true);
     expect(fixture.trigger.getAttribute('aria-expanded')).toBe('false');
@@ -287,9 +302,11 @@ describe('initializeMiniCart', () => {
   });
 
   it('renders populated items safely, formats ARS prices, reacts to cartItems changes, and removes items without closing', () => {
-    const removeSpy = vi.spyOn(CartService, 'removeFromCart').mockImplementation((productId: number) => {
-      cartItems.set(cartItems.get().filter((item) => item.productId !== productId));
-    });
+    const removeSpy = vi
+      .spyOn(CartService, 'removeFromCart')
+      .mockImplementation((productId: number) => {
+        cartItems.set(cartItems.get().filter((item) => item.productId !== productId));
+      });
 
     cartItems.set([
       {
@@ -344,7 +361,9 @@ describe('initializeMiniCart', () => {
     expect(fixture.menu.hidden).toBe(false);
 
     const firstRemove = rows[0].querySelector('.mini-cart__remove')!;
-    expect(firstRemove.getAttribute('aria-label')).toBe('Quitar <img src=x onerror=alert(1)> Cubo del carrito');
+    expect(firstRemove.getAttribute('aria-label')).toBe(
+      'Quitar <img src=x onerror=alert(1)> Cubo del carrito',
+    );
     firstRemove.dispatchClick(fixture.document);
 
     expect(removeSpy).toHaveBeenCalledWith(7);

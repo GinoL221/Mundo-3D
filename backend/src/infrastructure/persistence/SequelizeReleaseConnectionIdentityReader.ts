@@ -1,6 +1,9 @@
 import type { Sequelize } from 'sequelize';
 import type { TransactionContext } from '../../domain/ports/UnitOfWorkPort';
-import type { ReleaseConnectionIdentityReader, LiveConnectionIdentity } from '../database/CoordinateSandboxRelease';
+import type {
+  ReleaseConnectionIdentityReader,
+  LiveConnectionIdentity,
+} from '../database/CoordinateSandboxRelease';
 
 /**
  * Unwired adapter reading the live identity of the raw connection a

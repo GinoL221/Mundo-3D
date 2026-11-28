@@ -16,7 +16,10 @@ import { OrderApiController } from '../../controllers/OrderApiController';
 import { apiAuthMiddleware, adminGuard, buyerGuard, requireRoles } from '../../middlewares/auth';
 import { Role } from '../../../domain/Role';
 import { csrfGuard } from '../../middlewares/csrf';
-import { orderCreateValidation, listMyOrdersValidation } from '../../middlewares/validators/orderValidators';
+import {
+  orderCreateValidation,
+  listMyOrdersValidation,
+} from '../../middlewares/validators/orderValidators';
 
 const router = Router();
 
@@ -28,7 +31,14 @@ const uow = new SequelizeUnitOfWork();
 const paymentGateway = new ManualPaymentGateway();
 const logger = new PinoLogger();
 
-const createOrderUseCase = new CreateOrderUseCase(uow, orderRepo, cartRepo, productRepo, paymentGateway, logger);
+const createOrderUseCase = new CreateOrderUseCase(
+  uow,
+  orderRepo,
+  cartRepo,
+  productRepo,
+  paymentGateway,
+  logger,
+);
 const getOrderByIdUseCase = new GetOrderByIdUseCase(orderRepo);
 const listOrdersUseCase = new ListOrdersUseCase(orderRepo, userRepo);
 const confirmOrderPaymentUseCase = new ConfirmOrderPaymentUseCase(orderRepo);
@@ -41,7 +51,7 @@ const controller = new OrderApiController(
   listOrdersUseCase,
   confirmOrderPaymentUseCase,
   cancelOrderUseCase,
-  listMyOrdersUseCase
+  listMyOrdersUseCase,
 );
 
 /**
@@ -209,15 +219,34 @@ const controller = new OrderApiController(
 // compares the requester against the order's owner and returns 404 for a
 // non-owner (avoids order-id enumeration), with an ADMIN bypass — design.md
 // "Routes and the ADMIN guard".
-router.post('/orders', apiAuthMiddleware, buyerGuard, csrfGuard, orderCreateValidation, controller.create);
+router.post(
+  '/orders',
+  apiAuthMiddleware,
+  buyerGuard,
+  csrfGuard,
+  orderCreateValidation,
+  controller.create,
+);
 // ORDER-SENSITIVE: MUST be registered before `/orders/:id` — otherwise
 // Express matches "mine" as the `:id` param, `parseInt('mine', 10)` is
 // `NaN`, and the buyer gets `show`'s 400 "Id de orden inválido" instead of
 // their order list (design.md, order-history change).
-router.get('/orders/mine', apiAuthMiddleware, buyerGuard, listMyOrdersValidation, controller.listMine);
+router.get(
+  '/orders/mine',
+  apiAuthMiddleware,
+  buyerGuard,
+  listMyOrdersValidation,
+  controller.listMine,
+);
 router.get('/orders/:id', apiAuthMiddleware, controller.show);
 router.get('/orders', apiAuthMiddleware, requireRoles(Role.ADMIN, Role.STAFF), controller.index);
-router.post('/orders/:id/confirm-payment', apiAuthMiddleware, csrfGuard, adminGuard, controller.confirmPayment);
+router.post(
+  '/orders/:id/confirm-payment',
+  apiAuthMiddleware,
+  csrfGuard,
+  adminGuard,
+  controller.confirmPayment,
+);
 router.post('/orders/:id/cancel', apiAuthMiddleware, csrfGuard, adminGuard, controller.cancel);
 
 export default router;

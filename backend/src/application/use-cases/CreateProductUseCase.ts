@@ -21,7 +21,7 @@ export interface CreateProductInput {
 export class CreateProductUseCase {
   constructor(
     private readonly productRepo: ProductRepositoryPort,
-    private readonly categoryRepo?: CategoryRepositoryPort
+    private readonly categoryRepo?: CategoryRepositoryPort,
   ) {}
 
   async execute(input: CreateProductInput): Promise<ProductDTO> {

@@ -1,7 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
 import trustedProxyIp from '../trustedProxyIp';
 
-function createReq(headers: Record<string, string | string[] | undefined>, initialIp = '127.0.0.1'): Request {
+function createReq(
+  headers: Record<string, string | string[] | undefined>,
+  initialIp = '127.0.0.1',
+): Request {
   const req = {
     headers,
   } as unknown as Request;

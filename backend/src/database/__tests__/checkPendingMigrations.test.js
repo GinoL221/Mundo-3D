@@ -21,10 +21,12 @@ const {
 function makeCompatibleQueryInterface() {
   const columnsByTable = {};
   for (const [table, columns] of Object.entries(REQUIRED_SCHEMA)) {
-    columnsByTable[table] = Object.fromEntries(columns.map((column) => {
-      const expected = REQUIRED_COLUMN_DEFINITIONS[table][column];
-      return [column, { type: expected.replace(/!$/, ''), allowNull: !expected.endsWith('!') }];
-    }));
+    columnsByTable[table] = Object.fromEntries(
+      columns.map((column) => {
+        const expected = REQUIRED_COLUMN_DEFINITIONS[table][column];
+        return [column, { type: expected.replace(/!$/, ''), allowNull: !expected.endsWith('!') }];
+      }),
+    );
   }
 
   return {
@@ -46,10 +48,12 @@ describe('checkNoPendingMigrations', () => {
   });
 
   it('rejects with a clear error naming the pending count when migrations are pending', async () => {
-    buildMigrator.mockReturnValue(makeMigrator(['20260901000000-add-orders.js', '20260902000000-add-orders2.js']));
+    buildMigrator.mockReturnValue(
+      makeMigrator(['20260901000000-add-orders.js', '20260902000000-add-orders2.js']),
+    );
 
     await expect(checkNoPendingMigrations()).rejects.toThrow(
-      'Database schema is not fully migrated: 2 pending migration(s) — run `pnpm db:migrate` before starting the server.'
+      'Database schema is not fully migrated: 2 pending migration(s) — run `pnpm db:migrate` before starting the server.',
     );
   });
 
@@ -61,12 +65,14 @@ describe('checkNoPendingMigrations', () => {
 
   it('rejects when a required table is missing even though no migrations are pending', async () => {
     const queryInterface = makeCompatibleQueryInterface();
-    const tablesWithoutShoppingCart = Object.keys(REQUIRED_SCHEMA).filter((table) => table !== 'ShoppingCart');
+    const tablesWithoutShoppingCart = Object.keys(REQUIRED_SCHEMA).filter(
+      (table) => table !== 'ShoppingCart',
+    );
     queryInterface.showAllTables.mockResolvedValue(tablesWithoutShoppingCart);
     buildMigrator.mockReturnValue(makeMigrator([], queryInterface));
 
     await expect(checkNoPendingMigrations()).rejects.toThrow(
-      /missing required table "ShoppingCart"/
+      /missing required table "ShoppingCart"/,
     );
   });
 
@@ -77,7 +83,7 @@ describe('checkNoPendingMigrations', () => {
     buildMigrator.mockReturnValue(makeMigrator([], queryInterface));
 
     await expect(checkNoPendingMigrations()).rejects.toThrow(
-      /incompatible definition for column "price" on table "Product".*expected type DECIMAL\(10,2\)/
+      /incompatible definition for column "price" on table "Product".*expected type DECIMAL\(10,2\)/,
     );
   });
 
@@ -88,7 +94,7 @@ describe('checkNoPendingMigrations', () => {
     buildMigrator.mockReturnValue(makeMigrator([], queryInterface));
 
     await expect(checkNoPendingMigrations()).rejects.toThrow(
-      /incompatible definition for column "email" on table "User".*allowNull=false/
+      /incompatible definition for column "email" on table "User".*allowNull=false/,
     );
   });
 
@@ -99,7 +105,7 @@ describe('checkNoPendingMigrations', () => {
     buildMigrator.mockReturnValue(makeMigrator([], queryInterface));
 
     await expect(checkNoPendingMigrations()).rejects.toThrow(
-      /missing required column "token_hash" on table "RememberToken"/
+      /missing required column "token_hash" on table "RememberToken"/,
     );
   });
 
@@ -117,9 +123,9 @@ describe('checkNoPendingMigrations', () => {
       buildMigrator.mockReturnValue(makeMigrator([], queryInterface));
 
       await expect(checkNoPendingMigrations()).rejects.toThrow(
-        new RegExp(`missing required column "${column}" on table "RememberToken"`)
+        new RegExp(`missing required column "${column}" on table "RememberToken"`),
       );
-    }
+    },
   );
 
   // MySQL 8.0.19+ dropped the display-width attribute from DESCRIBE/SHOW
@@ -145,7 +151,7 @@ describe('checkNoPendingMigrations', () => {
     buildMigrator.mockReturnValue(makeMigrator([], queryInterface));
 
     await expect(checkNoPendingMigrations()).rejects.toThrow(
-      /incompatible definition for column "id_user" on table "User"/
+      /incompatible definition for column "id_user" on table "User"/,
     );
   });
 });

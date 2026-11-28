@@ -44,7 +44,7 @@ interface DynamicStorageEngine {
   _handleFile(
     req: Request,
     file: UploadEngineFile,
-    cb: (e: unknown, info?: Record<string, unknown>) => void
+    cb: (e: unknown, info?: Record<string, unknown>) => void,
   ): void;
   _removeFile(req: Request, file: UploadEngineFile, cb: (e: unknown) => void): void;
 }
@@ -59,7 +59,7 @@ function createLocalStorageEngine(dest: string): DynamicStorageEngine {
     filename: (
       _req: Request,
       file: { originalname: string },
-      cb: (e: Error | null, f: string) => void
+      cb: (e: Error | null, f: string) => void,
     ) => cb(null, `${uuidv4()}${path.extname(file.originalname)}`),
   });
 
@@ -67,7 +67,7 @@ function createLocalStorageEngine(dest: string): DynamicStorageEngine {
     _handleFile(
       req: Request,
       file: UploadEngineFile,
-      cb: (e: unknown, info?: Record<string, unknown>) => void
+      cb: (e: unknown, info?: Record<string, unknown>) => void,
     ): void {
       disk._handleFile(
         req,
@@ -81,7 +81,7 @@ function createLocalStorageEngine(dest: string): DynamicStorageEngine {
           file.key = key;
           file.path = info.path;
           cb(null, { ...info, key, location: info.filename });
-        }
+        },
       );
     },
     _removeFile(req: Request, file: UploadEngineFile, cb: (e: unknown) => void): void {
@@ -95,7 +95,7 @@ function createDisabledStorageEngine(): DynamicStorageEngine {
     _handleFile(
       _req: Request,
       _file: UploadEngineFile,
-      cb: (e: unknown, info?: Record<string, unknown>) => void
+      cb: (e: unknown, info?: Record<string, unknown>) => void,
     ): void {
       const error = Object.assign(new Error('Image uploads are disabled in this environment'), {
         statusCode: 503,
@@ -130,7 +130,7 @@ export default function createUpload(dest: string): MulterInstance {
     _handleFile(
       req: Request,
       file: UploadEngineFile,
-      cb: (e: unknown, info?: Record<string, unknown>) => void
+      cb: (e: unknown, info?: Record<string, unknown>) => void,
     ): void {
       try {
         resolveEngineForRequest(dest)._handleFile(req, file, cb);
@@ -150,7 +150,7 @@ export default function createUpload(dest: string): MulterInstance {
   const fileFilter = (
     _req: Request,
     file: MulterFile,
-    callback: (error: Error | null, acceptFile?: boolean) => void
+    callback: (error: Error | null, acceptFile?: boolean) => void,
   ): void => {
     const allowedExts = /^\.(jpe?g|png|gif|webp)$/i;
     const allowedMimes = /^image\/(jpeg|png|gif|webp)$/i;
