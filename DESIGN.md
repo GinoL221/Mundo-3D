@@ -73,7 +73,7 @@ The visual system is not retro, pixel-art, CRT, JRPG, SaaS-gradient, or toy-like
 
 Tokens live in `frontend/src/styles/tokens/` and are consumed by the frontend stylesheets.
 
-### Colors (`tokens/colors.css`)
+### Colors (`frontend/src/styles/tokens/colors.css`)
 
 The default `:root` values and the explicit `data-theme="light"` values are the light paper theme. The dark values are a workshop-night theme, not an approved dark brand palette.
 
@@ -101,7 +101,7 @@ The `--pico-*` variables remain only as compatibility aliases for legacy selecto
 
 Theme state is set on `<html>` by `Layout.astro` and `themeToggle.ts`, using `localStorage.theme` with `system` as the initial value (following `prefers-color-scheme` and cycling `system -> light -> dark`).
 
-### Typography (`tokens/typography.css`)
+### Typography (`frontend/src/styles/tokens/typography.css`)
 
 - `--font-heading` and `--font-body`: `"IBM Plex Sans", system-ui, sans-serif`.
 - Scale: H1 `32px`, H2 `24px`, H3/heading `18px`, body `16px`, small `14px`, extra-small `12px`.
@@ -109,7 +109,7 @@ Theme state is set on `<html>` by `Layout.astro` and `themeToggle.ts`, using `lo
 
 `Layout.astro` imports the locally hosted IBM Plex Sans v23 WOFF2 Latin and Latin-ext subsets; their shared variable binaries provide weights 400, 500, and 600 with `font-display: swap`. Source URLs, checksums, sizes, and license are recorded in `frontend/public/fonts/ibm-plex-sans/README.md`. The manual's 40px display role is a brand role; there is no `--text-display` token yet. Press Start 2P and VT323 are not active product tokens and must not be introduced into brand work.
 
-### Spacing and breakpoints (`tokens/spacing.css`)
+### Spacing and breakpoints (`frontend/src/styles/tokens/spacing.css`)
 
 The spacing scale follows the existing 8px rhythm: `--space-xs 4px`, `--space-sm 8px`, `--space-md 16px`, `--space-lg 24px`, `--space-xl 32px`, and `--space-2xl 48px`.
 
@@ -161,7 +161,7 @@ The header (`HomeHeader.astro`) uses the horizontal isologotype as one responsiv
 
 - `Layout.astro` and `HomeHeader.astro` do not read `localStorage['retro-theme-preference']`, toggle `html.crt-theme-active`, or render `.crt-overlay` or a CRT toggle button.
 - The legacy `crtToggle.ts` script, `--lcd-bg` / `--lcd-fg` tokens, and unused legacy stylesheets (`carousel.css`, `feature-strip.css`, `forms.css`, legacy `profile.css`, `users-list.css`, `error-pages.css`, `whatsapp-floating.css`) plus `WhatsAppFloating.astro` have been retired (read-only `/profile` now uses a new semantic-token `profile.css`).
-- The PICO-8 fallback art has been retired: `frontend/public/images/illustrations/*.svg` and `img/products/productoSinImagen.svg` are neutral outline placeholders (stroke `#8c857d`, transparent background) and no stylesheet sets `image-rendering: pixelated`.
+- The PICO-8 fallback art has been retired: `frontend/public/images/illustrations/*.svg` and `frontend/public/img/products/productoSinImagen.svg` are neutral outline placeholders (stroke `#8c857d`, transparent background) and no stylesheet sets `image-rendering: pixelated`.
 
 ## Do's and don'ts
 

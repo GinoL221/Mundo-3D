@@ -35,21 +35,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Gates on the FULL tree, dev dependencies included. That scope only
-      # became achievable once the dev tree was cleared (it carried 1
-      # moderate and 14 high before "chore(deps): clear the 15 dev-tree
-      # advisories"); this step was introduced as --prod for exactly that
-      # reason. Deliberately the stricter scope now: a DoS advisory in build
-      # tooling cannot reach a deployed artifact, but letting those pile up
-      # is precisely how a real one gets lost in the noise.
-      #
-      # The cost is real and accepted. brace-expansion alone shipped three
-      # advisories in July 2026, and any new one anywhere in the tree blocks
-      # every PR until someone adds an override to pnpm-workspace.yaml —
-      # which is how every entry in that file's overrides block got there.
-      # This is the automated half of the "Security Hardening" policy that
-      # lives beside those overrides, enforced only by hand until now.
-      - name: Audit all dependencies
+      # Two-tier dependency audit enforced by `.github/scripts/run-pnpm-audit.sh`:
+      # gates on the production tree (`pnpm audit --prod`, with any documented
+      # temporary unpatched exception recorded in `pnpm-workspace.yaml`), and
+      # reports the full tree (including devDependencies) without blocking on
+      # upstream tooling advisories that cannot reach shipped artifacts.
+      - name: Audit dependencies (two-tier gate)
         run: bash .github/scripts/run-pnpm-audit.sh
 
       - name: Validate CI supply-chain controls
@@ -73,13 +64,13 @@ jobs:
       - name: Check backend build imports without emitting files
         run: pnpm --filter backend exec tsc -p tsconfig.build.json --noEmit
 
-      - name: Run fast tests (DB-independent)
-        run: pnpm run test:fast
+      - name: Run frontend unit tests
+        run: pnpm run frontend:test
 
       - name: Run standalone Node script unit tests (DB-independent)
         run: pnpm run test:deploy-scripts
 
-      - name: Run backend coverage and generate risk map
+      - name: Run backend unit tests with coverage and generate risk map
         run: pnpm run test:coverage
 
       - name: Run frontend Astro check
